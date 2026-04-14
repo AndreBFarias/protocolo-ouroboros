@@ -227,4 +227,387 @@ regras:
     categoria: "Transporte"
     classificacao: "Questionável"
 
+  # --- Transferências pessoais ---
+  transferencia_wanderson:
+    regex: "WANDERSON.*RAMOS|Wanderson.*Ramos|Wandersonsantos"
+    tipo: "Despesa"
+    categoria: "Pessoal"
+
+  transferencia_rodrigo:
+    regex: "Rodrigo Caetano Praxedes"
+    tipo: "Despesa"
+    categoria: "Pessoal"
+
+  transferencia_caroline:
+    regex: "Caroline Sobrinho Valente"
+    tipo: "Despesa"
+    categoria: "Pessoal"
+
+  transferencia_tatiane:
+    regex: "Tatiane|Pag\\*Tatiane"
+    tipo: "Despesa"
+    categoria: "Pessoal"
+
+  transferencia_adriana:
+    regex: "Adriana da Silva Heleno"
+    tipo: "Despesa"
+    categoria: "Pessoal"
+
+  transferencia_maria_angelica:
+    regex: "MARIA ANGELICA LOPES"
+    tipo: "Despesa"
+    categoria: "Pessoal"
+
+  transferencia_weblei:
+    regex: "Weblei Pereira"
+    tipo: "Despesa"
+    categoria: "Pessoal"
+
+  transferencia_joneides:
+    regex: "Joneides Fernandes"
+    tipo: "Despesa"
+    categoria: "Pessoal"
+
+  transferencia_roniel:
+    regex: "Roniel Araujo"
+    tipo: "Despesa"
+    categoria: "Pessoal"
+
+  transferencia_euvaldo:
+    regex: "Euvaldo Gomes|EUVALDO GOMES"
+    tipo: "Despesa"
+    categoria: "Pessoal"
+
+  transferencia_maiara:
+    regex: "Maiara Silva dos Santos"
+    tipo: "Despesa"
+    categoria: "Pessoal"
+
+  transferencia_marina:
+    regex: "MARINA KAMIYA"
+    tipo: "Despesa"
+    categoria: "Pessoal"
+
+  transferencia_lilian:
+    regex: "Lilian Conte"
+    tipo: "Despesa"
+    categoria: "Pessoal"
+
+  transferencia_fernanda:
+    regex: "Fernanda .rika"
+    tipo: "Despesa"
+    categoria: "Pessoal"
+
+  transferencia_graziella:
+    regex: "Graziella de Souza"
+    tipo: "Despesa"
+    categoria: "Pessoal"
+
+  transferencia_ramon:
+    regex: "Ramon Alves Rocha"
+    tipo: "Despesa"
+    categoria: "Pessoal"
+
+  transferencia_matheus:
+    regex: "Matheus Alves Escorcio"
+    tipo: "Despesa"
+    categoria: "Pessoal"
+
+  transferencia_marcelo:
+    regex: "Marcelo Dos Reis"
+    tipo: "Despesa"
+    categoria: "Pessoal"
+
+  transferencia_fabiano:
+    regex: "FABIANO MARTINS"
+    tipo: "Despesa"
+    categoria: "Pessoal"
+
+  transferencia_bruno:
+    regex: "Bruno Christian Prado"
+    tipo: "Despesa"
+    categoria: "Pessoal"
+
+  transferencia_lucas:
+    regex: "Lucas Matheus Motta"
+    tipo: "Despesa"
+    categoria: "Pessoal"
+
+  transferencia_anderson:
+    regex: "Anderson Santos De Novais"
+    tipo: "Despesa"
+    categoria: "Pessoal"
+
+  transferencia_rafael:
+    regex: "RAFAEL SILVA GONCALVES"
+    tipo: "Despesa"
+    categoria: "Pessoal"
+
+  transferencia_david:
+    regex: "DAVID ITALO MARTINS"
+    tipo: "Despesa"
+    categoria: "Pessoal"
+
+  transferencia_alekes:
+    regex: "ALEKES ARAUJO"
+    tipo: "Despesa"
+    categoria: "Pessoal"
+
+  transferencia_pix_pessoas:
+    regex: "55491795Willian|ZULAIDEDEMOURAESI|Josiasmendesda|Kaiohenrique|Pag\\*53380798telma|Pag\\*Hugodecastroalves|Pag\\*Manoelcostadeagui"
+    tipo: "Despesa"
+    categoria: "Pessoal"
+
+  # --- Juros e encargos (extensão) ---
+  juros_divida:
+    regex: "Encerramento de d[ií]vida|Juros de d[ií]vida"
+    categoria: "Juros/Encargos"
+    classificacao: "Obrigatório"
+
+  iof_encargos:
+    regex: "IOF de|ANUIDADE DIFERENCIADA|Cr[eé]dito de atraso|D[eé]bito em conta"
+    categoria: "Juros/Encargos"
+    classificacao: "Obrigatório"
+
+  # --- Alimentação (extensão) ---
+  alimentacao_ton_gama_fit:
+    regex: "Ton Gama Fit|Ton.Gama.Fit"
+    categoria: "Alimentação"
+    classificacao: "Obrigatório"
+
+  restaurantes:
+    regex: "Subway|Restaurante Entrevero|Felix Salgados|Fino Trigo|American Cookies|KONI.STORE|POLEN ALIMENTOS|LIV UP.*ALIMENTOS|SILVA E SANTOS COMERCIAL DE ALIMENTOS|F T Temperos|Natural Polpas|Doce e Festa"
+    categoria: "Alimentação"
+    classificacao: "Questionável"
+
+  mercado_ponto_alto:
+    regex: "Mercado Ponto Alto"
+    categoria: "Mercado"
+    classificacao: "Obrigatório"
+
+  acougue:
+    regex: "Pag\\*Acouguedotiao"
+    categoria: "Mercado"
+    classificacao: "Obrigatório"
+
+  # --- Condomínio (extensão) ---
+  pjbank_boleto:
+    regex: "PJBANK"
+    categoria: "Condomínio"
+    classificacao: "Obrigatório"
+
+  # --- Bebidas (extensão) ---
+  bebidas_extra:
+    regex: "Jpbebidasdw|Bebidas Vilas Boas|D W Comercio de Bebida|Jp Distribuidora de Be|Mp \\*Dwdistribuido"
+    categoria: "Bebidas"
+    classificacao: "Supérfluo"
+
+  # --- Compras diversas ---
+  compras_vestuario:
+    regex: "MODA MUNDIAL|Lojas Renner|Tecelana Tecidos|Rio 40 Sport|Pag\\*Belubolsas|Pag\\*Cosmeticos|Mp \\*Skinabrasil"
+    categoria: "Compras"
+    classificacao: "Supérfluo"
+
+  compras_utilidades:
+    regex: "Garcia Utilidades|Ferragista do Lobbo|FERRAGRO|Pag\\*Homecentercastelo|Top Eletrica|Mp \\*Topeletricadas|Golfo Importacao"
+    categoria: "Compras"
+    classificacao: "Questionável"
+
+  compras_papelaria:
+    regex: "Papelaria|R\\.?A\\.? Papelaria|Reis Papelaria|Cartao \\*Ra Papelaria|ARMARINHO E PAPELARIA"
+    categoria: "Compras"
+    classificacao: "Questionável"
+
+  compras_marketplace:
+    regex: "Magazine Luiza Marketplace"
+    categoria: "Compras Online"
+    classificacao: "Supérfluo"
+
+  # --- Contabilidade ---
+  contabilidade:
+    regex: "Setta Contabilidade"
+    categoria: "Contabilidade"
+    classificacao: "Obrigatório"
+
+  # --- Barbearia ---
+  barbearia:
+    regex: "BARBEARIATIOFIL"
+    categoria: "Barbearia"
+    classificacao: "Questionável"
+
+  # --- Assinaturas digitais (extensão) ---
+  assinaturas_digitais:
+    regex: "Notion Labs|LINKEDIN|Google Ellation"
+    categoria: "Assinatura"
+    classificacao: "Questionável"
+
+  # --- Transporte (extensão 2) ---
+  transporte_brb:
+    regex: "BRB Mobilidade"
+    categoria: "Transporte"
+    classificacao: "Obrigatório"
+
+  # --- Pagamentos/Intermediários ---
+  pagamento_intermediarios:
+    regex: "PUSHINPAY|Adyen do Brasil|Zoop Tecnologia|Zoop Brasil|ZOOP BRASIL|AIBR INSTITUICAO"
+    categoria: "Pagamento"
+    classificacao: "Questionável"
+
+  # --- Telecomunicações (extensão) ---
+  telefonia_oi:
+    regex: "OI S.?A"
+    categoria: "Internet"
+    classificacao: "Obrigatório"
+
+  # --- Educação (extensão) ---
+  entidade_estudantil:
+    regex: "UNIAO NACIONAL DOS ESTUDANTES"
+    categoria: "Educação"
+    classificacao: "Questionável"
+
+  # --- Investimento (extensão) ---
+  investimento_c6:
+    regex: "CDB C6 LIM|CDB C6"
+    tipo: "Transferência Interna"
+    categoria: "Investimento"
+
+  # --- Cmog ---
+  cmog:
+    regex: "Cmog"
+    categoria: "Compras"
+    classificacao: "Questionável"
+
+  # --- Transferências pessoais (extensão 2) ---
+  transferencia_amanda:
+    regex: "AMANDA ELISA"
+    tipo: "Despesa"
+    categoria: "Pessoal"
+
+  transferencia_andre_luiz:
+    regex: "ANDRE LUIZ ALVES DA FONSECA"
+    tipo: "Despesa"
+    categoria: "Pessoal"
+
+  transferencia_kevin:
+    regex: "Kevin Schepis"
+    tipo: "Despesa"
+    categoria: "Pessoal"
+
+  transferencia_joao_victor:
+    regex: "Joao Victor da Silva Batista"
+    tipo: "Despesa"
+    categoria: "Pessoal"
+
+  transferencia_igor:
+    regex: "IGOR RENAN"
+    tipo: "Despesa"
+    categoria: "Pessoal"
+
+  transferencia_almir:
+    regex: "Almir Clemente"
+    tipo: "Despesa"
+    categoria: "Pessoal"
+
+  transferencia_alexandreferreira:
+    regex: "ALEXANDREFERREIRA"
+    tipo: "Despesa"
+    categoria: "Pessoal"
+
+  transferencia_juciene:
+    regex: "JUCIENE CRUZ"
+    tipo: "Despesa"
+    categoria: "Pessoal"
+
+  transferencia_wanderson_soares:
+    regex: "Wanderson Soares Mariano"
+    tipo: "Despesa"
+    categoria: "Pessoal"
+
+  transferencia_matheus_weisz:
+    regex: "Matheus Weisz"
+    tipo: "Despesa"
+    categoria: "Pessoal"
+
+  transferencia_paulo:
+    regex: "PIX TRANSF Paulo"
+    tipo: "Despesa"
+    categoria: "Pessoal"
+
+  # --- Ferramentas IA (extensão) ---
+  ia_ferramentas_extra:
+    regex: "DEEPSEEK|MOONSHOT AI|ELEVENLABS"
+    categoria: "Ferramentas IA"
+    classificacao: "Questionável"
+
+  # --- Assinaturas (extensão 2) ---
+  assinaturas_extra:
+    regex: "OBSIDIAN|COURSERA"
+    categoria: "Assinatura"
+    classificacao: "Questionável"
+
+  streaming_google:
+    regex: "DL\\*GOOGLE SPOTIF"
+    categoria: "Streaming"
+    classificacao: "Questionável"
+
+  # --- Transporte (extensão 3) ---
+  transporte_dl99:
+    regex: "DL\\*99 RIDE"
+    categoria: "Transporte"
+    classificacao: "Questionável"
+
+  # --- Compras online (extensão) ---
+  compras_americanas:
+    regex: "AMERICANAS"
+    categoria: "Compras Online"
+    classificacao: "Supérfluo"
+
+  # --- Alimentação (extensão 2) ---
+  alimentacao_emporio:
+    regex: "EMPORIO FIT|SERVADO.*ALIMENTOS"
+    categoria: "Alimentação"
+    classificacao: "Questionável"
+
+  alimentacao_ton_santa_lola:
+    regex: "Ton Santa Lola"
+    categoria: "Alimentação"
+    classificacao: "Questionável"
+
+  # --- Saúde (extensão) ---
+  saude_servicos:
+    regex: "ASSUNCAO.*CORREIA.*SERVICOS EM SAUD"
+    categoria: "Saúde"
+    classificacao: "Obrigatório"
+    tag_irpf: "dedutivel_medico"
+
+  # --- Impostos (extensão) ---
+  imposto_sefaz:
+    regex: "SEFAZ"
+    categoria: "Impostos"
+    tipo: "Imposto"
+
+  # --- Celular (extensão) ---
+  celular_assistencia:
+    regex: "R2 Celular"
+    categoria: "Celular"
+    classificacao: "Questionável"
+
+  # --- Compras (extensão 2) ---
+  compras_variadas:
+    regex: "Crscomerciobrasil|MP \\*JPX"
+    categoria: "Compras"
+    classificacao: "Questionável"
+
+  # --- Pagamentos (extensão) ---
+  pagamento_intermediarios_extra:
+    regex: "PAGHIPER|PAY2ALL|PAGSEGURO|NUUVEM|DEMERGE|PIX QRS AIBR|PIX QRS PAY2ALL|CR GARCIA"
+    categoria: "Pagamento"
+    classificacao: "Questionável"
+
+  # --- Utilidades Garcia ---
+  garcia_utilidades_extra:
+    regex: "CR GARCIA COMERCIO"
+    categoria: "Compras"
+    classificacao: "Questionável"
+
 # "A riqueza consiste muito mais no desfrute do que na posse." -- Aristóteles

@@ -1,4 +1,4 @@
-"""Extrator de extratos de conta corrente Nubank (formato CSV: Data,Valor,Identificador,Descrição)."""
+"""Extrator de extratos de conta corrente Nubank (CSV: Data,Valor,ID,Descrição)."""
 
 import csv
 import html
@@ -99,26 +99,20 @@ class ExtratorNubankCC(ExtratorBase):
 
             for transacao in novas:
                 if transacao.identificador and transacao.identificador in ids_vistos:
-                    self.logger.debug(
-                        "Transação duplicada ignorada: %s", transacao.identificador
-                    )
+                    self.logger.debug("Transação duplicada ignorada: %s", transacao.identificador)
                     continue
                 if transacao.identificador:
                     ids_vistos.add(transacao.identificador)
                 transacoes.append(transacao)
 
-        self.logger.info(
-            "Total de transações extraídas (Nubank CC): %d", len(transacoes)
-        )
+        self.logger.info("Total de transações extraídas (Nubank CC): %d", len(transacoes))
         return transacoes
 
     def _listar_arquivos(self) -> list[Path]:
         """Lista todos os CSVs válidos no diretório."""
         if self.caminho.is_file():
             return [self.caminho] if self.pode_processar(self.caminho) else []
-        return sorted(
-            f for f in self.caminho.glob("*.csv") if self.pode_processar(f)
-        )
+        return sorted(f for f in self.caminho.glob("*.csv") if self.pode_processar(f))
 
     def _processar_arquivo(self, arquivo: Path) -> list[Transacao]:
         """Processa um único CSV e retorna lista de transações."""
@@ -176,9 +170,7 @@ class ExtratorNubankCC(ExtratorBase):
                 arquivo_origem=str(arquivo.name),
             )
         except (ValueError, KeyError) as erro:
-            self.logger.warning(
-                "Linha ignorada em %s: %s - %s", arquivo.name, linha, erro
-            )
+            self.logger.warning("Linha ignorada em %s: %s - %s", arquivo.name, linha, erro)
             return None
 
     def _detectar_conta(self, caminho: Path) -> str:

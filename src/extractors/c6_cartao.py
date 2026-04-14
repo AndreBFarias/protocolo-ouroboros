@@ -67,18 +67,14 @@ class ExtratorC6Cartao(ExtratorBase):
             self.logger.info("Processando fatura C6 cartão: %s", arquivo.name)
             transacoes.extend(self._processar_arquivo(arquivo))
 
-        self.logger.info(
-            "Total de transações extraídas (C6 cartão): %d", len(transacoes)
-        )
+        self.logger.info("Total de transações extraídas (C6 cartão): %d", len(transacoes))
         return transacoes
 
     def _listar_arquivos(self) -> list[Path]:
         """Lista todos os XLS válidos no diretório."""
         if self.caminho.is_file():
             return [self.caminho] if self.pode_processar(self.caminho) else []
-        return sorted(
-            f for f in self.caminho.glob("*.xls") if self.pode_processar(f)
-        )
+        return sorted(f for f in self.caminho.glob("*.xls") if self.pode_processar(f))
 
     def _processar_arquivo(self, arquivo: Path) -> list[Transacao]:
         """Processa um único XLS e retorna lista de transações."""
@@ -109,9 +105,7 @@ class ExtratorC6Cartao(ExtratorBase):
                     ms.decrypt(buf)
                     buf.seek(0)
                     wb: xlrd.Book = xlrd.open_workbook(file_contents=buf.read())
-                    self.logger.debug(
-                        "Arquivo %s descriptografado com sucesso", arquivo.name
-                    )
+                    self.logger.debug("Arquivo %s descriptografado com sucesso", arquivo.name)
                     return wb
             except Exception:
                 continue
@@ -151,18 +145,14 @@ class ExtratorC6Cartao(ExtratorBase):
                 return None
 
             if REGEX_PAGAMENTO.search(descricao_str):
-                self.logger.debug(
-                    "Pagamento de fatura ignorado: %s (%s)", descricao_str, valor
-                )
+                self.logger.debug("Pagamento de fatura ignorado: %s (%s)", descricao_str, valor)
                 return None
 
             descricao_completa: str = descricao_str
             if parcela_info and parcela_info != "Única":
                 descricao_completa = f"{descricao_str} - {parcela_info}"
 
-            identificador: str = self._gerar_hash(
-                str(data_transacao), descricao_str, str(valor)
-            )
+            identificador: str = self._gerar_hash(str(data_transacao), descricao_str, str(valor))
 
             return Transacao(
                 data=data_transacao,
@@ -176,9 +166,7 @@ class ExtratorC6Cartao(ExtratorBase):
                 arquivo_origem=str(arquivo.name),
             )
         except (ValueError, TypeError, IndexError) as erro:
-            self.logger.warning(
-                "Linha ignorada em %s: %s - %s", arquivo.name, valores, erro
-            )
+            self.logger.warning("Linha ignorada em %s: %s - %s", arquivo.name, valores, erro)
             return None
 
     @staticmethod
@@ -222,9 +210,7 @@ class ExtratorC6Cartao(ExtratorBase):
 
     def _carregar_senhas(self) -> list[str]:
         """Carrega senhas do arquivo de mapeamento ou usa padrões."""
-        caminho_senhas: Path = (
-            Path(__file__).parent.parent.parent / "mappings" / "senhas.yaml"
-        )
+        caminho_senhas: Path = Path(__file__).parent.parent.parent / "mappings" / "senhas.yaml"
         if caminho_senhas.exists():
             try:
                 with open(caminho_senhas, encoding="utf-8") as f:
@@ -234,9 +220,7 @@ class ExtratorC6Cartao(ExtratorBase):
                         self.logger.debug("Senhas carregadas de senhas.yaml")
                         return [str(s) for s in senhas]
             except (OSError, yaml.YAMLError) as erro:
-                self.logger.warning(
-                    "Erro ao carregar senhas.yaml: %s", erro
-                )
+                self.logger.warning("Erro ao carregar senhas.yaml: %s", erro)
         return SENHAS_PADRAO
 
 

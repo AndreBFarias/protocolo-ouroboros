@@ -89,8 +89,7 @@ def marcar_transferencias_internas(transacoes: list[dict]) -> list[dict]:
     entradas: dict[str, list[int]] = {}
     for i, t in enumerate(transacoes):
         if t.get("tipo") == "Receita" or (
-            t.get("tipo") == "Transferência Interna"
-            and t.get("valor", 0) > 0
+            t.get("tipo") == "Transferência Interna" and t.get("valor", 0) > 0
         ):
             data_str = t["data"].isoformat() if hasattr(t["data"], "isoformat") else str(t["data"])
             chave = f"{data_str}|{abs(t['valor']):.2f}"
@@ -137,4 +136,4 @@ def deduplicar(transacoes: list[dict]) -> list[dict]:
     return resultado
 
 
-# "A repetição é a mãe do aprendizado, mas a desduplicação é a mãe da clareza." -- adaptado de Plutarco
+# "A repetição é a mãe do aprendizado." -- Plutarco

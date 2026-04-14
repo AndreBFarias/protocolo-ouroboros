@@ -88,18 +88,14 @@ class ExtratorC6CC(ExtratorBase):
             self.logger.info("Processando extrato C6 CC: %s", arquivo.name)
             transacoes.extend(self._processar_arquivo(arquivo))
 
-        self.logger.info(
-            "Total de transações extraídas (C6 CC): %d", len(transacoes)
-        )
+        self.logger.info("Total de transações extraídas (C6 CC): %d", len(transacoes))
         return transacoes
 
     def _listar_arquivos(self) -> list[Path]:
         """Lista todos os XLSX válidos no diretório."""
         if self.caminho.is_file():
             return [self.caminho] if self.pode_processar(self.caminho) else []
-        return sorted(
-            f for f in self.caminho.glob("*.xlsx") if self.pode_processar(f)
-        )
+        return sorted(f for f in self.caminho.glob("*.xlsx") if self.pode_processar(f))
 
     def _processar_arquivo(self, arquivo: Path) -> list[Transacao]:
         """Processa um único XLSX e retorna lista de transações."""
@@ -118,9 +114,7 @@ class ExtratorC6CC(ExtratorBase):
             if idx <= LINHA_CABECALHO:
                 continue
 
-            transacao: Optional[Transacao] = self._parse_linha(
-                list(row), arquivo
-            )
+            transacao: Optional[Transacao] = self._parse_linha(list(row), arquivo)
             if transacao:
                 transacoes.append(transacao)
 
@@ -136,9 +130,7 @@ class ExtratorC6CC(ExtratorBase):
                 f.seek(0)
                 return openpyxl.load_workbook(f)
         except Exception as erro:
-            self.logger.error(
-                "Erro ao abrir %s: %s", arquivo.name, erro
-            )
+            self.logger.error("Erro ao abrir %s: %s", arquivo.name, erro)
             return None
 
     def _descriptografar(
@@ -153,16 +145,12 @@ class ExtratorC6CC(ExtratorBase):
                 buf: io.BytesIO = io.BytesIO()
                 ms.decrypt(buf)
                 buf.seek(0)
-                self.logger.debug(
-                    "Arquivo %s descriptografado com sucesso", arquivo.name
-                )
+                self.logger.debug("Arquivo %s descriptografado com sucesso", arquivo.name)
                 return openpyxl.load_workbook(buf)
             except Exception:
                 continue
 
-        self.logger.error(
-            "Nenhuma senha válida para %s", arquivo.name
-        )
+        self.logger.error("Nenhuma senha válida para %s", arquivo.name)
         return None
 
     def _parse_linha(
@@ -219,9 +207,7 @@ class ExtratorC6CC(ExtratorBase):
                 arquivo_origem=str(arquivo.name),
             )
         except (ValueError, TypeError, IndexError) as erro:
-            self.logger.warning(
-                "Linha ignorada em %s: %s - %s", arquivo.name, valores, erro
-            )
+            self.logger.warning("Linha ignorada em %s: %s - %s", arquivo.name, valores, erro)
             return None
 
     @staticmethod
@@ -282,9 +268,7 @@ class ExtratorC6CC(ExtratorBase):
 
     def _carregar_senhas(self) -> list[str]:
         """Carrega senhas do arquivo de mapeamento ou usa padrões."""
-        caminho_senhas: Path = (
-            Path(__file__).parent.parent.parent / "mappings" / "senhas.yaml"
-        )
+        caminho_senhas: Path = Path(__file__).parent.parent.parent / "mappings" / "senhas.yaml"
         if caminho_senhas.exists():
             try:
                 with open(caminho_senhas, encoding="utf-8") as f:
@@ -294,9 +278,7 @@ class ExtratorC6CC(ExtratorBase):
                         self.logger.debug("Senhas carregadas de senhas.yaml")
                         return [str(s) for s in senhas]
             except (OSError, yaml.YAMLError) as erro:
-                self.logger.warning(
-                    "Erro ao carregar senhas.yaml: %s", erro
-                )
+                self.logger.warning("Erro ao carregar senhas.yaml: %s", erro)
         return SENHAS_PADRAO
 
 

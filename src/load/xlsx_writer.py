@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Optional
 
 import openpyxl
-from openpyxl.styles import Alignment, Font, PatternFill, numbers
+from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
 
 from src.utils.logger import configurar_logger
@@ -13,14 +13,23 @@ from src.utils.logger import configurar_logger
 logger = configurar_logger("xlsx_writer")
 
 COLUNAS_EXTRATO = [
-    "data", "valor", "forma_pagamento", "local", "quem",
-    "categoria", "classificacao", "banco_origem", "tipo",
-    "mes_ref", "tag_irpf", "obs",
+    "data",
+    "valor",
+    "forma_pagamento",
+    "local",
+    "quem",
+    "categoria",
+    "classificacao",
+    "banco_origem",
+    "tipo",
+    "mes_ref",
+    "tag_irpf",
+    "obs",
 ]
 
 HEADER_FILL = PatternFill(start_color="2F5496", end_color="2F5496", fill_type="solid")
 HEADER_FONT = Font(color="FFFFFF", bold=True, size=11)
-VALOR_FORMAT = '#,##0.00'
+VALOR_FORMAT = "#,##0.00"
 
 
 def _aplicar_estilo_header(ws: openpyxl.worksheet.worksheet.Worksheet) -> None:
@@ -107,9 +116,15 @@ def _criar_aba_resumo_mensal(wb: openpyxl.Workbook, transacoes: list[dict]) -> N
     """Cria a aba de resumo mensal gerada automaticamente."""
     ws = wb.create_sheet("resumo_mensal")
     colunas = [
-        "mes_ref", "receita_total", "despesa_total", "saldo",
-        "top_categoria", "top_gasto", "total_obrigatorio",
-        "total_superfluo", "total_questionavel",
+        "mes_ref",
+        "receita_total",
+        "despesa_total",
+        "saldo",
+        "top_categoria",
+        "top_gasto",
+        "total_obrigatorio",
+        "total_superfluo",
+        "total_questionavel",
     ]
 
     for col_idx, col_nome in enumerate(colunas, 1):
@@ -124,8 +139,10 @@ def _criar_aba_resumo_mensal(wb: openpyxl.Workbook, transacoes: list[dict]) -> N
         mes = t.get("mes_ref", "")
         if mes not in dados_mes:
             dados_mes[mes] = {
-                "receita": 0, "despesa": 0,
-                "categorias": {}, "classificacoes": {"Obrigatório": 0, "Supérfluo": 0, "Questionável": 0},
+                "receita": 0,
+                "despesa": 0,
+                "categorias": {},
+                "classificacoes": {"Obrigatório": 0, "Supérfluo": 0, "Questionável": 0},
             }
 
         valor = t.get("valor", 0)
@@ -193,7 +210,9 @@ def _criar_aba_dividas(
 
                     ws.cell(row=row_idx, column=1, value=date.today().strftime("%Y-%m"))
                     ws.cell(row=row_idx, column=2, value=custo)
-                    ws.cell(row=row_idx, column=3, value=valor if isinstance(valor, (int, float)) else 0)
+                    ws.cell(
+                        row=row_idx, column=3, value=valor if isinstance(valor, (int, float)) else 0
+                    )
                     ws.cell(row=row_idx, column=4, value=status)
                     ws.cell(row=row_idx, column=8, value=obs)
 
@@ -217,8 +236,11 @@ def _criar_aba_inventario(
     """Cria a aba de inventário, importando e melhorando do histórico."""
     ws = wb.create_sheet("inventario")
     colunas = [
-        "bem", "valor_aquisicao", "vida_util_anos",
-        "depreciacao_anual", "perda_mensal",
+        "bem",
+        "valor_aquisicao",
+        "vida_util_anos",
+        "depreciacao_anual",
+        "perda_mensal",
     ]
 
     for col_idx, col_nome in enumerate(colunas, 1):
@@ -276,7 +298,9 @@ def _criar_aba_prazos(
                 ws_hist = wb_hist["Prazos"]
                 for row in ws_hist.iter_rows(min_row=8, values_only=True):
                     # Dados podem estar nas colunas C e D (índices 2 e 3)
-                    conta = row[2] if len(row) > 2 and row[2] else (row[0] if len(row) > 0 else None)
+                    conta = (
+                        row[2] if len(row) > 2 and row[2] else (row[0] if len(row) > 0 else None)
+                    )
                     dia = row[3] if len(row) > 3 and row[3] else (row[1] if len(row) > 1 else None)
                     if conta and dia and str(conta).strip() != "Dias":
                         ws.cell(row=row_idx, column=1, value=conta)
@@ -328,14 +352,8 @@ def _criar_aba_analise(wb: openpyxl.Workbook, transacoes: list[dict]) -> None:
     ws.cell(row=1, column=1).font = Font(bold=True, size=14)
 
     total_receitas = sum(t["valor"] for t in transacoes if t.get("tipo") == "Receita")
-    total_despesas = sum(
-        t["valor"] for t in transacoes
-        if t.get("tipo") in ("Despesa", "Imposto")
-    )
-    total_transf = sum(
-        t["valor"] for t in transacoes
-        if t.get("tipo") == "Transferência Interna"
-    )
+    total_despesas = sum(t["valor"] for t in transacoes if t.get("tipo") in ("Despesa", "Imposto"))
+    total_transf = sum(t["valor"] for t in transacoes if t.get("tipo") == "Transferência Interna")
 
     linhas = [
         "",

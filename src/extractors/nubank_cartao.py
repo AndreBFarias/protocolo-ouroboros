@@ -60,18 +60,14 @@ class ExtratorNubankCartao(ExtratorBase):
             self.logger.info("Processando fatura Nubank cartão: %s", arquivo.name)
             transacoes.extend(self._processar_arquivo(arquivo))
 
-        self.logger.info(
-            "Total de transações extraídas (Nubank cartão): %d", len(transacoes)
-        )
+        self.logger.info("Total de transações extraídas (Nubank cartão): %d", len(transacoes))
         return transacoes
 
     def _listar_arquivos(self) -> list[Path]:
         """Lista todos os CSVs válidos no diretório."""
         if self.caminho.is_file():
             return [self.caminho] if self.pode_processar(self.caminho) else []
-        return sorted(
-            f for f in self.caminho.glob("*.csv") if self.pode_processar(f)
-        )
+        return sorted(f for f in self.caminho.glob("*.csv") if self.pode_processar(f))
 
     def _processar_arquivo(self, arquivo: Path) -> list[Transacao]:
         """Processa um único CSV e retorna lista de transações."""
@@ -82,15 +78,11 @@ class ExtratorNubankCartao(ExtratorBase):
             with open(arquivo, encoding="utf-8") as f:
                 leitor = csv.DictReader(f)
                 for linha in leitor:
-                    transacao: Optional[Transacao] = self._parse_linha(
-                        linha, pessoa, arquivo
-                    )
+                    transacao: Optional[Transacao] = self._parse_linha(linha, pessoa, arquivo)
                     if transacao:
                         transacoes.append(transacao)
         except (OSError, csv.Error) as erro:
-            self.logger.error(
-                "Erro ao processar %s: %s", arquivo.name, erro
-            )
+            self.logger.error("Erro ao processar %s: %s", arquivo.name, erro)
 
         return transacoes
 
@@ -123,9 +115,7 @@ class ExtratorNubankCartao(ExtratorBase):
                 arquivo_origem=str(arquivo.name),
             )
         except (ValueError, KeyError) as erro:
-            self.logger.warning(
-                "Linha ignorada em %s: %s - %s", arquivo.name, linha, erro
-            )
+            self.logger.warning("Linha ignorada em %s: %s - %s", arquivo.name, linha, erro)
             return None
 
     def _classificar_tipo(self, titulo: str, pessoa: str) -> str:
