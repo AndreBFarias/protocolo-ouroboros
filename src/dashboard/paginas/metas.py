@@ -7,16 +7,8 @@ from typing import Any
 import streamlit as st
 import yaml
 
-from src.dashboard.dados import formatar_moeda
-
-CORES: dict[str, str] = {
-    "positivo": "#4ECDC4",
-    "negativo": "#FF6B6B",
-    "neutro": "#45B7D1",
-    "alerta": "#FFA726",
-    "fundo": "#0E1117",
-    "card_fundo": "#1E2130",
-}
+from src.dashboard.dados import calcular_saldo_acumulado, formatar_moeda
+from src.dashboard.tema import CORES, FONTE_MINIMA
 
 CAMINHO_METAS: Path = (
     Path(__file__).resolve().parents[3] / "mappings" / "metas.yaml"
@@ -102,8 +94,8 @@ def _card_meta(meta: dict[str, Any]) -> str:
         )
         progresso_pct = _calcular_progresso(meta) * 100
         detalhe = (
-            '<p style="color: #AAAAAA;'
-            " font-size: 12px;"
+            '<p style="color: #6272A4;'
+            " font-size: 13px;"
             ' margin: 2px 0;">'
             f"Progresso: {progresso_pct:.0f}%</p>"
         )
@@ -111,8 +103,8 @@ def _card_meta(meta: dict[str, Any]) -> str:
     nota_html = ""
     if nota:
         nota_html = (
-            '<p style="color: #888;'
-            " font-size: 11px;"
+            '<p style="color: #6272A4;'
+            " font-size: 13px;"
             " font-style: italic;"
             f' margin: 6px 0 0 0;">{nota}</p>'
         )
@@ -120,12 +112,15 @@ def _card_meta(meta: dict[str, Any]) -> str:
     deps = meta.get("depende_de", [])
     deps_html = ""
     if deps:
-        deps_texto = ", ".join(deps)
+        deps_itens = "".join(
+            f'<span style="color: {CORES["alerta"]}; margin-right: 8px;">'
+            f"{d}</span>"
+            for d in deps
+        )
         deps_html = (
-            '<p style="color: #888;'
-            " font-size: 11px;"
-            ' margin: 4px 0 0 0;">'
-            f"Depende de: {deps_texto}</p>"
+            f'<p style="color: {CORES["texto_sec"]};'
+            f" font-size: {FONTE_MINIMA}px;"
+            f' margin: 4px 0 0 0;">Depende de: {deps_itens}</p>'
         )
 
     fundo = CORES["card_fundo"]
@@ -138,19 +133,19 @@ def _card_meta(meta: dict[str, Any]) -> str:
         '<div style="display: flex;'
         " justify-content: space-between;"
         ' align-items: center;">'
-        '<p style="color: #FAFAFA;'
+        '<p style="color: #F8F8F2;'
         " font-size: 15px; font-weight: bold;"
         f' margin: 0;">{nome}</p>'
         f'<span style="color: {cor};'
-        " font-size: 12px;"
+        " font-size: 13px;"
         f' font-weight: bold;">P{prioridade}</span>'
         "</div>"
-        '<p style="color: #AAAAAA;'
+        '<p style="color: #6272A4;'
         " font-size: 13px;"
         f' margin: 4px 0;">{status}</p>'
         f"{detalhe}"
         f'<p style="color: {cor_urgencia};'
-        " font-size: 12px;"
+        " font-size: 13px;"
         f' margin: 4px 0;">'
         f"Prazo: {prazo} ({urgencia})</p>"
         f"{nota_html}"
@@ -159,11 +154,36 @@ def _card_meta(meta: dict[str, Any]) -> str:
     )
 
 
+def _atualizar_valor_atual(
+    metas: list[dict[str, Any]],
+    dados: dict,
+    mes: str,
+    pessoa: str,
+) -> list[dict[str, Any]]:
+    """Atualiza valor_atual das metas monetárias com saldo acumulado real."""
+    saldo = calcular_saldo_acumulado(dados, mes, pessoa)
+    saldo_positivo = max(saldo, 0.0)
+    resultado: list[dict[str, Any]] = []
+    for meta in metas:
+        meta_copia = dict(meta)
+        if meta_copia.get("tipo") != "binario" and meta_copia.get("valor_alvo", 0) > 0:
+            nome = meta_copia.get("nome", "").lower()
+            if "reserva" in nome and "emergência" in nome:
+                meta_copia["valor_atual"] = saldo_positivo
+            elif "dívida" in nome or "quitar" in nome:
+                pass
+            else:
+                meta_copia["valor_atual"] = meta_copia.get("valor_atual", 0)
+        resultado.append(meta_copia)
+    return resultado
+
+
 def renderizar(
     dados: dict, mes_selecionado: str, pessoa: str
 ) -> None:
     """Renderiza a página de metas financeiras."""
     metas = _carregar_metas()
+    metas = _atualizar_valor_atual(metas, dados, mes_selecionado, pessoa)
 
     if not metas:
         st.warning(
@@ -185,7 +205,7 @@ def renderizar(
     n_valor = len(metas_valor)
     n_bin = len(metas_binarias)
     st.markdown(
-        f'<p style="color: #AAAAAA; font-size: 14px;">'
+        f'<p style="color: #6272A4; font-size: 14px;">'
         f"{total} metas: {n_valor} monetárias, "
         f"{n_bin} binárias</p>",
         unsafe_allow_html=True,
@@ -283,13 +303,13 @@ def _timeline_metas(metas: list[dict[str, Any]]) -> None:
             " width: 12px; height: 12px;"
             f" background-color: {cor};"
             ' border-radius: 50%;"></div>'
-            '<p style="color: #FAFAFA;'
+            '<p style="color: #F8F8F2;'
             ' font-size: 13px; margin: 0;">'
             f'<span style="color: {cor_status};'
             f' font-weight: bold;">{prazo}</span>'
             f" -- {nome} "
             f'<span style="color: {cor_status};'
-            f' font-size: 11px;">'
+            f' font-size: 13px;">'
             f"({status_texto})</span></p></div>"
         )
 

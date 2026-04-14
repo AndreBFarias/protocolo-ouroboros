@@ -1,16 +1,45 @@
 """Módulo de projeção financeira com cenários baseados em dados reais."""
 
 from datetime import date, timedelta
+from pathlib import Path
 from typing import Any
+
+import yaml
 
 from src.utils.logger import configurar_logger
 
 logger = configurar_logger("projecoes")
 
 LIQUIDO_INFOBASE: float = 7442.0
-VALOR_RESERVA_EMERGENCIA: float = 27000.0
-VALOR_ENTRADA_APE: float = 50000.0
 MESES_PROJECAO: int = 12
+CAMINHO_METAS: Path = Path(__file__).resolve().parents[2] / "mappings" / "metas.yaml"
+
+_FALLBACK_RESERVA: float = 27000.0
+_FALLBACK_APE: float = 50000.0
+
+
+def _carregar_valores_metas() -> tuple[float, float]:
+    """Carrega valores alvo de metas do YAML. Retorna (reserva, apê) com fallback."""
+    try:
+        if CAMINHO_METAS.exists():
+            with CAMINHO_METAS.open("r", encoding="utf-8") as f:
+                dados = yaml.safe_load(f)
+            metas = dados.get("metas", [])
+            reserva = _FALLBACK_RESERVA
+            ape = _FALLBACK_APE
+            for meta in metas:
+                nome = meta.get("nome", "").lower()
+                if "reserva" in nome and "emergência" in nome:
+                    reserva = float(meta.get("valor_alvo", _FALLBACK_RESERVA))
+                elif "apartamento" in nome or "entrada" in nome:
+                    ape = float(meta.get("valor_alvo", _FALLBACK_APE))
+            return reserva, ape
+    except Exception as err:
+        logger.warning("Erro ao carregar metas: %s. Usando fallback.", err)
+    return _FALLBACK_RESERVA, _FALLBACK_APE
+
+
+VALOR_RESERVA_EMERGENCIA, VALOR_ENTRADA_APE = _carregar_valores_metas()
 
 
 def _ultimos_n_meses(transacoes: list[dict], n: int = 3) -> list[dict]:
@@ -61,7 +90,7 @@ def _calcular_medias(transacoes: list[dict], n_meses: int = 3) -> dict[str, floa
     }
 
 
-def _meses_ate_objetivo(saldo_mensal: float, objetivo: float, atual: float = 0.0) -> int | None:
+def meses_ate_objetivo(saldo_mensal: float, objetivo: float, atual: float = 0.0) -> int | None:
     """Calcula quantos meses até atingir um objetivo financeiro.
 
     Retorna None se saldo_mensal for <= 0 (inalcançável).
@@ -115,11 +144,11 @@ def projetar_cenarios(transacoes: list[dict]) -> dict[str, Any]:
 
     saldo_pos_infobase = (receita_media - LIQUIDO_INFOBASE) - despesa_media
 
-    meses_reserva = _meses_ate_objetivo(saldo_medio, VALOR_RESERVA_EMERGENCIA)
-    meses_ape = _meses_ate_objetivo(saldo_medio, VALOR_ENTRADA_APE)
+    meses_reserva = meses_ate_objetivo(saldo_medio, VALOR_RESERVA_EMERGENCIA)
+    meses_ape = meses_ate_objetivo(saldo_medio, VALOR_ENTRADA_APE)
 
-    meses_reserva_pos = _meses_ate_objetivo(saldo_pos_infobase, VALOR_RESERVA_EMERGENCIA)
-    meses_ape_pos = _meses_ate_objetivo(saldo_pos_infobase, VALOR_ENTRADA_APE)
+    meses_reserva_pos = meses_ate_objetivo(saldo_pos_infobase, VALOR_RESERVA_EMERGENCIA)
+    meses_ape_pos = meses_ate_objetivo(saldo_pos_infobase, VALOR_ENTRADA_APE)
 
     projecao_atual = _projecao_acumulada(saldo_medio, 0.0)
     projecao_pos = _projecao_acumulada(saldo_pos_infobase, 0.0)

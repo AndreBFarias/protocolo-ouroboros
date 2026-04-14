@@ -1,17 +1,12 @@
 """Página de contas e dívidas do dashboard financeiro."""
 
+from datetime import date
+
 import pandas as pd
 import streamlit as st
 
-from src.dashboard.dados import filtrar_por_mes, formatar_moeda
-
-CORES: dict[str, str] = {
-    "positivo": "#4ECDC4",
-    "negativo": "#FF6B6B",
-    "neutro": "#45B7D1",
-    "fundo": "#0E1117",
-    "card_fundo": "#1E2130",
-}
+from src.dashboard.dados import filtrar_por_mes, filtrar_por_pessoa, formatar_moeda
+from src.dashboard.tema import CORES, FONTE_CORPO, FONTE_MINIMA, card_html
 
 
 def renderizar(dados: dict[str, pd.DataFrame], mes_selecionado: str, pessoa: str) -> None:
@@ -24,93 +19,72 @@ def renderizar(dados: dict[str, pd.DataFrame], mes_selecionado: str, pessoa: str
         return
 
     if tem_dividas:
-        _secao_dividas(dados["dividas_ativas"], mes_selecionado)
+        _secao_dividas(dados["dividas_ativas"], mes_selecionado, pessoa)
 
     if tem_prazos:
         _secao_prazos(dados["prazos"])
 
 
-def _secao_dividas(df: pd.DataFrame, mes: str) -> None:
-    """Exibe tabela de dívidas ativas com semáforo visual."""
+def _secao_dividas(df: pd.DataFrame, mes: str, pessoa: str) -> None:
+    """Exibe tabela de dívidas ativas com indicadores visuais."""
     st.subheader("Dívidas Ativas")
 
     df_mes = filtrar_por_mes(df, mes)
+    if "recorrente" in df.columns:
+        df_recorrentes = df[
+            (df["recorrente"] == True) & (df["status"] != "Pago")  # noqa: E712
+        ]
+        df_mes = pd.concat([df_mes, df_recorrentes]).drop_duplicates()
+    df_mes = filtrar_por_pessoa(df_mes, pessoa)
 
     if df_mes.empty:
-        st.info("Sem dívidas registradas para este mês.")
+        st.info("Sem dívidas registradas para este período.")
         return
 
     _resumo_pagamentos(df_mes)
 
-    df_exibir = df_mes[["custo", "valor", "status", "obs"]].copy()
+    linhas_html: list[str] = []
+    for _, row in df_mes.iterrows():
+        status = row.get("status", "")
+        cor_borda = CORES["positivo"] if status == "Pago" else CORES["negativo"]
+        cor_fundo = (
+            "rgba(80, 250, 123, 0.08)" if status == "Pago"
+            else "rgba(255, 85, 85, 0.08)"
+        )
+        status_texto = "Pago" if status == "Pago" else "Pendente"
+        obs = row.get("obs", "") or "-"
 
-    df_exibir["status_visual"] = df_exibir["status"].apply(_semaforo_status)
+        linhas_html.append(
+            f'<tr style="background-color: {cor_fundo};'
+            f' border-left: 3px solid {cor_borda};">'
+            f'<td style="padding: 10px; color: {CORES["texto"]};'
+            f' font-size: {FONTE_CORPO}px;">{row.get("custo", "")}</td>'
+            f'<td style="padding: 10px; color: {CORES["texto"]};'
+            f' font-size: {FONTE_CORPO}px; text-align: right;">'
+            f'{formatar_moeda(row.get("valor", 0))}</td>'
+            f'<td style="padding: 10px; color: {cor_borda};'
+            f' font-weight: bold; font-size: {FONTE_CORPO}px;">'
+            f'{status_texto}</td>'
+            f'<td style="padding: 10px; color: {CORES["texto_sec"]};'
+            f' font-size: {FONTE_MINIMA}px;">{obs}</td></tr>'
+        )
 
-    df_exibir["valor_fmt"] = df_exibir["valor"].apply(formatar_moeda)
-
-    df_exibir["obs"] = df_exibir["obs"].fillna("-")
-
-    tabela = df_exibir[["custo", "valor_fmt", "status_visual", "obs"]].copy()
-    tabela.columns = ["Custo", "Valor", "Status", "Observação"]
-
-    st.dataframe(
-        tabela,
-        use_container_width=True,
-        hide_index=True,
-        column_config={
-            "Custo": st.column_config.TextColumn("Custo", width="medium"),
-            "Valor": st.column_config.TextColumn("Valor", width="small"),
-            "Status": st.column_config.TextColumn("Status", width="small"),
-            "Observação": st.column_config.TextColumn("Observação", width="medium"),
-        },
+    html = (
+        f'<table style="width: 100%; border-collapse: collapse;'
+        f' margin: 10px 0 20px 0;">'
+        f'<thead><tr style="background-color: {CORES["card_fundo"]};">'
+        f'<th style="padding: 10px; text-align: left;'
+        f' color: {CORES["texto_sec"]}; font-size: {FONTE_MINIMA}px;">Custo</th>'
+        f'<th style="padding: 10px; text-align: right;'
+        f' color: {CORES["texto_sec"]}; font-size: {FONTE_MINIMA}px;">Valor</th>'
+        f'<th style="padding: 10px; text-align: left;'
+        f' color: {CORES["texto_sec"]}; font-size: {FONTE_MINIMA}px;">Status</th>'
+        f'<th style="padding: 10px; text-align: left;'
+        f' color: {CORES["texto_sec"]}; font-size: {FONTE_MINIMA}px;">Obs</th>'
+        f'</tr></thead><tbody>{"".join(linhas_html)}</tbody></table>'
     )
 
-
-def _gerar_html_tabela(tabela: pd.DataFrame, status_list: list[str]) -> str:
-    """Gera HTML estilizado para a tabela de dívidas."""
-    linhas_html: list[str] = []
-
-    for i, (_, row) in enumerate(tabela.iterrows()):
-        status = status_list[i] if i < len(status_list) else ""
-        cor_fundo = (
-            "rgba(78, 205, 196, 0.1)" if status == "Pago"
-            else "rgba(255, 107, 107, 0.1)"
-        )
-        cor_borda = CORES["positivo"] if status == "Pago" else CORES["negativo"]
-
-        linhas_html.append(f"""
-        <tr style="background-color: {cor_fundo}; border-left: 3px solid {cor_borda};">
-            <td style="padding: 10px; color: #FAFAFA;">{row['Custo']}</td>
-            <td style="padding: 10px; color: #FAFAFA;">{row['Valor']}</td>
-            <td style="padding: 10px; color: {cor_borda}; font-weight: bold;">{row['Status']}</td>
-            <td style="padding: 10px; color: #AAAAAA;">{row['Observação']}</td>
-        </tr>
-        """)
-
-    return f"""
-    <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
-        <thead>
-            <tr style="background-color: {CORES['card_fundo']};">
-                <th style="padding: 12px; text-align: left; color: #FAFAFA;">Custo</th>
-                <th style="padding: 12px; text-align: left; color: #FAFAFA;">Valor</th>
-                <th style="padding: 12px; text-align: left; color: #FAFAFA;">Status</th>
-                <th style="padding: 12px; text-align: left; color: #FAFAFA;">Observação</th>
-            </tr>
-        </thead>
-        <tbody>
-            {"".join(linhas_html)}
-        </tbody>
-    </table>
-    """
-
-
-def _semaforo_status(status: str) -> str:
-    """Retorna indicador visual do status de pagamento."""
-    if pd.isna(status):
-        return "[?] Indefinido"
-    if status == "Pago":
-        return "[OK] Pago"
-    return "[!!] Não Pago"
+    st.markdown(html, unsafe_allow_html=True)
 
 
 def _resumo_pagamentos(df: pd.DataFrame) -> None:
@@ -123,62 +97,75 @@ def _resumo_pagamentos(df: pd.DataFrame) -> None:
 
     with col1:
         st.markdown(
-            _card_resumo("Total Pago", formatar_moeda(total_pago), CORES["positivo"]),
+            card_html("Total Pago", formatar_moeda(total_pago), CORES["positivo"]),
             unsafe_allow_html=True,
         )
     with col2:
         st.markdown(
-            _card_resumo("Total Pendente", formatar_moeda(total_pendente), CORES["negativo"]),
+            card_html("Total Pendente", formatar_moeda(total_pendente), CORES["negativo"]),
             unsafe_allow_html=True,
         )
     with col3:
         st.markdown(
-            _card_resumo("Total Geral", formatar_moeda(total_geral), CORES["neutro"]),
+            card_html("Total Geral", formatar_moeda(total_geral), CORES["neutro"]),
             unsafe_allow_html=True,
         )
 
 
-def _card_resumo(titulo: str, valor: str, cor: str) -> str:
-    """Gera HTML de card de resumo."""
-    return f"""
-    <div style="
-        background-color: {CORES['card_fundo']};
-        border-left: 4px solid {cor};
-        border-radius: 8px;
-        padding: 15px;
-        margin: 5px 0 15px 0;
-    ">
-        <p style="color: #AAAAAA; font-size: 13px; margin: 0;">{titulo}</p>
-        <p style="color: {cor}; font-size: 20px; font-weight: bold;
-            margin: 5px 0 0 0; white-space: nowrap;">{valor}</p>
-    </div>
-    """
-
-
 def _secao_prazos(df: pd.DataFrame) -> None:
-    """Exibe tabela de prazos de vencimento."""
+    """Exibe prazos de vencimento com indicador de urgência."""
     st.subheader("Prazos de Vencimento")
 
     if df.empty:
         st.info("Sem prazos cadastrados.")
         return
 
-    df_exibir = df[["conta", "dia_vencimento"]].copy()
-    df_exibir.columns = ["Conta", "Dia de Vencimento"]
+    hoje = date.today()
+    dia_atual = hoje.day
 
-    df_exibir = df_exibir.sort_values("Dia de Vencimento")
+    linhas_html: list[str] = []
+    for _, row in df.sort_values("dia_vencimento").iterrows():
+        conta = row.get("conta", "")
+        dia = int(row.get("dia_vencimento", 0))
+        dias_ate = dia - dia_atual
 
-    st.dataframe(
-        df_exibir,
-        use_container_width=True,
-        hide_index=True,
-        column_config={
-            "Conta": st.column_config.TextColumn("Conta", width="medium"),
-            "Dia de Vencimento": st.column_config.NumberColumn(
-                "Dia de Vencimento", format="%d"
-            ),
-        },
+        if dias_ate < 0:
+            urgencia = "Vencido"
+            cor = CORES["negativo"]
+        elif dias_ate <= 3:
+            urgencia = f"Em {dias_ate} dias"
+            cor = CORES["alerta"]
+        elif dias_ate <= 7:
+            urgencia = f"Em {dias_ate} dias"
+            cor = CORES["info"]
+        else:
+            urgencia = f"Em {dias_ate} dias"
+            cor = CORES["texto_sec"]
+
+        linhas_html.append(
+            f'<tr style="border-bottom: 1px solid {CORES["card_fundo"]};">'
+            f'<td style="padding: 10px; color: {CORES["texto"]};'
+            f' font-size: {FONTE_CORPO}px;">{conta}</td>'
+            f'<td style="padding: 10px; color: {CORES["texto"]};'
+            f' font-size: {FONTE_CORPO}px; text-align: center;">Dia {dia}</td>'
+            f'<td style="padding: 10px; color: {cor};'
+            f' font-size: {FONTE_CORPO}px; font-weight: bold;">'
+            f'{urgencia}</td></tr>'
+        )
+
+    html = (
+        f'<table style="width: 100%; border-collapse: collapse;">'
+        f'<thead><tr style="background-color: {CORES["card_fundo"]};">'
+        f'<th style="padding: 10px; text-align: left;'
+        f' color: {CORES["texto_sec"]}; font-size: {FONTE_MINIMA}px;">Conta</th>'
+        f'<th style="padding: 10px; text-align: center;'
+        f' color: {CORES["texto_sec"]}; font-size: {FONTE_MINIMA}px;">Vencimento</th>'
+        f'<th style="padding: 10px; text-align: left;'
+        f' color: {CORES["texto_sec"]}; font-size: {FONTE_MINIMA}px;">Urgência</th>'
+        f'</tr></thead><tbody>{"".join(linhas_html)}</tbody></table>'
     )
+
+    st.markdown(html, unsafe_allow_html=True)
 
 
 # "O preço de qualquer coisa é a quantidade de vida que você troca por ela." -- Henry David Thoreau

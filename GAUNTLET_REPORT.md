@@ -1,6 +1,6 @@
 # Relatório Gauntlet -- Controle de Bordo
 
-Data: 2026-04-14 14:23:11 | Duração: 1.0s | Python 3.12.1 | Linux
+Data: 2026-04-14 19:09:47 | Duração: 0.9s | Python 3.12.1 | Linux
 
 ## Resultado Geral: 44/44 (100%)
 
@@ -9,7 +9,7 @@ Data: 2026-04-14 14:23:11 | Duração: 1.0s | Python 3.12.1 | Linux
 | extratores | 2 | 2 | 0 | 0.3s |
 | categorias | 16 | 16 | 0 | 0.0s |
 | dedup | 4 | 4 | 0 | 0.0s |
-| xlsx | 4 | 4 | 0 | 0.1s |
+| xlsx | 4 | 4 | 0 | 0.0s |
 | relatorio | 2 | 2 | 0 | 0.0s |
 | projecoes | 4 | 4 | 0 | 0.0s |
 | obsidian | 4 | 4 | 0 | 0.0s |
