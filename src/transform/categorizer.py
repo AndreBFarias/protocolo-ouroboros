@@ -1,6 +1,7 @@
-"""Categorização automática de transações via regras regex."""
+"""Categorização automática de transações via regras regex e overrides manuais."""
 
 import re
+from collections import Counter
 from pathlib import Path
 from typing import Optional
 
@@ -12,14 +13,52 @@ logger = configurar_logger("categorizer")
 
 
 class Categorizer:
-    """Aplica categorias e classificações a transações usando regras regex."""
+    """Aplica categorias e classificações a transações usando overrides e regras regex."""
 
-    def __init__(self, caminho_regras: Optional[Path] = None):
+    def __init__(
+        self,
+        caminho_regras: Optional[Path] = None,
+        caminho_overrides: Optional[Path] = None,
+    ) -> None:
+        raiz_mappings = Path(__file__).parent.parent.parent / "mappings"
+
         if caminho_regras is None:
-            caminho_regras = Path(__file__).parent.parent.parent / "mappings" / "categorias.yaml"
+            caminho_regras = raiz_mappings / "categorias.yaml"
+        if caminho_overrides is None:
+            caminho_overrides = raiz_mappings / "overrides.yaml"
 
+        self.overrides: list[dict] = []
         self.regras: list[dict] = []
+
+        self._carregar_overrides(caminho_overrides)
         self._carregar_regras(caminho_regras)
+
+    def _carregar_overrides(self, caminho: Path) -> None:
+        """Carrega overrides manuais do YAML. Overrides têm prioridade sobre regex."""
+        if not caminho.exists():
+            logger.info("Arquivo de overrides não encontrado: %s", caminho)
+            return
+
+        with open(caminho, encoding="utf-8") as f:
+            dados = yaml.safe_load(f)
+
+        if not dados or "overrides" not in dados:
+            logger.warning("Arquivo de overrides vazio ou sem chave 'overrides': %s", caminho)
+            return
+
+        for descricao, config in dados["overrides"].items():
+            self.overrides.append(
+                {
+                    "descricao": str(descricao).strip(),
+                    "categoria": config.get("categoria"),
+                    "classificacao": config.get("classificacao"),
+                    "tipo": config.get("tipo"),
+                    "tag_irpf": config.get("tag_irpf"),
+                    "regra_valor": config.get("regra_valor"),
+                }
+            )
+
+        logger.info("Carregados %d overrides manuais", len(self.overrides))
 
     def _carregar_regras(self, caminho: Path) -> None:
         """Carrega regras de categorização do YAML."""
@@ -68,7 +107,7 @@ class Categorizer:
         operador, limite = match.groups()
         limite_float = float(limite)
 
-        operacoes = {
+        operacoes: dict[str, bool] = {
             ">=": valor >= limite_float,
             "<=": valor <= limite_float,
             ">": valor > limite_float,
@@ -79,11 +118,51 @@ class Categorizer:
 
         return operacoes.get(operador, True)
 
+    def _aplicar_override(self, transacao: dict) -> bool:
+        """Tenta aplicar um override manual. Retorna True se encontrou match."""
+        texto_busca = " ".join(
+            [
+                transacao.get("_descricao_original", ""),
+                transacao.get("local", ""),
+            ]
+        ).upper()
+        valor = transacao.get("valor", 0)
+
+        for override in self.overrides:
+            if override["descricao"].upper() not in texto_busca:
+                continue
+
+            if not self._verificar_regra_valor(override["regra_valor"], valor):
+                continue
+
+            if override["categoria"] is not None:
+                transacao["categoria"] = override["categoria"]
+
+            if override["classificacao"] is not None:
+                transacao["classificacao"] = override["classificacao"]
+
+            if override["tipo"] is not None:
+                transacao["tipo"] = override["tipo"]
+
+            if override["tag_irpf"] is not None:
+                transacao["tag_irpf"] = override["tag_irpf"]
+
+            return True
+
+        return False
+
     def categorizar(self, transacao: dict) -> dict:
         """Aplica categoria e classificação a uma transação.
 
-        Busca na descrição original e no local. Primeira regra que casar é aplicada.
+        Ordem de prioridade:
+        1. Overrides manuais (overrides.yaml)
+        2. Regras regex (categorias.yaml)
+        3. Fallback para 'Outros' + 'Questionável'
         """
+        if self._aplicar_override(transacao):
+            self._garantir_classificacao(transacao)
+            return transacao
+
         texto_busca = " ".join(
             [
                 transacao.get("_descricao_original", ""),
@@ -113,27 +192,49 @@ class Categorizer:
 
             break
 
-        # Fallback: sem categoria reconhecida
         if transacao.get("categoria") is None:
             transacao["categoria"] = "Outros"
             transacao["classificacao"] = "Questionável"
 
-        # Garantir que classificação nunca fique nula
-        if transacao.get("classificacao") is None:
-            tipo = transacao.get("tipo", "")
-            if tipo == "Transferência Interna":
-                transacao["classificacao"] = "N/A"
-            elif tipo == "Receita":
-                transacao["classificacao"] = "N/A"
-            elif tipo == "Imposto":
-                transacao["classificacao"] = "Obrigatório"
-            else:
-                transacao["classificacao"] = "Questionável"
-
+        self._garantir_classificacao(transacao)
         return transacao
 
+    def _garantir_classificacao(self, transacao: dict) -> None:
+        """Garante que classificação nunca fique nula."""
+        if transacao.get("classificacao") is not None:
+            return
+
+        tipo = transacao.get("tipo", "")
+        if tipo == "Transferência Interna":
+            transacao["classificacao"] = "N/A"
+        elif tipo == "Receita":
+            transacao["classificacao"] = "N/A"
+        elif tipo == "Imposto":
+            transacao["classificacao"] = "Obrigatório"
+        else:
+            transacao["classificacao"] = "Questionável"
+
+    def _detectar_padroes_novos(self, transacoes: list[dict]) -> None:
+        """Detecta descrições sem match que aparecem 3+ vezes (novos padrões)."""
+        sem_match: list[str] = []
+        for t in transacoes:
+            if t.get("categoria") == "Outros":
+                local = t.get("local", "").strip()
+                if local:
+                    sem_match.append(local.upper())
+
+        contagem: Counter[str] = Counter(sem_match)
+        padroes_recorrentes = {desc: qtd for desc, qtd in contagem.items() if qtd >= 3}
+
+        if padroes_recorrentes:
+            logger.warning(
+                "Novos padrões detectados (3+ ocorrências sem categorização):"
+            )
+            for desc, qtd in sorted(padroes_recorrentes.items(), key=lambda x: -x[1]):
+                logger.warning("  [%d ocorrências] %s", qtd, desc)
+
     def categorizar_lote(self, transacoes: list[dict]) -> list[dict]:
-        """Categoriza uma lista de transações."""
+        """Categoriza uma lista de transações e detecta padrões novos."""
         categorizadas = 0
         sem_categoria = 0
 
@@ -154,6 +255,8 @@ class Categorizer:
                 pct,
                 sem_categoria,
             )
+
+        self._detectar_padroes_novos(transacoes)
 
         return transacoes
 

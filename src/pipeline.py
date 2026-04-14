@@ -9,6 +9,7 @@ from src.load.relatorio import gerar_relatorios
 from src.load.xlsx_writer import gerar_xlsx
 from src.transform.categorizer import Categorizer
 from src.transform.deduplicator import deduplicar
+from src.transform.irpf_tagger import aplicar_tags_irpf
 from src.transform.normalizer import normalizar_transacao
 from src.utils.logger import configurar_logger
 
@@ -257,22 +258,25 @@ def executar(mes: str | None = None, processar_tudo: bool = False) -> None:
     categorizer = Categorizer()
     transacoes = categorizer.categorizar_lote(transacoes)
 
-    # 7. Filtrar por mês se necessário
+    # 7. Aplicar tags IRPF
+    transacoes = aplicar_tags_irpf(transacoes)
+
+    # 8. Filtrar por mês se necessário
     if mes and not processar_tudo:
         transacoes_filtradas = _filtrar_por_mes(transacoes, mes)
         logger.info("Filtrado para %s: %d transações", mes, len(transacoes_filtradas))
     else:
         transacoes_filtradas = transacoes
 
-    # 8. Ordenar por data
+    # 9. Ordenar por data
     transacoes_filtradas.sort(key=lambda t: t.get("data", ""))
 
-    # 9. Gerar XLSX
+    # 10. Gerar XLSX
     ano = mes[:4] if mes else str(datetime.now().year)
     caminho_xlsx = DIR_OUTPUT / f"controle_bordo_{ano}.xlsx"
     gerar_xlsx(transacoes_filtradas, caminho_xlsx, CONTROLE_ANTIGO)
 
-    # 10. Gerar relatórios
+    # 11. Gerar relatórios
     gerar_relatorios(transacoes_filtradas, DIR_OUTPUT)
 
     logger.info("=== Pipeline concluído ===")
