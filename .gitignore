@@ -1,0 +1,44 @@
+# Dados financeiros (NUNCA no repositório)
+data/
+inbox/
+logs/
+
+# Senhas e credenciais
+mappings/senhas.yaml
+.env
+*.key
+*.pem
+.git-credentials
+
+# Modelos locais
+models/
+
+# Caches Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+
+# Ambiente virtual
+.venv/
+venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Evidências de IA
+Task_Final/
+IMPORTANT.md
+
+# Jupyter
+.ipynb_checkpoints/

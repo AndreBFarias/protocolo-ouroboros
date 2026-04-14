@@ -1,0 +1,230 @@
+# Mapeamento regex -> categoria + classificação
+# Ordem importa: primeira regra que casar é aplicada
+
+regras:
+  # --- Renda ---
+  salario:
+    regex: "PAGTO.*SALARIO|CREDITO.*SALARIO|G4F|INFOBASE"
+    categoria: "Salário"
+    tipo: "Receita"
+
+  renda_pj:
+    regex: "PAIM.*94\\.425\\.154|NEES|UFAL"
+    categoria: "Renda PJ"
+    tipo: "Receita"
+
+  # --- Transferências internas ---
+  transferencia_casal:
+    regex: "ANDRE.*SILVA.*BATISTA|VITORIA.*MARIA.*SILVA|Vit[oó]ria|VITORIA"
+    tipo: "Transferência Interna"
+    categoria: "Transferência"
+
+  pagamento_cartao:
+    regex: "NU.PAGAMENT|BANCO.SANTA|pagamento de fatura"
+    tipo: "Transferência Interna"
+    categoria: "Pagamento de Fatura"
+
+  pagamento_fatura_nubank:
+    regex: "Pagamento de boleto.*NU PAGAMENTOS"
+    tipo: "Transferência Interna"
+    categoria: "Pagamento de Fatura"
+
+  resgate_cdb:
+    regex: "Resgate RDB|Resgate CDB|Aplicação RDB"
+    tipo: "Transferência Interna"
+    categoria: "Investimento"
+
+  # --- Moradia ---
+  aluguel_kisabor:
+    regex: "PANIFICADORA.KI.SABOR|KISABOR"
+    categoria: "Aluguel"
+    classificacao: "Obrigatório"
+    regra_valor: ">=800"
+
+  aluguel_superlogica:
+    regex: "SUPERLOGICA|PJBANK.*SUPERLOGICA"
+    categoria: "Aluguel"
+    classificacao: "Obrigatório"
+
+  energia:
+    regex: "NEOENERGIA|CEB|ENERGETICA|CEMIG"
+    categoria: "Energia"
+    classificacao: "Obrigatório"
+
+  agua:
+    regex: "CAESB|SANEAMENTO|COMPANHIA D"
+    categoria: "Água"
+    classificacao: "Obrigatório"
+
+  internet:
+    regex: "CLIENT CO SERVICOS DE REDE|CLARO|NET.SERVICOS|VIVO"
+    categoria: "Internet"
+    classificacao: "Obrigatório"
+
+  gas:
+    regex: "CONSIGAZ|FOGÁS|GAS.BRASILIANO|ULTRAGAZ"
+    categoria: "Gás"
+    classificacao: "Obrigatório"
+
+  # --- Alimentação ---
+  delivery:
+    regex: "IFD\\*|IFOOD|RAPPI|ZDELIVERY|UBER.*EATS|LOUCOMOTIVAPIZZA|DOCARIA.*ROSE|CREPE.CAFFE|SUSHI.DU.CHEF"
+    categoria: "Delivery"
+    classificacao: "Questionável"
+
+  mercado:
+    regex: "SUPERMERCADO|VIVENDAS|SACOLAO|ATACADAO|RURAL|KIDELICIA"
+    categoria: "Mercado"
+    classificacao: "Obrigatório"
+
+  padaria:
+    regex: "PANIFICADORA|KI.SABOR|PAES|PADARIA"
+    categoria: "Padaria"
+    classificacao: "Questionável"
+    regra_valor: "<800"
+
+  marmita:
+    regex: "FIT.DA.NUTRI|MARMITA|CONGELAD"
+    categoria: "Marmitas"
+    classificacao: "Obrigatório"
+
+  # --- Transporte ---
+  transporte:
+    regex: "UBER|99POP|99APP|99.TECNOLOGIA|TAXI|CABIFY"
+    categoria: "Transporte"
+    classificacao: "Questionável"
+
+  # --- Saúde ---
+  farmacia:
+    regex: "DROGARIA|FARMACIA|DROGA.RAIA|PAGUE.MENOS|SAO.RAFAEL|DROGASIL|MEG.FARMA|GAMAFARMA|DROGARIA.STAR|DROGARIA.SANTA"
+    categoria: "Farmácia"
+    classificacao: "Obrigatório"
+
+  saude_dedutivel:
+    regex: "CLINICA|HOSPITAL|CONSULT|PSIQ|PSICOL|LUDENS|AG.SERVICOS.NEUROLOGIC"
+    categoria: "Saúde"
+    classificacao: "Obrigatório"
+    tag_irpf: "dedutivel_medico"
+
+  otica:
+    regex: "MAIS.QUE.OTICA|OTICAS|OPTICA"
+    categoria: "Saúde"
+    classificacao: "Obrigatório"
+
+  # --- Educação ---
+  pos_graduacao:
+    regex: "SOCIEDADE MINEIRA DE CULTURA|PUC|FACULDADE|UNIVERSIDADE"
+    categoria: "Pós-graduação"
+    classificacao: "Obrigatório"
+
+  natacao:
+    regex: "SESC.*GAMA|SESC.*SERVICO|SESC"
+    categoria: "Natação"
+    classificacao: "Obrigatório"
+
+  # --- Assinaturas ---
+  streaming:
+    regex: "SPOTIFY|NETFLIX|DISNEY|YOUTUBE.PREMIUM|AMAZON.PRIME|CRUNCHYROLL|PIRATA.IPTV"
+    categoria: "Streaming"
+    classificacao: "Questionável"
+
+  cartao_desconto:
+    regex: "CARTAO.DE.TODOS"
+    categoria: "Assinatura"
+    classificacao: "Questionável"
+
+  celular:
+    regex: "RECARGA.DE.CELULAR|TIM|CLARO.CELULAR"
+    categoria: "Celular"
+    classificacao: "Obrigatório"
+
+  # --- Compras ---
+  compras_online:
+    regex: "SHOPEE|SHPP.BRASIL|MERCADO.LIVRE|MERCADOLIVRE|AMAZON|SHEIN|PIX.Marketplace"
+    categoria: "Compras Online"
+    classificacao: "Supérfluo"
+
+  # --- Impostos ---
+  imposto:
+    regex: "RECEITA.FED|DARF|DAS.MEI|DAS.*Simples"
+    categoria: "Impostos"
+    tipo: "Imposto"
+    tag_irpf: "imposto_pago"
+
+  # --- Pets ---
+  pet:
+    regex: "PET.CENTER|COBASI|PETZ|AGROPECUARIA|MONTEIRO"
+    categoria: "Pets"
+    classificacao: "Obrigatório"
+
+  # --- Ferramentas/IA ---
+  ia_ferramentas:
+    regex: "XAI.LLC|OPENAI|ANTHROPIC|GOOGLE.CLOUD|CURSOR|CLAUDE.AI"
+    categoria: "Ferramentas IA"
+    classificacao: "Questionável"
+
+  # --- Juros e encargos ---
+  juros_fatura:
+    regex: "Juros por fatura|Multa por fatura|IOF por fatura|Juros de atraso|Multa de atraso|IOF de atraso|Saldo em atraso|Valor pendente do m"
+    categoria: "Juros/Encargos"
+    classificacao: "Obrigatório"
+
+  # --- Reembolsos ---
+  reembolso:
+    regex: "Reembolso recebido|Estorno"
+    categoria: "Reembolso"
+    tipo: "Receita"
+
+  # --- Rendimentos ---
+  rendimento:
+    regex: "REND PAGO APLIC|RENDIMENTO|JUROS.*POUPANCA"
+    categoria: "Rendimento"
+    tipo: "Receita"
+
+  # --- Pagamentos internos ---
+  pgto_cartao_c6:
+    regex: "PGTO FAT CARTAO C6|DEBITO DE CARTAO"
+    tipo: "Transferência Interna"
+    categoria: "Pagamento de Fatura"
+
+  valor_adicionado:
+    regex: "Valor adicionado na conta|Pix no Crédito"
+    tipo: "Transferência Interna"
+    categoria: "Transferência"
+
+  # --- Mercado (extensão) ---
+  mercado_extra:
+    regex: "SUPERVENDAS|HND.GAMA|HORTIFRUTI|ATACADAO|ASSAI"
+    categoria: "Mercado"
+    classificacao: "Obrigatório"
+
+  # --- Pessoas conhecidas (transferências) ---
+  transferencia_parcela_andre:
+    regex: "André da Silva Batista de Farias.*\\d+/\\d+"
+    tipo: "Transferência Interna"
+    categoria: "Transferência"
+
+  transferencia_andre_nome:
+    regex: "André da Silva Batista de Farias"
+    tipo: "Transferência Interna"
+    categoria: "Transferência"
+
+  # --- Contas/Boletos ---
+  condominio:
+    regex: "PJBANK.*PAGAMENTOS|CONDOMINIO"
+    categoria: "Condomínio"
+    classificacao: "Obrigatório"
+
+  # --- Bebidas ---
+  bebidas:
+    regex: "BEBIDASVILASBOAS|DISTRIBUIDORA.*BEBIDA|ADEGA"
+    categoria: "Bebidas"
+    classificacao: "Supérfluo"
+
+  # --- Transporte (extensão) ---
+  transporte_99:
+    regex: "99\\*|99TECNOLOGIA|99.POP"
+    categoria: "Transporte"
+    classificacao: "Questionável"
+
+# "A riqueza consiste muito mais no desfrute do que na posse." -- Aristóteles

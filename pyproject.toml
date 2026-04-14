@@ -1,0 +1,43 @@
+[project]
+name = "controle-de-bordo"
+version = "1.0.0"
+description = "Pipeline ETL financeiro pessoal"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+
+dependencies = [
+    "pandas>=2.0",
+    "openpyxl>=3.1",
+    "xlrd>=2.0",
+    "pdfplumber>=0.10",
+    "Pillow>=10.0",
+    "pytesseract>=0.3",
+    "pyyaml>=6.0",
+    "python-dotenv>=1.0",
+    "rich>=13.0",
+    "msoffcrypto-tool>=5.0",
+]
+
+[project.optional-dependencies]
+dashboard = [
+    "streamlit>=1.30",
+    "plotly>=5.18",
+]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=4.0",
+    "ruff>=0.3",
+]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
+# "A simplicidade é a sofisticação suprema." -- Leonardo da Vinci
