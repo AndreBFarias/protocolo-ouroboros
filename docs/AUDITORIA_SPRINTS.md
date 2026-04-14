@@ -116,49 +116,60 @@ O irpf_tagger foi a entrega mais valiosa: transforma dados transacionais em info
 
 ---
 
-## Sprint 5 -- Relatórios e Projeções -- NÃO VALIDADA
+## Sprint 5 -- Relatórios e Projeções -- VALIDAÇÃO SUPERFICIAL
 
 **Objetivo:** Projeções financeiras, metas de economia, cenários.
 
-### Entregue (não validado)
+### Entregue
 
-- `src/dashboard/projecoes.py` (334 linhas) -- página de projeções financeiras
-- `src/dashboard/metas.py` (290 linhas) -- página de acompanhamento de metas
-- `src/dashboard/scenarios.py` (174 linhas) -- simulador de cenários
-- `mappings/metas.yaml` (43 linhas) -- definições de metas do usuário
-- `src/load/relatorio.py` modificado para incluir projeções
+- `src/projections/scenarios.py` (174 linhas) -- lógica real de cenários com cálculos baseados em dados
+- `src/dashboard/paginas/projecoes.py` (334 linhas) -- página funcional com 3 cenários e gráfico de patrimônio
+- `src/dashboard/paginas/metas.py` (290 linhas) -- página funcional com barras de progresso
+- `mappings/metas.yaml` (43 linhas) -- 7 metas reais do casal
+- `src/load/relatorio.py` modificado -- seções de metas, projeção e IRPF adicionadas
 
-### Status
+### Validação realizada
 
-Código criado por subagente que finalizou com créditos esgotados antes de validação completa. Lint passa (`ruff check` sem erros), mas funcionalidade não foi testada no browser. Não há garantia de que as páginas renderizam corretamente ou que os cálculos estão corretos.
+- `ruff check` passou sem erros
+- Pipeline `--tudo` roda sem erros com os novos arquivos
+- Página Projeções aberta no browser: cenários renderizam, gráfico de patrimônio funciona
+- Página Metas aberta no browser: 3 metas visíveis com progresso e prazos
+- app.py integra 6 tabs sem conflito
 
-### Risco
+### Validação pendente
 
-Código em produção sem teste. Pode quebrar o dashboard existente se importado incorretamente. Requer sessão dedicada de validação.
+- Lógica dos cenários não verificada em profundidade (números podem estar incorretos)
+- Edge cases: meses sem dados, divisão por zero, metas sem prazo
+- Relatórios melhorados não comparados com versão anterior item a item
+- Cenário "Pós-Infobase" mostra saldo negativo de R$ -7.349 -- pode estar correto ou não
 
 ---
 
-## Sprint 6 -- Integração Obsidian -- NÃO VALIDADA
+## Sprint 6 -- Integração Obsidian -- VALIDAÇÃO SUPERFICIAL
 
 **Objetivo:** Sincronizar relatórios financeiros com vault Obsidian.
 
-### Entregue (não validado)
+### Entregue
 
-- `src/obsidian/sync.py` (349 linhas) -- sincronizador vault Obsidian
-- 44 relatórios mensais sincronizados para `~/Controle de Bordo/Pessoal/Financeiro/Relatórios/`
-- 7 notas de metas criadas no vault
-- MOC (Map of Content) "Dashboard Financeiro" com Dataview queries
+- `src/obsidian/sync.py` (349 linhas) -- lógica real de sync com extração de valores via regex
+- 44 relatórios sincronizados em `~/Controle de Bordo/Pessoal/Financeiro/Relatórios/`
+- 7 notas de metas criadas com frontmatter YAML
+- MOC "Dashboard Financeiro" com Dataview queries
+- `run.sh --sync` integrado
 
-### Status
+### Validação realizada
 
-Código criado por subagente. Lint passa, vault populado com arquivos. Porém:
-- Dataview queries não foram validadas no Obsidian (podem ter erro de sintaxe)
-- Frontmatter YAML gerado não foi verificado contra schema Dataview
-- Idempotência do sync não testada exaustivamente
+- `ruff check` passou sem erros
+- 44 arquivos confirmados no vault
+- 7 metas confirmadas no vault
+- Frontmatter do relatório 2026-04 verificado (receita, despesa, saldo corretos)
 
-### Risco
+### Validação pendente
 
-Se Dataview queries estiverem erradas, o MOC mostra tabelas vazias ou erros. Os arquivos em si são Markdown válido e não quebram o vault.
+- Dataview queries NÃO testadas no Obsidian (podem ter erro de sintaxe)
+- Frontmatter de TODOS os relatórios não verificado (só 1 checado)
+- Idempotência do sync não testada (rodar 2x pode duplicar dados?)
+- Backlinks entre relatórios e metas não verificados
 
 ---
 
