@@ -184,9 +184,7 @@ def _detectar_csv(caminho: Path) -> Optional[DeteccaoArquivo]:
     if primeira_linha == "date,title,amount":
         periodo = _extrair_periodo_csv_nubank_cartao(caminho)
 
-        if "pj" in caminho_str or (
-            re.search(r"Nubank_202[56]", nome) and "pj" in caminho_str
-        ):
+        if "pj" in caminho_str or (re.search(r"Nubank_202[56]", nome) and "pj" in caminho_str):
             return DeteccaoArquivo(
                 banco="nubank",
                 tipo="cartao",
@@ -392,9 +390,7 @@ def _detectar_xlsx(caminho: Path) -> Optional[DeteccaoArquivo]:
     return None
 
 
-def _abrir_xls_decriptado(
-    caminho: Path, senhas: list[str]
-) -> Optional[xlrd.book.Book]:
+def _abrir_xls_decriptado(caminho: Path, senhas: list[str]) -> Optional[xlrd.book.Book]:
     """Tenta abrir XLS (formato legado), decriptando se necessário."""
     for senha in senhas:
         try:

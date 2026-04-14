@@ -102,18 +102,14 @@ class ExtratorItauPDF(ExtratorBase):
             self.logger.info("Processando extrato Itaú: %s", arquivo.name)
             transacoes.extend(self._processar_arquivo(arquivo))
 
-        self.logger.info(
-            "Total de transações extraídas (Itaú): %d", len(transacoes)
-        )
+        self.logger.info("Total de transações extraídas (Itaú): %d", len(transacoes))
         return transacoes
 
     def _listar_arquivos(self) -> list[Path]:
         """Lista todos os PDFs válidos no diretório."""
         if self.caminho.is_file():
             return [self.caminho] if self.pode_processar(self.caminho) else []
-        return sorted(
-            f for f in self.caminho.glob("*.pdf") if self.pode_processar(f)
-        )
+        return sorted(f for f in self.caminho.glob("*.pdf") if self.pode_processar(f))
 
     def _processar_arquivo(self, arquivo: Path) -> list[Transacao]:
         """Processa um único PDF e retorna lista de transações."""
@@ -128,13 +124,9 @@ class ExtratorItauPDF(ExtratorBase):
                 texto: Optional[str] = pagina.extract_text()
                 if not texto:
                     continue
-                transacoes.extend(
-                    self._extrair_de_texto(texto, arquivo)
-                )
+                transacoes.extend(self._extrair_de_texto(texto, arquivo))
         except Exception as erro:
-            self.logger.error(
-                "Erro ao processar páginas de %s: %s", arquivo.name, erro
-            )
+            self.logger.error("Erro ao processar páginas de %s: %s", arquivo.name, erro)
         finally:
             pdf.close()
 
@@ -145,9 +137,7 @@ class ExtratorItauPDF(ExtratorBase):
         for senha in self.senhas:
             try:
                 pdf = pdfplumber.open(str(arquivo), password=senha)
-                self.logger.debug(
-                    "PDF %s aberto com sucesso", arquivo.name
-                )
+                self.logger.debug("PDF %s aberto com sucesso", arquivo.name)
                 return pdf
             except Exception:
                 continue
@@ -176,9 +166,7 @@ class ExtratorItauPDF(ExtratorBase):
             if not match:
                 continue
 
-            transacao: Optional[Transacao] = self._parse_lancamento(
-                match, arquivo
-            )
+            transacao: Optional[Transacao] = self._parse_lancamento(match, arquivo)
             if transacao:
                 transacoes.append(transacao)
 
@@ -214,9 +202,7 @@ class ExtratorItauPDF(ExtratorBase):
                 arquivo_origem=str(arquivo.name),
             )
         except (ValueError, IndexError) as erro:
-            self.logger.warning(
-                "Lançamento ignorado: %s - %s", match.group(0), erro
-            )
+            self.logger.warning("Lançamento ignorado: %s - %s", match.group(0), erro)
             return None
 
     @staticmethod
@@ -270,9 +256,7 @@ class ExtratorItauPDF(ExtratorBase):
 
     def _carregar_senhas(self) -> list[str]:
         """Carrega senhas do arquivo de mapeamento ou usa padrões."""
-        caminho_senhas: Path = (
-            Path(__file__).parent.parent.parent / "mappings" / "senhas.yaml"
-        )
+        caminho_senhas: Path = Path(__file__).parent.parent.parent / "mappings" / "senhas.yaml"
         if caminho_senhas.exists():
             try:
                 with open(caminho_senhas, encoding="utf-8") as f:
@@ -282,9 +266,7 @@ class ExtratorItauPDF(ExtratorBase):
                         self.logger.debug("Senhas carregadas de senhas.yaml")
                         return [str(s) for s in senhas]
             except (OSError, yaml.YAMLError) as erro:
-                self.logger.warning(
-                    "Erro ao carregar senhas.yaml: %s", erro
-                )
+                self.logger.warning("Erro ao carregar senhas.yaml: %s", erro)
         return SENHAS_PADRAO
 
 

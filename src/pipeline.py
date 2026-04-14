@@ -5,11 +5,11 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+from src.load.relatorio import gerar_relatorios
+from src.load.xlsx_writer import gerar_xlsx
 from src.transform.categorizer import Categorizer
 from src.transform.deduplicator import deduplicar
 from src.transform.normalizer import normalizar_transacao
-from src.load.xlsx_writer import gerar_xlsx
-from src.load.relatorio import gerar_relatorios
 from src.utils.logger import configurar_logger
 
 logger = configurar_logger("pipeline")
@@ -27,36 +27,42 @@ def _descobrir_extratores() -> list:
 
     try:
         from src.extractors.nubank_cartao import ExtratorNubankCartao
+
         extratores.append(ExtratorNubankCartao)
     except ImportError as e:
         logger.warning("Extrator nubank_cartao indisponível: %s", e)
 
     try:
         from src.extractors.nubank_cc import ExtratorNubankCC
+
         extratores.append(ExtratorNubankCC)
     except ImportError as e:
         logger.warning("Extrator nubank_cc indisponível: %s", e)
 
     try:
         from src.extractors.c6_cc import ExtratorC6CC
+
         extratores.append(ExtratorC6CC)
     except ImportError as e:
         logger.warning("Extrator c6_cc indisponível: %s", e)
 
     try:
         from src.extractors.c6_cartao import ExtratorC6Cartao
+
         extratores.append(ExtratorC6Cartao)
     except ImportError as e:
         logger.warning("Extrator c6_cartao indisponível: %s", e)
 
     try:
         from src.extractors.itau_pdf import ExtratorItauPDF
+
         extratores.append(ExtratorItauPDF)
     except ImportError as e:
         logger.warning("Extrator itau_pdf indisponível: %s", e)
 
     try:
         from src.extractors.santander_pdf import ExtratorSantanderPDF
+
         extratores.append(ExtratorSantanderPDF)
     except ImportError as e:
         logger.warning("Extrator santander_pdf indisponível: %s", e)
@@ -100,7 +106,9 @@ def _extrair_tudo(arquivos: list[Path], classes_extratores: list) -> list[dict]:
                             valor=t.valor,
                             descricao=t.descricao,
                             banco_origem=t.banco_origem,
-                            tipo_extrato="cartao" if "cartao" in t.banco_origem.lower() or t.forma_pagamento == "Crédito" else "cc",
+                            tipo_extrato="cartao"
+                            if "cartao" in t.banco_origem.lower() or t.forma_pagamento == "Crédito"
+                            else "cc",
                             identificador=t.identificador,
                             subtipo=_inferir_subtipo(arquivo),
                             arquivo_origem=str(arquivo),
@@ -110,12 +118,16 @@ def _extrair_tudo(arquivos: list[Path], classes_extratores: list) -> list[dict]:
                     arquivos_processados += 1
                     logger.info(
                         "Extraídas %d transações de %s (%s)",
-                        len(resultado), arquivo.name, cls_extrator.__name__,
+                        len(resultado),
+                        arquivo.name,
+                        cls_extrator.__name__,
                     )
                     processado = True
                     break
             except Exception as e:
-                logger.error("Erro ao processar %s com %s: %s", arquivo.name, cls_extrator.__name__, e)
+                logger.error(
+                    "Erro ao processar %s com %s: %s", arquivo.name, cls_extrator.__name__, e
+                )
 
         if not processado:
             arquivos_ignorados += 1
@@ -123,7 +135,9 @@ def _extrair_tudo(arquivos: list[Path], classes_extratores: list) -> list[dict]:
 
     logger.info(
         "Extração concluída: %d arquivos processados, %d ignorados, %d transações brutas",
-        arquivos_processados, arquivos_ignorados, len(transacoes_brutas),
+        arquivos_processados,
+        arquivos_ignorados,
+        len(transacoes_brutas),
     )
     return transacoes_brutas
 
@@ -186,23 +200,25 @@ def _importar_historico() -> list[dict]:
             }
             clf_normalizada = clf_map.get(clf_raw, "Questionável")
 
-            transacoes.append({
-                "data": data_date,
-                "valor": abs(float(gasto)) if isinstance(gasto, (int, float)) else 0,
-                "forma_pagamento": str(forma) if forma else "Débito",
-                "local": str(local) if local else "",
-                "quem": str(quem) if quem else "Casal",
-                "categoria": str(categoria) if categoria else "Outros",
-                "classificacao": clf_normalizada,
-                "banco_origem": "Histórico",
-                "tipo": "Despesa",
-                "mes_ref": data_date.strftime("%Y-%m"),
-                "tag_irpf": None,
-                "obs": "Importado do histórico",
-                "_identificador": f"hist_{data_date.isoformat()}_{gasto}_{local}",
-                "_descricao_original": str(local),
-                "_arquivo_origem": str(CONTROLE_ANTIGO),
-            })
+            transacoes.append(
+                {
+                    "data": data_date,
+                    "valor": abs(float(gasto)) if isinstance(gasto, (int, float)) else 0,
+                    "forma_pagamento": str(forma) if forma else "Débito",
+                    "local": str(local) if local else "",
+                    "quem": str(quem) if quem else "Casal",
+                    "categoria": str(categoria) if categoria else "Outros",
+                    "classificacao": clf_normalizada,
+                    "banco_origem": "Histórico",
+                    "tipo": "Despesa",
+                    "mes_ref": data_date.strftime("%Y-%m"),
+                    "tag_irpf": None,
+                    "obs": "Importado do histórico",
+                    "_identificador": f"hist_{data_date.isoformat()}_{gasto}_{local}",
+                    "_descricao_original": str(local),
+                    "_arquivo_origem": str(CONTROLE_ANTIGO),
+                }
+            )
 
         logger.info("Histórico importado: %d transações (ago/2022 - jul/2023)", len(transacoes))
     except Exception as e:

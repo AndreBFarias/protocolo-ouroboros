@@ -1,6 +1,5 @@
 """Geração de relatório mensal em Markdown."""
 
-from collections import Counter
 from datetime import date
 from pathlib import Path
 from typing import Optional
@@ -32,11 +31,13 @@ def gerar_relatorio_mes(
     """Gera o relatório markdown de um mês específico."""
     # Filtrar transações do mês (excluir transferências internas)
     transacoes_mes = [
-        t for t in transacoes
+        t
+        for t in transacoes
         if t.get("mes_ref") == mes_ref and t.get("tipo") != "Transferência Interna"
     ]
     transferencias = [
-        t for t in transacoes
+        t
+        for t in transacoes
         if t.get("mes_ref") == mes_ref and t.get("tipo") == "Transferência Interna"
     ]
 
@@ -55,15 +56,18 @@ def gerar_relatorio_mes(
 
     # Classificações
     obrigatorio = sum(
-        t["valor"] for t in transacoes_mes
+        t["valor"]
+        for t in transacoes_mes
         if t.get("classificacao") == "Obrigatório" and t.get("tipo") in ("Despesa", "Imposto")
     )
     questionavel = sum(
-        t["valor"] for t in transacoes_mes
+        t["valor"]
+        for t in transacoes_mes
         if t.get("classificacao") == "Questionável" and t.get("tipo") in ("Despesa", "Imposto")
     )
     superfluo = sum(
-        t["valor"] for t in transacoes_mes
+        t["valor"]
+        for t in transacoes_mes
         if t.get("classificacao") == "Supérfluo" and t.get("tipo") in ("Despesa", "Imposto")
     )
 
@@ -87,9 +91,9 @@ def gerar_relatorio_mes(
     # Comparativo com mês anterior
     if transacoes_mes_anterior:
         desp_ant = sum(
-            t["valor"] for t in transacoes_mes_anterior
-            if t.get("tipo") in ("Despesa", "Imposto")
-            and t.get("tipo") != "Transferência Interna"
+            t["valor"]
+            for t in transacoes_mes_anterior
+            if t.get("tipo") in ("Despesa", "Imposto") and t.get("tipo") != "Transferência Interna"
         )
         diff = despesas - desp_ant
         sinal = "+" if diff > 0 else ""
@@ -97,26 +101,30 @@ def gerar_relatorio_mes(
         linhas.append("")
 
     # Top 5 categorias
-    linhas.extend([
-        "## Top 5 Categorias de Gasto",
-        "",
-        "| Categoria | Valor | % do total |",
-        "|-----------|-------|-----------|",
-    ])
+    linhas.extend(
+        [
+            "## Top 5 Categorias de Gasto",
+            "",
+            "| Categoria | Valor | % do total |",
+            "|-----------|-------|-----------|",
+        ]
+    )
     for cat, valor in top_categorias:
         pct = (valor / despesas * 100) if despesas > 0 else 0
         linhas.append(f"| {cat} | {_formatar_valor(valor)} | {pct:.1f}% |")
     linhas.append("")
 
     # Classificação
-    linhas.extend([
-        "## Por Classificação",
-        "",
-        f"- Obrigatório: {_formatar_valor(obrigatorio)}",
-        f"- Questionável: {_formatar_valor(questionavel)}",
-        f"- Supérfluo: {_formatar_valor(superfluo)}",
-        "",
-    ])
+    linhas.extend(
+        [
+            "## Por Classificação",
+            "",
+            f"- Obrigatório: {_formatar_valor(obrigatorio)}",
+            f"- Questionável: {_formatar_valor(questionavel)}",
+            f"- Supérfluo: {_formatar_valor(superfluo)}",
+            "",
+        ]
+    )
 
     # Alertas
     linhas.extend(["## Alertas", ""])
@@ -126,42 +134,50 @@ def gerar_relatorio_mes(
         linhas.append(f"- Gastos supérfluos acima de R$ 500: {_formatar_valor(superfluo)}")
     if saldo < 0:
         linhas.append(f"- [ALERTA] Saldo negativo no mês: {_formatar_valor(saldo)}")
-    if not any("ALERTA" in l or "transações" in l for l in linhas[-3:]):
+    if not any("ALERTA" in linha or "transações" in linha for linha in linhas[-3:]):
         linhas.append("- Nenhum alerta crítico")
     linhas.append("")
 
     # Transferências internas
     total_transf = sum(t["valor"] for t in transferencias)
-    linhas.extend([
-        "## Transferências Internas",
-        "",
-        f"- Total movimentado entre contas: {_formatar_valor(total_transf)}",
-        f"- Quantidade: {len(transferencias)} transações",
-        "",
-    ])
+    linhas.extend(
+        [
+            "## Transferências Internas",
+            "",
+            f"- Total movimentado entre contas: {_formatar_valor(total_transf)}",
+            f"- Quantidade: {len(transferencias)} transações",
+            "",
+        ]
+    )
 
     # Transações por pessoa
     gastos_andre = sum(
-        t["valor"] for t in transacoes_mes
+        t["valor"]
+        for t in transacoes_mes
         if t.get("quem") == "André" and t.get("tipo") in ("Despesa", "Imposto")
     )
     gastos_vitoria = sum(
-        t["valor"] for t in transacoes_mes
+        t["valor"]
+        for t in transacoes_mes
         if t.get("quem") == "Vitória" and t.get("tipo") in ("Despesa", "Imposto")
     )
-    linhas.extend([
-        "## Gastos por Pessoa",
-        "",
-        f"- André: {_formatar_valor(gastos_andre)}",
-        f"- Vitória: {_formatar_valor(gastos_vitoria)}",
-        "",
-    ])
+    linhas.extend(
+        [
+            "## Gastos por Pessoa",
+            "",
+            f"- André: {_formatar_valor(gastos_andre)}",
+            f"- Vitória: {_formatar_valor(gastos_vitoria)}",
+            "",
+        ]
+    )
 
-    linhas.extend([
-        "---",
-        "",
-        f"*Gerado automaticamente em {date.today().isoformat()}*",
-    ])
+    linhas.extend(
+        [
+            "---",
+            "",
+            f"*Gerado automaticamente em {date.today().isoformat()}*",
+        ]
+    )
 
     return "\n".join(linhas)
 

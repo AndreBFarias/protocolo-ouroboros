@@ -194,12 +194,14 @@ def processar_inbox(diretorio_inbox: Path, diretorio_raw: Path) -> list[dict]:
             contadores[resultado["status"]] += 1
         except Exception as erro:
             logger.error("Erro inesperado ao processar %s: %s", arquivo.name, erro)
-            resultados.append({
-                "arquivo_original": str(arquivo),
-                "destino": None,
-                "deteccao": None,
-                "status": "erro",
-            })
+            resultados.append(
+                {
+                    "arquivo_original": str(arquivo),
+                    "destino": None,
+                    "deteccao": None,
+                    "status": "erro",
+                }
+            )
             contadores["erro"] += 1
 
     logger.info(

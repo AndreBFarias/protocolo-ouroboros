@@ -101,18 +101,14 @@ class ExtratorSantanderPDF(ExtratorBase):
             self.logger.info("Processando fatura Santander: %s", arquivo.name)
             transacoes.extend(self._processar_arquivo(arquivo))
 
-        self.logger.info(
-            "Total de transações extraídas (Santander): %d", len(transacoes)
-        )
+        self.logger.info("Total de transações extraídas (Santander): %d", len(transacoes))
         return transacoes
 
     def _listar_arquivos(self) -> list[Path]:
         """Lista todos os PDFs válidos no diretório."""
         if self.caminho.is_file():
             return [self.caminho] if self.pode_processar(self.caminho) else []
-        return sorted(
-            f for f in self.caminho.glob("*.pdf") if self.pode_processar(f)
-        )
+        return sorted(f for f in self.caminho.glob("*.pdf") if self.pode_processar(f))
 
     def _processar_arquivo(self, arquivo: Path) -> list[Transacao]:
         """Processa um único PDF e retorna lista de transações."""
@@ -127,9 +123,7 @@ class ExtratorSantanderPDF(ExtratorBase):
         try:
             vencimento: Optional[date] = self._extrair_vencimento(pdf)
             if vencimento is None:
-                self.logger.warning(
-                    "Vencimento não encontrado em %s", arquivo.name
-                )
+                self.logger.warning("Vencimento não encontrado em %s", arquivo.name)
 
             texto_completo: str = ""
             for pagina in pdf.pages:
@@ -138,13 +132,9 @@ class ExtratorSantanderPDF(ExtratorBase):
                     texto_completo += texto + "\n"
 
             if REGEX_DETALHAMENTO.search(texto_completo):
-                transacoes = self._extrair_transacoes(
-                    texto_completo, arquivo, vencimento
-                )
+                transacoes = self._extrair_transacoes(texto_completo, arquivo, vencimento)
         except Exception as erro:
-            self.logger.error(
-                "Erro ao processar %s: %s", arquivo.name, erro
-            )
+            self.logger.error("Erro ao processar %s: %s", arquivo.name, erro)
         finally:
             pdf.close()
 
@@ -215,9 +205,7 @@ class ExtratorSantanderPDF(ExtratorBase):
             if REGEX_LINHA_IGNORAR.search(linha_limpa):
                 continue
 
-            encontradas: list[Transacao] = self._extrair_da_linha(
-                linha_limpa, arquivo, vencimento
-            )
+            encontradas: list[Transacao] = self._extrair_da_linha(linha_limpa, arquivo, vencimento)
             transacoes.extend(encontradas)
 
         return transacoes
@@ -320,9 +308,7 @@ class ExtratorSantanderPDF(ExtratorBase):
                 tipo = "Despesa"
                 valor = abs(valor)
 
-            identificador: str = self._gerar_hash(
-                str(data_transacao), descricao_limpa, str(valor)
-            )
+            identificador: str = self._gerar_hash(str(data_transacao), descricao_limpa, str(valor))
 
             return Transacao(
                 data=data_transacao,
@@ -336,9 +322,7 @@ class ExtratorSantanderPDF(ExtratorBase):
                 arquivo_origem=str(arquivo.name),
             )
         except (ValueError, IndexError) as erro:
-            self.logger.warning(
-                "Transação ignorada: %s - %s", descricao, erro
-            )
+            self.logger.warning("Transação ignorada: %s - %s", descricao, erro)
             return None
 
     @staticmethod

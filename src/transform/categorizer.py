@@ -42,15 +42,17 @@ class Categorizer:
                 logger.error("Regex inválido em regra '%s': %s", nome, e)
                 continue
 
-            self.regras.append({
-                "nome": nome,
-                "regex": regex_compilado,
-                "categoria": regra.get("categoria"),
-                "classificacao": regra.get("classificacao"),
-                "tipo": regra.get("tipo"),
-                "tag_irpf": regra.get("tag_irpf"),
-                "regra_valor": regra.get("regra_valor"),
-            })
+            self.regras.append(
+                {
+                    "nome": nome,
+                    "regex": regex_compilado,
+                    "categoria": regra.get("categoria"),
+                    "classificacao": regra.get("classificacao"),
+                    "tipo": regra.get("tipo"),
+                    "tag_irpf": regra.get("tag_irpf"),
+                    "regra_valor": regra.get("regra_valor"),
+                }
+            )
 
         logger.info("Carregadas %d regras de categorização", len(self.regras))
 
@@ -82,10 +84,12 @@ class Categorizer:
 
         Busca na descrição original e no local. Primeira regra que casar é aplicada.
         """
-        texto_busca = " ".join([
-            transacao.get("_descricao_original", ""),
-            transacao.get("local", ""),
-        ])
+        texto_busca = " ".join(
+            [
+                transacao.get("_descricao_original", ""),
+                transacao.get("local", ""),
+            ]
+        )
         valor = transacao.get("valor", 0)
 
         for regra in self.regras:
@@ -145,7 +149,10 @@ class Categorizer:
             pct = (categorizadas / total) * 100
             logger.info(
                 "Categorização: %d/%d (%.1f%%) categorizadas, %d sem categoria",
-                categorizadas, total, pct, sem_categoria,
+                categorizadas,
+                total,
+                pct,
+                sem_categoria,
             )
 
         return transacoes
