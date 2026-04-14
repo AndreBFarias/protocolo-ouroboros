@@ -1,4 +1,4 @@
-"""Entrypoint principal do dashboard financeiro - Controle de Bordo."""
+"""Entrypoint principal do dashboard financeiro - Protocolo Ouroboros."""
 
 import sys
 from pathlib import Path
@@ -36,7 +36,7 @@ from src.dashboard.tema import (  # noqa: E402
 def _configurar_pagina() -> None:
     """Configura layout e metadados da página."""
     st.set_page_config(
-        page_title="Controle de Bordo",
+        page_title="Protocolo Ouroboros",
         layout="wide",
         initial_sidebar_state="expanded",
     )
@@ -51,7 +51,7 @@ def _sidebar(dados: dict) -> tuple[str, str, str]:
         Tupla com (período selecionado, pessoa, granularidade).
     """
     with st.sidebar:
-        st.title("Controle de Bordo")
+        st.title("Protocolo Ouroboros")
 
         if CAMINHO_XLSX.exists():
             import os

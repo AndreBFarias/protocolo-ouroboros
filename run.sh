@@ -5,6 +5,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
 VENV=".venv"
+XLSX="data/output/ouroboros_2026.xlsx"
 
 # ─────────────────────────────────────────────────────────────────
 # CORES ANSI -- desabilita se não estiver em TTY interativo
@@ -28,16 +29,6 @@ fi
 # ─────────────────────────────────────────────────────────────────
 # FUNÇÕES UTILITÁRIAS
 # ─────────────────────────────────────────────────────────────────
-type_slow() {
-    local text="$1"
-    local delay="${2:-0.02}"
-    for ((i=0; i<${#text}; i++)); do
-        printf "%s" "${text:$i:1}"
-        sleep "$delay"
-    done
-    echo ""
-}
-
 verificar_venv() {
     if [ ! -d "$VENV" ]; then
         echo -e "${RED}Ambiente virtual não encontrado.${NC}"
@@ -48,19 +39,19 @@ verificar_venv() {
 }
 
 backup_xlsx() {
-    if compgen -G "data/output/controle_bordo_*.xlsx" > /dev/null 2>&1; then
+    if compgen -G "data/output/ouroboros_*.xlsx" > /dev/null 2>&1; then
         BACKUP_DIR="data/output/backup/$(date +%Y%m%d_%H%M%S)"
         mkdir -p "$BACKUP_DIR"
-        cp data/output/controle_bordo_*.xlsx "$BACKUP_DIR/" 2>/dev/null || true
+        cp data/output/ouroboros_*.xlsx "$BACKUP_DIR/" 2>/dev/null || true
     fi
 }
 
 contar_transacoes() {
-    if compgen -G "data/output/controle_bordo_*.xlsx" > /dev/null 2>&1; then
+    if compgen -G "data/output/ouroboros_*.xlsx" > /dev/null 2>&1; then
         "$VENV/bin/python" -c "
 import openpyxl, sys
 from pathlib import Path
-arquivos = sorted(Path('data/output').glob('controle_bordo_*.xlsx'))
+arquivos = sorted(Path('data/output').glob('ouroboros_*.xlsx'))
 if not arquivos:
     print('0|0')
     sys.exit()
@@ -82,6 +73,27 @@ wb.close()
     fi
 }
 
+ultima_atualizacao() {
+    if [ -f "$XLSX" ]; then
+        stat -c '%Y' "$XLSX" 2>/dev/null | xargs -I{} date -d @{} '+%d/%m/%Y %H:%M' 2>/dev/null || echo "---"
+    else
+        echo "---"
+    fi
+}
+
+confirmar() {
+    local mensagem="$1"
+    echo -ne "  ${YELLOW}${mensagem} [s/N]: ${NC}"
+    read -r resposta
+    [[ "$resposta" =~ ^[sS]$ ]]
+}
+
+aguardar_retorno() {
+    echo ""
+    echo -ne "  ${DIM}Pressione Enter para voltar ao menu...${NC}"
+    read -r
+}
+
 # ─────────────────────────────────────────────────────────────────
 # BANNER E MENU
 # ─────────────────────────────────────────────────────────────────
@@ -90,48 +102,47 @@ exibir_banner() {
     dados=$(contar_transacoes)
     local transacoes="${dados%%|*}"
     local meses="${dados##*|}"
+    local atualizado
+    atualizado=$(ultima_atualizacao)
 
+    clear
     echo ""
-    echo -e "${CYAN}"
-    echo "  ╔══════════════════════════════════════════════╗"
-    echo "  ║                                              ║"
-    echo "  ║         CONTROLE DE BORDO                    ║"
-    echo "  ║         Pipeline Financeiro Pessoal          ║"
-    echo "  ║                                              ║"
-    echo "  ╚══════════════════════════════════════════════╝"
+    echo -e "${MAGENTA}"
+    echo "  ╔══════════════════════════════════════════════════╗"
+    echo "  ║                                                  ║"
+    echo "  ║           PROTOCOLO OUROBOROS                      ║"
+    echo "  ║           Pipeline Financeiro Pessoal            ║"
+    echo "  ║                                                  ║"
+    echo "  ╚══════════════════════════════════════════════════╝"
     echo -e "${NC}"
 
-    echo -e "  ${DIM}${transacoes} transações | ${meses} meses processados${NC}"
+    echo -e "  ${DIM}${transacoes} transações | ${meses} meses | Atualizado: ${atualizado}${NC}"
     echo ""
-    sleep 0.3
-
-    echo -ne "  ${MAGENTA}"
-    type_slow "...calculando balanço..." 0.03
-    echo -e "${NC}"
-    echo ""
-    sleep 0.4
 }
 
 exibir_menu() {
-    echo -e "  ${WHITE}O que deseja fazer?${NC}"
+    echo -e "  ${GREEN}${BOLD}PROCESSAMENTO${NC}"
+    echo -e "  ${GREEN}[1]${NC} Processar inbox          ${GREEN}[2]${NC} Processar mês"
+    echo -e "  ${GREEN}[3]${NC} Processar tudo"
     echo ""
-    echo -e "  ${GREEN}[1]${NC} Processar inbox"
-    echo -e "  ${GREEN}[2]${NC} Processar mês específico"
-    echo -e "  ${GREEN}[3]${NC} Processar todos os dados"
-    echo -e "  ${CYAN}[4]${NC} Abrir dashboard"
-    echo -e "  ${BLUE}[5]${NC} Sincronizar com Obsidian"
-    echo -e "  ${YELLOW}[6]${NC} Health check"
-    echo -e "  ${MAGENTA}[7]${NC} Gerar pacote IRPF"
-    echo -e "  ${RED}[8]${NC} Executar gauntlet"
-    echo -e "  ${DIM}[0]${NC} Sair"
+    echo -e "  ${CYAN}${BOLD}VISUALIZAÇÃO${NC}"
+    echo -e "  ${CYAN}[4]${NC} Dashboard Streamlit      ${CYAN}[5]${NC} Gerar relatório"
+    echo ""
+    echo -e "  ${BLUE}${BOLD}INTEGRAÇÃO${NC}"
+    echo -e "  ${BLUE}[6]${NC} Sincronizar Obsidian     ${BLUE}[7]${NC} Pacote IRPF"
+    echo ""
+    echo -e "  ${YELLOW}${BOLD}QUALIDADE${NC}"
+    echo -e "  ${YELLOW}[8]${NC} Health check             ${YELLOW}[9]${NC} Gauntlet"
+    echo ""
+    echo -e "  ${DIM}[0] Sair${NC}"
     echo ""
 }
 
 executar_menu() {
-    exibir_banner
-    exibir_menu
-
     while true; do
+        exibir_banner
+        exibir_menu
+
         echo -ne "  ${BOLD}> ${NC}"
         read -r escolha
 
@@ -141,8 +152,8 @@ executar_menu() {
                 echo -e "  ${GREEN}Processando inbox...${NC}"
                 echo ""
                 backup_xlsx
-                python -m src.inbox_processor
-                break
+                python -m src.inbox_processor || true
+                aguardar_retorno
                 ;;
             2)
                 echo ""
@@ -153,37 +164,60 @@ executar_menu() {
                 echo -e "  ${GREEN}Processando ${mes}...${NC}"
                 echo ""
                 backup_xlsx
-                python -m src.pipeline --mes "$mes"
-                break
+                python -m src.pipeline --mes "$mes" || true
+                aguardar_retorno
                 ;;
             3)
                 echo ""
-                echo -e "  ${GREEN}Processando todos os dados...${NC}"
-                echo ""
-                backup_xlsx
-                python -m src.pipeline --tudo
-                break
+                if confirmar "Processar TODOS os dados? Pode demorar."; then
+                    echo ""
+                    echo -e "  ${GREEN}Processando todos os dados...${NC}"
+                    echo ""
+                    backup_xlsx
+                    python -m src.pipeline --tudo || true
+                else
+                    echo -e "  ${DIM}Cancelado.${NC}"
+                fi
+                aguardar_retorno
                 ;;
             4)
                 echo ""
                 echo -e "  ${CYAN}Abrindo dashboard...${NC}"
                 echo ""
-                streamlit run src/dashboard/app.py
-                break
+                streamlit run src/dashboard/app.py || true
+                aguardar_retorno
                 ;;
             5)
                 echo ""
-                echo -e "  ${BLUE}Sincronizando com Obsidian...${NC}"
+                echo -ne "  ${CYAN}Mês do relatório (YYYY-MM) [$(date +%Y-%m)]: ${NC}"
+                read -r mes_rel
+                mes_rel="${mes_rel:-$(date +%Y-%m)}"
                 echo ""
-                python -m src.obsidian.sync
-                break
+                echo -e "  ${CYAN}Gerando relatório de ${mes_rel}...${NC}"
+                echo ""
+                python -c "
+import pandas as pd
+from src.load.relatorio import gerar_relatorio_mes
+from pathlib import Path
+xlsx = Path('data/output/ouroboros_2026.xlsx')
+if not xlsx.exists():
+    print('XLSX não encontrado. Execute o pipeline primeiro.')
+    raise SystemExit(1)
+df = pd.read_excel(xlsx, sheet_name='extrato')
+transacoes = df.to_dict('records')
+conteudo = gerar_relatorio_mes(transacoes, '${mes_rel}')
+saida = Path('data/output/${mes_rel}_relatorio.md')
+saida.write_text(conteudo, encoding='utf-8')
+print(f'Relatório salvo em {saida}')
+" || true
+                aguardar_retorno
                 ;;
             6)
                 echo ""
-                echo -e "  ${YELLOW}Executando health check...${NC}"
+                echo -e "  ${BLUE}Sincronizando com Obsidian...${NC}"
                 echo ""
-                python -m src.utils.health_check
-                break
+                python -m src.obsidian.sync || true
+                aguardar_retorno
                 ;;
             7)
                 echo ""
@@ -193,15 +227,22 @@ executar_menu() {
                 echo ""
                 echo -e "  ${MAGENTA}Gerando pacote IRPF ${ano}...${NC}"
                 echo ""
-                python -m src.irpf --ano "$ano"
-                break
+                python -m src.irpf --ano "$ano" || true
+                aguardar_retorno
                 ;;
             8)
                 echo ""
-                echo -e "  ${RED}Executando gauntlet...${NC}"
+                echo -e "  ${YELLOW}Executando health check...${NC}"
                 echo ""
-                python -m scripts.gauntlet.gauntlet "${@:2}"
-                break
+                python -m src.utils.health_check || true
+                aguardar_retorno
+                ;;
+            9)
+                echo ""
+                echo -e "  ${YELLOW}Executando gauntlet...${NC}"
+                echo ""
+                python -m scripts.gauntlet.gauntlet || true
+                aguardar_retorno
                 ;;
             0)
                 echo ""
@@ -210,7 +251,8 @@ executar_menu() {
                 exit 0
                 ;;
             *)
-                echo -e "  ${RED}Opção inválida. Escolha de 0 a 8.${NC}"
+                echo -e "  ${RED}Opção inválida. Escolha de 0 a 9.${NC}"
+                sleep 1
                 ;;
         esac
     done
@@ -221,42 +263,64 @@ executar_menu() {
 # ─────────────────────────────────────────────────────────────────
 verificar_venv
 
+# Captura Ctrl+C para saída limpa
+trap 'echo -e "\n  ${DIM}Até a próxima.${NC}\n"; exit 0' INT
+
 case "${1:-}" in
     --inbox)
-        echo "=== Controle de Bordo -- Processando Inbox ==="
+        echo "=== Protocolo Ouroboros -- Processando Inbox ==="
         backup_xlsx
         python -m src.inbox_processor
         ;;
     --mes)
         MES="${2:?Informe o mês no formato YYYY-MM}"
-        echo "=== Controle de Bordo -- Processando $MES ==="
+        echo "=== Protocolo Ouroboros -- Processando $MES ==="
         backup_xlsx
         python -m src.pipeline --mes "$MES"
         ;;
     --tudo)
-        echo "=== Controle de Bordo -- Processando todos os dados ==="
+        echo "=== Protocolo Ouroboros -- Processando todos os dados ==="
         backup_xlsx
         python -m src.pipeline --tudo
         ;;
     --dashboard)
-        echo "=== Controle de Bordo -- Dashboard ==="
+        echo "=== Protocolo Ouroboros -- Dashboard ==="
         streamlit run src/dashboard/app.py
         ;;
     --check)
-        echo "=== Controle de Bordo -- Health Check ==="
+        echo "=== Protocolo Ouroboros -- Health Check ==="
         python -m src.utils.health_check
+        ;;
+    --relatorio)
+        MES="${2:-$(date +%Y-%m)}"
+        echo "=== Protocolo Ouroboros -- Relatório $MES ==="
+        python -c "
+import pandas as pd
+from src.load.relatorio import gerar_relatorio_mes
+from pathlib import Path
+xlsx = Path('data/output/ouroboros_2026.xlsx')
+if not xlsx.exists():
+    print('XLSX não encontrado. Execute o pipeline primeiro.')
+    raise SystemExit(1)
+df = pd.read_excel(xlsx, sheet_name='extrato')
+transacoes = df.to_dict('records')
+conteudo = gerar_relatorio_mes(transacoes, '$MES')
+saida = Path('data/output/${MES}_relatorio.md')
+saida.write_text(conteudo, encoding='utf-8')
+print(f'Relatório salvo em {saida}')
+"
         ;;
     --irpf)
         ANO="${2:?Informe o ano}"
-        echo "=== Controle de Bordo -- IRPF $ANO ==="
+        echo "=== Protocolo Ouroboros -- IRPF $ANO ==="
         python -m src.irpf --ano "$ANO"
         ;;
     --sync)
-        echo "=== Controle de Bordo -- Sincronizando com Obsidian ==="
+        echo "=== Protocolo Ouroboros -- Sincronizando com Obsidian ==="
         python -m src.obsidian.sync
         ;;
     --gauntlet)
-        echo "=== Controle de Bordo -- Gauntlet ==="
+        echo "=== Protocolo Ouroboros -- Gauntlet ==="
         python -m scripts.gauntlet.gauntlet "${@:2}"
         ;;
     --menu)
@@ -273,6 +337,7 @@ case "${1:-}" in
         echo "  --mes YYYY-MM     Processa um mês específico"
         echo "  --tudo            Processa todos os dados disponíveis"
         echo "  --dashboard       Abre o dashboard Streamlit"
+        echo "  --relatorio [MM]  Gera relatório do mês (padrão: atual)"
         echo "  --check           Health check do ambiente"
         echo "  --irpf ANO        Gera pacote IRPF do ano"
         echo "  --sync            Sincroniza relatórios com vault Obsidian"

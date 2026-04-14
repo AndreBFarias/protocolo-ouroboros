@@ -1,4 +1,4 @@
-# Auditoria de Sprints -- Controle de Bordo
+# Auditoria de Sprints -- Protocolo Ouroboros
 
 Registro sincero do que foi entregue, do que ficou pendente e das lições de cada sprint.
 

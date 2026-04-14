@@ -1,4 +1,4 @@
-"""Gauntlet -- Sistema de validação do Controle de Bordo.
+"""Gauntlet -- Sistema de validação do Protocolo Ouroboros.
 
 Inspirado no gauntlet da Luna. Testa o pipeline inteiro com dados sintéticos,
 sem mocks, gerando relatório detalhado em GAUNTLET_REPORT.md.
@@ -64,7 +64,7 @@ def _exibir_banner() -> None:
     console.print()
     console.print("  [bold cyan]╔══════════════════════════════════════════╗[/bold cyan]")
     console.print("  [bold cyan]║         GAUNTLET                        ║[/bold cyan]")
-    console.print("  [bold cyan]║         Controle de Bordo               ║[/bold cyan]")
+    console.print("  [bold cyan]║         Protocolo Ouroboros             ║[/bold cyan]")
     console.print("  [bold cyan]╚══════════════════════════════════════════╝[/bold cyan]")
     console.print()
 
@@ -173,7 +173,7 @@ def executar(fases_selecionadas: list[str] | None = None) -> int:
 def main() -> None:
     """Ponto de entrada CLI do gauntlet."""
     parser = argparse.ArgumentParser(
-        description="Gauntlet -- Sistema de validação do Controle de Bordo",
+        description="Gauntlet -- Sistema de validação do Protocolo Ouroboros",
     )
     parser.add_argument(
         "--apenas",

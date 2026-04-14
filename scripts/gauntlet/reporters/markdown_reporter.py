@@ -22,7 +22,7 @@ def gerar_relatorio(
 
     linhas: list[str] = []
 
-    linhas.append("# Relatório Gauntlet -- Controle de Bordo")
+    linhas.append("# Relatório Gauntlet -- Protocolo Ouroboros")
     linhas.append("")
     linhas.append(
         f"Data: {agora} | Duração: {duracao_total:.1f}s | "

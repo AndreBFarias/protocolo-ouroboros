@@ -235,7 +235,7 @@ def _filtrar_por_mes(transacoes: list[dict], mes: str) -> list[dict]:
 
 def executar(mes: str | None = None, processar_tudo: bool = False) -> None:
     """Executa o pipeline completo."""
-    logger.info("=== Controle de Bordo -- Pipeline ===")
+    logger.info("=== Protocolo Ouroboros -- Pipeline ===")
 
     # 1. Descobrir extratores
     classes_extratores = _descobrir_extratores()
@@ -273,7 +273,7 @@ def executar(mes: str | None = None, processar_tudo: bool = False) -> None:
 
     # 10. Gerar XLSX
     ano = mes[:4] if mes else str(datetime.now().year)
-    caminho_xlsx = DIR_OUTPUT / f"controle_bordo_{ano}.xlsx"
+    caminho_xlsx = DIR_OUTPUT / f"ouroboros_{ano}.xlsx"
     gerar_xlsx(transacoes_filtradas, caminho_xlsx, CONTROLE_ANTIGO)
 
     # 11. Gerar relatórios

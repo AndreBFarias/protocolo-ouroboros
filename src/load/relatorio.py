@@ -1,4 +1,4 @@
-"""Geração de relatório mensal em Markdown."""
+"""Geração de relatório mensal em Markdown formatado para GitHub."""
 
 from datetime import date
 from pathlib import Path
@@ -6,6 +6,16 @@ from typing import Any, Optional
 
 import yaml
 
+from src.load.formatacao_md import (
+    barra_progresso_unicode,
+    cabecalho_relatorio,
+    formatar_valor,
+    gerar_mermaid_pie,
+    linha_badges,
+    secao_colapsavel,
+    tabela_categorias,
+    tabela_classificacao,
+)
 from src.utils.logger import configurar_logger
 
 logger = configurar_logger("relatorio")
@@ -22,11 +32,6 @@ def _agrupar_por_mes(transacoes: list[dict]) -> dict[str, list[dict]]:
     return por_mes
 
 
-def _formatar_valor(valor: float) -> str:
-    """Formata valor monetário no padrão brasileiro."""
-    return f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-
-
 def _carregar_metas() -> list[dict[str, Any]]:
     """Carrega metas do arquivo YAML."""
     if not CAMINHO_METAS.exists():
@@ -40,50 +45,60 @@ def _carregar_metas() -> list[dict[str, Any]]:
         return []
 
 
-def _barra_progresso_ascii(progresso: float, largura: int = 20) -> str:
-    """Gera barra de progresso ASCII. Progresso de 0.0 a 1.0."""
-    preenchido = int(progresso * largura)
-    vazio = largura - preenchido
-    return f"[{'#' * preenchido}{'.' * vazio}] {progresso * 100:.0f}%"
-
-
 def _gerar_secao_metas() -> list[str]:
-    """Gera seção de metas com barras de progresso ASCII."""
+    """Gera seção de metas com barras de progresso Unicode."""
     metas = _carregar_metas()
     if not metas:
         return []
 
-    linhas: list[str] = ["## Metas", ""]
+    linhas_tabela: list[str] = [
+        "| Meta | Progresso | Prazo |",
+        "|:-----|:----------|:------|",
+    ]
 
     for meta in sorted(metas, key=lambda m: m.get("prioridade", 99)):
         nome = meta.get("nome", "Sem nome")
-        prazo = meta.get("prazo", "")
-        prioridade = meta.get("prioridade", 0)
-        nota = meta.get("nota", "")
+        prazo = meta.get("prazo", "---")
         tipo = meta.get("tipo", "valor")
 
         if tipo == "binario":
-            linhas.append(f"- **{nome}** (P{prioridade}) -- Prazo: {prazo} -- [ ] Pendente")
+            linhas_tabela.append(f"| {nome} | Pendente | {prazo} |")
         else:
             valor_alvo = meta.get("valor_alvo", 0)
             valor_atual = meta.get("valor_atual", 0)
             progresso = min(valor_atual / valor_alvo, 1.0) if valor_alvo > 0 else 0.0
-            barra = _barra_progresso_ascii(progresso)
-            linhas.append(
-                f"- **{nome}** (P{prioridade}) -- "
-                f"{_formatar_valor(valor_atual)} / {_formatar_valor(valor_alvo)} -- "
-                f"Prazo: {prazo}"
-            )
-            linhas.append(f"  {barra}")
+            barra = barra_progresso_unicode(progresso)
+            linhas_tabela.append(f"| {nome} | {barra} | {prazo} |")
 
-        if nota:
-            linhas.append(f"  *{nota}*")
-
+    conteudo_detalhado: list[str] = []
+    for meta in sorted(metas, key=lambda m: m.get("prioridade", 99)):
+        nome = meta.get("nome", "Sem nome")
+        nota = meta.get("nota", "")
         deps = meta.get("depende_de", [])
-        if deps:
-            linhas.append(f"  Depende de: {', '.join(deps)}")
+        tipo = meta.get("tipo", "valor")
 
-    linhas.append("")
+        detalhes: list[str] = [f"**{nome}**"]
+        if tipo != "binario":
+            valor_alvo = meta.get("valor_alvo", 0)
+            valor_atual = meta.get("valor_atual", 0)
+            detalhes.append(f"  {formatar_valor(valor_atual)} / {formatar_valor(valor_alvo)}")
+        if nota:
+            detalhes.append(f"  *{nota}*")
+        if deps:
+            detalhes.append(f"  Depende de: {', '.join(deps)}")
+        conteudo_detalhado.append("\n".join(detalhes))
+
+    detalhes_md = "\n\n".join(conteudo_detalhado)
+
+    linhas: list[str] = [
+        "## Metas",
+        "",
+        "\n".join(linhas_tabela),
+        "",
+        secao_colapsavel("Detalhes das metas", detalhes_md),
+        "",
+    ]
+
     return linhas
 
 
@@ -99,36 +114,31 @@ def _gerar_secao_projecao(transacoes: list[dict], mes_ref: str) -> list[str]:
     if receita_media == 0.0 and despesa_media == 0.0:
         return []
 
-    n_meses = 3
     projecao_6m = saldo_medio * 6
     projecao_12m = saldo_medio * 12
 
     linhas: list[str] = [
         "## Projeção",
         "",
-        f"- Receita média (últimos {n_meses} meses): {_formatar_valor(receita_media)}",
-        f"- Despesa média (últimos {n_meses} meses): {_formatar_valor(despesa_media)}",
-        f"- Saldo médio mensal: {_formatar_valor(saldo_medio)}",
+        "| Métrica | Valor |",
+        "|:--------|------:|",
+        f"| Receita média (3 meses) | {formatar_valor(receita_media)} |",
+        f"| Despesa média (3 meses) | {formatar_valor(despesa_media)} |",
+        f"| Saldo médio mensal | {formatar_valor(saldo_medio)} |",
+        f"| Projeção 6 meses | {formatar_valor(projecao_6m)} |",
+        f"| Projeção 12 meses | {formatar_valor(projecao_12m)} |",
         "",
     ]
 
     if saldo_medio > 0:
-        linhas.append(f"- Projeção 6 meses (acumulado): {_formatar_valor(projecao_6m)}")
-        linhas.append(f"- Projeção 12 meses (acumulado): {_formatar_valor(projecao_12m)}")
-        linhas.append("")
         linhas.append(
-            "Se mantiver o ritmo atual, sobram "
-            f"{_formatar_valor(projecao_6m)} em 6 meses e "
-            f"{_formatar_valor(projecao_12m)} em 12 meses."
+            f"> No ritmo atual, sobram {formatar_valor(projecao_6m)} em 6 meses "
+            f"e {formatar_valor(projecao_12m)} em 12 meses."
         )
     else:
-        linhas.append(f"- Projeção 6 meses (déficit): {_formatar_valor(projecao_6m)}")
-        linhas.append(f"- Projeção 12 meses (déficit): {_formatar_valor(projecao_12m)}")
-        linhas.append("")
         linhas.append(
-            "**ALERTA:** No ritmo atual, faltam "
-            f"{_formatar_valor(abs(projecao_6m))} em 6 meses e "
-            f"{_formatar_valor(abs(projecao_12m))} em 12 meses."
+            f"> **ALERTA:** No ritmo atual, faltam {formatar_valor(abs(projecao_6m))} "
+            f"em 6 meses e {formatar_valor(abs(projecao_12m))} em 12 meses."
         )
 
     linhas.append("")
@@ -136,7 +146,7 @@ def _gerar_secao_projecao(transacoes: list[dict], mes_ref: str) -> list[str]:
 
 
 def _gerar_secao_irpf(transacoes: list[dict], mes_ref: str) -> list[str]:
-    """Gera seção de IRPF acumulado no ano."""
+    """Gera seção de IRPF acumulado no ano (colapsável)."""
     ano = mes_ref[:4]
     transacoes_ano = [
         t for t in transacoes
@@ -161,16 +171,18 @@ def _gerar_secao_irpf(transacoes: list[dict], mes_ref: str) -> list[str]:
         if t.get("tipo") == "Imposto" or t.get("tag_irpf") == "imposto_pago"
     )
 
-    linhas: list[str] = [
-        f"## IRPF Acumulado ({ano})",
-        "",
-        f"- Rendimentos tributáveis (Salário + PJ): {_formatar_valor(rendimentos_tributaveis)}",
-        f"- Despesas dedutíveis (saúde): {_formatar_valor(despesas_dedutiveis)}",
-        f"- Impostos pagos (DARF/DAS): {_formatar_valor(impostos_pagos)}",
+    conteudo = (
+        f"| Métrica | Valor |\n"
+        f"|:--------|------:|\n"
+        f"| Rendimentos tributáveis | {formatar_valor(rendimentos_tributaveis)} |\n"
+        f"| Despesas dedutíveis (saúde) | {formatar_valor(despesas_dedutiveis)} |\n"
+        f"| Impostos pagos (DARF/DAS) | {formatar_valor(impostos_pagos)} |"
+    )
+
+    return [
+        secao_colapsavel(f"IRPF Acumulado ({ano})", conteudo),
         "",
     ]
-
-    return linhas
 
 
 def gerar_relatorio_mes(
@@ -179,7 +191,6 @@ def gerar_relatorio_mes(
     transacoes_mes_anterior: Optional[list[dict]] = None,
 ) -> str:
     """Gera o relatório markdown de um mês específico."""
-    # Filtrar transações do mês (excluir transferências internas)
     transacoes_mes = [
         t
         for t in transacoes
@@ -194,17 +205,19 @@ def gerar_relatorio_mes(
     receitas = sum(t["valor"] for t in transacoes_mes if t.get("tipo") == "Receita")
     despesas = sum(t["valor"] for t in transacoes_mes if t.get("tipo") in ("Despesa", "Imposto"))
     saldo = receitas - despesas
+    poupanca = (saldo / receitas * 100) if receitas > 0 else 0.0
 
-    # Top 5 categorias
     gastos_categoria: dict[str, float] = {}
+    classificacao_categoria: dict[str, str] = {}
     for t in transacoes_mes:
         if t.get("tipo") in ("Despesa", "Imposto"):
             cat = t.get("categoria", "Outros")
             gastos_categoria[cat] = gastos_categoria.get(cat, 0) + t["valor"]
+            if cat not in classificacao_categoria:
+                classificacao_categoria[cat] = t.get("classificacao", "N/A")
 
-    top_categorias = sorted(gastos_categoria.items(), key=lambda x: x[1], reverse=True)[:5]
+    top_categorias = sorted(gastos_categoria.items(), key=lambda x: x[1], reverse=True)[:10]
 
-    # Classificações
     obrigatorio = sum(
         t["valor"]
         for t in transacoes_mes
@@ -221,24 +234,30 @@ def gerar_relatorio_mes(
         if t.get("classificacao") == "Supérfluo" and t.get("tipo") in ("Despesa", "Imposto")
     )
 
-    # Sem categoria
     sem_categoria = [t for t in transacoes_mes if t.get("categoria") == "Outros"]
 
-    # Montar relatório
-    linhas = [
-        f"# Relatório Financeiro -- {mes_ref}",
-        "",
-        "---",
-        "",
-        "## Resumo",
-        "",
-        f"- Receita: {_formatar_valor(receitas)}",
-        f"- Despesa: {_formatar_valor(despesas)}",
-        f"- Saldo: {_formatar_valor(saldo)}",
-        "",
-    ]
+    # -- Montar relatório --
 
-    # Comparativo com mês anterior
+    linhas: list[str] = []
+
+    # Header com logo e badges
+    linhas.append(cabecalho_relatorio(mes_ref))
+    linhas.append("")
+    linhas.append(linha_badges(receitas, despesas, saldo, poupanca))
+    linhas.append("")
+    linhas.append("---")
+    linhas.append("")
+
+    # Resumo em tabela
+    linhas.append("## Resumo")
+    linhas.append("")
+    linhas.append("| Métrica | Valor |")
+    linhas.append("|:--------|------:|")
+    linhas.append(f"| Receita total | {formatar_valor(receitas)} |")
+    linhas.append(f"| Despesa total | {formatar_valor(despesas)} |")
+    linhas.append(f"| Saldo | {formatar_valor(saldo)} |")
+    linhas.append(f"| Taxa de poupança | {poupanca:.1f}% |")
+
     if transacoes_mes_anterior:
         desp_ant = sum(
             t["valor"]
@@ -247,60 +266,34 @@ def gerar_relatorio_mes(
         )
         diff = despesas - desp_ant
         sinal = "+" if diff > 0 else ""
-        linhas.append(f"- Variação vs mês anterior: {sinal}{_formatar_valor(diff)}")
+        linhas.append(f"| vs mês anterior | {sinal}{formatar_valor(diff)} |")
+
+    linhas.append("")
+
+    # Mermaid pie chart
+    if gastos_categoria:
+        linhas.append("## Categorias")
+        linhas.append("")
+        linhas.append(gerar_mermaid_pie(gastos_categoria))
         linhas.append("")
 
-    # Top 5 categorias
-    linhas.extend(
-        [
-            "## Top 5 Categorias de Gasto",
-            "",
-            "| Categoria | Valor | % do total |",
-            "|-----------|-------|-----------|",
+        # Top 10 colapsável
+        dados_tabela = [
+            (cat, valor, (valor / despesas * 100) if despesas > 0 else 0.0,
+             classificacao_categoria.get(cat, "N/A"))
+            for cat, valor in top_categorias
         ]
-    )
-    for cat, valor in top_categorias:
-        pct = (valor / despesas * 100) if despesas > 0 else 0
-        linhas.append(f"| {cat} | {_formatar_valor(valor)} | {pct:.1f}% |")
-    linhas.append("")
+        conteudo_top10 = tabela_categorias(dados_tabela)
+        linhas.append(secao_colapsavel("Top 10 Categorias", conteudo_top10))
+        linhas.append("")
 
     # Classificação
-    linhas.extend(
-        [
-            "## Por Classificação",
-            "",
-            f"- Obrigatório: {_formatar_valor(obrigatorio)}",
-            f"- Questionável: {_formatar_valor(questionavel)}",
-            f"- Supérfluo: {_formatar_valor(superfluo)}",
-            "",
-        ]
-    )
-
-    # Alertas
-    linhas.extend(["## Alertas", ""])
-    if len(sem_categoria) > 0:
-        linhas.append(f"- {len(sem_categoria)} transações sem categoria reconhecida")
-    if superfluo > 500:
-        linhas.append(f"- Gastos supérfluos acima de R$ 500: {_formatar_valor(superfluo)}")
-    if saldo < 0:
-        linhas.append(f"- [ALERTA] Saldo negativo no mês: {_formatar_valor(saldo)}")
-    if not any("ALERTA" in linha or "transações" in linha for linha in linhas[-3:]):
-        linhas.append("- Nenhum alerta crítico")
+    linhas.append("## Classificação")
+    linhas.append("")
+    linhas.append(tabela_classificacao(obrigatorio, questionavel, superfluo))
     linhas.append("")
 
-    # Transferências internas
-    total_transf = sum(t["valor"] for t in transferencias)
-    linhas.extend(
-        [
-            "## Transferências Internas",
-            "",
-            f"- Total movimentado entre contas: {_formatar_valor(total_transf)}",
-            f"- Quantidade: {len(transferencias)} transações",
-            "",
-        ]
-    )
-
-    # Transações por pessoa
+    # Gastos por pessoa
     gastos_andre = sum(
         t["valor"]
         for t in transacoes_mes
@@ -311,35 +304,66 @@ def gerar_relatorio_mes(
         for t in transacoes_mes
         if t.get("quem") == "Vitória" and t.get("tipo") in ("Despesa", "Imposto")
     )
-    linhas.extend(
-        [
-            "## Gastos por Pessoa",
-            "",
-            f"- André: {_formatar_valor(gastos_andre)}",
-            f"- Vitória: {_formatar_valor(gastos_vitoria)}",
-            "",
-        ]
-    )
 
+    conteudo_pessoa = (
+        "| Pessoa | Valor |\n"
+        "|:-------|------:|\n"
+        f"| André | {formatar_valor(gastos_andre)} |\n"
+        f"| Vitória | {formatar_valor(gastos_vitoria)} |"
+    )
+    linhas.append(secao_colapsavel("Gastos por Pessoa", conteudo_pessoa))
+    linhas.append("")
+
+    # Transferências internas
+    total_transf = sum(t["valor"] for t in transferencias)
+    if transferencias:
+        conteudo_transf = (
+            f"- Total movimentado entre contas: {formatar_valor(total_transf)}\n"
+            f"- Quantidade: {len(transferencias)} transações"
+        )
+        linhas.append(secao_colapsavel("Transferências Internas", conteudo_transf))
+        linhas.append("")
+
+    # Alertas
+    alertas: list[str] = []
+    if len(sem_categoria) > 0:
+        alertas.append(f"- {len(sem_categoria)} transações sem categoria reconhecida")
+    if superfluo > 500:
+        alertas.append(f"- Gastos supérfluos acima de R$ 500: {formatar_valor(superfluo)}")
+    if saldo < 0:
+        alertas.append(f"- **ALERTA:** Saldo negativo no mês: {formatar_valor(saldo)}")
+
+    if alertas:
+        linhas.append("## Alertas")
+        linhas.append("")
+        linhas.extend(alertas)
+        linhas.append("")
+
+    # Metas
     secao_metas = _gerar_secao_metas()
     if secao_metas:
         linhas.extend(secao_metas)
 
+    # Projeção
     secao_projecao = _gerar_secao_projecao(transacoes, mes_ref)
     if secao_projecao:
         linhas.extend(secao_projecao)
 
+    # IRPF
     secao_irpf = _gerar_secao_irpf(transacoes, mes_ref)
     if secao_irpf:
         linhas.extend(secao_irpf)
 
-    linhas.extend(
-        [
-            "---",
-            "",
-            f"*Gerado automaticamente em {date.today().isoformat()}*",
-        ]
-    )
+    # Footer
+    linhas.extend([
+        "---",
+        "",
+        '<div align="center">',
+        "",
+        f"*Gerado automaticamente em {date.today().isoformat()}*",
+        "",
+        "</div>",
+    ])
 
     return "\n".join(linhas)
 

@@ -1,4 +1,4 @@
-# Sprint 09 -- Testes e CI/CD
+# Sprint 17 -- Testes e CI/CD
 
 ## Status: Parcialmente coberta pelo gauntlet
 Issue: a criar

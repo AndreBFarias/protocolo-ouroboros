@@ -1,4 +1,4 @@
-# Roadmap -- Controle de Bordo
+# Roadmap -- Protocolo Ouroboros
 
 ```
 VERSÃO: 3.0 | SPRINTS: 14 | CONCLUÍDAS: 6/14
@@ -135,7 +135,7 @@ GitHub-readiness: README.md público, screenshots, badges CI, documentação com
 
 | Projeto | Caminho | Descrição |
 |---------|---------|-----------|
-| **Finanças** (este) | `~/Desenvolvimento/Financas` | Pipeline ETL financeiro maduro, 38 arquivos Python |
+| **Protocolo Ouroboros** (este) | `~/Desenvolvimento/protocolo-ouroboros` | Pipeline ETL financeiro maduro, 38 arquivos Python |
 | **Controle_de_Bordo_OS** | `~/Desenvolvimento/Controle_de_Bordo_OS` | Blueprint arquitetural hexagonal, 20 sprints planejadas |
 | **Vault Obsidian** | `~/Controle de Bordo` | 1.202 notas, 24 plugins, organização PARA |
 

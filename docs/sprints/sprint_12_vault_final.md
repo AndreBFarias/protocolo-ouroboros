@@ -1,15 +1,15 @@
-# Sprint 13 -- Integração Vault Final
+# Sprint 12 -- Integração Vault Final
 
 ## Status: Pendente
 Issue: a criar
 
 ## Objetivo
 
-Centralizar o ecossistema pessoal em um único sistema. Avaliar melhor estratégia de unificação entre os 3 projetos (Financas, Controle_de_Bordo_OS, vault Obsidian).
+Centralizar o ecossistema pessoal em um único sistema. Avaliar melhor estratégia de unificação entre os 3 projetos (Protocolo Ouroboros, Controle_de_Bordo_OS, vault Obsidian).
 
 ## Contexto dos 3 projetos
 
-### Financas (este projeto)
+### Protocolo Ouroboros (este projeto)
 - Pipeline ETL maduro, 38 arquivos Python, 2.859 transações
 - Streamlit dashboard, 8 abas XLSX, gauntlet de testes
 

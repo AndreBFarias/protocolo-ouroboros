@@ -1,4 +1,4 @@
-# Modelos de Dados -- Controle de Bordo
+# Modelos de Dados -- Protocolo Ouroboros
 
 Documentação de todos os schemas utilizados no pipeline, incluindo tabelas do XLSX (8 abas) e dataclass interna.
 

@@ -1,4 +1,4 @@
-"""Módulo de carregamento e cache de dados do controle de bordo."""
+"""Módulo de carregamento e cache de dados do Protocolo Ouroboros."""
 
 from pathlib import Path
 
@@ -6,7 +6,7 @@ import pandas as pd
 import streamlit as st
 
 CAMINHO_XLSX: Path = (
-    Path(__file__).resolve().parents[2] / "data" / "output" / "controle_bordo_2026.xlsx"
+    Path(__file__).resolve().parents[2] / "data" / "output" / "ouroboros_2026.xlsx"
 )
 
 ABAS: list[str] = [

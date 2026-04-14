@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Protocolo Ouroboros
+Comment=Pipeline Financeiro Pessoal
+Exec=bash -c 'cd ~/Desenvolvimento/protocolo-ouroboros && ./run.sh'
+Icon=/home/andrefarias/Desenvolvimento/protocolo-ouroboros/assets/icon.png
+Terminal=true
+Type=Application
+Categories=Finance;Office;
+StartupNotify=false
