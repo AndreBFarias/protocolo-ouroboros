@@ -1,0 +1,43 @@
+metas:
+  - nome: "Reserva de emergência"
+    valor_alvo: 27000
+    valor_atual: 0
+    prioridade: 1
+    prazo: "2026-12"
+
+  - nome: "Quitar dívida Nubank PF (Vitória)"
+    valor_alvo: 13049
+    prioridade: 2
+    prazo: "2030-09"
+    nota: "Deixando caducar. Prescrição em set/2030"
+
+  - nome: "Quitar dívida Nubank PJ (Vitória)"
+    valor_alvo: 10783
+    prioridade: 2
+    prazo: "2030-09"
+    nota: "Deixando caducar"
+
+  - nome: "Plano de saúde ativo"
+    tipo: "binario"
+    prioridade: 1
+    prazo: "2026-06"
+
+  - nome: "Sair da Infobase"
+    tipo: "binario"
+    prioridade: 1
+    prazo: "2026-07"
+    depende_de: ["Reserva de emergência > 5000", "Plano de saúde ativo"]
+
+  - nome: "Entrada apartamento Novo Gama"
+    valor_alvo: 50000
+    valor_atual: 0
+    prioridade: 3
+    prazo: "2028-06"
+
+  - nome: "CNH (André + Vitória)"
+    valor_alvo: 8000
+    valor_atual: 0
+    prioridade: 4
+    prazo: "2027-06"
+
+# "Quem não sabe o que procura não entende o que encontra." -- Claude Bernard

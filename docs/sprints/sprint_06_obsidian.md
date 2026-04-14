@@ -1,29 +1,38 @@
-# Sprint 06 - Integração com Vault Obsidian
+# Sprint 06 -- Integração Obsidian
+
+## Status: Em andamento
+Issue: #6
 
 ## Objetivo
 
-Integrar o pipeline financeiro com o vault Obsidian existente em ~/Controle de Bordo/. Relatórios financeiros devem aparecer automaticamente no vault com backlinks, frontmatter e queries Dataview funcionais.
+Integrar o pipeline financeiro com o vault Obsidian existente. Relatórios financeiros devem aparecer automaticamente no vault com backlinks, frontmatter YAML e queries Dataview funcionais.
 
 ## Entregas
 
-- [ ] Sync automático: copiar relatório MD para vault após execução de ./run.sh
+- [ ] Sync automático para vault após execução do pipeline
+- [ ] Frontmatter YAML em cada relatório (tags, aliases, datas)
 - [ ] Backlinks entre relatórios mensais, metas e dívidas
-- [ ] Frontmatter YAML em cada relatório (tags, aliases, datas, categorias para Dataview)
-- [ ] Templates de relatório compatíveis com a estrutura existente do vault
-- [ ] Dataview queries pré-configuradas (resumo mensal, evolução de metas, dívidas ativas)
+- [ ] Dataview queries pré-configuradas (resumo mensal, evolução de metas)
+- [ ] MOC (Map of Content) financeiro
+
+## Armadilhas conhecidas
+
+- Código criado por subagente sem validação completa (créditos esgotados antes de testar)
+- Vault existe em ~/Controle de Bordo/ com estrutura PARA -- integração deve respeitar essa organização
+- Frontmatter precisa ser compatível com plugins Dataview e Templater
+
+## Arquivos criados/modificados
+
+| Arquivo | Descrição |
+|---------|-----------|
+| `src/obsidian/__init__.py` | Init do módulo obsidian |
+| `src/obsidian/sync.py` | Sincronizador vault-pipeline (349 linhas) |
+| `run.sh` | Modificado: flag --sync adicionada |
+
+## Critério de sucesso
+
+Relatórios aparecem no vault com frontmatter correto. Dataview queries retornam dados corretos. Backlinks navegáveis entre documentos.
 
 ## Dependências
 
-Sprint 5 (relatórios automáticos completos).
-
-## Critério de Sucesso
-
-Relatórios aparecem no vault Obsidian com links navegáveis e queries Dataview retornando dados corretos.
-
-## Nota
-
-O vault já existe em ~/Controle de Bordo/ com estrutura PARA (Projects, Areas, Resources, Archives). A integração deve respeitar essa organização existente.
-
-## Estimativa de Complexidade
-
-**Média.** Maior desafio é manter compatibilidade com a estrutura PARA existente e garantir que frontmatter e backlinks sigam as convenções do vault. Estimativa: 1-1.5 semanas.
+Sprint 05 (relatórios automáticos completos).

@@ -36,7 +36,8 @@ def _criar_card_metrica(titulo: str, valor: str, cor: str) -> str:
         margin: 5px 0;
     ">
         <p style="color: #AAAAAA; font-size: 14px; margin: 0;">{titulo}</p>
-        <p style="color: {cor}; font-size: 28px; font-weight: bold; margin: 5px 0 0 0;">{valor}</p>
+        <p style="color: {cor}; font-size: 24px; font-weight: bold;
+            margin: 5px 0 0 0; white-space: nowrap;">{valor}</p>
     </div>
     """
 
@@ -215,12 +216,13 @@ def _grafico_pizza_classificacao(
     )])
 
     fig.update_layout(
-        title="Distribuição por Classificação",
+        title="Classificação",
         plot_bgcolor=CORES["fundo"],
         paper_bgcolor=CORES["fundo"],
         font=dict(color="#FAFAFA"),
-        margin=dict(l=20, r=20, t=60, b=20),
-        showlegend=False,
+        margin=dict(l=10, r=10, t=50, b=10),
+        showlegend=True,
+        legend=dict(orientation="h", yanchor="bottom", y=-0.1),
     )
 
     st.plotly_chart(fig, use_container_width=True)

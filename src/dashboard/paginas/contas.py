@@ -53,9 +53,16 @@ def _secao_dividas(df: pd.DataFrame, mes: str) -> None:
     tabela = df_exibir[["custo", "valor_fmt", "status_visual", "obs"]].copy()
     tabela.columns = ["Custo", "Valor", "Status", "Observação"]
 
-    st.markdown(
-        _gerar_html_tabela(tabela, df_exibir["status"].tolist()),
-        unsafe_allow_html=True,
+    st.dataframe(
+        tabela,
+        use_container_width=True,
+        hide_index=True,
+        column_config={
+            "Custo": st.column_config.TextColumn("Custo", width="medium"),
+            "Valor": st.column_config.TextColumn("Valor", width="small"),
+            "Status": st.column_config.TextColumn("Status", width="small"),
+            "Observação": st.column_config.TextColumn("Observação", width="medium"),
+        },
     )
 
 
@@ -142,7 +149,8 @@ def _card_resumo(titulo: str, valor: str, cor: str) -> str:
         margin: 5px 0 15px 0;
     ">
         <p style="color: #AAAAAA; font-size: 13px; margin: 0;">{titulo}</p>
-        <p style="color: {cor}; font-size: 22px; font-weight: bold; margin: 5px 0 0 0;">{valor}</p>
+        <p style="color: {cor}; font-size: 20px; font-weight: bold;
+            margin: 5px 0 0 0; white-space: nowrap;">{valor}</p>
     </div>
     """
 

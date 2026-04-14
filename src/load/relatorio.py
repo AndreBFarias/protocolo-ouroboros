@@ -2,11 +2,15 @@
 
 from datetime import date
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
+
+import yaml
 
 from src.utils.logger import configurar_logger
 
 logger = configurar_logger("relatorio")
+
+CAMINHO_METAS: Path = Path(__file__).resolve().parents[2] / "mappings" / "metas.yaml"
 
 
 def _agrupar_por_mes(transacoes: list[dict]) -> dict[str, list[dict]]:
@@ -21,6 +25,164 @@ def _agrupar_por_mes(transacoes: list[dict]) -> dict[str, list[dict]]:
 def _formatar_valor(valor: float) -> str:
     """Formata valor monetário no padrão brasileiro."""
     return f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
+
+def _carregar_metas() -> list[dict[str, Any]]:
+    """Carrega metas do arquivo YAML."""
+    if not CAMINHO_METAS.exists():
+        return []
+    try:
+        with open(CAMINHO_METAS, encoding="utf-8") as f:
+            dados = yaml.safe_load(f)
+        return dados.get("metas", [])
+    except Exception as e:
+        logger.warning("Erro ao carregar metas: %s", e)
+        return []
+
+
+def _barra_progresso_ascii(progresso: float, largura: int = 20) -> str:
+    """Gera barra de progresso ASCII. Progresso de 0.0 a 1.0."""
+    preenchido = int(progresso * largura)
+    vazio = largura - preenchido
+    return f"[{'#' * preenchido}{'.' * vazio}] {progresso * 100:.0f}%"
+
+
+def _gerar_secao_metas() -> list[str]:
+    """Gera seção de metas com barras de progresso ASCII."""
+    metas = _carregar_metas()
+    if not metas:
+        return []
+
+    linhas: list[str] = ["## Metas", ""]
+
+    for meta in sorted(metas, key=lambda m: m.get("prioridade", 99)):
+        nome = meta.get("nome", "Sem nome")
+        prazo = meta.get("prazo", "")
+        prioridade = meta.get("prioridade", 0)
+        nota = meta.get("nota", "")
+        tipo = meta.get("tipo", "valor")
+
+        if tipo == "binario":
+            linhas.append(f"- **{nome}** (P{prioridade}) -- Prazo: {prazo} -- [ ] Pendente")
+        else:
+            valor_alvo = meta.get("valor_alvo", 0)
+            valor_atual = meta.get("valor_atual", 0)
+            progresso = min(valor_atual / valor_alvo, 1.0) if valor_alvo > 0 else 0.0
+            barra = _barra_progresso_ascii(progresso)
+            linhas.append(
+                f"- **{nome}** (P{prioridade}) -- "
+                f"{_formatar_valor(valor_atual)} / {_formatar_valor(valor_alvo)} -- "
+                f"Prazo: {prazo}"
+            )
+            linhas.append(f"  {barra}")
+
+        if nota:
+            linhas.append(f"  *{nota}*")
+
+        deps = meta.get("depende_de", [])
+        if deps:
+            linhas.append(f"  Depende de: {', '.join(deps)}")
+
+    linhas.append("")
+    return linhas
+
+
+def _gerar_secao_projecao(transacoes: list[dict], mes_ref: str) -> list[str]:
+    """Gera seção de projeção calculando ritmo e estimativas."""
+    transacoes_validas = [
+        t for t in transacoes
+        if t.get("tipo") != "Transferência Interna" and t.get("mes_ref")
+    ]
+
+    if not transacoes_validas:
+        return []
+
+    meses_disponiveis = sorted({t["mes_ref"] for t in transacoes_validas}, reverse=True)
+    ultimos_3 = meses_disponiveis[:3]
+
+    recentes = [t for t in transacoes_validas if t.get("mes_ref") in ultimos_3]
+    n_meses = len(ultimos_3) or 1
+
+    receita_total = sum(t["valor"] for t in recentes if t.get("tipo") == "Receita")
+    despesa_total = sum(
+        t["valor"] for t in recentes if t.get("tipo") in ("Despesa", "Imposto")
+    )
+
+    receita_media = receita_total / n_meses
+    despesa_media = despesa_total / n_meses
+    saldo_medio = receita_media - despesa_media
+
+    projecao_6m = saldo_medio * 6
+    projecao_12m = saldo_medio * 12
+
+    linhas: list[str] = [
+        "## Projeção",
+        "",
+        f"- Receita média (últimos {n_meses} meses): {_formatar_valor(receita_media)}",
+        f"- Despesa média (últimos {n_meses} meses): {_formatar_valor(despesa_media)}",
+        f"- Saldo médio mensal: {_formatar_valor(saldo_medio)}",
+        "",
+    ]
+
+    if saldo_medio > 0:
+        linhas.append(f"- Projeção 6 meses (acumulado): {_formatar_valor(projecao_6m)}")
+        linhas.append(f"- Projeção 12 meses (acumulado): {_formatar_valor(projecao_12m)}")
+        linhas.append("")
+        linhas.append(
+            "Se mantiver o ritmo atual, sobram "
+            f"{_formatar_valor(projecao_6m)} em 6 meses e "
+            f"{_formatar_valor(projecao_12m)} em 12 meses."
+        )
+    else:
+        linhas.append(f"- Projeção 6 meses (déficit): {_formatar_valor(projecao_6m)}")
+        linhas.append(f"- Projeção 12 meses (déficit): {_formatar_valor(projecao_12m)}")
+        linhas.append("")
+        linhas.append(
+            "**ALERTA:** No ritmo atual, faltam "
+            f"{_formatar_valor(abs(projecao_6m))} em 6 meses e "
+            f"{_formatar_valor(abs(projecao_12m))} em 12 meses."
+        )
+
+    linhas.append("")
+    return linhas
+
+
+def _gerar_secao_irpf(transacoes: list[dict], mes_ref: str) -> list[str]:
+    """Gera seção de IRPF acumulado no ano."""
+    ano = mes_ref[:4]
+    transacoes_ano = [
+        t for t in transacoes
+        if t.get("mes_ref", "").startswith(ano) and t.get("tipo") != "Transferência Interna"
+    ]
+
+    if not transacoes_ano:
+        return []
+
+    rendimentos_tributaveis = sum(
+        t["valor"] for t in transacoes_ano
+        if t.get("tipo") == "Receita" and t.get("categoria") in ("Salário", "Renda PJ")
+    )
+
+    despesas_dedutiveis = sum(
+        t["valor"] for t in transacoes_ano
+        if t.get("tag_irpf") == "dedutivel_medico"
+    )
+
+    impostos_pagos = sum(
+        t["valor"] for t in transacoes_ano
+        if t.get("tipo") == "Imposto" or t.get("tag_irpf") == "imposto_pago"
+    )
+
+    linhas: list[str] = [
+        f"## IRPF Acumulado ({ano})",
+        "",
+        f"- Rendimentos tributáveis (Salário + PJ): {_formatar_valor(rendimentos_tributaveis)}",
+        f"- Despesas dedutíveis (saúde): {_formatar_valor(despesas_dedutiveis)}",
+        f"- Impostos pagos (DARF/DAS): {_formatar_valor(impostos_pagos)}",
+        "",
+    ]
+
+    return linhas
 
 
 def gerar_relatorio_mes(
@@ -170,6 +332,18 @@ def gerar_relatorio_mes(
             "",
         ]
     )
+
+    secao_metas = _gerar_secao_metas()
+    if secao_metas:
+        linhas.extend(secao_metas)
+
+    secao_projecao = _gerar_secao_projecao(transacoes, mes_ref)
+    if secao_projecao:
+        linhas.extend(secao_projecao)
+
+    secao_irpf = _gerar_secao_irpf(transacoes, mes_ref)
+    if secao_irpf:
+        linhas.extend(secao_irpf)
 
     linhas.extend(
         [
