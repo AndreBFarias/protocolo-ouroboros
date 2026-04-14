@@ -24,6 +24,27 @@ def _formatar_moeda(valor: float) -> str:
     return f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
 
+SIGLAS_PRESERVAR: set[str] = {"PF", "PJ", "CNH", "IRPF", "PIX", "INSS", "IRRF", "CLT", "MEI", "DAS"}
+PREPOSICOES_PT: set[str] = {"de", "da", "do", "das", "dos", "e", "em", "no", "na", "nos", "nas"}
+
+
+def _formatar_nome(nome: str) -> str:
+    """Aplica title case preservando siglas (PF, PJ) e preposições (de, da)."""
+    palavras = nome.title().split()
+    resultado: list[str] = []
+    for i, palavra in enumerate(palavras):
+        limpa = palavra.strip("()+")
+        if limpa.upper() in SIGLAS_PRESERVAR:
+            prefixo = "(" if palavra.startswith("(") else ""
+            sufixo = ")" if palavra.endswith(")") else ""
+            resultado.append(f"{prefixo}{limpa.upper()}{sufixo}")
+        elif i > 0 and limpa.lower() in PREPOSICOES_PT:
+            resultado.append(palavra.lower())
+        else:
+            resultado.append(palavra)
+    return " ".join(resultado)
+
+
 MESES_PT: dict[str, str] = {
     "01": "Janeiro",
     "02": "Fevereiro",
@@ -75,8 +96,26 @@ def _nome_mes_pt(mes_ref: str) -> str:
     return MESES_PT.get(numero_mes, mes_ref)
 
 
-def _gerar_frontmatter(mes_ref: str, valores: dict[str, Optional[float]]) -> str:
-    """Gera o frontmatter YAML para um relatorio mensal."""
+def _extrair_created_existente(caminho: Path) -> Optional[str]:
+    """Extrai o campo created do frontmatter de um arquivo existente."""
+    if not caminho.exists():
+        return None
+    try:
+        conteudo = caminho.read_text(encoding="utf-8")
+        match = re.search(r'^created:\s*"?(\d{4}-\d{2}-\d{2})"?', conteudo, re.MULTILINE)
+        if match:
+            return match.group(1)
+    except Exception as err:
+        logger.warning("Erro ao ler created de %s: %s", caminho, err)
+    return None
+
+
+def _gerar_frontmatter(
+    mes_ref: str,
+    valores: dict[str, Optional[float]],
+    created_existente: Optional[str] = None,
+) -> str:
+    """Gera o frontmatter YAML para um relatório mensal."""
     partes = mes_ref.split("-")
     ano = partes[0] if len(partes) == 2 else mes_ref
     nome_mes = _nome_mes_pt(mes_ref)
@@ -98,7 +137,7 @@ def _gerar_frontmatter(mes_ref: str, valores: dict[str, Optional[float]]) -> str
         f"Relatorio {nome_mes} {ano}",
         f"Financas {nome_mes}",
     ]
-    frontmatter_dict["created"] = date.today().isoformat()
+    frontmatter_dict["created"] = created_existente or date.today().isoformat()
 
     linhas = ["---"]
     for chave, valor in frontmatter_dict.items():
@@ -117,11 +156,11 @@ def _gerar_frontmatter(mes_ref: str, valores: dict[str, Optional[float]]) -> str
 
 
 def _gerar_backlinks(metas: list[dict[str, object]]) -> str:
-    """Gera secao de backlinks para metas financeiras."""
+    """Gera seção de backlinks para metas financeiras."""
     linhas = ["", "## Links"]
     for meta in metas:
         nome = str(meta.get("nome", ""))
-        nome_formatado = nome.title().replace(" ", " ")
+        nome_formatado = _formatar_nome(nome)
         linhas.append(f"- [[{nome_formatado}]]")
     return "\n".join(linhas)
 
@@ -171,14 +210,16 @@ def sincronizar_relatorios(diretorio_output: Path) -> list[Path]:
         mes_ref = arquivo.stem.replace("_relatorio", "")
         conteudo_original = arquivo.read_text(encoding="utf-8")
 
+        destino = RELATORIOS_PATH / f"{mes_ref}.md"
+        created_existente = _extrair_created_existente(destino)
+
         valores = _extrair_valores_relatorio(conteudo_original)
-        frontmatter = _gerar_frontmatter(mes_ref, valores)
+        frontmatter = _gerar_frontmatter(mes_ref, valores, created_existente)
         conteudo_limpo = _remover_linha_gerado(conteudo_original)
         backlinks = _gerar_backlinks(metas)
 
         conteudo_final = f"{frontmatter}\n\n{conteudo_limpo}\n{backlinks}\n"
 
-        destino = RELATORIOS_PATH / f"{mes_ref}.md"
         destino.write_text(conteudo_final, encoding="utf-8")
         copiados.append(destino)
 
@@ -211,7 +252,7 @@ def criar_notas_metas() -> list[Path]:
         nota = meta.get("nota", "")
         depende_de = meta.get("depende_de", [])
 
-        nome_arquivo = nome.title().replace(" ", " ")
+        nome_arquivo = _formatar_nome(nome)
 
         frontmatter_linhas = [
             "---",
@@ -232,7 +273,7 @@ def criar_notas_metas() -> list[Path]:
 
         corpo_linhas = [
             "",
-            f"# {nome.title()}",
+            f"# {_formatar_nome(nome)}",
             "",
         ]
 

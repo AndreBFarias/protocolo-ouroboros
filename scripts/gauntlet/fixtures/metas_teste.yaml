@@ -1,0 +1,19 @@
+metas:
+  - nome: "Reserva de emergência"
+    valor_alvo: 27000
+    valor_atual: 5000
+    prioridade: 1
+    prazo: "2026-12"
+
+  - nome: "Plano de saúde"
+    tipo: "binario"
+    prioridade: 1
+    prazo: "2026-06"
+
+  - nome: "Entrada apartamento"
+    valor_alvo: 50000
+    valor_atual: 0
+    prioridade: 3
+    prazo: "2028-06"
+
+# "Planeje o seu trabalho e trabalhe o seu plano." -- Napoleon Hill

@@ -181,6 +181,16 @@ def renderizar(
         m for m in metas if m.get("tipo") == "binario"
     ]
 
+    total = len(metas)
+    n_valor = len(metas_valor)
+    n_bin = len(metas_binarias)
+    st.markdown(
+        f'<p style="color: #AAAAAA; font-size: 14px;">'
+        f"{total} metas: {n_valor} monetárias, "
+        f"{n_bin} binárias</p>",
+        unsafe_allow_html=True,
+    )
+
     if metas_valor:
         st.markdown("### Metas com Valor")
         for meta in sorted(
@@ -190,8 +200,10 @@ def renderizar(
                 _card_meta(meta), unsafe_allow_html=True
             )
             progresso = _calcular_progresso(meta)
+            progresso_visual = max(progresso, 0.01)
             st.progress(
-                progresso, text=f"{progresso * 100:.0f}%"
+                progresso_visual,
+                text=f"{progresso * 100:.0f}%",
             )
 
     if metas_binarias:

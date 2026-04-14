@@ -1,4 +1,4 @@
-.PHONY: help process inbox tudo dashboard test lint format docs validate check install clean
+.PHONY: help process inbox tudo dashboard test lint format docs validate check install clean gauntlet
 
 SHELL := /bin/bash
 VENV := .venv
@@ -65,6 +65,9 @@ check: ## Health check do ambiente
 	@ls data/output/*_relatorio.md 2>/dev/null | wc -l | xargs -I{} echo "[OK] {} relatórios"
 	@$(RUFF) check src/ --quiet && echo "[OK] Lint passou" || echo "[X] Lint com erros"
 	@echo "=== Concluído ==="
+
+gauntlet: ## Executa gauntlet de testes (validação completa)
+	$(PYTHON) -m scripts.gauntlet.gauntlet
 
 clean: ## Remove artefatos de build (não remove dados)
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true

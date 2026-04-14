@@ -43,9 +43,66 @@ def _configurar_pagina() -> None:
     st.markdown(
         """
         <style>
-        .block-container { padding-top: 1rem; }
+        .block-container { padding-top: 2.5rem; }
         [data-testid="stSidebar"] { background-color: #1E2130; }
         [data-testid="stSidebar"] h1 { color: #4ECDC4; }
+        [data-testid="stDownloadButton"] button {
+            background-color: #252840;
+            color: #FAFAFA;
+            border: 1px solid #4ECDC4;
+        }
+        [data-testid="stDownloadButton"] button:hover {
+            background-color: #4ECDC4;
+            color: #0E1117;
+        }
+        .stTabs [data-baseweb="tab-list"],
+        .stTabs [data-baseweb="tab-list"] > div,
+        .stTabs > div:first-child {
+            gap: 8px;
+            background-color: #1E2130;
+            border-radius: 8px;
+            min-height: 60px !important;
+            height: auto !important;
+            overflow: visible !important;
+            overflow-y: visible !important;
+            overflow-x: auto !important;
+        }
+        .stTabs [data-baseweb="tab"] {
+            color: #CCCCCC !important;
+            font-size: 15px !important;
+            padding: 16px 20px !important;
+            height: auto !important;
+            min-height: 48px !important;
+            white-space: nowrap !important;
+            overflow: visible !important;
+            display: flex !important;
+            align-items: center !important;
+        }
+        .stTabs [data-baseweb="tab"] p,
+        .stTabs [data-baseweb="tab"] div {
+            color: inherit !important;
+            font-size: 15px !important;
+            overflow: visible !important;
+            line-height: 1.4 !important;
+        }
+        .stTabs [aria-selected="true"] {
+            color: #FFFFFF !important;
+            font-weight: bold !important;
+        }
+        .stTabs [aria-selected="true"] p,
+        .stTabs [aria-selected="true"] div {
+            color: #FFFFFF !important;
+        }
+        .stTabs [data-baseweb="tab"]:hover {
+            color: #FAFAFA !important;
+        }
+        .stTabs [data-baseweb="tab-highlight"] {
+            background-color: transparent !important;
+            display: none !important;
+        }
+        .stTabs [aria-selected="true"] {
+            border-bottom: 3px solid #4ECDC4 !important;
+        }
         </style>
         """,
         unsafe_allow_html=True,

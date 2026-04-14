@@ -1,0 +1,86 @@
+regras:
+  delivery:
+    regex: "IFD\\*|IFOOD|RAPPI"
+    categoria: "Delivery"
+    classificacao: "Questionável"
+    tipo: "Despesa"
+
+  transporte:
+    regex: "UBER.*TRIP|99POP|TAXI"
+    categoria: "Transporte"
+    classificacao: "Questionável"
+    tipo: "Despesa"
+
+  farmacia:
+    regex: "DROGARIA|FARMACIA|DROGA.RAIA"
+    categoria: "Remédios"
+    classificacao: "Obrigatório"
+    tipo: "Despesa"
+
+  energia:
+    regex: "NEOENERGIA|CEB|ENERGETICA"
+    categoria: "Energia"
+    classificacao: "Obrigatório"
+    tipo: "Despesa"
+
+  agua:
+    regex: "CAESB|SANEAMENTO"
+    categoria: "Água"
+    classificacao: "Obrigatório"
+    tipo: "Despesa"
+
+  compras_online:
+    regex: "SHOPEE|MERCADO.LIVRE|AMAZON"
+    categoria: "Compras Online"
+    classificacao: "Supérfluo"
+    tipo: "Despesa"
+
+  pets:
+    regex: "PET.CENTER|COBASI|PETZ"
+    categoria: "Pets"
+    classificacao: "Obrigatório"
+    tipo: "Despesa"
+
+  assinaturas:
+    regex: "NETFLIX|SPOTIFY|DISNEY|PRIME.VIDEO"
+    categoria: "Assinaturas"
+    classificacao: "Questionável"
+    tipo: "Despesa"
+
+  natacao:
+    regex: "SESC.*NATACAO|SESC.*SERVICO"
+    categoria: "Educação e Esporte"
+    classificacao: "Obrigatório"
+    tipo: "Despesa"
+
+  ia_ferramentas:
+    regex: "XAI.LLC|OPENAI|ANTHROPIC|CURSOR"
+    categoria: "Ferramentas IA"
+    classificacao: "Questionável"
+    tipo: "Despesa"
+
+  salario:
+    regex: "PAGTO.*SALARIO|CREDITO.*SALARIO"
+    categoria: "Salário"
+    classificacao: "N/A"
+    tipo: "Receita"
+
+  pagamento_cartao:
+    regex: "NU.PAGAMENT|BANCO.SANTA"
+    categoria: "Pagamento Cartão"
+    classificacao: "N/A"
+    tipo: "Transferência Interna"
+
+  imposto:
+    regex: "RECEITA.FED|DARF|DAS.MEI"
+    categoria: "Impostos"
+    classificacao: "Obrigatório"
+    tipo: "Imposto"
+
+  transferencia_casal:
+    regex: "VITORIA|VIT[OÓ]RIA"
+    categoria: "Transferência Casal"
+    classificacao: "N/A"
+    tipo: "Transferência Interna"
+
+# "A dúvida é o começo da sabedoria." -- Aristóteles
