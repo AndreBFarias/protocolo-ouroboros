@@ -88,6 +88,9 @@ Detalhes completos em `docs/ARMADILHAS.md`.
 | `./run.sh --dashboard` | Abre dashboard |
 | `./run.sh --sync` | Sincroniza com vault Obsidian |
 | `./run.sh --check` | Health check do pipeline |
+| `./run.sh --gauntlet` | Executa gauntlet (44 testes, 8 fases) |
+| `./run.sh` (sem args) | Menu interativo ANSI colorido |
+| `make gauntlet` | Atalho para gauntlet |
 
 ---
 
@@ -99,17 +102,17 @@ Detalhes completos em `docs/ARMADILHAS.md`.
 |--------|------|--------|
 | 1 | MVP: Pipeline ETL + 6 extratores + XLSX 8 abas | Concluída (commit 10b4b64) |
 | 2 | Infra: Categorização 100%, Makefile, OCR | Concluída (commit 7544101) |
-| 3 | Dashboard Streamlit: 4 páginas, tema dark | Concluída (commit 9a5bdb5) |
+| 3 | Dashboard Streamlit: 6 abas, tema dark, auditoria visual | Concluída (commit 9a5bdb5 + correções visuais) |
 | 4 | Inteligência: overrides, IRPF tagger, validador | Concluída (commit 12b778c) |
-| 5 | Relatórios + Projeções: cenários, metas | Código criado, não validado |
-| 6 | Integração Obsidian: sync, frontmatter, Dataview | Código criado, não validado |
+| 5 | Relatórios + Projeções: 3 cenários, 7 metas, timeline | Concluída (bugs corrigidos, validada via Chrome MCP) |
+| 6 | Integração Obsidian: sync idempotente, siglas, Dataview | Concluída (idempotência + _formatar_nome corrigidos) |
 | 7 | Acentuação e Qualidade | Pendente |
 | 8 | Dashboard v2: Redesign visual | Pendente |
-| 9 | Testes e CI/CD: pytest, GitHub Actions | Pendente |
+| 9 | Testes e CI/CD: gauntlet expandido, GitHub Actions | Pendente |
 | 10 | LLM Local: análise financeira via Gemma/Phi | Pendente |
 | 11 | Grafos e Visualizações: Sankey, heatmap | Pendente |
 | 12 | IRPF Completo: pacote CSV, simulador | Pendente |
-| 13 | Integração Vault Final: mover para ~/Controle de Bordo/ | Pendente |
+| 13 | Integração Vault Final: unificação com Controle_de_Bordo_OS | Pendente |
 | 14 | Auditoria Final: GitHub-readiness | Pendente |
 
 ### Números
@@ -122,6 +125,8 @@ Detalhes completos em `docs/ARMADILHAS.md`.
 - **6 validações** de integridade no validador
 - **8 abas** no XLSX de saída
 - **44 relatórios** mensais em Markdown
+- **44 testes** no gauntlet (8 fases)
+- **52 arquivos** sincronizados com vault Obsidian (44 relatórios + 7 metas + 1 MOC)
 
 ---
 

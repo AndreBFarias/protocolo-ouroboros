@@ -88,30 +88,18 @@ def _gerar_secao_metas() -> list[str]:
 
 
 def _gerar_secao_projecao(transacoes: list[dict], mes_ref: str) -> list[str]:
-    """Gera seção de projeção calculando ritmo e estimativas."""
-    transacoes_validas = [
-        t for t in transacoes
-        if t.get("tipo") != "Transferência Interna" and t.get("mes_ref")
-    ]
+    """Gera seção de projeção usando cálculos unificados do scenarios.py."""
+    from src.projections.scenarios import _calcular_medias
 
-    if not transacoes_validas:
+    medias = _calcular_medias(transacoes)
+    receita_media = medias["receita_media"]
+    despesa_media = medias["despesa_media"]
+    saldo_medio = medias["saldo_medio"]
+
+    if receita_media == 0.0 and despesa_media == 0.0:
         return []
 
-    meses_disponiveis = sorted({t["mes_ref"] for t in transacoes_validas}, reverse=True)
-    ultimos_3 = meses_disponiveis[:3]
-
-    recentes = [t for t in transacoes_validas if t.get("mes_ref") in ultimos_3]
-    n_meses = len(ultimos_3) or 1
-
-    receita_total = sum(t["valor"] for t in recentes if t.get("tipo") == "Receita")
-    despesa_total = sum(
-        t["valor"] for t in recentes if t.get("tipo") in ("Despesa", "Imposto")
-    )
-
-    receita_media = receita_total / n_meses
-    despesa_media = despesa_total / n_meses
-    saldo_medio = receita_media - despesa_media
-
+    n_meses = 3
     projecao_6m = saldo_medio * 6
     projecao_12m = saldo_medio * 12
 

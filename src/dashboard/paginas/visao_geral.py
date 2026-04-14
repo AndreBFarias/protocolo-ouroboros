@@ -210,8 +210,9 @@ def _grafico_pizza_classificacao(
         labels=agrupado["classificacao"],
         values=agrupado["valor"],
         marker=dict(colors=cores),
-        hole=0.4,
+        hole=0.45,
         textinfo="label+percent",
+        textposition="inside",
         textfont=dict(size=12),
     )])
 
@@ -223,6 +224,8 @@ def _grafico_pizza_classificacao(
         margin=dict(l=10, r=10, t=50, b=10),
         showlegend=True,
         legend=dict(orientation="h", yanchor="bottom", y=-0.1),
+        uniformtext_minsize=10,
+        uniformtext_mode="hide",
     )
 
     st.plotly_chart(fig, use_container_width=True)

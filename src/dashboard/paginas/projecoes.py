@@ -180,6 +180,15 @@ def renderizar(
             ),
             unsafe_allow_html=True,
         )
+        if pos["saldo_mensal"] < 0:
+            st.markdown(
+                '<p style="color: #FFA726; font-size: 11px;'
+                ' font-style: italic; margin-top: -5px;">'
+                "Cenário sem salário Infobase. Saldo negativo"
+                " indica necessidade de ajuste de despesas"
+                " ou nova fonte de renda.</p>",
+                unsafe_allow_html=True,
+            )
 
     with col3:
         st.markdown(
