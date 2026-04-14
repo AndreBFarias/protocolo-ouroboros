@@ -6,8 +6,8 @@ from datetime import date
 from scripts.gauntlet.config import ResultadoFase, ResultadoTeste
 from src.projections.scenarios import (
     _calcular_medias,
-    _meses_ate_objetivo,
     _projecao_acumulada,
+    meses_ate_objetivo,
     projetar_cenarios,
 )
 from src.utils.logger import configurar_logger
@@ -87,13 +87,13 @@ def _testar_medias() -> ResultadoTeste:
     )
 
 
-def _testar_meses_ate_objetivo() -> ResultadoTeste:
+def _testarmeses_ate_objetivo() -> ResultadoTeste:
     """Testa cálculo de meses até atingir objetivo."""
     inicio = time.time()
 
-    meses = _meses_ate_objetivo(5000.0, 27000.0)
-    meses_impossivel = _meses_ate_objetivo(-1000.0, 27000.0)
-    meses_zero = _meses_ate_objetivo(5000.0, 27000.0, atual=27000.0)
+    meses = meses_ate_objetivo(5000.0, 27000.0)
+    meses_impossivel = meses_ate_objetivo(-1000.0, 27000.0)
+    meses_zero = meses_ate_objetivo(5000.0, 27000.0, atual=27000.0)
 
     passou = meses == 6 and meses_impossivel is None and meses_zero == 0
 
@@ -177,7 +177,7 @@ def executar() -> ResultadoFase:
     inicio = time.time()
 
     fase.testes.append(_testar_medias())
-    fase.testes.append(_testar_meses_ate_objetivo())
+    fase.testes.append(_testarmeses_ate_objetivo())
     fase.testes.append(_testar_projecao_acumulada())
     fase.testes.append(_testar_cenarios_completos())
 

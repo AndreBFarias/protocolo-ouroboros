@@ -10,9 +10,12 @@ if str(RAIZ_PROJETO) not in sys.path:
     sys.path.insert(0, str(RAIZ_PROJETO))
 
 from src.dashboard.dados import (  # noqa: E402
+    CAMINHO_XLSX,
     carregar_dados,
-    filtrar_por_mes,
+    filtrar_por_periodo,
+    filtrar_por_pessoa,
     formatar_moeda,
+    obter_anos_disponiveis,
     obter_meses_disponiveis,
 )
 from src.dashboard.paginas import (  # noqa: E402
@@ -23,13 +26,11 @@ from src.dashboard.paginas import (  # noqa: E402
     projecoes,
     visao_geral,
 )
-
-CORES: dict[str, str] = {
-    "positivo": "#4ECDC4",
-    "negativo": "#FF6B6B",
-    "neutro": "#45B7D1",
-    "card_fundo": "#1E2130",
-}
+from src.dashboard.tema import (  # noqa: E402
+    CORES,
+    card_sidebar_html,
+    css_global,
+)
 
 
 def _configurar_pagina() -> None:
@@ -40,169 +41,121 @@ def _configurar_pagina() -> None:
         initial_sidebar_state="expanded",
     )
 
-    st.markdown(
-        """
-        <style>
-        .block-container { padding-top: 2.5rem; }
-        [data-testid="stSidebar"] { background-color: #1E2130; }
-        [data-testid="stSidebar"] h1 { color: #4ECDC4; }
-        [data-testid="stDownloadButton"] button {
-            background-color: #252840;
-            color: #FAFAFA;
-            border: 1px solid #4ECDC4;
-        }
-        [data-testid="stDownloadButton"] button:hover {
-            background-color: #4ECDC4;
-            color: #0E1117;
-        }
-        .stTabs [data-baseweb="tab-list"],
-        .stTabs [data-baseweb="tab-list"] > div,
-        .stTabs > div:first-child {
-            gap: 8px;
-            background-color: #1E2130;
-            border-radius: 8px;
-            min-height: 60px !important;
-            height: auto !important;
-            overflow: visible !important;
-            overflow-y: visible !important;
-            overflow-x: auto !important;
-        }
-        .stTabs [data-baseweb="tab"] {
-            color: #CCCCCC !important;
-            font-size: 15px !important;
-            padding: 16px 20px !important;
-            height: auto !important;
-            min-height: 48px !important;
-            white-space: nowrap !important;
-            overflow: visible !important;
-            display: flex !important;
-            align-items: center !important;
-        }
-        .stTabs [data-baseweb="tab"] p,
-        .stTabs [data-baseweb="tab"] div {
-            color: inherit !important;
-            font-size: 15px !important;
-            overflow: visible !important;
-            line-height: 1.4 !important;
-        }
-        .stTabs [aria-selected="true"] {
-            color: #FFFFFF !important;
-            font-weight: bold !important;
-        }
-        .stTabs [aria-selected="true"] p,
-        .stTabs [aria-selected="true"] div {
-            color: #FFFFFF !important;
-        }
-        .stTabs [data-baseweb="tab"]:hover {
-            color: #FAFAFA !important;
-        }
-        .stTabs [data-baseweb="tab-highlight"] {
-            background-color: transparent !important;
-            display: none !important;
-        }
-        .stTabs [aria-selected="true"] {
-            border-bottom: 3px solid #4ECDC4 !important;
-        }
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
+    st.markdown(css_global(), unsafe_allow_html=True)
 
 
-def _sidebar(dados: dict) -> tuple[str, str]:
+def _sidebar(dados: dict) -> tuple[str, str, str]:
     """Renderiza sidebar com filtros globais e retorna seleções.
 
     Returns:
-        Tupla com (mês selecionado, pessoa selecionada).
+        Tupla com (período selecionado, pessoa, granularidade).
     """
     with st.sidebar:
         st.title("Controle de Bordo")
+
+        if CAMINHO_XLSX.exists():
+            import os
+            from datetime import datetime
+
+            mtime = os.path.getmtime(CAMINHO_XLSX)
+            ultima = datetime.fromtimestamp(mtime)
+            st.caption(
+                f"Dados de {ultima.strftime('%d/%m/%Y às %H:%M')}"
+            )
+
         st.markdown("---")
 
         meses = obter_meses_disponiveis(dados)
 
         if not meses:
             st.warning("Nenhum dado disponível.")
-            return "", "Todos"
+            return "", "Todos", "Mês"
 
-        mes_selecionado: str = st.selectbox(
-            "Mês de referência",
-            meses,
-            index=0,
-            key="seletor_mes",
+        granularidade: str = st.selectbox(
+            "Granularidade",
+            ["Dia", "Semana", "Mês", "Ano"],
+            index=2,
+            key="seletor_granularidade",
         )
 
-        pessoa: str = st.radio(
+        if granularidade == "Ano":
+            anos = obter_anos_disponiveis(dados)
+            periodo: str = st.selectbox(
+                "Período", anos, index=0, key="seletor_periodo",
+            )
+        else:
+            mes_base: str = st.selectbox(
+                "Mês", meses, index=0, key="seletor_mes_base",
+            )
+
+            if granularidade == "Semana":
+                from src.dashboard.dados import obter_semanas_do_mes
+
+                semanas = obter_semanas_do_mes(dados, mes_base)
+                if semanas:
+                    periodo = st.selectbox(
+                        "Semana", semanas, index=0,
+                        key="seletor_detalhe",
+                    )
+                else:
+                    periodo = mes_base
+            elif granularidade == "Dia":
+                from src.dashboard.dados import obter_dias_do_mes
+
+                dias = obter_dias_do_mes(dados, mes_base)
+                if dias:
+                    periodo = st.selectbox(
+                        "Dia", dias, index=0,
+                        key="seletor_detalhe",
+                    )
+                else:
+                    periodo = mes_base
+            else:
+                periodo = mes_base
+
+        pessoa: str = st.selectbox(
             "Pessoa",
             ["Todos", "André", "Vitória"],
             index=0,
             key="seletor_pessoa",
-            horizontal=True,
         )
 
         st.markdown("---")
 
-        _cards_sidebar(dados, mes_selecionado, pessoa)
+        _cards_sidebar(dados, periodo, pessoa, granularidade)
 
-        return mes_selecionado, pessoa
+        return periodo, pessoa, granularidade
 
 
-def _cards_sidebar(dados: dict, mes: str, pessoa: str) -> None:
+def _cards_sidebar(
+    dados: dict, periodo: str, pessoa: str, granularidade: str
+) -> None:
     """Exibe cards de resumo na sidebar."""
-    if "resumo_mensal" not in dados:
+    if "extrato" not in dados:
         return
 
-    resumo = dados["resumo_mensal"]
-    resumo_mes = filtrar_por_mes(resumo, mes)
-
-    if pessoa != "Todos" and "extrato" in dados:
-        from src.dashboard.dados import filtrar_por_pessoa
-
-        ext = filtrar_por_pessoa(
-            filtrar_por_mes(dados["extrato"], mes), pessoa
-        )
-        receita = ext[ext["tipo"] == "Receita"]["valor"].sum()
-        despesa = ext[ext["tipo"] == "Despesa"]["valor"].sum()
-        saldo = receita - despesa
-    elif not resumo_mes.empty:
-        receita = float(resumo_mes["receita_total"].iloc[0])
-        despesa = float(resumo_mes["despesa_total"].iloc[0])
-        saldo = float(resumo_mes["saldo"].iloc[0])
-    else:
-        receita = 0.0
-        despesa = 0.0
-        saldo = 0.0
+    ext = filtrar_por_pessoa(
+        filtrar_por_periodo(dados["extrato"], granularidade, periodo),
+        pessoa,
+    )
+    receita = ext[ext["tipo"] == "Receita"]["valor"].sum()
+    despesa = ext[ext["tipo"].isin(["Despesa", "Imposto"])]["valor"].sum()
+    saldo = receita - despesa
 
     st.markdown(
-        _card_html("Receita", formatar_moeda(receita), CORES["positivo"]),
+        card_sidebar_html("Receita", formatar_moeda(receita), CORES["positivo"]),
         unsafe_allow_html=True,
     )
     st.markdown(
-        _card_html("Despesa", formatar_moeda(despesa), CORES["negativo"]),
+        card_sidebar_html("Despesa", formatar_moeda(despesa), CORES["negativo"]),
         unsafe_allow_html=True,
     )
 
     cor_saldo = CORES["positivo"] if saldo >= 0 else CORES["negativo"]
     st.markdown(
-        _card_html("Saldo", formatar_moeda(saldo), cor_saldo),
+        card_sidebar_html("Saldo", formatar_moeda(saldo), cor_saldo),
         unsafe_allow_html=True,
     )
-
-
-def _card_html(titulo: str, valor: str, cor: str) -> str:
-    """Gera HTML de card compacto para sidebar."""
-    return f"""
-    <div style="
-        background-color: {CORES['card_fundo']};
-        border-left: 3px solid {cor};
-        border-radius: 6px;
-        padding: 10px 14px;
-        margin-bottom: 8px;
-    ">
-        <p style="color: #888; font-size: 12px; margin: 0;">{titulo}</p>
-        <p style="color: {cor}; font-size: 18px; font-weight: bold; margin: 2px 0 0 0;">{valor}</p>
-    </div>
-    """
 
 
 def main() -> None:
@@ -215,32 +168,34 @@ def main() -> None:
         st.error("Nenhum dado encontrado. Verifique se o arquivo XLSX existe em data/output/.")
         st.stop()
 
-    mes_selecionado, pessoa = _sidebar(dados)
+    periodo, pessoa, granularidade = _sidebar(dados)
 
-    if not mes_selecionado:
+    if not periodo:
         st.stop()
 
     tab_visao, tab_categorias, tab_extrato, tab_contas, tab_projecoes, tab_metas = st.tabs(
         ["Visão Geral", "Categorias", "Extrato", "Contas", "Projeções", "Metas"]
     )
 
+    ctx = {"granularidade": granularidade, "periodo": periodo}
+
     with tab_visao:
-        visao_geral.renderizar(dados, mes_selecionado, pessoa)
+        visao_geral.renderizar(dados, periodo, pessoa, ctx)
 
     with tab_categorias:
-        categorias.renderizar(dados, mes_selecionado, pessoa)
+        categorias.renderizar(dados, periodo, pessoa, ctx)
 
     with tab_extrato:
-        extrato.renderizar(dados, mes_selecionado, pessoa)
+        extrato.renderizar(dados, periodo, pessoa, ctx)
 
     with tab_contas:
-        contas.renderizar(dados, mes_selecionado, pessoa)
+        contas.renderizar(dados, periodo, pessoa)
 
     with tab_projecoes:
-        projecoes.renderizar(dados, mes_selecionado, pessoa)
+        projecoes.renderizar(dados, periodo, pessoa)
 
     with tab_metas:
-        metas.renderizar(dados, mes_selecionado, pessoa)
+        metas.renderizar(dados, periodo, pessoa)
 
 
 if __name__ == "__main__":
