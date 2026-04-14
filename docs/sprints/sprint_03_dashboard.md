@@ -1,9 +1,9 @@
 # Sprint 03 -- Dashboard Streamlit v1
 
-## Status: Concluída
-Data de conclusão: 2026-04-14
+## Status: Parcialmente concluída (issue #3 reaberta)
+Data do commit inicial: 2026-04-14
 Commit: 9a5bdb5
-Issue: #3
+Issue: #3 (reaberta -- bugs de UI pendentes)
 
 ## Objetivo
 
@@ -21,9 +21,15 @@ Dashboard interativo em Streamlit para visualização completa das finanças. In
 
 ## O que ficou faltando
 
-- Responsividade mobile: Streamlit tem limitações nativas em telas pequenas
-- Problemas visuais: botões invisíveis em dark mode, fontes inconsistentes em alguns cards
+- Responsividade mobile: não testada em dispositivos móveis
+- Bug crítico na página Contas: tabela HTML renderizava como texto bruto (corrigido parcialmente com st.dataframe)
+- Cards de métricas: valores quebrando em 2 linhas ("R$ 8.726" / ",36") (corrigido parcialmente com white-space: nowrap)
+- Gráfico donut: título "Distribuição por Classificação" truncado (corrigido)
+- Labels do donut cortadas nas bordas
+- Extrato: label "Classificação" quebrando em 2 linhas, selectboxes truncados ("Tod...")
+- Projeções: títulos de cards truncados
 - Páginas Projeções e Metas: movidas para Sprint 05
+- Estética geral: pendente redesign visual completo (Sprint 08)
 
 ## Armadilhas conhecidas
 

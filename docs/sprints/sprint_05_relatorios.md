@@ -1,7 +1,7 @@
 # Sprint 05 -- Relatórios e Projeções
 
-## Status: Em andamento
-Issue: #5
+## Status: Código integrado, validação superficial (issue #5 reaberta)
+Issue: #5 (reaberta)
 
 ## Objetivo
 
@@ -9,17 +9,33 @@ Gerar relatórios mensais completos automaticamente e implementar projeções fi
 
 ## Entregas
 
-- [ ] Relatório mensal melhorado (resumo executivo, alertas, acompanhamento de metas)
-- [ ] Projetor de cenários (cenário atual, pós-Infobase, meta apartamento)
-- [ ] Página Streamlit Projeções (gráfico de patrimônio, slider de economia, marcos)
-- [ ] Página Streamlit Metas (barras de progresso, timeline, dependências)
-- [ ] mappings/metas.yaml com metas financeiras do casal
+- [x] Relatório mensal melhorado (seções de metas, projeção 6m/12m, IRPF acumulado)
+- [x] Projetor de cenários (ritmo atual, pós-Infobase, meta apartamento)
+- [x] Página Streamlit Projeções (3 cards de cenários, gráfico de patrimônio projetado)
+- [x] Página Streamlit Metas (barras de progresso, prazos, prioridades)
+- [x] mappings/metas.yaml com 7 metas reais do casal
+
+## Validação realizada
+
+- `ruff check` passa sem erros
+- Pipeline `--tudo` roda sem erros com os novos arquivos
+- Página Projeções aberta no browser: cenários renderizam com dados reais
+- Página Metas aberta no browser: 3 metas visíveis com progresso e prazos
+- app.py integra 6 tabs sem conflito
+
+## Validação pendente
+
+- [ ] Lógica dos cenários: números não verificados em profundidade
+- [ ] Edge cases: meses sem dados, divisão por zero, metas sem prazo
+- [ ] Cenário "Pós-Infobase": saldo mensal -R$ 7.349 -- verificar se está correto
+- [ ] Relatórios melhorados: comparar com versão anterior item a item
+- [ ] Metas: verificar que todas as 7 do YAML aparecem no dashboard
 
 ## Armadilhas conhecidas
 
-- Código criado por subagente sem validação completa (créditos esgotados antes de testar)
+- Código criado por subagente que ficou sem créditos antes de validar
 - Projeções exigem modelagem numérica cuidadosa para não gerar resultados irreais
-- Páginas de metas e projeções dependem de dados históricos suficientes
+- Cenário pós-Infobase assume renda zero do André, o que gera saldo negativo
 
 ## Arquivos criados/modificados
 
@@ -29,13 +45,16 @@ Gerar relatórios mensais completos automaticamente e implementar projeções fi
 | `src/projections/__init__.py` | Init do módulo projections |
 | `src/dashboard/paginas/projecoes.py` | Página Streamlit de projeções (334 linhas) |
 | `src/dashboard/paginas/metas.py` | Página Streamlit de metas (290 linhas) |
-| `mappings/metas.yaml` | Metas financeiras configuráveis (43 linhas) |
+| `mappings/metas.yaml` | 7 metas financeiras configuráveis (43 linhas) |
 | `src/load/relatorio.py` | Relatório melhorado (382 linhas) |
 | `src/dashboard/app.py` | Modificado para 6 tabs |
 
 ## Critério de sucesso
 
-Páginas Projeções e Metas funcionais no dashboard. metas.yaml carregado corretamente. Relatórios melhorados com projeções. Todos os módulos executam sem erro.
+- [ ] Todos os 7 metas do YAML visíveis no dashboard
+- [ ] Cenários com números que batem com dados reais
+- [ ] Relatórios com seções novas (metas, projeção, IRPF) preenchidas
+- [ ] Zero erros ao navegar entre todas as 6 tabs
 
 ## Dependências
 
