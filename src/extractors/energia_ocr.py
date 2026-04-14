@@ -41,7 +41,9 @@ def _extrair_dados_ocr(texto: str) -> list[dict]:
 
     for bloco in blocos:
         mes_match = re.search(r"(\d{2})/(\d{4})", bloco)
-        consumo_match = re.search(r"Consumo\s*\n?\s*(\d+)\s*[Kk][Ww][Hh]", bloco)
+        consumo_match = re.search(
+            r"(?:[Cc]onsumo\s*\n?\s*)?(\d{2,4})\s*[Kk][Ww][Hh]", bloco
+        )
         valor_match = re.search(
             r"(?:Valor|R\$)\s*\n?\s*R?\$?\s*([\d.]+,\d{2})", bloco
         )

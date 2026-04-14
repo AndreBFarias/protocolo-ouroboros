@@ -20,11 +20,22 @@ pip install --upgrade pip --quiet
 echo "Instalando dependências do projeto..."
 pip install -e ".[dashboard,dev]" --quiet
 
-# OCR (fallback para screenshots de contas)
+# Dependências de sistema
+echo "Verificando dependências de sistema..."
+
+# OCR (para screenshots de contas de energia)
 if ! command -v tesseract &> /dev/null; then
-    echo "Instalando tesseract-ocr..."
-    sudo apt install -y tesseract-ocr tesseract-ocr-por 2>/dev/null || \
-        echo "[AVISO] tesseract-ocr não instalado. OCR de imagens não funcionará."
+    echo "Instalando tesseract-ocr (necessário para OCR de contas de energia)..."
+    sudo apt install -y tesseract-ocr tesseract-ocr-por || \
+        echo "[AVISO] tesseract-ocr não instalado. Rode: sudo apt install -y tesseract-ocr tesseract-ocr-por"
+else
+    echo "[OK] tesseract-ocr já instalado"
+fi
+
+# pre-commit
+if ! "$VENV/bin/pre-commit" --version &> /dev/null; then
+    echo "Instalando pre-commit..."
+    "$VENV/bin/pip" install pre-commit --quiet
 fi
 
 # Criar estrutura de diretórios
