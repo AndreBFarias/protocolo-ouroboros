@@ -1,0 +1,48 @@
+# Correcoes manuais de categorizacao
+# Tem prioridade sobre as regras regex automaticas
+# Formato: descricao exata (case-insensitive) -> categoria + classificacao
+
+overrides:
+  "WANDERSON RAMOS":
+    categoria: "Pessoal"
+    classificacao: "Questionável"
+
+  "PANIFICADORA KI-SABOR":
+    categoria: "Aluguel"
+    classificacao: "Obrigatório"
+    regra_valor: ">=800"
+
+  "Rodrigo Caetano Praxedes":
+    categoria: "Pessoal"
+    classificacao: "Questionável"
+
+  "Caroline Sobrinho Valente":
+    categoria: "Pessoal"
+    classificacao: "Questionável"
+
+  "Adriana da Silva Heleno":
+    categoria: "Pessoal"
+    classificacao: "Questionável"
+
+  "MARIA ANGELICA LOPES":
+    categoria: "Pessoal"
+    classificacao: "Questionável"
+
+  "Weblei Pereira":
+    categoria: "Pessoal"
+    classificacao: "Questionável"
+
+  "Joneides Fernandes":
+    categoria: "Pessoal"
+    classificacao: "Questionável"
+
+  "Roniel Araujo":
+    categoria: "Pessoal"
+    classificacao: "Questionável"
+
+  "Euvaldo Gomes":
+    categoria: "Pessoal"
+    classificacao: "Questionável"
+
+
+# "O que sabemos e uma gota; o que ignoramos e um oceano." -- Isaac Newton
