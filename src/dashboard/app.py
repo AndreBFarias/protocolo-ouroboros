@@ -15,7 +15,14 @@ from src.dashboard.dados import (  # noqa: E402
     formatar_moeda,
     obter_meses_disponiveis,
 )
-from src.dashboard.paginas import categorias, contas, extrato, visao_geral  # noqa: E402
+from src.dashboard.paginas import (  # noqa: E402
+    categorias,
+    contas,
+    extrato,
+    metas,
+    projecoes,
+    visao_geral,
+)
 
 CORES: dict[str, str] = {
     "positivo": "#4ECDC4",
@@ -156,8 +163,8 @@ def main() -> None:
     if not mes_selecionado:
         st.stop()
 
-    tab_visao, tab_categorias, tab_extrato, tab_contas = st.tabs(
-        ["Visão Geral", "Categorias", "Extrato", "Contas"]
+    tab_visao, tab_categorias, tab_extrato, tab_contas, tab_projecoes, tab_metas = st.tabs(
+        ["Visão Geral", "Categorias", "Extrato", "Contas", "Projeções", "Metas"]
     )
 
     with tab_visao:
@@ -171,6 +178,12 @@ def main() -> None:
 
     with tab_contas:
         contas.renderizar(dados, mes_selecionado, pessoa)
+
+    with tab_projecoes:
+        projecoes.renderizar(dados, mes_selecionado, pessoa)
+
+    with tab_metas:
+        metas.renderizar(dados, mes_selecionado, pessoa)
 
 
 if __name__ == "__main__":

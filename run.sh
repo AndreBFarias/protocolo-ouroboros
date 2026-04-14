@@ -46,6 +46,10 @@ case "${1:-}" in
         echo "=== Controle de Bordo -- IRPF $ANO ==="
         python -m src.irpf --ano "$ANO"
         ;;
+    --sync)
+        echo "=== Controle de Bordo -- Sincronizando com Obsidian ==="
+        python -m src.obsidian.sync
+        ;;
     *)
         echo "Uso: ./run.sh [opção]"
         echo ""
@@ -56,6 +60,7 @@ case "${1:-}" in
         echo "  --dashboard       Abre o dashboard Streamlit"
         echo "  --check           Health check do ambiente"
         echo "  --irpf ANO        Gera pacote IRPF do ano"
+        echo "  --sync            Sincroniza relatorios com vault Obsidian"
         echo ""
         echo "Exemplos:"
         echo "  ./run.sh --inbox"
