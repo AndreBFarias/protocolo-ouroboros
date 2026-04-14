@@ -135,7 +135,7 @@ def _gerar_frontmatter(
     frontmatter_dict["tags"] = ["financeiro", "mensal", "relatorio"]
     frontmatter_dict["aliases"] = [
         f"Relatorio {nome_mes} {ano}",
-        f"Financas {nome_mes}",
+        f"Ouroboros {nome_mes}",
     ]
     frontmatter_dict["created"] = created_existente or date.today().isoformat()
 

@@ -1,4 +1,4 @@
-# CLAUDE.md -- Controle de Bordo
+# CLAUDE.md -- Protocolo Ouroboros
 
 ```
 VERSÃO: 2.0 | STATUS: PRODUÇÃO | LANG: PT-BR
@@ -251,7 +251,7 @@ PDFs bancários protegidos. Ordem de tentativa:
 ## Estrutura do Projeto
 
 ```
-Financas/
+protocolo-ouroboros/
 ├── CLAUDE.md                     # Este arquivo
 ├── GSD.md                        # Onboarding rápido para qualquer IA
 ├── README.md                     # Documentação pública
@@ -324,9 +324,11 @@ Financas/
 
 ## Contexto Ativo
 
-- **Sprints concluídas:** 1 (MVP), 2 (Infra), 3 (Dashboard), 4 (Inteligência)
-- **Sprints com código não validado:** 5 (Relatórios), 6 (Obsidian)
-- **Próxima sprint:** 7 (Acentuação e Qualidade)
+- **Sprints concluídas:** 1 (MVP), 2 (Infra), 4 (Inteligência), 8 (Dashboard v2 Dracula)
+- **Sprints com código integrado:** 3 (Dashboard v1), 5 (Relatórios), 6 (Obsidian)
+- **Sprint atual:** 14 (UI/UX e Outputs)
+- **Próximas sprints:** 09 (LLM), 10 (Grafos), 11 (IRPF), 12 (Vault), 13 (Rebranding)
+- **Sprints finais:** 15 (Acentuação), 16 (Dashboard Polish), 17 (Testes CI/CD), 18 (Auditoria)
 - **Transações:** 2.859 (1.214 histórico + 1.645 dados brutos)
 - **Cobertura de meses:** 44 (ago/2022 a out/2026)
 - **Bancos:** Itaú, Santander, C6, Nubank (André) + Nubank PF/PJ (Vitória)

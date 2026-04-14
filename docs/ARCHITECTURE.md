@@ -1,4 +1,4 @@
-# Arquitetura -- Controle de Bordo
+# Arquitetura -- Protocolo Ouroboros
 
 ## Visão Geral
 

@@ -43,7 +43,7 @@ validate: ## Valida integridade do último XLSX gerado
 	$(PYTHON) -c "\
 	import openpyxl; \
 	from collections import Counter; \
-	wb = openpyxl.load_workbook('data/output/controle_bordo_2026.xlsx'); \
+	wb = openpyxl.load_workbook('data/output/ouroboros_2026.xlsx'); \
 	ws = wb['extrato']; \
 	total = ws.max_row - 1; \
 	cats = Counter(row[5] for row in ws.iter_rows(min_row=2, values_only=True)); \
@@ -61,7 +61,7 @@ validate: ## Valida integridade do último XLSX gerado
 check: ## Health check do ambiente
 	@echo "=== Health Check ==="
 	@test -d $(VENV) && echo "[OK] Ambiente virtual" || echo "[X] Sem ambiente virtual"
-	@test -f data/output/controle_bordo_2026.xlsx && echo "[OK] XLSX gerado" || echo "[X] XLSX não encontrado"
+	@test -f data/output/ouroboros_2026.xlsx && echo "[OK] XLSX gerado" || echo "[X] XLSX não encontrado"
 	@ls data/output/*_relatorio.md 2>/dev/null | wc -l | xargs -I{} echo "[OK] {} relatórios"
 	@$(RUFF) check src/ --quiet && echo "[OK] Lint passou" || echo "[X] Lint com erros"
 	@echo "=== Concluído ==="

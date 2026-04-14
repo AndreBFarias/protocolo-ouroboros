@@ -22,8 +22,8 @@ CLASSIFICACOES_VALIDAS: set[str] = {
 
 
 def _encontrar_xlsx_mais_recente() -> Path | None:
-    """Encontra o XLSX de controle de bordo mais recente em data/output/."""
-    arquivos = sorted(DIR_OUTPUT.glob("controle_bordo_*.xlsx"), reverse=True)
+    """Encontra o XLSX do Ouroboros mais recente em data/output/."""
+    arquivos = sorted(DIR_OUTPUT.glob("ouroboros_*.xlsx"), reverse=True)
     if not arquivos:
         return None
     return arquivos[0]
@@ -182,7 +182,7 @@ def executar_validacao(caminho: Path | None = None) -> bool:
         caminho = _encontrar_xlsx_mais_recente()
 
     if caminho is None or not caminho.exists():
-        logger.error("Nenhum XLSX de controle de bordo encontrado em %s", DIR_OUTPUT)
+        logger.error("Nenhum XLSX do Ouroboros encontrado em %s", DIR_OUTPUT)
         return False
 
     logger.info("Validando: %s", caminho)

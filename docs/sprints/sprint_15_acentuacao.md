@@ -1,4 +1,4 @@
-# Sprint 07 -- Acentuação, Qualidade e Hooks
+# Sprint 15 -- Acentuação, Qualidade e Hooks
 
 ## Status: Pendente
 Issue: a criar

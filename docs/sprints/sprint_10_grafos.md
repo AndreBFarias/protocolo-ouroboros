@@ -1,4 +1,4 @@
-# Sprint 11 -- Grafos e Visualizações Avançadas
+# Sprint 10 -- Grafos e Visualizações Avançadas
 
 ## Status: Pendente
 Issue: a criar

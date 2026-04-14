@@ -1,5 +1,11 @@
 <div align="center">
 
+<img src="assets/icon.png" width="120" alt="Protocolo Ouroboros">
+
+# Protocolo Ouroboros
+
+Pipeline ETL financeiro pessoal com dashboard interativo e integração Obsidian.
+
 ![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=flat&logo=python&logoColor=white)
 ![Streamlit](https://img.shields.io/badge/Streamlit-1.x-FF4B4B?style=flat&logo=streamlit&logoColor=white)
 ![Pandas](https://img.shields.io/badge/Pandas-2.x-150458?style=flat&logo=pandas&logoColor=white)
@@ -7,17 +13,54 @@
 ![License](https://img.shields.io/badge/Licen%C3%A7a-MIT-green?style=flat)
 ![Status](https://img.shields.io/badge/Status-Produ%C3%A7%C3%A3o-brightgreen?style=flat)
 
-# Controle de Bordo
-
-Pipeline ETL financeiro pessoal com dashboard interativo e integração Obsidian.
-
 </div>
+
+---
+
+### Quick Start
+
+```bash
+git clone git@github.com:[REDACTED]/protocolo-ouroboros.git
+cd protocolo-ouroboros
+./install.sh
+./run.sh
+```
+
+O menu interativo guia todas as operações: processamento, dashboard, relatórios, integração Obsidian e validação.
 
 ---
 
 ### Sobre
 
 Consolida dados bancários de múltiplas fontes (CSVs, XLSX, XLS, PDFs protegidos, imagens via OCR) em um XLSX unificado com 8 abas, relatórios mensais em Markdown e dashboard Streamlit com visualizações interativas.
+
+---
+
+### Arquitetura
+
+```mermaid
+flowchart LR
+    subgraph Entrada
+        A[CSVs] --> E[Extratores]
+        B[PDFs] --> E
+        C[XLSX/XLS] --> E
+        D[OCR] --> E
+    end
+
+    subgraph Pipeline
+        E --> F[Normalização]
+        F --> G[Deduplicação]
+        G --> H[Categorização]
+        H --> I[IRPF Tagger]
+    end
+
+    subgraph Saída
+        I --> J[XLSX 8 abas]
+        I --> K[Relatórios MD]
+        I --> L[Dashboard]
+        I --> M[Obsidian]
+    end
+```
 
 ---
 
@@ -30,49 +73,37 @@ Consolida dados bancários de múltiplas fontes (CSVs, XLSX, XLS, PDFs protegido
 | Categorização | 111 regras regex + 10 overrides manuais (100% de cobertura) |
 | Deduplicação | 3 níveis: UUID, hash cross-source, pares de transferência |
 | IRPF | 21 regras de tagging automático em 5 tipos fiscais |
-| Dashboard | 6 páginas interativas com Plotly (tema dark) |
-| Relatórios | 44 relatórios mensais gerados automaticamente |
-| Validação | 6 checagens de integridade do pipeline |
+| Dashboard | 6 páginas interativas com tema Dracula |
+| Relatórios | Relatórios mensais com badges, Mermaid charts e barras Unicode |
+| Validação | 6 checagens de integridade + gauntlet automatizado |
 | Obsidian | Sincronização automática com vault pessoal |
 | OCR | Leitura de contas de energia via Tesseract (valores R$ 100% precisos) |
 
 ---
 
-### Instalação
-
-```bash
-git clone git@github.com:[REDACTED]/Financas.git
-cd Financas
-./install.sh
-```
-
-O script instala dependências Python no virtualenv, Tesseract OCR e cria a estrutura de diretórios.
-
----
-
 ### Uso
 
+**Menu interativo:**
+
 ```bash
-# Processar todos os dados
-./run.sh --tudo
-
-# Processar um mês específico
-./run.sh --mes 2026-04
-
-# Processar arquivos do inbox
-./run.sh --inbox
-
-# Abrir dashboard
-./run.sh --dashboard
-
-# Sincronizar com Obsidian
-./run.sh --sync
-
-# Health check
-./run.sh --check
+./run.sh
 ```
 
-Ou via Makefile:
+**Comandos diretos:**
+
+```bash
+./run.sh --tudo            # Processa todos os dados
+./run.sh --mes 2026-04     # Processa um mês específico
+./run.sh --inbox           # Processa arquivos do inbox
+./run.sh --dashboard       # Abre o dashboard Streamlit
+./run.sh --relatorio       # Gera relatório do mês atual
+./run.sh --sync            # Sincroniza com Obsidian
+./run.sh --check           # Health check
+./run.sh --irpf 2026       # Gera pacote IRPF
+./run.sh --gauntlet        # Executa gauntlet de testes
+```
+
+**Via Makefile:**
 
 ```bash
 make help        # Lista todos os comandos
@@ -80,7 +111,7 @@ make install     # Setup completo
 make process     # Pipeline completo
 make dashboard   # Abre dashboard Streamlit
 make lint        # Verifica código (ruff)
-make validate    # Validação de integridade
+make gauntlet    # Executa gauntlet de testes
 ```
 
 ---
@@ -88,72 +119,31 @@ make validate    # Validação de integridade
 ### Estrutura do Projeto
 
 ```
-Financas/
-├── CLAUDE.md                     # Instruções para agentes de IA
-├── GSD.md                        # Onboarding rápido (Get Stuff Done)
-├── README.md                     # Este arquivo
-├── pyproject.toml                # Dependências Python
-├── Makefile                      # 13 targets automatizados
-├── install.sh                    # Setup completo
-├── run.sh                        # Entrypoint CLI
-│
-├── data/
-│   ├── raw/{pessoa}/{banco}/     # Arquivos brutos por pessoa e banco
-│   ├── processed/                # CSVs intermediários padronizados
-│   ├── output/                   # XLSX final + relatórios Markdown
-│   └── historico/                # Dados legados importados
+protocolo-ouroboros/
+├── run.sh                        # Entrypoint CLI com menu interativo
+├── install.sh                    # Setup completo (venv + deps + tesseract)
+├── Makefile                      # Targets automatizados
+├── assets/
+│   └── icon.png                  # Logo do projeto
 │
 ├── src/
 │   ├── pipeline.py               # Orquestrador principal (11 passos)
 │   ├── inbox_processor.py        # Detecção, renomeação e organização
 │   ├── extractors/               # 7 extratores bancários
-│   │   ├── nubank_cartao.py      # CSV: date, title, amount
-│   │   ├── nubank_cc.py          # CSV: Data, Valor, Identificador, Descrição
-│   │   ├── c6_cc.py              # XLSX conta corrente
-│   │   ├── c6_cartao.py          # XLS fatura (msoffcrypto + xlrd)
-│   │   ├── itau_pdf.py           # PDF protegido (pdfplumber)
-│   │   ├── santander_pdf.py      # PDF fatura cartão
-│   │   └── energia_ocr.py        # Screenshot via Tesseract OCR
-│   ├── transform/
-│   │   ├── normalizer.py         # Padronização para schema único
-│   │   ├── categorizer.py        # 111 regex + 10 overrides
-│   │   ├── deduplicator.py       # UUID + hash + pares internos
-│   │   └── irpf_tagger.py        # 21 regras de tagging fiscal
-│   ├── load/
-│   │   ├── xlsx_writer.py        # Geração do XLSX (8 abas)
-│   │   └── relatorio.py          # Relatórios mensais Markdown
-│   ├── projections/
-│   │   └── scenarios.py          # Cenários financeiros
-│   ├── dashboard/
-│   │   ├── app.py                # Streamlit entrypoint
-│   │   ├── dados.py              # Cache de dados
-│   │   └── paginas/              # 6 páginas do dashboard
-│   ├── obsidian/
-│   │   └── sync.py               # Sincronização com vault
-│   └── utils/
-│       ├── logger.py             # Logging rotacionado (rich)
-│       ├── file_detector.py      # Detecção de banco/tipo/pessoa
-│       ├── pdf_reader.py         # Wrapper pdfplumber com senhas
-│       └── validator.py          # 6 validações de integridade
+│   ├── transform/                # Categorização, deduplicação, IRPF
+│   ├── load/                     # XLSX writer + relatórios MD
+│   ├── projections/              # Cenários financeiros
+│   ├── dashboard/                # Streamlit app (6 páginas, tema Dracula)
+│   ├── obsidian/                 # Sincronização com vault
+│   └── utils/                    # Logger, PDF reader, validador
 │
-├── mappings/
-│   ├── categorias.yaml           # 111 regras regex
-│   ├── overrides.yaml            # Correções manuais
-│   ├── metas.yaml                # Metas financeiras
-│   └── senhas.yaml               # Senhas e contas bancárias
-│
-├── docs/
-│   ├── ARCHITECTURE.md           # Diagrama de fluxo ETL
-│   ├── ARMADILHAS.md             # Bugs e aprendizados críticos
-│   ├── AUDITORIA_SPRINTS.md      # Auditoria de cada sprint
-│   ├── MODELOS.md                # Schemas de dados
-│   ├── adr/                      # 7 Architecture Decision Records
-│   ├── sprints/                  # 14 sprints documentadas
-│   └── extractors/               # Auto-documentação de formatos
-│
-└── scripts/
-    └── pre-commit-check.sh       # ruff + bloqueio de dados sensíveis
+├── mappings/                     # Regras YAML (categorias, overrides, metas)
+├── data/                         # Dados financeiros (no .gitignore)
+├── docs/                         # Arquitetura, ADRs, sprints, armadilhas
+└── scripts/                      # Gauntlet de testes e pre-commit
 ```
+
+<!-- Screenshots do dashboard aqui -->
 
 ---
 

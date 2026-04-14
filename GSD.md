@@ -22,7 +22,7 @@ Se os passos 4 e 5 passam sem erros críticos, o ambiente está saudável.
 
 ```
 Nome: [REDACTED]
-Remote SSH: git@github.com-personal:[REDACTED]/Financas.git
+Remote SSH: git@github.com-personal:[REDACTED]/protocolo-ouroboros.git
 Branch principal: main
 Formato commit: tipo: descrição imperativa (PT-BR, sem emojis, sem menção a IA)
 Tipos: feat, fix, refactor, docs, test, perf, chore
@@ -57,7 +57,7 @@ Tipos: feat, fix, refactor, docs, test, perf, chore
 5. **Categorizer break vs return** -- `return` após match regex impedia fallback de classificação N/A. Usar `break`.
 6. **Histórico corrompido** -- Classificações "Obrigatórios" (com s), "Rou" (truncado). Normalizar no pipeline.
 7. **Prazos XLSX antigo** -- Colunas nos índices 2/3, não 0/1. Verificar ambos com fallback.
-8. **Git SSH** -- Precisa alias `github.com-personal` no push. Se falhar: `git remote set-url origin git@github.com-personal:[REDACTED]/Financas.git`
+8. **Git SSH** -- Precisa alias `github.com-personal` no push. Se falhar: `git remote set-url origin git@github.com-personal:[REDACTED]/protocolo-ouroboros.git`
 9. **Pre-commit** -- `core.hooksPath` global impede `pre-commit install`. Usar `scripts/pre-commit-check.sh`.
 10. **OCR energia** -- Valores R$ 100% OK. Consumo kWh 67% (layout confunde).
 11. **Streamlit tabs** -- Troca visual de aba requer JavaScript, não click em elemento.
@@ -112,7 +112,7 @@ Detalhes completos em `docs/ARMADILHAS.md`.
 | 10 | LLM Local: análise financeira via Gemma/Phi | Pendente |
 | 11 | Grafos e Visualizações: Sankey, heatmap | Pendente |
 | 12 | IRPF Completo: pacote CSV, simulador | Pendente |
-| 13 | Integração Vault Final: unificação com Controle_de_Bordo_OS | Pendente |
+| 13 | Integração Vault Final: unificação de projetos | Pendente |
 | 14 | Auditoria Final: GitHub-readiness | Pendente |
 
 ### Números

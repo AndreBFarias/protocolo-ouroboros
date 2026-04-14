@@ -1,4 +1,4 @@
-# Sprint 10 -- LLM Local
+# Sprint 09 -- LLM Local
 
 ## Status: Pendente
 Issue: a criar

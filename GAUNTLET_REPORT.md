@@ -1,4 +1,4 @@
-# Relatório Gauntlet -- Controle de Bordo
+# Relatório Gauntlet -- Protocolo Ouroboros
 
 Data: 2026-04-14 19:09:47 | Duração: 0.9s | Python 3.12.1 | Linux
 

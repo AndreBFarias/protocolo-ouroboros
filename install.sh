@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-echo "=== Controle de Bordo -- Instalação ==="
+echo "=== Protocolo Ouroboros -- Instalação ==="
 
 VENV=".venv"
 
@@ -53,6 +53,14 @@ mkdir -p \
     logs \
     mappings \
     tests/fixtures
+
+# Instalar launcher .desktop
+DESKTOP_DIR="$HOME/.local/share/applications"
+mkdir -p "$DESKTOP_DIR"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cp "$SCRIPT_DIR/ouroboros.desktop" "$DESKTOP_DIR/" 2>/dev/null && \
+    echo "[OK] Launcher instalado em $DESKTOP_DIR/ouroboros.desktop" || \
+    echo "[AVISO] Não foi possível instalar launcher .desktop"
 
 echo ""
 echo "=== Instalação completa ==="

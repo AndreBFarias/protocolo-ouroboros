@@ -1,4 +1,4 @@
-# Sprint 08b -- Dashboard Polish Visual
+# Sprint 16 -- Dashboard Polish Visual
 
 ## Status: Pendente
 Issue: a criar
