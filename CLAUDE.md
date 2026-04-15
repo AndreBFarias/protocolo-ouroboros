@@ -1,9 +1,9 @@
 # CLAUDE.md -- Protocolo Ouroboros
 
 ```
-VERSÃO: 2.0 | STATUS: PRODUÇÃO | LANG: PT-BR
+VERSÃO: 3.0 | STATUS: PRODUÇÃO (com lacunas documentadas) | LANG: PT-BR
 TRANSAÇÕES: 2.859 | MESES: 44 (ago/2022 a out/2026) | BANCOS: 6
-SPRINTS CONCLUÍDAS: 4/14 | CATEGORIZAÇÃO: 100% | IRPF TAGS: 79
+SPRINTS CONCLUÍDAS: 9/24 | CATEGORIZAÇÃO: 100% | IRPF TAGS: 79
 ```
 
 ---
@@ -92,18 +92,22 @@ A IA deve ler o CONTEÚDO (não confiar no nome) para detectar:
 
 ### renda
 
-| Coluna | Tipo |
-|--------|------|
-| mes_ref | str (YYYY-MM) |
-| fonte | str (G4F/Infobase/PJ Vitória/Rendimentos) |
-| bruto | float |
-| inss | float |
-| irrf | float |
-| vr_va | float |
-| liquido | float |
-| banco | str |
+**AVISO:** Colunas `inss`, `irrf`, `vr_va` estão sempre vazias. O pipeline infere receita das transações bancárias (tipo == "Receita"), mas não tem extrator de contracheque. Sem holerite, esses campos nunca serão preenchidos automaticamente.
+
+| Coluna | Tipo | Preenchido? |
+|--------|------|-------------|
+| mes_ref | str (YYYY-MM) | sim |
+| fonte | str | sim (inferido do banco_origem) |
+| bruto | float | sim (valor da transação) |
+| inss | float | SEMPRE VAZIO (sem extrator de contracheque) |
+| irrf | float | SEMPRE VAZIO (sem extrator de contracheque) |
+| vr_va | float | SEMPRE VAZIO (sem extrator de contracheque) |
+| liquido | float | sim (= bruto, pois sem deduções) |
+| banco | str | sim |
 
 ### dividas_ativas
+
+**AVISO:** Dados importados do controle_antigo.xlsx (2022-2023), nunca atualizados. As dívidas reais atuais (Nubank PF/PJ) não estão refletidas. 26 linhas estáticas.
 
 | Coluna | Tipo |
 |--------|------|
@@ -118,6 +122,8 @@ A IA deve ler o CONTEÚDO (não confiar no nome) para detectar:
 
 ### inventario
 
+**AVISO:** 18 bens importados do histórico, sem mecanismo de atualização. Snapshot congelado.
+
 | Coluna | Tipo |
 |--------|------|
 | bem | str |
@@ -127,6 +133,8 @@ A IA deve ler o CONTEÚDO (não confiar no nome) para detectar:
 | perda_mensal | float |
 
 ### prazos
+
+**AVISO:** 6 prazos importados do histórico. Leitura frágil (depende de índices de coluna).
 
 | Coluna | Tipo |
 |--------|------|
@@ -151,18 +159,20 @@ A IA deve ler o CONTEÚDO (não confiar no nome) para detectar:
 
 ### irpf
 
-| Coluna | Tipo |
-|--------|------|
-| ano | int |
-| tipo | str (rendimento_tributavel/inss/irrf/despesa_medica/isento/imposto_pago) |
-| fonte | str |
-| cnpj_cpf | str |
-| valor | float |
-| mes | str |
+**AVISO:** Coluna `cnpj_cpf` está sempre vazia -- o tagger IRPF não extrai CNPJ/CPF do contraparte.
+
+| Coluna | Tipo | Preenchido? |
+|--------|------|-------------|
+| ano | int | sim |
+| tipo | str | sim |
+| fonte | str | sim |
+| cnpj_cpf | str | SEMPRE VAZIO (sem extração de CNPJ) |
+| valor | float | sim |
+| mes | str | sim |
 
 ### análise
 
-Texto livre com insights gerados por mês.
+**AVISO:** NÃO contém análise real. Gera frases genéricas com totais ("Total de X transações"). Análise inteligente depende de LLM local (Sprint 09, não implementada).
 
 ---
 
@@ -321,17 +331,37 @@ protocolo-ouroboros/
 
 ## Contexto Ativo
 
-- **Sprints concluídas:** 1 (MVP), 2 (Infra), 4 (Inteligência), 8 (Dashboard v2 Dracula), 13 (Rebranding), 14 (UI/UX), 18 (Auditoria), 19 (Dívida Técnica), 20 (Bugs Críticos)
-- **Sprints com código integrado:** 3 (Dashboard v1), 5 (Relatórios), 6 (Obsidian)
-- **Sprints parciais:** 15 (Acentuação -- hooks prontos, correções concluídas na Sprint 19)
-- **Próximas sprints:** 09 (LLM), 10 (Grafos), 11 (IRPF), 12 (Vault Final -- absorção CdB)
-- **Sprints finais:** 16 (Dashboard Polish), 17 (Testes CI/CD)
-- **Plano de convergência:** Ouroboros absorve vault ~/Controle de Bordo (plano em .claude/plans/)
+- **Sprints concluídas:** 1, 2, 4, 8, 13, 14, 15 (parcial), 18, 19, 20
+- **Sprints com código integrado:** 3, 5, 6
+- **Backlog priorizado:**
+  - 21 (Dashboard Redesign -- CSS, tipografia, layout)
+  - 22 (Relatórios Diagnósticos -- contexto, anomalias, metas reais)
+  - 23 (Consolidação -- módulos fantasmas, energia_ocr, obsidian sync)
+  - 24 (Verdade nos Dados -- eliminar placeholders e colunas vazias)
+- **Backlog futuro:** 09 (LLM), 10 (Grafos), 12 (Vault Final), 16 (Dashboard Polish), 17 (Testes CI/CD)
 - **Transações:** 2.859 (1.214 histórico + 1.645 dados brutos)
 - **Cobertura de meses:** 44 (ago/2022 a out/2026)
 - **Bancos:** Itaú, Santander, C6, Nubank (André) + Nubank PF/PJ (Vitória)
 - **Categorização:** 100% (111 regras + 10 overrides)
 - **IRPF tags:** 79 registros em 5 tipos
+
+### Lacunas conhecidas (auditoria 2026-04-15)
+
+| Lacuna | Impacto | Sprint |
+|--------|---------|--------|
+| Download de extratos é 100% manual | Sem integração com Open Finance/APIs bancárias | Fora do escopo |
+| `health_check.py` não existe | Menu opção 8 e --check crasham | 23 |
+| `doc_generator.py` não existe | `make docs` crasha | 23 |
+| `energia_ocr.py` não registrado no pipeline | Contas de energia nunca processadas | 23 |
+| Obsidian sync com frontmatter nulo | Queries Dataview quebradas | 23 |
+| Aba renda: INSS/IRRF/VR-VA vazios | Sem extrator de contracheque | 24 |
+| Aba analise: texto estático | Sem LLM (Sprint 09) | 24 | <!-- noqa: accent -->
+| Abas dividas/inventario/prazos: congeladas | Dados de 2023, nunca atualizados | 24 |
+| Aba irpf: cnpj_cpf vazio | Sem extração de CNPJ | 24 |
+| Dashboard: layout, fontes, contraste | Não segue padrões visuais | 21 |
+| Relatórios: descritivos, não diagnósticos | Inúteis para análise financeira por IA | 22 |
+| Sem agendamento (cron) | Toda execução é on-demand | Fora do escopo |
+| Sem extrator CAESB/contracheque | Dados faltantes | Fora do escopo |
 
 ---
 

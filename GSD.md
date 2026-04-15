@@ -87,7 +87,7 @@ Detalhes completos em `docs/ARMADILHAS.md`.
 | `./run.sh --inbox` | Processa inbox |
 | `./run.sh --dashboard` | Abre dashboard |
 | `./run.sh --sync` | Sincroniza com vault Obsidian |
-| `./run.sh --check` | Health check do pipeline |
+| `./run.sh --check` | QUEBRADO -- health_check.py não existe (Sprint 23) |
 | `./run.sh --gauntlet` | Executa gauntlet (44 testes, 8 fases) |
 | `./run.sh` (sem args) | Menu interativo ANSI colorido |
 | `make gauntlet` | Atalho para gauntlet |
@@ -100,23 +100,28 @@ Detalhes completos em `docs/ARMADILHAS.md`.
 
 | Sprint | Tema | Status |
 |--------|------|--------|
-| 01 | MVP: Pipeline ETL + 6 extratores + XLSX 8 abas | Concluída (commit 10b4b64) |
-| 02 | Infra: Categorização 100%, Makefile, OCR | Concluída (commit 7544101) |
-| 03 | Dashboard Streamlit: 6 abas, tema dark | Integrada (commit 9a5bdb5) |
-| 04 | Inteligência: overrides, IRPF tagger, validador | Concluída (commit 12b778c) |
+| 01 | MVP: Pipeline ETL + 6 extratores + XLSX 8 abas | Concluída |
+| 02 | Infra: Categorização 100%, Makefile, OCR | Concluída |
+| 03 | Dashboard Streamlit: 6 abas, tema dark | Integrada |
+| 04 | Inteligência: overrides, IRPF tagger, validador | Concluída |
 | 05 | Relatórios + Projeções: 3 cenários, 7 metas | Integrada |
-| 06 | Integração Obsidian: sync, siglas, Dataview | Integrada |
-| 08 | Dashboard v2: Redesign Dracula | Concluída (commit f8b1855) |
-| 09 | LLM Local: análise financeira via Gemma/Phi | Pendente |
-| 10 | Grafos e Visualizações: Sankey, heatmap | Pendente |
-| 11 | IRPF Completo: pacote CSV, simulador | Pendente |
-| 12 | Vault Final: absorção do CdB pelo Ouroboros | Pendente |
-| 13 | Rebranding Protocolo Ouroboros | Concluída (commit b73068a) |
-| 14 | UI/UX e Outputs Profissionais | Concluída (commit b73068a) |
-| 15 | Acentuação e Qualidade | Pendente |
-| 16 | Dashboard Polish Visual | Pendente |
-| 17 | Testes e CI/CD | Pendente |
-| 18 | Auditoria Final: GitHub-readiness | Pendente |
+| 06 | Integração Obsidian: sync, siglas, Dataview | Integrada (frontmatter quebrado -- Sprint 23) |
+| 08 | Dashboard v2: Redesign Dracula | Concluída |
+| 13 | Rebranding Protocolo Ouroboros | Concluída |
+| 14 | UI/UX e Outputs Profissionais | Concluída |
+| 15 | Acentuação e Qualidade | Parcial (hooks OK, correções na 19) |
+| 18 | Auditoria Final: GitHub-readiness | Concluída |
+| 19 | Dívida Técnica: acentuação + deduplicação | Concluída |
+| 20 | Bugs Críticos: crashes, projeções, classificação | Concluída |
+| **21** | **Dashboard Redesign: CSS, tipografia, layout** | **Pendente** |
+| **22** | **Relatórios Diagnósticos: contexto, anomalias** | **Pendente** |
+| **23** | **Consolidação: módulos fantasmas, energia, obsidian** | **Pendente** |
+| **24** | **Verdade nos Dados: eliminar placeholders** | **Pendente** |
+| 09 | LLM Local: análise financeira via Gemma/Phi | Futuro |
+| 10 | Grafos e Visualizações | Futuro |
+| 12 | Vault Final: absorção do CdB | Futuro |
+| 16 | Dashboard Polish Visual | Futuro (absorvido parcialmente pela 21) |
+| 17 | Testes e CI/CD | Futuro |
 
 ### Números
 
@@ -124,12 +129,26 @@ Detalhes completos em `docs/ARMADILHAS.md`.
 - **44 meses** de cobertura (ago/2022 a out/2026)
 - **111 regras regex** de categorização + **10 overrides** manuais
 - **21 regras IRPF** em 5 tipos de tag -> **79 registros tagueados**
-- **6 extratores** funcionais (nubank_cartao, nubank_cc, c6_cc, c6_cartao, itau_pdf, santander_pdf) + **1 OCR** (energia)
-- **6 validações** de integridade no validador
-- **8 abas** no XLSX de saída
-- **44 relatórios** mensais em Markdown
+- **6 extratores** registrados no pipeline + **1 OCR** (energia -- existe mas não registrado) <!-- noqa: accent -->
+- **6 validações** de integridade no validador (NÃO roda automaticamente)
+- **8 abas** no XLSX (3 com dados reais, 3 congeladas do histórico, 1 parcial, 1 estática)
+- **44 relatórios** mensais em Markdown (projeções corrigidas na Sprint 20)
 - **44 testes** no gauntlet (8 fases)
-- **52 arquivos** sincronizados com vault Obsidian (44 relatórios + 7 metas + 1 MOC)
+
+### O que funciona vs o que não funciona
+
+| Funciona | Não funciona |
+|----------|-------------|
+| Inbox processor detecta banco/pessoa | Download de extratos é manual |
+| 6 extratores (CSV, XLSX, XLS, PDF) | energia_ocr.py não registrado no pipeline |
+| Descriptografia automática (senhas.yaml) | health_check.py não existe (menu crasha) |
+| Categorização 100% (111 regras) | doc_generator.py não existe (make docs crasha) |
+| Deduplicação 3 níveis | Obsidian sync com frontmatter nulo |
+| IRPF tagger + simulador de regime | Aba renda: INSS/IRRF/VR-VA vazios |
+| XLSX 8 abas + 44 relatórios | Aba analise: texto estático (sem LLM) | <!-- noqa: accent -->
+| Dashboard 8 páginas (Dracula) | Abas dividas/inventario/prazos: congeladas 2023 |
+| Backup automático antes de processar | Sem cron/agendamento |
+| Projeções por mês (corrigido Sprint 20) | Aba irpf: cnpj_cpf vazio |
 
 ---
 
