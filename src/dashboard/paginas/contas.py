@@ -6,7 +6,7 @@ import pandas as pd
 import streamlit as st
 
 from src.dashboard.dados import filtrar_por_mes, filtrar_por_pessoa, formatar_moeda
-from src.dashboard.tema import CORES, FONTE_CORPO, FONTE_MINIMA, card_html
+from src.dashboard.tema import CORES, FONTE_CORPO, FONTE_MINIMA, card_html, rgba_cor
 
 
 def renderizar(dados: dict[str, pd.DataFrame], mes_selecionado: str, pessoa: str) -> None:
@@ -48,8 +48,9 @@ def _secao_dividas(df: pd.DataFrame, mes: str, pessoa: str) -> None:
         status = row.get("status", "")
         cor_borda = CORES["positivo"] if status == "Pago" else CORES["negativo"]
         cor_fundo = (
-            "rgba(80, 250, 123, 0.08)" if status == "Pago"
-            else "rgba(255, 85, 85, 0.08)"
+            rgba_cor(CORES["positivo"], 0.08)
+            if status == "Pago"
+            else rgba_cor(CORES["negativo"], 0.08)
         )
         status_texto = "Pago" if status == "Pago" else "Pendente"
         obs = row.get("obs", "") or "-"
@@ -57,15 +58,15 @@ def _secao_dividas(df: pd.DataFrame, mes: str, pessoa: str) -> None:
         linhas_html.append(
             f'<tr style="background-color: {cor_fundo};'
             f' border-left: 3px solid {cor_borda};">'
-            f'<td style="padding: 10px; color: {CORES["texto"]};'
+            f'<td style="padding: 12px 10px; color: {CORES["texto"]};'
             f' font-size: {FONTE_CORPO}px;">{row.get("custo", "")}</td>'
-            f'<td style="padding: 10px; color: {CORES["texto"]};'
+            f'<td style="padding: 12px 10px; color: {CORES["texto"]};'
             f' font-size: {FONTE_CORPO}px; text-align: right;">'
-            f'{formatar_moeda(row.get("valor", 0))}</td>'
-            f'<td style="padding: 10px; color: {cor_borda};'
+            f"{formatar_moeda(row.get('valor', 0))}</td>"
+            f'<td style="padding: 12px 10px; color: {cor_borda};'
             f' font-weight: bold; font-size: {FONTE_CORPO}px;">'
-            f'{status_texto}</td>'
-            f'<td style="padding: 10px; color: {CORES["texto_sec"]};'
+            f"{status_texto}</td>"
+            f'<td style="padding: 12px 10px; color: {CORES["texto_sec"]};'
             f' font-size: {FONTE_MINIMA}px;">{obs}</td></tr>'
         )
 
@@ -81,7 +82,7 @@ def _secao_dividas(df: pd.DataFrame, mes: str, pessoa: str) -> None:
         f' color: {CORES["texto_sec"]}; font-size: {FONTE_MINIMA}px;">Status</th>'
         f'<th style="padding: 10px; text-align: left;'
         f' color: {CORES["texto_sec"]}; font-size: {FONTE_MINIMA}px;">Obs</th>'
-        f'</tr></thead><tbody>{"".join(linhas_html)}</tbody></table>'
+        f"</tr></thead><tbody>{''.join(linhas_html)}</tbody></table>"
     )
 
     st.markdown(html, unsafe_allow_html=True)
@@ -150,7 +151,7 @@ def _secao_prazos(df: pd.DataFrame) -> None:
             f' font-size: {FONTE_CORPO}px; text-align: center;">Dia {dia}</td>'
             f'<td style="padding: 10px; color: {cor};'
             f' font-size: {FONTE_CORPO}px; font-weight: bold;">'
-            f'{urgencia}</td></tr>'
+            f"{urgencia}</td></tr>"
         )
 
     html = (
@@ -162,7 +163,7 @@ def _secao_prazos(df: pd.DataFrame) -> None:
         f' color: {CORES["texto_sec"]}; font-size: {FONTE_MINIMA}px;">Vencimento</th>'
         f'<th style="padding: 10px; text-align: left;'
         f' color: {CORES["texto_sec"]}; font-size: {FONTE_MINIMA}px;">Urgência</th>'
-        f'</tr></thead><tbody>{"".join(linhas_html)}</tbody></table>'
+        f"</tr></thead><tbody>{''.join(linhas_html)}</tbody></table>"
     )
 
     st.markdown(html, unsafe_allow_html=True)

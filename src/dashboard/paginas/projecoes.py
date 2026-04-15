@@ -5,7 +5,7 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from src.dashboard.dados import filtrar_por_pessoa, formatar_moeda
-from src.dashboard.tema import CORES, FONTE_MINIMA, FONTE_SUBTITULO, LAYOUT_PLOTLY
+from src.dashboard.tema import CORES, FONTE_MINIMA, FONTE_SUBTITULO, LAYOUT_PLOTLY, rgba_cor
 
 
 def _card_cenario(
@@ -24,10 +24,10 @@ def _card_cenario(
     return (
         f'<div style="background-color: {CORES["card_fundo"]};'
         f" border-left: 4px solid {cor};"
-        f' border-radius: 8px; padding: 18px;'
+        f" border-radius: 8px; padding: 18px;"
         f' margin: 5px 0 10px 0;">'
         f'<p style="color: {cor}; font-size: {FONTE_SUBTITULO}px;'
-        f' font-weight: bold;'
+        f" font-weight: bold;"
         f' margin: 0 0 10px 0;">{titulo}</p>'
         f"{itens}</div>"
     )
@@ -65,9 +65,7 @@ def renderizar(
 ) -> None:
     """Renderiza a página de projeções financeiras."""
     if "extrato" not in dados:
-        st.warning(
-            "Nenhum dado de extrato disponível para projeções."
-        )
+        st.warning("Nenhum dado de extrato disponível para projeções.")
         return
 
     from src.projections.scenarios import (
@@ -92,19 +90,15 @@ def renderizar(
     meta_ape = cenarios["cenario_meta_ape"]
 
     with col1:
-        cor = (
-            CORES["positivo"]
-            if atual["saldo_mensal"] > 0
-            else CORES["negativo"]
-        )
+        cor = CORES["positivo"] if atual["saldo_mensal"] > 0 else CORES["negativo"]
         linhas_atual = [
             ("Saldo mensal", formatar_moeda(atual["saldo_mensal"])),
             ("Reserva emergencial", _formatar_meses(atual["meses_ate_reserva_emergencia"])),
             ("Entrada apartamento", _formatar_meses(atual["meses_ate_entrada_ape"])),
             (
                 "Meta apê",
-                f'{formatar_moeda(meta_ape["valor_alvo"])} em '
-                f'{_formatar_meses(meta_ape["meses_ate_entrada_ape"])}',
+                f"{formatar_moeda(meta_ape['valor_alvo'])} em "
+                f"{_formatar_meses(meta_ape['meses_ate_entrada_ape'])}",
             ),
         ]
         st.markdown(
@@ -113,11 +107,7 @@ def renderizar(
         )
 
     with col2:
-        cor = (
-            CORES["positivo"]
-            if pos["saldo_mensal"] > 0
-            else CORES["negativo"]
-        )
+        cor = CORES["positivo"] if pos["saldo_mensal"] > 0 else CORES["negativo"]
         linhas_pos = [
             ("Saldo mensal", formatar_moeda(pos["saldo_mensal"])),
             ("Reserva emergencial", _formatar_meses(pos["meses_ate_reserva_emergencia"])),
@@ -157,9 +147,7 @@ def renderizar(
     )
 
     if economia_extra > 0:
-        projecao_custom = projetar_com_economia(
-            transacoes, float(economia_extra)
-        )
+        projecao_custom = projetar_com_economia(transacoes, float(economia_extra))
         projecao_base = cenarios["cenario_atual"]["projecao_12_meses"]
         _grafico_simulacao(projecao_base, projecao_custom, economia_extra)
 
@@ -177,25 +165,27 @@ def _grafico_projecao(cenarios: dict) -> None:
 
     fig = go.Figure()
 
-    fig.add_trace(go.Scatter(
-        x=meses_labels,
-        y=valores_atual,
-        name="Ritmo Atual",
-        mode="lines+markers",
-        line=dict(color=CORES["positivo"], width=3),
-        marker=dict(size=6),
-    ))
+    fig.add_trace(
+        go.Scatter(
+            x=meses_labels,
+            y=valores_atual,
+            name="Ritmo Atual",
+            mode="lines+markers",
+            line=dict(color=CORES["positivo"], width=3),
+            marker=dict(size=6),
+        )
+    )
 
-    fig.add_trace(go.Scatter(
-        x=meses_labels,
-        y=valores_pos,
-        name="Pós-Infobase",
-        mode="lines+markers",
-        line=dict(
-            color=CORES["alerta"], width=2, dash="dash"
-        ),
-        marker=dict(size=5),
-    ))
+    fig.add_trace(
+        go.Scatter(
+            x=meses_labels,
+            y=valores_pos,
+            name="Pós-Infobase",
+            mode="lines+markers",
+            line=dict(color=CORES["alerta"], width=2, dash="dash"),
+            marker=dict(size=5),
+        )
+    )
 
     label_reserva = f"Reserva ({formatar_moeda(VALOR_RESERVA_EMERGENCIA)})"
     label_ape = f"Entrada Apê ({formatar_moeda(VALOR_ENTRADA_APE)})"
@@ -217,9 +207,7 @@ def _grafico_projecao(cenarios: dict) -> None:
 
     fig.update_layout(
         **LAYOUT_PLOTLY,
-        legend=dict(
-            orientation="h", yanchor="bottom", y=1.02
-        ),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02),
         yaxis_title="Patrimônio Acumulado (R$)",
         xaxis_title="Mês",
         hovermode="x unified",
@@ -240,24 +228,28 @@ def _grafico_simulacao(
 
     fig = go.Figure()
 
-    fig.add_trace(go.Scatter(
-        x=meses_labels,
-        y=valores_base,
-        name="Cenário base",
-        mode="lines",
-        line=dict(color=CORES["texto_sec"], width=2, dash="dot"),
-    ))
+    fig.add_trace(
+        go.Scatter(
+            x=meses_labels,
+            y=valores_base,
+            name="Cenário base",
+            mode="lines",
+            line=dict(color=CORES["texto_sec"], width=2, dash="dot"),
+        )
+    )
 
-    fig.add_trace(go.Scatter(
-        x=meses_labels,
-        y=valores_custom,
-        name=f"Economizando +R$ {economia}/mês",
-        mode="lines+markers",
-        line=dict(color=CORES["destaque"], width=3),
-        marker=dict(size=6),
-        fill="tonexty",
-        fillcolor="rgba(189, 147, 249, 0.1)",
-    ))
+    fig.add_trace(
+        go.Scatter(
+            x=meses_labels,
+            y=valores_custom,
+            name=f"Economizando +R$ {economia}/mês",
+            mode="lines+markers",
+            line=dict(color=CORES["destaque"], width=3),
+            marker=dict(size=6),
+            fill="tonexty",
+            fillcolor=rgba_cor(CORES["destaque"], 0.08),
+        )
+    )
 
     from src.projections.scenarios import VALOR_ENTRADA_APE, VALOR_RESERVA_EMERGENCIA
 
@@ -283,9 +275,7 @@ def _grafico_simulacao(
 
     fig.update_layout(
         **LAYOUT_PLOTLY,
-        legend=dict(
-            orientation="h", yanchor="bottom", y=1.02
-        ),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02),
         yaxis_title="Patrimônio Acumulado (R$)",
         xaxis_title="Mês",
     )
