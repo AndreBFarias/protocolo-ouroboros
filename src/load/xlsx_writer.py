@@ -335,6 +335,7 @@ def _criar_aba_irpf(wb: openpyxl.Workbook, transacoes: list[dict]) -> None:
         ws.cell(row=row_idx, column=1, value=ano)
         ws.cell(row=row_idx, column=2, value=tag)
         ws.cell(row=row_idx, column=3, value=t.get("local", ""))
+        ws.cell(row=row_idx, column=4, value=t.get("cnpj_cpf", ""))
         ws.cell(row=row_idx, column=5, value=t.get("valor", 0))
         ws.cell(row=row_idx, column=6, value=t.get("mes_ref", ""))
         ws.cell(row=row_idx, column=5).number_format = VALOR_FORMAT
@@ -346,30 +347,151 @@ def _criar_aba_irpf(wb: openpyxl.Workbook, transacoes: list[dict]) -> None:
 
 
 def _criar_aba_analise(wb: openpyxl.Workbook, transacoes: list[dict]) -> None:
-    """Cria a aba de análise com insights gerados."""
+    """Cria a aba de análise com insights quantitativos e qualitativos."""
+    from collections import Counter
+
     ws = wb.create_sheet("analise")
-    ws.cell(row=1, column=1, value="Análise gerada automaticamente")
-    ws.cell(row=1, column=1).font = Font(bold=True, size=14)
+    ws.column_dimensions["A"].width = 80
+    negrito = Font(bold=True, size=12)
+    subtitulo = Font(bold=True, size=11, color="2F5496")
 
-    total_receitas = sum(t["valor"] for t in transacoes if t.get("tipo") == "Receita")
-    total_despesas = sum(t["valor"] for t in transacoes if t.get("tipo") in ("Despesa", "Imposto"))
-    total_transf = sum(t["valor"] for t in transacoes if t.get("tipo") == "Transferência Interna")
+    despesas = [t for t in transacoes if t.get("tipo") in ("Despesa", "Imposto")]
+    receitas = [t for t in transacoes if t.get("tipo") == "Receita"]
+    total_desp = sum(t["valor"] for t in despesas)
+    total_rec = sum(t["valor"] for t in receitas)
+    saldo = total_rec - total_desp
 
-    linhas = [
-        "",
-        f"Total de transações processadas: {len(transacoes)}",
-        f"Receita total: R$ {total_receitas:,.2f}",
-        f"Despesa total: R$ {total_despesas:,.2f}",
-        f"Saldo: R$ {total_receitas - total_despesas:,.2f}",
-        f"Transferências internas: R$ {total_transf:,.2f}",
-        "",
-        "Detalhes por mês disponíveis na aba 'resumo_mensal'.",
+    meses = sorted({t.get("mes_ref", "") for t in transacoes if t.get("mes_ref")})
+    n_meses = len(meses) or 1
+
+    # Panorama geral
+    linhas: list[tuple[str, Optional[Font]]] = [
+        ("PANORAMA GERAL", negrito),
+        (
+            f"Período: {meses[0] if meses else '?'} a "
+            f"{meses[-1] if meses else '?'} ({n_meses} meses)",
+            None,
+        ),
+        (
+            f"Transações: {len(transacoes)} ({len(receitas)} receitas, {len(despesas)} despesas)",
+            None,
+        ),
+        (f"Receita total: R$ {total_rec:,.2f} (média R$ {total_rec / n_meses:,.2f}/mês)", None),
+        (f"Despesa total: R$ {total_desp:,.2f} (média R$ {total_desp / n_meses:,.2f}/mês)", None),
+        (f"Saldo acumulado: R$ {saldo:,.2f}", None),
+        (f"Taxa de poupança: {(saldo / total_rec * 100) if total_rec > 0 else 0:.1f}%", None),
+        ("", None),
     ]
 
-    for i, linha in enumerate(linhas, 2):
-        ws.cell(row=i, column=1, value=linha)
+    # Top 10 categorias por gasto
+    cat_totais = Counter()
+    for t in despesas:
+        cat_totais[t.get("categoria", "?")] += t["valor"]
+    top10 = cat_totais.most_common(10)
 
-    ws.column_dimensions["A"].width = 60
+    linhas.append(("TOP 10 CATEGORIAS (por valor total)", subtitulo))
+    for i, (cat, val) in enumerate(top10, 1):
+        pct = val / total_desp * 100 if total_desp > 0 else 0
+        linhas.append((f"  {i}. {cat}: R$ {val:,.2f} ({pct:.1f}%)", None))
+    linhas.append(("", None))
+
+    # Classificação
+    clf_totais = Counter()
+    for t in despesas:
+        clf_totais[t.get("classificacao", "?")] += t["valor"]
+
+    linhas.append(("CLASSIFICAÇÃO DE DESPESAS", subtitulo))
+    for clf in ["Obrigatório", "Questionável", "Supérfluo"]:
+        val = clf_totais.get(clf, 0)
+        pct = val / total_desp * 100 if total_desp > 0 else 0
+        linhas.append((f"  {clf}: R$ {val:,.2f} ({pct:.1f}%)", None))
+    linhas.append(("", None))
+
+    # Análise por pessoa
+    pessoa_desp: dict[str, float] = {}
+    pessoa_rec: dict[str, float] = {}
+    for t in despesas:
+        p = t.get("quem", "?")
+        pessoa_desp[p] = pessoa_desp.get(p, 0) + t["valor"]
+    for t in receitas:
+        p = t.get("quem", "?")
+        pessoa_rec[p] = pessoa_rec.get(p, 0) + t["valor"]
+
+    linhas.append(("BALANÇO POR PESSOA", subtitulo))
+    for p in sorted(set(list(pessoa_desp.keys()) + list(pessoa_rec.keys()))):
+        rec = pessoa_rec.get(p, 0)
+        desp = pessoa_desp.get(p, 0)
+        saldo_p = rec - desp
+        txt_p = f"  {p}: R$ {rec:,.2f} rec | R$ {desp:,.2f} desp | R$ {saldo_p:,.2f}"
+        linhas.append((txt_p, None))
+    linhas.append(("", None))
+
+    # Evolução mensal (últimos 6 meses)
+    ultimos_6 = meses[-6:] if len(meses) >= 6 else meses
+    linhas.append(("EVOLUÇÃO MENSAL (últimos meses)", subtitulo))
+    for m in ultimos_6:
+        rec_m = sum(t["valor"] for t in receitas if t.get("mes_ref") == m)
+        desp_m = sum(t["valor"] for t in despesas if t.get("mes_ref") == m)
+        saldo_m = rec_m - desp_m
+        sinal = "+" if saldo_m >= 0 else ""
+        txt_m = f"  {m}: R$ {rec_m:,.2f} rec | R$ {desp_m:,.2f} desp | {sinal}R$ {saldo_m:,.2f}"
+        linhas.append((txt_m, None))
+    linhas.append(("", None))
+
+    # Anomalias (categorias com variação > 50% entre penúltimo e último mês)
+    if len(meses) >= 2:
+        penultimo, ultimo = meses[-2], meses[-1]
+        cat_pen: Counter = Counter()
+        cat_ult: Counter = Counter()
+        for t in despesas:
+            if t.get("mes_ref") == penultimo:
+                cat_pen[t.get("categoria", "?")] += t["valor"]
+            elif t.get("mes_ref") == ultimo:
+                cat_ult[t.get("categoria", "?")] += t["valor"]
+
+        anomalias: list[str] = []
+        todas_cats = set(list(cat_pen.keys()) + list(cat_ult.keys()))
+        for cat in sorted(todas_cats):
+            v_pen = cat_pen.get(cat, 0)
+            v_ult = cat_ult.get(cat, 0)
+            if v_pen > 100 and v_ult > 100:
+                variacao = (v_ult - v_pen) / v_pen * 100
+                if abs(variacao) > 50:
+                    sinal = "+" if variacao > 0 else ""
+                    anomalias.append(
+                        f"  {cat}: R$ {v_pen:,.2f} -> R$ {v_ult:,.2f} ({sinal}{variacao:.0f}%)"
+                    )
+            elif v_pen == 0 and v_ult > 200:
+                anomalias.append(f"  {cat}: NOVO gasto de R$ {v_ult:,.2f} em {ultimo}")
+            elif v_pen > 200 and v_ult == 0:
+                anomalias.append(f"  {cat}: DESAPARECEU (era R$ {v_pen:,.2f} em {penultimo})")
+
+        if anomalias:
+            linhas.append((f"ANOMALIAS ({penultimo} vs {ultimo})", subtitulo))
+            for a in anomalias:
+                linhas.append((a, None))
+            linhas.append(("", None))
+
+    # Saúde financeira (categorias de saúde agrupadas)
+    saude_cats = {"Farmácia", "Saúde", "Natação"}
+    saude_total = sum(t["valor"] for t in despesas if t.get("categoria") in saude_cats)
+    if saude_total > 0:
+        pct_saude = saude_total / total_desp * 100 if total_desp > 0 else 0
+        linhas.append(("CUSTOS DE SAÚDE (agrupado)", subtitulo))
+        for cat in sorted(saude_cats):
+            val = cat_totais.get(cat, 0)
+            if val > 0:
+                linhas.append((f"  {cat}: R$ {val:,.2f}", None))
+        linhas.append(
+            (f"  TOTAL SAÚDE: R$ {saude_total:,.2f} ({pct_saude:.1f}% das despesas)", None)
+        )
+        linhas.append(("", None))
+
+    # Escrever na aba
+    for i, (texto, fonte) in enumerate(linhas, 1):
+        cell = ws.cell(row=i, column=1, value=texto)
+        if fonte:
+            cell.font = fonte
 
 
 def gerar_xlsx(

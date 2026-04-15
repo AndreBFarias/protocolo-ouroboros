@@ -1,6 +1,6 @@
 # Sprint 24 -- Verdade nos Dados: Eliminar Placeholders e Dados Estáticos
 
-## Status: Pendente
+## Status: Concluída (parcial -- itens de visão movidos para Sprints 25 e 26)
 
 ## Objetivo
 

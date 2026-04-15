@@ -407,11 +407,14 @@ def gerar_relatorio_mes(
 def gerar_relatorios(
     transacoes: list[dict],
     diretorio_saida: Path,
+    meses_filtro: Optional[list[str]] = None,
 ) -> list[Path]:
-    """Gera relatórios para todos os meses disponíveis."""
+    """Gera relatórios para todos os meses (ou apenas os filtrados)."""
     diretorio_saida.mkdir(parents=True, exist_ok=True)
     por_mes = _agrupar_por_mes(transacoes)
     meses_ordenados = sorted(por_mes.keys())
+    if meses_filtro:
+        meses_ordenados = [m for m in meses_ordenados if m in meses_filtro]
 
     arquivos_gerados: list[Path] = []
 
