@@ -40,9 +40,7 @@ def renderizar(
     extrato_mes = filtrar_por_periodo(extrato_filtrado, gran, periodo)
 
     receitas = extrato_mes[extrato_mes["tipo"] == "Receita"]["valor"].sum()
-    despesas = extrato_mes[
-        extrato_mes["tipo"].isin(["Despesa", "Imposto"])
-    ]["valor"].sum()
+    despesas = extrato_mes[extrato_mes["tipo"].isin(["Despesa", "Imposto"])]["valor"].sum()
     saldo = receitas - despesas
 
     superfluo = extrato_mes[
@@ -63,8 +61,10 @@ def renderizar(
     col1, col2, col3 = st.columns(3)
 
     with col1:
-        cor_taxa = CORES["positivo"] if taxa_poupanca > 10 else (
-            CORES["alerta"] if taxa_poupanca > 0 else CORES["negativo"]
+        cor_taxa = (
+            CORES["positivo"]
+            if taxa_poupanca > 10
+            else (CORES["alerta"] if taxa_poupanca > 0 else CORES["negativo"])
         )
         st.markdown(
             card_html("Taxa de poupança", f"{taxa_poupanca:.1f}%", cor_taxa),
@@ -130,7 +130,7 @@ def _indicador_saude(receita: float, saldo: float, superfluo: float) -> None:
         f"background-color: {CORES['card_fundo']};"
         f" border-left: 4px solid {cor};"
         f" border-radius: 8px;"
-        f" padding: 14px 20px;"
+        f" padding: 20px;"
         f" margin: 10px 0 20px 0;"
         f'">'
         f'<span style="color: {cor}; font-weight: bold;'
@@ -154,7 +154,7 @@ def _grafico_barras_historico(
     if mes_atual in meses_ordenados:
         idx = meses_ordenados.index(mes_atual)
         inicio = max(0, idx - 5)
-        meses_sel = meses_ordenados[inicio: idx + 1]
+        meses_sel = meses_ordenados[inicio : idx + 1]
     else:
         meses_sel = meses_ordenados[-6:]
 
@@ -171,27 +171,33 @@ def _grafico_barras_historico(
         saldos_list.append(rec - desp)
 
     fig = go.Figure()
-    fig.add_trace(go.Bar(
-        x=meses_sel,
-        y=receitas_list,
-        name="Receita",
-        marker_color=CORES["positivo"],
-    ))
-    fig.add_trace(go.Bar(
-        x=meses_sel,
-        y=despesas_list,
-        name="Despesa",
-        marker_color=CORES["negativo"],
-    ))
-    fig.add_trace(go.Scatter(
-        x=meses_sel,
-        y=saldos_list,
-        name="Saldo",
-        mode="lines+markers",
-        line=dict(color=CORES["destaque"], width=3),
-        marker=dict(size=8),
-        yaxis="y2",
-    ))
+    fig.add_trace(
+        go.Bar(
+            x=meses_sel,
+            y=receitas_list,
+            name="Receita",
+            marker_color=CORES["positivo"],
+        )
+    )
+    fig.add_trace(
+        go.Bar(
+            x=meses_sel,
+            y=despesas_list,
+            name="Despesa",
+            marker_color=CORES["negativo"],
+        )
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=meses_sel,
+            y=saldos_list,
+            name="Saldo",
+            mode="lines+markers",
+            line=dict(color=CORES["destaque"], width=3),
+            marker=dict(size=8),
+            yaxis="y2",
+        )
+    )
 
     fig.update_layout(
         **LAYOUT_PLOTLY,
@@ -224,15 +230,19 @@ def _grafico_classificacao(extrato_mes: pd.DataFrame) -> None:
 
     cores = [MAPA_CLASSIFICACAO.get(c, CORES["na"]) for c in agrupado["classificacao"]]
 
-    fig = go.Figure(data=[go.Bar(
-        x=agrupado["valor"],
-        y=agrupado["classificacao"],
-        orientation="h",
-        marker_color=cores,
-        text=[formatar_moeda(v) for v in agrupado["valor"]],
-        textposition="auto",
-        textfont=dict(size=FONTE_MINIMA),
-    )])
+    fig = go.Figure(
+        data=[
+            go.Bar(
+                x=agrupado["valor"],
+                y=agrupado["classificacao"],
+                orientation="h",
+                marker_color=cores,
+                text=[formatar_moeda(v) for v in agrupado["valor"]],
+                textposition="auto",
+                textfont=dict(size=FONTE_MINIMA),
+            )
+        ]
+    )
 
     layout = {**LAYOUT_PLOTLY, "margin": dict(l=120, r=20, t=50, b=30)}
     fig.update_layout(

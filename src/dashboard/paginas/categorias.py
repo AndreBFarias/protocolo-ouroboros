@@ -92,15 +92,13 @@ def _treemap_categorias(df: pd.DataFrame) -> None:
     fig.update_traces(
         textinfo="label+value",
         texttemplate="%{label}<br>R$ %{value:,.2f}",
-        textfont=dict(size=FONTE_MINIMA),
+        textfont=dict(size=FONTE_CORPO),
     )
 
     st.plotly_chart(fig, width="stretch")
 
 
-def _ranking_com_variacao(
-    extrato_filtrado: pd.DataFrame, mes_atual: str
-) -> None:
+def _ranking_com_variacao(extrato_filtrado: pd.DataFrame, mes_atual: str) -> None:
     """Top 10 categorias com variação vs mês anterior."""
     st.markdown(
         f'<p style="font-size: {FONTE_SUBTITULO}px; font-weight: bold;'
@@ -109,9 +107,7 @@ def _ranking_com_variacao(
         unsafe_allow_html=True,
     )
 
-    df_desp = extrato_filtrado[
-        extrato_filtrado["tipo"].isin(["Despesa", "Imposto"])
-    ]
+    df_desp = extrato_filtrado[extrato_filtrado["tipo"].isin(["Despesa", "Imposto"])]
 
     meses = sorted(df_desp["mes_ref"].dropna().unique().tolist())
     if mes_atual not in meses:
@@ -158,8 +154,7 @@ def _ranking_com_variacao(
         cor_var = CORES["negativo"] if var_val > 0 else CORES["positivo"]
         sinal = "+" if var_val > 0 else ""
         var_texto = (
-            f"{sinal}{formatar_moeda(var_val)} ({sinal}{var_pct:.0f}%)"
-            if mes_ant else "---"
+            f"{sinal}{formatar_moeda(var_val)} ({sinal}{var_pct:.0f}%)" if mes_ant else "---"
         )
 
         linhas_html.append(
@@ -168,15 +163,22 @@ def _ranking_com_variacao(
             f' font-size: {FONTE_CORPO}px;">{row["categoria"]}</td>'
             f'<td style="padding: 8px; color: {CORES["texto"]};'
             f' font-size: {FONTE_CORPO}px; text-align: right;">'
-            f'{formatar_moeda(row["valor"])}</td>'
+            f"{formatar_moeda(row['valor'])}</td>"
             f'<td style="padding: 8px; color: {cor_var};'
             f' font-size: {FONTE_MINIMA}px; text-align: right;">'
             f"{var_texto}</td></tr>"
         )
 
     header_ant = f"vs {mes_ant}" if mes_ant else "Variação"
+    css_tabela = (
+        "<style>"
+        ".tabela-top10 tr:nth-child(even) { background: rgba(68,71,90,0.3); }"
+        ".tabela-top10 tr:hover { background: rgba(68,71,90,0.5); }"
+        "</style>"
+    )
     html = (
-        f'<table style="width: 100%; border-collapse: collapse;">'
+        f"{css_tabela}"
+        f'<table class="tabela-top10" style="width: 100%; border-collapse: collapse;">'
         f'<thead><tr style="background-color: {CORES["card_fundo"]};">'
         f'<th style="padding: 8px; text-align: left; color: {CORES["texto_sec"]};'
         f' font-size: {FONTE_MINIMA}px;">Categoria</th>'
@@ -184,7 +186,7 @@ def _ranking_com_variacao(
         f' font-size: {FONTE_MINIMA}px;">Valor</th>'
         f'<th style="padding: 8px; text-align: right; color: {CORES["texto_sec"]};'
         f' font-size: {FONTE_MINIMA}px;">{header_ant}</th>'
-        f'</tr></thead><tbody>{"".join(linhas_html)}</tbody></table>'
+        f"</tr></thead><tbody>{''.join(linhas_html)}</tbody></table>"
     )
 
     st.markdown(html, unsafe_allow_html=True)
@@ -202,16 +204,14 @@ def _evolucao_categorias(
         unsafe_allow_html=True,
     )
 
-    df_despesas = extrato_filtrado[
-        extrato_filtrado["tipo"].isin(["Despesa", "Imposto"])
-    ].copy()
+    df_despesas = extrato_filtrado[extrato_filtrado["tipo"].isin(["Despesa", "Imposto"])].copy()
 
     meses_ordenados = sorted(df_despesas["mes_ref"].dropna().unique().tolist())
 
     if mes_atual in meses_ordenados:
         idx = meses_ordenados.index(mes_atual)
         inicio = max(0, idx - 5)
-        meses_periodo = meses_ordenados[inicio: idx + 1]
+        meses_periodo = meses_ordenados[inicio : idx + 1]
     else:
         meses_periodo = meses_ordenados[-6:]
 
@@ -228,8 +228,7 @@ def _evolucao_categorias(
         return
 
     df_periodo = df_despesas[
-        (df_despesas["mes_ref"].isin(meses_periodo))
-        & (df_despesas["categoria"].isin(top5_do_mes))
+        (df_despesas["mes_ref"].isin(meses_periodo)) & (df_despesas["categoria"].isin(top5_do_mes))
     ]
     evolucao = df_periodo.groupby(["mes_ref", "categoria"])["valor"].sum().reset_index()
 
@@ -247,19 +246,23 @@ def _evolucao_categorias(
     fig = go.Figure()
     for i, cat in enumerate(top5_do_mes):
         dados_cat = evolucao[evolucao["categoria"] == cat].sort_values("mes_ref")
-        fig.add_trace(go.Scatter(
-            x=dados_cat["mes_ref"],
-            y=dados_cat["valor"],
-            name=cat,
-            mode="lines+markers",
-            line=dict(color=cores_linha[i % len(cores_linha)], width=2),
-            marker=dict(size=6),
-        ))
+        fig.add_trace(
+            go.Scatter(
+                x=dados_cat["mes_ref"],
+                y=dados_cat["valor"],
+                name=cat,
+                mode="lines+markers",
+                line=dict(color=cores_linha[i % len(cores_linha)], width=2),
+                marker=dict(size=6),
+            )
+        )
 
     fig.update_layout(
         **LAYOUT_PLOTLY,
         legend=dict(
-            orientation="h", yanchor="bottom", y=1.02,
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
             font=dict(size=FONTE_MINIMA),
         ),
         yaxis_title="Valor (R$)",
