@@ -16,12 +16,18 @@ dependencies = [
     "python-dotenv>=1.0",
     "rich>=13.0",
     "msoffcrypto-tool>=5.0",
+    "ofxparse>=0.21",
 ]
 
 [project.optional-dependencies]
 dashboard = [
     "streamlit>=1.30",
     "plotly>=5.18",
+]
+integrations = [
+    "belvo-python>=0.35",
+    "google-api-python-client>=2.0",
+    "google-auth-oauthlib>=1.0",
 ]
 dev = [
     "pytest>=8.0",

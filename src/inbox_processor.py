@@ -11,7 +11,7 @@ logger = configurar_logger("inbox_processor")
 
 RAIZ_PROJETO = Path(__file__).parent.parent
 
-EXTENSOES_SUPORTADAS: set[str] = {".csv", ".xlsx", ".xls", ".pdf"}
+EXTENSOES_SUPORTADAS: set[str] = {".csv", ".xlsx", ".xls", ".pdf", ".ofx"}
 
 
 def _gerar_nome_padronizado(deteccao: DeteccaoArquivo) -> str:

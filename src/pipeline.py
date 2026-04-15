@@ -68,12 +68,26 @@ def _descobrir_extratores() -> list:
     except ImportError as e:
         logger.warning("Extrator santander_pdf indisponível: %s", e)
 
+    try:
+        from src.extractors.energia_ocr import ExtratorEnergiaOCR
+
+        extratores.append(ExtratorEnergiaOCR)
+    except ImportError as e:
+        logger.warning("Extrator energia_ocr indisponível: %s", e)
+
+    try:
+        from src.extractors.ofx_parser import ExtratorOFX
+
+        extratores.append(ExtratorOFX)
+    except ImportError as e:
+        logger.warning("Extrator ofx_parser indisponível: %s", e)
+
     return extratores
 
 
 def _escanear_arquivos(diretorio: Path) -> list[Path]:
     """Escaneia recursivamente todos os arquivos em data/raw/."""
-    extensoes = {".csv", ".xlsx", ".xls", ".pdf"}
+    extensoes = {".csv", ".xlsx", ".xls", ".pdf", ".ofx"}
     arquivos = []
 
     for arquivo in diretorio.rglob("*"):
