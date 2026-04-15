@@ -108,7 +108,8 @@ def _gerar_secao_projecao(transacoes: list[dict], mes_ref: str) -> list[str]:
     """Gera seção de projeção usando cálculos unificados do scenarios.py."""
     from src.projections.scenarios import _calcular_medias
 
-    medias = _calcular_medias(transacoes)
+    transacoes_ate_mes = [t for t in transacoes if t.get("mes_ref", "") <= mes_ref]
+    medias = _calcular_medias(transacoes_ate_mes)
     receita_media = medias["receita_media"]
     despesa_media = medias["despesa_media"]
     saldo_medio = medias["saldo_medio"]
