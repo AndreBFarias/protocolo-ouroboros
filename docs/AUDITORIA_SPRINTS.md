@@ -17,7 +17,7 @@ Registro sincero do que foi entregue, do que ficou pendente e das lições de ca
   - `nubank_cc` (CSV conta corrente, com UUID)
   - `c6_cc` (XLS encriptado via msoffcrypto-tool)
   - `c6_cartao` (CSV)
-  - `itau_pdf` (PDF protegido, senha 051273)
+  - `itau_pdf` (PDF protegido, senha [SENHA])
   - `santander_pdf` (PDF fatura)
 - Categorizer com regex base (mappings/categorias.yaml)
 - Deduplicator 3 níveis (UUID, hash, pares de transferência)

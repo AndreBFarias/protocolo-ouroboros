@@ -2,7 +2,7 @@
 
 ## Formato
 
-XLSX exportado pelo app/site C6 Bank. Pode estar criptografado (senha: 051273).
+XLSX exportado pelo app/site C6 Bank. Pode estar criptografado (senha: [SENHA]).
 
 ## Estrutura
 

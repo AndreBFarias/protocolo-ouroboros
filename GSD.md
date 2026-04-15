@@ -51,7 +51,7 @@ Tipos: feat, fix, refactor, docs, test, perf, chore
 **Leia ANTES de mexer em qualquer extrator ou no pipeline:**
 
 1. **C6 XLS encriptado** -- `msoffcrypto-tool` decripta, depois `xlrd` lê. Sem msoffcrypto = crash.
-2. **Itaú PDF** -- Senha `051273` via `pdfplumber`. Nunca `PyPDF2`.
+2. **Itaú PDF** -- Senha via `mappings/senhas.yaml` + `pdfplumber`. Nunca `PyPDF2`.
 3. **Nubank 2 formatos** -- Cartão (`date,title,amount`) vs CC (`Data,Valor,Identificador,Descrição`). São extratores SEPARADOS.
 4. **Ki-Sabor** -- Mesmo local, 2 categorias por valor: >= R$ 800 = Aluguel, < R$ 800 = Padaria.
 5. **Categorizer break vs return** -- `return` após match regex impedia fallback de classificação N/A. Usar `break`.

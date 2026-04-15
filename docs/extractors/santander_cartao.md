@@ -14,7 +14,7 @@ Fatura com 2-4 páginas:
 ### Cabeçalho (página 2)
 
 ```
-SANTANDER ELITE ANDRE DA SILVA BATISTA DE FARI - 4220 XXXX XXXX 7342
+SANTANDER ELITE [NOME COMPLETO] - 4220 XXXX XXXX [FINAL]
 Total a Pagar: R$ 1.184,60    Vencimento: 10/02/2026
 ```
 

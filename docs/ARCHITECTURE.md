@@ -80,7 +80,7 @@ Cada extrator implementa a interface base: recebe caminho do arquivo, retorna li
 | `nubank_cc` | CSV | pandas | Colunas: Data, Valor, Identificador, Descricao. UUID para dedup |
 | `c6_cc` | XLS | msoffcrypto-tool + xlrd | Arquivo encriptado, decripta antes de ler |
 | `c6_cartao` | CSV | pandas | Formato padrão C6 |
-| `itau_pdf` | PDF | pdfplumber | Protegido com senha 051273 |
+| `itau_pdf` | PDF | pdfplumber | Protegido com senha [SENHA] |
 | `santander_pdf` | PDF | pdfplumber | Cartão Elite Visa (Black Way = 7342) |
 | `energia_ocr` | Imagem | tesseract + Pillow | Valores R$ OK, consumo kWh parcial (67%) |
 

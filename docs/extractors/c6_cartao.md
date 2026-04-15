@@ -2,12 +2,12 @@
 
 ## Formato
 
-XLS (Excel 97-2003) exportado pelo app/site C6. Criptografado (senha: 051273).
+XLS (Excel 97-2003) exportado pelo app/site C6. Criptografado (senha: [SENHA]).
 
 ## Estrutura
 
 ```
-Linha 0: "Nome: ANDRE DA SILVA BATISTA DE FARIAS     Cartão C6"
+Linha 0: "Nome: [NOME COMPLETO]     Cartão C6"
 Linha 1: Headers
 Linha 2+: Transações
 ```
