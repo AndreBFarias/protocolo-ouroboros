@@ -1,6 +1,6 @@
-# Armadilhas Críticas -- Lições das Sprints 1-4
+# Armadilhas Críticas -- Lições das Sprints 1-4 e 19
 
-14 problemas reais encontrados durante o desenvolvimento. Cada um custou tempo de debug e gerou correção específica.
+15 problemas reais encontrados durante o desenvolvimento. Cada um custou tempo de debug e gerou correção específica.
 
 ---
 
@@ -141,6 +141,28 @@
 **Solução aplicada:** Adicionada `msoffcrypto-tool` ao `pyproject.toml` e ao `install.sh`. Documentada como dependência crítica no extrator C6.
 
 **Como evitar no futuro:** Ao adicionar `import` novo em qualquer módulo, imediatamente verificar se a dependência está no `pyproject.toml`. Rodar `pip install` em venv limpo periodicamente para detectar dependências ocultas.
+
+---
+
+## 15. Duplicatas fuzzy residuais (Sprint 19)
+
+**O que aconteceu:** O validador reporta 16 duplicatas residuais (mesmo data+valor+local). Análise manual revela 4 categorias distintas:
+
+**Categoria A -- Pares de transferência entre contas (legítimos):**
+Ambos os lados de uma transferência são visíveis porque o casal tem contas em bancos diferentes. Exemplos: C6->Nubank (Pix enviado/recebido), Nubank PF->Nubank PJ (Vitória), Itaú->Santander (pagamento de fatura). Corretamente marcados como Transferência Interna. Manter ambos.
+
+**Categoria B -- Duplicatas reais de CSVs sobrepostos:**
+Mesmo banco, mesma descrição, mesmo valor, mesma data. Exemplos: 99 TECNOLOGIA LTDA (múltiplas corridas 99), Recarga de celular, DAS-SIMPLES NACIONAL. Causa: CSVs baixados com períodos que se sobrepõem. Nível 1 (UUID) não removeu porque os identificadores são diferentes.
+
+**Categoria C -- Reembolsos no mesmo dia:**
+Despesa original + receita de reembolso com mesmo valor. Exemplos: iFood (despesa + Pix de reembolso), 99 TECNOLOGIA (corrida + cancelamento). São transações distintas -- uma é Despesa, outra é Receita.
+
+**Categoria D -- Coincidências históricas:**
+Dados manuais do XLSX antigo (2022-2023) com mesmo valor+data mas locais completamente diferentes. Exemplos: R$ 20,00 em Barbearia e Vivendas no mesmo dia. Coincidência, não duplicata.
+
+**Decisão:** Categorias A, C e D são legítimas e não devem ser removidas. Categoria B requer melhoria no deduplicator (nível 2 deveria remover quando banco+local+data+valor são idênticos, não apenas marcar).
+
+**Como evitar no futuro:** Ao baixar CSVs bancários, anotar o período exato para evitar sobreposição. Considerar melhorar dedup nível 2 para remoção quando todos os campos coincidem (não apenas data+valor).
 
 ---
 

@@ -219,9 +219,9 @@ class ExtratorSantanderPDF(ExtratorBase):
         """Extrai zero ou mais transações de uma linha (layout multi-coluna).
 
         Ordem de prioridade:
-        1. Parcelamentos (DD/MM DESCRICAO DD/MM VALOR) -- a parcela inclui DD/MM
-        2. Transações em USD (DD/MM DESCRICAO VALOR_BRL VALOR_USD)
-        3. Transações em BRL (DD/MM DESCRICAO VALOR)
+        1. Parcelamentos (DD/MM DESCRIÇÃO DD/MM VALOR) -- a parcela inclui DD/MM
+        2. Transações em USD (DD/MM DESCRIÇÃO VALOR_BRL VALOR_USD)
+        3. Transações em BRL (DD/MM DESCRIÇÃO VALOR)
         """
         transacoes: list[Transacao] = []
         posicoes_consumidas: set[tuple[int, int]] = set()
@@ -277,7 +277,7 @@ class ExtratorSantanderPDF(ExtratorBase):
         arquivo: Path,
         vencimento: Optional[date],
     ) -> Optional[Transacao]:
-        """Cria uma Transacao a partir dos componentes parseados."""
+        """Cria uma Transação a partir dos componentes parseados."""
         try:
             descricao_limpa: str = descricao.strip()
 

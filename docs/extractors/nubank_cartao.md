@@ -34,7 +34,7 @@ date,title,amount
 |-------------|---------------|
 | date | data |
 | amount | valor (abs) |
-| title | descricao / local |
+| title | descricao / local | <!-- noqa: accent -->
 | -- | forma_pagamento = "Crédito" |
 | -- | tipo = "Despesa" (padrão) |
 

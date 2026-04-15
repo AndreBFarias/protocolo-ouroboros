@@ -175,7 +175,7 @@ class ExtratorItauPDF(ExtratorBase):
         match: re.Match[str],
         arquivo: Path,
     ) -> Optional[Transacao]:
-        """Converte um match de regex em Transacao."""
+        """Converte um match de regex em Transação."""
         try:
             data_str: str = match.group(1)
             historico: str = match.group(2).strip()

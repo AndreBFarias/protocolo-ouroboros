@@ -129,11 +129,18 @@ def _esta_em_codigo_md(linha: str, pos_inicio: int, pos_fim: int) -> bool:
     if re.search(r"\.\w{1,4}", contexto):
         return True
 
-    # Adjacente a separadores de código (_, /, .)
-    if pos_inicio > 0 and linha[pos_inicio - 1] in ("_", "/", "."):
+    # Identificador genérico (adjacente a caracteres de código)
+    if _e_identificador(linha, pos_inicio, pos_fim):
         return True
-    if pos_fim < len(linha) and linha[pos_fim] in ("_", "/", "."):
-        return True
+
+    # Em tabelas Markdown: célula sem espaço é nome de coluna/identificador
+    if "|" in linha:
+        antes_pipe = linha[:pos_inicio].rfind("|")
+        depois_pipe = linha.find("|", pos_fim)
+        if antes_pipe >= 0 and depois_pipe >= 0:
+            celula = linha[antes_pipe + 1 : depois_pipe].strip()
+            if celula and " " not in celula:
+                return True
 
     return False
 
@@ -143,6 +150,32 @@ _PADRAO_STRING = re.compile(
     re.DOTALL,
 )
 _PADRAO_COMENTARIO = re.compile(r"#(.+)$", re.MULTILINE)
+_PADRAO_FSTRING_VAR = re.compile(r"\{[^}]*?\}")
+
+
+def _e_identificador(texto: str, pos_inicio: int, pos_fim: int) -> bool:
+    """Verifica se a palavra está em contexto de identificador/código."""
+    if pos_inicio > 0 and texto[pos_inicio - 1] in "_/.${\"'":
+        return True
+    if pos_fim < len(texto) and texto[pos_fim] in "_/.(){}=\"'":
+        return True
+    if pos_inicio >= 2 and texto[pos_inicio - 2 : pos_inicio] == "--":
+        return True
+    return False
+
+
+def _e_linha_codigo_shell(linha: str) -> bool:
+    """Detecta se a linha de .sh contém código Python embutido ou padrão bash."""
+    stripped = linha.strip()
+    if any(stripped.startswith(p) for p in ("from ", "import ", "def ", "class ")):
+        return True
+    if re.match(r"^\w+\s*=", stripped):
+        return True
+    if re.match(r"^--\w+\)", stripped):
+        return True
+    if re.search(r"\w+\.\w+\(", stripped):
+        return True
+    return False
 
 
 def _extrair_textos_python(conteudo: str) -> list[tuple[int, str]]:
@@ -184,10 +217,14 @@ def verificar_arquivo(caminho: Path) -> list[str]:
                 parte_limpa = parte.strip()
                 if parte_limpa and " " not in parte_limpa:
                     continue
-                for match in _PADRAO.finditer(parte):
+                # Remover referências a variáveis em f-strings ({var}, {var.attr})
+                parte_check = _PADRAO_FSTRING_VAR.sub(" ", parte)
+                for match in _PADRAO.finditer(parte_check):
                     errada = match.group().lower()
                     correta = DICIONARIO.get(errada, "?")
-                    if correta.lower() in parte.lower():
+                    if correta.lower() in parte_check.lower():
+                        continue
+                    if _e_identificador(parte_check, match.start(), match.end()):
                         continue
                     num = linha_base + sub_linha
                     erros.append(f"  {caminho}:{num}: '{match.group()}' -> '{correta}'")
@@ -202,6 +239,9 @@ def verificar_arquivo(caminho: Path) -> list[str]:
                 continue
             if em_bloco_codigo:
                 continue
+            # Para .sh, pular linhas que são código Python embutido ou padrões bash
+            if extensao == ".sh" and _e_linha_codigo_shell(linha):
+                continue
             for match in _PADRAO.finditer(linha):
                 errada = match.group().lower()
                 correta = DICIONARIO.get(errada, "?")
@@ -209,6 +249,9 @@ def verificar_arquivo(caminho: Path) -> list[str]:
                     continue
                 # Para .md, ignorar referências a código
                 if extensao == ".md" and _esta_em_codigo_md(linha, match.start(), match.end()):
+                    continue
+                # Para todos: verificar se é identificador no contexto
+                if _e_identificador(linha, match.start(), match.end()):
                     continue
                 erros.append(f"  {caminho}:{num}: '{match.group()}' -> '{correta}'")
 

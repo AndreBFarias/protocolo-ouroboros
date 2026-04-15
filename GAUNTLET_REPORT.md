@@ -53,11 +53,11 @@ Data: 2026-04-14 19:09:47 | Duração: 0.9s | Python 3.12.1 | Linux
 ### Fase: xlsx [OK]
 
 - [OK] gerar_xlsx: XLSX gerado sem erros
-- [OK] abas_existem: 8 abas encontradas: extrato, renda, dividas_ativas, inventario, prazos, resumo_mensal, irpf, analise
+- [OK] abas_existem: 8 abas encontradas: extrato, renda, dividas_ativas, inventario, prazos, resumo_mensal, irpf, analise <!-- noqa: accent -->
 - [OK] colunas_extrato: Colunas OK: 12
 - [OK] contagem_linhas: 10 linhas (esperado: 10)
 
-### Fase: relatorio [OK]
+### Fase: relatorio [OK] <!-- noqa: accent -->
 
 - [OK] geracao_relatorio: Relatório gerado: 1908 caracteres
 - [OK] secoes_obrigatorias: Todas as 5 seções presentes

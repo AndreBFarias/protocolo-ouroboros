@@ -89,7 +89,7 @@ def processar_arquivo(
         resultado["destino"] = str(destino)
         resultado["status"] = "nao_identificado"
         logger.warning(
-            "[NAO IDENTIFICADO] %s -> %s",
+            "[NÃO IDENTIFICADO] %s -> %s",
             caminho.name,
             destino,
         )

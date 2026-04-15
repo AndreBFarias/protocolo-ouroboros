@@ -117,7 +117,7 @@ class ExtratorC6Cartao(ExtratorBase):
         valores: list[Any],
         arquivo: Path,
     ) -> Optional[Transacao]:
-        """Converte uma linha da planilha em Transacao."""
+        """Converte uma linha da planilha em Transação."""
         try:
             if len(valores) < 9:
                 return None

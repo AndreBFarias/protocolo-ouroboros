@@ -29,7 +29,7 @@ Centralizar o ecossistema pessoal em um único sistema. Avaliar melhor estratég
 
 - [ ] Avaliar estratégia: mover projeto pro vault vs vault pro projeto vs manter separados
 - [ ] Se unificar: migrar storage de XLSX para SQLite+WAL (do Controle_de_Bordo_OS)
-- [ ] Adotar Pydantic models para Transacao (substituir dicts)
+- [ ] Adotar Pydantic models para Transacao (substituir dicts) <!-- noqa: accent -->
 - [ ] Implementar event bus tipado para desacoplamento do pipeline
 - [ ] Integrar documentos pessoais (contratos, CVs, diplomas)
 - [ ] Integrar documentos acadêmicos e profissionais
