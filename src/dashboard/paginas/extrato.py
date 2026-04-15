@@ -35,6 +35,11 @@ def renderizar(
         placeholder="Digite para filtrar...",
     )
 
+    st.markdown(
+        "<style>.stSelectbox { margin-bottom: 12px; }</style>",
+        unsafe_allow_html=True,
+    )
+
     with st.expander("Filtros avançados", expanded=False):
         col1, col2 = st.columns(2)
 
@@ -48,7 +53,9 @@ def renderizar(
         with col2:
             classificacoes = ["Todas"] + sorted(df["classificacao"].dropna().unique().tolist())
             classificacao_sel = st.selectbox(
-                "Classificação", classificacoes, key="filtro_classificacao",
+                "Classificação",
+                classificacoes,
+                key="filtro_classificacao",
             )
 
             tipos = ["Todos"] + sorted(df["tipo"].dropna().unique().tolist())
@@ -86,8 +93,14 @@ def _exibir_tabela(df: pd.DataFrame) -> None:
     )
 
     colunas_exibicao: list[str] = [
-        "data", "valor", "local", "categoria", "classificacao",
-        "banco_origem", "tipo", "quem",
+        "data",
+        "valor",
+        "local",
+        "categoria",
+        "classificacao",
+        "banco_origem",
+        "tipo",
+        "quem",
     ]
 
     colunas_presentes = [c for c in colunas_exibicao if c in df.columns]
