@@ -8,7 +8,7 @@ PDF protegido por senha, exportado pelo app/site Itaú.
 
 Cabeçalho na primeira página com dados da conta:
 ```
-ANDRE SILVA BATISTA FARIAS 051.273.731-22 agência: 6450 conta: 006854-6
+[NOME COMPLETO] [CPF] agência: [AGENCIA] conta: [CONTA]
 saldo em conta: R$ XXX,XX
 ```
 
@@ -22,7 +22,7 @@ DD/MM  HISTÓRICO                          VALOR
 ## Detecção
 
 - Extensão: `.pdf`
-- Requer senha: 051273 (primária), 05127, 05127373122
+- Requer senha: ver mappings/senhas.yaml (não rastreado pelo git)
 - Contém "ITAÚ UNIBANCO" ou "agência: 6450"
 
 ## Pessoa

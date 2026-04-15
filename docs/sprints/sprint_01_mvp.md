@@ -39,7 +39,7 @@ Pipeline ETL financeiro mínimo viável. Processar extratos bancários de múlti
 ## Armadilhas conhecidas
 
 - C6 XLS precisa de msoffcrypto para descriptografia
-- Itaú PDF protegido com senha 051273
+- Itaú PDF protegido com senha [SENHA]
 - Nubank tem 2 formatos distintos (cartão vs conta corrente)
 - Histórico antigo tem colunas diferentes do schema novo
 

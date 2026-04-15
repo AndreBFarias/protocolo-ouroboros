@@ -9,7 +9,7 @@ Checklist de arquivos que precisam ser adicionados ao projeto para completar o h
 - [ ] Nubank cartão: históricos de 2024 e 2025 (CSVs, formato `date,title,amount`)
 - [ ] C6 conta corrente: históricos de 2024 e 2025 (XLSX)
 - [ ] C6 cartão: históricos de 2024 e 2025 (XLS, formato `Fatura-CPF-*.xls`)
-- [ ] Itaú extrato CC: históricos de 2024 e 2025 (PDFs protegidos, senha `051273`)
+- [ ] Itaú extrato CC: históricos de 2024 e 2025 (PDFs protegidos, senha via `senhas.yaml`)
 - [ ] Santander cartão: identificar quais meses cobrem os 4 PDFs existentes (nomes numéricos sem data)
 - [ ] Contracheques G4F: todos os meses (XLSX ou PDF)
 - [ ] Contracheques Infobase: todos os meses (XLSX ou PDF)
@@ -43,7 +43,7 @@ Checklist de arquivos que precisam ser adicionados ao projeto para completar o h
 
 | Banco/Fonte | Formato Aceito | Observação |
 |---|---|---|
-| Itaú CC | PDF (extrato mensal) | Protegido por senha `051273` |
+| Itaú CC | PDF (extrato mensal) | Protegido por senha via `senhas.yaml` |
 | Nubank cartão | CSV (`date,title,amount`) | Exportar pelo app ou site |
 | Nubank CC | CSV (`Data,Valor,Identificador,Descrição`) | Formato diferente do cartão |
 | C6 CC | XLSX | Exportar pelo app |

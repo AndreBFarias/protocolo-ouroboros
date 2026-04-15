@@ -18,7 +18,7 @@
 
 **O que aconteceu:** PyPDF2 não conseguia abrir os PDFs do Itaú mesmo com senha correta. O erro era inconsistente entre versões da biblioteca. Tentativas com diferentes modos de decriptação falhavam.
 
-**Solução aplicada:** Substituído PyPDF2 por pdfplumber, que usa pdfminer internamente e aceita senha via parâmetro `password="051273"`. Funciona de forma consistente.
+**Solução aplicada:** Substituído PyPDF2 por pdfplumber, que usa pdfminer internamente e aceita senha via parâmetro `password="[SENHA]"`. Funciona de forma consistente.
 
 **Como evitar no futuro:** Para PDFs bancários brasileiros, pdfplumber é a escolha padrão. PyPDF2 tem problemas conhecidos com certos tipos de encriptação PDF.
 

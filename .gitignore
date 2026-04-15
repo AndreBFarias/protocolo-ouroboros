@@ -3,12 +3,22 @@ data/
 inbox/
 logs/
 
+# Documentos pessoais (contracheques, Serasa, Registrato, etc.)
+docs/pessoal/
+contexto/
+
 # Senhas e credenciais
 mappings/senhas.yaml
 .env
 *.key
 *.pem
 .git-credentials
+
+# Arquivos com dados sensíveis (questionários, dúvidas de desenvolvimento)
+duvidas.md
+docs/QUESTIONARIO_VIDA_COMPLETO.md
+docs/PLANO_FINANCEIRO_ANDRE_VITORIA.md
+docs/PLANO_FINANCEIRO_2026.md
 
 # Modelos locais
 models/

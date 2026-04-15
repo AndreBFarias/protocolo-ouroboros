@@ -38,7 +38,7 @@ Aprendizados das Sprints 1-4 que PRECISAM ser respeitados:
 | # | Armadilha | Solução |
 |---|-----------|---------|
 | 1 | C6 XLS encriptado -- xlrd sozinho falha | Usar `msoffcrypto-tool` para decriptar ANTES, depois `xlrd` |
-| 2 | Itaú PDF protegido | Senha `051273` via pdfplumber. Nunca PyPDF2 |
+| 2 | Itaú PDF protegido | Senha via `senhas.yaml` + pdfplumber. Nunca PyPDF2 |
 | 3 | Nubank tem 2 formatos CSV incompatíveis | Cartão: `date,title,amount`. CC: `Data,Valor,Identificador,Descrição` |
 | 4 | Ki-Sabor: mesmo local, 2 categorias | Valor >= R$ 800 = Aluguel. Valor < R$ 800 = Padaria. Regra de valor |
 | 5 | Categorizer: `return` após match impede fallback | Trocado por `break` para que classificação N/A sempre execute |
@@ -205,11 +205,8 @@ Transferências entre contas próprias NÃO são gastos.
 
 ## Senhas
 
-PDFs bancários protegidos. Ordem de tentativa:
-1. `051273`
-2. `05127`
-3. `05127373122`
-4. Perguntar ao usuário
+PDFs bancários protegidos. Senhas carregadas de `mappings/senhas.yaml` (não rastreado pelo git).
+Se o arquivo não existir, perguntar ao usuário.
 
 ---
 
