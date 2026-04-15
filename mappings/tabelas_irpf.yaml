@@ -1,0 +1,80 @@
+# Tabelas progressivas do IRPF -- atualizáveis por ano-calendário
+# Fonte: Receita Federal do Brasil
+# Última atualização: tabelas 2024 (declaração 2025) e 2025 (declaração 2026)
+
+2024:
+  descricao: "Ano-calendário 2024, declaração 2025"
+
+  tabela_anual:
+    - limite: 26481.60
+      aliquota: 0.0
+      deducao: 0.0
+    - limite: 33919.80
+      aliquota: 0.075
+      deducao: 1986.12
+    - limite: 45012.60
+      aliquota: 0.15
+      deducao: 4530.61
+    - limite: 55976.16
+      aliquota: 0.225
+      deducao: 7906.05
+    - limite: 999999999.99
+      aliquota: 0.275
+      deducao: 10703.12
+
+  deducao_simplificada_limite: 16754.34
+  deducao_simplificada_pct: 0.20
+  deducao_dependente_anual: 2275.08
+  teto_inss_anual: 7786.02
+
+2025:
+  descricao: "Ano-calendário 2025, declaração 2026"
+
+  tabela_anual:
+    - limite: 26963.20
+      aliquota: 0.0
+      deducao: 0.0
+    - limite: 33919.80
+      aliquota: 0.075
+      deducao: 2022.24
+    - limite: 45012.60
+      aliquota: 0.15
+      deducao: 4566.23
+    - limite: 55976.16
+      aliquota: 0.225
+      deducao: 7941.67
+    - limite: 999999999.99
+      aliquota: 0.275
+      deducao: 10740.98
+
+  deducao_simplificada_limite: 16754.34
+  deducao_simplificada_pct: 0.20
+  deducao_dependente_anual: 2275.08
+  teto_inss_anual: 7786.02
+
+2026:
+  descricao: "Ano-calendário 2026, declaração 2027 (projetado)"
+
+  tabela_anual:
+    - limite: 26963.20
+      aliquota: 0.0
+      deducao: 0.0
+    - limite: 33919.80
+      aliquota: 0.075
+      deducao: 2022.24
+    - limite: 45012.60
+      aliquota: 0.15
+      deducao: 4566.23
+    - limite: 55976.16
+      aliquota: 0.225
+      deducao: 7941.67
+    - limite: 999999999.99
+      aliquota: 0.275
+      deducao: 10740.98
+
+  deducao_simplificada_limite: 16754.34
+  deducao_simplificada_pct: 0.20
+  deducao_dependente_anual: 2275.08
+  teto_inss_anual: 7786.02
+
+# "A morte e os impostos são as duas únicas certezas na vida." -- Benjamin Franklin
