@@ -65,57 +65,86 @@ Eliminar a etapa manual de baixar extratos bancários. Hoje o gargalo do pipelin
 
 ---
 
-## Decisão: Abordagem em Camadas
+## Por que não dá pra acessar de graça via API direta?
 
-### Camada 1: Pluggy (automação completa) -- US$ 29/mês
+**Open Finance Brasil:** Só instituições autorizadas pelo Banco Central podem consumir as APIs. Pessoa física não pode. Precisa de um intermediário (Pluggy, Belvo, etc.) ou ser banco.
 
-- Integrar Pluggy API para baixar transações de todos os 6 bancos automaticamente
-- Consentimento via app dos bancos (1x por ano)
-- Pipeline roda `pluggy_sync.py` que baixa transações novas e salva como CSV no `data/raw/`
-- O inbox processor já sabe o que fazer com os CSVs
+**Registrato BCB:** Consulta pelo gov.br (prata/ouro). Mostra histórico de contas, chaves Pix, empréstimos. Mas NÃO tem API pública, NÃO exporta transações, e NÃO é automatizável (requer login gov.br com 2FA).
+
+**LGPD (portabilidade):** Você tem direito legal aos seus dados. Pode solicitar via SAC de cada banco. Mas o processo é manual (formulário, esperar resposta) e o formato varia (PDF, CSV, planilha). Não há API padronizada para exercer esse direito automaticamente.
+
+**Resumo:** Os dados são seus, mas os bancos não oferecem API pessoal para baixá-los. O Open Finance existe justamente pra resolver isso, mas o Banco Central exige que o acesso seja via instituição autorizada (como Pluggy).
+
+---
+
+## Decisão: Abordagem em Camadas (da gratuita para a paga)
+
+### Camada 1: MeuPluggy (GRATUITO para uso pessoal)
+
+- **MeuPluggy** (meu.pluggy.ai) é um app gratuito da Pluggy para pessoas físicas
+- Conecta suas contas bancárias via Open Finance (consentimento no app do banco)
+- Exporta transações para planilha/Google Sheets
+- Tem API de desenvolvedor com `client_id` + `client_secret` (trial de 15 dias, mas dados continuam acessíveis depois)
+- **Limitação real:** Usuários da pynubank reportam dados incompletos via Open Finance (transações parciais, parcelas inconsistentes, descrições faltantes). Isso é limitação do Open Finance do Nubank, não da Pluggy.
 
 **Entregas:**
-- [ ] Criar conta no Pluggy (meu.pluggy.ai)
+- [ ] Criar conta gratuita no meu.pluggy.ai
 - [ ] Conectar as 6 contas bancárias via consentimento Open Finance
-- [ ] Criar `src/integrations/pluggy_sync.py` que:
-  - Autentica com Pluggy API (client_id + client_secret)
-  - Lista contas conectadas
-  - Baixa transações do último mês (ou período customizável)
-  - Salva em CSVs no formato que os extratores já entendem
-  - Loga resultado e erros
-- [ ] Integrar no `run.sh` como nova opção: `--sync-bancos`
-- [ ] Agendar execução mensal (cron ou systemd timer)
+- [ ] Testar export de transações (verificar se dados estão completos)
+- [ ] Se API dev disponível: criar `src/integrations/pluggy_sync.py`
+  - Autentica com client_id + client_secret
+  - Baixa transações do último mês
+  - Converte para CSV no formato dos extratores
+  - Salva em `data/raw/` para o pipeline processar
+- [ ] Integrar no `run.sh` como `--sync-bancos`
 
-### Camada 2: OFX parser (fallback manual) -- gratuito
+### Camada 2: Export manual dos bancos (GRATUITO, mais confiável)
 
-Para quando Pluggy não estiver disponível ou para bancos não conectados:
+Todos os bancos do casal exportam extratos manualmente:
 
+| Banco | Como exportar | Formato | Nota |
+|-------|--------------|---------|------|
+| Nubank | App > Conta > Exportar extrato | CSV, OFX, PDF | Envia por email |
+| Itaú | Internet Banking > Extrato > Salvar em outros formatos | OFX | Precisa desktop |
+| Santander | Internet Banking > Extrato > Exportar OFX | OFX | Precisa desktop |
+| C6 Bank | App > Extrato > Exportar | CSV, XLSX | Direto no app |
+
+**Entregas:**
 - [ ] Adicionar extrator OFX genérico (`src/extractors/ofx_parser.py`)
   - Usa `ofxparse` para ler qualquer arquivo .ofx
   - Detecta banco pelo header OFX
-  - Converte para schema padrão do Ouroboros
+  - Converte para schema Ouroboros
 - [ ] Adicionar `.ofx` às extensões suportadas em `pipeline.py` e `inbox_processor.py`
+- [ ] Documentar procedimento de export por banco em `docs/EXPORT_BANCOS.md`
 
-### Camada 3: Pluggy MCP Server (integração com Claude) -- bônus
+### Camada 3: Pluggy MCP Server + Claude (GRATUITO se tier dev funcionar)
 
-- [ ] Configurar o MCP server da Pluggy para que Claude Code acesse dados bancários diretamente
-- [ ] Permitir consultas como: "Quanto gastei em farmácia este mês?" direto no Claude
+- [ ] Configurar MCP server da Pluggy para Claude Code acessar dados bancários
+- [ ] Consultas diretas: "Quanto gastei em farmácia este mês?"
+
+### Camada 4: Pluggy API paga (US$ 29/mês -- só se necessário)
+
+Se MeuPluggy gratuito não atender (dados incompletos, trial expirar sem acesso):
+- Assinar plano pago da Pluggy
+- API completa sem limitações
+- Agendar sync mensal via cron
 
 ---
 
 ## Armadilhas
 
-- Pluggy cobra por uso. $29/mês é viável para projeto pessoal mas não é gratuito
-- Consentimento Open Finance expira em 12 meses. Lembrar de renovar
-- Pluggy retorna transações no formato deles, não no formato dos CSVs dos bancos. O `pluggy_sync.py` precisa converter
-- Sandbox da Pluggy usa dados fictícios. Testar com sandbox, depois migrar para produção com dados reais
-- Se Pluggy mudar API ou fechar, o fallback OFX garante continuidade (Local First)
+- MeuPluggy é gratuito mas dados do Open Finance podem ser incompletos (Nubank especialmente)
+- Export manual do OFX é mais confiável mas não é automático
+- Consentimento Open Finance expira em 12 meses -- lembrar de renovar
+- API dev do MeuPluggy tem trial de 15 dias -- testar rápido e avaliar
+- OFX do Itaú requer internet banking desktop (não funciona no app)
+- CSV do Nubank vem por email -- pode automatizar com Gmail API no futuro
 
 ## Dependências
 
-- Conta na Pluggy ($29/mês)
-- `pip install ofxparse` (para camada OFX)
-- Consentimento nos apps dos 6 bancos (Open Finance)
+- Conta gratuita no meu.pluggy.ai
+- `pip install ofxparse` (para extrator OFX)
+- Consentimento nos apps dos bancos (Open Finance)
 
 ---
 
