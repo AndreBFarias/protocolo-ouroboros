@@ -98,7 +98,16 @@ Detalhes completos em `docs/ARMADILHAS.md`.
 
 ## Contexto Ativo
 
-### Sprints
+### Mapa de Sprints
+
+```
+Concluídas: 01, 02, 03, 04, 05, 06, 08, 13, 14, 15, 18, 19, 20, 24
+Pendentes:  21 (Dashboard), 22 (Relatórios), 23 (Consolidação)
+Visão:      25 (Automação Bancária), 26 (Pacote IRPF)
+Futuro:     09, 10, 12, 16, 17
+```
+
+### Detalhamento
 
 | Sprint | Tema | Status |
 |--------|------|--------|
