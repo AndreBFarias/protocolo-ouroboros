@@ -1,6 +1,5 @@
 """Tema visual centralizado do dashboard -- Dracula Theme."""
 
-
 DRACULA: dict[str, str] = {
     "background": "#282A36",
     "current_line": "#44475A",
@@ -51,10 +50,12 @@ def card_html(titulo: str, valor: str, cor: str) -> str:
     return (
         f'<div style="'
         f"background-color: {CORES['card_fundo']};"
+        f" border: 1px solid {CORES['texto_sec']}33;"
         f" border-left: 4px solid {cor};"
         f" border-radius: 8px;"
         f" padding: 16px 18px;"
         f" margin: 6px 0;"
+        f" box-shadow: 0 2px 8px rgba(0,0,0,0.3);"
         f'">'
         f'<p style="color: {CORES["texto_sec"]};'
         f" font-size: {FONTE_CORPO}px;"
@@ -73,10 +74,12 @@ def card_sidebar_html(titulo: str, valor: str, cor: str) -> str:
     return (
         f'<div style="'
         f"background-color: {CORES['card_fundo']};"
+        f" border: 1px solid {CORES['texto_sec']}33;"
         f" border-left: 3px solid {cor};"
         f" border-radius: 6px;"
         f" padding: 10px 14px;"
         f" margin-bottom: 8px;"
+        f" box-shadow: 0 2px 6px rgba(0,0,0,0.25);"
         f'">'
         f'<p style="color: {CORES["texto_sec"]};'
         f" font-size: {FONTE_MINIMA}px;"
@@ -151,6 +154,8 @@ def css_global() -> str:
         background-color: transparent !important;
         display: none !important;
     }}
+    .element-container {{ margin-bottom: 16px; }}
+    [data-testid="stHorizontalBlock"] {{ gap: 16px; }}
     </style>
     """
 
@@ -161,6 +166,13 @@ LAYOUT_PLOTLY: dict = {
     "font": {"color": CORES["texto"], "size": FONTE_CORPO},
     "margin": {"l": 50, "r": 20, "t": 50, "b": 40},
 }
+
+
+def rgba_cor(cor_hex: str, alpha: float) -> str:
+    """Converte cor hex (#RRGGBB) para rgba(r,g,b,alpha)."""
+    cor = cor_hex.lstrip("#")
+    r, g, b = int(cor[0:2], 16), int(cor[2:4], 16), int(cor[4:6], 16)
+    return f"rgba({r}, {g}, {b}, {alpha})"
 
 
 # "Design não é como parece. Design é como funciona." -- Steve Jobs
