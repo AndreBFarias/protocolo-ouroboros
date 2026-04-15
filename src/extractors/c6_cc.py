@@ -8,13 +8,12 @@ from typing import Any, Optional
 
 import msoffcrypto
 import openpyxl
-import yaml
 
 from src.extractors.base import ExtratorBase, Transacao
 from src.utils.logger import configurar_logger
+from src.utils.senhas import carregar_senhas_pdf
 
 LINHA_CABECALHO: int = 8
-SENHAS_PADRAO: list[str] = ["051273", "05127", "05127373122"]
 COLUNAS: dict[str, int] = {
     "data_lancamento": 0,
     "data_contabil": 1,
@@ -266,20 +265,10 @@ class ExtratorC6CC(ExtratorBase):
 
         return "Despesa"
 
-    def _carregar_senhas(self) -> list[str]:
-        """Carrega senhas do arquivo de mapeamento ou usa padrões."""
-        caminho_senhas: Path = Path(__file__).parent.parent.parent / "mappings" / "senhas.yaml"
-        if caminho_senhas.exists():
-            try:
-                with open(caminho_senhas, encoding="utf-8") as f:
-                    dados: dict = yaml.safe_load(f)
-                    senhas: Optional[list[str]] = dados.get("senhas_pdf")
-                    if senhas:
-                        self.logger.debug("Senhas carregadas de senhas.yaml")
-                        return [str(s) for s in senhas]
-            except (OSError, yaml.YAMLError) as erro:
-                self.logger.warning("Erro ao carregar senhas.yaml: %s", erro)
-        return SENHAS_PADRAO
+    @staticmethod
+    def _carregar_senhas() -> list[str]:
+        """Carrega senhas via módulo centralizado."""
+        return carregar_senhas_pdf()
 
 
 # "O dinheiro é um bom servo, mas um mau mestre." -- Francis Bacon

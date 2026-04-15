@@ -7,12 +7,10 @@ from pathlib import Path
 from typing import Optional
 
 import pdfplumber
-import yaml
 
 from src.extractors.base import ExtratorBase, Transacao
 from src.utils.logger import configurar_logger
-
-SENHAS_PADRAO: list[str] = ["051273", "05127", "05127373122"]
+from src.utils.senhas import carregar_senhas_pdf
 
 REGEX_LANCAMENTO: re.Pattern[str] = re.compile(
     r"^(\d{2}/\d{2}/\d{4})\s+(.+?)\s+([\-]?[\d\.]+,\d{2})$"
@@ -254,20 +252,10 @@ class ExtratorItauPDF(ExtratorBase):
         conteudo: str = f"itau|{data}|{historico}|{valor}"
         return hashlib.sha256(conteudo.encode("utf-8")).hexdigest()[:16]
 
-    def _carregar_senhas(self) -> list[str]:
-        """Carrega senhas do arquivo de mapeamento ou usa padrões."""
-        caminho_senhas: Path = Path(__file__).parent.parent.parent / "mappings" / "senhas.yaml"
-        if caminho_senhas.exists():
-            try:
-                with open(caminho_senhas, encoding="utf-8") as f:
-                    dados: dict = yaml.safe_load(f)
-                    senhas: Optional[list[str]] = dados.get("senhas_pdf")
-                    if senhas:
-                        self.logger.debug("Senhas carregadas de senhas.yaml")
-                        return [str(s) for s in senhas]
-            except (OSError, yaml.YAMLError) as erro:
-                self.logger.warning("Erro ao carregar senhas.yaml: %s", erro)
-        return SENHAS_PADRAO
+    @staticmethod
+    def _carregar_senhas() -> list[str]:
+        """Carrega senhas via módulo centralizado."""
+        return carregar_senhas_pdf()
 
 
 # "A verdadeira riqueza de um homem é o bem que ele faz no mundo." -- Maomé
