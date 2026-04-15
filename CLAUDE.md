@@ -321,7 +321,7 @@ protocolo-ouroboros/
 
 ## Contexto Ativo
 
-- **Sprints concluídas:** 1 (MVP), 2 (Infra), 4 (Inteligência), 8 (Dashboard v2 Dracula), 13 (Rebranding), 14 (UI/UX), 18 (Auditoria), 19 (Dívida Técnica)
+- **Sprints concluídas:** 1 (MVP), 2 (Infra), 4 (Inteligência), 8 (Dashboard v2 Dracula), 13 (Rebranding), 14 (UI/UX), 18 (Auditoria), 19 (Dívida Técnica), 20 (Bugs Críticos)
 - **Sprints com código integrado:** 3 (Dashboard v1), 5 (Relatórios), 6 (Obsidian)
 - **Sprints parciais:** 15 (Acentuação -- hooks prontos, correções concluídas na Sprint 19)
 - **Próximas sprints:** 09 (LLM), 10 (Grafos), 11 (IRPF), 12 (Vault Final -- absorção CdB)

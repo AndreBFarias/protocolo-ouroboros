@@ -35,7 +35,7 @@ def carregar_dados() -> dict[str, pd.DataFrame]:
 
     for aba in ABAS:
         if aba in xls.sheet_names:
-            df = pd.read_excel(xls, sheet_name=aba)
+            df = pd.read_excel(xls, sheet_name=aba, keep_default_na=False, na_values=[""])
             resultado[aba] = df
 
     return resultado

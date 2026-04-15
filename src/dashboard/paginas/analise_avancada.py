@@ -263,8 +263,9 @@ def _renderizar_tendencias(df_total: pd.DataFrame) -> None:
             )
         )
 
+    layout_base = {k: v for k, v in LAYOUT_PLOTLY.items() if k != "margin"}
     fig.update_layout(
-        **LAYOUT_PLOTLY,
+        **layout_base,
         title=dict(
             text="Tendências -- Média Móvel 3 Meses (Top 5 Categorias)",
             font=dict(size=FONTE_SUBTITULO),

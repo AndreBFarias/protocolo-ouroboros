@@ -117,6 +117,10 @@ def _exibir_tabela(df: pd.DataFrame) -> None:
         "quem": "Quem",
     }
 
+    if "data" in df_exibir.columns:
+        datas = pd.to_datetime(df_exibir["data"], errors="coerce")
+        df_exibir["data"] = datas.dt.strftime("%Y-%m-%d")
+
     df_exibir = df_exibir.rename(columns=nomes_colunas)
 
     st.dataframe(
