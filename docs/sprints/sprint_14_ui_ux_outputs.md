@@ -1,6 +1,6 @@
 # Sprint 14 -- UI/UX e Outputs Profissionais
 
-## Status: Em andamento
+## Status: Concluída (commit b73068a)
 
 ## Objetivo
 
@@ -37,7 +37,7 @@ Refinar as 3 interfaces do projeto com o usuário: menu CLI (run.sh), relatório
 - [x] 8 arquivos renomeados (09-18)
 - [x] Headers internos atualizados
 - [x] Sprint 13 (Rebranding) e Sprint 14 (esta) criadas
-- [ ] CLAUDE.md atualizado
+- [x] CLAUDE.md atualizado
 
 ## Dependências
 

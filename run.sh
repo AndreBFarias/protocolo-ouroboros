@@ -7,13 +7,13 @@ cd "$SCRIPT_DIR"
 VENV=".venv"
 XLSX="data/output/ouroboros_2026.xlsx"
 
-# ─────────────────────────────────────────────────────────────────
-# CORES ANSI -- desabilita se não estiver em TTY interativo
-# ─────────────────────────────────────────────────────────────────
+# ─────────────────────────────────────────────────────────
+# Cores ANSI (desabilitadas fora de TTY interativo)
+# ─────────────────────────────────────────────────────────
 if [ -t 1 ]; then
     RED='\033[0;31m'
     GREEN='\033[0;32m'
-    YELLOW='\033[0;33m'
+    YELLOW='\033[1;33m'
     BLUE='\033[0;34m'
     MAGENTA='\033[0;35m'
     CYAN='\033[0;36m'
@@ -26,13 +26,23 @@ else
     CYAN='' WHITE='' BOLD='' DIM='' NC=''
 fi
 
-# ─────────────────────────────────────────────────────────────────
-# FUNÇÕES UTILITÁRIAS
-# ─────────────────────────────────────────────────────────────────
+# ─────────────────────────────────────────────────────────
+# Mensagens formatadas
+# ─────────────────────────────────────────────────────────
+msg_ok()    { echo -e "    ${GREEN}${BOLD}ok${NC}   $1"; }
+msg_erro()  { echo -e "    ${RED}${BOLD}erro${NC} $1"; }
+msg_info()  { echo -e "    ${CYAN}..${NC}   $1"; }
+msg_aviso() { echo -e "    ${YELLOW}!!${NC}   $1"; }
+
+# ─────────────────────────────────────────────────────────
+# Funções utilitárias
+# ─────────────────────────────────────────────────────────
 verificar_venv() {
     if [ ! -d "$VENV" ]; then
-        echo -e "${RED}Ambiente virtual não encontrado.${NC}"
-        echo -e "${DIM}Rode ./install.sh primeiro.${NC}"
+        echo ""
+        msg_erro "Ambiente virtual não encontrado."
+        echo -e "         ${DIM}Execute${NC} ./install.sh ${DIM}para configurar.${NC}"
+        echo ""
         exit 1
     fi
     source "$VENV/bin/activate"
@@ -40,9 +50,9 @@ verificar_venv() {
 
 backup_xlsx() {
     if compgen -G "data/output/ouroboros_*.xlsx" > /dev/null 2>&1; then
-        BACKUP_DIR="data/output/backup/$(date +%Y%m%d_%H%M%S)"
-        mkdir -p "$BACKUP_DIR"
-        cp data/output/ouroboros_*.xlsx "$BACKUP_DIR/" 2>/dev/null || true
+        local backup_dir="data/output/backup/$(date +%Y%m%d_%H%M%S)"
+        mkdir -p "$backup_dir"
+        cp data/output/ouroboros_*.xlsx "$backup_dir/" 2>/dev/null || true
     fi
 }
 
@@ -75,7 +85,8 @@ wb.close()
 
 ultima_atualizacao() {
     if [ -f "$XLSX" ]; then
-        stat -c '%Y' "$XLSX" 2>/dev/null | xargs -I{} date -d @{} '+%d/%m/%Y %H:%M' 2>/dev/null || echo "---"
+        stat -c '%Y' "$XLSX" 2>/dev/null | \
+            xargs -I{} date -d @{} '+%d/%m/%Y %H:%M' 2>/dev/null || echo "---"
     else
         echo "---"
     fi
@@ -83,273 +94,417 @@ ultima_atualizacao() {
 
 confirmar() {
     local mensagem="$1"
-    echo -ne "  ${YELLOW}${mensagem} [s/N]: ${NC}"
+    echo -ne "    ${YELLOW}${mensagem}${NC} ${DIM}[s/N]${NC} "
     read -r resposta
     [[ "$resposta" =~ ^[sS]$ ]]
 }
 
 aguardar_retorno() {
     echo ""
-    echo -ne "  ${DIM}Pressione Enter para voltar ao menu...${NC}"
+    echo -ne "    ${DIM}Enter para continuar${NC} "
     read -r
 }
 
-# ─────────────────────────────────────────────────────────────────
-# BANNER E MENU
-# ─────────────────────────────────────────────────────────────────
-exibir_banner() {
+separador() {
+    local titulo="$1"
+    local cor="${2:-$DIM}"
+    local titulo_len=${#titulo}
+    local pad=$((46 - titulo_len))
+    if [ "$pad" -lt 4 ]; then pad=4; fi
+    local dashes=""
+    for ((i = 0; i < pad; i++)); do dashes+="─"; done
+    echo ""
+    echo -e "    ${cor}──── ${titulo} ${dashes}${NC}"
+    echo ""
+}
+
+# ─────────────────────────────────────────────────────────
+# Cache de estatísticas (evita reler XLSX a cada loop)
+# ─────────────────────────────────────────────────────────
+_CACHE_TRANSACOES=""
+_CACHE_MESES=""
+_CACHE_ATUALIZADO=""
+_CACHE_VALIDO=false
+
+invalidar_cache() { _CACHE_VALIDO=false; }
+
+carregar_dados() {
+    if [ "$_CACHE_VALIDO" = true ]; then return; fi
     local dados
     dados=$(contar_transacoes)
-    local transacoes="${dados%%|*}"
-    local meses="${dados##*|}"
-    local atualizado
-    atualizado=$(ultima_atualizacao)
+    _CACHE_TRANSACOES="${dados%%|*}"
+    _CACHE_MESES="${dados##*|}"
+    _CACHE_ATUALIZADO=$(ultima_atualizacao)
+    _CACHE_VALIDO=true
+}
+
+# ─────────────────────────────────────────────────────────
+# Banner
+# ─────────────────────────────────────────────────────────
+exibir_banner() {
+    carregar_dados
 
     clear
     echo ""
-    echo -e "${MAGENTA}"
-    echo "  ╔══════════════════════════════════════════════════╗"
-    echo "  ║                                                  ║"
-    echo "  ║           PROTOCOLO OUROBOROS                      ║"
-    echo "  ║           Pipeline Financeiro Pessoal            ║"
-    echo "  ║                                                  ║"
-    echo "  ╚══════════════════════════════════════════════════╝"
-    echo -e "${NC}"
-
-    echo -e "  ${DIM}${transacoes} transações | ${meses} meses | Atualizado: ${atualizado}${NC}"
+    echo -e "    ${MAGENTA}${BOLD}"
+    echo "    ╔══════════════════════════════════════════════════╗"
+    echo "    ║                                                  ║"
+    echo "    ║    ╭─╮  PROTOCOLO  OUROBOROS                     ║"
+    echo "    ║    ╰─╯  Pipeline Financeiro Pessoal              ║"
+    echo "    ║                                                  ║"
+    echo "    ╚══════════════════════════════════════════════════╝"
+    echo -e "    ${NC}"
+    echo ""
+    printf "    ${WHITE}%s${NC} ${DIM}transações${NC}" "$_CACHE_TRANSACOES"
+    printf "   ${WHITE}%s${NC} ${DIM}meses${NC}" "$_CACHE_MESES"
+    printf "   ${DIM}atualizado${NC} ${WHITE}%s${NC}\n" "$_CACHE_ATUALIZADO"
     echo ""
 }
 
+# ─────────────────────────────────────────────────────────
+# Menu
+# ─────────────────────────────────────────────────────────
 exibir_menu() {
-    echo -e "  ${GREEN}${BOLD}PROCESSAMENTO${NC}"
-    echo -e "  ${GREEN}[1]${NC} Processar inbox          ${GREEN}[2]${NC} Processar mês"
-    echo -e "  ${GREEN}[3]${NC} Processar tudo"
+    separador "PROCESSAMENTO" "$GREEN"
+    echo -e "    ${GREEN}${BOLD}1${NC}   Processar inbox"
+    echo -e "    ${GREEN}${BOLD}2${NC}   Processar mês específico"
+    echo -e "    ${GREEN}${BOLD}3${NC}   Processar todos os dados"
+
+    separador "VISUALIZAÇÃO" "$CYAN"
+    echo -e "    ${CYAN}${BOLD}4${NC}   Abrir dashboard"
+    echo -e "    ${CYAN}${BOLD}5${NC}   Gerar relatório mensal"
+
+    separador "INTEGRAÇÃO" "$BLUE"
+    echo -e "    ${BLUE}${BOLD}6${NC}   Sincronizar Obsidian"
+    echo -e "    ${BLUE}${BOLD}7${NC}   Gerar pacote IRPF"
+
+    separador "QUALIDADE" "$YELLOW"
+    echo -e "    ${YELLOW}${BOLD}8${NC}   Health check"
+    echo -e "    ${YELLOW}${BOLD}9${NC}   Gauntlet"
+
     echo ""
-    echo -e "  ${CYAN}${BOLD}VISUALIZAÇÃO${NC}"
-    echo -e "  ${CYAN}[4]${NC} Dashboard Streamlit      ${CYAN}[5]${NC} Gerar relatório"
-    echo ""
-    echo -e "  ${BLUE}${BOLD}INTEGRAÇÃO${NC}"
-    echo -e "  ${BLUE}[6]${NC} Sincronizar Obsidian     ${BLUE}[7]${NC} Pacote IRPF"
-    echo ""
-    echo -e "  ${YELLOW}${BOLD}QUALIDADE${NC}"
-    echo -e "  ${YELLOW}[8]${NC} Health check             ${YELLOW}[9]${NC} Gauntlet"
-    echo ""
-    echo -e "  ${DIM}[0] Sair${NC}"
+    echo -e "    ${DIM}0   Sair${NC}"
     echo ""
 }
 
+# ─────────────────────────────────────────────────────────
+# Ações do menu
+# ─────────────────────────────────────────────────────────
+acao_processar_inbox() {
+    echo ""
+    msg_info "Processando inbox..."
+    echo ""
+    backup_xlsx
+    if python -m src.inbox_processor; then
+        echo ""
+        msg_ok "Inbox processado."
+    else
+        echo ""
+        msg_erro "Falha ao processar inbox."
+    fi
+    invalidar_cache
+    aguardar_retorno
+}
+
+acao_processar_mes() {
+    echo ""
+    echo -ne "    ${DIM}Mês${NC} ${WHITE}(YYYY-MM)${NC} ${DIM}[${NC}$(date +%Y-%m)${DIM}]:${NC} "
+    read -r mes_input
+    local mes="${mes_input:-$(date +%Y-%m)}"
+    echo ""
+    msg_info "Processando ${mes}..."
+    echo ""
+    backup_xlsx
+    if python -m src.pipeline --mes "$mes"; then
+        echo ""
+        msg_ok "Mês ${mes} processado."
+    else
+        echo ""
+        msg_erro "Falha ao processar ${mes}."
+    fi
+    invalidar_cache
+    aguardar_retorno
+}
+
+acao_processar_tudo() {
+    echo ""
+    if confirmar "Processar TODOS os dados?"; then
+        echo ""
+        msg_info "Processando todos os dados..."
+        echo ""
+        backup_xlsx
+        if python -m src.pipeline --tudo; then
+            echo ""
+            msg_ok "Pipeline completo."
+        else
+            echo ""
+            msg_erro "Falha no pipeline."
+        fi
+        invalidar_cache
+    else
+        echo ""
+        msg_info "Cancelado."
+    fi
+    aguardar_retorno
+}
+
+acao_abrir_dashboard() {
+    echo ""
+    msg_info "Abrindo dashboard Streamlit..."
+    echo ""
+    streamlit run src/dashboard/app.py || true
+    aguardar_retorno
+}
+
+acao_gerar_relatorio() {
+    echo ""
+    echo -ne "    ${DIM}Mês do relatório${NC} ${WHITE}(YYYY-MM)${NC} ${DIM}[${NC}$(date +%Y-%m)${DIM}]:${NC} "
+    read -r mes_rel
+    mes_rel="${mes_rel:-$(date +%Y-%m)}"
+    echo ""
+    msg_info "Gerando relatório de ${mes_rel}..."
+    echo ""
+    if python -c "
+import pandas as pd
+from src.load.relatorio import gerar_relatorio_mes
+from pathlib import Path
+xlsx = sorted(Path('data/output').glob('ouroboros_*.xlsx'))
+if not xlsx:
+    print('    XLSX não encontrado. Execute o pipeline primeiro.')
+    raise SystemExit(1)
+df = pd.read_excel(xlsx[-1], sheet_name='extrato')
+transacoes = df.to_dict('records')
+conteudo = gerar_relatorio_mes(transacoes, '${mes_rel}')
+saida = Path('data/output/${mes_rel}_relatorio.md')
+saida.write_text(conteudo, encoding='utf-8')
+print(f'    Salvo em: {saida}')
+"; then
+        echo ""
+        msg_ok "Relatório de ${mes_rel} gerado."
+    else
+        echo ""
+        msg_erro "Falha ao gerar relatório."
+    fi
+    aguardar_retorno
+}
+
+acao_sincronizar_obsidian() {
+    echo ""
+    msg_info "Sincronizando com Obsidian..."
+    echo ""
+    if python -m src.obsidian.sync; then
+        echo ""
+        msg_ok "Sincronização concluída."
+    else
+        echo ""
+        msg_erro "Falha na sincronização."
+    fi
+    aguardar_retorno
+}
+
+acao_pacote_irpf() {
+    echo ""
+    echo -ne "    ${DIM}Ano do IRPF${NC} ${WHITE}[${NC}$(date +%Y)${DIM}]:${NC} "
+    read -r ano_input
+    local ano="${ano_input:-$(date +%Y)}"
+    echo ""
+    msg_info "Gerando pacote IRPF ${ano}..."
+    echo ""
+    if python -m src.irpf --ano "$ano"; then
+        echo ""
+        msg_ok "Pacote IRPF ${ano} gerado."
+    else
+        echo ""
+        msg_erro "Módulo IRPF ainda não implementado (Sprint 11)."
+    fi
+    aguardar_retorno
+}
+
+acao_health_check() {
+    echo ""
+    msg_info "Executando health check..."
+    echo ""
+    if python -m src.utils.health_check; then
+        echo ""
+        msg_ok "Health check concluído."
+    else
+        echo ""
+        msg_aviso "Health check reportou problemas."
+    fi
+    aguardar_retorno
+}
+
+acao_gauntlet() {
+    echo ""
+    msg_info "Executando gauntlet..."
+    echo ""
+    if python -m scripts.gauntlet.gauntlet; then
+        echo ""
+        msg_ok "Gauntlet concluído."
+    else
+        echo ""
+        msg_aviso "Gauntlet reportou falhas."
+    fi
+    aguardar_retorno
+}
+
+# ─────────────────────────────────────────────────────────
+# Loop do menu interativo
+# ─────────────────────────────────────────────────────────
 executar_menu() {
     while true; do
         exibir_banner
         exibir_menu
 
-        echo -ne "  ${BOLD}> ${NC}"
+        echo -ne "    ${BOLD}>${NC} "
         read -r escolha
 
         case "$escolha" in
-            1)
-                echo ""
-                echo -e "  ${GREEN}Processando inbox...${NC}"
-                echo ""
-                backup_xlsx
-                python -m src.inbox_processor || true
-                aguardar_retorno
-                ;;
-            2)
-                echo ""
-                echo -ne "  ${CYAN}Mês (YYYY-MM) [$(date +%Y-%m)]: ${NC}"
-                read -r mes_input
-                mes="${mes_input:-$(date +%Y-%m)}"
-                echo ""
-                echo -e "  ${GREEN}Processando ${mes}...${NC}"
-                echo ""
-                backup_xlsx
-                python -m src.pipeline --mes "$mes" || true
-                aguardar_retorno
-                ;;
-            3)
-                echo ""
-                if confirmar "Processar TODOS os dados? Pode demorar."; then
-                    echo ""
-                    echo -e "  ${GREEN}Processando todos os dados...${NC}"
-                    echo ""
-                    backup_xlsx
-                    python -m src.pipeline --tudo || true
-                else
-                    echo -e "  ${DIM}Cancelado.${NC}"
-                fi
-                aguardar_retorno
-                ;;
-            4)
-                echo ""
-                echo -e "  ${CYAN}Abrindo dashboard...${NC}"
-                echo ""
-                streamlit run src/dashboard/app.py || true
-                aguardar_retorno
-                ;;
-            5)
-                echo ""
-                echo -ne "  ${CYAN}Mês do relatório (YYYY-MM) [$(date +%Y-%m)]: ${NC}"
-                read -r mes_rel
-                mes_rel="${mes_rel:-$(date +%Y-%m)}"
-                echo ""
-                echo -e "  ${CYAN}Gerando relatório de ${mes_rel}...${NC}"
-                echo ""
-                python -c "
-import pandas as pd
-from src.load.relatorio import gerar_relatorio_mes
-from pathlib import Path
-xlsx = Path('data/output/ouroboros_2026.xlsx')
-if not xlsx.exists():
-    print('XLSX não encontrado. Execute o pipeline primeiro.')
-    raise SystemExit(1)
-df = pd.read_excel(xlsx, sheet_name='extrato')
-transacoes = df.to_dict('records')
-conteudo = gerar_relatorio_mes(transacoes, '${mes_rel}')
-saida = Path('data/output/${mes_rel}_relatorio.md')
-saida.write_text(conteudo, encoding='utf-8')
-print(f'Relatório salvo em {saida}')
-" || true
-                aguardar_retorno
-                ;;
-            6)
-                echo ""
-                echo -e "  ${BLUE}Sincronizando com Obsidian...${NC}"
-                echo ""
-                python -m src.obsidian.sync || true
-                aguardar_retorno
-                ;;
-            7)
-                echo ""
-                echo -ne "  ${MAGENTA}Ano do IRPF [$(date +%Y)]: ${NC}"
-                read -r ano_input
-                ano="${ano_input:-$(date +%Y)}"
-                echo ""
-                echo -e "  ${MAGENTA}Gerando pacote IRPF ${ano}...${NC}"
-                echo ""
-                python -m src.irpf --ano "$ano" || true
-                aguardar_retorno
-                ;;
-            8)
-                echo ""
-                echo -e "  ${YELLOW}Executando health check...${NC}"
-                echo ""
-                python -m src.utils.health_check || true
-                aguardar_retorno
-                ;;
-            9)
-                echo ""
-                echo -e "  ${YELLOW}Executando gauntlet...${NC}"
-                echo ""
-                python -m scripts.gauntlet.gauntlet || true
-                aguardar_retorno
-                ;;
+            1) acao_processar_inbox ;;
+            2) acao_processar_mes ;;
+            3) acao_processar_tudo ;;
+            4) acao_abrir_dashboard ;;
+            5) acao_gerar_relatorio ;;
+            6) acao_sincronizar_obsidian ;;
+            7) acao_pacote_irpf ;;
+            8) acao_health_check ;;
+            9) acao_gauntlet ;;
             0)
                 echo ""
-                echo -e "  ${DIM}Até a próxima.${NC}"
+                echo -e "    ${DIM}Até a próxima.${NC}"
                 echo ""
                 exit 0
                 ;;
             *)
-                echo -e "  ${RED}Opção inválida. Escolha de 0 a 9.${NC}"
-                sleep 1
+                msg_aviso "Opção inválida. Escolha de 0 a 9."
+                sleep 0.8
                 ;;
         esac
     done
 }
 
-# ─────────────────────────────────────────────────────────────────
-# EXECUÇÃO PRINCIPAL
-# ─────────────────────────────────────────────────────────────────
+# ─────────────────────────────────────────────────────────
+# Help formatado
+# ─────────────────────────────────────────────────────────
+exibir_help() {
+    echo ""
+    echo -e "  ${MAGENTA}${BOLD}PROTOCOLO OUROBOROS${NC} ${DIM}-- Pipeline Financeiro Pessoal${NC}"
+    echo ""
+    echo -e "  ${WHITE}Uso:${NC} ./run.sh ${DIM}[opção]${NC}"
+    echo ""
+    echo -e "  Sem argumentos abre o menu interativo."
+    echo ""
+    echo -e "  ${WHITE}Processamento${NC}"
+    echo -e "    ${GREEN}--inbox${NC}             Processa arquivos do inbox/"
+    echo -e "    ${GREEN}--mes${NC} ${DIM}YYYY-MM${NC}       Processa um mês específico"
+    echo -e "    ${GREEN}--tudo${NC}              Processa todos os dados"
+    echo ""
+    echo -e "  ${WHITE}Visualização${NC}"
+    echo -e "    ${CYAN}--dashboard${NC}         Abre o dashboard Streamlit"
+    echo -e "    ${CYAN}--relatorio${NC} ${DIM}[MM]${NC}    Gera relatório mensal (padrão: mês atual)"
+    echo ""
+    echo -e "  ${WHITE}Integração${NC}"
+    echo -e "    ${BLUE}--irpf${NC} ${DIM}ANO${NC}          Gera pacote IRPF do ano"
+    echo -e "    ${BLUE}--sync${NC}              Sincroniza com vault Obsidian"
+    echo ""
+    echo -e "  ${WHITE}Qualidade${NC}"
+    echo -e "    ${YELLOW}--check${NC}             Health check do ambiente"
+    echo -e "    ${YELLOW}--gauntlet${NC}          Gauntlet de testes"
+    echo ""
+    echo -e "  ${WHITE}Exemplos${NC}"
+    echo -e "    ${DIM}\$${NC} ./run.sh --mes 2026-03"
+    echo -e "    ${DIM}\$${NC} ./run.sh --relatorio 2026-04"
+    echo -e "    ${DIM}\$${NC} ./run.sh --irpf 2026"
+    echo ""
+}
+
+# ─────────────────────────────────────────────────────────
+# Execução principal
+# ─────────────────────────────────────────────────────────
 verificar_venv
 
-# Captura Ctrl+C para saída limpa
-trap 'echo -e "\n  ${DIM}Até a próxima.${NC}\n"; exit 0' INT
+trap 'echo -e "\n    ${DIM}Até a próxima.${NC}\n"; exit 0' INT
 
 case "${1:-}" in
     --inbox)
-        echo "=== Protocolo Ouroboros -- Processando Inbox ==="
+        msg_info "Processando inbox..."
         backup_xlsx
         python -m src.inbox_processor
+        msg_ok "Inbox processado."
         ;;
     --mes)
         MES="${2:?Informe o mês no formato YYYY-MM}"
-        echo "=== Protocolo Ouroboros -- Processando $MES ==="
+        msg_info "Processando ${MES}..."
         backup_xlsx
         python -m src.pipeline --mes "$MES"
+        msg_ok "Mês ${MES} processado."
         ;;
     --tudo)
-        echo "=== Protocolo Ouroboros -- Processando todos os dados ==="
+        msg_info "Processando todos os dados..."
         backup_xlsx
         python -m src.pipeline --tudo
+        msg_ok "Pipeline completo."
         ;;
     --dashboard)
-        echo "=== Protocolo Ouroboros -- Dashboard ==="
+        msg_info "Abrindo dashboard Streamlit..."
         streamlit run src/dashboard/app.py
         ;;
     --check)
-        echo "=== Protocolo Ouroboros -- Health Check ==="
+        msg_info "Executando health check..."
         python -m src.utils.health_check
         ;;
     --relatorio)
         MES="${2:-$(date +%Y-%m)}"
-        echo "=== Protocolo Ouroboros -- Relatório $MES ==="
+        msg_info "Gerando relatório de ${MES}..."
         python -c "
 import pandas as pd
 from src.load.relatorio import gerar_relatorio_mes
 from pathlib import Path
-xlsx = Path('data/output/ouroboros_2026.xlsx')
-if not xlsx.exists():
+xlsx = sorted(Path('data/output').glob('ouroboros_*.xlsx'))
+if not xlsx:
     print('XLSX não encontrado. Execute o pipeline primeiro.')
     raise SystemExit(1)
-df = pd.read_excel(xlsx, sheet_name='extrato')
+df = pd.read_excel(xlsx[-1], sheet_name='extrato')
 transacoes = df.to_dict('records')
 conteudo = gerar_relatorio_mes(transacoes, '$MES')
 saida = Path('data/output/${MES}_relatorio.md')
 saida.write_text(conteudo, encoding='utf-8')
-print(f'Relatório salvo em {saida}')
+print(f'Salvo em: {saida}')
 "
+        msg_ok "Relatório de ${MES} gerado."
         ;;
     --irpf)
         ANO="${2:?Informe o ano}"
-        echo "=== Protocolo Ouroboros -- IRPF $ANO ==="
+        msg_info "Gerando pacote IRPF ${ANO}..."
         python -m src.irpf --ano "$ANO"
+        msg_ok "Pacote IRPF ${ANO} gerado."
         ;;
     --sync)
-        echo "=== Protocolo Ouroboros -- Sincronizando com Obsidian ==="
+        msg_info "Sincronizando com Obsidian..."
         python -m src.obsidian.sync
+        msg_ok "Sincronização concluída."
         ;;
     --gauntlet)
-        echo "=== Protocolo Ouroboros -- Gauntlet ==="
+        msg_info "Executando gauntlet..."
         python -m scripts.gauntlet.gauntlet "${@:2}"
+        msg_ok "Gauntlet concluído."
         ;;
     --menu)
         executar_menu
+        ;;
+    --help|-h)
+        exibir_help
+        exit 0
         ;;
     "")
         executar_menu
         ;;
     *)
-        echo "Uso: ./run.sh [opção]"
+        msg_erro "Opção desconhecida: ${1}"
         echo ""
-        echo "Opções:"
-        echo "  --inbox           Processa arquivos do inbox/"
-        echo "  --mes YYYY-MM     Processa um mês específico"
-        echo "  --tudo            Processa todos os dados disponíveis"
-        echo "  --dashboard       Abre o dashboard Streamlit"
-        echo "  --relatorio [MM]  Gera relatório do mês (padrão: atual)"
-        echo "  --check           Health check do ambiente"
-        echo "  --irpf ANO        Gera pacote IRPF do ano"
-        echo "  --sync            Sincroniza relatórios com vault Obsidian"
-        echo "  --gauntlet        Executa gauntlet de testes"
-        echo "  --menu            Abre o menu interativo"
-        echo ""
-        echo "Sem argumentos: abre o menu interativo."
-        exit 0
+        exibir_help
+        exit 1
         ;;
 esac
-
-echo ""
-echo -e "${GREEN}=== Concluído ===${NC}"
 
 # "A liberdade é o reconhecimento da necessidade." -- Baruch Spinoza

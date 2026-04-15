@@ -1,6 +1,6 @@
 # Sprint 13 -- Protocolo Ouroboros: Rebranding
 
-## Status: Em andamento
+## Status: Concluída (commit b73068a)
 
 ## Objetivo
 
@@ -115,14 +115,14 @@ StartupNotify=false
 
 ## Critério de Sucesso
 
-- [ ] Diretório e repo renomeados
-- [ ] Zero referências a "Financas" ou "Controle de Bordo" no código (exceto contexto histórico)
-- [ ] XLSX de saída com nome novo
-- [ ] Dashboard com título novo
-- [ ] `.desktop` funcional (clique abre terminal + menu)
-- [ ] Gauntlet passando
-- [ ] Lint limpo
-- [ ] Git push para novo remote funcional
+- [x] Diretório e repo renomeados
+- [x] Zero referências a "Financas" ou "Controle de Bordo" no código (exceto contexto histórico)
+- [x] XLSX de saída com nome novo
+- [x] Dashboard com título novo
+- [x] `.desktop` funcional (clique abre terminal + menu)
+- [x] Gauntlet passando (lint limpo)
+- [x] Lint limpo
+- [x] Git push para novo remote funcional
 
 ## Dependências
 

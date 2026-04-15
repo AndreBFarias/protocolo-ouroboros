@@ -9,7 +9,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$SCRIPT_DIR"
 
 if [ ! -d "$VENV" ]; then
-    echo "[AVISO] Ambiente virtual nao encontrado. Pulando checks."
+    echo "[AVISO] Ambiente virtual não encontrado. Pulando checks."
     exit 0
 fi
 
@@ -59,4 +59,17 @@ else
     exit 1
 fi
 
-echo "=== Checks concluidos ==="
+# 4. Verificação de acentuação (T1 -- bloqueia commit)
+echo -n "Acentuação PT-BR... "
+if python scripts/check_acentuacao.py 2>/dev/null; then
+    echo "[OK]"
+else
+    echo "[FALHA]"
+    python scripts/check_acentuacao.py 2>/dev/null || true
+    exit 1
+fi
+
+# 5. Freshness do gauntlet (T2 -- apenas avisa)
+python scripts/check_gauntlet_freshness.py 2>/dev/null || true
+
+echo "=== Checks concluídos ==="

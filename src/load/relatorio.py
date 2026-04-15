@@ -9,10 +9,12 @@ import yaml
 from src.load.formatacao_md import (
     barra_progresso_unicode,
     cabecalho_relatorio,
+    callout_github,
     formatar_valor,
     gerar_mermaid_pie,
     linha_badges,
     secao_colapsavel,
+    separador_secao,
     tabela_categorias,
     tabela_classificacao,
 )
@@ -149,7 +151,8 @@ def _gerar_secao_irpf(transacoes: list[dict], mes_ref: str) -> list[str]:
     """Gera seção de IRPF acumulado no ano (colapsável)."""
     ano = mes_ref[:4]
     transacoes_ano = [
-        t for t in transacoes
+        t
+        for t in transacoes
         if t.get("mes_ref", "").startswith(ano) and t.get("tipo") != "Transferência Interna"
     ]
 
@@ -157,17 +160,18 @@ def _gerar_secao_irpf(transacoes: list[dict], mes_ref: str) -> list[str]:
         return []
 
     rendimentos_tributaveis = sum(
-        t["valor"] for t in transacoes_ano
+        t["valor"]
+        for t in transacoes_ano
         if t.get("tipo") == "Receita" and t.get("categoria") in ("Salário", "Renda PJ")
     )
 
     despesas_dedutiveis = sum(
-        t["valor"] for t in transacoes_ano
-        if t.get("tag_irpf") == "dedutivel_medico"
+        t["valor"] for t in transacoes_ano if t.get("tag_irpf") == "dedutivel_medico"
     )
 
     impostos_pagos = sum(
-        t["valor"] for t in transacoes_ano
+        t["valor"]
+        for t in transacoes_ano
         if t.get("tipo") == "Imposto" or t.get("tag_irpf") == "imposto_pago"
     )
 
@@ -245,8 +249,19 @@ def gerar_relatorio_mes(
     linhas.append("")
     linhas.append(linha_badges(receitas, despesas, saldo, poupanca))
     linhas.append("")
-    linhas.append("---")
-    linhas.append("")
+
+    # Destaques do mês
+    top_gasto = top_categorias[0] if top_categorias else ("---", 0.0)
+    destaques = (
+        f"**{len(transacoes_mes)}** transações processadas"
+        f" | Top gasto: **{top_gasto[0]}** ({formatar_valor(top_gasto[1])})"
+    )
+    if saldo >= 0:
+        destaques += f" | Saldo positivo: **{formatar_valor(saldo)}**"
+    else:
+        destaques += f" | Saldo negativo: **{formatar_valor(saldo)}**"
+    linhas.append(f"> {destaques}")
+    linhas.append(separador_secao())
 
     # Resumo em tabela
     linhas.append("## Resumo")
@@ -268,7 +283,7 @@ def gerar_relatorio_mes(
         sinal = "+" if diff > 0 else ""
         linhas.append(f"| vs mês anterior | {sinal}{formatar_valor(diff)} |")
 
-    linhas.append("")
+    linhas.append(separador_secao())
 
     # Mermaid pie chart
     if gastos_categoria:
@@ -279,8 +294,12 @@ def gerar_relatorio_mes(
 
         # Top 10 colapsável
         dados_tabela = [
-            (cat, valor, (valor / despesas * 100) if despesas > 0 else 0.0,
-             classificacao_categoria.get(cat, "N/A"))
+            (
+                cat,
+                valor,
+                (valor / despesas * 100) if despesas > 0 else 0.0,
+                classificacao_categoria.get(cat, "N/A"),
+            )
             for cat, valor in top_categorias
         ]
         conteudo_top10 = tabela_categorias(dados_tabela)
@@ -288,6 +307,7 @@ def gerar_relatorio_mes(
         linhas.append("")
 
     # Classificação
+    linhas.append(separador_secao())
     linhas.append("## Classificação")
     linhas.append("")
     linhas.append(tabela_classificacao(obrigatorio, questionavel, superfluo))
@@ -324,46 +344,61 @@ def gerar_relatorio_mes(
         linhas.append(secao_colapsavel("Transferências Internas", conteudo_transf))
         linhas.append("")
 
-    # Alertas
-    alertas: list[str] = []
-    if len(sem_categoria) > 0:
-        alertas.append(f"- {len(sem_categoria)} transações sem categoria reconhecida")
-    if superfluo > 500:
-        alertas.append(f"- Gastos supérfluos acima de R$ 500: {formatar_valor(superfluo)}")
-    if saldo < 0:
-        alertas.append(f"- **ALERTA:** Saldo negativo no mês: {formatar_valor(saldo)}")
+    # Alertas (callouts nativos do GitHub)
+    alertas_warning: list[str] = []
+    alertas_note: list[str] = []
 
-    if alertas:
+    if saldo < 0:
+        alertas_warning.append(f"Saldo negativo no mês: {formatar_valor(saldo)}")
+    if superfluo > 500:
+        alertas_warning.append(f"Gastos supérfluos acima de R$ 500: {formatar_valor(superfluo)}")
+    if len(sem_categoria) > 0:
+        alertas_note.append(f"{len(sem_categoria)} transações sem categoria reconhecida")
+
+    if alertas_warning or alertas_note:
+        linhas.append(separador_secao())
         linhas.append("## Alertas")
         linhas.append("")
-        linhas.extend(alertas)
-        linhas.append("")
+        for alerta in alertas_warning:
+            linhas.append(callout_github("WARNING", alerta))
+            linhas.append("")
+        for alerta in alertas_note:
+            linhas.append(callout_github("NOTE", alerta))
+            linhas.append("")
 
     # Metas
     secao_metas = _gerar_secao_metas()
     if secao_metas:
+        linhas.append(separador_secao())
         linhas.extend(secao_metas)
 
     # Projeção
     secao_projecao = _gerar_secao_projecao(transacoes, mes_ref)
     if secao_projecao:
+        linhas.append(separador_secao())
         linhas.extend(secao_projecao)
 
     # IRPF
     secao_irpf = _gerar_secao_irpf(transacoes, mes_ref)
     if secao_irpf:
+        linhas.append(separador_secao())
         linhas.extend(secao_irpf)
 
     # Footer
-    linhas.extend([
-        "---",
-        "",
-        '<div align="center">',
-        "",
-        f"*Gerado automaticamente em {date.today().isoformat()}*",
-        "",
-        "</div>",
-    ])
+    linhas.extend(
+        [
+            "",
+            "---",
+            "",
+            '<div align="center">',
+            "",
+            '<img src="../../assets/icon.png" width="32" alt="Ouroboros">',
+            "",
+            f"*Protocolo Ouroboros -- Gerado em {date.today().isoformat()}*",
+            "",
+            "</div>",
+        ]
+    )
 
     return "\n".join(linhas)
 
