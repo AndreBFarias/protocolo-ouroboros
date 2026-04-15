@@ -19,6 +19,7 @@ from src.dashboard.dados import (  # noqa: E402
     obter_meses_disponiveis,
 )
 from src.dashboard.paginas import (  # noqa: E402
+    analise_avancada,
     categorias,
     contas,
     extrato,
@@ -59,9 +60,7 @@ def _sidebar(dados: dict) -> tuple[str, str, str]:
 
             mtime = os.path.getmtime(CAMINHO_XLSX)
             ultima = datetime.fromtimestamp(mtime)
-            st.caption(
-                f"Dados de {ultima.strftime('%d/%m/%Y às %H:%M')}"
-            )
+            st.caption(f"Dados de {ultima.strftime('%d/%m/%Y às %H:%M')}")
 
         st.markdown("---")
 
@@ -81,11 +80,17 @@ def _sidebar(dados: dict) -> tuple[str, str, str]:
         if granularidade == "Ano":
             anos = obter_anos_disponiveis(dados)
             periodo: str = st.selectbox(
-                "Período", anos, index=0, key="seletor_periodo",
+                "Período",
+                anos,
+                index=0,
+                key="seletor_periodo",
             )
         else:
             mes_base: str = st.selectbox(
-                "Mês", meses, index=0, key="seletor_mes_base",
+                "Mês",
+                meses,
+                index=0,
+                key="seletor_mes_base",
             )
 
             if granularidade == "Semana":
@@ -94,7 +99,9 @@ def _sidebar(dados: dict) -> tuple[str, str, str]:
                 semanas = obter_semanas_do_mes(dados, mes_base)
                 if semanas:
                     periodo = st.selectbox(
-                        "Semana", semanas, index=0,
+                        "Semana",
+                        semanas,
+                        index=0,
                         key="seletor_detalhe",
                     )
                 else:
@@ -105,7 +112,9 @@ def _sidebar(dados: dict) -> tuple[str, str, str]:
                 dias = obter_dias_do_mes(dados, mes_base)
                 if dias:
                     periodo = st.selectbox(
-                        "Dia", dias, index=0,
+                        "Dia",
+                        dias,
+                        index=0,
                         key="seletor_detalhe",
                     )
                 else:
@@ -127,9 +136,7 @@ def _sidebar(dados: dict) -> tuple[str, str, str]:
         return periodo, pessoa, granularidade
 
 
-def _cards_sidebar(
-    dados: dict, periodo: str, pessoa: str, granularidade: str
-) -> None:
+def _cards_sidebar(dados: dict, periodo: str, pessoa: str, granularidade: str) -> None:
     """Exibe cards de resumo na sidebar."""
     if "extrato" not in dados:
         return
@@ -173,9 +180,15 @@ def main() -> None:
     if not periodo:
         st.stop()
 
-    tab_visao, tab_categorias, tab_extrato, tab_contas, tab_projecoes, tab_metas = st.tabs(
-        ["Visão Geral", "Categorias", "Extrato", "Contas", "Projeções", "Metas"]
-    )
+    (
+        tab_visao,
+        tab_categorias,
+        tab_extrato,
+        tab_contas,
+        tab_projecoes,
+        tab_metas,
+        tab_analise,
+    ) = st.tabs(["Visão Geral", "Categorias", "Extrato", "Contas", "Projeções", "Metas", "Análise"])
 
     ctx = {"granularidade": granularidade, "periodo": periodo}
 
@@ -196,6 +209,9 @@ def main() -> None:
 
     with tab_metas:
         metas.renderizar(dados, periodo, pessoa)
+
+    with tab_analise:
+        analise_avancada.renderizar(dados, periodo, pessoa, ctx)
 
 
 if __name__ == "__main__":
