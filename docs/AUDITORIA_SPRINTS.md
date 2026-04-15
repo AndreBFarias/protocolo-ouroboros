@@ -46,7 +46,7 @@ O doc de sprint original listava "extrator genérico de conta de água" como ent
 ### Entregue
 
 - Categorização de 92,5% para 100% de cobertura (111 regras regex)
-- Makefile com 13 targets (process, xlsx, relatorio, check, lint, clean, etc.)
+- Makefile com 13 targets (process, xlsx, relatorio, check, lint, clean, etc.) <!-- noqa: accent -->
 - Script de pre-commit local (verificação de lint, acentuação, anonimato)
 - OCR de conta de energia via tesseract (validado com gabarito manual)
 - Auto-documentação em `docs/extractors/` (7 documentos, um por extrator)

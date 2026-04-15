@@ -15,12 +15,12 @@ _CAMINHO_SENHAS: Path = Path(__file__).resolve().parents[2] / "mappings" / "senh
 def carregar_senhas_pdf() -> list[str]:
     """Carrega lista de senhas para PDFs/XLS protegidos.
 
-    Le de mappings/senhas.yaml (nao rastreado pelo git).
-    Retorna lista vazia se o arquivo nao existir.
+    Lê de mappings/senhas.yaml (não rastreado pelo git).
+    Retorna lista vazia se o arquivo não existir.
     """
     if not _CAMINHO_SENHAS.exists():
         logger.warning(
-            "Arquivo de senhas nao encontrado: %s. "
+            "Arquivo de senhas não encontrado: %s. "
             "Crie mappings/senhas.yaml com a chave 'senhas_pdf'.",
             _CAMINHO_SENHAS,
         )

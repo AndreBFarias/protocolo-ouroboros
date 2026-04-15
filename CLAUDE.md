@@ -321,10 +321,11 @@ protocolo-ouroboros/
 
 ## Contexto Ativo
 
-- **Sprints concluídas:** 1 (MVP), 2 (Infra), 4 (Inteligência), 8 (Dashboard v2 Dracula), 13 (Rebranding), 14 (UI/UX)
+- **Sprints concluídas:** 1 (MVP), 2 (Infra), 4 (Inteligência), 8 (Dashboard v2 Dracula), 13 (Rebranding), 14 (UI/UX), 18 (Auditoria), 19 (Dívida Técnica)
 - **Sprints com código integrado:** 3 (Dashboard v1), 5 (Relatórios), 6 (Obsidian)
+- **Sprints parciais:** 15 (Acentuação -- hooks prontos, correções concluídas na Sprint 19)
 - **Próximas sprints:** 09 (LLM), 10 (Grafos), 11 (IRPF), 12 (Vault Final -- absorção CdB)
-- **Sprints finais:** 15 (Acentuação), 16 (Dashboard Polish), 17 (Testes CI/CD), 18 (Auditoria)
+- **Sprints finais:** 16 (Dashboard Polish), 17 (Testes CI/CD)
 - **Plano de convergência:** Ouroboros absorve vault ~/Controle de Bordo (plano em .claude/plans/)
 - **Transações:** 2.859 (1.214 histórico + 1.645 dados brutos)
 - **Cobertura de meses:** 44 (ago/2022 a out/2026)

@@ -143,7 +143,7 @@ def normalizar_transacao(
     """Normaliza uma transação para o schema padrão do XLSX.
 
     Retorna dict com as 12 colunas do schema:
-    data, valor, forma_pagamento, local, quem, categoria, classificacao,
+    data, valor, forma_pagamento, local, quem, categoria, classificação,
     banco_origem, tipo, mes_ref, tag_irpf, obs
     """
     descricao_limpa = descricao.replace("&amp;", "&").strip()

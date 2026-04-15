@@ -92,7 +92,7 @@ class ExtratorNubankCartao(ExtratorBase):
         pessoa: str,
         arquivo: Path,
     ) -> Optional[Transacao]:
-        """Converte uma linha do CSV em Transacao."""
+        """Converte uma linha do CSV em Transação."""
         try:
             data_str: str = linha["date"].strip()
             titulo: str = linha["title"].strip()

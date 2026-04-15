@@ -6,7 +6,13 @@ echo "=== Protocolo Ouroboros -- Instalação ==="
 VENV=".venv"
 
 if [ -d "$VENV" ]; then
-    echo "Ambiente virtual já existe. Atualizando dependências..."
+    if "$VENV/bin/python" -c "import sys" 2>/dev/null; then
+        echo "Ambiente virtual válido. Atualizando dependências..."
+    else
+        echo "Ambiente virtual corrompido. Recriando..."
+        rm -rf "$VENV"
+        python3 -m venv "$VENV"
+    fi
     source "$VENV/bin/activate"
 else
     echo "Criando ambiente virtual..."

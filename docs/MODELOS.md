@@ -4,7 +4,7 @@ Documentação de todos os schemas utilizados no pipeline, incluindo tabelas do 
 
 ---
 
-## Dataclass Base: Transacao (`src/extractors/base.py`)
+## Dataclass Base: Transacao (`src/extractors/base.py`) <!-- noqa: accent -->
 
 Representação interna de uma transação durante o pipeline. Todos os extratores produzem instâncias desta dataclass.
 
@@ -145,7 +145,7 @@ Dados acumulados para declaração de imposto de renda. Gerada pelo irpf_tagger.
 
 ---
 
-## Aba: analise
+## Aba: analise <!-- noqa: accent -->
 
 Texto livre gerado pelo pipeline com insights do mês.
 
