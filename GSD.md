@@ -88,6 +88,8 @@ Detalhes completos em `docs/ARMADILHAS.md`.
 | `./run.sh --dashboard` | Abre dashboard |
 | `./run.sh --sync` | Sincroniza com vault Obsidian |
 | `./run.sh --check` | QUEBRADO -- health_check.py não existe (Sprint 23) |
+| `python -m src.integrations.belvo_sync` | Sincronizar via Belvo (precisa .env configurado) |
+| `python -m src.integrations.gmail_csv` | Baixar CSVs do Nubank via Gmail (precisa credentials.json) |
 | `./run.sh --gauntlet` | Executa gauntlet (44 testes, 8 fases) |
 | `./run.sh` (sem args) | Menu interativo ANSI colorido |
 | `make gauntlet` | Atalho para gauntlet |
@@ -116,7 +118,9 @@ Detalhes completos em `docs/ARMADILHAS.md`.
 | **21** | **Dashboard Redesign: CSS, tipografia, layout** | **Pendente** |
 | **22** | **Relatórios Diagnósticos: contexto, anomalias** | **Pendente** |
 | **23** | **Consolidação: módulos fantasmas, energia, obsidian** | **Pendente** |
-| **24** | **Verdade nos Dados: eliminar placeholders** | **Pendente** |
+| **24** | **Verdade nos Dados: análise quali/quanti, CNPJ, projeção** | **Concluída (parcial)** |
+| **25** | **Automação Bancária: OFX, Belvo, Gmail, MeuPluggy** | **Em andamento** |
+| **26** | **Pacote IRPF: organização de documentos para declaração** | **Pendente** |
 | 09 | LLM Local: análise financeira via Gemma/Phi | Futuro |
 | 10 | Grafos e Visualizações | Futuro |
 | 12 | Vault Final: absorção do CdB | Futuro |
@@ -129,26 +133,26 @@ Detalhes completos em `docs/ARMADILHAS.md`.
 - **44 meses** de cobertura (ago/2022 a out/2026)
 - **111 regras regex** de categorização + **10 overrides** manuais
 - **21 regras IRPF** em 5 tipos de tag -> **79 registros tagueados**
-- **6 extratores** registrados no pipeline + **1 OCR** (energia -- existe mas não registrado) <!-- noqa: accent -->
+- **8 extratores** registrados no pipeline (nubank x2, c6 x2, itaú, santander, energia OCR, OFX genérico)
 - **6 validações** de integridade no validador (NÃO roda automaticamente)
-- **8 abas** no XLSX (3 com dados reais, 3 congeladas do histórico, 1 parcial, 1 estática)
+- **8 abas** no XLSX (3 reais, 3 histórico, 1 parcial, 1 análise quali/quanti)
 - **44 relatórios** mensais em Markdown (projeções corrigidas na Sprint 20)
 - **44 testes** no gauntlet (8 fases)
 
 ### O que funciona vs o que não funciona
 
-| Funciona | Não funciona |
-|----------|-------------|
-| Inbox processor detecta banco/pessoa | Download de extratos é manual |
-| 6 extratores (CSV, XLSX, XLS, PDF) | energia_ocr.py não registrado no pipeline |
-| Descriptografia automática (senhas.yaml) | health_check.py não existe (menu crasha) |
-| Categorização 100% (111 regras) | doc_generator.py não existe (make docs crasha) |
-| Deduplicação 3 níveis | Obsidian sync com frontmatter nulo |
-| IRPF tagger + simulador de regime | Aba renda: INSS/IRRF/VR-VA vazios |
-| XLSX 8 abas + 44 relatórios | Aba analise: texto estático (sem LLM) | <!-- noqa: accent -->
-| Dashboard 8 páginas (Dracula) | Abas dividas/inventario/prazos: congeladas 2023 |
+| Funciona | Não funciona / pendente |
+|----------|------------------------|
+| 8 extratores (CSV, XLSX, XLS, PDF, OFX) | Download de extratos ainda manual (Belvo em teste) |
+| Inbox processor detecta banco/pessoa | health_check.py não existe (menu crasha) -- Sprint 23 |
+| Descriptografia automática (senhas.yaml) | doc_generator.py não existe (make docs crasha) -- Sprint 23 |
+| Categorização 100% (111 regras) | Obsidian sync com frontmatter nulo -- Sprint 23 |
+| Deduplicação 3 níveis | Aba renda: INSS/IRRF/VR-VA vazios (sem contracheque) |
+| IRPF tagger + CNPJ extraído (14/79) | Abas dividas/inventario/prazos: congeladas 2023 |
+| Aba analise: quali/quanti (37+ linhas) | Dashboard visual precisa redesign -- Sprint 21 | <!-- noqa: accent -->
+| Projeções por mês (corrigido Sprint 20) | Relatórios descritivos, não diagnósticos -- Sprint 22 |
+| 4 integrações bancárias (OFX/Belvo/Gmail/Pluggy) | Belvo em teste, Gmail precisa setup |
 | Backup automático antes de processar | Sem cron/agendamento |
-| Projeções por mês (corrigido Sprint 20) | Aba irpf: cnpj_cpf vazio |
 
 ---
 

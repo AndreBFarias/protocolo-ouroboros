@@ -1,9 +1,10 @@
 # CLAUDE.md -- Protocolo Ouroboros
 
 ```
-VERSÃO: 3.0 | STATUS: PRODUÇÃO (com lacunas documentadas) | LANG: PT-BR
-TRANSAÇÕES: 2.859 | MESES: 44 (ago/2022 a out/2026) | BANCOS: 6
-SPRINTS CONCLUÍDAS: 9/24 | CATEGORIZAÇÃO: 100% | IRPF TAGS: 79
+VERSÃO: 3.1 | STATUS: PRODUÇÃO (com lacunas documentadas) | LANG: PT-BR
+TRANSAÇÕES: 2.859 | MESES: 44 (ago/2022 a out/2026) | BANCOS: 6 | EXTRATORES: 8
+SPRINTS CONCLUÍDAS: 10/26 | CATEGORIZAÇÃO: 100% | IRPF TAGS: 79 (14 com CNPJ)
+INTEGRAÇÕES: OFX (pronto), Belvo (em teste), Gmail (setup pendente), MeuPluggy (disponível)
 ```
 
 ---
@@ -275,15 +276,16 @@ protocolo-ouroboros/
 │   └── historico/                # XLSX antigo importado
 │
 ├── src/
-│   ├── pipeline.py               # Orquestrador (11 passos)
-│   ├── inbox_processor.py        # Detecta, renomeia, move arquivos
-│   ├── extractors/               # 7 extratores (nubank, c6, itaú, santander, energia)
-│   ├── transform/                # categorizer, normalizer, deduplicator, irpf_tagger
-│   ├── load/                     # xlsx_writer (8 abas), relatório (MD)
+│   ├── pipeline.py               # Orquestrador (11 passos, 8 extratores)
+│   ├── inbox_processor.py        # Detecta, renomeia, move arquivos (.csv, .xlsx, .xls, .pdf, .ofx)
+│   ├── extractors/               # 8 extratores (nubank x2, c6 x2, itaú, santander, energia, OFX)
+│   ├── transform/                # categorizer, normalizer, deduplicator, irpf_tagger (com CNPJ)
+│   ├── load/                     # xlsx_writer (8 abas, análise quali/quanti), relatório (MD)
+│   ├── integrations/             # Belvo sync, Gmail CSV, docs de MeuPluggy
 │   ├── projections/              # cenários financeiros
-│   ├── dashboard/                # Streamlit app (6 páginas)
-│   ├── obsidian/                 # Sync com vault Obsidian
-│   └── utils/                    # logger, pdf_reader, file_detector, validator
+│   ├── dashboard/                # Streamlit app (8 páginas, Dracula theme)
+│   ├── obsidian/                 # Sync com vault Obsidian (frontmatter com bug -- Sprint 23)
+│   └── utils/                    # logger, pdf_reader, file_detector, validator, senhas
 │
 ├── mappings/
 │   ├── categorias.yaml           # 111 regras regex
@@ -326,18 +328,24 @@ protocolo-ouroboros/
 | Armadilhas | `docs/ARMADILHAS.md` |
 | Arquitetura | `docs/ARCHITECTURE.md` |
 | Dados faltantes | `DADOS_FALTANTES.md` |
+| Automação bancária | `docs/AUTOMACAO_BANCARIA.md` |
+| Integrações (Belvo/Gmail) | `src/integrations/README.md` |
+| Sync Belvo | `python -m src.integrations.belvo_sync` |
+| Download Gmail | `python -m src.integrations.gmail_csv` |
 
 ---
 
 ## Contexto Ativo
 
-- **Sprints concluídas:** 1, 2, 4, 8, 13, 14, 15 (parcial), 18, 19, 20
+- **Sprints concluídas:** 1, 2, 4, 8, 13, 14, 15 (parcial), 18, 19, 20, 24 (parcial)
 - **Sprints com código integrado:** 3, 5, 6
 - **Backlog priorizado:**
   - 21 (Dashboard Redesign -- CSS, tipografia, layout)
   - 22 (Relatórios Diagnósticos -- contexto, anomalias, metas reais)
   - 23 (Consolidação -- módulos fantasmas, energia_ocr, obsidian sync)
-  - 24 (Verdade nos Dados -- eliminar placeholders e colunas vazias)
+  - 24 (Verdade nos Dados -- parcial, itens de visão em 25/26)
+  - 25 (Automação Bancária -- OFX pronto, Belvo em teste, Gmail setup pendente)
+  - 26 (Pacote IRPF -- organização de documentos para declaração)
 - **Backlog futuro:** 09 (LLM), 10 (Grafos), 12 (Vault Final), 16 (Dashboard Polish), 17 (Testes CI/CD)
 - **Transações:** 2.859 (1.214 histórico + 1.645 dados brutos)
 - **Cobertura de meses:** 44 (ago/2022 a out/2026)
