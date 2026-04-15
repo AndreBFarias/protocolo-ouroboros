@@ -8,11 +8,9 @@ import streamlit as st
 import yaml
 
 from src.dashboard.dados import calcular_saldo_acumulado, formatar_moeda
-from src.dashboard.tema import CORES, FONTE_MINIMA
+from src.dashboard.tema import CORES, FONTE_CORPO, FONTE_MINIMA, FONTE_SUBTITULO
 
-CAMINHO_METAS: Path = (
-    Path(__file__).resolve().parents[3] / "mappings" / "metas.yaml"
-)
+CAMINHO_METAS: Path = Path(__file__).resolve().parents[3] / "mappings" / "metas.yaml"
 
 
 def _carregar_metas() -> list[dict[str, Any]]:
@@ -88,14 +86,11 @@ def _card_meta(meta: dict[str, Any]) -> str:
     else:
         valor_alvo = meta.get("valor_alvo", 0)
         valor_atual = meta.get("valor_atual", 0)
-        status = (
-            f"{formatar_moeda(valor_atual)} "
-            f"/ {formatar_moeda(valor_alvo)}"
-        )
+        status = f"{formatar_moeda(valor_atual)} / {formatar_moeda(valor_alvo)}"
         progresso_pct = _calcular_progresso(meta) * 100
         detalhe = (
-            '<p style="color: #6272A4;'
-            " font-size: 13px;"
+            f'<p style="color: {CORES["texto_sec"]};'
+            f" font-size: {FONTE_MINIMA}px;"
             ' margin: 2px 0;">'
             f"Progresso: {progresso_pct:.0f}%</p>"
         )
@@ -103,8 +98,8 @@ def _card_meta(meta: dict[str, Any]) -> str:
     nota_html = ""
     if nota:
         nota_html = (
-            '<p style="color: #6272A4;'
-            " font-size: 13px;"
+            f'<p style="color: {CORES["texto_sec"]};'
+            f" font-size: {FONTE_MINIMA}px;"
             " font-style: italic;"
             f' margin: 6px 0 0 0;">{nota}</p>'
         )
@@ -113,9 +108,7 @@ def _card_meta(meta: dict[str, Any]) -> str:
     deps_html = ""
     if deps:
         deps_itens = "".join(
-            f'<span style="color: {CORES["alerta"]}; margin-right: 8px;">'
-            f"{d}</span>"
-            for d in deps
+            f'<span style="color: {CORES["alerta"]}; margin-right: 8px;">{d}</span>' for d in deps
         )
         deps_html = (
             f'<p style="color: {CORES["texto_sec"]};'
@@ -128,24 +121,24 @@ def _card_meta(meta: dict[str, Any]) -> str:
     return (
         f'<div style="background-color: {fundo};'
         f" border-left: 4px solid {cor};"
-        " border-radius: 8px; padding: 16px;"
+        " border-radius: 8px; padding: 20px;"
         ' margin: 8px 0;">'
         '<div style="display: flex;'
         " justify-content: space-between;"
         ' align-items: center;">'
-        '<p style="color: #F8F8F2;'
-        " font-size: 15px; font-weight: bold;"
+        f'<p style="color: {CORES["texto"]};'
+        f" font-size: {FONTE_SUBTITULO}px; font-weight: bold;"
         f' margin: 0;">{nome}</p>'
         f'<span style="color: {cor};'
-        " font-size: 13px;"
+        f" font-size: {FONTE_MINIMA}px;"
         f' font-weight: bold;">P{prioridade}</span>'
         "</div>"
-        '<p style="color: #6272A4;'
-        " font-size: 13px;"
+        f'<p style="color: {CORES["texto_sec"]};'
+        f" font-size: {FONTE_MINIMA}px;"
         f' margin: 4px 0;">{status}</p>'
         f"{detalhe}"
         f'<p style="color: {cor_urgencia};'
-        " font-size: 13px;"
+        f" font-size: {FONTE_MINIMA}px;"
         f' margin: 4px 0;">'
         f"Prazo: {prazo} ({urgencia})</p>"
         f"{nota_html}"
@@ -178,34 +171,25 @@ def _atualizar_valor_atual(
     return resultado
 
 
-def renderizar(
-    dados: dict, mes_selecionado: str, pessoa: str
-) -> None:
+def renderizar(dados: dict, mes_selecionado: str, pessoa: str) -> None:
     """Renderiza a página de metas financeiras."""
     metas = _carregar_metas()
     metas = _atualizar_valor_atual(metas, dados, mes_selecionado, pessoa)
 
     if not metas:
-        st.warning(
-            "Nenhuma meta encontrada."
-            " Verifique mappings/metas.yaml."
-        )
+        st.warning("Nenhuma meta encontrada. Verifique mappings/metas.yaml.")
         return
 
     st.subheader("Metas Financeiras")
 
-    metas_valor = [
-        m for m in metas if m.get("tipo") != "binario"
-    ]
-    metas_binarias = [
-        m for m in metas if m.get("tipo") == "binario"
-    ]
+    metas_valor = [m for m in metas if m.get("tipo") != "binario"]
+    metas_binarias = [m for m in metas if m.get("tipo") == "binario"]
 
     total = len(metas)
     n_valor = len(metas_valor)
     n_bin = len(metas_binarias)
     st.markdown(
-        f'<p style="color: #6272A4; font-size: 14px;">'
+        f'<p style="color: {CORES["texto_sec"]}; font-size: {FONTE_CORPO}px;">'
         f"{total} metas: {n_valor} monetárias, "
         f"{n_bin} binárias</p>",
         unsafe_allow_html=True,
@@ -213,12 +197,8 @@ def renderizar(
 
     if metas_valor:
         st.markdown("### Metas com Valor")
-        for meta in sorted(
-            metas_valor, key=lambda m: m.get("prioridade", 99)
-        ):
-            st.markdown(
-                _card_meta(meta), unsafe_allow_html=True
-            )
+        for meta in sorted(metas_valor, key=lambda m: m.get("prioridade", 99)):
+            st.markdown(_card_meta(meta), unsafe_allow_html=True)
             progresso = _calcular_progresso(meta)
             progresso_visual = max(progresso, 0.01)
             st.progress(
@@ -232,9 +212,7 @@ def renderizar(
             metas_binarias,
             key=lambda m: m.get("prioridade", 99),
         ):
-            st.markdown(
-                _card_meta(meta), unsafe_allow_html=True
-            )
+            st.markdown(_card_meta(meta), unsafe_allow_html=True)
 
     st.markdown("---")
     st.subheader("Timeline de Prazos")
@@ -244,9 +222,7 @@ def renderizar(
 def _timeline_metas(metas: list[dict[str, Any]]) -> None:
     """Exibe timeline simplificada de prazos."""
     metas_com_prazo = [m for m in metas if m.get("prazo")]
-    metas_ordenadas = sorted(
-        metas_com_prazo, key=lambda m: m["prazo"]
-    )
+    metas_ordenadas = sorted(metas_com_prazo, key=lambda m: m["prazo"])
 
     hoje = date.today()
     hoje_str = hoje.strftime("%Y-%m")
@@ -255,25 +231,22 @@ def _timeline_metas(metas: list[dict[str, Any]]) -> None:
     fundo = CORES["card_fundo"]
 
     linhas: list[str] = []
+    linhas.append(f'<div style="background-color: {fundo}; border-radius: 8px; padding: 20px;">')
     linhas.append(
-        f'<div style="background-color: {fundo};'
-        ' border-radius: 8px; padding: 20px;">'
-    )
-    linhas.append(
-        '<div style="border-left: 2px solid #555;'
+        f'<div style="border-left: 2px solid {CORES["card_fundo"]};'
         ' padding-left: 20px; margin-left: 10px;">'
     )
 
     linhas.append(
         '<div style="position: relative;'
-        ' margin-bottom: 15px;">'
+        ' margin-bottom: 24px;">'
         '<div style="position: absolute;'
         " left: -27px; top: 3px;"
         " width: 12px; height: 12px;"
         f" background-color: {cor_pos};"
         ' border-radius: 50%;"></div>'
         f'<p style="color: {cor_pos};'
-        " font-size: 13px;"
+        f" font-size: {FONTE_MINIMA}px;"
         ' font-weight: bold; margin: 0;">'
         f"HOJE ({hoje_str})</p></div>"
     )
@@ -297,19 +270,19 @@ def _timeline_metas(metas: list[dict[str, Any]]) -> None:
 
         linhas.append(
             '<div style="position: relative;'
-            ' margin-bottom: 15px;">'
+            ' margin-bottom: 24px;">'
             '<div style="position: absolute;'
             " left: -27px; top: 3px;"
             " width: 12px; height: 12px;"
             f" background-color: {cor};"
             ' border-radius: 50%;"></div>'
-            '<p style="color: #F8F8F2;'
-            ' font-size: 13px; margin: 0;">'
+            f'<p style="color: {CORES["texto"]};'
+            f' font-size: {FONTE_MINIMA}px; margin: 0;">'
             f'<span style="color: {cor_status};'
             f' font-weight: bold;">{prazo}</span>'
             f" -- {nome} "
             f'<span style="color: {cor_status};'
-            f' font-size: 13px;">'
+            f' font-size: {FONTE_MINIMA}px;">'
             f"({status_texto})</span></p></div>"
         )
 
