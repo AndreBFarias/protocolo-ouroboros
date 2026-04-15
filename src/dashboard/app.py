@@ -23,6 +23,7 @@ from src.dashboard.paginas import (  # noqa: E402
     categorias,
     contas,
     extrato,
+    irpf,
     metas,
     projecoes,
     visao_geral,
@@ -188,7 +189,19 @@ def main() -> None:
         tab_projecoes,
         tab_metas,
         tab_analise,
-    ) = st.tabs(["Visão Geral", "Categorias", "Extrato", "Contas", "Projeções", "Metas", "Análise"])
+        tab_irpf,
+    ) = st.tabs(
+        [
+            "Visão Geral",
+            "Categorias",
+            "Extrato",
+            "Contas",
+            "Projeções",
+            "Metas",
+            "Análise",
+            "IRPF",
+        ]
+    )
 
     ctx = {"granularidade": granularidade, "periodo": periodo}
 
@@ -212,6 +225,9 @@ def main() -> None:
 
     with tab_analise:
         analise_avancada.renderizar(dados, periodo, pessoa, ctx)
+
+    with tab_irpf:
+        irpf.renderizar(dados, periodo, pessoa, ctx)
 
 
 if __name__ == "__main__":
