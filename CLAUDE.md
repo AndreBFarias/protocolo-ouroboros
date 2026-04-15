@@ -337,16 +337,10 @@ protocolo-ouroboros/
 
 ## Contexto Ativo
 
-- **Sprints concluídas:** 1, 2, 4, 8, 13, 14, 15 (parcial), 18, 19, 20, 24 (parcial)
-- **Sprints com código integrado:** 3, 5, 6
-- **Backlog priorizado:**
-  - 21 (Dashboard Redesign -- CSS, tipografia, layout)
-  - 22 (Relatórios Diagnósticos -- contexto, anomalias, metas reais)
-  - 23 (Consolidação -- módulos fantasmas, energia_ocr, obsidian sync)
-  - 24 (Verdade nos Dados -- parcial, itens de visão em 25/26)
-  - 25 (Automação Bancária -- OFX pronto, Belvo em teste, Gmail setup pendente)
-  - 26 (Pacote IRPF -- organização de documentos para declaração)
-- **Backlog futuro:** 09 (LLM), 10 (Grafos), 12 (Vault Final), 16 (Dashboard Polish), 17 (Testes CI/CD)
+- **Concluídas:** 1 (MVP), 2 (Infra), 3 (Dashboard v1), 4 (Inteligência), 5 (Relatórios), 6 (Obsidian), 8 (Dashboard v2), 13 (Rebranding), 14 (UI/UX), 15 (Acentuação -- hooks), 18 (Auditoria), 19 (Dívida Técnica), 20 (Bugs Críticos), 24 (Verdade nos Dados -- parcial)
+- **Pendentes:** 21 (Dashboard Redesign), 22 (Relatórios Diagnósticos), 23 (Consolidação)
+- **Visão:** 25 (Automação Bancária), 26 (Pacote IRPF)
+- **Futuro:** 09 (LLM), 10 (Grafos), 12 (Vault Final), 16 (Dashboard Polish), 17 (Testes CI/CD)
 - **Transações:** 2.859 (1.214 histórico + 1.645 dados brutos)
 - **Cobertura de meses:** 44 (ago/2022 a out/2026)
 - **Bancos:** Itaú, Santander, C6, Nubank (André) + Nubank PF/PJ (Vitória)
