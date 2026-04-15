@@ -100,20 +100,23 @@ Detalhes completos em `docs/ARMADILHAS.md`.
 
 | Sprint | Tema | Status |
 |--------|------|--------|
-| 1 | MVP: Pipeline ETL + 6 extratores + XLSX 8 abas | Concluída (commit 10b4b64) |
-| 2 | Infra: Categorização 100%, Makefile, OCR | Concluída (commit 7544101) |
-| 3 | Dashboard Streamlit: 6 abas, tema dark, auditoria visual | Concluída (commit 9a5bdb5 + correções visuais) |
-| 4 | Inteligência: overrides, IRPF tagger, validador | Concluída (commit 12b778c) |
-| 5 | Relatórios + Projeções: 3 cenários, 7 metas, timeline | Concluída (bugs corrigidos, validada via Chrome MCP) |
-| 6 | Integração Obsidian: sync idempotente, siglas, Dataview | Concluída (idempotência + _formatar_nome corrigidos) |
-| 7 | Acentuação e Qualidade | Pendente |
-| 8 | Dashboard v2: Redesign visual | Pendente |
-| 9 | Testes e CI/CD: gauntlet expandido, GitHub Actions | Pendente |
-| 10 | LLM Local: análise financeira via Gemma/Phi | Pendente |
-| 11 | Grafos e Visualizações: Sankey, heatmap | Pendente |
-| 12 | IRPF Completo: pacote CSV, simulador | Pendente |
-| 13 | Integração Vault Final: unificação de projetos | Pendente |
-| 14 | Auditoria Final: GitHub-readiness | Pendente |
+| 01 | MVP: Pipeline ETL + 6 extratores + XLSX 8 abas | Concluída (commit 10b4b64) |
+| 02 | Infra: Categorização 100%, Makefile, OCR | Concluída (commit 7544101) |
+| 03 | Dashboard Streamlit: 6 abas, tema dark | Integrada (commit 9a5bdb5) |
+| 04 | Inteligência: overrides, IRPF tagger, validador | Concluída (commit 12b778c) |
+| 05 | Relatórios + Projeções: 3 cenários, 7 metas | Integrada |
+| 06 | Integração Obsidian: sync, siglas, Dataview | Integrada |
+| 08 | Dashboard v2: Redesign Dracula | Concluída (commit f8b1855) |
+| 09 | LLM Local: análise financeira via Gemma/Phi | Pendente |
+| 10 | Grafos e Visualizações: Sankey, heatmap | Pendente |
+| 11 | IRPF Completo: pacote CSV, simulador | Pendente |
+| 12 | Vault Final: absorção do CdB pelo Ouroboros | Pendente |
+| 13 | Rebranding Protocolo Ouroboros | Concluída (commit b73068a) |
+| 14 | UI/UX e Outputs Profissionais | Concluída (commit b73068a) |
+| 15 | Acentuação e Qualidade | Pendente |
+| 16 | Dashboard Polish Visual | Pendente |
+| 17 | Testes e CI/CD | Pendente |
+| 18 | Auditoria Final: GitHub-readiness | Pendente |
 
 ### Números
 

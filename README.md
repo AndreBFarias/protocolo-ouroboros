@@ -34,6 +34,10 @@ O menu interativo guia todas as operações: processamento, dashboard, relatóri
 
 Consolida dados bancários de múltiplas fontes (CSVs, XLSX, XLS, PDFs protegidos, imagens via OCR) em um XLSX unificado com 8 abas, relatórios mensais em Markdown e dashboard Streamlit com visualizações interativas.
 
+| Transações | Meses | Bancos | Regras | Overrides | Tags IRPF |
+|:----------:|:-----:|:------:|:------:|:---------:|:---------:|
+| 2.859 | 44 | 6 | 111 | 10 | 79 |
+
 ---
 
 ### Arquitetura

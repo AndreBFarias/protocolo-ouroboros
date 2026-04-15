@@ -1,4 +1,4 @@
-"""Sincronizacao de relatorios financeiros com o vault Obsidian."""
+"""Sincronização de relatórios financeiros com o vault Obsidian."""
 
 import re
 from datetime import date
@@ -19,8 +19,9 @@ PROJETO_ROOT: Path = Path(__file__).parent.parent.parent
 OUTPUT_PATH: Path = PROJETO_ROOT / "data" / "output"
 METAS_YAML: Path = PROJETO_ROOT / "mappings" / "metas.yaml"
 
+
 def _formatar_moeda(valor: float) -> str:
-    """Formata valor monetario no padrao brasileiro."""
+    """Formata valor monetário no padrão brasileiro."""
     return f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
 
@@ -48,7 +49,7 @@ def _formatar_nome(nome: str) -> str:
 MESES_PT: dict[str, str] = {
     "01": "Janeiro",
     "02": "Fevereiro",
-    "03": "Marco",
+    "03": "Março",
     "04": "Abril",
     "05": "Maio",
     "06": "Junho",
@@ -62,7 +63,7 @@ MESES_PT: dict[str, str] = {
 
 
 def _extrair_valores_relatorio(conteudo: str) -> dict[str, Optional[float]]:
-    """Extrai receita, despesa e saldo do conteudo do relatorio."""
+    """Extrai receita, despesa e saldo do conteúdo do relatório."""
     valores: dict[str, Optional[float]] = {
         "receita": None,
         "despesa": None,
@@ -82,13 +83,13 @@ def _extrair_valores_relatorio(conteudo: str) -> dict[str, Optional[float]]:
             try:
                 valores[chave] = float(valor_str)
             except ValueError:
-                logger.warning("Valor invalido para %s: %s", chave, match.group(1))
+                logger.warning("Valor inválido para %s: %s", chave, match.group(1))
 
     return valores
 
 
 def _nome_mes_pt(mes_ref: str) -> str:
-    """Retorna o nome do mes em portugues a partir de YYYY-MM."""
+    """Retorna o nome do mês em português a partir de YYYY-MM."""
     partes = mes_ref.split("-")
     if len(partes) != 2:
         return mes_ref
@@ -132,9 +133,9 @@ def _gerar_frontmatter(
     if valores["saldo"] is not None:
         frontmatter_dict["saldo"] = valores["saldo"]
 
-    frontmatter_dict["tags"] = ["financeiro", "mensal", "relatorio"]
+    frontmatter_dict["tags"] = ["financeiro", "mensal", "relatório"]
     frontmatter_dict["aliases"] = [
-        f"Relatorio {nome_mes} {ano}",
+        f"Relatório {nome_mes} {ano}",
         f"Ouroboros {nome_mes}",
     ]
     frontmatter_dict["created"] = created_existente or date.today().isoformat()
@@ -166,11 +167,10 @@ def _gerar_backlinks(metas: list[dict[str, object]]) -> str:
 
 
 def _remover_linha_gerado(conteudo: str) -> str:
-    """Remove a linha de 'Gerado automaticamente' do conteudo original."""
+    """Remove a linha de 'Gerado automaticamente' do conteúdo original."""
     linhas = conteudo.split("\n")
     linhas_filtradas = [
-        linha for linha in linhas
-        if not linha.strip().startswith("*Gerado automaticamente")
+        linha for linha in linhas if not linha.strip().startswith("*Gerado automaticamente")
     ]
     return "\n".join(linhas_filtradas).rstrip()
 
@@ -178,7 +178,7 @@ def _remover_linha_gerado(conteudo: str) -> str:
 def _carregar_metas() -> list[dict[str, object]]:
     """Carrega metas do arquivo YAML."""
     if not METAS_YAML.exists():
-        logger.warning("Arquivo de metas nao encontrado: %s", METAS_YAML)
+        logger.warning("Arquivo de metas não encontrado: %s", METAS_YAML)
         return []
 
     with METAS_YAML.open("r", encoding="utf-8") as f:
@@ -188,11 +188,11 @@ def _carregar_metas() -> list[dict[str, object]]:
 
 
 def sincronizar_relatorios(diretorio_output: Path) -> list[Path]:
-    """Copia relatorios MD do pipeline para o vault Obsidian.
+    """Copia relatórios MD do pipeline para o vault Obsidian.
 
-    Para cada relatorio YYYY-MM_relatorio.md:
+    Para cada relatório YYYY-MM_relatorio.md:
     1. Adiciona frontmatter YAML (tags, tipo, aliases, datas)
-    2. Adiciona backlinks para metas e dividas
+    2. Adiciona backlinks para metas e dívidas
     3. Copia para VAULT/Pessoal/Financeiro/Relatorios/YYYY-MM.md
     """
     RELATORIOS_PATH.mkdir(parents=True, exist_ok=True)
@@ -201,7 +201,7 @@ def sincronizar_relatorios(diretorio_output: Path) -> list[Path]:
     arquivos_relatorio = sorted(diretorio_output.glob("*_relatorio.md"))
 
     if not arquivos_relatorio:
-        logger.warning("Nenhum relatorio encontrado em %s", diretorio_output)
+        logger.warning("Nenhum relatório encontrado em %s", diretorio_output)
         return []
 
     copiados: list[Path] = []
@@ -224,7 +224,7 @@ def sincronizar_relatorios(diretorio_output: Path) -> list[Path]:
         copiados.append(destino)
 
     logger.info(
-        "Relatorios sincronizados: %d arquivos em %s",
+        "Relatórios sincronizados: %d arquivos em %s",
         len(copiados),
         RELATORIOS_PATH,
     )
@@ -264,12 +264,14 @@ def criar_notas_metas() -> list[Path]:
             frontmatter_linhas.append(f"valor_alvo: {valor_alvo}")
             frontmatter_linhas.append(f"valor_atual: {valor_atual}")
 
-        frontmatter_linhas.extend([
-            f"prioridade: {prioridade}",
-            f'prazo: "{prazo}"',
-            'tags: ["financeiro", "meta"]',
-            "---",
-        ])
+        frontmatter_linhas.extend(
+            [
+                f"prioridade: {prioridade}",
+                f'prazo: "{prazo}"',
+                'tags: ["financeiro", "meta"]',
+                "---",
+            ]
+        )
 
         corpo_linhas = [
             "",
@@ -278,7 +280,7 @@ def criar_notas_metas() -> list[Path]:
         ]
 
         if tipo_meta == "binario":
-            corpo_linhas.append("Tipo: Meta binaria (sim/nao)")
+            corpo_linhas.append("Tipo: Meta binária (sim/não)")
             corpo_linhas.append(f"Prazo: {prazo}")
         else:
             valor_alvo_fmt = _formatar_moeda(valor_alvo)
@@ -290,21 +292,23 @@ def criar_notas_metas() -> list[Path]:
             corpo_linhas.extend(["", f"Nota: {nota}"])
 
         if depende_de:
-            corpo_linhas.extend(["", "### Dependencias"])
+            corpo_linhas.extend(["", "### Dependências"])
             for dep in depende_de:
                 corpo_linhas.append(f"- {dep}")
 
-        corpo_linhas.extend([
-            "",
-            "## Relatorios relacionados",
-            "",
-            "```dataview",
-            "LIST",
-            'FROM "Pessoal/Financeiro/Relatorios"',
-            "SORT file.name DESC",
-            "LIMIT 6",
-            "```",
-        ])
+        corpo_linhas.extend(
+            [
+                "",
+                "## Relatórios relacionados",
+                "",
+                "```dataview",
+                "LIST",
+                'FROM "Pessoal/Financeiro/Relatorios"',
+                "SORT file.name DESC",
+                "LIMIT 6",
+                "```",
+            ]
+        )
 
         conteudo = "\n".join(frontmatter_linhas) + "\n".join(corpo_linhas) + "\n"
 
@@ -327,7 +331,7 @@ tags: ["financeiro", "dashboard", "moc"]
 
 # Dashboard Financeiro
 
-## Relatorios Recentes
+## Relatórios Recentes
 
 ```dataview
 TABLE receita, despesa, saldo
@@ -344,9 +348,9 @@ FROM "Pessoal/Financeiro/Metas"
 SORT prioridade ASC
 ```
 
-## Navegacao
+## Navegação
 
-- [[Pessoal/Financeiro/Relatorios|Todos os Relatorios]]
+- [[Pessoal/Financeiro/Relatorios|Todos os Relatórios]]
 - [[Pessoal/Financeiro/Metas|Todas as Metas]]
 """
 
@@ -357,21 +361,21 @@ SORT prioridade ASC
 
 
 def executar_sincronizacao() -> None:
-    """Executa o fluxo completo de sincronizacao com o vault Obsidian."""
-    logger.info("Iniciando sincronizacao com vault Obsidian")
+    """Executa o fluxo completo de sincronização com o vault Obsidian."""
+    logger.info("Iniciando sincronização com vault Obsidian")
     logger.info("Vault: %s", VAULT_PATH)
     logger.info("Output: %s", OUTPUT_PATH)
 
     if not VAULT_PATH.exists():
-        logger.error("Vault Obsidian nao encontrado em %s", VAULT_PATH)
+        logger.error("Vault Obsidian não encontrado em %s", VAULT_PATH)
         return
 
     if not OUTPUT_PATH.exists():
-        logger.error("Diretorio de output nao encontrado em %s", OUTPUT_PATH)
+        logger.error("Diretório de output não encontrado em %s", OUTPUT_PATH)
         return
 
     relatorios = sincronizar_relatorios(OUTPUT_PATH)
-    logger.info("Relatorios sincronizados: %d", len(relatorios))
+    logger.info("Relatórios sincronizados: %d", len(relatorios))
 
     metas = criar_notas_metas()
     logger.info("Notas de metas criadas: %d", len(metas))
@@ -379,12 +383,12 @@ def executar_sincronizacao() -> None:
     moc = criar_moc_financeiro()
     logger.info("MOC criado: %s", moc)
 
-    logger.info("Sincronizacao concluida com sucesso")
+    logger.info("Sincronização concluída com sucesso")
 
 
 if __name__ == "__main__":
     executar_sincronizacao()
 
 
-# "Nao e porque as coisas sao dificeis que nao ousamos;
-# e porque nao ousamos que sao dificeis." -- Seneca
+# "Não é porque as coisas são difíceis que não ousamos;
+# é porque não ousamos que são difíceis." -- Sêneca

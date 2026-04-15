@@ -16,6 +16,18 @@ DRACULA = {
 }
 
 
+def callout_github(tipo: str, conteudo: str) -> str:
+    """Gera callout nativo do GitHub (NOTE, WARNING, TIP, IMPORTANT, CAUTION)."""
+    linhas_conteudo = conteudo.strip().split("\n")
+    corpo = "\n> ".join(linhas_conteudo)
+    return f"> [!{tipo.upper()}]\n> {corpo}"
+
+
+def separador_secao() -> str:
+    """Retorna separador horizontal para Markdown."""
+    return "\n---\n"
+
+
 def formatar_valor(valor: float) -> str:
     """Formata valor monetário no padrão brasileiro."""
     sinal = "-" if valor < 0 else ""
@@ -42,7 +54,7 @@ def gerar_mermaid_pie(categorias: dict[str, float], titulo: str = "Gastos por Ca
     top5 = ordenadas[:5]
     resto = sum(v for _, v in ordenadas[5:])
 
-    linhas = ['```mermaid', f'pie title {titulo}']
+    linhas = ["```mermaid", f"pie title {titulo}"]
 
     for cat, valor in top5:
         linhas.append(f'    "{cat}" : {int(valor)}')
@@ -64,12 +76,7 @@ def barra_progresso_unicode(progresso: float, largura: int = 10) -> str:
 
 def secao_colapsavel(titulo: str, conteudo: str) -> str:
     """Gera seção colapsável HTML com <details>."""
-    return (
-        f"<details>\n"
-        f"<summary>{titulo}</summary>\n\n"
-        f"{conteudo}\n"
-        f"</details>"
-    )
+    return f"<details>\n<summary>{titulo}</summary>\n\n{conteudo}\n</details>"
 
 
 def cabecalho_relatorio(mes_ref: str, logo_path: str = "../../assets/icon.png") -> str:
@@ -83,10 +90,12 @@ def cabecalho_relatorio(mes_ref: str, logo_path: str = "../../assets/icon.png") 
 
 
 def linha_badges(receita: float, despesa: float, saldo: float, poupanca: float) -> str:
-    """Gera linha de badges com métricas principais."""
+    """Gera badges com métricas principais em grade 2x2 para legibilidade."""
     cor_saldo = DRACULA["positivo"] if saldo >= 0 else DRACULA["negativo"]
-    cor_poupanca = DRACULA["neutro"] if poupanca > 10 else (
-        DRACULA["alerta"] if poupanca > 0 else DRACULA["negativo"]
+    cor_poupanca = (
+        DRACULA["neutro"]
+        if poupanca > 10
+        else (DRACULA["alerta"] if poupanca > 0 else DRACULA["negativo"])
     )
 
     badges = [
@@ -96,7 +105,7 @@ def linha_badges(receita: float, despesa: float, saldo: float, poupanca: float) 
         gerar_badge("Poupança", f"{poupanca:.1f}%", cor_poupanca),
     ]
 
-    return f'<div align="center">\n\n{" ".join(badges)}\n\n</div>'
+    return f'<div align="center">\n\n{badges[0]} {badges[1]}<br>\n{badges[2]} {badges[3]}\n\n</div>'
 
 
 def tabela_categorias(

@@ -29,8 +29,9 @@ dashboard: ## Abre o dashboard Streamlit
 test: ## Executa testes
 	$(PYTHON) -m pytest tests/ -v --tb=short
 
-lint: ## Verifica código com ruff
+lint: ## Verifica código com ruff + acentuação
 	$(RUFF) check src/ tests/
+	$(PYTHON) scripts/check_acentuacao.py --all
 
 format: ## Formata código com ruff
 	$(RUFF) format src/ tests/
