@@ -12,15 +12,13 @@ import msoffcrypto
 import openpyxl
 import pdfplumber
 import xlrd
-import yaml
 
 from src.utils.logger import configurar_logger
+from src.utils.senhas import carregar_senhas_pdf
 
 logger = configurar_logger("file_detector")
 
 RAIZ_PROJETO = Path(__file__).parent.parent.parent
-
-SENHAS_PADRAO: list[str] = ["051273", "05127", "05127373122"]
 
 MESES_POR_EXTENSO: dict[str, str] = {
     "janeiro": "01",
@@ -80,18 +78,8 @@ class DeteccaoArquivo:
 
 
 def _carregar_senhas() -> list[str]:
-    """Carrega senhas do YAML de mapeamento, com fallback para senhas padrão."""
-    caminho_senhas = RAIZ_PROJETO / "mappings" / "senhas.yaml"
-    if caminho_senhas.exists():
-        try:
-            with open(caminho_senhas, encoding="utf-8") as f:
-                dados = yaml.safe_load(f)
-            senhas = dados.get("senhas_pdf", [])
-            if senhas:
-                return [str(s) for s in senhas]
-        except Exception as erro:
-            logger.warning("Falha ao carregar senhas.yaml: %s", erro)
-    return SENHAS_PADRAO
+    """Carrega senhas via módulo centralizado."""
+    return carregar_senhas_pdf()
 
 
 def calcular_hash(caminho: Path) -> str:
