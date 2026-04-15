@@ -277,7 +277,11 @@ def executar(mes: str | None = None, processar_tudo: bool = False) -> None:
     gerar_xlsx(transacoes_filtradas, caminho_xlsx, CONTROLE_ANTIGO)
 
     # 11. Gerar relatórios
-    gerar_relatorios(transacoes_filtradas, DIR_OUTPUT)
+    # Quando --mes é usado, passa transações completas (para projeções corretas)
+    # mas filtra a geração apenas para o mês solicitado
+    gerar_relatorios(
+        transacoes, DIR_OUTPUT, meses_filtro=[mes] if (mes and not processar_tudo) else None
+    )
 
     logger.info("=== Pipeline concluído ===")
     logger.info("XLSX: %s", caminho_xlsx)

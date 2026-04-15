@@ -174,8 +174,31 @@ def _aplicar_tag(transacao: dict) -> Optional[str]:
     return None
 
 
+_REGEX_CNPJ = re.compile(r"\d{2}\.?\d{3}\.?\d{3}/\d{4}-?\d{2}")
+_REGEX_CPF = re.compile(r"\d{3}\.?\d{3}\.?\d{3}-?\d{2}")
+
+
+def _extrair_cnpj_cpf(transacao: dict) -> Optional[str]:
+    """Extrai CNPJ ou CPF do contraparte a partir da descrição da transação."""
+    texto = " ".join([
+        transacao.get("_descricao_original") or "",
+        transacao.get("local") or "",
+        transacao.get("obs") or "",
+    ])
+
+    match_cnpj = _REGEX_CNPJ.search(texto)
+    if match_cnpj:
+        return match_cnpj.group()
+
+    match_cpf = _REGEX_CPF.search(texto)
+    if match_cpf:
+        return match_cpf.group()
+
+    return None
+
+
 def aplicar_tags_irpf(transacoes: list[dict]) -> list[dict]:
-    """Aplica tags IRPF automaticamente a todas as transações.
+    """Aplica tags IRPF e extrai CNPJ/CPF do contraparte.
 
     Tags possíveis:
     - rendimento_tributavel: salários (G4F, Infobase)
@@ -185,6 +208,7 @@ def aplicar_tags_irpf(transacoes: list[dict]) -> list[dict]:
     - inss_retido: INSS descontado nos contracheques
     """
     total_tags = 0
+    total_cnpj = 0
     contagem_por_tag: dict[str, int] = {}
 
     for t in transacoes:
@@ -194,10 +218,18 @@ def aplicar_tags_irpf(transacoes: list[dict]) -> list[dict]:
             total_tags += 1
             contagem_por_tag[tag] = contagem_por_tag.get(tag, 0) + 1
 
+        if t.get("tag_irpf") and not t.get("cnpj_cpf"):
+            cnpj_cpf = _extrair_cnpj_cpf(t)
+            if cnpj_cpf:
+                t["cnpj_cpf"] = cnpj_cpf
+                total_cnpj += 1
+
     if total_tags > 0:
         logger.info("Tags IRPF aplicadas: %d transações tagueadas", total_tags)
         for tag, qtd in sorted(contagem_por_tag.items()):
             logger.info("  %s: %d", tag, qtd)
+    if total_cnpj > 0:
+        logger.info("CNPJ/CPF extraídos: %d transações", total_cnpj)
 
     return transacoes
 
