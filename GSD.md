@@ -87,7 +87,7 @@ Detalhes completos em `docs/ARMADILHAS.md`.
 | `./run.sh --inbox` | Processa inbox |
 | `./run.sh --dashboard` | Abre dashboard |
 | `./run.sh --sync` | Sincroniza com vault Obsidian |
-| `./run.sh --check` | QUEBRADO -- health_check.py não existe (Sprint 23) |
+| `./run.sh --check` | QUEBRADO -- health_check.py não existe (Sprint 22) |
 | `python -m src.integrations.belvo_sync` | Sincronizar via Belvo (precisa .env configurado) |
 | `python -m src.integrations.gmail_csv` | Baixar CSVs do Nubank via Gmail (precisa credentials.json) |
 | `./run.sh --gauntlet` | Executa gauntlet (44 testes, 8 fases) |
@@ -101,13 +101,13 @@ Detalhes completos em `docs/ARMADILHAS.md`.
 ### Mapa de Sprints
 
 ```
-Concluídas: 01, 02, 03, 04, 05, 06, 08, 13, 14, 15, 18, 19, 20, 24
-Pendentes:  21 (Dashboard), 22 (Relatórios), 23 (Consolidação)
-Visão:      25 (Automação Bancária), 26 (Pacote IRPF)
-Cérebro:    27 (Ingestão Universal), 28 (Grafo + Classificação v2),
-            29 (LLM Orquestrado Claude), 30 (UX Navegável)
-Futuro:     09 (LLM Local), 10 (Grafos analíticos), 12 (Vault Final),
-            16 (Dashboard Polish), 17 (Testes CI/CD)
+Concluídas: 01, 02, 03, 04, 05, 06, 07, 12, 13, 14, 17, 18, 19, 23
+Pendentes:  20 (Dashboard), 21 (Relatórios), 22 (Consolidação)
+Visão:      24 (Automação Bancária), 25 (Pacote IRPF)
+Cérebro:    26 (Ingestão Universal), 27 (Grafo + Classificação v2),
+            28 (LLM Orquestrado Claude), 29 (UX Navegável)
+Futuro:     08 (LLM Local), 09 (Grafos analíticos), 11 (Vault Final),
+            15 (Dashboard Polish), 16 (Testes CI/CD)
 ```
 
 ### Detalhamento
@@ -119,29 +119,29 @@ Futuro:     09 (LLM Local), 10 (Grafos analíticos), 12 (Vault Final),
 | 03 | Dashboard Streamlit: 6 abas, tema dark | Integrada |
 | 04 | Inteligência: overrides, IRPF tagger, validador | Concluída |
 | 05 | Relatórios + Projeções: 3 cenários, 7 metas | Integrada |
-| 06 | Integração Obsidian: sync, siglas, Dataview | Integrada (frontmatter quebrado -- Sprint 23) |
-| 08 | Dashboard v2: Redesign Dracula | Concluída |
-| 13 | Rebranding Protocolo Ouroboros | Concluída |
-| 14 | UI/UX e Outputs Profissionais | Concluída |
-| 15 | Acentuação e Qualidade | Parcial (hooks OK, correções na 19) |
-| 18 | Auditoria Final: GitHub-readiness | Concluída |
-| 19 | Dívida Técnica: acentuação + deduplicação | Concluída |
-| 20 | Bugs Críticos: crashes, projeções, classificação | Concluída |
-| **21** | **Dashboard Redesign: CSS, tipografia, layout** | **Pendente** |
-| **22** | **Relatórios Diagnósticos: contexto, anomalias** | **Pendente** |
-| **23** | **Consolidação: módulos fantasmas, energia, obsidian** | **Pendente** |
-| **24** | **Verdade nos Dados: análise quali/quanti, CNPJ, projeção** | **Concluída (parcial)** |
-| **25** | **Automação Bancária: OFX, Belvo, Gmail, MeuPluggy** | **Em andamento** |
-| **26** | **Pacote IRPF: organização de documentos para declaração** | **Pendente** |
-| **27** | **Ingestão Universal: OCR qualquer doc, Gmail/Drive, inbox watchdog** | **Proposta (2026-04-16)** |
-| **28** | **Grafo de Conhecimento + Classificação v2: SQLite nodes/edges, entidades, linking doc↔tx, contexto, score** | **Proposta (2026-04-16)** |
-| **29** | **LLM Orquestrado: Claude Opus como padrão, prompts versionados, NL query, slash commands** | **Proposta (2026-04-16)** |
-| **30** | **UX Navegável: busca global, timeline por entidade, grafo visual, Obsidian rico, "abrir PDF"** | **Proposta (2026-04-16)** |
-| 09 | LLM Local: análise via Gemma/Phi | Futuro (backend alternativo da 29) |
-| 10 | Grafos analíticos: Sankey, heatmap, trend | Futuro (complementar à 30 -- viz analítica, não navegacional) |
-| 12 | Vault Final: absorção do CdB | Futuro |
-| 16 | Dashboard Polish Visual | Futuro (absorvido parcialmente pela 21) |
-| 17 | Testes e CI/CD | Futuro |
+| 06 | Integração Obsidian: sync, siglas, Dataview | Integrada (frontmatter quebrado -- Sprint 21) |
+| 07 | Dashboard v2: Redesign Dracula | Concluída |
+| 12 | Rebranding Protocolo Ouroboros | Concluída |
+| 13 | UI/UX e Outputs Profissionais | Concluída |
+| 14 | Acentuação e Qualidade | Parcial (hooks OK, correções na 18) |
+| 17 | Auditoria Final: GitHub-readiness | Concluída |
+| 18 | Dívida Técnica: acentuação + deduplicação | Concluída |
+| 19 | Bugs Críticos: crashes, projeções, classificação | Concluída |
+| **20** | **Dashboard Redesign: CSS, tipografia, layout** | **Pendente** |
+| **21** | **Relatórios Diagnósticos: contexto, anomalias** | **Pendente** |
+| **22** | **Consolidação: módulos fantasmas, energia, obsidian** | **Pendente** |
+| **23** | **Verdade nos Dados: análise quali/quanti, CNPJ, projeção** | **Concluída (parcial)** |
+| **24** | **Automação Bancária: OFX, Belvo, Gmail, MeuPluggy** | **Em andamento** |
+| **25** | **Pacote IRPF: organização de documentos para declaração** | **Pendente** |
+| **26** | **Ingestão Universal: OCR qualquer doc, Gmail/Drive, inbox watchdog** | **Proposta (2026-04-16)** |
+| **27** | **Grafo de Conhecimento + Classificação v2: SQLite nodes/edges, entidades, linking doc↔tx, contexto, score** | **Proposta (2026-04-16)** |
+| **28** | **LLM Orquestrado: Claude Opus como padrão, prompts versionados, NL query, slash commands** | **Proposta (2026-04-16)** |
+| **29** | **UX Navegável: busca global, timeline por entidade, grafo visual, Obsidian rico, "abrir PDF"** | **Proposta (2026-04-16)** |
+| 08 | LLM Local: análise via Gemma/Phi | Futuro (backend alternativo da 28) |
+| 09 | Grafos analíticos: Sankey, heatmap, trend | Futuro (complementar à 29 -- viz analítica, não navegacional) |
+| 11 | Vault Final: absorção do CdB | Futuro |
+| 15 | Dashboard Polish Visual | Futuro (absorvido parcialmente pela 20) |
+| 16 | Testes e CI/CD | Futuro |
 
 ### Números
 
@@ -152,7 +152,7 @@ Futuro:     09 (LLM Local), 10 (Grafos analíticos), 12 (Vault Final),
 - **8 extratores** registrados no pipeline (nubank x2, c6 x2, itaú, santander, energia OCR, OFX genérico)
 - **6 validações** de integridade no validador (NÃO roda automaticamente)
 - **8 abas** no XLSX (3 reais, 3 histórico, 1 parcial, 1 análise quali/quanti)
-- **44 relatórios** mensais em Markdown (projeções corrigidas na Sprint 20)
+- **44 relatórios** mensais em Markdown (projeções corrigidas na Sprint 19)
 - **44 testes** no gauntlet (8 fases)
 
 ### O que funciona vs o que não funciona
@@ -160,13 +160,13 @@ Futuro:     09 (LLM Local), 10 (Grafos analíticos), 12 (Vault Final),
 | Funciona | Não funciona / pendente |
 |----------|------------------------|
 | 8 extratores (CSV, XLSX, XLS, PDF, OFX) | Download de extratos ainda manual (Belvo em teste) |
-| Inbox processor detecta banco/pessoa | health_check.py não existe (menu crasha) -- Sprint 23 |
-| Descriptografia automática (senhas.yaml) | doc_generator.py não existe (make docs crasha) -- Sprint 23 |
-| Categorização 100% (111 regras) | Obsidian sync com frontmatter nulo -- Sprint 23 |
+| Inbox processor detecta banco/pessoa | health_check.py não existe (menu crasha) -- Sprint 22 |
+| Descriptografia automática (senhas.yaml) | doc_generator.py não existe (make docs crasha) -- Sprint 22 |
+| Categorização 100% (111 regras) | Obsidian sync com frontmatter nulo -- Sprint 22 |
 | Deduplicação 3 níveis | Aba renda: INSS/IRRF/VR-VA vazios (sem contracheque) |
 | IRPF tagger + CNPJ extraído (14/79) | Abas dividas/inventario/prazos: congeladas 2023 |
-| Aba analise: quali/quanti (37+ linhas) | Dashboard visual precisa redesign -- Sprint 21 | <!-- noqa: accent -->
-| Projeções por mês (corrigido Sprint 20) | Relatórios descritivos, não diagnósticos -- Sprint 22 |
+| Aba analise: quali/quanti (37+ linhas) | Dashboard visual precisa redesign -- Sprint 20 | <!-- noqa: accent -->
+| Projeções por mês (corrigido Sprint 19) | Relatórios descritivos, não diagnósticos -- Sprint 21 |
 | 4 integrações bancárias (OFX/Belvo/Gmail/Pluggy) | Belvo em teste, Gmail precisa setup |
 | Backup automático antes de processar | Sem cron/agendamento |
 

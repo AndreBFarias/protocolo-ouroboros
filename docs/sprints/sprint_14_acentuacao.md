@@ -1,4 +1,4 @@
-# Sprint 15 -- Acentuação, Qualidade e Hooks
+# Sprint 14 -- Acentuação, Qualidade e Hooks
 
 ## Status: Parcialmente concluída (hooks implementados)
 Issue: a criar
@@ -13,9 +13,9 @@ Revisar acentuação em todos os arquivos do projeto, criar hook automático de 
 - [x] Criar hook `scripts/check_gauntlet_freshness.py` (alerta se gauntlet não rodou há mais de 24h)
 - [x] Integrar hooks no `scripts/pre-commit-check.sh`
 - [x] Atualizar Makefile: `make lint` inclui verificação de acentuação
-- [ ] Revisar acentuação em todos os .py (docstrings, strings, logs, comentários) -- ver Sprint 19
-- [ ] Revisar acentuação em todos os .md (docs, sprints, ADRs) -- ver Sprint 19
-- [ ] Revisar acentuação em todos os .yaml (categorias, overrides, metas) -- ver Sprint 19
+- [ ] Revisar acentuação em todos os .py (docstrings, strings, logs, comentários) -- ver Sprint 18
+- [ ] Revisar acentuação em todos os .md (docs, sprints, ADRs) -- ver Sprint 18
+- [ ] Revisar acentuação em todos os .yaml (categorias, overrides, metas) -- ver Sprint 18
 
 ## Conceitos importados
 

@@ -1,4 +1,4 @@
-# Sprint 27 -- Ingestão Universal de Documentos
+# Sprint 26 -- Ingestão Universal de Documentos
 
 ## Status: Pendente (proposta 2026-04-16)
 Issue: #11
@@ -7,7 +7,7 @@ Issue: #11
 
 Transformar qualquer documento financeiro jogado no sistema (boleto, fatura, NF, cupom fiscal, contrato, recibo) em um **nó `Documento` estruturado** com metadados extraídos: valor, datas, CNPJ, código de barras, emissor, tipo. Hoje o pipeline só processa extratos bancários estruturados (OFX/CSV/PDF de banco conhecido). Esta sprint abre a porta para tudo mais.
 
-Sem esta sprint, a Sprint 28 (Grafo) não tem nós `Documento` pra linkar -- fica só com transações, perdendo metade do valor.
+Sem esta sprint, a Sprint 27 (Grafo) não tem nós `Documento` pra linkar -- fica só com transações, perdendo metade do valor.
 
 ---
 
@@ -41,7 +41,7 @@ O sistema atual ignora tudo isso. Só extratos bancários são processados.
   - `informe_rendimento` (layout Receita Federal)
   - `contrato` (texto longo, assinaturas, cláusulas)
   - `recibo_avulso` (tudo mais)
-- [ ] Classificação por heurísticas determinísticas primeiro (padrões regex + estrutura do PDF), com fallback para Claude Code na Sprint 29.
+- [ ] Classificação por heurísticas determinísticas primeiro (padrões regex + estrutura do PDF), com fallback para Claude Code na Sprint 28.
 
 ### 2. OCR inteligente multi-estratégia
 
@@ -62,7 +62,7 @@ O sistema atual ignora tudo isso. Só extratos bancários são processados.
   - `cupom_fiscal_extractor.py` -- CNPJ, valor, data, itens (mesmo sem todos os campos).
   - `fatura_utilitario_extractor.py` -- emissor (regex da Sprint 4 expandido), valor, mês de referência, vencimento.
   - `informe_rendimento_extractor.py` -- empregador, CNPJ, ano-base, rendimentos tributáveis, IRRF, INSS, isentos.
-  - `contrato_extractor.py` -- início, fim, valor mensal, partes, índice de reajuste. Extração via heurísticas; fallback para LLM Claude (Sprint 29).
+  - `contrato_extractor.py` -- início, fim, valor mensal, partes, índice de reajuste. Extração via heurísticas; fallback para LLM Claude (Sprint 28).
 - [ ] Cada extrator devolve um dict com schema consistente:
   ```python
   {
@@ -82,7 +82,7 @@ O sistema atual ignora tudo isso. Só extratos bancários são processados.
 
 - [ ] **Inbox watchdog**: processo em background (`src/ingest/watcher.py`) escuta `inbox/` via `watchdog` lib. Novo arquivo aparece -> processa em segundos. Rodar via systemd user unit ou tmux/screen (decidir na execução).
 - [ ] **Drag-and-drop no dashboard**: nova página Streamlit em `src/dashboard/paginas/upload.py` com `st.file_uploader` multi-arquivo. Ao enviar, salva em `inbox/` e dispara o processamento.
-- [ ] **Gmail/Drive integration**: a Sprint 25 já previa Gmail API para Nubank CSV. Expandir para:
+- [ ] **Gmail/Drive integration**: a Sprint 24 já previa Gmail API para Nubank CSV. Expandir para:
   - Gmail: baixar anexos com assuntos contendo palavras-chave configuráveis em `mappings/gmail_filtros.yaml` (ex.: "conta de luz", "fatura", "boleto", "informe de rendimentos").
   - Google Drive: monitorar pasta específica.
   - Código existente em `src/integrations/gmail_csv.py` vira `gmail_docs.py` genérico.
@@ -100,8 +100,8 @@ O sistema atual ignora tudo isso. Só extratos bancários são processados.
 ### 6. Integração com o pipeline
 
 - [ ] `src/pipeline.py` chama `src/ingest/processar_documentos()` ANTES da etapa de extração bancária.
-- [ ] Documentos viram nós no grafo (Sprint 28) via `src/graph/ingest_doc.py`.
-- [ ] Nada quebra se a Sprint 28 ainda não estiver pronta: documentos ficam só no JSONL até o grafo existir.
+- [ ] Documentos viram nós no grafo (Sprint 27) via `src/graph/ingest_doc.py`.
+- [ ] Nada quebra se a Sprint 27 ainda não estiver pronta: documentos ficam só no JSONL até o grafo existir.
 
 ---
 
@@ -128,10 +128,10 @@ O sistema atual ignora tudo isso. Só extratos bancários são processados.
 1. **HEIC no Linux** sem `pillow-heif` não abre. Marcar como opcional e avisar no `install.sh`.
 2. **NFS-e varia por cidade**: começar só com layout de Brasília (onde moram). Outros municípios entram sob demanda.
 3. **Tesseract em boletos**: layout gráfico confunde. Usar `pdfplumber` primeiro (quase sempre extrai linha digitável se for PDF nativo).
-4. **Dedup por hash nem sempre basta**: mesmo boleto pode chegar como JPG e PDF. Hash será diferente, mas o documento é o mesmo. Segundo nível de dedup via linha digitável/chave NFe (Sprint 28 no grafo).
+4. **Dedup por hash nem sempre basta**: mesmo boleto pode chegar como JPG e PDF. Hash será diferente, mas o documento é o mesmo. Segundo nível de dedup via linha digitável/chave NFe (Sprint 27 no grafo).
 5. **Watchdog consumindo bateria**: desligável via `RUN_WATCHER=false` no `.env`. Documentar bem.
 6. **Arquivos muito grandes** (PDF escaneado de 100 páginas): timeout generoso, logar warning.
-7. **Claude Code para contratos**: extrair cláusulas de contratos via LLM é Sprint 29. Aqui deixar stub que retorna `{"status": "pendente_llm"}`.
+7. **Claude Code para contratos**: extrair cláusulas de contratos via LLM é Sprint 28. Aqui deixar stub que retorna `{"status": "pendente_llm"}`.
 8. **Segurança**: alguns documentos têm PII forte (CPF, endereço). Logs devem mascarar. Usar o `_mascarar_dados()` existente em `src/utils/logger.py`.
 
 ---
@@ -151,14 +151,14 @@ O sistema atual ignora tudo isso. Só extratos bancários são processados.
 
 - Esta é a **base** das sprints 28, 29, 30. Sem ela, documento não entra no sistema.
 - Sprint 04 (Inteligência): extratores OCR de energia/água já existem, serão absorvidos em `fatura_utilitario_extractor.py`.
-- Sprint 25 (Automação bancária): Gmail API já desenhada, vira fundação de `gmail_docs.py`.
+- Sprint 24 (Automação bancária): Gmail API já desenhada, vira fundação de `gmail_docs.py`.
 
 ---
 
 ## Decisão registrada
 
 - **OCR externo (Google/AWS) permanecerá desligado por padrão.** Local First vale. Habilitar só se o usuário decidir e assumir o custo/privacidade.
-- **Documentos contratuais terão extração heurística + LLM (Sprint 29).** Heurística sozinha é insuficiente.
+- **Documentos contratuais terão extração heurística + LLM (Sprint 28).** Heurística sozinha é insuficiente.
 
 ---
 

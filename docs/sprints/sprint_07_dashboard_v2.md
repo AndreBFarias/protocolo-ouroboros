@@ -1,4 +1,4 @@
-# Sprint 08 -- Dashboard v2 (Redesign Dracula)
+# Sprint 07 -- Dashboard v2 (Redesign Dracula)
 
 ## Status: Pendente
 Issue: a criar

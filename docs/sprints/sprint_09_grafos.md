@@ -1,20 +1,20 @@
-# Sprint 10 -- Grafos e Visualizações Avançadas
+# Sprint 09 -- Grafos e Visualizações Avançadas
 
 ## Status: Pendente (escopo refinado em 2026-04-16)
 
-## Relação com Sprint 30 (UX Navegável)
+## Relação com Sprint 29 (UX Navegável)
 
-A Sprint 30 entrega o **navegador de grafo interativo** (pyvis, exploratório: clique num nó, expande vizinhança). Esta sprint 10 cobre uma categoria diferente: **visualizações analíticas estáticas** que mostram padrões de fluxo e tendências sem requerer navegação -- Sankey de receita→categorias, heatmap estilo GitHub de intensidade diária, trend analysis com média móvel.
+A Sprint 29 entrega o **navegador de grafo interativo** (pyvis, exploratório: clique num nó, expande vizinhança). Esta sprint 09 cobre uma categoria diferente: **visualizações analíticas estáticas** que mostram padrões de fluxo e tendências sem requerer navegação -- Sankey de receita→categorias, heatmap estilo GitHub de intensidade diária, trend analysis com média móvel.
 
 Ambas sobrevivem, com escopos complementares:
-- **Sprint 30**: "me mostra tudo que encosta na Neoenergia" (exploração).
-- **Sprint 10**: "me mostra o fluxo agregado de 2025 em um quadro" (síntese).
+- **Sprint 29**: "me mostra tudo que encosta na Neoenergia" (exploração).
+- **Sprint 09**: "me mostra o fluxo agregado de 2025 em um quadro" (síntese).
 
-Fonte de dados comum: grafo SQLite da Sprint 28.
+Fonte de dados comum: grafo SQLite da Sprint 27.
 
 ## Objetivo
 
-Adicionar visualizações analíticas avançadas ao dashboard: fluxo financeiro agregado, heatmaps temporais, análise de tendências -- complementando o navegador interativo da Sprint 30.
+Adicionar visualizações analíticas avançadas ao dashboard: fluxo financeiro agregado, heatmaps temporais, análise de tendências -- complementando o navegador interativo da Sprint 29.
 
 ## Entregas
 
@@ -44,4 +44,4 @@ Visualizações interativas funcionais no dashboard. Sankey renderiza com dados 
 
 ## Dependências
 
-Sprint 05 (relatórios e projeções) + Sprint 08 (dashboard v2).
+Sprint 05 (relatórios e projeções) + Sprint 07 (dashboard v2).

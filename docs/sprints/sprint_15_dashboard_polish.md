@@ -1,15 +1,15 @@
-# Sprint 16 -- Dashboard Polish Visual
+# Sprint 15 -- Dashboard Polish Visual
 
 ## Status: Pendente
 Issue: a criar
 
 ## Objetivo
 
-Refinamento estético do dashboard após a Sprint 08 (infraestrutura Dracula + granularidade). Foco exclusivo em visual: espaçamento, contraste, respiração entre elementos, consistência de cores, hover states, e aprovação visual aba por aba via Chrome MCP.
+Refinamento estético do dashboard após a Sprint 07 (infraestrutura Dracula + granularidade). Foco exclusivo em visual: espaçamento, contraste, respiração entre elementos, consistência de cores, hover states, e aprovação visual aba por aba via Chrome MCP.
 
 ## Contexto
 
-A Sprint 08 entregou a infraestrutura completa (tema.py, granularidade, bugfixes, repaginação funcional das 6 abas). Porém o visual ainda está "cru" -- cards sem contraste suficiente, gráficos com cores agressivas, espaçamento apertado, tabelas com estilo nativo conflitando com Dracula.
+A Sprint 07 entregou a infraestrutura completa (tema.py, granularidade, bugfixes, repaginação funcional das 6 abas). Porém o visual ainda está "cru" -- cards sem contraste suficiente, gráficos com cores agressivas, espaçamento apertado, tabelas com estilo nativo conflitando com Dracula.
 
 ## Problemas Visuais Identificados
 
@@ -62,7 +62,7 @@ A Sprint 08 entregou a infraestrutura completa (tema.py, granularidade, bugfixes
 
 ## Dependências
 
-Sprint 08 (concluída).
+Sprint 07 (concluída).
 
 ---
 
