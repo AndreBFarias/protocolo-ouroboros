@@ -1,0 +1,63 @@
+name: Reportar Bug
+description: Reporte um problema encontrado no projeto
+labels: ["bug"]
+body:
+  - type: dropdown
+    id: componente
+    attributes:
+      label: Componente afetado
+      options:
+        - "Pipeline ETL"
+        - "Extratores (PDF/CSV/XLS/OFX/OCR)"
+        - "Categorização/Deduplicação"
+        - "Dashboard Streamlit"
+        - "IRPF/Fiscal"
+        - "Relatórios"
+        - "Integração (Belvo/Gmail/OFX)"
+        - "Outro"
+    validations:
+      required: true
+  - type: textarea
+    id: descricao
+    attributes:
+      label: Descrição do bug
+      description: Descreva o que aconteceu de forma clara e objetiva.
+    validations:
+      required: true
+  - type: textarea
+    id: reproducao
+    attributes:
+      label: Passos para reproduzir
+      description: Liste os passos necessários para reproduzir o problema.
+      value: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+  - type: textarea
+    id: esperado
+    attributes:
+      label: Comportamento esperado
+      description: O que deveria ter acontecido?
+    validations:
+      required: true
+  - type: textarea
+    id: ambiente
+    attributes:
+      label: Ambiente
+      description: Informações sobre seu sistema.
+      value: |
+        - SO:
+        - Python:
+        - Versão do projeto:
+    validations:
+      required: false
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs relevantes
+      description: Cole aqui qualquer log de erro ou saída relevante.
+      render: shell
+    validations:
+      required: false
