@@ -10,7 +10,8 @@ Pipeline ETL financeiro pessoal com dashboard interativo e integração Obsidian
 ![Streamlit](https://img.shields.io/badge/Streamlit-1.x-FF4B4B?style=flat&logo=streamlit&logoColor=white)
 ![Pandas](https://img.shields.io/badge/Pandas-2.x-150458?style=flat&logo=pandas&logoColor=white)
 ![Plotly](https://img.shields.io/badge/Plotly-5.x-3F4F75?style=flat&logo=plotly&logoColor=white)
-![License](https://img.shields.io/badge/Licen%C3%A7a-MIT-green?style=flat)
+[![CI](https://github.com/AndreBFarias/protocolo-ouroboros/actions/workflows/ci.yml/badge.svg)](https://github.com/AndreBFarias/protocolo-ouroboros/actions/workflows/ci.yml)
+![License](https://img.shields.io/badge/Licen%C3%A7a-GPLv3-blue?style=flat)
 ![Status](https://img.shields.io/badge/Status-Produ%C3%A7%C3%A3o-brightgreen?style=flat)
 
 </div>
@@ -186,7 +187,7 @@ protocolo-ouroboros/
 
 ### Licença
 
-Distribuído sob a licença MIT. Veja [LICENSE](LICENSE) para detalhes.
+Distribuído sob a licença GPLv3. Veja [LICENSE](LICENSE) para detalhes.
 
 ---
 

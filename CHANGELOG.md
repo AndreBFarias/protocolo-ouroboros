@@ -4,6 +4,22 @@ Todas as alterações relevantes do projeto estão documentadas aqui.
 
 ---
 
+## [1.0.1] - 2026-04-15
+
+### Adicionado
+- Código de Conduta (Contributor Covenant v2.1)
+- Política de Segurança (SECURITY.md)
+- Templates de issue e PR para GitHub
+- Workflow CI (lint + testes)
+- .mailmap para unificação de identidade git
+- Badge CI no README
+
+### Corrigido
+- Licença MIT corrigida para GPLv3 em pyproject.toml e README
+- pyproject.toml modernizado com [build-system], classifiers e URLs
+
+---
+
 ## [Sprint 4] - 2026-04-14
 
 ### Adicionado
