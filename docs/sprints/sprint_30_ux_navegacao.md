@@ -76,7 +76,7 @@ Dado um nó qualquer, mostrar cronologia.
 - [ ] `src/dashboard/paginas/grafo_visual.py` usando **pyvis** (Plotly também aceitável).
 - [ ] Input: nó inicial + profundidade (1 a 3 níveis).
 - [ ] Filtros por tipo de nó: mostrar/esconder `Transacao`, `Documento`, `Entidade`, `Evento`, `Pessoa`.
-- [ ] Cores por tipo (Transacao azul, Documento verde, Entidade laranja, Pessoa roxo).
+- [ ] Cores por tipo (`Transacao` azul, `Documento` verde, `Entidade` laranja, `Pessoa` roxo).
 - [ ] Hover mostra atributos principais.
 - [ ] Clique em nó -> abre a timeline correspondente.
 - [ ] Performance: para nós com >100 vizinhos, amostrar e permitir "ver mais".
