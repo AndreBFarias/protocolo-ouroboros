@@ -1,0 +1,32 @@
+name: Sugerir Feature
+description: Sugira uma nova funcionalidade para o projeto
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problema
+    attributes:
+      label: Problema ou necessidade
+      description: Qual problema esta feature resolveria?
+    validations:
+      required: true
+  - type: textarea
+    id: proposta
+    attributes:
+      label: Solução proposta
+      description: Como você imagina que isso funcionaria?
+    validations:
+      required: true
+  - type: textarea
+    id: alternativas
+    attributes:
+      label: Alternativas consideradas
+      description: Você considerou outras abordagens?
+    validations:
+      required: false
+  - type: textarea
+    id: contexto
+    attributes:
+      label: Contexto adicional
+      description: Qualquer informação extra que ajude a entender a sugestão.
+    validations:
+      required: false
