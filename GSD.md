@@ -104,7 +104,10 @@ Detalhes completos em `docs/ARMADILHAS.md`.
 Concluídas: 01, 02, 03, 04, 05, 06, 08, 13, 14, 15, 18, 19, 20, 24
 Pendentes:  21 (Dashboard), 22 (Relatórios), 23 (Consolidação)
 Visão:      25 (Automação Bancária), 26 (Pacote IRPF)
-Futuro:     09, 10, 12, 16, 17
+Cérebro:    27 (Ingestão Universal), 28 (Grafo + Classificação v2),
+            29 (LLM Orquestrado Claude), 30 (UX Navegável)
+Futuro:     09 (LLM Local), 10 (Grafos analíticos), 12 (Vault Final),
+            16 (Dashboard Polish), 17 (Testes CI/CD)
 ```
 
 ### Detalhamento
@@ -130,8 +133,12 @@ Futuro:     09, 10, 12, 16, 17
 | **24** | **Verdade nos Dados: análise quali/quanti, CNPJ, projeção** | **Concluída (parcial)** |
 | **25** | **Automação Bancária: OFX, Belvo, Gmail, MeuPluggy** | **Em andamento** |
 | **26** | **Pacote IRPF: organização de documentos para declaração** | **Pendente** |
-| 09 | LLM Local: análise financeira via Gemma/Phi | Futuro |
-| 10 | Grafos e Visualizações | Futuro |
+| **27** | **Ingestão Universal: OCR qualquer doc, Gmail/Drive, inbox watchdog** | **Proposta (2026-04-16)** |
+| **28** | **Grafo de Conhecimento + Classificação v2: SQLite nodes/edges, entidades, linking doc↔tx, contexto, score** | **Proposta (2026-04-16)** |
+| **29** | **LLM Orquestrado: Claude Opus como padrão, prompts versionados, NL query, slash commands** | **Proposta (2026-04-16)** |
+| **30** | **UX Navegável: busca global, timeline por entidade, grafo visual, Obsidian rico, "abrir PDF"** | **Proposta (2026-04-16)** |
+| 09 | LLM Local: análise via Gemma/Phi | Futuro (backend alternativo da 29) |
+| 10 | Grafos analíticos: Sankey, heatmap, trend | Futuro (complementar à 30 -- viz analítica, não navegacional) |
 | 12 | Vault Final: absorção do CdB | Futuro |
 | 16 | Dashboard Polish Visual | Futuro (absorvido parcialmente pela 21) |
 | 17 | Testes e CI/CD | Futuro |

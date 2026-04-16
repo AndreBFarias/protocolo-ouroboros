@@ -3,7 +3,7 @@
 ```
 VERSÃO: 3.1 | STATUS: PRODUÇÃO (com lacunas documentadas) | LANG: PT-BR
 TRANSAÇÕES: 2.859 | MESES: 44 (ago/2022 a out/2026) | BANCOS: 6 | EXTRATORES: 8
-SPRINTS CONCLUÍDAS: 10/26 | CATEGORIZAÇÃO: 100% | IRPF TAGS: 79 (14 com CNPJ)
+SPRINTS CONCLUÍDAS: 14/29 | CATEGORIZAÇÃO: 100% | IRPF TAGS: 79 (14 com CNPJ)
 INTEGRAÇÕES: OFX (pronto), Belvo (em teste), Gmail (setup pendente), MeuPluggy (disponível)
 ```
 
@@ -340,7 +340,8 @@ protocolo-ouroboros/
 - **Concluídas:** 1 (MVP), 2 (Infra), 3 (Dashboard v1), 4 (Inteligência), 5 (Relatórios), 6 (Obsidian), 8 (Dashboard v2), 13 (Rebranding), 14 (UI/UX), 15 (Acentuação -- hooks), 18 (Auditoria), 19 (Dívida Técnica), 20 (Bugs Críticos), 24 (Verdade nos Dados -- parcial)
 - **Pendentes:** 21 (Dashboard Redesign), 22 (Relatórios Diagnósticos), 23 (Consolidação)
 - **Visão:** 25 (Automação Bancária), 26 (Pacote IRPF)
-- **Futuro:** 09 (LLM), 10 (Grafos), 12 (Vault Final), 16 (Dashboard Polish), 17 (Testes CI/CD)
+- **Cérebro Inteligente (propostas 2026-04-16):** 27 (Ingestão Universal de Documentos), 28 (Grafo de Conhecimento + Classificação v2), 29 (LLM Orquestrado via Claude Opus), 30 (UX Navegável: busca, timeline, grafo visual, Obsidian rico)
+- **Futuro:** 09 (LLM Local -- vira backend alternativo da 29 quando qualidade justificar), 10 (Grafos analíticos Sankey/heatmap -- complementar à 30), 12 (Vault Final), 16 (Dashboard Polish), 17 (Testes CI/CD)
 - **Transações:** 2.859 (1.214 histórico + 1.645 dados brutos)
 - **Cobertura de meses:** 44 (ago/2022 a out/2026)
 - **Bancos:** Itaú, Santander, C6, Nubank (André) + Nubank PF/PJ (Vitória)
