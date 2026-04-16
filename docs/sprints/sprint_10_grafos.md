@@ -1,11 +1,20 @@
 # Sprint 10 -- Grafos e Visualizações Avançadas
 
-## Status: Pendente
-Issue: a criar
+## Status: Pendente (escopo refinado em 2026-04-16)
+
+## Relação com Sprint 30 (UX Navegável)
+
+A Sprint 30 entrega o **navegador de grafo interativo** (pyvis, exploratório: clique num nó, expande vizinhança). Esta sprint 10 cobre uma categoria diferente: **visualizações analíticas estáticas** que mostram padrões de fluxo e tendências sem requerer navegação -- Sankey de receita→categorias, heatmap estilo GitHub de intensidade diária, trend analysis com média móvel.
+
+Ambas sobrevivem, com escopos complementares:
+- **Sprint 30**: "me mostra tudo que encosta na Neoenergia" (exploração).
+- **Sprint 10**: "me mostra o fluxo agregado de 2025 em um quadro" (síntese).
+
+Fonte de dados comum: grafo SQLite da Sprint 28.
 
 ## Objetivo
 
-Adicionar visualizações avançadas ao dashboard: fluxo financeiro interativo, heatmaps temporais e análise de tendências.
+Adicionar visualizações analíticas avançadas ao dashboard: fluxo financeiro agregado, heatmaps temporais, análise de tendências -- complementando o navegador interativo da Sprint 30.
 
 ## Entregas
 

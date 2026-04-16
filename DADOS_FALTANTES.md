@@ -1,31 +1,66 @@
 # Dados Faltantes
 
-Checklist de arquivos que precisam ser adicionados ao projeto para completar o histórico financeiro.
+Checklist do que falta para cobrir a janela **jan/2025 -> 16/04/2026**
+(acompanhamento alvo definido em 16/04/2026).
+
+Legenda:
+- [x] já no projeto e cobre a janela
+- [~] parcial (indica os meses que faltam)
+- [ ] ausente
 
 ---
 
 ### André
 
-- [ ] Nubank cartão: históricos de 2024 e 2025 (CSVs, formato `date,title,amount`)
-- [ ] C6 conta corrente: históricos de 2024 e 2025 (XLSX)
-- [ ] C6 cartão: históricos de 2024 e 2025 (XLS, formato `Fatura-CPF-*.xls`)
-- [ ] Itaú extrato CC: históricos de 2024 e 2025 (PDFs protegidos, senha via `senhas.yaml`)
-- [ ] Santander cartão: identificar quais meses cobrem os 4 PDFs existentes (nomes numéricos sem data)
-- [ ] Contracheques G4F: todos os meses (XLSX ou PDF)
-- [ ] Contracheques Infobase: todos os meses (XLSX ou PDF)
+- [~] **Itaú CC** (PDF, senha via `senhas.yaml`): só
+  `itau_extrato_012026.pdf`. Faltam **jan-dez/2025 e fev-abr/2026**
+  (15 meses).
+- [ ] **Itaú cartão**: pasta não existe. Faltam 16 meses.
+- [ ] **Santander CC** (OFX): nenhum arquivo. Faltam 16 meses.
+- [~] **Santander cartão** (PDF): 4 faturas com vencimento
+  10/jan/26, 10/fev/26, 10/mar/26, 10/abr/26 (faturas de **dez/2025
+  a mar/2026**). Faltam **jan-nov/2025 + abr/2026** (12 meses).
+- [x] **C6 CC** (OFX): `data/raw/andre/c6_cc/c6_cc_andre_2022-06_2026-04.ofx`
+  cobre jun/2022 a 14/04/2026 (892 transações). XLSX antigo movido
+  para `legacy/`. Janela coberta.
+- [~] **C6 cartão** (XLS): 3 faturas (`Fatura-CPF-janeiro/
+  fevereiro/marco-andre.xls`) -- presumivelmente 2026. Faltam
+  abr/2026 (se já fechou) e todo 2025 (12 meses).
+- [~] **Nubank CC** (OFX/CSV): arquivos em `data/raw/andre/nubank_cc/`:
+  - `nubank_cc_andre_17759427-5_2022-03_2025-07.{csv,ofx}` -- conta
+    antiga (virou nova em jul/2025).
+  - `nubank_cc_andre_73551559-3_2019-10_2026-03.{csv,ofx}` -- conta
+    ativa atual.
+  Falta **05/03/2026 -> 16/04/2026** da conta ativa.
+- [ ] **Nubank cartão** (CSV formato `date,title,amount`): os 4
+  CSVs no projeto (`Nubank_2026-08-09` a `Nubank_2026-11-09`) são
+  **projeções de parcelas futuras** (parcelas 7/10 a 10/10 de uma
+  compra Amazon), não extratos históricos. Faltam **todas as
+  faturas reais de jan/2025 a abr/2026** (16 meses).
 
 ### Vitória
 
-- [ ] Nubank PJ cartão: setembro/2025 (falta entre agosto e outubro)
-- [ ] Nubank PF CC: meses anteriores a outubro/2024
-- [ ] Comprovantes de bolsa NEES/UFAL: todos os meses
+- [x] **Nubank PF CC** (CSV, `Data,Valor,Identificador,Descrição`):
+  48 CSVs cobrindo out/2024 -> abr/2026. Janela coberta.
+- [x] **Nubank PJ CC**: `cc_pj_vitoria.csv` (571 transações, de
+  05/01/2024 a 01/04/2026). Janela coberta.
+- [~] **Nubank PJ cartão** (CSV): 13 faturas jun/2025 -> mai/2026.
+  Pendente conhecido: **setembro/2025**.
+- [ ] **Nubank PF cartão**: pasta não existe. Faltam 16 meses.
+- [ ] **Comprovantes de bolsa NEES/UFAL**: todos os meses.
 
 ### Contas Fixas
 
-- [ ] Neoenergia (energia): contas de todos os meses disponíveis (PDF ou screenshot)
-- [ ] CAESB (água): contas de todos os meses (PDF). Extrator de água ainda não implementado (sprint futura)
+- [ ] Neoenergia (energia): PDF ou screenshot. Extrator via OCR
+  Tesseract já implementado.
+- [ ] CAESB (água): PDF. Extrator ainda não implementado.
 
-### Documentos para Integração (~/Controle de Bordo/)
+### Contracheques
+
+- [ ] G4F: todos os meses (XLSX ou PDF).
+- [ ] Infobase: todos os meses (XLSX ou PDF).
+
+### Documentos para Integração (`~/Controle de Bordo/`)
 
 - [ ] Contratos de trabalho (F2F, Paim, IBPAD)
 - [ ] Currículos atualizados
@@ -45,9 +80,10 @@ Checklist de arquivos que precisam ser adicionados ao projeto para completar o h
 |---|---|---|
 | Itaú CC | PDF (extrato mensal) | Protegido por senha via `senhas.yaml` |
 | Nubank cartão | CSV (`date,title,amount`) | Exportar pelo app ou site |
-| Nubank CC | CSV (`Data,Valor,Identificador,Descrição`) | Formato diferente do cartão |
-| C6 CC | XLSX | Exportar pelo app |
+| Nubank CC | CSV (`Data,Valor,Identificador,Descrição`) ou OFX | Formato diferente do cartão |
+| C6 CC | OFX (preferido) ou XLSX | Exportar pelo app (OFX vem em ZIP com senha) |
 | C6 cartão | XLS (`Fatura-CPF-*.xls`) | Exportar pelo app |
+| Santander CC | OFX | Internet banking desktop |
 | Santander cartão | PDF (fatura mensal) | Sem senha |
 | Neoenergia | PDF ou screenshot (imagem) | OCR via Tesseract |
 | CAESB | PDF | Extrator ainda não implementado |

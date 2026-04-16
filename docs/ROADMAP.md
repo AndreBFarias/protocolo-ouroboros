@@ -1,133 +1,146 @@
 # Roadmap -- Protocolo Ouroboros
 
 ```
-VERSÃO: 3.0 | SPRINTS: 14 | CONCLUÍDAS: 6/14
-ÚLTIMA ATUALIZAÇÃO: 2026-04-14
+VERSÃO: 4.0 | SPRINTS: 29 (14 concluídas, 15 pendentes)
+CÉREBRO INTELIGENTE: sprints 27-30 (propostas em 2026-04-16)
+ÚLTIMA ATUALIZAÇÃO: 2026-04-16
 ```
 
 ---
 
 ## Visão
 
-Sistema de inteligência financeira pessoal para o casal André e Vitória. Pipeline ETL que centraliza dados bancários de múltiplas fontes em XLSX consolidado + dashboard Streamlit + relatórios mensais + integração Obsidian.
+Sistema de inteligência financeira pessoal para o casal André e Vitória. Pipeline ETL que centraliza dados bancários de múltiplas fontes em XLSX consolidado, dashboard Streamlit, relatórios mensais, integração Obsidian e -- a partir das sprints 27-30 -- grafo de conhecimento com LLM orquestrado.
 
-**Evolução futura:** unificar com o Controle_de_Bordo_OS (arquitetura hexagonal, Pydantic, SQLite+WAL, event bus) e o vault Obsidian (1.202 notas, PARA method) em um único ecossistema de gestão de vida.
-
----
-
-## Sprints Concluídas
-
-### Sprint 01 -- MVP Pipeline ETL
-**Commit:** `10b4b64` | **Issue:** #1
-
-Pipeline completo: 6 extratores (Nubank cartão, Nubank CC, C6, Itaú PDF, Santander PDF, energia OCR), categorização regex, XLSX 8 abas. Scaffold do projeto com estrutura `src/`, `data/`, `mappings/`.
-
-### Sprint 02 -- Infra de Qualidade
-**Commit:** `7544101` | **Issue:** #2
-
-Categorização 100% (111 regras regex + 10 overrides), Makefile com 13 targets, pre-commit hooks, auto-documentação de formatos em `docs/extractors/`, extrator de energia via OCR (Tesseract).
-
-### Sprint 03 -- Dashboard Streamlit v1
-**Commit:** `9a5bdb5` | **Issue:** #3
-
-Dashboard interativo com 6 abas (Visão Geral, Categorias, Extrato, Contas, Projeções, Metas), sidebar com filtros globais (mês, pessoa), tema dark mode, gráficos Plotly. Auditoria visual via Chrome MCP.
-
-Correções aplicadas:
-- Abas do menu superior visíveis com CSS personalizado (dark mode)
-- Donut chart com `textposition="inside"` para fatias pequenas
-- Botão "Exportar CSV" visível em dark mode (CSS override)
-
-### Sprint 04 -- Inteligência de Categorização
-**Commit:** `12b778c` | **Issue:** #4
-
-Overrides manuais (`mappings/overrides.yaml`), IRPF tagger automático (21 regras, 5 tipos, 79 registros), validador de integridade (6 checagens), deduplicação 3 níveis (UUID, hash fuzzy, pares de transferência).
-
-### Sprint 05 -- Relatórios e Projeções
-**Issue:** #5
-
-Relatório mensal automático em Markdown, projetor de 3 cenários (Ritmo Atual, Pós-Infobase, Meta Apartamento), página Metas com 7 metas (5 monetárias + 2 binárias), timeline de prazos, simulação personalizada com slider.
-
-Correções aplicadas:
-- 7 metas visíveis com contagem no topo
-- Barra de progresso 0% visível (mínimo 1% visual)
-- Nota explicativa no cenário negativo Pós-Infobase
-- Cálculo unificado: `relatorio.py` importa `_calcular_medias()` de `scenarios.py`
-
-### Sprint 06 -- Integração Obsidian
-**Issue:** #6
-
-Sync automático de 44 relatórios + 7 metas + 1 MOC para o vault `~/Controle de Bordo/`. Frontmatter YAML compatível com Dataview, backlinks entre relatórios e metas.
-
-Correções aplicadas:
-- Idempotência total: campo `created` preservado em reexecuções
-- Siglas preservadas: `_formatar_nome()` mantém PF, PJ, CNH (não "Pf", "Pj")
-- Preposições em minúsculas: "de", "da", "do" (não "De", "Da")
+**Evolução em três horizontes:**
+1. **Curto (pendentes + visão)**: dashboard redesign, relatórios diagnósticos, consolidação, automação bancária, pacote IRPF.
+2. **Médio (cérebro inteligente 27-30)**: ingestão universal, grafo de conhecimento, LLM orquestrado via Claude Opus, UX navegável.
+3. **Longo (futuro)**: LLM local, grafos analíticos, unificação com Controle_de_Bordo_OS e vault Obsidian em ecossistema único.
 
 ---
 
-## Infraestrutura Transversal
+## Estado atual -- mapa por status
 
-### Menu Interativo (`run.sh`)
-Menu ANSI colorido com banner box-drawing, 9 opções numeradas, subprompts para mês/ano, contagem de transações do XLSX. Inspirado no `run_luna.sh` do projeto Luna.
-
-### Gauntlet (Sistema de Testes)
-44 testes em 8 fases (extratores, categorias, dedup, xlsx, relatório, projeções, obsidian, dashboard). Fixtures sintéticas, diretórios temporários, relatório GAUNTLET_REPORT.md. Inspirado na ADR-13 da Luna (gauntlet como único sistema de testes).
+| Status | Sprints | Total |
+|--------|---------|-------|
+| Concluídas | 01, 02, 03, 04, 05, 06, 08, 13, 14, 15 (parcial), 18, 19, 20, 24 (parcial) | 14 |
+| Pendentes (execução imediata) | 21, 22, 23 | 3 |
+| Visão | 25, 26 | 2 |
+| Cérebro Inteligente (propostas 2026-04-16) | 27, 28, 29, 30 | 4 |
+| Futuro / backlog | 09, 10, 11, 12, 16, 17 | 6 |
+| Lacuna | 07 (nunca criada, reservada historicamente) | 0 |
 
 ---
 
-## Sprints Pendentes
+## Sprints Concluídas (14)
 
-### Sprint 07 -- Acentuação e Qualidade
-**Dependências:** Nenhuma
+| Sprint | Tema | Issue |
+|--------|------|-------|
+| 01 | MVP: pipeline ETL + 6 extratores + XLSX 8 abas | #1 |
+| 02 | Infra: categorização 100%, Makefile, OCR | #2 |
+| 03 | Dashboard Streamlit v1 (6 abas, dark mode) | #3 |
+| 04 | Inteligência: overrides, IRPF tagger, validador | #4 |
+| 05 | Relatórios + Projeções (3 cenários, 7 metas) | #5 |
+| 06 | Integração Obsidian (frontmatter quebrado pendente na 23) | #6 |
+| 08 | Dashboard v2 (Dracula theme) | -- |
+| 13 | Rebranding Protocolo Ouroboros | -- |
+| 14 | UI/UX e outputs profissionais | -- |
+| 15 | Acentuação e qualidade (parcial -- completada na 19) | -- |
+| 18 | Auditoria Final (GitHub-readiness) | -- |
+| 19 | Dívida técnica (acentuação + deduplicação) | -- |
+| 20 | Bugs críticos (crashes, projeções, classificação) | -- |
+| 24 | Verdade nos dados (parcial: análise quali/quanti, CNPJ) | -- |
 
-Revisar acentuação em todos os arquivos (.py, .md, .yaml). Criar hooks pre-commit: `check_acentuacao.py` (dicionário de 50+ palavras) e `check_gauntlet_freshness.py` (alerta se gauntlet não rodou há 24h). Conceitos da Luna: hooks como T1 blockers e T2 warnings.
+---
 
-### Sprint 08 -- Dashboard v2
-**Dependências:** Sprint 03
+## Sprints Pendentes -- execução imediata (3)
 
-Redesign visual completo. Melhorar contraste de cards (#252840 ou borda sutil), responsividade em resoluções menores, gráficos avançados (Sankey de fluxo financeiro, heatmap de gastos estilo GitHub).
+### Sprint 21 -- Dashboard Redesign
+CSS refinado, tipografia, layout responsivo. Pré-requisito informal das Sprints 27-30.
 
-### Sprint 09 -- Testes e CI/CD
-**Dependências:** Gauntlet existente
+### Sprint 22 -- Relatórios Diagnósticos
+Contextualização, detecção de anomalias, comparação inter-mensal. Evolução dos relatórios MD automáticos.
 
-Fixtures sintéticas para formatos faltantes (PDF Itaú, XLS C6 encriptado, PDF Santander). Expandir gauntlet para 60+ testes. GitHub Actions CI (gauntlet + ruff em push/PR). Coverage report. Conceitos do Controle_de_Bordo_OS: `test_domain/`, `test_adapters/`, `test_e2e/`.
+### Sprint 23 -- Consolidação
+Corrigir módulos fantasmas (`health_check.py`, `doc_generator.py`), registrar `energia_ocr.py` no pipeline, reparar frontmatter do sync Obsidian. **Bloqueio da Sprint 30.**
 
-### Sprint 10 -- LLM Local
-**Dependências:** Sprint 05
+---
 
-Módulo `src/analysis/llm_analyst.py` com modelo local (Gemma 2B ou Phi-3 Mini, RTX 3050 4GB VRAM). Insights automáticos no relatório ("delivery subiu 30%"). Fallback sem GPU: análise baseada em regras. Pipeline nunca falha por falta de LLM.
+## Sprints Visão (2)
 
-### Sprint 11 -- Grafos e Visualizações
-**Dependências:** Sprint 05 + Sprint 10
+### Sprint 25 -- Automação Bancária
+OFX manual (feito), Belvo (inviável gratuito -- ver `docs/AUTOMACAO_BANCARIA.md`), Gmail API (setup pendente), MeuPluggy (a testar). Em andamento.
 
-Sankey diagram de fluxo financeiro (de onde vem, pra onde vai cada real). Grafo de dependência entre metas (networkx). Heatmap de gastos (calendário estilo GitHub). Trend analysis com média móvel 3 meses.
+### Sprint 26 -- Pacote IRPF (Declaração Facilitada)
+Organização de documentos por tipo, extração de CNPJ aprimorada, resumo IRPF, eventual export `.DEC` da Receita. Alinha-se com Sprint 28 (grafo) e Sprint 11 (simulação tributária futura).
 
-### Sprint 12 -- IRPF Completo
-**Dependências:** Sprint 04
+---
 
-Gerador de pacote IRPF (`./run.sh --irpf YYYY`): CSVs por tipo, simulador completo vs simplificado, checklist de documentos, página Streamlit dedicada.
+## Cérebro Inteligente -- propostas 2026-04-16 (4)
 
-### Sprint 13 -- Integração Vault Final
-**Dependências:** Todas anteriores
+Quatro sprints grandes que transformam o pipeline em sistema de conhecimento financeiro. Detalhamento nos arquivos linkados.
 
-Decisão arquitetural: mover projeto pro vault vs vault pro projeto vs manter separados. Se unificar: migrar XLSX para SQLite+WAL, adotar Pydantic models, implementar event bus tipado, unificar CLI (bash -> Typer).
+### Sprint 27 -- Ingestão Universal de Documentos  ([#11](https://github.com/AndreBFarias/protocolo-ouroboros/issues/11))
+Qualquer PDF/imagem de boleto/NF/fatura/contrato ingerido via inbox, Gmail, Drive ou upload vira nó `Documento` com campos estruturados. OCR cascata (pdfplumber → Tesseract → Donut/LayoutLMv3 → API externa opt-in).
+[`docs/sprints/sprint_27_ingestao_universal.md`](sprints/sprint_27_ingestao_universal.md)
 
-Conceitos do Controle_de_Bordo_OS:
-- **Arquitetura hexagonal**: domain/ nunca importa adapters/
-- **Pydantic Models**: Transaction com validação tipada
-- **SQLite+WAL**: Storage ACID, queries SQL
-- **Event Bus**: pub/sub tipado para pipeline
-- **4-Phase Migration**: JSON_ONLY -> DUAL_WRITE -> DUAL_READ_SQL -> SQLITE_ONLY
+### Sprint 28 -- Grafo + Classificação v2  ([#12](https://github.com/AndreBFarias/protocolo-ouroboros/issues/12))
+SQLite `nodes`/`edges` com motores de linking (doc↔transação), resolução fuzzy de entidades, detecção de eventos (parcelamento, assinaturas). Refactor do categorizador para contexto e score.
+[`docs/sprints/sprint_28_grafo_classificacao.md`](sprints/sprint_28_grafo_classificacao.md)
 
-Conceitos do vault Obsidian:
-- **PARA method**: Projects, Areas, Resources, Archive
-- **Dataview queries**: agregação automática
-- **MOC**: Map of Content como hub de navegação
+### Sprint 29 -- LLM Orquestrado via Claude  ([#13](https://github.com/AndreBFarias/protocolo-ouroboros/issues/13))
+Claude Opus como LLM padrão. Provider abstrato permite troca futura pra local (Sprint 09). Contratos Pydantic, prompts versionados, cache SQLite, slash commands Claude Code como copiloto de manutenção.
+[`docs/sprints/sprint_29_llm_orquestrado.md`](sprints/sprint_29_llm_orquestrado.md)
 
-### Sprint 14 -- Auditoria Final
-**Dependências:** Sprint 13
+### Sprint 30 -- UX Navegável  ([#14](https://github.com/AndreBFarias/protocolo-ouroboros/issues/14))
+Busca global, timeline por entidade/evento/pessoa, navegador de grafo visual (pyvis), Obsidian rico com attachments, "abrir PDF original" em qualquer lugar, página "vida de um boleto".
+[`docs/sprints/sprint_30_ux_navegacao.md`](sprints/sprint_30_ux_navegacao.md)
 
-GitHub-readiness: README.md público, screenshots, badges CI, documentação completa. Verificação de .gitignore (dados sensíveis), limpeza de código morto, revisão de acentuação final.
+---
+
+## Futuro / Backlog (6)
+
+### Sprint 09 -- LLM Local
+Fica como **backend alternativo** da Sprint 29. Retomar quando Gemma/Phi-3 tiverem qualidade comparável ao Opus e o custo da API justificar troca.
+
+### Sprint 10 -- Grafos Analíticos
+Sankey, heatmap GitHub-style, trend analysis. **Complementar** (não substituto) da Sprint 30: 30 é navegação exploratória, 10 é síntese agregada.
+
+### Sprint 11 -- IRPF Completo (Simulação + Interface)
+Simulador completo vs simplificado, página Streamlit dedicada, cálculo de economia fiscal. Depende de Sprint 26.
+
+### Sprint 12 -- Vault Final
+Decisão arquitetural de unificação com Controle_de_Bordo_OS (hexagonal, Pydantic, SQLite+WAL, event bus) e vault Obsidian. Migração `JSON → DUAL_WRITE → DUAL_READ → SQLITE_ONLY`.
+
+### Sprint 16 -- Dashboard Polish Visual
+Absorvida parcialmente pela Sprint 21. Resíduo: ajustes de micro-UX.
+
+### Sprint 17 -- Testes e CI/CD
+Expandir gauntlet, fixtures sintéticas de formatos faltantes, GitHub Actions em push/PR, coverage.
+
+---
+
+## Ordem de execução sugerida
+
+```
+Horizonte 1 -- estabilizar base (4-6 semanas)
+  └─ 23 Consolidação ──► 21 Dashboard Redesign ──► 22 Relatórios Diagnósticos
+
+Horizonte 2 -- fechar operação manual (2-3 semanas)
+  └─ 25 Automação Bancária (OFX + MeuPluggy) ──► 26 Pacote IRPF v1
+
+Horizonte 3 -- cérebro inteligente (12-16 semanas)
+  └─ 27 Ingestão Universal ──► 28 Grafo + Classificação v2 ──► 29 LLM Orquestrado ──► 30 UX Navegável
+
+Horizonte 4 -- maturação (execução paralela, conforme prioridade)
+  ├─ 11 IRPF Simulação
+  ├─ 10 Grafos Analíticos
+  ├─ 17 Testes e CI/CD
+  └─ 09 LLM Local (gatilho: Opus caro OU local bom o bastante)
+
+Horizonte 5 -- unificação (indefinido)
+  └─ 12 Vault Final (absorção do ecossistema)
+```
 
 ---
 
@@ -135,27 +148,52 @@ GitHub-readiness: README.md público, screenshots, badges CI, documentação com
 
 | Projeto | Caminho | Descrição |
 |---------|---------|-----------|
-| **Protocolo Ouroboros** (este) | `~/Desenvolvimento/protocolo-ouroboros` | Pipeline ETL financeiro maduro, 38 arquivos Python |
+| **Protocolo Ouroboros** (este) | `~/Desenvolvimento/protocolo-ouroboros` | Pipeline ETL financeiro maduro, grafo de conhecimento em construção |
 | **Controle_de_Bordo_OS** | `~/Desenvolvimento/Controle_de_Bordo_OS` | Blueprint arquitetural hexagonal, 20 sprints planejadas |
 | **Vault Obsidian** | `~/Controle de Bordo` | 1.202 notas, 24 plugins, organização PARA |
 
-A Sprint 13 avaliará a melhor estratégia de unificação.
+A Sprint 12 avaliará a estratégia de unificação. As sprints 27-30 já produzem dados compatíveis com o vault Obsidian (notas por entidade, attachments).
 
 ---
 
-## Priorização
+## Priorização visual
 
 ```
-Sprint 01-06  ████████ Concluídas (MVP -> Dashboard -> Obsidian)
-Sprint 07     ██████── Acentuação (qualidade, pode rodar a qualquer momento)
-Sprint 08     █████─── Dashboard v2 (visual polish)
-Sprint 09     █████─── Testes e CI (estabilidade)
-Sprint 10     ████──── LLM Local (insights automáticos)
-Sprint 11     ███───── Grafos e viz avançada
-Sprint 12     ███───── IRPF completo
-Sprint 13     ██────── Integração vault (decisão arquitetural)
-Sprint 14     █─────── Auditoria final (GitHub-readiness)
+Horizonte 1 (base)
+  21  ██████── Dashboard Redesign
+  22  █████─── Relatórios Diagnósticos
+  23  ████──── Consolidação (bloqueio da 30)
+
+Horizonte 2 (operacional)
+  25  ███───── Automação Bancária (OFX + MeuPluggy)
+  26  ███───── Pacote IRPF v1
+
+Horizonte 3 (cérebro inteligente)
+  27  ██████── Ingestão Universal
+  28  ██████── Grafo + Classificação v2
+  29  █████─── LLM Orquestrado
+  30  █████─── UX Navegável
+
+Horizonte 4 (maturação)
+  11  ███───── IRPF Simulação
+  10  ██────── Grafos Analíticos
+  17  ██────── Testes e CI/CD
+  09  █─────── LLM Local
+
+Horizonte 5 (unificação)
+  12  █─────── Vault Final
 ```
+
+---
+
+## Referências
+
+- Contexto técnico: [`CLAUDE.md`](../CLAUDE.md)
+- Onboarding rápido: [`GSD.md`](../GSD.md)
+- Armadilhas conhecidas: [`docs/ARMADILHAS.md`](ARMADILHAS.md)
+- Arquitetura: [`docs/ARCHITECTURE.md`](ARCHITECTURE.md)
+- Dados faltantes: [`DADOS_FALTANTES.md`](../DADOS_FALTANTES.md)
+- Automação bancária: [`docs/AUTOMACAO_BANCARIA.md`](AUTOMACAO_BANCARIA.md)
 
 ---
 
