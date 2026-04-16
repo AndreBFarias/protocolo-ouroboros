@@ -173,7 +173,7 @@ A IA deve ler o CONTEÚDO (não confiar no nome) para detectar:
 
 ### análise
 
-**AVISO:** NÃO contém análise real. Gera frases genéricas com totais ("Total de X transações"). Análise inteligente depende de LLM local (Sprint 09, não implementada).
+**AVISO:** NÃO contém análise real. Gera frases genéricas com totais ("Total de X transações"). Análise inteligente depende de LLM local (Sprint 08, não implementada).
 
 ---
 
@@ -284,7 +284,7 @@ protocolo-ouroboros/
 │   ├── integrations/             # Belvo sync, Gmail CSV, docs de MeuPluggy
 │   ├── projections/              # cenários financeiros
 │   ├── dashboard/                # Streamlit app (8 páginas, Dracula theme)
-│   ├── obsidian/                 # Sync com vault Obsidian (frontmatter com bug -- Sprint 23)
+│   ├── obsidian/                 # Sync com vault Obsidian (frontmatter com bug -- Sprint 22)
 │   └── utils/                    # logger, pdf_reader, file_detector, validator, senhas
 │
 ├── mappings/
@@ -305,7 +305,7 @@ protocolo-ouroboros/
 ├── scripts/
 │   └── pre-commit-check.sh       # ruff + bloqueio de dados sensíveis
 │
-└── tests/                        # Fixtures sintéticas (Sprint 9)
+└── tests/                        # Fixtures sintéticas (Sprint 8)
 ```
 
 ---
@@ -337,11 +337,11 @@ protocolo-ouroboros/
 
 ## Contexto Ativo
 
-- **Concluídas:** 1 (MVP), 2 (Infra), 3 (Dashboard v1), 4 (Inteligência), 5 (Relatórios), 6 (Obsidian), 8 (Dashboard v2), 13 (Rebranding), 14 (UI/UX), 15 (Acentuação -- hooks), 18 (Auditoria), 19 (Dívida Técnica), 20 (Bugs Críticos), 24 (Verdade nos Dados -- parcial)
-- **Pendentes:** 21 (Dashboard Redesign), 22 (Relatórios Diagnósticos), 23 (Consolidação)
-- **Visão:** 25 (Automação Bancária), 26 (Pacote IRPF)
-- **Cérebro Inteligente (propostas 2026-04-16):** 27 (Ingestão Universal de Documentos), 28 (Grafo de Conhecimento + Classificação v2), 29 (LLM Orquestrado via Claude Opus), 30 (UX Navegável: busca, timeline, grafo visual, Obsidian rico)
-- **Futuro:** 09 (LLM Local -- vira backend alternativo da 29 quando qualidade justificar), 10 (Grafos analíticos Sankey/heatmap -- complementar à 30), 12 (Vault Final), 16 (Dashboard Polish), 17 (Testes CI/CD)
+- **Concluídas:** 1 (MVP), 2 (Infra), 3 (Dashboard v1), 4 (Inteligência), 5 (Relatórios), 6 (Obsidian), 7 (Dashboard v2), 12 (Rebranding), 13 (UI/UX), 14 (Acentuação -- hooks), 17 (Auditoria), 18 (Dívida Técnica), 19 (Bugs Críticos), 23 (Verdade nos Dados -- parcial)
+- **Pendentes:** 20 (Dashboard Redesign), 21 (Relatórios Diagnósticos), 22 (Consolidação)
+- **Visão:** 24 (Automação Bancária), 25 (Pacote IRPF)
+- **Cérebro Inteligente (propostas 2026-04-16):** 26 (Ingestão Universal de Documentos), 27 (Grafo de Conhecimento + Classificação v2), 28 (LLM Orquestrado via Claude Opus), 29 (UX Navegável: busca, timeline, grafo visual, Obsidian rico)
+- **Futuro:** 08 (LLM Local -- vira backend alternativo da 28 quando qualidade justificar), 09 (Grafos analíticos Sankey/heatmap -- complementar à 29), 11 (Vault Final), 15 (Dashboard Polish), 16 (Testes CI/CD)
 - **Transações:** 2.859 (1.214 histórico + 1.645 dados brutos)
 - **Cobertura de meses:** 44 (ago/2022 a out/2026)
 - **Bancos:** Itaú, Santander, C6, Nubank (André) + Nubank PF/PJ (Vitória)
@@ -358,7 +358,7 @@ protocolo-ouroboros/
 | `energia_ocr.py` não registrado no pipeline | Contas de energia nunca processadas | 23 |
 | Obsidian sync com frontmatter nulo | Queries Dataview quebradas | 23 |
 | Aba renda: INSS/IRRF/VR-VA vazios | Sem extrator de contracheque | 24 |
-| Aba analise: texto estático | Sem LLM (Sprint 09) | 24 | <!-- noqa: accent -->
+| Aba analise: texto estático | Sem LLM (Sprint 08) | 24 | <!-- noqa: accent -->
 | Abas dividas/inventario/prazos: congeladas | Dados de 2023, nunca atualizados | 24 |
 | Aba irpf: cnpj_cpf vazio | Sem extração de CNPJ | 24 |
 | Dashboard: layout, fontes, contraste | Não segue padrões visuais | 21 |

@@ -1,20 +1,20 @@
 # Roadmap -- Protocolo Ouroboros
 
 ```
-VERSÃO: 4.0 | SPRINTS: 29 (14 concluídas, 15 pendentes)
-CÉREBRO INTELIGENTE: sprints 27-30 (propostas em 2026-04-16)
-ÚLTIMA ATUALIZAÇÃO: 2026-04-16
+VERSÃO: 4.1 | SPRINTS: 29 (14 concluídas, 15 pendentes)
+CÉREBRO INTELIGENTE: sprints 26-29 (propostas em 2026-04-16)
+ÚLTIMA ATUALIZAÇÃO: 2026-04-16 (renumeração fecha gap da antiga Sprint 07)
 ```
 
 ---
 
 ## Visão
 
-Sistema de inteligência financeira pessoal para o casal André e Vitória. Pipeline ETL que centraliza dados bancários de múltiplas fontes em XLSX consolidado, dashboard Streamlit, relatórios mensais, integração Obsidian e -- a partir das sprints 27-30 -- grafo de conhecimento com LLM orquestrado.
+Sistema de inteligência financeira pessoal para o casal André e Vitória. Pipeline ETL que centraliza dados bancários de múltiplas fontes em XLSX consolidado, dashboard Streamlit, relatórios mensais, integração Obsidian e -- a partir das sprints 26-29 -- grafo de conhecimento com LLM orquestrado.
 
 **Evolução em três horizontes:**
 1. **Curto (pendentes + visão)**: dashboard redesign, relatórios diagnósticos, consolidação, automação bancária, pacote IRPF.
-2. **Médio (cérebro inteligente 27-30)**: ingestão universal, grafo de conhecimento, LLM orquestrado via Claude Opus, UX navegável.
+2. **Médio (cérebro inteligente 26-29)**: ingestão universal, grafo de conhecimento, LLM orquestrado via Claude Opus, UX navegável.
 3. **Longo (futuro)**: LLM local, grafos analíticos, unificação com Controle_de_Bordo_OS e vault Obsidian em ecossistema único.
 
 ---
@@ -23,12 +23,11 @@ Sistema de inteligência financeira pessoal para o casal André e Vitória. Pipe
 
 | Status | Sprints | Total |
 |--------|---------|-------|
-| Concluídas | 01, 02, 03, 04, 05, 06, 08, 13, 14, 15 (parcial), 18, 19, 20, 24 (parcial) | 14 |
-| Pendentes (execução imediata) | 21, 22, 23 | 3 |
-| Visão | 25, 26 | 2 |
-| Cérebro Inteligente (propostas 2026-04-16) | 27, 28, 29, 30 | 4 |
-| Futuro / backlog | 09, 10, 11, 12, 16, 17 | 6 |
-| Lacuna | 07 (nunca criada, reservada historicamente) | 0 |
+| Concluídas | 01, 02, 03, 04, 05, 06, 07, 12, 13, 14 (parcial), 17, 18, 19, 23 (parcial) | 14 |
+| Pendentes (execução imediata) | 20, 21, 22 | 3 |
+| Visão | 24, 25 | 2 |
+| Cérebro Inteligente (propostas 2026-04-16) | 26, 27, 28, 29 | 4 |
+| Futuro / backlog | 08, 09, 10, 11, 15, 16 | 6 |
 
 ---
 
@@ -41,38 +40,38 @@ Sistema de inteligência financeira pessoal para o casal André e Vitória. Pipe
 | 03 | Dashboard Streamlit v1 (6 abas, dark mode) | #3 |
 | 04 | Inteligência: overrides, IRPF tagger, validador | #4 |
 | 05 | Relatórios + Projeções (3 cenários, 7 metas) | #5 |
-| 06 | Integração Obsidian (frontmatter quebrado pendente na 23) | #6 |
-| 08 | Dashboard v2 (Dracula theme) | -- |
-| 13 | Rebranding Protocolo Ouroboros | -- |
-| 14 | UI/UX e outputs profissionais | -- |
-| 15 | Acentuação e qualidade (parcial -- completada na 19) | -- |
-| 18 | Auditoria Final (GitHub-readiness) | -- |
-| 19 | Dívida técnica (acentuação + deduplicação) | -- |
-| 20 | Bugs críticos (crashes, projeções, classificação) | -- |
-| 24 | Verdade nos dados (parcial: análise quali/quanti, CNPJ) | -- |
+| 06 | Integração Obsidian (frontmatter quebrado pendente na 22) | #6 |
+| 07 | Dashboard v2 (Dracula theme) | #15 |
+| 12 | Rebranding Protocolo Ouroboros | #16 |
+| 13 | UI/UX e outputs profissionais | #17 |
+| 14 | Acentuação e qualidade (parcial -- completada na 18) | #18 |
+| 17 | Auditoria Final (GitHub-readiness) | #19 |
+| 18 | Dívida técnica (acentuação + deduplicação) | #20 |
+| 19 | Bugs críticos (crashes, projeções, classificação) | #21 |
+| 23 | Verdade nos dados (parcial: análise quali/quanti, CNPJ) | #22 |
 
 ---
 
 ## Sprints Pendentes -- execução imediata (3)
 
-### Sprint 21 -- Dashboard Redesign
-CSS refinado, tipografia, layout responsivo. Pré-requisito informal das Sprints 27-30.
+### Sprint 20 -- Dashboard Redesign
+CSS refinado, tipografia, layout responsivo. Pré-requisito informal das Sprints 26-29.
 
-### Sprint 22 -- Relatórios Diagnósticos
+### Sprint 21 -- Relatórios Diagnósticos
 Contextualização, detecção de anomalias, comparação inter-mensal. Evolução dos relatórios MD automáticos.
 
-### Sprint 23 -- Consolidação
-Corrigir módulos fantasmas (`health_check.py`, `doc_generator.py`), registrar `energia_ocr.py` no pipeline, reparar frontmatter do sync Obsidian. **Bloqueio da Sprint 30.**
+### Sprint 22 -- Consolidação
+Corrigir módulos fantasmas (`health_check.py`, `doc_generator.py`), registrar `energia_ocr.py` no pipeline, reparar frontmatter do sync Obsidian. **Bloqueio da Sprint 29.**
 
 ---
 
 ## Sprints Visão (2)
 
-### Sprint 25 -- Automação Bancária
+### Sprint 24 -- Automação Bancária
 OFX manual (feito), Belvo (inviável gratuito -- ver `docs/AUTOMACAO_BANCARIA.md`), Gmail API (setup pendente), MeuPluggy (a testar). Em andamento.
 
-### Sprint 26 -- Pacote IRPF (Declaração Facilitada)
-Organização de documentos por tipo, extração de CNPJ aprimorada, resumo IRPF, eventual export `.DEC` da Receita. Alinha-se com Sprint 28 (grafo) e Sprint 11 (simulação tributária futura).
+### Sprint 25 -- Pacote IRPF (Declaração Facilitada)
+Organização de documentos por tipo, extração de CNPJ aprimorada, resumo IRPF, eventual export `.DEC` da Receita. Alinha-se com Sprint 27 (grafo) e Sprint 10 (simulação tributária futura).
 
 ---
 
@@ -80,42 +79,42 @@ Organização de documentos por tipo, extração de CNPJ aprimorada, resumo IRPF
 
 Quatro sprints grandes que transformam o pipeline em sistema de conhecimento financeiro. Detalhamento nos arquivos linkados.
 
-### Sprint 27 -- Ingestão Universal de Documentos  ([#11](https://github.com/AndreBFarias/protocolo-ouroboros/issues/11))
+### Sprint 26 -- Ingestão Universal de Documentos  ([#11](https://github.com/AndreBFarias/protocolo-ouroboros/issues/11))
 Qualquer PDF/imagem de boleto/NF/fatura/contrato ingerido via inbox, Gmail, Drive ou upload vira nó `Documento` com campos estruturados. OCR cascata (pdfplumber → Tesseract → Donut/LayoutLMv3 → API externa opt-in).
-[`docs/sprints/sprint_27_ingestao_universal.md`](sprints/sprint_27_ingestao_universal.md)
+[`docs/sprints/sprint_26_ingestao_universal.md`](sprints/sprint_26_ingestao_universal.md)
 
-### Sprint 28 -- Grafo + Classificação v2  ([#12](https://github.com/AndreBFarias/protocolo-ouroboros/issues/12))
+### Sprint 27 -- Grafo + Classificação v2  ([#12](https://github.com/AndreBFarias/protocolo-ouroboros/issues/12))
 SQLite `nodes`/`edges` com motores de linking (doc↔transação), resolução fuzzy de entidades, detecção de eventos (parcelamento, assinaturas). Refactor do categorizador para contexto e score.
-[`docs/sprints/sprint_28_grafo_classificacao.md`](sprints/sprint_28_grafo_classificacao.md)
+[`docs/sprints/sprint_27_grafo_classificacao.md`](sprints/sprint_27_grafo_classificacao.md)
 
-### Sprint 29 -- LLM Orquestrado via Claude  ([#13](https://github.com/AndreBFarias/protocolo-ouroboros/issues/13))
-Claude Opus como LLM padrão. Provider abstrato permite troca futura pra local (Sprint 09). Contratos Pydantic, prompts versionados, cache SQLite, slash commands Claude Code como copiloto de manutenção.
-[`docs/sprints/sprint_29_llm_orquestrado.md`](sprints/sprint_29_llm_orquestrado.md)
+### Sprint 28 -- LLM Orquestrado via Claude  ([#13](https://github.com/AndreBFarias/protocolo-ouroboros/issues/13))
+Claude Opus como LLM padrão. Provider abstrato permite troca futura pra local (Sprint 08). Contratos Pydantic, prompts versionados, cache SQLite, slash commands Claude Code como copiloto de manutenção.
+[`docs/sprints/sprint_28_llm_orquestrado.md`](sprints/sprint_28_llm_orquestrado.md)
 
-### Sprint 30 -- UX Navegável  ([#14](https://github.com/AndreBFarias/protocolo-ouroboros/issues/14))
+### Sprint 29 -- UX Navegável  ([#14](https://github.com/AndreBFarias/protocolo-ouroboros/issues/14))
 Busca global, timeline por entidade/evento/pessoa, navegador de grafo visual (pyvis), Obsidian rico com attachments, "abrir PDF original" em qualquer lugar, página "vida de um boleto".
-[`docs/sprints/sprint_30_ux_navegacao.md`](sprints/sprint_30_ux_navegacao.md)
+[`docs/sprints/sprint_29_ux_navegacao.md`](sprints/sprint_29_ux_navegacao.md)
 
 ---
 
 ## Futuro / Backlog (6)
 
-### Sprint 09 -- LLM Local
-Fica como **backend alternativo** da Sprint 29. Retomar quando Gemma/Phi-3 tiverem qualidade comparável ao Opus e o custo da API justificar troca.
+### Sprint 08 -- LLM Local
+Fica como **backend alternativo** da Sprint 28. Retomar quando Gemma/Phi-3 tiverem qualidade comparável ao Opus e o custo da API justificar troca.
 
-### Sprint 10 -- Grafos Analíticos
-Sankey, heatmap GitHub-style, trend analysis. **Complementar** (não substituto) da Sprint 30: 30 é navegação exploratória, 10 é síntese agregada.
+### Sprint 09 -- Grafos Analíticos
+Sankey, heatmap GitHub-style, trend analysis. **Complementar** (não substituto) da Sprint 29: 29 é navegação exploratória, 09 é síntese agregada.
 
-### Sprint 11 -- IRPF Completo (Simulação + Interface)
-Simulador completo vs simplificado, página Streamlit dedicada, cálculo de economia fiscal. Depende de Sprint 26.
+### Sprint 10 -- IRPF Completo (Simulação + Interface)
+Simulador completo vs simplificado, página Streamlit dedicada, cálculo de economia fiscal. Depende de Sprint 25.
 
-### Sprint 12 -- Vault Final
+### Sprint 11 -- Vault Final
 Decisão arquitetural de unificação com Controle_de_Bordo_OS (hexagonal, Pydantic, SQLite+WAL, event bus) e vault Obsidian. Migração `JSON → DUAL_WRITE → DUAL_READ → SQLITE_ONLY`.
 
-### Sprint 16 -- Dashboard Polish Visual
-Absorvida parcialmente pela Sprint 21. Resíduo: ajustes de micro-UX.
+### Sprint 15 -- Dashboard Polish Visual
+Absorvida parcialmente pela Sprint 20. Resíduo: ajustes de micro-UX.
 
-### Sprint 17 -- Testes e CI/CD
+### Sprint 16 -- Testes e CI/CD
 Expandir gauntlet, fixtures sintéticas de formatos faltantes, GitHub Actions em push/PR, coverage.
 
 ---
@@ -152,7 +151,7 @@ Horizonte 5 -- unificação (indefinido)
 | **Controle_de_Bordo_OS** | `~/Desenvolvimento/Controle_de_Bordo_OS` | Blueprint arquitetural hexagonal, 20 sprints planejadas |
 | **Vault Obsidian** | `~/Controle de Bordo` | 1.202 notas, 24 plugins, organização PARA |
 
-A Sprint 12 avaliará a estratégia de unificação. As sprints 27-30 já produzem dados compatíveis com o vault Obsidian (notas por entidade, attachments).
+A Sprint 11 avaliará a estratégia de unificação. As sprints 26-29 já produzem dados compatíveis com o vault Obsidian (notas por entidade, attachments).
 
 ---
 

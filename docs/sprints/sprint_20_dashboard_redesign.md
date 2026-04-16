@@ -1,4 +1,4 @@
-# Sprint 21 -- Dashboard Redesign: Layout, Tipografia e Harmonia Visual
+# Sprint 20 -- Dashboard Redesign: Layout, Tipografia e Harmonia Visual
 
 ## Status: Pendente
 

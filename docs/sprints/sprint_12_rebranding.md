@@ -1,4 +1,4 @@
-# Sprint 13 -- Protocolo Ouroboros: Rebranding
+# Sprint 12 -- Protocolo Ouroboros: Rebranding
 
 ## Status: Concluída (commit b73068a)
 

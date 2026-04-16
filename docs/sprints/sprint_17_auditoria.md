@@ -1,4 +1,4 @@
-# Sprint 18 -- Auditoria Final e GitHub-Readiness
+# Sprint 17 -- Auditoria Final e GitHub-Readiness
 
 ## Status: Pendente
 Issue: a criar

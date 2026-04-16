@@ -1,4 +1,4 @@
-# Sprint 26 -- Pacote IRPF: Declaração Facilitada
+# Sprint 25 -- Pacote IRPF: Declaração Facilitada
 
 ## Status: Pendente
 

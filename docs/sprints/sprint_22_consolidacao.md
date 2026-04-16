@@ -1,4 +1,4 @@
-# Sprint 23 -- Consolidação: Módulos Fantasmas, Extrator Órfão e Obsidian
+# Sprint 22 -- Consolidação: Módulos Fantasmas, Extrator Órfão e Obsidian
 
 ## Status: Pendente
 
@@ -25,7 +25,7 @@ Eliminar referências a módulos que não existem, integrar o extrator de energi
   - Arquivos: `Makefile` (target docs), `src/utils/doc_generator.py` (criar ou remover)
 
 - [ ] **Corrigir mensagem desatualizada do IRPF no menu**
-  - `run.sh` contém `msg_erro "Módulo IRPF ainda não implementado (Sprint 11)."` como fallback
+  - `run.sh` contém `msg_erro "Módulo IRPF ainda não implementado (Sprint 10)."` como fallback
   - O módulo IRPF está implementado e funcional
   - Fix: remover a mensagem de fallback desatualizada
   - Arquivo: `run.sh`

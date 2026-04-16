@@ -1,4 +1,4 @@
-# Sprint 24 -- Verdade nos Dados: Eliminar Placeholders e Dados Estáticos
+# Sprint 23 -- Verdade nos Dados: Eliminar Placeholders e Dados Estáticos
 
 ## Status: Concluída (parcial -- itens de visão movidos para Sprints 25 e 26)
 
@@ -24,8 +24,8 @@ O XLSX tem abas com dados falsos, estáticos ou vazios que dão a impressão de 
 - [ ] **Conteúdo é soma de totais, não análise**
   - Deveria conter "texto livre com insights gerados por mês" (CLAUDE.md)
   - Na realidade: gera frases genéricas como "Total de X transações, Y receita, Z despesa"
-  - Sem LLM local (Sprint 09), não há análise inteligente possível
-  - Decisão: gerar insights baseados em regras (anomalias, comparativos) OU renomear para "resumo" e documentar que análise real depende da Sprint 09
+  - Sem LLM local (Sprint 08), não há análise inteligente possível
+  - Decisão: gerar insights baseados em regras (anomalias, comparativos) OU renomear para "resumo" e documentar que análise real depende da Sprint 08
   - Arquivo: `src/load/xlsx_writer.py` (seção de análise)
 
 ### Aba `dividas_ativas` -- dados congelados de 2023
@@ -62,7 +62,7 @@ O XLSX tem abas com dados falsos, estáticos ou vazios que dão a impressão de 
 
 ### Projeção com --mes usando dados filtrados
 
-- [ ] **Bug remanescente da Sprint 20**
+- [ ] **Bug remanescente da Sprint 19**
   - Quando `--mes YYYY-MM` é usado, `gerar_relatorios()` recebe dados já filtrados
   - Projeção calcula média de 1 mês em vez dos 3 últimos
   - Fix: passar transações completas para `gerar_relatorios()` mesmo quando --mes filtra o extrato

@@ -144,7 +144,7 @@
 
 ---
 
-## 15. Duplicatas fuzzy residuais (Sprint 19)
+## 15. Duplicatas fuzzy residuais (Sprint 18)
 
 **O que aconteceu:** O validador reporta 16 duplicatas residuais (mesmo data+valor+local). Análise manual revela 4 categorias distintas:
 

@@ -1,4 +1,4 @@
-# Sprint 22 -- Relatórios Diagnósticos: de Descritivo para Acionável
+# Sprint 21 -- Relatórios Diagnósticos: de Descritivo para Acionável
 
 ## Status: Pendente
 
@@ -68,9 +68,9 @@ A pasta `contexto/` contém um plano financeiro de 7 fases, dados de saúde (TDA
 - [ ] Formato: lista com bandeira (alerta/info)
 - [ ] Arquivo: `src/load/relatorio.py` (nova função `_gerar_secao_anomalias()`)
 
-### 6. Seção "Projeção" (já corrigida na Sprint 20, apenas expandir)
+### 6. Seção "Projeção" (já corrigida na Sprint 19, apenas expandir)
 
-- [ ] Após fix da Sprint 20 (projeções por mês):
+- [ ] Após fix da Sprint 19 (projeções por mês):
   - Adicionar cenário "sem Infobase" se renda de Infobase > 0 no mês
   - Mostrar meses até reserva de emergência e entrada de apartamento
 - [ ] Arquivo: `src/load/relatorio.py` (`_gerar_secao_projecao()` já existe)

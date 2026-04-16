@@ -1,4 +1,4 @@
-# Sprint 19 -- Dívida Técnica: Acentuação e Deduplicação
+# Sprint 18 -- Dívida Técnica: Acentuação e Deduplicação
 
 ## Status: Concluída
 
@@ -8,7 +8,7 @@ Resolver dívida técnica identificada na validação de produção: corrigir 56
 
 ## Contexto
 
-A Sprint 15 implementou os hooks de verificação (`check_acentuacao.py`, `check_gauntlet_freshness.py`) e a integração no `make lint`. Os hooks funcionam e detectam problemas. Esta sprint executa a correção dos 56 problemas reais encontrados.
+A Sprint 14 implementou os hooks de verificação (`check_acentuacao.py`, `check_gauntlet_freshness.py`) e a integração no `make lint`. Os hooks funcionam e detectam problemas. Esta sprint executa a correção dos 56 problemas reais encontrados.
 
 O deduplicator nível 2 (fuzzy) marca transações com mesmo `data|valor` entre bancos diferentes. As 16 marcadas podem ser coincidências legítimas ou duplicatas reais. Revisão manual necessária.
 
@@ -88,4 +88,4 @@ Todos em strings, docstrings, docs e scripts -- NÃO em identificadores Python.
 
 ## Dependências
 
-Sprint 15 (hooks -- já concluída parcialmente). Nenhuma outra dependência técnica.
+Sprint 14 (hooks -- já concluída parcialmente). Nenhuma outra dependência técnica.

@@ -1,4 +1,4 @@
-# Sprint 28 -- Grafo de Conhecimento + Classificação v2
+# Sprint 27 -- Grafo de Conhecimento + Classificação v2
 
 ## Status: Pendente (proposta 2026-04-16)
 Issue: #12
@@ -30,7 +30,7 @@ Fazer junto pois são acoplados: a qualidade do grafo depende da qualidade da ca
 | Tipo | Chave natural | Exemplos |
 |------|---------------|----------|
 | `Transacao` | hash(data+valor+conta+descricao) | cada linha do extrato |
-| `Documento` | hash do arquivo + linha_digitavel/chave_nfe | PDFs, imagens (Sprint 27) |
+| `Documento` | hash do arquivo + linha_digitavel/chave_nfe | PDFs, imagens (Sprint 26) |
 | `Entidade` | slug canônico | `neoenergia`, `itau`, `dr-souza-clinica` |
 | `Pessoa` | uuid interno | contrapartes privadas (hashadas) |
 | `Conta` | bankid+branchid+acctid | Itau-0341-9110-4, NubankPF-0260-97737068-1 |
@@ -93,7 +93,7 @@ Localização: `data/output/grafo.sqlite` (já coberto por `data/` no `.gitignor
 
 ### Motor 1 -- Linking Documento ↔ Transação
 
-Pra cada `Documento` recém-ingerido (Sprint 27), busca `Transacao` candidatas:
+Pra cada `Documento` recém-ingerido (Sprint 26), busca `Transacao` candidatas:
 - Mesma "categoria compatível" (energia-pagamento para conta de luz)
 - `|valor_doc - valor_transacao| <= max(1.00, valor_doc * 0.02)` (tolerância de 2% ou R$1)
 - Data da transação entre `data_emissao - 3 dias` e `data_vencimento + 10 dias`
@@ -103,7 +103,7 @@ Score:
 - 0.80 se 2 batem e 1 é frouxo (valor dentro da tolerância)
 - 0.50 se só 1 bate (loga alerta, não grava)
 
-Ambiguidade: se 2+ candidatas empatam em score, grava com menor score e cria um `Alerta/ambiguidade` (ver Sprint 30).
+Ambiguidade: se 2+ candidatas empatam em score, grava com menor score e cria um `Alerta/ambiguidade` (ver Sprint 29).
 
 ### Motor 2 -- Resolução de Entidade (string → nó canônico)
 
@@ -111,7 +111,7 @@ Hoje regex em `categorias.yaml` é o que identifica entidades. Substituir por:
 - **Camada 1**: tabela de aliases em `mappings/entidades.yaml` (bancos, utilities conhecidas, farmácias).
 - **Camada 2**: fuzzy match via `rapidfuzz` (Levenshtein) com threshold 85%.
 - **Camada 3**: embeddings sentence-transformers para casos semânticos ("Neoenergia Brasília" vs "Neoenergia Pernambuco" são entidades diferentes, apesar de string similar -- usa contexto de estado no doc).
-- **Camada 4 (Sprint 29)**: Claude Code resolve ambiguidade residual.
+- **Camada 4 (Sprint 28)**: Claude Code resolve ambiguidade residual.
 
 ### Motor 3 -- Eventos e cadeias
 
@@ -202,8 +202,8 @@ Hoje regex em `categorias.yaml` é o que identifica entidades. Substituir por:
 ## Armadilhas
 
 1. **Explosão combinatória**: 2.859 transações × N documentos × M entidades. Usar batching e índices. Motor 1 sobre histórico: estimar em ~30s no primeiro run.
-2. **SQLite vs XLSX**: XLSX continua sendo saída humana, grafo é a verdade relacional interna. NÃO tentar substituir ainda (isso é Sprint 12).
-3. **Falsos positivos do Motor 1**: exigir confidence >= 0.8 pra gravar. Amostras abaixo disso viram alerta pra Sprint 30.
+2. **SQLite vs XLSX**: XLSX continua sendo saída humana, grafo é a verdade relacional interna. NÃO tentar substituir ainda (isso é Sprint 11).
+3. **Falsos positivos do Motor 1**: exigir confidence >= 0.8 pra gravar. Amostras abaixo disso viram alerta pra Sprint 29.
 4. **`pessoas.yaml` vazando no git**: adicionar ao `.gitignore` ANTES de criar. Validar no pre-commit.
 5. **Regex vs Fuzzy**: fuzzy sem regex prévio pode gerar falsos positivos. Arquitetura: regex primeiro (alta precisão), fuzzy segundo (recall).
 6. **Renomear "Questionável"**: em 2 fases (adicionar `Nao-Classificado`, migrar dashboards, depois limpar uso antigo).
@@ -214,7 +214,7 @@ Hoje regex em `categorias.yaml` é o que identifica entidades. Substituir por:
 
 ## Critério de sucesso
 
-1. Grafo contém nós para: todas as 2.859 transações, todas as contas/cartões do casal, 30+ entidades canônicas, todos os documentos ingeridos pela Sprint 27.
+1. Grafo contém nós para: todas as 2.859 transações, todas as contas/cartões do casal, 30+ entidades canônicas, todos os documentos ingeridos pela Sprint 26.
 2. Motor 1 consegue linkar pelo menos 80% dos documentos históricos com confidence >= 0.8.
 3. Motor 3 detecta corretamente parcelamentos conhecidos (ex.: compras Amazon em 10x) e pelo menos 5 assinaturas (Netflix, Spotify, Disney, Claude, ChatGPT, etc.).
 4. `python -m src.graph.query --entidade neoenergia` lista timeline completa em menos de 1 segundo.
@@ -227,11 +227,11 @@ Hoje regex em `categorias.yaml` é o que identifica entidades. Substituir por:
 
 ## Dependências
 
-- **Sprint 27 (Ingestão Universal)** -- fonte de `Documento`s. Pode começar esta sprint sem 27 pronta, mas linking só fica útil com 27 entregue.
-- **Sprint 29 (LLM)** -- consome o grafo para inferência. Motor 2 camada 4 depende dela, mas as outras camadas funcionam sem LLM.
-- **Sprint 30 (UX)** -- consome o grafo. Só inicia depois desta.
-- **Sprint 12 (Vault Final)** -- futuro consolidador: XLSX vira secundário, SQLite/grafo vira primário.
-- **Sprint 19 (Dívida Técnica)** -- precisa estar concluída antes de refatorar o categorizador (base estável).
+- **Sprint 26 (Ingestão Universal)** -- fonte de `Documento`s. Pode começar esta sprint sem 27 pronta, mas linking só fica útil com 27 entregue.
+- **Sprint 28 (LLM)** -- consome o grafo para inferência. Motor 2 camada 4 depende dela, mas as outras camadas funcionam sem LLM.
+- **Sprint 29 (UX)** -- consome o grafo. Só inicia depois desta.
+- **Sprint 11 (Vault Final)** -- futuro consolidador: XLSX vira secundário, SQLite/grafo vira primário.
+- **Sprint 18 (Dívida Técnica)** -- precisa estar concluída antes de refatorar o categorizador (base estável).
 
 ---
 
@@ -241,7 +241,7 @@ Hoje regex em `categorias.yaml` é o que identifica entidades. Substituir por:
 2. Schema SQLite + store.
 3. Migração inicial das transações históricas para nós.
 4. Motor 2 (entidade resolver) -- beneficia Metade B também.
-5. Motor 1 (linking doc-transação) -- só após Sprint 27 entregar documentos.
+5. Motor 1 (linking doc-transação) -- só após Sprint 26 entregar documentos.
 6. Motor 3 (eventos) -- último, consome tudo.
 
 ---

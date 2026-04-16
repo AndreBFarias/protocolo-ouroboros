@@ -1,4 +1,4 @@
-# Sprint 30 -- UX Navegável: Busca, Timeline, Grafo Visual e Obsidian Rico
+# Sprint 29 -- UX Navegável: Busca, Timeline, Grafo Visual e Obsidian Rico
 
 ## Status: Pendente (proposta 2026-04-16)
 Issue: #14
@@ -89,7 +89,7 @@ Dado um nó qualquer, mostrar cronologia.
 
 ## 4. Obsidian rico
 
-Expandir a integração da Sprint 06 (hoje com bugs pendentes na Sprint 23) para incluir notas por entidade, evento, pessoa, assinatura e boletos.
+Expandir a integração da Sprint 06 (hoje com bugs pendentes na Sprint 22) para incluir notas por entidade, evento, pessoa, assinatura e boletos.
 
 ### Estrutura no vault (`~/Controle de Bordo/`)
 
@@ -135,7 +135,7 @@ Pessoal/Financeiro/
 - [ ] Backlinks automáticos: nota do doc em `Attachments/Boletos/neoenergia-2026-03.md` (metadata) aponta pra entidade.
 
 ### Entregas específicas
-- [ ] Bugs da Sprint 23 corrigidos primeiro (frontmatter nulo, nomes PF/PJ).
+- [ ] Bugs da Sprint 22 corrigidos primeiro (frontmatter nulo, nomes PF/PJ).
 - [ ] `src/obsidian/sync.py` estendido para gerar notas de entidade/evento/assinatura.
 - [ ] Dataview queries testadas em Obsidian real (chrome MCP se possível).
 
@@ -222,11 +222,11 @@ Em toda UI que mostre uma transação ligada a um documento, exibir link/ícone:
 
 ## Dependências
 
-- Sprint 27 (Ingestão) -- documentos existem pra serem abertos.
-- Sprint 28 (Grafo) -- dados pra serem exibidos.
-- Sprint 29 (LLM) -- opcional aqui, complementa a busca com NL query.
-- Sprint 23 (Consolidação) -- bugs do sync Obsidian corrigidos PRÉVIO a essa sprint.
-- Sprint 21 (Dashboard Redesign) -- layout base do dashboard novo. Combinar com esta para evitar retrabalho.
+- Sprint 26 (Ingestão) -- documentos existem pra serem abertos.
+- Sprint 27 (Grafo) -- dados pra serem exibidos.
+- Sprint 28 (LLM) -- opcional aqui, complementa a busca com NL query.
+- Sprint 22 (Consolidação) -- bugs do sync Obsidian corrigidos PRÉVIO a essa sprint.
+- Sprint 20 (Dashboard Redesign) -- layout base do dashboard novo. Combinar com esta para evitar retrabalho.
 
 ---
 

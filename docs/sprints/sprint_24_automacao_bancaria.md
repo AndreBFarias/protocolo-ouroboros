@@ -1,4 +1,4 @@
-# Sprint 25 -- Automação Bancária: Download de Extratos
+# Sprint 24 -- Automação Bancária: Download de Extratos
 
 ## Status: Pendente (pesquisa concluída 2026-04-15)
 

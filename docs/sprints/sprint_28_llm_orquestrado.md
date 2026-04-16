@@ -1,4 +1,4 @@
-# Sprint 29 -- LLM Orquestrado (Claude como Copiloto)
+# Sprint 28 -- LLM Orquestrado (Claude como Copiloto)
 
 ## Status: Pendente (proposta 2026-04-16)
 Issue: #13
@@ -18,9 +18,9 @@ Isso significa: **o LLM não é só uma função chamada pelo pipeline -- é o c
 ### Modo 1 -- Análise pontual em tempo de pipeline
 Funções determinísticas dentro do pipeline que, quando heurísticas falham, delegam para o LLM e cacheiam a resposta. Exemplos:
 
-- Classificar transação com `categoria_confianca < 0.5` (Sprint 28).
-- Extrair cláusulas de contratos PDF (Sprint 27).
-- Resolver ambiguidade de entidades (Motor 2 camada 4 da Sprint 28).
+- Classificar transação com `categoria_confianca < 0.5` (Sprint 27).
+- Extrair cláusulas de contratos PDF (Sprint 26).
+- Resolver ambiguidade de entidades (Motor 2 camada 4 da Sprint 27).
 - Desambiguar linking de documentos com múltiplos candidatos.
 
 ### Modo 2 -- Consultas em linguagem natural (usuário pergunta)
@@ -73,7 +73,7 @@ Esse modo 3 é operado via comandos (`/slash`) ou skills do Claude Code, não vi
       def sugerir_regras(self, padroes: list[dict]) -> list[RegraSugerida]: ...
   ```
 - [ ] `src/llm/claude_api.py` -- implementação via `anthropic` SDK, modelo `claude-opus-4-7`, prompt caching habilitado.
-- [ ] `src/llm/local.py` -- stub que levanta `NotImplementedError` com ponteiro pra Sprint 09.
+- [ ] `src/llm/local.py` -- stub que levanta `NotImplementedError` com ponteiro pra Sprint 08.
 - [ ] `src/llm/cache.py` -- cache SQLite (`data/output/llm_cache.sqlite`) com TTL configurável por tipo de chamada.
 - [ ] `src/llm/cost_tracker.py` -- loga tokens in/out por chamada em `data/output/llm_custos.jsonl` pra monitorar gasto.
 
@@ -111,9 +111,9 @@ Você é um classificador financeiro para o Protocolo Ouroboros.
 
 ### 4. Integração com pipeline
 
-- [ ] Em `src/transform/categorizer.py` (Sprint 28), quando `categoria_confianca < 0.5`, chamar `LLMProvider.classificar()` com contexto do grafo.
-- [ ] Em `src/ingest/extractors/contrato_extractor.py` (Sprint 27), chamar `LLMProvider.extrair_clausulas()` para o texto OCR.
-- [ ] Em `src/graph/entity_resolver.py` (Sprint 28), camada 4 = LLM.
+- [ ] Em `src/transform/categorizer.py` (Sprint 27), quando `categoria_confianca < 0.5`, chamar `LLMProvider.classificar()` com contexto do grafo.
+- [ ] Em `src/ingest/extractors/contrato_extractor.py` (Sprint 26), chamar `LLMProvider.extrair_clausulas()` para o texto OCR.
+- [ ] Em `src/graph/entity_resolver.py` (Sprint 27), camada 4 = LLM.
 - [ ] Em `src/graph/linker.py`, quando Motor 1 tem 2+ candidatos com score próximo, chamar `desambiguar_linking`.
 
 ### 5. Consulta em linguagem natural (Modo 2)
@@ -129,7 +129,7 @@ Você é um classificador financeiro para o Protocolo Ouroboros.
 ### 6. Operação assistida (Modo 3) -- skills Claude Code
 
 - [ ] `.claude/commands/revisar_grafo.md` -- slash command que faz Claude ler `grafo.sqlite`, gerar relatório de inconsistências, propor limpezas.
-- [ ] `.claude/commands/sugerir_regras.md` -- lê `sugestoes_categorizacao.md` (Sprint 28), escreve entradas prontas pra `categorias.yaml`.
+- [ ] `.claude/commands/sugerir_regras.md` -- lê `sugestoes_categorizacao.md` (Sprint 27), escreve entradas prontas pra `categorias.yaml`.
 - [ ] `.claude/commands/resumo_mensal.md` -- pega mês referência, gera análise narrativa em `data/output/relatorios/resumo_YYYY-MM.md`.
 - [ ] `.claude/commands/auditar_irpf.md` -- checa se deduções têm CNPJ, documentos anexos; lista faltantes.
 - [ ] `CLAUDE.md` atualizado com seção "Claude Code como copiloto do Ouroboros".
@@ -180,7 +180,7 @@ Você é um classificador financeiro para o Protocolo Ouroboros.
 
 ## Critério de sucesso
 
-1. Transação com `categoria_confianca < 0.5` após Sprint 28 é re-classificada via LLM com taxa de acerto ≥ 85% (validada em amostra manual de 50 casos).
+1. Transação com `categoria_confianca < 0.5` após Sprint 27 é re-classificada via LLM com taxa de acerto ≥ 85% (validada em amostra manual de 50 casos).
 2. Pergunta "quanto gastei com farmácia em 2025?" no dashboard retorna valor correto + link para transações específicas em menos de 10 segundos.
 3. Slash command `/revisar_grafo` gera relatório acionável com pelo menos 3 sugestões por execução (ex.: merge de entidades duplicadas).
 4. Resumo narrativo mensal passa em revisão qualitativa: sem alucinação, destaca padrões reais.
@@ -192,8 +192,8 @@ Você é um classificador financeiro para o Protocolo Ouroboros.
 
 ## Dependências
 
-- **Sprint 27 e 28 devem estar entregues.** LLM trabalha sobre grafo e documentos.
-- **Sprint 09 (LLM Local)** fica como *follow-up*: quando qualidade local for boa o suficiente, substitui `ClaudeAPIProvider` por `LocalLLMProvider` sem mudar o resto.
+- **Sprint 26 e 28 devem estar entregues.** LLM trabalha sobre grafo e documentos.
+- **Sprint 08 (LLM Local)** fica como *follow-up*: quando qualidade local for boa o suficiente, substitui `ClaudeAPIProvider` por `LocalLLMProvider` sem mudar o resto.
 
 ---
 

@@ -1,4 +1,4 @@
-# Sprint 14 -- UI/UX e Outputs Profissionais
+# Sprint 13 -- UI/UX e Outputs Profissionais
 
 ## Status: Concluída (commit b73068a)
 
@@ -36,12 +36,12 @@ Refinar as 3 interfaces do projeto com o usuário: menu CLI (run.sh), relatório
 ### 4. Renumeração de Sprints
 - [x] 8 arquivos renomeados (09-18)
 - [x] Headers internos atualizados
-- [x] Sprint 13 (Rebranding) e Sprint 14 (esta) criadas
+- [x] Sprint 12 (Rebranding) e Sprint 13 (esta) criadas
 - [x] CLAUDE.md atualizado
 
 ## Dependências
 
-Sprint 08 (concluída).
+Sprint 07 (concluída).
 
 ---
 

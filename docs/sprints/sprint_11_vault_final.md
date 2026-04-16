@@ -1,4 +1,4 @@
-# Sprint 12 -- Integração Vault Final
+# Sprint 11 -- Integração Vault Final
 
 ## Status: Pendente
 Issue: a criar
@@ -60,4 +60,4 @@ Decisão arquitetural documentada em ADR. Se unificar: tudo centralizado, vault 
 
 ## Dependências
 
-Todas as sprints anteriores (especialmente Sprint 06 - Obsidian, Sprint 09 - Testes).
+Todas as sprints anteriores (especialmente Sprint 06 - Obsidian, Sprint 08 - Testes).

@@ -1,13 +1,13 @@
-# Sprint 09 -- LLM Local
+# Sprint 08 -- LLM Local
 
-## Status: Futuro (backend alternativo da Sprint 29)
+## Status: Futuro (backend alternativo da Sprint 28)
 
-## Relação com Sprint 29 (LLM Orquestrado via Claude)
+## Relação com Sprint 28 (LLM Orquestrado via Claude)
 
-Em 2026-04-16, a decisão foi usar **Claude Opus** como LLM principal durante a fase de melhoria contínua (Sprint 29). Esta sprint 09 permanece válida como **objetivo de longo prazo**: substituir o `ClaudeAPIProvider` por um `LocalLLMProvider` (Gemma/Phi) quando a qualidade local justificar, sem mudar o resto do sistema. A interface `LLMProvider` da Sprint 29 já prevê esse swap.
+Em 2026-04-16, a decisão foi usar **Claude Opus** como LLM principal durante a fase de melhoria contínua (Sprint 28). Esta sprint 08 permanece válida como **objetivo de longo prazo**: substituir o `ClaudeAPIProvider` por um `LocalLLMProvider` (Gemma/Phi) quando a qualidade local justificar, sem mudar o resto do sistema. A interface `LLMProvider` da Sprint 28 já prevê esse swap.
 
 Iniciar esta sprint só após:
-1. Sprint 29 estabilizada.
+1. Sprint 28 estabilizada.
 2. Modelos locais ≥ 4B parâmetros rodarem com qualidade aceitável na RTX 3050.
 3. Custo mensal do Claude Opus justificar a troca.
 
