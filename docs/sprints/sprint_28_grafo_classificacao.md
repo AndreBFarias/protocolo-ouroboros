@@ -44,17 +44,17 @@ Fazer junto pois são acoplados: a qualidade do grafo depende da qualidade da ca
 
 | Verbo | Domínio → Contradomínio | Confiança típica |
 |-------|-------------------------|------------------|
-| `paga` | Transacao → Documento | 0.9 se valor+data OK |
-| `emitido_por` | Documento → Entidade | 1.0 (extração) |
-| `referente_a` | Documento → Periodo | 1.0 |
-| `categoria` | Transacao → Categoria | 0.7-1.0 |
-| `contraparte` | Transacao → Entidade/Pessoa | 0.8-1.0 |
-| `origem` | Transacao → Conta/Cartao | 1.0 |
-| `parte_de` | Transacao → Evento | 0.6-0.9 |
-| `reembolsa` | Transacao → Transacao | 0.7 |
-| `transferencia_par` | Transacao → Transacao | 1.0 (já existe) |
-| `dedutivel_em` | Transacao → AnoFiscal | 0.5-1.0 |
-| `instancia_de` | Transacao → Assinatura | 0.8 |
+| `paga` | `Transacao` → `Documento` | 0.9 se valor+data OK |
+| `emitido_por` | `Documento` → `Entidade` | 1.0 (extração) |
+| `referente_a` | `Documento` → `Periodo` | 1.0 |
+| `categoria` | `Transacao` → `Categoria` | 0.7-1.0 |
+| `contraparte` | `Transacao` → `Entidade`/`Pessoa` | 0.8-1.0 |
+| `origem` | `Transacao` → `Conta`/`Cartao` | 1.0 |
+| `parte_de` | `Transacao` → `Evento` | 0.6-0.9 |
+| `reembolsa` | `Transacao` → `Transacao` | 0.7 |
+| `transferencia_par` | `Transacao` → `Transacao` | 1.0 (já existe) |
+| `dedutivel_em` | `Transacao` → `AnoFiscal` | 0.5-1.0 |
+| `instancia_de` | `Transacao` → `Assinatura` | 0.8 |
 | `substitui` | Entidade → Entidade | 1.0 (ex.: CEB virou Neoenergia) |
 
 ### Schema SQL

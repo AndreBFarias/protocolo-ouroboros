@@ -80,10 +80,10 @@ Esse modo 3 é operado via comandos (`/slash`) ou skills do Claude Code, não vi
 ### 2. Contratos de entrada/saída (Pydantic)
 
 - [ ] `src/llm/schemas.py` com modelos estritos para cada tipo de resposta:
-  - `ClassificacaoResult` (categoria, classificacao, tag_irpf, confianca, justificativa)
-  - `ContratoResult` (partes, valor_mensal, data_inicio, data_fim, reajuste_indice, multa_rescisao)
-  - `RespostaNLResult` (resposta_texto, consultas_executadas, evidencias)
-  - `RegraSugerida` (regex_proposto, categoria, classificacao, exemplos_que_casariam, risco_falso_positivo)
+  - `ClassificacaoResult` (`categoria`, `classificacao`, `tag_irpf`, `confianca`, `justificativa`)
+  - `ContratoResult` (`partes`, `valor_mensal`, `data_inicio`, `data_fim`, `reajuste_indice`, `multa_rescisao`)
+  - `RespostaNLResult` (`resposta_texto`, `consultas_executadas`, `evidencias`)
+  - `RegraSugerida` (`regex_proposto`, `categoria`, `classificacao`, `exemplos_que_casariam`, `risco_falso_positivo`)
 - [ ] Toda resposta LLM é parseada via Pydantic com retry (1 retry se JSON malformado, depois vira erro).
 
 ### 3. Prompts versionados
@@ -91,7 +91,7 @@ Esse modo 3 é operado via comandos (`/slash`) ou skills do Claude Code, não vi
 - [ ] `src/llm/prompts/classificar_transacao.md` -- input: JSON da transação + top 3 transações similares do grafo. Output: `ClassificacaoResult`.
 - [ ] `src/llm/prompts/extrair_clausulas_contrato.md` -- input: texto OCR do contrato. Output: `ContratoResult`.
 - [ ] `src/llm/prompts/responder_pergunta_financeira.md` -- input: pergunta + tool list (query grafo, query XLSX, buscar docs). Output: `RespostaNLResult`.
-- [ ] `src/llm/prompts/sugerir_regra_categorizacao.md` -- input: N transações sem categoria + descricao comum. Output: `RegraSugerida`.
+- [ ] `src/llm/prompts/sugerir_regra_categorizacao.md` -- input: N transações sem categoria + descrição comum. Output: `RegraSugerida`.
 - [ ] `src/llm/prompts/desambiguar_linking.md` -- input: doc + K candidatos de transação. Output: `LinkingResolution`.
 - [ ] `src/llm/prompts/resumo_mensal_narrativo.md` -- input: dados do mês. Output: texto de 2-3 parágrafos.
 
