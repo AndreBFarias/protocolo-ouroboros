@@ -86,7 +86,8 @@ class GmailCSVDownloader:
                 creds.refresh(Request())
             else:
                 flow = InstalledAppFlow.from_client_secrets_file(
-                    str(CREDENTIALS_PATH), SCOPES,
+                    str(CREDENTIALS_PATH),
+                    SCOPES,
                 )
                 creds = flow.run_local_server(port=0)
 
@@ -107,14 +108,22 @@ class GmailCSVDownloader:
         query = f"({remetentes}) has:attachment after:{data_limite}"
 
         try:
-            resultado = self.service.users().messages().list(
-                userId="me", q=query, maxResults=50,
-            ).execute()
+            resultado = (
+                self.service.users()
+                .messages()
+                .list(
+                    userId="me",
+                    q=query,
+                    maxResults=50,
+                )
+                .execute()
+            )
 
             mensagens = resultado.get("messages", [])
             logger.info(
                 "Encontrados %d emails do Nubank com anexos (últimos %d dias)",
-                len(mensagens), dias,
+                len(mensagens),
+                dias,
             )
             return mensagens
         except Exception as e:
@@ -135,9 +144,15 @@ class GmailCSVDownloader:
 
         for msg_ref in mensagens:
             try:
-                msg = self.service.users().messages().get(
-                    userId="me", id=msg_ref["id"],
-                ).execute()
+                msg = (
+                    self.service.users()
+                    .messages()
+                    .get(
+                        userId="me",
+                        id=msg_ref["id"],
+                    )
+                    .execute()
+                )
 
                 partes = msg.get("payload", {}).get("parts", [])
                 for parte in partes:
@@ -153,9 +168,17 @@ class GmailCSVDownloader:
                     attachment_id = corpo.get("attachmentId")
 
                     if attachment_id:
-                        anexo = self.service.users().messages().attachments().get(
-                            userId="me", messageId=msg_ref["id"], id=attachment_id,
-                        ).execute()
+                        anexo = (
+                            self.service.users()
+                            .messages()
+                            .attachments()
+                            .get(
+                                userId="me",
+                                messageId=msg_ref["id"],
+                                id=attachment_id,
+                            )
+                            .execute()
+                        )
 
                         dados = base64.urlsafe_b64decode(anexo["data"])
                         destino = destino_dir / nome_arquivo
@@ -194,7 +217,9 @@ def main() -> None:
     )
     parser.add_argument("--dias", type=int, default=30, help="Dias para buscar")
     parser.add_argument(
-        "--destino", type=str, default=str(DIR_INBOX),
+        "--destino",
+        type=str,
+        default=str(DIR_INBOX),
         help="Diretório de destino dos anexos",
     )
     args = parser.parse_args()

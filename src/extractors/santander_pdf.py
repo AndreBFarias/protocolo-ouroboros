@@ -161,8 +161,12 @@ class ExtratorSantanderPDF(ExtratorBase):
             if match:
                 try:
                     return datetime.strptime(match.group(1), "%d/%m/%Y").date()
-                except ValueError:
-                    pass
+                except ValueError as err:
+                    self.logger.warning(
+                        "Vencimento com formato inesperado '%s': %s",
+                        match.group(1),
+                        err,
+                    )
 
         return None
 

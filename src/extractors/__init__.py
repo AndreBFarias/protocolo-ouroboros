@@ -18,3 +18,6 @@ __all__: list[str] = [
     "ExtratorNubankCC",
     "ExtratorSantanderPDF",
 ]
+
+
+# "O todo é mais do que a soma das partes." -- Aristóteles

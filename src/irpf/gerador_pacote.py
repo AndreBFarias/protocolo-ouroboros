@@ -15,7 +15,7 @@ def gerar_csvs_por_tipo(transacoes: list[dict], diretorio: Path) -> list[Path]:
     por_tipo: dict[str, list[dict]] = {}
     for t in transacoes:
         tag = t.get("tag_irpf")
-        if tag:
+        if isinstance(tag, str) and tag:
             por_tipo.setdefault(tag, []).append(t)
 
     arquivos: list[Path] = []
@@ -60,7 +60,7 @@ def gerar_resumo(transacoes: list[dict], diretorio: Path) -> Path:
     contagens: dict[str, int] = {}
     for t in transacoes:
         tag = t.get("tag_irpf")
-        if tag:
+        if isinstance(tag, str) and tag:
             totais[tag] = totais.get(tag, 0) + t.get("valor", 0)
             contagens[tag] = contagens.get(tag, 0) + 1
 

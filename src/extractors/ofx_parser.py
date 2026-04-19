@@ -5,6 +5,8 @@ Nubank, C6, BB, Caixa) e converte para o schema padrão do Ouroboros.
 """
 
 import hashlib
+import io
+import re
 from datetime import date
 from pathlib import Path
 from typing import Optional
@@ -13,6 +15,8 @@ from ofxparse import OfxParser as OfxLib
 
 from src.extractors.base import ExtratorBase, Transacao
 from src.utils.logger import configurar_logger
+
+REGEX_ENCODING_HEADER = re.compile(rb"^(ENCODING:\s*)([^\r\n]+)", re.MULTILINE)
 
 logger = configurar_logger("ExtratorOFX")
 
@@ -76,7 +80,12 @@ class ExtratorOFX(ExtratorBase):
 
         try:
             with open(arquivo, "rb") as f:
-                ofx = OfxLib.parse(f)
+                conteudo = f.read()
+            conteudo = REGEX_ENCODING_HEADER.sub(
+                lambda m: m.group(1) + m.group(2).replace(b" ", b""),
+                conteudo,
+            )
+            ofx = OfxLib.parse(io.BytesIO(conteudo))
         except Exception as e:
             logger.error("Erro ao parsear OFX %s: %s", arquivo.name, e)
             return []
@@ -87,7 +96,10 @@ class ExtratorOFX(ExtratorBase):
         if ofx.account and ofx.account.statement:
             for transacao_ofx in ofx.account.statement.transactions:
                 t = self._converter_transacao(
-                    transacao_ofx, banco_origem, pessoa, arquivo,
+                    transacao_ofx,
+                    banco_origem,
+                    pessoa,
+                    arquivo,
                 )
                 if t:
                     transacoes.append(t)
@@ -98,14 +110,19 @@ class ExtratorOFX(ExtratorBase):
                 if hasattr(conta, "statement") and conta.statement:
                     for transacao_ofx in conta.statement.transactions:
                         t = self._converter_transacao(
-                            transacao_ofx, banco_origem, pessoa, arquivo,
+                            transacao_ofx,
+                            banco_origem,
+                            pessoa,
+                            arquivo,
                         )
                         if t:
                             transacoes.append(t)
 
         logger.info(
             "Extraídas %d transações de %s (%s)",
-            len(transacoes), arquivo.name, banco_origem,
+            len(transacoes),
+            arquivo.name,
+            banco_origem,
         )
         return transacoes
 

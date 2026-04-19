@@ -34,40 +34,48 @@ def deduplicar_por_identificador(transacoes: list[dict]) -> list[dict]:
 
 
 def deduplicar_por_hash_fuzzy(transacoes: list[dict]) -> list[dict]:
-    """Nível 2: Remove duplicatas por combinação data + valor + local similar.
+    """Nível 2: Remove duplicatas por combinação data + valor + local.
 
-    Detecta a mesma transação aparecendo em dois extratos diferentes
-    (ex: Pix aparece no Itaú E no Nubank com descrições ligeiramente diferentes).
+    Cobre três cenários reais:
+    - Mesma transação em OFX e XLSX/CSV legacy do mesmo banco
+    - Mesma transação no XLSX histórico (banco_origem="Histórico") e na
+      re-extração atual do banco de origem
+    - Transferência interna listada pelo OFX e pelo CSV do mesmo banco
+
+    Quando múltiplas transações casam pela chave, mantém a que TEM
+    `banco_origem != "Histórico"` (metadados melhores da fonte original).
+    Pares LEGÍTIMOS de transferência interna (entre bancos diferentes) não
+    colidem na chave, pois têm `local` distinto em cada ponta.
     """
-    resultado: list[dict] = []
-    chaves_vistas: set[str] = set()
-    duplicatas = 0
+    grupos: dict[str, list[int]] = {}
 
-    for t in transacoes:
-        # Transferências internas são tratadas separadamente
-        if t.get("tipo") == "Transferência Interna":
-            resultado.append(t)
-            continue
-
+    for idx, t in enumerate(transacoes):
         data_str = t["data"].isoformat() if hasattr(t["data"], "isoformat") else str(t["data"])
         valor_str = f"{abs(t['valor']):.2f}"
-        chave = f"{data_str}|{valor_str}"
+        local = str(t.get("local", "")).strip().lower()
+        chave = f"{data_str}|{valor_str}|{local}"
+        grupos.setdefault(chave, []).append(idx)
 
-        if chave in chaves_vistas:
-            duplicatas += 1
-            t["_duplicata_fuzzy"] = True
-            # Mantém a transação mas marca -- pode ser coincidência legítima
-            # (dois gastos iguais no mesmo dia é possível)
-            resultado.append(t)
+    indices_remover: set[int] = set()
+    for ids in grupos.values():
+        if len(ids) <= 1:
             continue
+        nao_historicos = [i for i in ids if transacoes[i].get("banco_origem") != "Histórico"]
+        preservar = nao_historicos[0] if nao_historicos else ids[0]
+        for i in ids:
+            if i != preservar:
+                indices_remover.add(i)
 
-        chaves_vistas.add(chave)
+    resultado: list[dict] = []
+    for idx, t in enumerate(transacoes):
+        if idx in indices_remover:
+            continue
         resultado.append(t)
 
-    if duplicatas > 0:
+    if indices_remover:
         logger.info(
-            "Dedup nível 2 (fuzzy): %d possíveis duplicatas marcadas (não removidas)",
-            duplicatas,
+            "Dedup nível 2 (fuzzy por data+valor+local): %d duplicatas removidas",
+            len(indices_remover),
         )
 
     return resultado

@@ -441,8 +441,8 @@ def _abrir_pdf(caminho: Path, senhas: list[str]) -> Optional[pdfplumber.PDF]:
         if pdf.pages:
             _ = pdf.pages[0].extract_text()
         return pdf
-    except Exception:
-        pass
+    except Exception as err:
+        logger.debug("PDF %s exige senha ou falhou ao abrir sem senha: %s", caminho.name, err)
 
     for senha in senhas:
         try:

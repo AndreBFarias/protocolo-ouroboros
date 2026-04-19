@@ -315,7 +315,7 @@ acao_pacote_irpf() {
         msg_ok "Pacote IRPF ${ano} gerado."
     else
         echo ""
-        msg_erro "Módulo IRPF ainda não implementado (Sprint 11)."
+        msg_erro "Falha ao gerar pacote IRPF ${ano}. Ver logs."
     fi
     aguardar_retorno
 }
