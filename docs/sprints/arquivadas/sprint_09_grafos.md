@@ -1,5 +1,18 @@
 # Sprint 09 -- Grafos e Visualizações Avançadas
 
+**Status:** ABSORVIDA
+**Data de arquivamento:** 2026-04-18
+**Motivo:** Sankey e heatmap temporal passam a fazer parte da sprint 27b (motores avançados do grafo).
+**Substituída por:** Sprint 27b
+**Plano referência:** `/home/andrefarias/.claude/plans/o-que-eu-quero-twinkly-wreath.md`
+
+> Esta sprint foi arquivada na reorganização do roadmap em 2026-04-18.
+> O conteúdo abaixo é preservado para consulta histórica.
+
+---
+
+## Conteúdo histórico
+
 ## Status: Pendente (escopo refinado em 2026-04-16)
 
 ## Relação com Sprint 29 (UX Navegável)

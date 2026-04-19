@@ -1,5 +1,18 @@
 # Sprint 08 -- LLM Local
 
+**Status:** CANCELADA
+**Data de arquivamento:** 2026-04-18
+**Motivo:** Provedor LLM via API externa custa $2-5/mês com prompt caching; hardware para modelo local não se justifica.
+**Substituída por:** Sprint 31 (Infra LLM)
+**Plano referência:** `/home/andrefarias/.claude/plans/o-que-eu-quero-twinkly-wreath.md`
+
+> Esta sprint foi arquivada na reorganização do roadmap em 2026-04-18.
+> O conteúdo abaixo é preservado para consulta histórica.
+
+---
+
+## Conteúdo histórico
+
 ## Status: Futuro (backend alternativo da Sprint 28)
 
 ## Relação com Sprint 28 (LLM Orquestrado via Claude)
