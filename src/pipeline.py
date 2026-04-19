@@ -5,6 +5,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+from src.extractors.contracheque_pdf import processar_holerites
 from src.load.relatorio import gerar_relatorios
 from src.load.xlsx_writer import gerar_xlsx
 from src.transform.categorizer import Categorizer
@@ -285,10 +286,13 @@ def executar(mes: str | None = None, processar_tudo: bool = False) -> None:
     # 9. Ordenar por data
     transacoes_filtradas.sort(key=lambda t: t.get("data", ""))
 
-    # 10. Gerar XLSX
+    # 10. Processar holerites (contracheques) -- fonte extra para a aba renda
+    contracheques = processar_holerites(DIR_RAW / "andre" / "holerites")
+
+    # 11. Gerar XLSX
     ano = mes[:4] if mes else str(datetime.now().year)
     caminho_xlsx = DIR_OUTPUT / f"ouroboros_{ano}.xlsx"
-    gerar_xlsx(transacoes_filtradas, caminho_xlsx, CONTROLE_ANTIGO)
+    gerar_xlsx(transacoes_filtradas, caminho_xlsx, CONTROLE_ANTIGO, contracheques)
 
     # 11. Gerar relatórios
     # Quando --mes é usado, passa transações completas (para projeções corretas)

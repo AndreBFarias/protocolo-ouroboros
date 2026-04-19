@@ -194,7 +194,8 @@ class Categorizer:
 
         if transacao.get("categoria") is None:
             transacao["categoria"] = "Outros"
-            transacao["classificacao"] = "Questionável"
+            if transacao.get("tipo") in ("Despesa", None):
+                transacao["classificacao"] = "Questionável"
 
         self._garantir_classificacao(transacao)
         return transacao
@@ -227,9 +228,7 @@ class Categorizer:
         padroes_recorrentes = {desc: qtd for desc, qtd in contagem.items() if qtd >= 3}
 
         if padroes_recorrentes:
-            logger.warning(
-                "Novos padrões detectados (3+ ocorrências sem categorização):"
-            )
+            logger.warning("Novos padrões detectados (3+ ocorrências sem categorização):")
             for desc, qtd in sorted(padroes_recorrentes.items(), key=lambda x: -x[1]):
                 logger.warning("  [%d ocorrências] %s", qtd, desc)
 

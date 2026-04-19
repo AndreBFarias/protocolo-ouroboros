@@ -120,11 +120,13 @@ def _projecao_acumulada(
     for i in range(1, meses + 1):
         mes_futuro = hoje + timedelta(days=30 * i)
         acumulado += saldo_mensal
-        projecao.append({
-            "mes": mes_futuro.strftime("%Y-%m"),
-            "indice": i,
-            "acumulado": round(acumulado, 2),
-        })
+        projecao.append(
+            {
+                "mes": mes_futuro.strftime("%Y-%m"),
+                "indice": i,
+                "acumulado": round(acumulado, 2),
+            }
+        )
 
     return projecao
 

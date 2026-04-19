@@ -29,6 +29,9 @@ dashboard: ## Abre o dashboard Streamlit
 test: ## Executa testes
 	$(PYTHON) -m pytest tests/ -v --tb=short
 
+test-cov: ## Executa testes com relatório de cobertura
+	$(PYTHON) -m pytest tests/ --cov=src/transform --cov=src/extractors --cov-report=term-missing
+
 lint: ## Verifica código com ruff + acentuação
 	$(RUFF) check src/ tests/
 	$(PYTHON) scripts/check_acentuacao.py --all

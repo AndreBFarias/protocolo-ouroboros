@@ -5,9 +5,11 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
-CAMINHO_XLSX: Path = (
-    Path(__file__).resolve().parents[2] / "data" / "output" / "ouroboros_2026.xlsx"
-)
+from src.utils.logger import configurar_logger
+
+logger = configurar_logger("dashboard.dados")
+
+CAMINHO_XLSX: Path = Path(__file__).resolve().parents[2] / "data" / "output" / "ouroboros_2026.xlsx"
 
 ABAS: list[str] = [
     "extrato",
@@ -19,6 +21,9 @@ ABAS: list[str] = [
     "irpf",
     "analise",
 ]
+
+# Abas cujo cabeçalho de colunas está na linha 2 (linha 1 = aviso de snapshot)
+ABAS_COM_AVISO: set[str] = {"dividas_ativas", "inventario", "prazos"}
 
 
 @st.cache_data(ttl=300)
@@ -35,7 +40,14 @@ def carregar_dados() -> dict[str, pd.DataFrame]:
 
     for aba in ABAS:
         if aba in xls.sheet_names:
-            df = pd.read_excel(xls, sheet_name=aba, keep_default_na=False, na_values=[""])
+            skip = 1 if aba in ABAS_COM_AVISO else 0
+            df = pd.read_excel(
+                xls,
+                sheet_name=aba,
+                keep_default_na=False,
+                na_values=[""],
+                skiprows=skip,
+            )
             resultado[aba] = df
 
     return resultado
@@ -170,8 +182,8 @@ def filtrar_por_periodo(
             df_copia["_data_dt"] = pd.to_datetime(df_copia["data"], errors="coerce").dt.date
             resultado = df_copia[df_copia["_data_dt"] == data_alvo].drop(columns=["_data_dt"])
             return resultado
-        except (ValueError, KeyError):
-            pass
+        except (ValueError, KeyError) as err:
+            logger.debug("Filtro diário com período '%s' falhou: %s", periodo, err)
 
     if granularidade == "Semana" and "data" in df.columns:
         if periodo.startswith("Sem "):
@@ -184,8 +196,8 @@ def filtrar_por_periodo(
                     columns=["_data_dt", "_semana"]
                 )
                 return resultado
-            except (ValueError, KeyError):
-                pass
+            except (ValueError, KeyError) as err:
+                logger.debug("Filtro semanal com período '%s' falhou: %s", periodo, err)
 
     if "mes_ref" not in df.columns:
         return df

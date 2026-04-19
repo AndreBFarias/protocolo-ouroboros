@@ -69,7 +69,53 @@ else
     exit 1
 fi
 
-# 5. Freshness do gauntlet (T2 -- apenas avisa)
+# 5. Hooks de disciplina (hooks/*.sh e hooks/*.py)
+# Ordem: shell primeiro (independentes de staged), depois python
+echo "Hooks de disciplina:"
+HOOK_FAIL=0
+
+if [ -d "hooks" ]; then
+    for hook in hooks/*.sh hooks/*.py; do
+        [ -f "$hook" ] || continue
+        name=$(basename "$hook")
+
+        # sprint_auto_move roda no hook real do git, não aqui
+        case "$name" in
+            sprint_auto_move.py) continue ;;
+            # hooks commit-msg rodam via arg único (arquivo de mensagem)
+            remove_coauthor.sh|check_commit_msg.py) continue ;;
+            # pre-push roda no stage pre-push, não aqui
+            pre_push_protect_main.sh) continue ;;
+        esac
+
+        echo -n "  $name ... "
+        if [[ "$hook" == *.py ]]; then
+            if python "$hook" >/tmp/ouro_hook_out 2>&1; then
+                echo "[OK]"
+            else
+                echo "[FALHA]"
+                cat /tmp/ouro_hook_out
+                HOOK_FAIL=1
+            fi
+        else
+            if bash "$hook" >/tmp/ouro_hook_out 2>&1; then
+                echo "[OK]"
+            else
+                echo "[FALHA]"
+                cat /tmp/ouro_hook_out
+                HOOK_FAIL=1
+            fi
+        fi
+    done
+fi
+
+if [ "$HOOK_FAIL" -ne 0 ]; then
+    echo ""
+    echo "[BLOQUEADO] Um ou mais hooks falharam. Veja mensagens acima."
+    exit 1
+fi
+
+# 6. Freshness do gauntlet (T2 -- apenas avisa)
 python scripts/check_gauntlet_freshness.py 2>/dev/null || true
 
 echo "=== Checks concluídos ==="

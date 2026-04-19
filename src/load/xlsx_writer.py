@@ -27,14 +27,22 @@ COLUNAS_EXTRATO = [
     "obs",
 ]
 
+AVISO_SNAPSHOT = (
+    "[Snapshot histórico 2023 -- dados não são atualizados automaticamente. "
+    "Reabilitação prevista para a Sprint 24 (automação bancária).]"
+)
+
 HEADER_FILL = PatternFill(start_color="2F5496", end_color="2F5496", fill_type="solid")
 HEADER_FONT = Font(color="FFFFFF", bold=True, size=11)
 VALOR_FORMAT = "#,##0.00"
 
 
-def _aplicar_estilo_header(ws: openpyxl.worksheet.worksheet.Worksheet) -> None:
-    """Aplica estilo visual nos cabeçalhos."""
-    for cell in ws[1]:
+def _aplicar_estilo_header(
+    ws: openpyxl.worksheet.worksheet.Worksheet,
+    linha: int = 1,
+) -> None:
+    """Aplica estilo visual nos cabeçalhos da linha informada (default: 1)."""
+    for cell in ws[linha]:
         cell.fill = HEADER_FILL
         cell.font = HEADER_FONT
         cell.alignment = Alignment(horizontal="center")
@@ -80,22 +88,49 @@ def _criar_aba_extrato(wb: openpyxl.Workbook, transacoes: list[dict]) -> None:
     logger.info("Aba 'extrato': %d transações escritas", len(transacoes))
 
 
-def _criar_aba_renda(wb: openpyxl.Workbook, transacoes: list[dict]) -> None:
-    """Cria a aba de renda mensal."""
+def _criar_aba_renda(
+    wb: openpyxl.Workbook,
+    transacoes: list[dict],
+    contracheques: Optional[list[dict]] = None,
+) -> None:
+    """Cria a aba de renda mensal.
+
+    Prioriza holerites extraídos (com bruto/INSS/IRRF/VR-VA reais) quando
+    disponíveis. Para meses sem holerite, recai no comportamento antigo de
+    inferir receita bruta das transações marcadas como "Receita" no extrato.
+    """
     ws = wb.create_sheet("renda")
     colunas = ["mes_ref", "fonte", "bruto", "inss", "irrf", "vr_va", "liquido", "banco"]
 
     for col_idx, col_nome in enumerate(colunas, 1):
         ws.cell(row=1, column=col_idx, value=col_nome)
 
-    # Agrupar receitas por mês
+    contracheques = contracheques or []
+    meses_com_holerite = {c["mes_ref"] for c in contracheques}
+
+    row_idx = 2
+
+    for c in sorted(contracheques, key=lambda x: (x["mes_ref"], x["fonte"])):
+        ws.cell(row=row_idx, column=1, value=c["mes_ref"])
+        ws.cell(row=row_idx, column=2, value=c["fonte"])
+        ws.cell(row=row_idx, column=3, value=c.get("bruto", 0))
+        ws.cell(row=row_idx, column=4, value=c.get("inss", 0))
+        ws.cell(row=row_idx, column=5, value=c.get("irrf", 0))
+        ws.cell(row=row_idx, column=6, value=c.get("vr_va", 0))
+        ws.cell(row=row_idx, column=7, value=c.get("liquido", 0))
+        ws.cell(row=row_idx, column=8, value=c.get("banco", ""))
+        for col in (3, 4, 5, 6, 7):
+            ws.cell(row=row_idx, column=col).number_format = VALOR_FORMAT
+        row_idx += 1
+
     receitas_por_mes: dict[str, list[dict]] = {}
     for t in transacoes:
         if t.get("tipo") == "Receita":
             mes = t.get("mes_ref", "")
+            if mes in meses_com_holerite:
+                continue
             receitas_por_mes.setdefault(mes, []).append(t)
 
-    row_idx = 2
     for mes in sorted(receitas_por_mes.keys()):
         for t in receitas_por_mes[mes]:
             ws.cell(row=row_idx, column=1, value=mes)
@@ -109,7 +144,12 @@ def _criar_aba_renda(wb: openpyxl.Workbook, transacoes: list[dict]) -> None:
 
     _aplicar_estilo_header(ws)
     _ajustar_largura_colunas(ws)
-    logger.info("Aba 'renda': %d linhas", row_idx - 2)
+    logger.info(
+        "Aba 'renda': %d linhas (%d holerites + %d receitas inferidas)",
+        row_idx - 2,
+        len(contracheques),
+        row_idx - 2 - len(contracheques),
+    )
 
 
 def _criar_aba_resumo_mensal(wb: openpyxl.Workbook, transacoes: list[dict]) -> None:
@@ -190,10 +230,11 @@ def _criar_aba_dividas(
     ws = wb.create_sheet("dividas_ativas")
     colunas = ["mes_ref", "custo", "valor", "status", "vencimento", "quem", "recorrente", "obs"]
 
+    ws.cell(row=1, column=1, value=AVISO_SNAPSHOT)
     for col_idx, col_nome in enumerate(colunas, 1):
-        ws.cell(row=1, column=col_idx, value=col_nome)
+        ws.cell(row=2, column=col_idx, value=col_nome)
 
-    row_idx = 2
+    row_idx = 3
     if caminho_historico and caminho_historico.exists():
         try:
             wb_hist = openpyxl.load_workbook(caminho_historico)
@@ -221,11 +262,11 @@ def _criar_aba_dividas(
 
                     row_idx += 1
 
-                logger.info("Aba 'dividas_ativas': importadas %d linhas do histórico", row_idx - 2)
+                logger.info("Aba 'dividas_ativas': importadas %d linhas do histórico", row_idx - 3)
         except Exception as e:
             logger.warning("Erro ao importar dívidas do histórico: %s", e)
 
-    _aplicar_estilo_header(ws)
+    _aplicar_estilo_header(ws, linha=2)
     _ajustar_largura_colunas(ws)
 
 
@@ -243,10 +284,11 @@ def _criar_aba_inventario(
         "perda_mensal",
     ]
 
+    ws.cell(row=1, column=1, value=AVISO_SNAPSHOT)
     for col_idx, col_nome in enumerate(colunas, 1):
-        ws.cell(row=1, column=col_idx, value=col_nome)
+        ws.cell(row=2, column=col_idx, value=col_nome)
 
-    row_idx = 2
+    row_idx = 3
     if caminho_historico and caminho_historico.exists():
         try:
             wb_hist = openpyxl.load_workbook(caminho_historico)
@@ -271,11 +313,11 @@ def _criar_aba_inventario(
                     ws.cell(row=row_idx, column=5).number_format = VALOR_FORMAT
                     row_idx += 1
 
-                logger.info("Aba 'inventario': importados %d bens do histórico", row_idx - 2)
+                logger.info("Aba 'inventario': importados %d bens do histórico", row_idx - 3)
         except Exception as e:
             logger.warning("Erro ao importar inventário do histórico: %s", e)
 
-    _aplicar_estilo_header(ws)
+    _aplicar_estilo_header(ws, linha=2)
     _ajustar_largura_colunas(ws)
 
 
@@ -287,10 +329,11 @@ def _criar_aba_prazos(
     ws = wb.create_sheet("prazos")
     colunas = ["conta", "dia_vencimento", "banco_pagamento", "auto_debito"]
 
+    ws.cell(row=1, column=1, value=AVISO_SNAPSHOT)
     for col_idx, col_nome in enumerate(colunas, 1):
-        ws.cell(row=1, column=col_idx, value=col_nome)
+        ws.cell(row=2, column=col_idx, value=col_nome)
 
-    row_idx = 2
+    row_idx = 3
     if caminho_historico and caminho_historico.exists():
         try:
             wb_hist = openpyxl.load_workbook(caminho_historico)
@@ -307,11 +350,11 @@ def _criar_aba_prazos(
                         ws.cell(row=row_idx, column=2, value=dia)
                         row_idx += 1
 
-                logger.info("Aba 'prazos': importados %d prazos do histórico", row_idx - 2)
+                logger.info("Aba 'prazos': importados %d prazos do histórico", row_idx - 3)
         except Exception as e:
             logger.warning("Erro ao importar prazos do histórico: %s", e)
 
-    _aplicar_estilo_header(ws)
+    _aplicar_estilo_header(ws, linha=2)
     _ajustar_largura_colunas(ws)
 
 
@@ -347,13 +390,19 @@ def _criar_aba_irpf(wb: openpyxl.Workbook, transacoes: list[dict]) -> None:
 
 
 def _criar_aba_analise(wb: openpyxl.Workbook, transacoes: list[dict]) -> None:
-    """Cria a aba de análise com insights quantitativos e qualitativos."""
+    """Cria a aba de análise com insights quantitativos e qualitativos.
+
+    A aba é marcada como DEPRECATED: produz apenas totais e contagens, sem
+    análise interpretativa. Mantida para compatibilidade até a implementação
+    do resumo narrativo baseado em LLM (Sprint 33).
+    """
     from collections import Counter
 
     ws = wb.create_sheet("analise")
     ws.column_dimensions["A"].width = 80
     negrito = Font(bold=True, size=12)
     subtitulo = Font(bold=True, size=11, color="2F5496")
+    alerta = Font(bold=True, size=11, color="B00020")
 
     despesas = [t for t in transacoes if t.get("tipo") in ("Despesa", "Imposto")]
     receitas = [t for t in transacoes if t.get("tipo") == "Receita"]
@@ -364,8 +413,13 @@ def _criar_aba_analise(wb: openpyxl.Workbook, transacoes: list[dict]) -> None:
     meses = sorted({t.get("mes_ref", "") for t in transacoes if t.get("mes_ref")})
     n_meses = len(meses) or 1
 
-    # Panorama geral
     linhas: list[tuple[str, Optional[Font]]] = [
+        (
+            "[DEPRECATED -- apenas totais, sem análise interpretativa. "
+            "Resumo narrativo diagnóstico em implementação na Sprint 33.]",
+            alerta,
+        ),
+        ("", None),
         ("PANORAMA GERAL", negrito),
         (
             f"Período: {meses[0] if meses else '?'} a "
@@ -498,6 +552,7 @@ def gerar_xlsx(
     transacoes: list[dict],
     caminho_saida: Path,
     caminho_historico: Optional[Path] = None,
+    contracheques: Optional[list[dict]] = None,
 ) -> Path:
     """Gera o XLSX completo com todas as 8 abas."""
     wb = openpyxl.Workbook()
@@ -505,7 +560,7 @@ def gerar_xlsx(
     wb.remove(wb.active)
 
     _criar_aba_extrato(wb, transacoes)
-    _criar_aba_renda(wb, transacoes)
+    _criar_aba_renda(wb, transacoes, contracheques)
     _criar_aba_dividas(wb, caminho_historico)
     _criar_aba_inventario(wb, caminho_historico)
     _criar_aba_prazos(wb, caminho_historico)

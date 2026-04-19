@@ -180,11 +180,13 @@ _REGEX_CPF = re.compile(r"\d{3}\.?\d{3}\.?\d{3}-?\d{2}")
 
 def _extrair_cnpj_cpf(transacao: dict) -> Optional[str]:
     """Extrai CNPJ ou CPF do contraparte a partir da descrição da transação."""
-    texto = " ".join([
-        transacao.get("_descricao_original") or "",
-        transacao.get("local") or "",
-        transacao.get("obs") or "",
-    ])
+    texto = " ".join(
+        [
+            transacao.get("_descricao_original") or "",
+            transacao.get("local") or "",
+            transacao.get("obs") or "",
+        ]
+    )
 
     match_cnpj = _REGEX_CNPJ.search(texto)
     if match_cnpj:

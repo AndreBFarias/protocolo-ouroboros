@@ -13,9 +13,18 @@ from src.utils.logger import configurar_logger
 logger = configurar_logger("extrator_energia")
 
 MESES_PT = {
-    "01": "janeiro", "02": "fevereiro", "03": "março", "04": "abril",
-    "05": "maio", "06": "junho", "07": "julho", "08": "agosto",
-    "09": "setembro", "10": "outubro", "11": "novembro", "12": "dezembro",
+    "01": "janeiro",
+    "02": "fevereiro",
+    "03": "março",
+    "04": "abril",
+    "05": "maio",
+    "06": "junho",
+    "07": "julho",
+    "08": "agosto",
+    "09": "setembro",
+    "10": "outubro",
+    "11": "novembro",
+    "12": "dezembro",
 }
 
 
@@ -23,6 +32,7 @@ def _tentar_ocr(imagem_path: Path) -> Optional[str]:
     """Tenta extrair texto via tesseract. Retorna None se falhar."""
     try:
         import pytesseract
+
         img = Image.open(imagem_path)
         texto = pytesseract.image_to_string(img, lang="por")
         if texto and len(texto.strip()) > 20:
@@ -41,12 +51,8 @@ def _extrair_dados_ocr(texto: str) -> list[dict]:
 
     for bloco in blocos:
         mes_match = re.search(r"(\d{2})/(\d{4})", bloco)
-        consumo_match = re.search(
-            r"(?:[Cc]onsumo\s*\n?\s*)?(\d{2,4})\s*[Kk][Ww][Hh]", bloco
-        )
-        valor_match = re.search(
-            r"(?:Valor|R\$)\s*\n?\s*R?\$?\s*([\d.]+,\d{2})", bloco
-        )
+        consumo_match = re.search(r"(?:[Cc]onsumo\s*\n?\s*)?(\d{2,4})\s*[Kk][Ww][Hh]", bloco)
+        valor_match = re.search(r"(?:Valor|R\$)\s*\n?\s*R?\$?\s*([\d.]+,\d{2})", bloco)
 
         if mes_match and valor_match:
             mes = int(mes_match.group(1))
@@ -54,12 +60,14 @@ def _extrair_dados_ocr(texto: str) -> list[dict]:
             valor_str = valor_match.group(1).replace(".", "").replace(",", ".")
             consumo = int(consumo_match.group(1)) if consumo_match else 0
 
-            resultados.append({
-                "mes": mes,
-                "ano": ano,
-                "consumo_kwh": consumo,
-                "valor": float(valor_str),
-            })
+            resultados.append(
+                {
+                    "mes": mes,
+                    "ano": ano,
+                    "consumo_kwh": consumo,
+                    "valor": float(valor_str),
+                }
+            )
 
     return resultados
 
@@ -112,17 +120,19 @@ class ExtratorEnergiaOCR(ExtratorBase):
             except ValueError:
                 continue
 
-            transacoes.append(Transacao(
-                data=data_ref,
-                valor=d["valor"],
-                descricao=f"Energia elétrica - {d['consumo_kwh']} kWh",
-                banco_origem="Neoenergia",
-                pessoa="Casal",
-                forma_pagamento="Boleto",
-                tipo="Despesa",
-                identificador=f"energia_{data_ref.isoformat()}_{d['valor']:.2f}",
-                arquivo_origem=str(self.caminho),
-            ))
+            transacoes.append(
+                Transacao(
+                    data=data_ref,
+                    valor=d["valor"],
+                    descricao=f"Energia elétrica - {d['consumo_kwh']} kWh",
+                    banco_origem="Neoenergia",
+                    pessoa="Casal",
+                    forma_pagamento="Boleto",
+                    tipo="Despesa",
+                    identificador=f"energia_{data_ref.isoformat()}_{d['valor']:.2f}",
+                    arquivo_origem=str(self.caminho),
+                )
+            )
 
         return transacoes
 

@@ -29,9 +29,7 @@ try:
     BELVO_DISPONIVEL = True
 except ImportError:
     BELVO_DISPONIVEL = False
-    logger.warning(
-        "belvo-python não instalado. Rode: pip install belvo-python"
-    )
+    logger.warning("belvo-python não instalado. Rode: pip install belvo-python")
 
 RAIZ = Path(__file__).resolve().parents[2]
 DIR_RAW = RAIZ / "data" / "raw"
@@ -84,12 +82,14 @@ class BelvoSync:
             links = self.client.Links.list()
             contas: list[dict[str, Any]] = []
             for link in links:
-                contas.append({
-                    "id": link.get("id"),
-                    "instituição": link.get("institution"),
-                    "status": link.get("status"),
-                    "criado_em": link.get("created_at"),
-                })
+                contas.append(
+                    {
+                        "id": link.get("id"),
+                        "instituição": link.get("institution"),
+                        "status": link.get("status"),
+                        "criado_em": link.get("created_at"),
+                    }
+                )
             logger.info("Encontradas %d contas conectadas", len(contas))
             return contas
         except Exception as e:
@@ -114,7 +114,10 @@ class BelvoSync:
             )
             logger.info(
                 "Baixadas %d transações (link %s, %s a %s)",
-                len(transacoes), link_id[:8], data_inicio, data_fim,
+                len(transacoes),
+                link_id[:8],
+                data_inicio,
+                data_fim,
             )
             return transacoes
         except Exception as e:
@@ -179,7 +182,9 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Sincronizar dados via Belvo")
     parser.add_argument("--dias", type=int, default=30, help="Dias para buscar")
     parser.add_argument(
-        "--destino", type=str, default=str(DIR_RAW),
+        "--destino",
+        type=str,
+        default=str(DIR_RAW),
         help="Diretório de destino dos CSVs",
     )
     parser.add_argument("--listar", action="store_true", help="Apenas listar contas")

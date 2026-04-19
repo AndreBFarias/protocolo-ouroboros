@@ -65,8 +65,7 @@ def validar_total_por_banco(transacoes: list[dict]) -> tuple[bool, str]:
 def validar_sem_categoria(transacoes: list[dict]) -> tuple[bool, str]:
     """Verifica se existem transações sem categoria."""
     sem_categoria = [
-        t for t in transacoes
-        if t.get("categoria") is None or t.get("categoria") == ""
+        t for t in transacoes if t.get("categoria") is None or t.get("categoria") == ""
     ]
     qtd = len(sem_categoria)
     ok = qtd == 0
@@ -163,14 +162,12 @@ def validar_despesa_maior_receita(transacoes: list[dict]) -> tuple[bool, str]:
             dados_mes[mes]["despesa"] += valor
 
     meses_negativos = sorted(
-        m for m, d in dados_mes.items()
-        if d["receita"] > 0 and d["despesa"] > d["receita"]
+        m for m, d in dados_mes.items() if d["receita"] > 0 and d["despesa"] > d["receita"]
     )
 
     if meses_negativos:
         return False, (
-            f"{len(meses_negativos)} meses com despesa > receita "
-            f"({', '.join(meses_negativos)})"
+            f"{len(meses_negativos)} meses com despesa > receita ({', '.join(meses_negativos)})"
         )
 
     return True, "Nenhum mês com despesa superior à receita"
