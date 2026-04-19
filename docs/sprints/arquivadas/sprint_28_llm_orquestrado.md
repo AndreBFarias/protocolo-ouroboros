@@ -1,3 +1,5 @@
+> **ARQUIVADA em 2026-04-19** -- repensada como 43 (workflow supervisor artesanal) + 44-47b (extratores modulares). Conteúdo preservado abaixo para referência histórica.
+
 ## 0. SPEC (machine-readable)
 
 ```yaml
@@ -34,7 +36,7 @@ sprint:
 
 # Sprint 28 -- LLM Orquestrado: índice dos 3 modos de uso
 
-**Status:** PENDENTE
+**Status:** OBSOLETA
 **Data:** 2026-04-18
 **Prioridade:** ALTA
 **Tipo:** Documentação/Infra

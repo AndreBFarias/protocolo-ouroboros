@@ -1,3 +1,5 @@
+> **ARQUIVADA em 2026-04-19** -- absorvida em 53 (Grafo Visual + Obsidian Rico). Conteúdo preservado abaixo para referência histórica.
+
 ## 0. SPEC (machine-readable)
 
 ```yaml
@@ -37,7 +39,7 @@ sprint:
 
 # Sprint 29b -- UX Rica: grafo visual e Obsidian enriquecido
 
-**Status:** PENDENTE
+**Status:** OBSOLETA
 **Data:** 2026-04-18
 **Prioridade:** BAIXA
 **Tipo:** Feature

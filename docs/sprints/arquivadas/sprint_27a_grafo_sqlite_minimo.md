@@ -1,3 +1,5 @@
+> **ARQUIVADA em 2026-04-19** -- absorvida em 42 (Grafo SQLite Mínimo). Conteúdo preservado abaixo para referência histórica.
+
 ## 0. SPEC (machine-readable)
 
 ```yaml
@@ -41,7 +43,7 @@ sprint:
 
 # Sprint 27a -- Grafo de Conhecimento: SQLite mínimo e entity resolution
 
-**Status:** PENDENTE
+**Status:** OBSOLETA
 **Data:** 2026-04-18
 **Prioridade:** ALTA
 **Tipo:** Feature
