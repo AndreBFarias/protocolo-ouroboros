@@ -1,10 +1,14 @@
 # CLAUDE.md -- Protocolo Ouroboros
 
 ```
-VERSÃO: 3.1 | STATUS: PRODUÇÃO (com lacunas documentadas) | LANG: PT-BR
-TRANSAÇÕES: 2.859 | MESES: 44 (ago/2022 a out/2026) | BANCOS: 6 | EXTRATORES: 8
-SPRINTS CONCLUÍDAS: 14/29 | CATEGORIZAÇÃO: 100% | IRPF TAGS: 79 (14 com CNPJ)
+VERSÃO: 3.6 | STATUS: PRODUÇÃO (com lacunas verificadas) | LANG: PT-BR
+TRANSAÇÕES: 6.136 | MESES: 82 (out/2019 a mar/2026) | BANCOS: 6 | EXTRATORES: 9
+SPRINTS: 42 (20 concluídas, 0 produção, 15 backlog, 7 arquivadas)
+CATEGORIZAÇÃO: 100% | IRPF TAGS: 167 (75 com CNPJ) | HOLERITES: 24 (G4F + Infobase)
+TESTES: 44 unitários (transform/ 82% média, extractors/contracheque_pdf 59%)
+ROTA: re-roadmap como catalogador universal artesanal (2026-04-19)
 INTEGRAÇÕES: OFX (pronto), Belvo (em teste), Gmail (setup pendente), MeuPluggy (disponível)
+ROTA ATUAL: Plano 30/60/90 dias -- base honesta + supervisor IA + cérebro MVP
 ```
 
 ---
@@ -93,22 +97,22 @@ A IA deve ler o CONTEÚDO (não confiar no nome) para detectar:
 
 ### renda
 
-**AVISO:** Colunas `inss`, `irrf`, `vr_va` estão sempre vazias. O pipeline infere receita das transações bancárias (tipo == "Receita"), mas não tem extrator de contracheque. Sem holerite, esses campos nunca serão preenchidos automaticamente.
+Fonte primária: extrator de contracheque PDF (`src/extractors/contracheque_pdf.py`), que suporta G4F (PDF nativo) e Infobase (PDF nativo ou escaneado, com fallback OCR via tesseract). Folha mensal, 13º adiantamento e 13º integral são entradas distintas identificadas pelo campo `fonte`. Para meses sem holerite, o pipeline recai para receitas inferidas do extrato bancário (INSS/IRRF/VR-VA ficam vazios nesse caso).
 
 | Coluna | Tipo | Preenchido? |
 |--------|------|-------------|
 | mes_ref | str (YYYY-MM) | sim |
-| fonte | str | sim (inferido do banco_origem) |
-| bruto | float | sim (valor da transação) |
-| inss | float | SEMPRE VAZIO (sem extrator de contracheque) |
-| irrf | float | SEMPRE VAZIO (sem extrator de contracheque) |
-| vr_va | float | SEMPRE VAZIO (sem extrator de contracheque) |
-| liquido | float | sim (= bruto, pois sem deduções) |
-| banco | str | sim |
+| fonte | str | sim (G4F, Infobase, G4F - 13º Adiantamento, etc.) |
+| bruto | float | sim (valor total dos vencimentos do contracheque) |
+| inss | float | sim quando holerite disponível; vazio quando fallback para extrato bancário |
+| irrf | float | idem |
+| vr_va | float | idem (G4F tem Vale Alimentação; Infobase, não) |
+| liquido | float | sim (valor líquido a receber do holerite) |
+| banco | str | vazio para holerites; preenchido só para fallback de extrato |
 
 ### dividas_ativas
 
-**AVISO:** Dados importados do controle_antigo.xlsx (2022-2023), nunca atualizados. As dívidas reais atuais (Nubank PF/PJ) não estão refletidas. 26 linhas estáticas.
+**AVISO:** Dados importados do controle_antigo.xlsx (2022-2023), nunca atualizados. As dívidas reais atuais (Nubank PF/PJ) não estão refletidas. 26 linhas estáticas. Aba no XLSX tem cabeçalho "[Snapshot histórico 2023 -- dados não são atualizados automaticamente]" na linha 1; colunas começam na linha 2.
 
 | Coluna | Tipo |
 |--------|------|
@@ -123,7 +127,7 @@ A IA deve ler o CONTEÚDO (não confiar no nome) para detectar:
 
 ### inventario
 
-**AVISO:** 18 bens importados do histórico, sem mecanismo de atualização. Snapshot congelado.
+**AVISO:** 18 bens importados do histórico, sem mecanismo de atualização. Snapshot congelado. Cabeçalho de aviso na linha 1 do XLSX; colunas começam na linha 2.
 
 | Coluna | Tipo |
 |--------|------|
@@ -135,7 +139,7 @@ A IA deve ler o CONTEÚDO (não confiar no nome) para detectar:
 
 ### prazos
 
-**AVISO:** 6 prazos importados do histórico. Leitura frágil (depende de índices de coluna).
+**AVISO:** 6 prazos importados do histórico. Leitura frágil (depende de índices de coluna). Cabeçalho de aviso na linha 1 do XLSX; colunas começam na linha 2.
 
 | Coluna | Tipo |
 |--------|------|
@@ -160,20 +164,20 @@ A IA deve ler o CONTEÚDO (não confiar no nome) para detectar:
 
 ### irpf
 
-**AVISO:** Coluna `cnpj_cpf` está sempre vazia -- o tagger IRPF não extrai CNPJ/CPF do contraparte.
+CNPJ/CPF extraídos contextualmente pelo tagger (`src/transform/irpf_tagger.py:_extrair_cnpj_cpf`) a partir do campo `_descricao_original` das transações. Em execução atual, 75 de 167 registros IRPF têm CNPJ/CPF preenchido (44%). Os que faltam são casos onde a descrição original não carrega os dígitos.
 
 | Coluna | Tipo | Preenchido? |
 |--------|------|-------------|
 | ano | int | sim |
 | tipo | str | sim |
 | fonte | str | sim |
-| cnpj_cpf | str | SEMPRE VAZIO (sem extração de CNPJ) |
+| cnpj_cpf | str | sim quando a descrição bruta contém CNPJ/CPF |
 | valor | float | sim |
 | mes | str | sim |
 
 ### análise
 
-**AVISO:** NÃO contém análise real. Gera frases genéricas com totais ("Total de X transações"). Análise inteligente depende de LLM local (Sprint 08, não implementada).
+**AVISO:** Marcada como DEPRECATED no XLSX (linha 1 da aba). Produz apenas totais e contagens ("Total de X transações, top 10 categorias, balanço por pessoa"). Análise interpretativa real depende do resumo narrativo diagnóstico (Sprint 33, não implementada).
 
 ---
 
@@ -284,7 +288,7 @@ protocolo-ouroboros/
 │   ├── integrations/             # Belvo sync, Gmail CSV, docs de MeuPluggy
 │   ├── projections/              # cenários financeiros
 │   ├── dashboard/                # Streamlit app (8 páginas, Dracula theme)
-│   ├── obsidian/                 # Sync com vault Obsidian (frontmatter com bug -- Sprint 22)
+│   ├── obsidian/                 # Sync com vault Obsidian (frontmatter YAML funcional)
 │   └── utils/                    # logger, pdf_reader, file_detector, validator, senhas
 │
 ├── mappings/
@@ -335,36 +339,57 @@ protocolo-ouroboros/
 
 ---
 
-## Contexto Ativo
+## Contexto Ativo -- organizado por Fase do plano 30/60/90
 
-- **Concluídas:** 1 (MVP), 2 (Infra), 3 (Dashboard v1), 4 (Inteligência), 5 (Relatórios), 6 (Obsidian), 7 (Dashboard v2), 12 (Rebranding), 13 (UI/UX), 14 (Acentuação -- hooks), 17 (Auditoria), 18 (Dívida Técnica), 19 (Bugs Críticos), 23 (Verdade nos Dados -- parcial)
-- **Pendentes:** 20 (Dashboard Redesign), 21 (Relatórios Diagnósticos), 22 (Consolidação)
-- **Visão:** 24 (Automação Bancária), 25 (Pacote IRPF)
-- **Cérebro Inteligente (propostas 2026-04-16):** 26 (Ingestão Universal de Documentos), 27 (Grafo de Conhecimento + Classificação v2), 28 (LLM Orquestrado via Claude Opus), 29 (UX Navegável: busca, timeline, grafo visual, Obsidian rico)
-- **Futuro:** 08 (LLM Local -- vira backend alternativo da 28 quando qualidade justificar), 09 (Grafos analíticos Sankey/heatmap -- complementar à 29), 11 (Vault Final), 15 (Dashboard Polish), 16 (Testes CI/CD)
+Layout em `docs/sprints/{concluidos,producao,backlog,arquivadas}`. Detalhamento por sprint em cada arquivo `sprint_NN_*.md`. Visão consolidada em `docs/ROADMAP.md`.
+
+### Decisões arquiteturais ativas (ADRs)
+
+Princípios que regem as Fases 1-3 e qualquer decisão futura. Leitura obrigatória antes de propor mudança estrutural.
+
+- **ADR-07** -- Princípio Local First (base histórica)
+- **ADR-08** -- Supervisor-Aprovador: Claude propõe, humano aprova, aprovação incorpora regra determinística (implementa Sprints 31 e 34)
+- **ADR-09** -- Autossuficiência Progressiva: LLM é ferramenta provisória; métrica-chave é % determinístico (implementa Sprint 36)
+- **ADR-10** -- Resiliência a Dados Incompletos: cérebro brilha com gaps; apenas relatório final avisa cobertura parcial (implementa Sprint 21)
+- **ADR-11** -- Classificação em Camadas: overrides > regex > supervisor LLM (sugere) > fallback (formaliza pipeline atual)
+- **ADR-12** -- Cruzamentos via Grafo de Conhecimento: SQLite + rapidfuzz + entity resolution (implementa Sprint 27a)
+
+
+- **Concluídas (20):** 01 (MVP), 02 (Infra), 03 (Dashboard v1), 04 (Inteligência), 05 (Relatórios), 06 (Obsidian), 07 (Dashboard v2), 12 (Rebranding), 13 (UI/UX), 14 (Acentuação), 17 (Auditoria), 18 (Dívida Técnica), 19 (Bugs Críticos), 22 (Consolidação), 23 (Verdade nos Dados), 30 (Base Honesta -- testes), 37 (Fix OFX encoding), 38 (Fix deduplicator fuzzy), 39 (Fix IRPF sort), 40 (Fix fallback receita).
+- **Fase 1 backlog (30 dias):** 21 (Relatórios Diagnósticos), 30 (Base Honesta + Testes), 31 (Infra LLM + Supervisor Modo 1), 20 (Dashboard Redesign -- mockups primeiro).
+- **Fase 2 backlog (60 dias):** 20 (CSS pós-mockups), 32 (OCR Energia via Vision), 33 (Resumo Mensal Narrativo), 34 (Supervisor Modo 2 -- Auditor), 35 (IRPF como YAML), 36 (Métricas IA -- termômetro de autossuficiência).
+- **Fase 3 backlog (90 dias):** 27a (Grafo SQLite mínimo), 29a (Busca + Timeline + Pergunte NL), 28 (LLM Orquestrado -- consolidação + ADR-08).
+- **Pós-90d backlog:** 24 (Automação Bancária), 25 (Pacote IRPF completo), 27b (Grafo avançado + visualização), 29b (Obsidian rico + MOCs).
+- **Arquivadas (7):** 08 (CANCELADA), 09 (ABSORVIDA em 27b), 10 (CANCELADA), 11 (CANCELADA), 15 (ABSORVIDA em 20), 16 (ABSORVIDA em 30), 26 (OBSOLETA -- fundida com 28).
 - **Transações:** 2.859 (1.214 histórico + 1.645 dados brutos)
 - **Cobertura de meses:** 44 (ago/2022 a out/2026)
 - **Bancos:** Itaú, Santander, C6, Nubank (André) + Nubank PF/PJ (Vitória)
 - **Categorização:** 100% (111 regras + 10 overrides)
 - **IRPF tags:** 79 registros em 5 tipos
 
-### Lacunas conhecidas (auditoria 2026-04-15)
+### Lacunas conhecidas (auditoria cruzada 2026-04-18)
 
-| Lacuna | Impacto | Sprint |
-|--------|---------|--------|
-| Download de extratos é 100% manual | Sem integração com Open Finance/APIs bancárias | Fora do escopo |
-| `health_check.py` não existe | Menu opção 8 e --check crasham | 23 |
-| `doc_generator.py` não existe | `make docs` crasha | 23 |
-| `energia_ocr.py` não registrado no pipeline | Contas de energia nunca processadas | 23 |
-| Obsidian sync com frontmatter nulo | Queries Dataview quebradas | 23 |
-| Aba renda: INSS/IRRF/VR-VA vazios | Sem extrator de contracheque | 24 |
-| Aba analise: texto estático | Sem LLM (Sprint 08) | 24 | <!-- noqa: accent -->
-| Abas dividas/inventario/prazos: congeladas | Dados de 2023, nunca atualizados | 24 |
-| Aba irpf: cnpj_cpf vazio | Sem extração de CNPJ | 24 |
-| Dashboard: layout, fontes, contraste | Não segue padrões visuais | 21 |
-| Relatórios: descritivos, não diagnósticos | Inúteis para análise financeira por IA | 22 |
-| Sem agendamento (cron) | Toda execução é on-demand | Fora do escopo |
-| Sem extrator CAESB/contracheque | Dados faltantes | Fora do escopo |
+Auditoria por leitura direta do código -- não confie apenas em sprints antigas.
+
+| Lacuna | Impacto | Fase do plano 30/60/90 |
+|--------|---------|------------------------|
+| Aba `analise`: texto estático sem diagnóstico | Agora marcada como DEPRECATED; análise real só via LLM narrativo | Fase 2 §2.3 (Sprint 33) |
+| Abas `dividas_ativas`/`inventario`/`prazos`: congeladas em 2023 | Marcadas com cabeçalho de snapshot histórico; reabilitação depende de automação bancária | Pós-90d (Sprint 24) |
+| Zero infraestrutura LLM | Sem `anthropic` em deps, sem `src/llm/`, sem cache, sem cost_tracker | Fase 1 §1.6 |
+| Relatórios mensais são descritivos, não diagnósticos | Listam totais mas não comparam períodos nem sinalizam anomalias | Fase 1 §1.5 |
+| Dashboard: layout, tipografia, contraste inconsistentes | Navegação funcional mas visualmente descuidada | Fase 2 §2.1 |
+| Sem grafo de conhecimento / entity resolution | Mesmas entidades com nomes diferentes não se cruzam | Fase 3 §3.1 |
+| Sem busca global no dashboard | Usuário não consegue rastrear "neoenergia" em todas as transações | Fase 3 §3.2 |
+| Download de extratos é 100% manual | Sem integração Open Finance | Fora do escopo do 30/60/90 |
+| Sem extrator CAESB/contracheque | Dados faltantes afetam relatório final | Fora do escopo do 30/60/90 |
+| Sem agendamento (cron) | Toda execução é on-demand | Fora do escopo do 30/60/90 |
+
+### Mentiras corrigidas nesta revisão
+
+Auditoria identificou afirmações do CLAUDE.md v3.1 que contradiziam o código. Corrigidas:
+
+- **`energia_ocr.py` está registrado no pipeline** (`src/pipeline.py:71-76`). A sprint 23 corrigiu isso antes; a documentação não acompanhou.
+- **Obsidian sync gera frontmatter YAML válido** (`src/obsidian/sync.py:114-156`) com `tipo`, `mes`, `receita`, `despesa`, `saldo`, `tags`, `aliases`, `created`. O "frontmatter nulo" que CLAUDE.md mencionava não existe mais.
 
 ---
 

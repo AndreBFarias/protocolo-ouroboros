@@ -166,4 +166,44 @@ Dados manuais do XLSX antigo (2022-2023) com mesmo valor+data mas locais complet
 
 ---
 
+## 16. OFX com espaços no header ENCODING (Sprint 37)
+
+**O que aconteceu:** O OFX do C6 (`c6_cc_andre_2022-06_2026-04.ofx`) falhava no parser `ofxparse` com erro obscuro `cannot access local variable 'encoding' where it is not associated with a value`. O cabeçalho do arquivo tinha `ENCODING: UTF - 8` com espaços ao redor do hífen, e a lib não tolera essa variação. 1.784 transações do C6 ficavam fora do XLSX consolidado.
+
+**Solução aplicada:** Pré-processar o arquivo em memória via regex `REGEX_ENCODING_HEADER` que remove espaços internos do valor do header ENCODING antes de passar bytes para `OfxParser.parse` via `io.BytesIO`. Código em `src/extractors/ofx_parser.py:37,88-94`.
+
+**Como evitar no futuro:** Bancos brasileiros exportam OFX com variações livres no cabeçalho. Quando adicionar extrator para novo banco, rodar `head -c 400 arquivo.ofx` e comparar com formato canônico antes de assumir compatibilidade com ofxparse.
+
+---
+
+## 17. Deduplicator fuzzy só marcava, não removia (Sprint 38)
+
+**O que aconteceu:** Validator reportava 88 duplicatas residuais após destravar o OFX do C6. Causa: `deduplicar_por_hash_fuzzy` usava chave frouxa `(data, valor)` e apenas setava `_duplicata_fuzzy=True` sem remover, com comentário "pode ser coincidência legítima". Histórico vs OFX novo, e OFX vs CSV do mesmo banco, inflavam o XLSX.
+
+**Solução aplicada:** Chave passou a `(data+valor+local)` alinhada ao validator; remove ao invés de marcar; quando múltiplos registros casam, prefere `banco_origem != "Histórico"` (metadados mais ricos); inclui Transferências Internas (pares legítimos entre bancos diferentes não colidem pois `local` é distinto em cada ponta). 88 → 43 → 5 → 0 duplicatas.
+
+**Como evitar no futuro:** Regras de dedup sem ação concreta (marcar sem remover) contaminam downstream silenciosamente. Sempre remover OU justificar por escrito no código que a ambiguidade foi intencional.
+
+---
+
+## 18. `bool(NaN) == True` passa NaN como tag válida (Sprint 39)
+
+**O que aconteceu:** `python -m src.irpf --ano 2026` crashava com `TypeError: '<' not supported between instances of 'str' and 'float'` em `sorted(por_tipo.items())`. Causa: transações sem `tag_irpf` vinham do `pd.read_excel` como `NaN` (float), e `if tag:` aceita NaN como truthy, fazendo NaN entrar como chave junto com tags-string.
+
+**Solução aplicada:** Substituir `if tag:` por `if isinstance(tag, str) and tag:` em `gerar_csvs_por_tipo` (src/irpf/gerador_pacote.py:17-19) e `gerar_resumo` (linhas 61-65). Condição dupla filtra NaN/None/numéricos e strings vazias.
+
+**Como evitar no futuro:** Ao consumir coluna opcional vinda de XLSX via pandas, assumir que o valor pode ser `pd.NA`, `math.nan` ou `None`. Truthy-checks ingênuos passam NaN. Usar `isinstance(x, str)` explicitamente antes de agregação ou sort.
+
+---
+
+## 19. Fallback do categorizer forçava Questionável para Receita/TI (Sprint 40)
+
+**O que aconteceu:** Testes da Sprint 30 revelaram que transações `Receita` e `Transferência Interna` sem match de regex eram classificadas como `"Questionável"`. Causa: `categorizar()` setava `classificacao="Questionável"` no fallback (`categorizer.py:197`) antes de `_garantir_classificacao` rodar, e este último só atua quando a classificação é None. Impactava `resumo_mensal.total_questionavel` silenciosamente.
+
+**Solução aplicada:** Fallback agora só marca Questionável se `tipo in ("Despesa", None)`. Outros tipos ficam com `classificacao=None` e `_garantir_classificacao` atribui N/A (Receita, TI) ou Obrigatório (Imposto). Testes de regressão em `tests/test_categorizer.py::test_receita_sem_match_cai_em_na` e `test_transferencia_interna_sem_match_cai_em_na`.
+
+**Como evitar no futuro:** Uma classificação é um rótulo de despesa -- Questionável/Supérfluo/Obrigatório não fazem sentido para Receita ou TI. Fallbacks que "chutam valor padrão" devem respeitar a semântica do domínio, não só o fluxo de controle.
+
+---
+
 *"Experiência é simplesmente o nome que damos aos nossos erros." -- Oscar Wilde*
