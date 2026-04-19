@@ -1,3 +1,5 @@
+> **ARQUIVADA em 2026-04-19** -- absorvida em 45 (Cupom Térmico Foto -- OCR universal cobre também energia). Conteúdo preservado abaixo para referência histórica.
+
 ## 0. SPEC (machine-readable)
 
 ```yaml
@@ -38,7 +40,7 @@ sprint:
 
 # Sprint 32 -- OCR de Energia via Visão do LLM: fallback sobre tesseract
 
-**Status:** PENDENTE
+**Status:** OBSOLETA
 **Data:** 2026-04-18
 **Prioridade:** MÉDIA
 **Tipo:** Refactor

@@ -1,12 +1,13 @@
 # CLAUDE.md -- Protocolo Ouroboros
 
 ```
-VERSÃO: 3.6 | STATUS: PRODUÇÃO (com lacunas verificadas) | LANG: PT-BR
+VERSÃO: 4.0 | STATUS: PRODUÇÃO (catalogador universal em construção) | LANG: PT-BR
 TRANSAÇÕES: 6.136 | MESES: 82 (out/2019 a mar/2026) | BANCOS: 6 | EXTRATORES: 9
-SPRINTS: 42 (20 concluídas, 0 produção, 15 backlog, 7 arquivadas)
+SPRINTS: 51 (20 concluídas, 0 produção, 18 backlog, 13 arquivadas)
 CATEGORIZAÇÃO: 100% | IRPF TAGS: 167 (75 com CNPJ) | HOLERITES: 24 (G4F + Infobase)
 TESTES: 44 unitários (transform/ 82% média, extractors/contracheque_pdf 59%)
-ROTA: re-roadmap como catalogador universal artesanal (2026-04-19)
+ROTA: Catalogador universal artesanal via Claude Code Opus (ver docs/ROADMAP.md fases ALFA→ZETA)
+SUPERVISOR: Claude Code (sessão interativa) -- nenhuma API programática (ADR-13)
 INTEGRAÇÕES: OFX (pronto), Belvo (em teste), Gmail (setup pendente), MeuPluggy (disponível)
 ROTA ATUAL: Plano 30/60/90 dias -- base honesta + supervisor IA + cérebro MVP
 ```

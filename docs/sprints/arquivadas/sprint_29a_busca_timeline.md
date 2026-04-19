@@ -1,3 +1,5 @@
+> **ARQUIVADA em 2026-04-19** -- absorvida em 52 (Busca Global Doc-Cêntrica). Conteúdo preservado abaixo para referência histórica.
+
 ## 0. SPEC (machine-readable)
 
 ```yaml
@@ -41,7 +43,7 @@ sprint:
 
 # Sprint 29a -- UX Navegável: busca global, abrir PDF e timeline de entidade
 
-**Status:** PENDENTE
+**Status:** OBSOLETA
 **Data:** 2026-04-18
 **Prioridade:** ALTA
 **Tipo:** Feature

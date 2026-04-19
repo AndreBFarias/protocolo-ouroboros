@@ -1,3 +1,5 @@
+> **ARQUIVADA em 2026-04-19** -- repensada como 43 (supervisor artesanal via Claude Code, sem API programática). Conteúdo preservado abaixo para referência histórica.
+
 ## 0. SPEC (machine-readable)
 
 ```yaml
@@ -75,7 +77,7 @@ sprint:
 
 # Sprint 31 -- Infra LLM + Supervisor de Melhoria Contínua (Modo 1)
 
-**Status:** PENDENTE
+**Status:** OBSOLETA
 **Data:** 2026-04-18
 **Prioridade:** CRÍTICA
 **Tipo:** Feature
