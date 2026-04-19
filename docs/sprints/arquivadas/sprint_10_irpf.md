@@ -1,5 +1,18 @@
 # Sprint 10 -- IRPF Completo
 
+**Status:** CANCELADA
+**Data de arquivamento:** 2026-04-18
+**Motivo:** IRPF 2026 já foi declarado manualmente; o loop de regras (Sprint 35) e o pacote completo (Sprint 25) cobrem 2027+.
+**Substituída por:** Sprints 25, 35
+**Plano referência:** `/home/andrefarias/.claude/plans/o-que-eu-quero-twinkly-wreath.md`
+
+> Esta sprint foi arquivada na reorganização do roadmap em 2026-04-18.
+> O conteúdo abaixo é preservado para consulta histórica.
+
+---
+
+## Conteúdo histórico
+
 ## Status: Pendente
 Issue: a criar
 

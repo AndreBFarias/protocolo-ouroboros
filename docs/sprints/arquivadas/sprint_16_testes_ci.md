@@ -1,5 +1,18 @@
 # Sprint 16 -- Testes e CI/CD
 
+**Status:** ABSORVIDA
+**Data de arquivamento:** 2026-04-18
+**Motivo:** Testes mínimos viram parte da Sprint 30 (base honesta). CI incorporada em scripts/ci/ nos hooks portados.
+**Substituída por:** Sprint 30
+**Plano referência:** `/home/andrefarias/.claude/plans/o-que-eu-quero-twinkly-wreath.md`
+
+> Esta sprint foi arquivada na reorganização do roadmap em 2026-04-18.
+> O conteúdo abaixo é preservado para consulta histórica.
+
+---
+
+## Conteúdo histórico
+
 ## Status: Parcialmente coberta pelo gauntlet
 Issue: a criar
 

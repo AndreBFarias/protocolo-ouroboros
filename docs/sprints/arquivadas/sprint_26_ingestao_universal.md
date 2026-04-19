@@ -1,5 +1,18 @@
 # Sprint 26 -- Ingestão Universal de Documentos
 
+**Status:** OBSOLETA
+**Data de arquivamento:** 2026-04-18
+**Motivo:** Escopo original (7 tipos de documento novos, OCR multi-estratégia, watchdog systemd) é 3-4 sprints honestas. Fundida na Sprint 28 (modos de LLM) onde enriquecimento via LLM entrega o valor essencial sem expansão da ingestão.
+**Substituída por:** Sprint 28 (LLM Orquestrado), Sprint 32 (OCR Vision)
+**Plano referência:** `/home/andrefarias/.claude/plans/o-que-eu-quero-twinkly-wreath.md`
+
+> Esta sprint foi arquivada na reorganização do roadmap em 2026-04-18.
+> O conteúdo abaixo é preservado para consulta histórica.
+
+---
+
+## Conteúdo histórico
+
 ## Status: Pendente (proposta 2026-04-16)
 Issue: #11
 

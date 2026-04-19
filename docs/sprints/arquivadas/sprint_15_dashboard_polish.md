@@ -1,5 +1,18 @@
 # Sprint 15 -- Dashboard Polish Visual
 
+**Status:** ABSORVIDA
+**Data de arquivamento:** 2026-04-18
+**Motivo:** Polish visual e redesign se fundem na Sprint 20 (mockups + CSS).
+**Substituída por:** Sprint 20
+**Plano referência:** `/home/andrefarias/.claude/plans/o-que-eu-quero-twinkly-wreath.md`
+
+> Esta sprint foi arquivada na reorganização do roadmap em 2026-04-18.
+> O conteúdo abaixo é preservado para consulta histórica.
+
+---
+
+## Conteúdo histórico
+
 ## Status: Pendente
 Issue: a criar
 
