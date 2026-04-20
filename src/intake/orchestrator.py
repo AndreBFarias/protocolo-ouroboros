@@ -40,6 +40,7 @@ from src.intake.extractors_envelope import (
     expandir_zip,
     extrair_anexos_eml,
 )
+from src.intake.heterogeneidade import e_heterogeneo
 from src.intake.preview import gerar_preview
 from src.intake.router import RelatorioRoteamento, arquivar_original, rotear_lote
 from src.utils.logger import configurar_logger
@@ -214,13 +215,18 @@ def _expandir(
     from src.intake import extractors_envelope as env
 
     if tipo_envelope == "pdf":
-        resultado = expandir_pdf_multipage(caminho_inbox)
-        return resultado, resultado.paginas
+        # Sprint 41d: page-split SÓ se >1 documento lógico distinto detectado.
+        # Sem isso, extratos bancários multipage fragmentam (cabeçalho só na pg1).
+        if e_heterogeneo(caminho_inbox):
+            resultado = expandir_pdf_multipage(caminho_inbox)
+            return resultado, resultado.paginas
+        # PDF homogêneo: 1 artefato só, single envelope
+        return _envelope_single_file(caminho_inbox, sha8, env._ENVELOPES_BASE), ()
     if tipo_envelope == "zip":
         return expandir_zip(caminho_inbox), ()
     if tipo_envelope == "eml":
         return extrair_anexos_eml(caminho_inbox), ()
-    # single
+    # single (não-PDF)
     resultado = _envelope_single_file(caminho_inbox, sha8, env._ENVELOPES_BASE)
     return resultado, ()
 
