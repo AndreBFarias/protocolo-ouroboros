@@ -3,7 +3,7 @@
 ```
 VERSÃO: 4.0 | STATUS: PRODUÇÃO (catalogador universal em construção) | LANG: PT-BR
 TRANSAÇÕES: 6.136 | MESES: 82 (out/2019 a mar/2026) | BANCOS: 6 | EXTRATORES: 9
-SPRINTS: 51 (20 concluídas, 0 produção, 18 backlog, 13 arquivadas)
+SPRINTS: 56 (21 concluídas, 0 produção, 22 backlog, 13 arquivadas) -- Sprint 41 CONCLUÍDA com precisão 100% em 98 arquivos; abre 41b (auto-detect pessoa), 41c (unificação detector), 41d (heterogeneity)
 CATEGORIZAÇÃO: 100% | IRPF TAGS: 167 (75 com CNPJ) | HOLERITES: 24 (G4F + Infobase)
 TESTES: 44 unitários (transform/ 82% média, extractors/contracheque_pdf 59%)
 ROTA: Catalogador universal artesanal via Claude Code Opus (ver docs/ROADMAP.md fases ALFA→ZETA)

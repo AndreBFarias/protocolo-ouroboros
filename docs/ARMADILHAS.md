@@ -206,4 +206,35 @@ Dados manuais do XLSX antigo (2022-2023) com mesmo valor+data mas locais complet
 
 ---
 
+## 20. Glyphs corrompidos em PDF nativo confundem regex (descoberta 2026-04-19, Sprint 41)
+
+**O que aconteceu:** Cupom de garantia da Americanas (`inbox/pdf_notas.pdf`) é PDF de texto nativo, mas a fonte embarcada tem mapeamento ToUnicode incompleto. `pdfplumber.extract_text()` devolve texto legível para humanos, mas com caracteres únicos trocados de forma sistemática: `CNPJ` aparece como `CNP)`, `S.A.` como `5.A.`, `O BILHETE` como `Q BILHETE`, `Modelo` como `Modela`, `DÚVIDAS` sem til. Regex ingênua tipo `r"CNPJ:\s*([\d./-]+)"` deixa passar 100% dos casos -- o detector de tipo ignora um arquivo válido.
+
+**Solução aplicada:** Toda regex de detecção de tipo de documento e de campos canônicos (CNPJ, CPF, razão social, palavras-chave de cabeçalho como `BILHETE`, `NOTA FISCAL`, `CUPOM`) deve usar **classes de caractere tolerantes** para os pares conhecidos de troca. Padrões reusáveis (centralizar em `src/intake/glyph_tolerant.py` quando passar de dois usos):
+
+| Original | Padrão tolerante | Por que |
+|----------|------------------|---------|
+| `CNPJ` | `CNP[J\)]` | `J` vira `)` |
+| `S.A.` ou `SA` | `[S5]\.?[AÁ]\.?` | `S` vira `5` |
+| `O BILHETE` | `[OQ]\s+BILHETE` | `O` maiúsculo vira `Q` |
+| qualquer dígito | `[\d.\s,]` | espaços/pontos colados de OCR-like |
+| acentos opcionais | `[ÚU]VIDAS`, `Modela?` | acento omitido pela fonte |
+
+**Como evitar no futuro:** Antes de escrever regex contra texto extraído de PDF nativo, **sempre** rodar `pdfplumber.extract_text()` num arquivo real e inspecionar visualmente -- não confiar em renderização. Se aparecer ASCII estranho (`)` no lugar de `J`, `5` no lugar de `S`), assumir fonte com ToUnicode quebrado e adotar classes de char. Esta armadilha é cross-cutting: vale para Sprint 41 (detector de tipo), 44/44b (DANFE/NFC-e), 46 (XML quando vier inline em PDF), 47b (termo de garantia), 47c (cupom garantia estendida) e qualquer extrator futuro de PDF nativo de cupom térmico.
+
+---
+
+## 21. Diagnóstico scan/nativo: texto-primeiro, NUNCA imagem-primeiro (descoberta 2026-04-19, Sprint 41)
+
+**O que aconteceu:** A pg1 do `inbox/pdf_notas.pdf` é PDF nativo (1.584 chars de texto extraível) MAS tem QR code embutido como imagem que cobre > 80% da área da página. Implementação inicial de `diagnosticar_pagina` em `src/intake/extractors_envelope.py` checava se havia "imagem grande" antes de avaliar o texto -- resultado: a página seria classificada como `scan` e enviada para o pipeline de OCR pesado, perdendo o texto nativo já disponível.
+
+**Solução aplicada:** A heurística sempre verifica TEXTO primeiro:
+1. Se `len(texto_util) >= LIMITE_CHARS_NATIVO` (50 chars por padrão) -> `nativo` (DECIDIDO, ignora imagens).
+2. Caso contrário, se há imagem cobrindo > 80% da área -> `scan`.
+3. Caso contrário -> `misto` (vai para `_classificar/_aguardando_ocr/`).
+
+**Como evitar no futuro:** Em qualquer extrator que tenha que decidir entre texto-nativo e OCR (Sprint 45 cupom térmico, 47b termo de garantia, etc.), aplicar a mesma ordem: texto-primeiro. PDFs reais frequentemente carregam logos, QR codes, marcas d'água e anúncios -- presença de imagem grande NÃO implica ausência de texto extraível. Inverter a ordem manda PDF perfeitamente parseável para o pipeline OCR (mais lento, mais ruidoso, mais caro). Comentário explícito em `src/intake/extractors_envelope.py:diagnosticar_pagina` para a próxima pessoa não inverter.
+
+---
+
 *"Experiência é simplesmente o nome que damos aos nossos erros." -- Oscar Wilde*

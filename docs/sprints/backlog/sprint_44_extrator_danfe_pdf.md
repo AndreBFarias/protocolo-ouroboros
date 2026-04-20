@@ -3,7 +3,7 @@
 ```yaml
 sprint:
   id: 44
-  title: "Extrator de DANFE PDF (NFe formal)"
+  title: "Extrator NFe modelo 55 (DANFE PDF formal)"
   touches:
     - path: src/extractors/danfe_pdf.py
       reason: "extrai cabeçalho (CNPJ emissor, chave 44 dígitos, data emissão, total) e itens (descrição, NCM, qtd, valor unit, ICMS/IPI/PIS) de DANFE PDF"
@@ -35,16 +35,19 @@ sprint:
 
 ---
 
-# Sprint 44 -- Extrator de DANFE PDF
+# Sprint 44 -- Extrator NFe modelo 55 (DANFE PDF formal)
 
 **Status:** PENDENTE
-**Data:** 2026-04-19
+**Data:** 2026-04-19 (renomeada 2026-04-19 -- escopo era ambíguo entre modelo 55 e 65)
 **Prioridade:** ALTA
 **Tipo:** Feature
 **Dependências:** Sprint 41 (intake roteia DANFE para pasta correta), Sprint 42 (grafo recebe nodes)
 **Desbloqueia:** Sprint 48 (linking), Sprint 51 (dashboard mostra NFs)
 **Issue:** --
 **ADR:** ADR-14 (grafo extensível)
+
+> **Escopo:** apenas NFe modelo 55 (DANFE A4 formal, com destinatário, ICMS por item, layouts Bling/eNotas/SEFAZ).
+> **Fora de escopo:** NFC-e modelo 65 (mini-cupom, sem destinatário, com QR SEFAZ) -- vai para Sprint 44b. Layouts são distintos o bastante para forçar dois extratores; um regex unificado vira monstro.
 
 ---
 
@@ -57,7 +60,7 @@ sprint:
 
 - NÃO extrair tributos complexos (só o essencial: ICMS, IPI, PIS, COFINS quando fáceis)
 - NÃO normalizar NCM para tabela completa -- só captura o código
-- NÃO tentar DANFE de NFCe (é outro formato, fica para sprint futura)
+- NÃO tentar parsear NFC-e (modelo 65, mini-cupom com QR SEFAZ) -- isso é Sprint 44b. Se o intake rotear NFC-e por engano para esta pasta, o extrator detecta pela ausência de "DANFE" e ausência de destinatário, loga warning e devolve fallback.
 
 ---
 
