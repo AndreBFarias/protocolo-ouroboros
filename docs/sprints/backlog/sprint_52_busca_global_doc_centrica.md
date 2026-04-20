@@ -121,18 +121,18 @@ Render em Streamlit com `st.timeline` ou lista vertical com ícones.
 ### Fase 4: UI
 
 ```
-[ 🔍 Buscar: _______________ ]
+[ Buscar: _______________ ]
 
 Fornecedores encontrados
-  ▪ NEOENERGIA S.A. (CNPJ 00.394.460/0058-87) -- 48 documentos, R$ 12.340
+  - NEOENERGIA S.A. (CNPJ 00.394.460/0058-87) -- 48 documentos, R$ 12.340
 
 Documentos
-  📄 Fatura 2025-03.pdf -- R$ 487,23
-  📄 Fatura 2025-02.pdf -- R$ 512,11
+  - Fatura 2025-03.pdf -- R$ 487,23
+  - Fatura 2025-02.pdf -- R$ 512,11
   ...
 
 Transações
-  💰 2025-03-08 Débito R$ 487,23 "NEOENERGIA DF"
+  - 2025-03-08 Débito R$ 487,23 "NEOENERGIA DF"
   ...
 
 Timeline [ver]
