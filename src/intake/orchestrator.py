@@ -32,7 +32,7 @@ from pathlib import Path
 from typing import Literal
 
 from src.intake import sha8_arquivo
-from src.intake.classifier import Decisao, classificar
+from src.intake.classifier import Decisao
 from src.intake.extractors_envelope import (
     PaginaPdf,
     ResultadoEnvelope,
@@ -42,6 +42,7 @@ from src.intake.extractors_envelope import (
 )
 from src.intake.heterogeneidade import e_heterogeneo
 from src.intake.preview import gerar_preview
+from src.intake.registry import detectar_tipo
 from src.intake.router import RelatorioRoteamento, arquivar_original, rotear_lote
 from src.utils.logger import configurar_logger
 
@@ -191,7 +192,8 @@ def processar_arquivo_inbox(
             tipo_envelope=tipo_envelope,
             paginas_meta=paginas_meta,
         )
-        decisao = classificar(artefato, sub_mime, preview_texto or "", pessoa=pessoa)
+        # Sprint 41c: usa registry (legado + YAML) em vez de classifier direto
+        decisao = detectar_tipo(artefato, sub_mime, preview_texto, pessoa=pessoa)
         pares.append((artefato, decisao))
 
     return rotear_lote(
