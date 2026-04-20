@@ -131,9 +131,7 @@ def test_processar_pdf_notas_3_paginas_classifica_3_garantias(tmp_path, isolar_c
 
 
 @SOMENTE_SE_INBOX_EXISTE
-def test_processar_pdf_scan_4_paginas_vira_single_e_cai_em_classificar(
-    tmp_path, isolar_caminhos
-):
+def test_processar_pdf_scan_4_paginas_vira_single_e_cai_em_classificar(tmp_path, isolar_caminhos):
     """notas de garantia e compras.pdf: 4 pgs SCAN, sem texto extraível.
     Pós-Sprint 41d (heterogeneidade): scan sem identificadores legíveis
     é classificado como HOMOGÊNEO (conservador) -> envelope `single` ->
