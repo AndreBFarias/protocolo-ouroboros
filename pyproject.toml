@@ -22,6 +22,8 @@ dependencies = [
     "rich>=13.0",
     "msoffcrypto-tool>=5.0",
     "ofxparse>=0.21",
+    "pikepdf>=8.0",
+    "pillow-heif>=0.16",
 ]
 
 keywords = ["etl", "finance", "personal", "streamlit", "dashboard", "irpf"]
