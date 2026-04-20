@@ -41,6 +41,7 @@ from src.intake.extractors_envelope import (
     extrair_anexos_eml,
 )
 from src.intake.heterogeneidade import e_heterogeneo
+from src.intake.pessoa_detector import detectar_pessoa
 from src.intake.preview import gerar_preview
 from src.intake.registry import detectar_tipo
 from src.intake.router import RelatorioRoteamento, arquivar_original, rotear_lote
@@ -169,6 +170,10 @@ def processar_arquivo_inbox(
     """Processa UM arquivo da inbox: arquivar original, expandir envelope,
     classificar cada artefato, rotear, devolver relatório.
 
+    Quando `pessoa == "_indefinida"`, dispara auto-detect (Sprint 41b):
+    extrai CPF do primeiro preview disponível, consulta
+    `mappings/cpfs_pessoas.yaml`; fallback para path; fallback para `casal`.
+
     NÃO descarta o arquivo da inbox -- caller chama `descartar_da_inbox`
     após gravar evidências (ex.: no grafo da Sprint 42).
     """
@@ -184,6 +189,22 @@ def processar_arquivo_inbox(
     tipo_envelope = _decidir_tipo_envelope(mime)
     resultado_envelope, paginas_meta = _expandir(caminho_inbox, tipo_envelope, sha8)
 
+    # Sprint 41b: auto-detect de pessoa antes do loop de classificação.
+    # Decide UMA vez por arquivo da inbox -- todos os artefatos do mesmo PDF
+    # compartilham a mesma pessoa (segurado/destinatário do documento).
+    pessoa_resolvida = pessoa
+    if pessoa_resolvida == "_indefinida":
+        preview_para_pessoa = _primeiro_preview_disponivel(
+            resultado_envelope.artefatos, paginas_meta, tipo_envelope
+        )
+        pessoa_resolvida, fonte = detectar_pessoa(caminho_inbox, preview_para_pessoa)
+        logger.info(
+            "pessoa auto-detectada para %s: %s (fonte: %s)",
+            caminho_inbox.name,
+            pessoa_resolvida,
+            fonte,
+        )
+
     pares: list[tuple[Path, Decisao]] = []
     for indice, artefato in enumerate(resultado_envelope.artefatos):
         sub_mime, preview_texto = _preview_para_artefato(
@@ -193,7 +214,7 @@ def processar_arquivo_inbox(
             paginas_meta=paginas_meta,
         )
         # Sprint 41c: usa registry (legado + YAML) em vez de classifier direto
-        decisao = detectar_tipo(artefato, sub_mime, preview_texto, pessoa=pessoa)
+        decisao = detectar_tipo(artefato, sub_mime, preview_texto, pessoa=pessoa_resolvida)
         pares.append((artefato, decisao))
 
     return rotear_lote(
@@ -254,6 +275,27 @@ def _preview_para_artefato(
 
     sub_mime = detectar_mime(artefato)
     return sub_mime, gerar_preview(artefato, sub_mime)
+
+
+def _primeiro_preview_disponivel(
+    artefatos: list[Path],
+    paginas_meta: tuple[PaginaPdf, ...],
+    tipo_envelope: TipoEnvelope,
+) -> str | None:
+    """Devolve preview do primeiro artefato (para auto-detect de pessoa).
+
+    Reusa `texto_nativo` quando disponível (PDF heterogêneo splittado);
+    senão chama gerar_preview no primeiro artefato. None se vazio/falhou.
+    """
+    if not artefatos:
+        return None
+    if tipo_envelope == "pdf" and paginas_meta:
+        primeira = paginas_meta[0]
+        if primeira.diagnostico == "nativo" and primeira.texto_nativo:
+            return primeira.texto_nativo
+    primeiro_artefato = artefatos[0]
+    sub_mime = detectar_mime(primeiro_artefato)
+    return gerar_preview(primeiro_artefato, sub_mime)
 
 
 # "Quem orquestra precisa conhecer a partitura de cada instrumento." -- princípio do regente
