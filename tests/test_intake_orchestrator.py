@@ -131,10 +131,15 @@ def test_processar_pdf_notas_3_paginas_classifica_3_garantias(tmp_path, isolar_c
 
 
 @SOMENTE_SE_INBOX_EXISTE
-def test_processar_pdf_scan_4_paginas_caem_em_classificar(tmp_path, isolar_caminhos):
-    """notas de garantia e compras.pdf: 4 pgs SCAN.
-    Sem OCR de PDF, o texto_nativo é vazio -> classifier não casa nada ->
-    todas vão pra _classificar/ (estado correto pendente de Sprint 45 OCR).
+def test_processar_pdf_scan_4_paginas_vira_single_e_cai_em_classificar(
+    tmp_path, isolar_caminhos
+):
+    """notas de garantia e compras.pdf: 4 pgs SCAN, sem texto extraível.
+    Pós-Sprint 41d (heterogeneidade): scan sem identificadores legíveis
+    é classificado como HOMOGÊNEO (conservador) -> envelope `single` ->
+    1 artefato só em `_classificar/`. Quando a Sprint 45 (OCR de PDF)
+    entrar, identificadores serão extraídos e o PDF passa a ser detectado
+    como heterogêneo (2 chaves NFe + 2 bilhetes) -> page-split + 4 artefatos.
     """
     pseudo_inbox = tmp_path / "inbox"
     pseudo_inbox.mkdir()
@@ -143,13 +148,12 @@ def test_processar_pdf_scan_4_paginas_caem_em_classificar(tmp_path, isolar_camin
 
     relatorio = orq.processar_arquivo_inbox(copia, pessoa="andre")
 
-    assert len(relatorio.artefatos) == 4
-    tipos = [a.decisao.tipo for a in relatorio.artefatos]
-    assert tipos == [None] * 4  # nenhuma classifica sem OCR
+    assert len(relatorio.artefatos) == 1, (
+        "scan sem texto -> homogêneo -> 1 artefato (single envelope)"
+    )
+    assert relatorio.artefatos[0].decisao.tipo is None
     assert relatorio.sucesso_total is False
-    for a in relatorio.artefatos:
-        assert "_classificar" in str(a.caminho_final)
-        assert a.sucesso is False
+    assert "_classificar" in str(relatorio.artefatos[0].caminho_final)
 
 
 # ============================================================================

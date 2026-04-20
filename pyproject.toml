@@ -55,6 +55,7 @@ dev = [
     "pytest>=8.0",
     "pytest-cov>=4.0",
     "ruff>=0.3",
+    "reportlab>=4.0",   # gera PDFs sintéticos nos testes da Sprint 41d (heterogeneidade)
 ]
 
 [tool.ruff]
