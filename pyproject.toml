@@ -24,6 +24,7 @@ dependencies = [
     "ofxparse>=0.21",
     "pikepdf>=8.0",
     "pillow-heif>=0.16",
+    "rapidfuzz>=3.0",
 ]
 
 keywords = ["etl", "finance", "personal", "streamlit", "dashboard", "irpf"]
