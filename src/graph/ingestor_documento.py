@@ -318,4 +318,144 @@ def _extrair_mes_ref(data_iso: str | None) -> str | None:
     return None
 
 
+# ============================================================================
+# Ingestão de documento fiscal (Sprint 44/44b)
+# ============================================================================
+
+
+CAMPOS_OBRIGATORIOS_DOCUMENTO: tuple[str, ...] = (
+    "chave_44",
+    "cnpj_emitente",
+    "data_emissao",
+)
+
+
+def upsert_item(
+    db: GrafoDB,
+    cnpj_varejo: str,
+    data_compra: str,
+    codigo_produto: str,
+    descricao: str,
+    metadata_extra: dict[str, Any] | None = None,
+) -> int:
+    """Upsert de nó `item` com chave canônica `<cnpj_varejo>|<data>|<codigo>`.  # noqa: accent
+
+    O mesmo produto (mesmo código) vendido em dias diferentes é item diferente,
+    porque o ponto-de-referência para cruzar com apólice é a compra, não o
+    SKU. A descrição textual entra como metadata e alias (facilita busca).
+    """
+    chave_canonica = f"{cnpj_varejo}|{data_compra[:10]}|{codigo_produto}"
+    meta: dict[str, Any] = {
+        "cnpj_varejo": cnpj_varejo,
+        "data_compra": data_compra[:10],
+        "codigo_produto": codigo_produto,
+        "descricao": descricao,
+    }
+    if metadata_extra:
+        meta.update(metadata_extra)
+    aliases = [descricao] if descricao else []
+    return db.upsert_node("item", chave_canonica, metadata=meta, aliases=aliases)
+
+
+def ingerir_documento_fiscal(
+    db: GrafoDB,
+    documento: dict[str, Any],
+    itens: list[dict[str, Any]],
+    caminho_arquivo: Path | None = None,
+) -> int:
+    """Insere um documento fiscal (NFe55 ou NFC-e65) e suas arestas no grafo.
+
+    Campos esperados em `documento` (os 3 primeiros são obrigatórios):
+
+        chave_44:          44 dígitos, DV validado -- chave canônica do nó `documento`
+        cnpj_emitente:     CNPJ canônico do varejo
+        data_emissao:      YYYY-MM-DD
+        tipo_documento:    "nfce_modelo_65" | "nfe_modelo_55"
+        numero:            número da nota
+        serie:             série da nota
+        total:             float
+        forma_pagamento:   string canônica ("PIX", "Crédito", "Débito", "Dinheiro")
+        cpf_consumidor:    CPF do consumidor (opcional)
+        razao_social:      razão social do emitente (para aliases)
+        endereco:          endereço da loja
+
+    Cada item em `itens` precisa ter: `codigo`, `descricao`, `qtde`, `valor_unit`,  # noqa: accent
+    `valor_total`. O item é chaveado por (cnpj_varejo, data_compra, codigo).  # noqa: accent
+
+    Arestas criadas:
+        documento -> fornecedor (fornecido_por)
+        documento -> periodo    (ocorre_em)
+        documento -> item       (contem_item, uma por item)
+
+    Idempotente: chave 44 é única; reprocessar não duplica nós nem arestas.
+
+    Devolve o id do nó `documento`.
+    """
+    for campo in CAMPOS_OBRIGATORIOS_DOCUMENTO:
+        if not documento.get(campo):
+            raise ValueError(
+                f"documento sem '{campo}' -- ingestão abortada "
+                "(nó documento ou aresta ficaria órfão)"
+            )
+
+    metadata = {
+        chave: valor
+        for chave, valor in documento.items()
+        if valor is not None and not chave.startswith("_")
+    }
+    metadata.setdefault("tipo_documento", "documento_fiscal")
+    if caminho_arquivo is not None:
+        metadata["arquivo_origem"] = str(caminho_arquivo)
+
+    documento_id = db.upsert_node(
+        "documento", documento["chave_44"], metadata=metadata
+    )
+
+    fornecedor_id = upsert_fornecedor(
+        db,
+        documento["cnpj_emitente"],
+        razao_social=documento.get("razao_social"),
+        metadata_extra=(
+            {"endereco": documento["endereco"]} if documento.get("endereco") else None
+        ),
+    )
+    db.adicionar_edge(documento_id, fornecedor_id, "fornecido_por")
+
+    mes_ref = _extrair_mes_ref(documento["data_emissao"])
+    if mes_ref:
+        periodo_id = upsert_periodo(db, mes_ref)
+        db.adicionar_edge(documento_id, periodo_id, "ocorre_em")
+
+    for item in itens:
+        if not item.get("codigo") or not item.get("descricao"):
+            logger.warning(
+                "item sem código/descrição em documento %s -- pulado",
+                documento["chave_44"],
+            )
+            continue
+        meta_item: dict[str, Any] = {
+            "qtde": item.get("qtde"),
+            "unidade": item.get("unidade"),
+            "valor_unit": item.get("valor_unit"),
+            "valor_total": item.get("valor_total"),
+        }
+        item_id = upsert_item(
+            db,
+            cnpj_varejo=documento["cnpj_emitente"],
+            data_compra=documento["data_emissao"],
+            codigo_produto=item["codigo"],
+            descricao=item["descricao"],
+            metadata_extra=meta_item,
+        )
+        db.adicionar_edge(documento_id, item_id, "contem_item")
+
+    logger.info(
+        "documento %s ingerido: %d item(ns), fornecedor %s",
+        documento["chave_44"],
+        len(itens),
+        documento["cnpj_emitente"],
+    )
+    return documento_id
+
+
 # "Cada documento é um nó; cada nó é uma memória." -- princípio de arquivista
