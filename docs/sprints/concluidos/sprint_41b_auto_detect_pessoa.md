@@ -39,12 +39,12 @@ sprint:
 
 # Sprint 41b -- Auto-detecção de pessoa no intake
 
-**Status:** PENDENTE
-**Data:** 2026-04-19 (criada após Conferência Artesanal Opus da Sprint 41 -- escopo separado conforme princípio "uma sprint, um escopo")
+**Status:** CONCLUÍDA
+**Data:** 2026-04-19 (criada e implementada no mesmo dia)
 **Prioridade:** MEDIA
 **Tipo:** Feature
 **Dependências:** Sprint 41 (intake universal funcionando; orquestrador exposto)
-**Desbloqueia:** integração final do intake no `inbox_processor.py` (a decisão de pessoa não pode mais vir de parâmetro hardcoded em produção)
+**Desbloqueia:** integração final do intake no `inbox_processor.py` -- pessoa deixa de ser parâmetro hardcoded
 **Issue:** --
 **ADR:** ADR-15 (intake multiformato)
 
