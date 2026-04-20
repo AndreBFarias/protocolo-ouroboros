@@ -83,6 +83,15 @@ def _descobrir_extratores() -> list:
     except ImportError as e:
         logger.warning("Extrator ofx_parser indisponível: %s", e)
 
+    try:
+        from src.extractors.cupom_garantia_estendida_pdf import (
+            ExtratorCupomGarantiaEstendida,
+        )
+
+        extratores.append(ExtratorCupomGarantiaEstendida)
+    except ImportError as e:
+        logger.warning("Extrator cupom_garantia_estendida_pdf indisponível: %s", e)
+
     return extratores
 
 
