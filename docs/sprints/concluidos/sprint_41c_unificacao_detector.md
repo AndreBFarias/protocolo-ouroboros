@@ -42,14 +42,15 @@ sprint:
 
 # Sprint 41c -- Unificação do detector de tipo
 
-**Status:** PENDENTE
-**Data:** 2026-04-19 (criada após prova de fogo histórica da Sprint 41 -- gap revelado: 56 CSVs + 7 XLS/OFX/XLSX bancários ficaram fora do intake porque o YAML não cobre esses tipos, mas o `file_detector.py` legado já cobre)
+**Status:** CONCLUÍDA
+**Data:** 2026-04-19 (criada e implementada no mesmo dia, após prova de fogo da Sprint 41)
 **Prioridade:** MEDIA
 **Tipo:** Refactor + Feature
-**Dependências:** Sprint 41 (intake universal funcionando), Sprint 41d recomendada antes (page-split condicional)
-**Desbloqueia:** integração final do intake no `inbox_processor.py` (exige cobertura de >=95% recall em data/raw/)
+**Dependências:** Sprint 41 (intake universal funcionando), Sprint 41d (page-split condicional)
+**Desbloqueia:** integração final no `inbox_processor.py` -- recall pós-41c saltou de 19% para 85% (98 arquivos do data/raw/, 83 roteados). Os 15 residuais são holerites Infobase escaneados (cobertos pela Sprint 45 OCR de PDF)
 **Issue:** --
 **ADR:** ADR-15 (intake multiformato)
+**Conferência Artesanal Opus:** `docs/propostas/sprint_41c_conferencia.md`
 
 ---
 
