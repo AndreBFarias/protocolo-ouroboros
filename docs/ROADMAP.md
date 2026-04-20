@@ -167,7 +167,7 @@ Fase ALFA -- CONCLUÍDA
 
 Fase BETA -- infra universal (próximo bloco)
   ├─ 41 Intake multiformato  ─────┐
-  └─ 42 Grafo SQLite mínimo  ─────┼──► 43 Workflow Supervisor
+  └─ 42 Grafo SQLite mínimo  ─────┼── 43 Workflow Supervisor
 
 Fase GAMA -- extratores (paralelizáveis)
   ├─ 44  DANFE PDF (NFe modelo 55)

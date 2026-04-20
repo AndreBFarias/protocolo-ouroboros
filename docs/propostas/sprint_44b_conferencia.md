@@ -17,8 +17,8 @@ para validação end-to-end.
 
 | NFC-e | Tipo | Nº itens PDF | Nº itens grafo | Recall | Total PDF | Total grafo | Forma pgto | CPF | Chave DV |
 |-------|------|--------------|-----------------|--------|-----------|-------------|-------------|-----|----------|
-| Compra Americanas (P55) | PDF nativo, 2 itens | 2 | 2 | 100% | R$ 629,98 | R$ 629,98 | PIX ✓ | 000.000.000-00 | válido |
-| Supermercado Americanas | PDF nativo, 31 itens densos | 31 | 31 | 100% | R$ 595,52 | R$ 595,52 | PIX ✓ | null (não identificado) | válido |
+| Compra Americanas (P55) | PDF nativo, 2 itens | 2 | 2 | 100% | R$ 629,98 | R$ 629,98 | PIX | 000.000.000-00 | válido |
+| Supermercado Americanas | PDF nativo, 31 itens densos | 31 | 31 | 100% | R$ 595,52 | R$ 595,52 | PIX | null (não identificado) | válido |
 
 Meta de aceitação era recall ≥ 90% -- atingido 100% em ambas.
 
