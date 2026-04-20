@@ -410,6 +410,7 @@ exibir_help() {
     echo -e "  ${WHITE}Qualidade${NC}"
     echo -e "    ${YELLOW}--check${NC}             Health check do ambiente"
     echo -e "    ${YELLOW}--gauntlet${NC}          Gauntlet de testes"
+    echo -e "    ${YELLOW}--supervisor${NC}        Snapshot do estado do projeto (contexto para sessão)"
     echo ""
     echo -e "  ${WHITE}Exemplos${NC}"
     echo -e "    ${DIM}\$${NC} ./run.sh --mes 2026-03"
@@ -488,6 +489,9 @@ print(f'Salvo em: {saida}')
         msg_info "Executando gauntlet..."
         python -m scripts.gauntlet.gauntlet "${@:2}"
         msg_ok "Gauntlet concluído."
+        ;;
+    --supervisor)
+        bash scripts/supervisor_contexto.sh
         ;;
     --menu)
         executar_menu
