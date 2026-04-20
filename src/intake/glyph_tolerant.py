@@ -40,7 +40,7 @@ from typing import Iterable, Literal, Pattern
 # replicar o literal no caller.
 # ============================================================================
 
-GLYPH_J = r"[J\)]"  # 'J' em CNPJ vira ')' -- visto em pdf_notas.pdf
+GLYPH_J = r"[J\)\]]"  # 'J' em CNPJ vira ')' (nativo) ou ']' (OCR de scan) -- Sprint 47c
 GLYPH_S_MAIUSCULO = r"[S5]"  # 'S' maiúsculo vira '5' -- visto em "5.A." e "5USEP"
 GLYPH_O_MAIUSCULO = r"[OQ]"  # 'O' maiúsculo vira 'Q' -- visto em "Q BILHETE"
 GLYPH_ZERO = r"[0D]"  # '0' em códigos curtos vira 'D' -- visto em "D6238" (cód. SUSEP)
@@ -63,16 +63,24 @@ GLYPH_C_CEDILHA = r"[ÇC]"
 # direto no padrão é OK quando a captura adicional não importa.
 # ============================================================================
 
+# Separadores tolerantes entre blocos de dígitos -- OCR às vezes troca `.` por
+# `,` em números (observado em `00,776.574/0160-79` na Sprint 47c fixture scan).
+_SEP_MILHAR = r"[.\s,]?"
+
+# `GLYPH_J+` (1 ou mais) permite OCR que produz sequências tipo `CNPJ]`
+# (letra J seguida de ] extra) -- observado na Sprint 47c.
 RE_CNPJ_TOLERANTE: Pattern[str] = re.compile(
-    r"CNP" + GLYPH_J + r"\s*:?\s*"
-    r"(\d{2}[.\s]?\d{3}[.\s]?\d{3}\s*[/\\]\s*\d{4}\s*[-\s]\s*\d{2})",
+    r"CNP" + GLYPH_J + r"+\s*:?\s*"
+    r"(\d{2}" + _SEP_MILHAR + r"\d{3}" + _SEP_MILHAR
+    + r"\d{3}\s*[/\\]\s*\d{4}\s*[-\s]\s*\d{2})",
     re.IGNORECASE,
 )
 
 # CNPJ "solto" (sem rótulo CNPJ:) -- 14 dígitos com pontuação opcional.
 # Útil quando o detector de fornecedor quer só o número, não o rótulo.
 RE_CNPJ_SOLTO: Pattern[str] = re.compile(
-    r"\b(\d{2}[.\s]?\d{3}[.\s]?\d{3}\s*[/\\]\s*\d{4}\s*[-\s]\s*\d{2})\b"
+    r"\b(\d{2}" + _SEP_MILHAR + r"\d{3}" + _SEP_MILHAR
+    + r"\d{3}\s*[/\\]\s*\d{4}\s*[-\s]\s*\d{2})\b"
 )
 
 RE_CPF_TOLERANTE: Pattern[str] = re.compile(
