@@ -179,7 +179,7 @@ inbox. Contagens ANTES (baseline Sprint 42) e DEPOIS:
 | `emitida_por` | 0 | **2** | +2 (apolice -> MAPFRE) |
 | `vendida_em` | 0 | **2** | +2 (apolice -> Americanas) |
 | `ocorre_em` | 6086 | 6088 | +2 (apolice -> periodo 2026-04) |
-| `assegura` | 0 | 0 | 0 (esperado) |
+| `assegura` | 0 | 0 (nesta execução) | 0 -- **atualizado: 2 após execução da Sprint 44b** (NFC-e populou itens, re-ingestão das apólices via `localizar_item` casou por descrição+CNPJ+janela; ver conferência 44b §2) |
 
 Apólices persistidas:
 
