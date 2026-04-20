@@ -1,176 +1,195 @@
-"""Processador de inbox: detecta, renomeia e move arquivos financeiros automaticamente."""
+"""Processador de inbox: ponto de entrada do CLI `./run.sh --inbox`.
 
-import shutil
+Sprint 41 (intake universal) consolidou a lógica de detecção/roteamento
+em `src.intake.orchestrator.processar_arquivo_inbox`. Este módulo agora
+é um WRAPPER FINO que:
+
+  1. Varre `inbox/` por arquivos elegíveis (extensões suportadas).
+  2. Para cada um, delega ao orquestrador da Sprint 41.
+  3. Decide se descarta o original da inbox (sucesso total -> sim).
+  4. Adapta o `RelatorioRoteamento` (rico, da Sprint 41) para o
+     `list[dict]` legado consumido por callers/CLI/relatórios.
+
+O contrato externo é PRESERVADO: callers que iteram sobre `processar_inbox`
+e olham `r["status"]` continuam funcionando.
+
+Ganhos pós-integração:
+  - PDF compilado heterogêneo (cupom + NFC-e no mesmo arquivo) é
+    page-splittado e cada página vira um dict no resultado.
+  - ZIP/EML são expandidos automaticamente; cada anexo vira um dict.
+  - Pessoa é auto-detectada via CPF (Sprint 41b) -- não precisa mais
+    organizar manualmente em subpastas pessoa/.
+  - Imagens (JPG/PNG/HEIC) entram via OCR (Sprint 41 preview).
+  - XML NFe é reconhecido por conteúdo.
+  - 15 tipos canônicos no YAML + detector legado bancário cobrem 85%+
+    do data/raw/ histórico (validado em prova de fogo Sprint 41c).
+
+Status do dict no resultado:
+  - "processado":       artefato roteado para pasta canônica
+  - "nao_identificado": artefato em `data/raw/_classificar/` (fallback)
+  - "duplicata":        intake é idempotente por sha8 (arquivar_original
+                        re-encontra cópia anterior); contado quando o
+                        arquivo da inbox tinha cópia previamente arquivada
+  - "erro":             exceção catastrófica
+"""
+
+from __future__ import annotations
+
 from pathlib import Path
-from typing import Optional
 
-from src.utils.file_detector import DeteccaoArquivo, calcular_hash, detectar_arquivo
+from src.intake.orchestrator import processar_arquivo_inbox
+from src.intake.router import ArtefatoArquivado, RelatorioRoteamento, descartar_da_inbox
 from src.utils.logger import configurar_logger
 
 logger = configurar_logger("inbox_processor")
 
 RAIZ_PROJETO = Path(__file__).parent.parent
 
-EXTENSOES_SUPORTADAS: set[str] = {".csv", ".xlsx", ".xls", ".pdf", ".ofx"}
+EXTENSOES_SUPORTADAS: set[str] = {
+    # Bancário (Sprint 41c -- registry delega ao file_detector legado)
+    ".csv",
+    ".xlsx",
+    ".xls",
+    ".ofx",
+    # Documental (Sprint 41 -- classifier YAML)
+    ".pdf",
+    ".xml",
+    ".eml",
+    ".zip",
+    ".jpg",
+    ".jpeg",
+    ".png",
+    ".heic",
+    ".heif",
+    ".webp",
+    ".txt",
+}
 
 
-def _gerar_nome_padronizado(deteccao: DeteccaoArquivo) -> str:
-    """Gera nome de arquivo padronizado a partir da detecção.
+# ============================================================================
+# Adapter RelatorioRoteamento (rico) -> list[dict] (contrato legado)
+# ============================================================================
 
-    Formato: {banco}_{tipo}_{YYYY-MM}.{ext}
-    Para Vitória PJ: {banco}_{subtipo}_{tipo}_{YYYY-MM}.{ext}
+
+def _artefato_para_dict(arquivo_origem: Path, artefato: ArtefatoArquivado) -> dict:
+    """Converte ArtefatoArquivado em dict no shape esperado pelo legado.
+
+    Status mapping:
+      - sucesso=True   -> "processado"
+      - sucesso=False  -> "nao_identificado" (fallback _classificar/)
+
+    deteccao:
+      - tipo, prioridade, extrator_modulo, origem_sprint, data_detectada_iso
+      - banco/pessoa/subtipo derivados do tipo quando bancário
     """
-    periodo = deteccao.periodo or "sem-data"
+    decisao = artefato.decisao
+    status = "processado" if artefato.sucesso else "nao_identificado"
+    return {
+        "arquivo_original": str(arquivo_origem),
+        "destino": str(artefato.caminho_final),
+        "deteccao": {
+            "tipo": decisao.tipo,
+            "prioridade": decisao.prioridade,
+            "match_mode": decisao.match_mode,
+            "extrator_modulo": decisao.extrator_modulo,
+            "origem_sprint": decisao.origem_sprint,
+            "data_detectada_iso": decisao.data_detectada_iso,
+            "motivo_fallback": decisao.motivo_fallback,
+        },
+        "status": status,
+    }
 
-    if deteccao.subtipo:
-        nome = f"{deteccao.banco}_{deteccao.subtipo}_{deteccao.tipo}_{periodo}"
-    else:
-        nome = f"{deteccao.banco}_{deteccao.tipo}_{periodo}"
 
-    return f"{nome}.{deteccao.formato}"
+def _relatorio_para_dicts(arquivo_origem: Path, relatorio: RelatorioRoteamento) -> list[dict]:
+    """Expande RelatorioRoteamento em N dicts (1 por artefato).
 
-
-def _gerar_diretorio_destino(diretorio_raw: Path, deteccao: DeteccaoArquivo) -> Path:
-    """Gera o caminho do diretório destino baseado na detecção.
-
-    Estrutura: data/raw/{pessoa}/{banco}_{subtipo}_{tipo}/
+    Em PDF homogêneo / single envelope, devolve 1 dict.
+    Em PDF heterogêneo, ZIP, EML, devolve N dicts.
+    Em sucesso parcial, mistura "processado" e "nao_identificado".
     """
-    if deteccao.subtipo:
-        subpasta = f"{deteccao.banco}_{deteccao.subtipo}_{deteccao.tipo}"
-    else:
-        subpasta = f"{deteccao.banco}_{deteccao.tipo}"
+    if not relatorio.artefatos:
+        return [
+            {
+                "arquivo_original": str(arquivo_origem),
+                "destino": None,
+                "deteccao": None,
+                "status": "erro",
+            }
+        ]
+    return [_artefato_para_dict(arquivo_origem, art) for art in relatorio.artefatos]
 
-    return diretorio_raw / deteccao.pessoa / subpasta
 
-
-def _verificar_duplicata(caminho_origem: Path, caminho_destino: Path) -> bool:
-    """Verifica se o arquivo já existe no destino com mesmo conteúdo (hash)."""
-    if not caminho_destino.exists():
-        return False
-
-    hash_origem = calcular_hash(caminho_origem)
-    hash_destino = calcular_hash(caminho_destino)
-
-    return hash_origem == hash_destino
+# ============================================================================
+# API pública (contrato preservado da versão pré-Sprint 41)
+# ============================================================================
 
 
 def processar_arquivo(
     caminho: Path,
-    diretorio_raw: Path,
-    diretorio_nao_identificados: Path,
-) -> dict:
-    """Processa um único arquivo do inbox.
+    diretorio_raw: Path | None = None,
+    diretorio_nao_identificados: Path | None = None,
+) -> list[dict]:
+    """Processa UM arquivo da inbox via intake universal (Sprint 41/b/c/d).
+
+    Devolve `list[dict]` -- 1 elemento por ARTEFATO produzido (1 para single,
+    N para PDF heterogêneo / ZIP / EML).
+
+    Os parâmetros `diretorio_raw` e `diretorio_nao_identificados` são
+    mantidos para compatibilidade de assinatura, mas ignorados: o
+    intake universal usa caminhos canônicos (`data/raw/{pessoa}/...` e
+    `data/raw/_classificar/`).
+    """
+    del diretorio_raw, diretorio_nao_identificados  # honra contrato sem usar
+
+    try:
+        relatorio = processar_arquivo_inbox(caminho, pessoa="_indefinida")
+    except FileNotFoundError:
+        logger.warning("arquivo da inbox sumiu antes do processamento: %s", caminho)
+        return [
+            {
+                "arquivo_original": str(caminho),
+                "destino": None,
+                "deteccao": None,
+                "status": "erro",
+            }
+        ]
+    except Exception as exc:  # noqa: BLE001 -- defensivo, pipeline não pode parar
+        logger.error("erro inesperado ao processar %s: %s", caminho.name, exc)
+        return [
+            {
+                "arquivo_original": str(caminho),
+                "destino": None,
+                "deteccao": None,
+                "status": "erro",
+            }
+        ]
+
+    # Sucesso total -> remove original da inbox; senão preserva pra supervisor
+    descartar_da_inbox(caminho, relatorio.sucesso_total)
+
+    return _relatorio_para_dicts(caminho, relatorio)
+
+
+def processar_inbox(diretorio_inbox: Path, diretorio_raw: Path | None = None) -> list[dict]:
+    """Processa todos os arquivos da inbox via intake universal.
+
+    Para cada arquivo, expande em N dicts (1 por artefato). Acumula tudo
+    numa lista achatada para preservar o contrato legado.
 
     Args:
-        caminho: Caminho do arquivo no inbox.
-        diretorio_raw: Diretório base para arquivos processados (data/raw/).
-        diretorio_nao_identificados: Diretório para arquivos não identificados.
+        diretorio_inbox: Diretório de entrada (geralmente `inbox/`).
+        diretorio_raw:   IGNORADO -- intake usa caminhos canônicos. Mantido
+                         para compatibilidade de assinatura.
 
     Returns:
-        Dicionário com: arquivo_original, destino, deteccao, status.
+        Lista achatada de dicts: cada elemento corresponde a UM artefato
+        (página de PDF, anexo de ZIP, etc.) com status, destino, detecção.
     """
-    resultado: dict = {
-        "arquivo_original": str(caminho),
-        "destino": None,
-        "deteccao": None,
-        "status": "erro",
-    }
+    del diretorio_raw  # honra contrato sem usar
 
-    deteccao: Optional[DeteccaoArquivo] = detectar_arquivo(caminho)
-
-    if deteccao is None:
-        diretorio_nao_identificados.mkdir(parents=True, exist_ok=True)
-        destino = diretorio_nao_identificados / caminho.name
-
-        if destino.exists():
-            destino = diretorio_nao_identificados / f"{caminho.stem}_dup{caminho.suffix}"
-
-        shutil.move(str(caminho), str(destino))
-        resultado["destino"] = str(destino)
-        resultado["status"] = "nao_identificado"
-        logger.warning(
-            "[NÃO IDENTIFICADO] %s -> %s",
-            caminho.name,
-            destino,
-        )
-        return resultado
-
-    resultado["deteccao"] = {
-        "banco": deteccao.banco,
-        "tipo": deteccao.tipo,
-        "pessoa": deteccao.pessoa,
-        "subtipo": deteccao.subtipo,
-        "periodo": deteccao.periodo,
-        "formato": deteccao.formato,
-        "confianca": deteccao.confianca,
-    }
-
-    diretorio_destino = _gerar_diretorio_destino(diretorio_raw, deteccao)
-    diretorio_destino.mkdir(parents=True, exist_ok=True)
-
-    nome_padronizado = _gerar_nome_padronizado(deteccao)
-    caminho_destino = diretorio_destino / nome_padronizado
-
-    if _verificar_duplicata(caminho, caminho_destino):
-        caminho.unlink()
-        resultado["destino"] = str(caminho_destino)
-        resultado["status"] = "duplicata"
-        logger.info(
-            "[DUPLICATA] %s (já existe em %s)",
-            caminho.name,
-            caminho_destino,
-        )
-        return resultado
-
-    if caminho_destino.exists():
-        contador = 1
-        while caminho_destino.exists():
-            if deteccao.subtipo:
-                nome_alt = (
-                    f"{deteccao.banco}_{deteccao.subtipo}_{deteccao.tipo}_"
-                    f"{deteccao.periodo or 'sem-data'}_{contador}.{deteccao.formato}"
-                )
-            else:
-                nome_alt = (
-                    f"{deteccao.banco}_{deteccao.tipo}_"
-                    f"{deteccao.periodo or 'sem-data'}_{contador}.{deteccao.formato}"
-                )
-            caminho_destino = diretorio_destino / nome_alt
-            contador += 1
-
-    shutil.move(str(caminho), str(caminho_destino))
-    resultado["destino"] = str(caminho_destino)
-    resultado["status"] = "processado"
-    logger.info(
-        "[OK] %s -> %s",
-        caminho.name,
-        caminho_destino,
-    )
-    return resultado
-
-
-def processar_inbox(diretorio_inbox: Path, diretorio_raw: Path) -> list[dict]:
-    """Processa todos os arquivos do inbox.
-
-    Para cada arquivo:
-    1. Chama detectar_arquivo()
-    2. Gera nome padronizado: {banco}_{tipo}_{YYYY-MM}.{ext}
-    3. Move para data/raw/{pessoa}/{banco}_{subtipo}_{tipo}/
-    4. Se arquivo já existe no destino, verifica se é duplicata (hash)
-    5. Loga tudo
-
-    Args:
-        diretorio_inbox: Diretório de entrada com arquivos brutos.
-        diretorio_raw: Diretório base de saída (data/raw/).
-
-    Returns:
-        Lista de dicts com: arquivo_original, destino, deteccao, status.
-    """
     if not diretorio_inbox.exists():
-        logger.warning("Diretório inbox não encontrado: %s", diretorio_inbox)
+        logger.warning("diretório inbox não encontrado: %s", diretorio_inbox)
         return []
-
-    diretorio_nao_identificados = diretorio_inbox / "nao_identificados"
 
     arquivos = [
         f
@@ -179,36 +198,24 @@ def processar_inbox(diretorio_inbox: Path, diretorio_raw: Path) -> list[dict]:
     ]
 
     if not arquivos:
-        logger.info("Nenhum arquivo para processar em %s", diretorio_inbox)
+        logger.info("nenhum arquivo para processar em %s", diretorio_inbox)
         return []
 
-    logger.info("Processando %d arquivo(s) do inbox", len(arquivos))
+    logger.info("processando %d arquivo(s) do inbox via intake universal", len(arquivos))
 
     resultados: list[dict] = []
     contadores = {"processado": 0, "duplicata": 0, "nao_identificado": 0, "erro": 0}
 
     for arquivo in arquivos:
-        try:
-            resultado = processar_arquivo(arquivo, diretorio_raw, diretorio_nao_identificados)
-            resultados.append(resultado)
-            contadores[resultado["status"]] += 1
-        except Exception as erro:
-            logger.error("Erro inesperado ao processar %s: %s", arquivo.name, erro)
-            resultados.append(
-                {
-                    "arquivo_original": str(arquivo),
-                    "destino": None,
-                    "deteccao": None,
-                    "status": "erro",
-                }
-            )
-            contadores["erro"] += 1
+        dicts = processar_arquivo(arquivo)
+        resultados.extend(dicts)
+        for d in dicts:
+            contadores[d["status"]] = contadores.get(d["status"], 0) + 1
 
     logger.info(
-        "Processamento finalizado: %d processado(s), %d duplicata(s), "
-        "%d não identificado(s), %d erro(s)",
+        "intake finalizado: %d artefato(s) -- %d processado, %d nao_identificado, %d erro",
+        len(resultados),
         contadores["processado"],
-        contadores["duplicata"],
         contadores["nao_identificado"],
         contadores["erro"],
     )
@@ -217,16 +224,15 @@ def processar_inbox(diretorio_inbox: Path, diretorio_raw: Path) -> list[dict]:
 
 
 def main() -> None:
-    """Ponto de entrada para execução via python -m src.inbox_processor."""
+    """Ponto de entrada para execução via `python -m src.inbox_processor`."""
     diretorio_inbox = RAIZ_PROJETO / "inbox"
-    diretorio_raw = RAIZ_PROJETO / "data" / "raw"
 
-    logger.info("Iniciando processamento do inbox: %s", diretorio_inbox)
+    logger.info("iniciando intake universal: %s", diretorio_inbox)
 
-    resultados = processar_inbox(diretorio_inbox, diretorio_raw)
+    resultados = processar_inbox(diretorio_inbox)
 
     if not resultados:
-        logger.info("Nenhum arquivo processado")
+        logger.info("nenhum arquivo processado")
         return
 
     for r in resultados:
