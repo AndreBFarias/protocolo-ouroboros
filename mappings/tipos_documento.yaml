@@ -1,0 +1,286 @@
+# =============================================================================
+# tipos_documento.yaml -- registro canônico de tipos de documento aceitos pelo intake
+# =============================================================================
+#
+# FONTE CANÔNICA DE EXECUÇÃO. O bloco YAML dentro de
+# `docs/sprints/backlog/sprint_41_intake_universal_multiformato.md` é apenas
+# documentação (SPEC); este arquivo é o que `src/intake/classifier.py` carrega
+# em runtime. Ao alterar uma regra, manter os dois sincronizados (meta-regra
+# N-para-N #1 do AI.md). Validação via teste e/ou conferência humana.
+#
+# Schema de cada entrada -- ver doc completa na Sprint 41:
+#   id:                       identificador único (snake_case)
+#   descricao:                o que é (humano-legível)
+#   prioridade:               especifico | normal | fallback (ordem de avaliação)
+#   match_mode:               all | any -- AND ou OR sobre regex_conteudo
+#   mimes:                    lista de MIMEs aceitos no preview
+#   regex_conteudo:           padrões aplicados ao texto extraído (preview)
+#                             usar src/intake/glyph_tolerant.py para PDFs nativos (Armadilha #20)
+#   extrator_modulo:          caminho de import do extrator (null = só roteamento, sem extrator ainda)
+#   origem_sprint:            sprint que criou a regra (rastreabilidade -- só metadado)
+#   pasta_destino_template:   destino com placeholder {pessoa}
+#   renomear_template:
+#     com_data:               usado quando a detecção rasa extrai data (regex DD/MM/YYYY)
+#     sem_data:               fallback quando não há data extraível
+#
+# Convenção do nome canônico no intake: <TIPO>[_<YYYY-MM-DD>]_<sha8>.<ext>
+# Renomeação rica (com fornecedor/número/empresa) é responsabilidade do EXTRATOR
+# dedicado, que tem o conteúdo parseado.
+# =============================================================================
+
+tipos:
+
+  # ============================================================
+  # === ESPECÍFICO (4) -- assinaturas únicas, match_mode: all ===
+  # ============================================================
+
+  - id: cupom_garantia_estendida
+    descricao: "Bilhete de Seguro de Garantia Estendida (apólice SUSEP -- NÃO é Termo de Garantia do fabricante)"
+    prioridade: especifico
+    match_mode: all
+    mimes: ["application/pdf", "image/jpeg", "image/png"]
+    regex_conteudo:
+      - "CUPOM\\s+[B8]ILHETE\\s+DE\\s+SEGURO"
+      - "GARANTIA\\s+ESTENDIDA"
+      - "Processo\\s+[S5]USEP"
+    extrator_modulo: null   # roteamento apenas; extrator é Sprint 47c
+    origem_sprint: 41
+    pasta_destino_template: "data/raw/{pessoa}/garantias_estendidas/"
+    renomear_template:
+      com_data: "GARANTIA_EST_{data:%Y-%m-%d}_{sha8}.{ext}"
+      sem_data: "GARANTIA_EST_{sha8}.{ext}"
+
+  - id: nfce_consumidor_eletronica
+    descricao: "NFC-e modelo 65 (mini-cupom 80mm com QR SEFAZ)"
+    prioridade: especifico
+    match_mode: all
+    mimes: ["application/pdf"]
+    regex_conteudo:
+      - "Documento\\s+Auxiliar\\s+da\\s+Nota\\s+Fiscal\\s+de\\s+Consumidor"
+      - "fazenda\\.\\w+\\.gov\\.br/nfce"
+    extrator_modulo: src.extractors.nfce_pdf
+    origem_sprint: 44b
+    pasta_destino_template: "data/raw/{pessoa}/nfs_fiscais/nfce/"
+    renomear_template:
+      com_data: "NFCE_{data:%Y-%m-%d}_{sha8}.pdf"
+      sem_data: "NFCE_{sha8}.pdf"
+
+  - id: danfe_nfe55
+    descricao: "DANFE PDF (NFe modelo 55, formal A4 com destinatário)"
+    prioridade: especifico
+    match_mode: all
+    mimes: ["application/pdf"]
+    regex_conteudo:
+      - "DANFE"
+      - "DOCUMENTO\\s+AUXILIAR\\s+DA\\s+NOTA\\s+FISCAL\\s+ELETR[ÔO]NICA"
+      - "DESTINAT[ÁA]RIO"   # NFe55 sempre tem bloco; NFC-e não -- evita falso-positivo
+    extrator_modulo: src.extractors.danfe_pdf
+    origem_sprint: 44
+    pasta_destino_template: "data/raw/{pessoa}/nfs_fiscais/danfe55/"
+    renomear_template:
+      com_data: "NF55_{data:%Y-%m-%d}_{sha8}.pdf"
+      sem_data: "NF55_{sha8}.pdf"
+
+  - id: xml_nfe
+    descricao: "XML NFe (modelo 55 ou 65) -- caminho preferencial quando disponível"
+    prioridade: especifico
+    match_mode: any   # MIME já filtra; basta a tag <infNFe>
+    mimes: ["application/xml", "text/xml"]
+    regex_conteudo:
+      - "<infNFe"
+    extrator_modulo: src.extractors.xml_nfe
+    origem_sprint: 46
+    pasta_destino_template: "data/raw/{pessoa}/nfs_fiscais/xml/"
+    renomear_template:
+      com_data: "XMLNFe_{data:%Y-%m-%d}_{sha8}.xml"
+      sem_data: "XMLNFe_{sha8}.xml"
+
+  # ===================================================
+  # === NORMAL (9) -- documentos pessoais e bancários ===
+  # ===================================================
+
+  - id: holerite
+    descricao: "Contracheque G4F ou Infobase (PDF nativo ou escaneado)"
+    prioridade: normal
+    match_mode: any
+    mimes: ["application/pdf"]
+    regex_conteudo:
+      - "Demonstrativo\\s+de\\s+Pagamento\\s+de\\s+Sal[áa]rio"
+      - "Folha\\s+Mensal"
+      - "Holerite"
+    extrator_modulo: src.extractors.contracheque_pdf
+    origem_sprint: 41
+    pasta_destino_template: "data/raw/{pessoa}/holerites/"
+    renomear_template:
+      com_data: "HOLERITE_{data:%Y-%m-%d}_{sha8}.pdf"
+      sem_data: "HOLERITE_{sha8}.pdf"
+
+  - id: receita_medica
+    descricao: "Receita médica ou prescrição (PDF nativo ou foto)"
+    prioridade: normal
+    match_mode: any
+    mimes: ["application/pdf", "image/jpeg", "image/png"]
+    regex_conteudo:
+      - "CRM[\\s:/-]+\\d"
+      - "POSOLOGIA"
+      - "PRESCRI[ÇC][ÃA]O"
+      - "USO\\s+CONT[ÍI]NUO"
+    extrator_modulo: null   # Sprint 47a
+    origem_sprint: 47a
+    pasta_destino_template: "data/raw/{pessoa}/saude/receitas/"
+    renomear_template:
+      com_data: "RECEITA_{data:%Y-%m-%d}_{sha8}.{ext}"
+      sem_data: "RECEITA_{sha8}.{ext}"
+
+  - id: garantia_fabricante
+    descricao: "Termo de Garantia do fabricante (cobertura de defeito; distinto de cupom_garantia_estendida)"
+    prioridade: normal
+    match_mode: any
+    mimes: ["application/pdf", "image/jpeg", "image/png", "message/rfc822"]
+    regex_conteudo:
+      - "TERMO\\s+DE\\s+GARANTIA"
+      - "PRAZO\\s+DE\\s+GARANTIA"
+      - "MANUAL\\s+DO\\s+PROPRIET[ÁA]RIO"
+    extrator_modulo: null   # Sprint 47b
+    origem_sprint: 47b
+    pasta_destino_template: "data/raw/{pessoa}/garantias/"
+    renomear_template:
+      com_data: "GARANTIA_{data:%Y-%m-%d}_{sha8}.{ext}"
+      sem_data: "GARANTIA_{sha8}.{ext}"
+
+  - id: fatura_cartao
+    descricao: "Fatura de cartão de crédito em PDF (Santander/Nubank/C6) -- declarada ANTES de extrato_bancario porque 'Limite do cartão' e 'Total da fatura' são fingerprint forte e exclusivo"
+    prioridade: normal
+    match_mode: any
+    mimes: ["application/pdf"]
+    regex_conteudo:
+      - "Fatura\\s+do\\s+Cart[ãa]o"
+      - "Total\\s+da\\s+fatura"
+      - "Limite\\s+do\\s+cart[ãa]o"
+      - "Vencimento\\s+da\\s+fatura"
+    extrator_modulo: null   # extratores específicos por bandeira já existem
+    origem_sprint: 41
+    pasta_destino_template: "data/raw/{pessoa}/faturas/"
+    renomear_template:
+      com_data: "FATURA_{data:%Y-%m-%d}_{sha8}.pdf"
+      sem_data: "FATURA_{sha8}.pdf"
+
+  - id: extrato_bancario
+    descricao: "Extrato de conta corrente em PDF (Itaú/Santander/C6/Nubank PF)"
+    prioridade: normal
+    match_mode: any
+    mimes: ["application/pdf"]
+    regex_conteudo:
+      - "EXTRATO\\s+DE\\s+CONTA"
+      - "EXTRATO\\s+CONSOLIDADO"
+      - "Saldo\\s+Anterior"
+      - "Saldo\\s+do\\s+per[íi]odo"
+    extrator_modulo: null   # extratores específicos por banco já existem em src/extractors/{itau,santander,c6,nubank_cc}.py
+    origem_sprint: 41
+    pasta_destino_template: "data/raw/{pessoa}/extratos/"
+    renomear_template:
+      com_data: "EXTRATO_{data:%Y-%m-%d}_{sha8}.pdf"
+      sem_data: "EXTRATO_{sha8}.pdf"
+
+  - id: conta_luz
+    descricao: "Fatura de energia (Neoenergia/CEB) -- PDF ou foto"
+    prioridade: normal
+    match_mode: any
+    mimes: ["application/pdf", "image/jpeg", "image/png"]
+    regex_conteudo:
+      - "Neoenergia"
+      - "CEB\\s+Distribui[çc][ãa]o"
+      - "Fatura\\s+de\\s+Energia"
+      - "kWh"
+    extrator_modulo: src.extractors.energia_ocr
+    origem_sprint: 41
+    pasta_destino_template: "data/raw/{pessoa}/contas/luz/"
+    renomear_template:
+      com_data: "LUZ_{data:%Y-%m-%d}_{sha8}.{ext}"
+      sem_data: "LUZ_{sha8}.{ext}"
+
+  - id: conta_agua
+    descricao: "Fatura de água da CAESB -- PDF ou foto"
+    prioridade: normal
+    match_mode: any
+    mimes: ["application/pdf", "image/jpeg", "image/png"]
+    regex_conteudo:
+      - "CAESB"
+      - "Companhia\\s+de\\s+Saneamento\\s+Ambiental"
+      - "Consumo\\s+de\\s+[ÁA]gua"
+      - "m[³3]\\s*de\\s*[áa]gua"
+    extrator_modulo: null   # extrator de água ainda não existe
+    origem_sprint: 41
+    pasta_destino_template: "data/raw/{pessoa}/contas/agua/"
+    renomear_template:
+      com_data: "AGUA_{data:%Y-%m-%d}_{sha8}.{ext}"
+      sem_data: "AGUA_{sha8}.{ext}"
+
+  - id: boleto_servico
+    descricao: "Boleto bancário (linha digitável + vencimento)"
+    prioridade: normal
+    match_mode: any
+    mimes: ["application/pdf"]
+    regex_conteudo:
+      - "Linha\\s+digit[áa]vel"
+      - "C[óo]digo\\s+de\\s+barras"
+      - "\\d{5}\\.\\d{5}\\s+\\d{5}\\.\\d{6}\\s+\\d{5}\\.\\d{6}\\s+\\d\\s+\\d{14}"   # padrão linha digitável
+      - "Vencimento.{0,40}\\d{2}/\\d{2}/\\d{4}"
+    extrator_modulo: null   # extrator de boleto ainda não existe
+    origem_sprint: 41
+    pasta_destino_template: "data/raw/{pessoa}/boletos/"
+    renomear_template:
+      com_data: "BOLETO_{data:%Y-%m-%d}_{sha8}.pdf"
+      sem_data: "BOLETO_{sha8}.pdf"
+
+  - id: contrato
+    descricao: "Contrato (locação/prestação/financiamento/compra-e-venda) -- exige CONTRATANTE E CONTRATAD[OA] em qualquer posição do texto, sem janela de proximidade"
+    prioridade: normal
+    match_mode: all
+    mimes: ["application/pdf"]
+    regex_conteudo:
+      - "CONTRATANTE"
+      - "CONTRATAD[OA]"
+    extrator_modulo: null   # contratos não são extraídos automaticamente; intake só arquiva
+    origem_sprint: 41
+    pasta_destino_template: "data/raw/{pessoa}/contratos/"
+    renomear_template:
+      com_data: "CONTRATO_{data:%Y-%m-%d}_{sha8}.pdf"
+      sem_data: "CONTRATO_{sha8}.pdf"
+
+  # =============================================================
+  # === FALLBACK (2) -- assinaturas fracas; só pegam se NORMAL falhar ===
+  # =============================================================
+
+  - id: cupom_fiscal_foto
+    descricao: "Cupom fiscal térmico fotografado (chega como imagem; OCR no extrator da Sprint 45)"
+    prioridade: fallback
+    match_mode: any
+    mimes: ["image/jpeg", "image/png", "image/heic"]
+    regex_conteudo:   # OCR de baixa resolução no preview; aceita qualquer pista
+      - "CUPOM\\s+FISCAL"
+      - "CCF[\\s:]"
+      - "EXTRATO\\s+CF[-\\s]?e"
+      - "SAT[-\\s]"
+    extrator_modulo: null   # Sprint 45
+    origem_sprint: 45
+    pasta_destino_template: "data/raw/{pessoa}/nfs_fiscais/cupom_foto/"
+    renomear_template:
+      com_data: "CUPOM_{data:%Y-%m-%d}_{sha8}.{ext}"
+      sem_data: "CUPOM_{sha8}.{ext}"
+
+  - id: recibo_nao_fiscal
+    descricao: "Recibo simples sem CNPJ formal (aluguel/mensalidade/autônomo)"
+    prioridade: fallback
+    match_mode: any
+    mimes: ["application/pdf", "image/jpeg", "image/png"]
+    regex_conteudo:
+      - "RECEBI\\s+DE"
+      - "Recibo\\s+No?\\.?\\s*\\d"
+      - "RECIBO\\s+DE\\s+PAGAMENTO"
+    extrator_modulo: null   # Sprint 47
+    origem_sprint: 47
+    pasta_destino_template: "data/raw/{pessoa}/recibos/"
+    renomear_template:
+      com_data: "RECIBO_{data:%Y-%m-%d}_{sha8}.{ext}"
+      sem_data: "RECIBO_{sha8}.{ext}"
