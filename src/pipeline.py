@@ -92,6 +92,13 @@ def _descobrir_extratores() -> list:
     except ImportError as e:
         logger.warning("Extrator cupom_garantia_estendida_pdf indisponível: %s", e)
 
+    try:
+        from src.extractors.nfce_pdf import ExtratorNfcePDF
+
+        extratores.append(ExtratorNfcePDF)
+    except ImportError as e:
+        logger.warning("Extrator nfce_pdf indisponível: %s", e)
+
     return extratores
 
 
