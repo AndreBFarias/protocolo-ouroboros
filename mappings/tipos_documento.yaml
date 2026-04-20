@@ -183,15 +183,16 @@ tipos:
       sem_data: "EXTRATO_{sha8}.pdf"
 
   - id: conta_luz
-    descricao: "Fatura de energia (Neoenergia/CEB) -- PDF ou foto"
+    descricao: "Fatura de energia (Neoenergia/CEB) -- PDF ou foto. Regex endurecido após falso-positivo em extrato Itaú com 'PIX QRS NEOENERGIA' (Sprint 41d Conferência Artesanal): exige assinatura DE FATURA, não só menção a Neoenergia/kWh isoladas."
     prioridade: normal
     match_mode: any
     mimes: ["application/pdf", "image/jpeg", "image/png"]
     regex_conteudo:
-      - "Neoenergia"
-      - "CEB\\s+Distribui[çc][ãa]o"
       - "Fatura\\s+de\\s+Energia"
-      - "kWh"
+      - "Conta\\s+de\\s+Energia\\s+El[ée]trica"
+      - "Neoenergia.{0,200}kWh"
+      - "CEB\\s+Distribui[çc][ãa]o.{0,200}kWh"
+      - "Consumo\\s+(em\\s+)?kWh"
     extrator_modulo: src.extractors.energia_ocr
     origem_sprint: 41
     pasta_destino_template: "data/raw/{pessoa}/contas/luz/"
