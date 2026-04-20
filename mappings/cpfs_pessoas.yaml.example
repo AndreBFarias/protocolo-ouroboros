@@ -1,0 +1,27 @@
+# =============================================================================
+# cpfs_pessoas.yaml -- mapping CPF -> pessoa para auto-detect no intake (Sprint 41b)
+# =============================================================================
+#
+# COMO USAR:
+#   1. Copie este arquivo para `mappings/cpfs_pessoas.yaml`
+#   2. Preencha com os CPFs reais do casal (e MEI compartilhado se houver)
+#   3. O `mappings/cpfs_pessoas.yaml` está no .gitignore -- NÃO entra no commit
+#
+# Schema:
+#   - Chave: CPF como string. Pode ter pontuação ou não -- o detector
+#     normaliza removendo tudo que não é dígito. O importante é serem 11
+#     dígitos no final.
+#   - Valor: "andre" | "vitoria" | "casal"
+#       - andre/vitoria: documentos com esse CPF vão pra `data/raw/<pessoa>/`
+#       - casal: documentos compartilhados (MEI conjunto, conta conjunta)
+#         vão pra `data/raw/casal/`
+#
+# Quando um CPF do preview NÃO está mapeado aqui:
+#   - Detector cai pra camada 2 (pasta-pai do arquivo: andre/vitoria)
+#   - Se nem isso casa, cai pra "casal" (NUNCA chuta sem evidência)
+# =============================================================================
+
+cpfs:
+  "00000000000": andre      # CPF do André (preencher com o real)
+  "11111111111": vitoria    # CPF da Vitória (preencher com o real)
+  # "22222222222": casal    # MEI compartilhado, se aplicável

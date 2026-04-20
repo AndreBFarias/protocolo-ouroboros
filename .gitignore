@@ -9,6 +9,7 @@ contexto/
 
 # Senhas e credenciais
 mappings/senhas.yaml
+mappings/cpfs_pessoas.yaml      # contém CPFs reais (LGPD); só o .example entra no repo
 .env
 *.key
 *.pem
