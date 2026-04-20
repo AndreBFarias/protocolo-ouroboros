@@ -160,4 +160,87 @@ sqlite3 data/output/grafo.sqlite "SELECT nome_canonico FROM node WHERE tipo='seg
 
 ---
 
+## 11. Validação em grafo real (end-to-end, 2026-04-19 23:45)
+
+Execução completa `./run.sh --inbox && ./run.sh --tudo` com os 2 PDFs reais da
+inbox. Contagens ANTES (baseline Sprint 42) e DEPOIS:
+
+| Tipo de nó | Antes | Depois | Delta |
+|------------|-------|--------|-------|
+| `apolice` | 0 | **2** | +2 |
+| `seguradora` | 0 | **1** | +1 |
+| `fornecedor` | 1099 | **1100** | +1 (Americanas loja 0337) |
+| `periodo` | 82 | 82 | 0 (2026-04 já existia) |
+| `item` | 0 | 0 | 0 (Sprint 44/44b não rodou ainda) |
+| `documento` | 0 | 0 | 0 (idem) |
+
+| Tipo de aresta | Antes | Depois | Delta |
+|----------------|-------|--------|-------|
+| `emitida_por` | 0 | **2** | +2 (apolice -> MAPFRE) |
+| `vendida_em` | 0 | **2** | +2 (apolice -> Americanas) |
+| `ocorre_em` | 6086 | 6088 | +2 (apolice -> periodo 2026-04) |
+| `assegura` | 0 | 0 | 0 (esperado) |
+
+Apólices persistidas:
+
+```
+bilhete 781000129322123: CONTROLE P55 DUALSENSE GALACTIC PURPLE
+  premio R$ 76,70  vig 2026-04-19..2029-04-19  SUSEP 15414.900147/2014-11
+bilhete 781000129322124: BASE DE CARREGAMENTO DO CONTROLE P55
+  premio R$ 53,98  vig 2026-04-19..2029-04-19  SUSEP 15414.900147/2014-11
+```
+
+Seguradora: MAPFRE Seguros Gerais, CNPJ `61.074.175/0001-38`, SUSEP `06238`.
+
+Varejo: Americanas SA loja 0337, CNPJ `00.776.574/0160-79`, endereço
+`SCC, LTS 01 05 E D6, PISO TERREO LJS 01 E 02 MODE ESLO1 - GAMA` (Gama/DF).
+
+**Query de exemplo** (apólice -> seguradora -> varejo via JOIN de edges):
+
+```sql
+SELECT a.nome_canonico AS bilhete, s.nome_canonico AS seguradora_cnpj,
+       v.nome_canonico AS varejo_cnpj
+FROM node a
+JOIN edge e1 ON e1.src_id = a.id AND e1.tipo = 'emitida_por'
+JOIN node s ON s.id = e1.dst_id
+JOIN edge e2 ON e2.src_id = a.id AND e2.tipo = 'vendida_em'
+JOIN node v ON v.id = e2.dst_id
+WHERE a.tipo = 'apolice';
+```
+
+Resultado:
+```
+781000129322123 | 61.074.175/0001-38 | 00.776.574/0160-79
+781000129322124 | 61.074.175/0001-38 | 00.776.574/0160-79
+```
+
+## 12. Observações da execução real (para Conferência Opus)
+
+1. **5 ocorrências -> 2 nós únicos.** O pipeline processou 5 cópias dos bilhetes
+   (3 PDFs roteados + 2 envelopes de auditoria) e o upsert por `numero_bilhete`
+   consolidou corretamente em 2 apólices únicas. Arestas também dedupadas.
+
+2. **PDF escaneado `notas de garantia e compras.pdf` ficou em `_classificar/`.**
+   O classifier da Sprint 41d rejeitou porque o preview do scan não tem texto
+   extraível e a heurística MIME/imagem atual não empurra scans puros para o
+   extrator 47c. Não é bloqueador da sprint (os 2 bilhetes únicos foram captados
+   via `pdf_notas.pdf` nativo), mas é oportunidade futura: o classifier poderia
+   tentar OCR no preview quando o MIME é imagem ou quando o PDF não tem texto
+   nativo. Registrar como nova sprint (scope atômico).
+
+3. **Razão social da seguradora persistiu com glyph quebrado (`MAPFRE Seguros
+   Gerais 5.À.`) em vez da canônica do YAML.** O enrich usa `setdefault`, que
+   só preenche quando ausente; o parser já extraiu a razão com glyph e o YAML
+   não sobrescreve. O CNPJ casa e o SUSEP foi corrigido (lógica específica para
+   `D` no lugar de `0`), mas a razão social não tem lógica análoga. Oportunidade
+   de melhoria pontual para sprint futura (não inline).
+
+4. **Pessoa detectada como `casal`** em vez de `andre` porque
+   `mappings/cpfs_pessoas.yaml` ainda não existe. Isso afeta o roteamento do
+   intake (`data/raw/casal/garantias_estendidas/` em vez de `.../andre/...`)
+   mas não afeta o grafo (apólice/seguradora/varejo são chaveados por CNPJ e
+   número do bilhete). Registrar como follow-up de configuração.
+
+---
+
 *"O seguro não evita o sinistro -- mas distribui o peso." -- princípio atuarial*

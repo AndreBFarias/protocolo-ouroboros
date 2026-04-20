@@ -237,4 +237,14 @@ Dados manuais do XLSX antigo (2022-2023) com mesmo valor+data mas locais complet
 
 ---
 
+## 22. `setdefault` no enrich por YAML preserva glyph no metadata (descoberta 2026-04-19, Sprint 47c end-to-end)
+
+**O que aconteceu:** Após rodar `./run.sh --tudo` contra `pdf_notas.pdf`, o nó `seguradora` foi persistido com `razao_social = "MAPFRE Seguros Gerais 5.À."` (glyph quebrado: `S` virou `5`, `A` virou `À`). O `mappings/seguradoras.yaml` tem a versão canônica `"MAPFRE Seguros Gerais S.A."`, mas o enrich (`_enriquecer_seguradora` em `src/extractors/cupom_garantia_estendida_pdf.py`) usa `bilhete.setdefault("seguradora_razao_social", cfg["razao_social"])` -- `setdefault` só preenche quando ausente, e o parser já preencheu com a versão com glyph. CNPJ e código SUSEP têm lógica de sobrescrita quando detectam glyph (`D` no lugar de `0`), mas a razão social não.
+
+**Solução aplicada:** nenhuma nesta sprint (scope atômico). Registrada como observação na conferência artesanal da 47c (`docs/propostas/sprint_47c_conferencia.md §12.3`) para ser endereçada em sprint dedicada de melhoria do enrich. Workaround para quem precisa da razão canônica AGORA: query cruzada, buscando via CNPJ diretamente no `mappings/seguradoras.yaml`.
+
+**Como evitar no futuro:** enrich por YAML deve SOBRESCREVER campos canônicos (razão social, código SUSEP, nome fantasia) quando o CNPJ bate -- o YAML É a fonte de verdade, por definição. `setdefault` preserva glyph e anula o propósito do registro. Aplicar essa regra também nas Sprints 44 (DANFE), 44b (NFC-e) e 46 (XML NFe) quando forem introduzidas, pois vão usar o mesmo padrão enrich-via-mapping.
+
+---
+
 *"Experiência é simplesmente o nome que damos aos nossos erros." -- Oscar Wilde*
