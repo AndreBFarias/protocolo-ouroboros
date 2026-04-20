@@ -3,7 +3,7 @@
 ```
 VERSÃO: 4.0 | STATUS: PRODUÇÃO (catalogador universal em construção) | LANG: PT-BR
 TRANSAÇÕES: 6.136 | MESES: 82 (out/2019 a mar/2026) | BANCOS: 6 | EXTRATORES: 9
-SPRINTS: 56 (24 concluídas, 0 produção, 19 backlog, 13 arquivadas) -- Família Sprint 41 (a/b/c/d) CONCLUÍDA. Intake universal pronto para integração no inbox_processor.py: recall 85%, precisão 100%, auto-detect de pessoa via CPF
+SPRINTS: 56 (25 concluídas, 0 produção, 18 backlog, 13 arquivadas) -- Sprint 42 CONCLUÍDA: grafo SQLite com 7.378 nodes (6086 transações + 1099 fornecedores entity-resolved + 100 categorias + 82 períodos + 7 contas + 4 tags IRPF) e 24.506 edges, populados do XLSX, idempotente. Inbox_processor.py integrado com intake universal (Sprint 41/b/c/d).
 CATEGORIZAÇÃO: 100% | IRPF TAGS: 167 (75 com CNPJ) | HOLERITES: 24 (G4F + Infobase)
 TESTES: 44 unitários (transform/ 82% média, extractors/contracheque_pdf 59%)
 ROTA: Catalogador universal artesanal via Claude Code Opus (ver docs/ROADMAP.md fases ALFA→ZETA)

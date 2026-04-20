@@ -1,9 +1,9 @@
 # Roadmap -- Protocolo Ouroboros
 
 ```
-VERSÃO: 6.5 | SPRINTS: 56 (24 concluídas, 0 em produção, 19 backlog, 13 arquivadas)
+VERSÃO: 6.6 | SPRINTS: 56 (25 concluídas, 0 em produção, 18 backlog, 13 arquivadas)
 ROTA: Catalogador universal artesanal (Fases ALFA → ZETA)
-ÚLTIMA ATUALIZAÇÃO: 2026-04-19 (Sprints 41/41b/41c/41d CONCLUÍDAS -- intake universal pronto para integração no inbox_processor.py)
+ÚLTIMA ATUALIZAÇÃO: 2026-04-19 (Sprint 42 CONCLUÍDA -- grafo SQLite com 7.378 nodes + 24.506 edges migrados do XLSX)
 ```
 
 ---
@@ -34,8 +34,8 @@ Catalogador universal artesanal da vida financeira do casal. O usuário joga QUA
 
 | Status | Sprints | Total |
 |--------|---------|-------|
-| Concluídas | 01-07, 12-14, 17-19, 22, 23, 30, 37-40, 41, 41b, 41c, 41d | 24 |
-| Backlog ativo (ALFA→EPSILON) | 42-53 (inclui 44b, 47a, 47b, 47c) | 16 |
+| Concluídas | 01-07, 12-14, 17-19, 22, 23, 30, 37-40, 41, 41b, 41c, 41d, 42 | 25 |
+| Backlog ativo (ALFA→EPSILON) | 43-53 (inclui 44b, 47a, 47b, 47c) | 15 |
 | Backlog consumidor (ZETA) | 20, 21, 24, 25, 33, 34, 35, 36 (pós-EPSILON) | 8 |
 | Arquivadas (substituídas) | 08, 09, 10, 11, 15, 16, 26, 27a, 28, 29a, 29b, 31, 32 | 13 |
 
@@ -66,7 +66,7 @@ Objetivo: aceitar qualquer arquivo, armazenar tudo no grafo, formalizar o workfl
 | 41b | Auto-detecção de pessoa via CPF do conteúdo | CONCLUÍDA | MEDIA |
 | 41c | Unificação detector legado + YAML (recall 19% → 85% em data/raw/) | CONCLUÍDA | MEDIA |
 | 41d | Heterogeneity Detection (page-split condicional) | CONCLUÍDA | ALTA |
-| 42 | Grafo SQLite Mínimo (backbone, migração inicial) | PENDENTE | CRÍTICA |
+| 42 | Grafo SQLite Mínimo (7.378 nodes + 24.506 edges) | CONCLUÍDA | CRÍTICA |
 | 43 | Workflow Supervisor Artesanal (scripts, templates, diário) | PENDENTE | CRÍTICA |
 
 Sprint 41 e 42 podem rodar em paralelo. Sprint 43 depende da 42 (supervisor_contexto.sh consulta grafo).

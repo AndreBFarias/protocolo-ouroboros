@@ -57,14 +57,16 @@ sprint:
 
 # Sprint 42 -- Grafo SQLite Mínimo
 
-**Status:** PENDENTE
-**Data:** 2026-04-19
+**Status:** CONCLUÍDA
+**Data:** 2026-04-19 (criada e implementada no mesmo dia)
 **Prioridade:** CRÍTICA
 **Tipo:** Infra
-**Dependências:** Nenhuma (paraleliza com 41)
-**Desbloqueia:** Sprints 44-53 (extratores gravam diretamente no grafo; dashboard/busca/linking consomem)
+**Dependências:** Nenhuma (paralelizou com 41)
+**Desbloqueia:** Sprints 43, 44-53 (extratores gravam no grafo; dashboard/busca/linking consomem)
 **Issue:** --
 **ADR:** ADR-12, ADR-14
+**Conferência Artesanal Opus:** `docs/propostas/sprint_42_conferencia.md`
+**Migração contra XLSX real:** 6086 transações + 1099 fornecedores canônicos (entity resolution unificou 17% de 1321 locais distintos) + 24506 arestas. Idempotente confirmado.
 
 ---
 
