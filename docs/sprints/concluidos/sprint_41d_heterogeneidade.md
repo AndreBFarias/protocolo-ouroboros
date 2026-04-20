@@ -41,7 +41,7 @@ sprint:
 
 # Sprint 41d -- Heterogeneity Detection
 
-**Status:** PENDENTE
+**Status:** CONCLUÍDA
 **Data:** 2026-04-19 (criada após prova de fogo histórica da Sprint 41 -- gap revelado: PDFs multipage com cabeçalho só na pg1 perdem cobertura porque page-split classifica cada página independentemente)
 **Prioridade:** ALTA
 **Tipo:** Feature
