@@ -1,9 +1,9 @@
 # Roadmap -- Protocolo Ouroboros
 
 ```
-VERSÃO: 6.0 | SPRINTS: 51 (20 concluídas, 0 em produção, 18 backlog, 13 arquivadas)
+VERSÃO: 6.3 | SPRINTS: 56 (21 concluídas, 0 em produção, 22 backlog, 13 arquivadas)
 ROTA: Catalogador universal artesanal (Fases ALFA → ZETA)
-ÚLTIMA ATUALIZAÇÃO: 2026-04-19 (re-roadmap completo; sprints 41-53 adicionadas)
+ÚLTIMA ATUALIZAÇÃO: 2026-04-19 (Sprint 41 CONCLUÍDA -- precisão 100% em 98 arquivos; abre 41b/41c/41d para gaps revelados pela prova histórica)
 ```
 
 ---
@@ -34,8 +34,8 @@ Catalogador universal artesanal da vida financeira do casal. O usuário joga QUA
 
 | Status | Sprints | Total |
 |--------|---------|-------|
-| Concluídas | 01-07, 12-14, 17-19, 22, 23, 30, 37-40 | 20 |
-| Backlog ativo (ALFA→EPSILON) | 41-53 (inclui 47a, 47b) | 15 |
+| Concluídas | 01-07, 12-14, 17-19, 22, 23, 30, 37-40, 41 | 21 |
+| Backlog ativo (ALFA→EPSILON) | 41b/c/d, 42-53 (inclui 44b, 47a, 47b, 47c) | 19 |
 | Backlog consumidor (ZETA) | 20, 21, 24, 25, 33, 34, 35, 36 (pós-EPSILON) | 8 |
 | Arquivadas (substituídas) | 08, 09, 10, 11, 15, 16, 26, 27a, 28, 29a, 29b, 31, 32 | 13 |
 
@@ -62,7 +62,10 @@ Objetivo: aceitar qualquer arquivo, armazenar tudo no grafo, formalizar o workfl
 
 | Sprint | Tema | Status | Prioridade |
 |--------|------|--------|------------|
-| 41 | Intake Universal Multiformato (JPG/HEIC/XML/EML/ZIP/...) | PENDENTE | CRÍTICA |
+| 41 | Intake Universal Multiformato (JPG/HEIC/XML/EML/ZIP/...) | CONCLUÍDA | CRÍTICA |
+| 41b | Auto-detecção de pessoa via CPF do conteúdo | PENDENTE | MEDIA |
+| 41c | Unificação detector legado + YAML num registry só (cobre CSV/OFX/XLS bancário) | PENDENTE | MEDIA |
+| 41d | Heterogeneity Detection (page-split condicional) -- pré-requisito de integração | PENDENTE | ALTA |
 | 42 | Grafo SQLite Mínimo (backbone, migração inicial) | PENDENTE | CRÍTICA |
 | 43 | Workflow Supervisor Artesanal (scripts, templates, diário) | PENDENTE | CRÍTICA |
 
@@ -78,14 +81,16 @@ Objetivo: transformar arquivos em itens estruturados no grafo.
 
 | Sprint | Tema | Status | Prioridade |
 |--------|------|--------|------------|
-| 44 | Extrator DANFE PDF | PENDENTE | ALTA |
+| 44 | Extrator NFe modelo 55 (DANFE PDF formal) | PENDENTE | ALTA |
+| 44b | Extrator NFC-e modelo 65 (mini-cupom QR SEFAZ) | PENDENTE | ALTA |
 | 45 | Extrator Cupom Fiscal Térmico (foto) | PENDENTE | ALTA |
 | 46 | Extrator XML NFe | PENDENTE | MEDIA |
 | 47 | Extrator Recibo Não-Fiscal | PENDENTE | MEDIA |
 | 47a | Extrator Receita Médica e Prescrição | PENDENTE | MEDIA |
-| 47b | Extrator Documento de Garantia | PENDENTE | BAIXA |
+| 47b | Extrator Termo de Garantia (fabricante) | PENDENTE | BAIXA |
+| 47c | Extrator Cupom Bilhete de Seguro Garantia Estendida (apólice SUSEP) | PROPOSTA | MEDIA |
 
-Após BETA, qualquer das GAMA pode começar. DANFE e cupom térmico têm maior impacto imediato (fontes dominantes do dia a dia).
+Após BETA, qualquer das GAMA pode começar. DANFE/NFC-e e cupom térmico têm maior impacto imediato (fontes dominantes do dia a dia). Sprint 47c aguarda aprovação humana via `docs/propostas/sprint_nova/sprint_47c_cupom_garantia_estendida.md`.
 
 ---
 
@@ -165,12 +170,14 @@ Fase BETA -- infra universal (próximo bloco)
   └─ 42 Grafo SQLite mínimo  ─────┼──► 43 Workflow Supervisor
 
 Fase GAMA -- extratores (paralelizáveis)
-  ├─ 44 DANFE PDF
-  ├─ 45 Cupom térmico foto
-  ├─ 46 XML NFe
-  ├─ 47 Recibo não-fiscal
+  ├─ 44  DANFE PDF (NFe modelo 55)
+  ├─ 44b NFC-e modelo 65 (mini-cupom QR SEFAZ)
+  ├─ 45  Cupom térmico foto
+  ├─ 46  XML NFe
+  ├─ 47  Recibo não-fiscal
   ├─ 47a Receita médica
-  └─ 47b Garantia
+  ├─ 47b Termo de Garantia (fabricante)
+  └─ 47c Cupom Bilhete de Seguro Garantia Estendida
 
 Fase DELTA -- linking e classificação
   └─ 48 Linking doc↔transação → 49 ER de produtos → 50 Categorias de item
