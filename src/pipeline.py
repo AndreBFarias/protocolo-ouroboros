@@ -120,6 +120,18 @@ def _descobrir_extratores() -> list:
     except ImportError as e:
         logger.warning("Extrator xml_nfe indisponível: %s", e)
 
+    # Receita médica entra ANTES do catch-all recibo_nao_fiscal e DEPOIS
+    # dos extratores fiscais: receita em foto/PDF tem marcadores específicos
+    # (CRM, receituário, prescrição) que não colidem com cupom/NFC-e/DANFE,
+    # mas um comprovante Pix fotografado poderia cair em recibo genérico
+    # caso a receita fosse avaliada por último.
+    try:
+        from src.extractors.receita_medica import ExtratorReceitaMedica
+
+        extratores.append(ExtratorReceitaMedica)
+    except ImportError as e:
+        logger.warning("Extrator receita_medica indisponível: %s", e)
+
     # Recibo não-fiscal é catch-all de baixa prioridade (Sprint 47):
     # registrado depois dos extratores fiscais para não capturar arquivo
     # que pertence a cupom térmico, NFC-e ou DANFE.
