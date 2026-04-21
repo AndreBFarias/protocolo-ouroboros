@@ -1,0 +1,83 @@
+# Regex por emissor para cupom fiscal térmico fotografado (Sprint 45).
+#
+# Cada entrada descreve um LAYOUT. O detector procura `identificador` no
+# texto OCR normalizado (uppercase, sem acento) para escolher qual
+# `regex_item` aplicar. Se nenhum casa, cai para `generico`.
+#
+# Campos esperados no match:
+#   codigo        -- opcional, SKU do produto
+#   descricao     -- obrigatório, descrição textual
+#   qtde          -- opcional, quantidade (1 se ausente)
+#   unidade       -- opcional (PCE, UN, KG, L, CX)
+#   valor_unit    -- opcional, valor unitário (= total / qtde se ausente)
+#   valor_total   -- obrigatório, valor total do item
+#
+# Formato dos números: vírgula decimal brasileira (999,99).
+#
+# N-para-N: alterações aqui exigem atualização dos testes em
+# `tests/test_cupom_termico_foto.py` quando o layout correspondente é
+# coberto por fixture.
+
+emissores:
+
+  # Layout Americanas S/A -- código de 12 dígitos no início, depois
+  # descrição, qtde + unidade + "x" + valor_unit + valor_total.
+  # Mesmo padrão que NFC-e Americanas mas sem cabeçalho SEFAZ.
+  americanas:
+    identificador: "AMERICANAS"
+    regex_item: >-
+      ^\s*(?P<codigo>\d{6,14})\s+
+      (?P<descricao>.+?)\s+
+      (?P<qtde>\d+(?:[.,]\d+)?)\s+
+      (?P<unidade>[A-Z]{1,4})\s*
+      x?\s*
+      (?P<valor_unit>\d{1,7}[.,]\d{2})\s+
+      (?P<valor_total>\d{1,7}[.,]\d{2})\s*$
+
+  # Supermercados genéricos (Pão de Açúcar, Extra, Big, Carrefour).
+  # Formato típico: "DESCRICAO QTD x UNIT TOTAL" sem código visível.
+  mercado_generico:
+    identificador: "SUPERMERC|MERCAD|ATACAD|CARREFOUR|EXTRA|P[ÃA]O\\s+DE\\s+A[CÇ]UCAR"
+    regex_item: >-
+      ^\s*(?P<descricao>[A-Z][A-Z0-9 \./\-]{3,}?)\s+
+      (?P<qtde>\d+(?:[.,]\d+)?)\s*
+      (?:(?P<unidade>[A-Z]{1,3})\s+)?
+      [Xx]\s*
+      (?P<valor_unit>\d{1,5}[.,]\d{2})\s+
+      (?P<valor_total>\d{1,7}[.,]\d{2})\s*$
+
+  # Farmácias (Drogaria São Paulo, Droga Raia, Pacheco, Pague Menos).
+  # Preço único por item (sem qtd x unit) e descrição em caixa alta.
+  # Código EAN obrigatório (13 dígitos) -- evita casar linhas como
+  # "DEBITO 110,20" ou "TOTAL 150,00".
+  farmacia:
+    identificador: "DROG|FARM[AÁ]CIA|PACHECO|PAGUE\\s+MENOS|RAIA"
+    regex_item: >-
+      ^\s*(?P<codigo>\d{12,14})\s+
+      (?P<descricao>[A-Z][A-Z0-9 \./\-]{3,}?)\s+
+      (?P<valor_total>\d{1,5}[.,]\d{2})\s*$
+
+  # Postos de combustível. Formato: "GASOLINA COMUM 12,345 L x 5,899 72,84"
+  # Atenção: litros têm 3 casas decimais.
+  posto:
+    identificador: "POSTO|COMBUST|SHELL|IPIRANGA|PETROBRAS|ALE\\b|RAIZEN"
+    regex_item: >-
+      ^\s*(?P<descricao>(?:GASOLINA|ETANOL|ALCOOL|DIESEL|GNV)[^\d\n]*?)\s+
+      (?P<qtde>\d+(?:[.,]\d{1,3})?)\s*
+      (?P<unidade>L|LT|LITROS?)\s+
+      [Xx]\s*
+      (?P<valor_unit>\d{1,3}[.,]\d{2,3})\s+
+      (?P<valor_total>\d{1,5}[.,]\d{2})\s*$
+
+  # Fallback -- tenta casar "<desc> <qtd>x<unit> <total>" sem exigir código.
+  # Usado quando nenhum identificador específico bate.
+  generico:
+    identificador: ""
+    regex_item: >-
+      ^\s*(?P<descricao>[A-Z][A-Z0-9 \./\-]{3,}?)\s+
+      (?P<qtde>\d+(?:[.,]\d+)?)\s*[Xx]\s*
+      (?P<valor_unit>\d{1,5}[.,]\d{2})\s+
+      (?P<valor_total>\d{1,7}[.,]\d{2})\s*$
+
+
+# "Nenhum regex sobrevive ao primeiro encontro com o cupom real." -- provérbio de parser

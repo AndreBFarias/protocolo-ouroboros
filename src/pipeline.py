@@ -106,12 +106,30 @@ def _descobrir_extratores() -> list:
     except ImportError as e:
         logger.warning("Extrator danfe_pdf indisponível: %s", e)
 
+    try:
+        from src.extractors.cupom_termico_foto import ExtratorCupomTermicoFoto
+
+        extratores.append(ExtratorCupomTermicoFoto)
+    except ImportError as e:
+        logger.warning("Extrator cupom_termico_foto indisponível: %s", e)
+
     return extratores
 
 
 def _escanear_arquivos(diretorio: Path) -> list[Path]:
     """Escaneia recursivamente todos os arquivos em data/raw/."""
-    extensoes = {".csv", ".xlsx", ".xls", ".pdf", ".ofx"}
+    extensoes = {
+        ".csv",
+        ".xlsx",
+        ".xls",
+        ".pdf",
+        ".ofx",
+        ".jpg",
+        ".jpeg",
+        ".png",
+        ".heic",
+        ".heif",
+    }
     arquivos = []
 
     for arquivo in diretorio.rglob("*"):
