@@ -1,9 +1,9 @@
 # Roadmap -- Protocolo Ouroboros
 
 ```
-VERSÃO: 6.7 | SPRINTS: 57 (25 concluídas, 0 em produção, 19 backlog, 13 arquivadas)
+VERSÃO: 6.8 | SPRINTS: 63 (27 concluídas, 0 em produção, 23 backlog, 13 arquivadas)
 ROTA: Catalogador universal artesanal (Fases ALFA → ZETA) + higiene INFRA pontual
-ÚLTIMA ATUALIZAÇÃO: 2026-04-20 (Sprint 54 PLANEJADA -- limpeza de 22 violações de acentuação pré-existentes, achado colateral COL-44-A)
+ÚLTIMA ATUALIZAÇÃO: 2026-04-20 (Sprint 44 CONCLUÍDA -- extrator DANFE NFe modelo 55 com ingestão no grafo; Sprint 43 também fechada formalmente; Sprint 54 PLANEJADA para COL-44-A)
 ```
 
 ---
@@ -36,8 +36,8 @@ Catalogador universal artesanal da vida financeira do casal. O usuário joga QUA
 
 | Status | Sprints | Total |
 |--------|---------|-------|
-| Concluídas | 01-07, 12-14, 17-19, 22, 23, 30, 37-40, 41, 41b, 41c, 41d, 42 | 25 |
-| Backlog ativo (ALFA→EPSILON) | 43-53 (inclui 44b, 47a, 47b, 47c) | 15 |
+| Concluídas | 01-07, 12-14, 17-19, 22, 23, 30, 37-40, 41, 41b, 41c, 41d, 42, 43, 44 | 27 |
+| Backlog ativo (ALFA→EPSILON) | 44b-53 (inclui 47a, 47b, 47c) | 14 |
 | Backlog consumidor (ZETA) | 20, 21, 24, 25, 33, 34, 35, 36 (pós-EPSILON) | 8 |
 | Backlog higiene INFRA | 54 | 1 |
 | Arquivadas (substituídas) | 08, 09, 10, 11, 15, 16, 26, 27a, 28, 29a, 29b, 31, 32 | 13 |
@@ -82,7 +82,7 @@ Objetivo: aceitar qualquer arquivo, armazenar tudo no grafo, formalizar o workfl
 | 41c | Unificação detector legado + YAML (recall 19% → 85% em data/raw/) | CONCLUÍDA | MEDIA |
 | 41d | Heterogeneity Detection (page-split condicional) | CONCLUÍDA | ALTA |
 | 42 | Grafo SQLite Mínimo (7.378 nodes + 24.506 edges) | CONCLUÍDA | CRÍTICA |
-| 43 | Workflow Supervisor Artesanal (scripts, templates, diário) | PENDENTE | CRÍTICA |
+| 43 | Workflow Supervisor Artesanal (scripts, templates, diário) | CONCLUÍDA | CRÍTICA |
 
 Sprint 41 e 42 podem rodar em paralelo. Sprint 43 depende da 42 (supervisor_contexto.sh consulta grafo).
 
@@ -96,7 +96,7 @@ Objetivo: transformar arquivos em itens estruturados no grafo.
 
 | Sprint | Tema | Status | Prioridade |
 |--------|------|--------|------------|
-| 44 | Extrator NFe modelo 55 (DANFE PDF formal) | PENDENTE | ALTA |
+| 44 | Extrator NFe modelo 55 (DANFE PDF formal) | CONCLUÍDA | ALTA |
 | 44b | Extrator NFC-e modelo 65 (mini-cupom QR SEFAZ) | PENDENTE | ALTA |
 | 45 | Extrator Cupom Fiscal Térmico (foto) | PENDENTE | ALTA |
 | 46 | Extrator XML NFe | PENDENTE | MEDIA |
