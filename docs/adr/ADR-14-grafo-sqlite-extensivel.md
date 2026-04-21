@@ -34,6 +34,7 @@ Tipos iniciais (extensível via `mappings/tipos_node.yaml`):
 | `garantia` | número de série | `{produto, prazo_meses, inicio, fim, fornecedor}` |
 | `periodo` | YYYY-MM ou YYYY | `{inicio, fim}` |
 | `tag_irpf` | nome da tag | `{tipo: dedutivel, rendimento, imposto}` |
+| `produto_canonico` | descrição normalizada | `{membros_count, fonte: override\|fuzzy, descricao_representativa}` |
 
 **`edge`** (id INTEGER PK, src_id, dst_id, tipo TEXT, peso REAL, evidencia JSON, created_at)
 
@@ -53,6 +54,7 @@ Tipos de aresta (extensível via `mappings/tipos_edge.yaml`):
 | `cobre` | garantia → item | `{data_ativacao}` |
 | `irpf` | `transacao` \| item → tag_irpf | `{ano}` |
 | `transferencia_par` | `transacao` → `transacao` | `{mesmo_valor: bool, diff_horas}` |
+| `mesmo_produto_que` | item → produto_canonico | `{fuzzy_score, fonte: override\|fuzzy}` |
 
 **Invariantes:**
 

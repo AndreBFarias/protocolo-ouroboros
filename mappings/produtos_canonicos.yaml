@@ -1,0 +1,34 @@
+# Overrides manuais para Entity Resolution de Produtos (Sprint 49)
+#
+# Aliases validados pelo supervisor. Carregados ANTES da heurística fuzzy:
+# descrições listadas em `aliases` são mapeadas direto para o `canonico`
+# sem passar pelo rapidfuzz. Útil para casos que a heurística erra
+# (marcas diferentes do mesmo produto, OCR ruído, sinônimos regionais).
+#
+# Formato:
+#
+#   produtos:
+#     - canonico: "<NOME CANONICO UPPER>"
+#       aliases:
+#         - "<descricao bruta como aparece no item.metadata.descricao>"
+#         - "<outra variacao>"
+#
+# Regras:
+# - `canonico` vira o nome_canonico do node produto_canonico no grafo.
+# - Aliases são case-insensitive na comparação, mas preservados textualmente.
+# - Aresta gerada: item -> produto_canonico (mesmo_produto_que), peso=1.0,
+#   evidencia={"fonte": "override"}.
+# - Vazio e comentado é válido (ativa apenas a heurística fuzzy).
+
+produtos:
+  - canonico: "DESODORANTE DOVE ROLLON 150ML"
+    aliases:
+      - "DESODORANTE DOVE CLINICAL 150ML"
+      - "DOVE DEO ROLLON 150G"
+      - "DOVE DEODORANT 150ML"
+      - "DESODORANTE DOVE 150ML"
+      - "DOVE DEO 150ML RO"
+      - "DOVE DEO 150G"
+      - "DOVE ROLLON 150ML"
+
+# "Nomear com precisão é o começo da sabedoria." -- Confúcio (parafraseado)

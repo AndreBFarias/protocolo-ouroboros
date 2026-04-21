@@ -362,6 +362,38 @@ def _executar_linking_documentos() -> None:
         logger.warning("Linking de documentos falhou: %s", erro)
 
 
+def _executar_er_produtos() -> None:
+    """Aciona o entity resolution de produtos quando o grafo existe.
+
+    Roda DEPOIS do linking de documentos (Sprint 48) para que nodes `item` já
+    estejam em posição estável. Importação lazy e falhas não-fatais (mesma
+    política do linking).
+    """
+    try:
+        from src.graph.db import caminho_padrao
+    except ImportError as erro:
+        logger.warning("Módulo src.graph indisponível: %s -- ER produtos ignorado", erro)
+        return
+
+    caminho_grafo = caminho_padrao()
+    if not caminho_grafo.exists():
+        logger.info(
+            "Grafo SQLite ausente em %s -- ER de produtos pulado",
+            caminho_grafo,
+        )
+        return
+
+    try:
+        from src.graph.db import GrafoDB
+        from src.graph.er_produtos import executar_er_produtos
+
+        with GrafoDB(caminho_grafo) as db:
+            stats = executar_er_produtos(db)
+        logger.info("ER de produtos: %s", stats)
+    except Exception as erro:
+        logger.warning("ER de produtos falhou: %s", erro)
+
+
 def executar(mes: str | None = None, processar_tudo: bool = False) -> None:
     """Executa o pipeline completo."""
     logger.info("=== Protocolo Ouroboros -- Pipeline ===")
@@ -421,6 +453,12 @@ def executar(mes: str | None = None, processar_tudo: bool = False) -> None:
     # extratores fiscais). Ausência do grafo não é erro -- pipeline principal
     # do XLSX segue funcionando sem ele.
     _executar_linking_documentos()
+
+    # 13. Entity resolution de produtos (Sprint 49): agrupa itens equivalentes
+    # (mesma descrição, variações ortográficas) em nodes `produto_canonico`.
+    # Roda depois do linking para que itens de documentos ainda por linkar
+    # não fiquem pendurados sem agregado. Ausência de grafo é no-op.
+    _executar_er_produtos()
 
     logger.info("=== Pipeline concluído ===")
     logger.info("XLSX: %s", caminho_xlsx)
