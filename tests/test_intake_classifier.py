@@ -441,7 +441,7 @@ def test_pasta_destino_resolve_pessoa_no_template(arquivo_temp):
 
 
 def test_sha8_estavel_para_mesmo_arquivo(arquivo_temp):
-    arq = arquivo_temp("doc.pdf", conteudo="%PDF-1.4 conteudo determinístico".encode("utf-8"))
+    arq = arquivo_temp("doc.pdf", conteudo="%PDF-1.4 conteúdo determinístico".encode("utf-8"))
     decisao_a = clf.classificar(arq, "application/pdf", PREVIEW_DESCONHECIDO, pessoa="andre")
     decisao_b = clf.classificar(arq, "application/pdf", PREVIEW_DESCONHECIDO, pessoa="andre")
     assert decisao_a.nome_canonico == decisao_b.nome_canonico

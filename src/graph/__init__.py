@@ -1,7 +1,7 @@
 """Grafo SQLite mínimo: backbone de cruzamentos do projeto (Sprint 42).
 
 Schema 2-tabelas (node + edge) declarado em ADR-14. Tipos de nó canônicos:
-transacao, documento, item, fornecedor, categoria, conta, periodo, tag_irpf,
+transacao, documento, item, fornecedor, categoria, conta, periodo, tag_irpf,  # noqa: accent
 prescricao, garantia, apolice, seguradora.
 
 Sub-módulos:

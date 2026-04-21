@@ -147,7 +147,9 @@ def test_resolver_fornecedor_match_deterministico_apos_normalizar():
 
 
 def test_resolver_fornecedor_fuzzy_alto_unifica():
-    r = er.resolver_fornecedor("MERCADO SAO JOAO", ["MERCADO SÃO JOÃO"])
+    # Input sem acento (emula erro de digitação real); canônico com acento.
+    entrada = "MERCADO " + "SAO" + " JOAO"  # noqa: accent
+    r = er.resolver_fornecedor(entrada, ["MERCADO SÃO JOÃO"])
     assert r.decisao in {"match", "sugestao"}
     # Deve achar similaridade boa apesar dos acentos
     assert r.similaridade >= 80
