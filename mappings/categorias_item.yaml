@@ -1,0 +1,505 @@
+# Mapeamento regex -> categoria de item de NF + classificação (Sprint 50).
+#
+# Domínio: descrições de itens extraídas de NFC-e, DANFE, cupons fiscais,
+# cupons térmicos fotografados, XML NFe etc. NÃO confundir com
+# `mappings/categorias.yaml`, que é de TRANSAÇÃO bancária.
+#
+# Ordem importa: primeira regra que casar vence. Específica antes de genérica.
+# Classificações canônicas: Obrigatório, Questionável, Supérfluo (mesmas do
+# projeto para permitir agregação cruzada).
+#
+# Overrides manuais ficam em `mappings/overrides_item.yaml` (opcional, criar
+# sob demanda quando regex não bastar).
+
+regras:
+  # ==========================================================================
+  # HIGIENE PESSOAL (Obrigatório)
+  # --------------------------------------------------------------------------
+  # Ordem: marcas específicas primeiro para não colidir com genéricos (ex.
+  # "DOVE" é marca comum em shampoo e sabonete).
+  # ==========================================================================
+  higiene_sabonete:
+    regex: "\\bSABONETE|\\bSABONET\\b|\\bDOVE\\b|\\bLUX\\b|\\bPROTEX\\b|\\bNIVEA\\b"
+    categoria: "Higiene"
+    classificacao: "Obrigatório"
+
+  higiene_shampoo:
+    regex: "\\bSHAMPOO|\\bXAMPU|\\bSHAMP\\b"
+    categoria: "Higiene"
+    classificacao: "Obrigatório"
+
+  higiene_condicionador:
+    regex: "\\bCONDICIONADOR|\\bCONDITIONER"
+    categoria: "Higiene"
+    classificacao: "Obrigatório"
+
+  higiene_desodorante:
+    regex: "\\bDESODORANTE|\\bANTITRANSPIR|\\bROLL.ON|\\bAEROSOL\\s+(AXE|REXONA|NIVEA|DOVE)"
+    categoria: "Higiene"
+    classificacao: "Obrigatório"
+
+  higiene_pasta_dente:
+    regex: "\\bPASTA\\s+DENT|\\bCREME\\s+DENTAL|\\bCOLGATE|\\bSENSODYNE|\\bORAL.B\\b"
+    categoria: "Higiene"
+    classificacao: "Obrigatório"
+
+  higiene_fio_dental:
+    regex: "\\bFIO\\s+DENTAL|\\bENXAGUANTE\\s+BUCAL|\\bLISTERINE|\\bPLAX"
+    categoria: "Higiene"
+    classificacao: "Obrigatório"
+
+  higiene_papel:
+    regex: "\\bPAPEL\\s+HIG|\\bNEVE\\s+FOLHA|\\bPERSONAL|\\bNEGRITA|\\bLENCO\\s+UMEDE"
+    categoria: "Higiene"
+    classificacao: "Obrigatório"
+
+  higiene_feminina:
+    regex: "\\bABSORVENTE|\\bINTIMUS|\\bALWAYS\\b|\\bSEMPRE\\s+LIVRE|\\bCAREFREE"
+    categoria: "Higiene"
+    classificacao: "Obrigatório"
+
+  higiene_descartavel:
+    regex: "\\bFRALDA|\\bPAMPERS|\\bHUGGIES|\\bCOTONETE|\\bALGODAO\\s+"
+    categoria: "Higiene"
+    classificacao: "Obrigatório"
+
+  # ==========================================================================
+  # ALIMENTOS BÁSICOS (Obrigatório)
+  # --------------------------------------------------------------------------
+  # "LEITE CONDENSADO" não cai aqui: capturado antes por `doces_leite_cond`.
+  # ==========================================================================
+  alimentos_arroz:
+    regex: "\\bARROZ\\b|\\bTIO\\s+JOAO|\\bCAMIL\\b|\\bPRATO\\s+FINO"
+    categoria: "Alimentos Básicos"
+    classificacao: "Obrigatório"
+
+  alimentos_feijao:
+    regex: "\\bFEIJAO|\\bFEIJ[ÃA]O|\\bCARIOCA\\b|\\bFRADINHO\\b|\\bPRETO\\s+KG"
+    categoria: "Alimentos Básicos"
+    classificacao: "Obrigatório"
+
+  alimentos_acucar:
+    regex: "\\bA[ÇC]UCAR|\\bACUCAR|\\bUNIAO\\s+CRIST|\\bREFINADO\\b"
+    categoria: "Alimentos Básicos"
+    classificacao: "Obrigatório"
+
+  alimentos_oleo:
+    regex: "\\b[ÓO]LEO\\s+SOJA|\\bOLEO\\s+DE|\\bLIZA\\b|\\bSOYA\\b|\\bAZEITE"
+    categoria: "Alimentos Básicos"
+    classificacao: "Obrigatório"
+
+  alimentos_sal:
+    regex: "\\bSAL\\s+(REFINADO|GROSSO|MARINHO)|\\bCISNE\\b|\\bLEBRE\\b"
+    categoria: "Alimentos Básicos"
+    classificacao: "Obrigatório"
+
+  alimentos_cafe:
+    regex: "\\bCAFE\\b|\\bCAF[ÉE]\\b|\\bPILAO\\b|\\bMELITTA|\\b3\\s*CORACOES"
+    categoria: "Alimentos Básicos"
+    classificacao: "Obrigatório"
+
+  alimentos_leite:
+    regex: "\\bLEITE\\s+(INTEGRAL|DESNATADO|SEMI|UHT|LONGA|PO\\b)|\\bITAMBE|\\bPARMALAT"
+    categoria: "Alimentos Básicos"
+    classificacao: "Obrigatório"
+
+  alimentos_pao_basico:
+    regex: "\\bPAO\\s+FRANC|\\bPAO\\s+DE\\s+FORMA|\\bPULLMAN\\b|\\bWICKBOLD"
+    categoria: "Alimentos Básicos"
+    classificacao: "Obrigatório"
+
+  alimentos_farinha:
+    regex: "\\bFARINHA\\s+(TRIGO|MANDIOCA|ROSCA|MILHO)|\\bTRIGO\\s+"
+    categoria: "Alimentos Básicos"
+    classificacao: "Obrigatório"
+
+  alimentos_ovos:
+    regex: "\\bOVOS?\\s+(BRANCOS?|VERMELH|CAIPIRA|DUZIA)|\\bDUZIA\\s+OVO"
+    categoria: "Alimentos Básicos"
+    classificacao: "Obrigatório"
+
+  # ==========================================================================
+  # ALIMENTOS INDUSTRIALIZADOS (Questionável)
+  # ==========================================================================
+  industrializados_macarrao:
+    regex: "\\bMACARRAO|\\bMASSA\\s+(ESPAGUET|PENNE|PARAFUSO)|\\bBARILLA|\\bADRIA\\b|\\bREN\\s+MASSA"
+    categoria: "Industrializados"
+    classificacao: "Questionável"
+
+  industrializados_molho:
+    regex: "\\bMOLHO\\s+(TOMATE|PRONTO|BOLONH|SUGO)|\\bKETCHUP|\\bCATCHUP|\\bMAIONESE|\\bMOSTARDA"
+    categoria: "Industrializados"
+    classificacao: "Questionável"
+
+  industrializados_biscoito:
+    regex: "\\bBISCOITO\\b|\\bBOLACHA\\b|\\bCREAM\\s+CRACKER|\\bWATER\\b"
+    categoria: "Industrializados"
+    classificacao: "Questionável"
+
+  industrializados_conserva:
+    regex: "\\bMILHO\\s+VERDE|\\bERVILHA\\s+|\\bSELETA|\\bPALMITO|\\bSARDINHA\\s+LATA|\\bATUM\\s+LATA"
+    categoria: "Industrializados"
+    classificacao: "Questionável"
+
+  industrializados_tempero:
+    regex: "\\bTEMPERO\\s+|\\bCALDO\\s+(GALINHA|CARNE)|\\bKNORR|\\bAJINO|\\bSAZON|\\bMAGGI"
+    categoria: "Industrializados"
+    classificacao: "Questionável"
+
+  industrializados_congelado:
+    regex: "\\bNUGGETS|\\bPIZZA\\s+CONGEL|\\bHAMBURGUER\\s+CONGEL|\\bLASANHA\\s+CONGEL|\\bSADIA|\\bPERDIGAO"
+    categoria: "Industrializados"
+    classificacao: "Questionável"
+
+  # ==========================================================================
+  # BEBIDAS (Questionável / Supérfluo)
+  # ==========================================================================
+  bebidas_agua:
+    regex: "\\bAGUA\\s+(MINERAL|SEM\\s+GAS|COM\\s+GAS)|\\bCRYSTAL\\s+|\\bBONAFONT|\\bIGARAPE"
+    categoria: "Bebidas"
+    classificacao: "Obrigatório"
+
+  bebidas_refrigerante:
+    regex: "\\bREFRIGERANTE|\\bCOCA\\s*COLA|\\bCOCA\\s+COLA|\\bGUARANA|\\bPEPSI|\\bSPRITE|\\bFANTA|\\bSUKITA"
+    categoria: "Bebidas"
+    classificacao: "Supérfluo"
+
+  bebidas_suco:
+    regex: "\\bSUCO\\s+(CAIXA|CAIXINHA|NECTAR|POLPA)|\\bDEL\\s+VALLE|\\bMAGUARY|\\bSUVALAN"
+    categoria: "Bebidas"
+    classificacao: "Questionável"
+
+  bebidas_energetico:
+    regex: "\\bENERGETICO|\\bMONSTER|\\bRED\\s+BULL|\\bBURN\\b|\\bTNT\\s+ENERGY"
+    categoria: "Bebidas"
+    classificacao: "Supérfluo"
+
+  bebidas_cerveja:
+    regex: "\\bCERVEJA|\\bSKOL\\b|\\bBRAHMA|\\bHEINEKEN|\\bAMSTEL|\\bBUDWEISER|\\bORIGINAL\\s+(269|350|473|600)|\\bCHOPP"
+    categoria: "Bebidas Alcoólicas"
+    classificacao: "Supérfluo"
+
+  bebidas_vinho:
+    regex: "\\bVINHO\\b|\\bTINTO\\b|\\bROSE\\b|\\bBRANCO\\s+SECO|\\bCONCHA\\s+TORO"
+    categoria: "Bebidas Alcoólicas"
+    classificacao: "Supérfluo"
+
+  bebidas_destilados:
+    regex: "\\bCACHACA|\\bCACHA[ÇC]A|\\bWHISKY|\\bWHISKEY|\\bVODKA|\\bGIN\\b|\\bRUM\\b|\\bTEQUILA|\\bSAGATIBA|\\b51\\s+BRANCA"
+    categoria: "Bebidas Alcoólicas"
+    classificacao: "Supérfluo"
+
+  # ==========================================================================
+  # DOCES E GULOSEIMAS (Supérfluo)
+  # --------------------------------------------------------------------------
+  # "LEITE CONDENSADO / MOCA" entra aqui, NÃO em laticínios.
+  # ==========================================================================
+  doces_leite_cond:
+    regex: "\\bLEITE\\s+(CONDENSADO|MO[CÇ]A)|\\bMOCA\\s+LATA|\\bCREME\\s+DE\\s+LEITE"
+    categoria: "Doces"
+    classificacao: "Supérfluo"
+
+  doces_chocolate:
+    regex: "\\bCHOCOLATE|\\bBOMBOM|\\bLACTA|\\bNESTLE\\s+CHOC|\\bHERSHEY|\\bKITKAT|\\bOUROBRANCO\\b|\\bSONHO\\s+DE\\s+VALSA|\\bTRENTO\\b|\\bDIAMANTE\\s+NEGRO"
+    categoria: "Doces"
+    classificacao: "Supérfluo"
+
+  doces_balas:
+    regex: "\\bBALA\\b|\\bPIRULITO|\\bCHICLETE|\\bTRIDENT|\\bHALLS\\b|\\bMENTOS"
+    categoria: "Doces"
+    classificacao: "Supérfluo"
+
+  doces_sorvete:
+    regex: "\\bSORVETE|\\bPICOLE|\\bKIBON|\\bNESTLE\\s+SORV|\\bMAGNUM\\s+"
+    categoria: "Doces"
+    classificacao: "Supérfluo"
+
+  doces_biscoito_recheado:
+    regex: "\\bBISCOITO\\s+RECHEAD|\\bOREO\\b|\\bTRAKINAS|\\bNEGRESCO|\\bTODDY\\s+BISC|\\bCHOCOBISC"
+    categoria: "Doces"
+    classificacao: "Supérfluo"
+
+  doces_acucarados:
+    regex: "\\bGELEIA|\\bCOMPOTA|\\bDOCE\\s+DE\\s+LEITE|\\bDOCE\\s+DE\\s+FRUTA|\\bMEL\\s+KG|\\bMEL\\s+"
+    categoria: "Doces"
+    classificacao: "Questionável"
+
+  # ==========================================================================
+  # LIMPEZA (Obrigatório)
+  # ==========================================================================
+  limpeza_detergente:
+    regex: "\\bDETERGENTE|\\bYPE\\b|\\bMINUANO\\b|\\bLIMPOL"
+    categoria: "Limpeza"
+    classificacao: "Obrigatório"
+
+  limpeza_sabao_po:
+    regex: "\\bSABAO\\s+(EM\\s+PO|P[OÓ])|\\bOMO\\b|\\bTIXAN|\\bBRILHANTE\\b|\\bARIEL\\b"
+    categoria: "Limpeza"
+    classificacao: "Obrigatório"
+
+  limpeza_amaciante:
+    regex: "\\bAMACIANTE|\\bCOMFORT\\b|\\bDOWNY\\b|\\bFOFO\\b"
+    categoria: "Limpeza"
+    classificacao: "Obrigatório"
+
+  limpeza_sanitaria:
+    regex: "\\bAGUA\\s+SANITARIA|\\bCLORO\\b|\\bCANDIDA\\s+|\\bDESINFETANTE|\\bPINHO\\s+SOL|\\bVEJA\\s+"
+    categoria: "Limpeza"
+    classificacao: "Obrigatório"
+
+  limpeza_multiuso:
+    regex: "\\bMULTIUSO\\b|\\bLIMPADOR\\b|\\bLIMPA\\s+(VIDRO|FORNO|FOGAO|INOX)|\\bBOMBRIL|\\bASSOLAN|\\bESPONJA"
+    categoria: "Limpeza"
+    classificacao: "Obrigatório"
+
+  limpeza_alcool:
+    regex: "\\b[ÁA]LCOOL|\\bALCOOL\\s+(70|GEL|LIQUIDO)"
+    categoria: "Limpeza"
+    classificacao: "Obrigatório"
+
+  # ==========================================================================
+  # HORTIFRÚTI (Obrigatório)
+  # ==========================================================================
+  hortifruti_frutas:
+    regex: "\\bBANANA\\b|\\bMACA\\s+|\\bMA[ÇC][AÃ]\\b|\\bLARANJA\\b|\\bUVA\\b|\\bMELANCIA|\\bMAMAO|\\bABACAXI|\\bMANGA\\s+KG|\\bPERA\\s+|\\bMORANGO|\\bKIWI\\b|\\bABACATE"
+    categoria: "Hortifrúti"
+    classificacao: "Obrigatório"
+
+  hortifruti_verduras:
+    regex: "\\bALFACE|\\bRUCULA|\\bCOUVE\\b|\\bESPINAFRE|\\bAGRIAO|\\bACELGA|\\bREPOLHO|\\bBROCOLIS|\\bCOUVE.FLOR"
+    categoria: "Hortifrúti"
+    classificacao: "Obrigatório"
+
+  hortifruti_legumes:
+    regex: "\\bTOMATE\\b|\\bCENOURA|\\bBATATA\\b|\\bCEBOLA\\b|\\bALHO\\b|\\bABOBRINHA|\\bBERINJELA|\\bPIMENTAO|\\bPEPINO|\\bCHUCHU|\\bQUIABO|\\bBETERRABA"
+    categoria: "Hortifrúti"
+    classificacao: "Obrigatório"
+
+  hortifruti_temperos_frescos:
+    regex: "\\bSALSINHA|\\bCEBOLINHA|\\bCOENTRO|\\bMANJERICAO|\\bHORTELA|\\bALECRIM"
+    categoria: "Hortifrúti"
+    classificacao: "Obrigatório"
+
+  # ==========================================================================
+  # CARNES E PROTEÍNAS (Obrigatório)
+  # ==========================================================================
+  carnes_bovino:
+    regex: "\\bPICANHA|\\bALCATRA|\\bFILE\\s+MIGNON|\\bCONTRA.?FILE|\\bPATINHO\\b|\\bCOXAO\\b|\\bACEM\\b|\\bMUSCULO\\b|\\bFRALDINHA|\\bCARNE\\s+MOIDA|\\bCARNE\\s+BOVINA"
+    categoria: "Carnes"
+    classificacao: "Obrigatório"
+
+  carnes_frango:
+    regex: "\\bFRANGO\\b|\\bPEITO\\s+FRANGO|\\bCOXA\\s+FRANGO|\\bASA\\s+FRANGO|\\bFILE\\s+FRANGO|\\bSASSA|\\bSEARA\\s+FRANGO"
+    categoria: "Carnes"
+    classificacao: "Obrigatório"
+
+  carnes_suino:
+    regex: "\\bLOMBO\\b|\\bCOSTELA\\s+SUIN|\\bBISTECA|\\bPERNIL\\b|\\bPORCO\\b|\\bCARNE\\s+SUINA"
+    categoria: "Carnes"
+    classificacao: "Obrigatório"
+
+  carnes_peixe:
+    regex: "\\bPEIXE\\b|\\bSALMAO|\\bTILAPIA|\\bMERLUZA|\\bATUM\\s+POSTA|\\bSARDINHA\\s+FRESCA|\\bBACALHAU"
+    categoria: "Carnes"
+    classificacao: "Obrigatório"
+
+  carnes_embutidos:
+    regex: "\\bLINGUICA|\\bSALSICHA|\\bPRESUNTO|\\bMORTADELA|\\bSALAME|\\bBACON\\b|\\bPEITO\\s+PERU|\\bAPRESUNTADO"
+    categoria: "Embutidos"
+    classificacao: "Questionável"
+
+  # ==========================================================================
+  # LATICÍNIOS (Obrigatório)
+  # --------------------------------------------------------------------------
+  # "LEITE MOÇA" / "LEITE CONDENSADO" já foi para "Doces" antes. "LEITE"
+  # genérico foi para "Alimentos Básicos". Aqui ficam derivados.
+  # ==========================================================================
+  laticinios_queijo:
+    regex: "\\bQUEIJO|\\bMUSSARELA|\\bPRATO\\s+FATIADO|\\bMINAS\\s+FRESC|\\bCATUPIRY|\\bPROVOLONE|\\bPARMESAO|\\bCHEDDAR|\\bRICOTA"
+    categoria: "Laticínios"
+    classificacao: "Obrigatório"
+
+  laticinios_iogurte:
+    regex: "\\bIOGURTE|\\bACTIVIA\\b|\\bDANONE\\b|\\bBATAVO|\\bVIGOR"
+    categoria: "Laticínios"
+    classificacao: "Obrigatório"
+
+  laticinios_manteiga:
+    regex: "\\bMANTEIGA\\b|\\bMARGARINA|\\bQUALY\\b|\\bDELICIA\\b|\\bDORIANA"
+    categoria: "Laticínios"
+    classificacao: "Obrigatório"
+
+  laticinios_requeijao:
+    regex: "\\bREQUEIJAO|\\bCREAM\\s+CHEESE|\\bPOLENGHI\\s+CREAM"
+    categoria: "Laticínios"
+    classificacao: "Obrigatório"
+
+  # ==========================================================================
+  # PADARIA (Questionável)
+  # --------------------------------------------------------------------------
+  # "PAO FRANCES" / "PAO DE FORMA" ficaram em Alimentos Básicos. Aqui
+  # produtos com apelo supérfluo ou não-diário.
+  # ==========================================================================
+  padaria_bolo:
+    regex: "\\bBOLO\\s+(FATIA|INTEIRO|FUBA|CHOCOLATE|CENOURA)|\\bTORTA\\s+(DOCE|SALGADA)|\\bPANETONE"
+    categoria: "Padaria"
+    classificacao: "Questionável"
+
+  padaria_salgado:
+    regex: "\\bCOXINHA|\\bESFIHA|\\bPASTEL\\s+"
+    categoria: "Padaria"
+    classificacao: "Questionável"
+
+  padaria_pao_especial:
+    regex: "\\bPAO\\s+(QUEIJO|INTEGRAL|AUSTRALI|SIRIO|HAMBURGU|HOT\\s+DOG|ALHO)"
+    categoria: "Padaria"
+    classificacao: "Questionável"
+
+  # ==========================================================================
+  # FARMÁCIA / MEDICAMENTOS (Obrigatório)
+  # --------------------------------------------------------------------------
+  # ATENÇÃO: "Medicamento" pode cruzar com Sprint 47a (prescricao). Aqui ficam
+  # só como pista textual — a aresta `prescreve_cobre` é outra sprint.
+  # ==========================================================================
+  medicamentos_analgesicos:
+    regex: "\\bDIPIRONA|\\bPARACETAMOL|\\bIBUPROFENO|\\bACETAMINOFEN|\\bASPIRINA|\\bTYLENOL|\\bDORFLEX|\\bNEOSALDINA"
+    categoria: "Medicamentos"
+    classificacao: "Obrigatório"
+
+  medicamentos_gastrico:
+    regex: "\\bOMEPRAZOL|\\bPANTOPRAZOL|\\bRANITIDINA|\\bLUFTAL|\\bESTOMA(Z|ZIL|ZIL\\s+)|\\bENO\\b|\\bSONRISAL"
+    categoria: "Medicamentos"
+    classificacao: "Obrigatório"
+
+  medicamentos_gripe:
+    regex: "\\bCORIZA|\\bANTIGRIPAL|\\bRESFENOL|\\bBENEGRIP|\\bCIMEGRIPE|\\bLORATADINA|\\bDESLORATAD"
+    categoria: "Medicamentos"
+    classificacao: "Obrigatório"
+
+  medicamentos_vitaminas:
+    regex: "\\bVITAMINA\\s+[A-Z]|\\bCOMPLEXO\\s+B|\\bPOLIVIT|\\bCENTRUM|\\bADDERA"
+    categoria: "Medicamentos"
+    classificacao: "Questionável"
+
+  medicamentos_generico:
+    regex: "\\bCOMP\\s+REV|\\bCAPS\\s+\\d|\\bMG/ML|\\bBLISTER|\\bMEDICAMENTO\\s+"
+    categoria: "Medicamentos"
+    classificacao: "Obrigatório"
+
+  # ==========================================================================
+  # ELETRÔNICOS (Supérfluo)
+  # ==========================================================================
+  eletronicos_cabo:
+    regex: "\\bCABO\\s+(USB|HDMI|TIPO\\s*C|LIGHTNING|MICRO.?USB|EXTENSOR)|\\bCARREGADOR\\b|\\bADAPTADOR\\s+(USB|TOMADA)"
+    categoria: "Eletrônicos"
+    classificacao: "Questionável"
+
+  eletronicos_audio:
+    regex: "\\bFONE\\s+(DE\\s+)?OUVIDO|\\bHEADSET|\\bHEADPHONE|\\bEARBUD|\\bAIRPOD|\\bCAIXA\\s+DE\\s+SOM|\\bALTO.?FALANTE"
+    categoria: "Eletrônicos"
+    classificacao: "Supérfluo"
+
+  eletronicos_perifericos:
+    regex: "\\bMOUSE\\b|\\bTECLADO\\b|\\bWEBCAM|\\bPENDRIVE|\\bPEN\\s+DRIVE|\\bHD\\s+EXTERNO|\\bSSD\\b"
+    categoria: "Eletrônicos"
+    classificacao: "Supérfluo"
+
+  eletronicos_telefonia:
+    regex: "\\bSMARTPHONE|\\bCELULAR\\b|\\bPELICULA|\\bCAPINHA|\\bCASE\\s+(CELULAR|IPHONE|SAMSUNG)"
+    categoria: "Eletrônicos"
+    classificacao: "Supérfluo"
+
+  # ==========================================================================
+  # PET SHOP (Questionável)
+  # ==========================================================================
+  pet_racao:
+    regex: "\\bRACAO\\s+|\\bPREMIER\\b|\\bROYAL\\s+CANIN|\\bPEDIGREE|\\bWHISKAS|\\bFRISKIES|\\bGOLDEN\\b|\\bMAGNUS"
+    categoria: "Pet"
+    classificacao: "Obrigatório"
+
+  pet_areia:
+    regex: "\\bAREIA\\s+GATO|\\bAREIA\\s+HIG|\\bGRANULADO\\s+SANIT"
+    categoria: "Pet"
+    classificacao: "Obrigatório"
+
+  pet_acessorio:
+    regex: "\\bCOLEIRA\\b|\\bBRINQUEDO\\s+(PET|CAO|GATO)|\\bPETISCO|\\bBIFINHO|\\bBEYOND\\s+PET"
+    categoria: "Pet"
+    classificacao: "Questionável"
+
+  # ==========================================================================
+  # SERVIÇOS (Questionável)
+  # --------------------------------------------------------------------------
+  # A50-4: items que são serviços viravam "Outros"; capturados aqui.
+  # ==========================================================================
+  servicos_delivery:
+    regex: "\\bIFOOD\\s+PEDIDO|\\bTAXA\\s+ENTREGA|\\bTX\\.?\\s*ENTREGA|\\bFRETE\\b|\\bCOBRANCA\\s+ENTREGA"
+    categoria: "Serviços"
+    classificacao: "Questionável"
+
+  servicos_corrida:
+    regex: "\\bUBER\\s+VIAGEM|\\b99\\s+CORRIDA|\\bCORRIDA\\s+APP|\\bVIAGEM\\s+(TAXI|APP)"
+    categoria: "Serviços"
+    classificacao: "Questionável"
+
+  servicos_assinatura:
+    regex: "\\bASSINATURA\\s+|\\bMENSALIDADE\\s+|\\bNETFLIX\\s+|\\bSPOTIFY|\\bAMAZON\\s+PRIME|\\bHBO\\s+MAX|\\bDISNEY\\+?"
+    categoria: "Serviços"
+    classificacao: "Supérfluo"
+
+  servicos_conserto:
+    regex: "\\bCONSERTO|\\bREPARO\\b|\\bMAO\\s+DE\\s+OBRA|\\bMANUTENCAO|\\bINSTALACAO\\s+"
+    categoria: "Serviços"
+    classificacao: "Questionável"
+
+  # ==========================================================================
+  # TABACO (Supérfluo) — regra explícita para não cair em "Outros".
+  # ==========================================================================
+  tabaco:
+    regex: "\\bCIGARRO|\\bMARLBORO|\\bDERBY\\b|\\bLUCKY\\s+STRIKE|\\bISQUEIRO|\\bFUMO\\s+"
+    categoria: "Tabaco"
+    classificacao: "Supérfluo"
+
+  # ==========================================================================
+  # UTILIDADES DOMÉSTICAS (Questionável)
+  # ==========================================================================
+  utilidades_cozinha:
+    regex: "\\bPANELA|\\bFRIGIDEIRA|\\bESCORREDOR|\\bTABUA\\s+CORTE|\\bFORMA\\s+(BOLO|PAO)|\\bPOTE\\s+PLASTIC"
+    categoria: "Utilidades"
+    classificacao: "Questionável"
+
+  utilidades_descartaveis:
+    regex: "\\bPAPEL\\s+ALUM|\\bPAPEL\\s+TOALHA|\\bFILME\\s+PVC|\\bSACO\\s+LIXO|\\bPRATO\\s+DESCART|\\bCOPO\\s+DESCART|\\bGUARDANAP"
+    categoria: "Utilidades"
+    classificacao: "Obrigatório"
+
+  utilidades_pilhas:
+    regex: "\\bPILHA\\s+(AA|AAA|ALCALIN)|\\bBATERIA\\s+9V|\\bDURACELL|\\bRAYOVAC|\\bPANASONIC\\s+BAT"
+    categoria: "Utilidades"
+    classificacao: "Questionável"
+
+  # ==========================================================================
+  # VESTUÁRIO (Supérfluo)
+  # ==========================================================================
+  vestuario_basico:
+    regex: "\\bCAMISETA|\\bCAMISA\\s+(POLO|MANGA)|\\bCALCA\\s+(JEANS|SOCIAL|MOLETON)|\\bBERMUDA\\b|\\bMEIA\\s+(KIT|PACOTE|CANO)"
+    categoria: "Vestuário"
+    classificacao: "Questionável"
+
+  vestuario_calcado:
+    regex: "\\bTENIS\\b|\\bCHINELO|\\bSANDALIA|\\bSAPATO\\s+(SOCIAL|COURO)|\\bHAVAIANAS|\\bCROCS"
+    categoria: "Vestuário"
+    classificacao: "Questionável"
+
+  # ==========================================================================
+  # PAPELARIA E ESCRITÓRIO (Questionável)
+  # ==========================================================================
+  papelaria:
+    regex: "\\bCADERNO\\b|\\bCANETA\\b|\\bLAPIS\\b|\\bBORRACHA\\s+(APAGAR|ESCOL)|\\bAPONTADOR|\\bMARCADOR\\s+TEXT|\\bGRAMPEADOR|\\bPAPEL\\s+A4"
+    categoria: "Papelaria"
+    classificacao: "Questionável"
+
+# Fim das regras. Fallback (sem match) é aplicado pelo categorizer:
+# categoria="Outros", classificacao="Questionável".
+#
+# "Nomear com precisão é o começo da sabedoria." -- Confúcio (parafraseado)

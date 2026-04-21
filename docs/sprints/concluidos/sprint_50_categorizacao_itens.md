@@ -34,7 +34,7 @@ sprint:
 
 # Sprint 50 -- Categorização de Itens via YAML
 
-**Status:** PENDENTE
+**Status:** CONCLUÍDA
 **Data:** 2026-04-19
 **Prioridade:** ALTA
 **Tipo:** Feature
