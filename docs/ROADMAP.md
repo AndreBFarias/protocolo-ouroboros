@@ -1,9 +1,9 @@
 # Roadmap -- Protocolo Ouroboros
 
 ```
-VERSÃO: 6.6 | SPRINTS: 56 (25 concluídas, 0 em produção, 18 backlog, 13 arquivadas)
-ROTA: Catalogador universal artesanal (Fases ALFA → ZETA)
-ÚLTIMA ATUALIZAÇÃO: 2026-04-19 (Sprint 42 CONCLUÍDA -- grafo SQLite com 7.378 nodes + 24.506 edges migrados do XLSX)
+VERSÃO: 6.7 | SPRINTS: 57 (25 concluídas, 0 em produção, 19 backlog, 13 arquivadas)
+ROTA: Catalogador universal artesanal (Fases ALFA → ZETA) + higiene INFRA pontual
+ÚLTIMA ATUALIZAÇÃO: 2026-04-20 (Sprint 54 PLANEJADA -- limpeza de 22 violações de acentuação pré-existentes, achado colateral COL-44-A)
 ```
 
 ---
@@ -28,6 +28,8 @@ Catalogador universal artesanal da vida financeira do casal. O usuário joga QUA
 5. **EPSILON** -- UX rica: dashboard, busca, grafo visual (51-53)
 6. **ZETA** -- consumo dos dados granulares (sprints 21, 25, 33, 34, 35, 36 já no backlog)
 
+**Higiene INFRA (fora de fase):** sprints pontuais de dívida pré-existente detectada por validador-sprint como achado colateral. Executáveis em qualquer janela, baixa prioridade, não bloqueiam fases.
+
 ---
 
 ## Estado atual -- mapa por status
@@ -37,6 +39,7 @@ Catalogador universal artesanal da vida financeira do casal. O usuário joga QUA
 | Concluídas | 01-07, 12-14, 17-19, 22, 23, 30, 37-40, 41, 41b, 41c, 41d, 42 | 25 |
 | Backlog ativo (ALFA→EPSILON) | 43-53 (inclui 44b, 47a, 47b, 47c) | 15 |
 | Backlog consumidor (ZETA) | 20, 21, 24, 25, 33, 34, 35, 36 (pós-EPSILON) | 8 |
+| Backlog higiene INFRA | 54 | 1 |
 | Arquivadas (substituídas) | 08, 09, 10, 11, 15, 16, 26, 27a, 28, 29a, 29b, 31, 32 | 13 |
 
 Cabeçalho de cada sprint arquivada explica motivo e substituta.
@@ -53,6 +56,18 @@ Bugs encontrados e corrigidos durante a sessão 2026-04-18, documentados como sp
 | 38 | Fix: Deduplicator fuzzy remove por (data+valor+local) | CONCLUÍDA | ALTA |
 | 39 | Fix: IRPF gerador_pacote sort com tag mista str/NaN | CONCLUÍDA | ALTA |
 | 40 | Fix: Categorizer fallback respeita tipo da transação | CONCLUÍDA | MEDIA |
+
+---
+
+## Higiene INFRA -- Fora de fase (dívida pré-existente)
+
+Sprints pontuais derivadas de achados colaterais do validador-sprint. Não bloqueiam as fases BETA/GAMA/DELTA/EPSILON/ZETA; executáveis em qualquer janela livre.
+
+| Sprint | Tema | Status | Prioridade | Origem |
+|--------|------|--------|------------|--------|
+| 54 | Limpeza de 22 violações de acentuação pré-existentes | PENDENTE | MEDIA | COL-44-A (validador Sprint 44) |
+
+Objetivo: reconstruir baseline verde de `make lint` e `scripts/check_acentuacao.py --all` para permitir medição limpa de regressões em sprints futuras. Sem ruído de dívida herdada, uma nova violação vira sinal claro de regressão introduzida.
 
 ---
 
@@ -164,6 +179,9 @@ Sprints já no backlog que agora operam sobre itens, não só transações. Prio
 ```
 Fase ALFA -- CONCLUÍDA
   └─ 37 → 38 → 39 → 40
+
+Higiene INFRA (fora de fase, baixa prioridade)
+  └─ 54 Limpeza de acentuação pré-existente (baseline verde)
 
 Fase BETA -- infra universal (próximo bloco)
   ├─ 41 Intake multiformato  ─────┐
