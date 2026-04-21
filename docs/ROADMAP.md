@@ -1,9 +1,9 @@
 # Roadmap -- Protocolo Ouroboros
 
 ```
-VERSÃO: 7.2 | SPRINTS: 63 (31 concluídas, 0 em produção, 19 backlog, 13 arquivadas)
-ROTA: Catalogador universal artesanal (Fases ALFA → ZETA) + higiene INFRA pontual
-ÚLTIMA ATUALIZAÇÃO: 2026-04-20 (Sprint 54 CONCLUÍDA -- baseline verde: 22 violações de acentuação pré-existentes resolvidas, `make lint` exit 0, convenção única `# noqa: accent`/`<!-- noqa: accent -->`; Sprints 43, 44, 44b, 45, 47c também CONCLUÍDAS neste ciclo)
+VERSÃO: 7.5 | SPRINTS: 95 (46 concluídas, 0 em produção, 36 backlog, 13 arquivadas)
+ROTA: Catalogador universal artesanal (Fases ALFA → ZETA) + Fase ETA (auditoria) + Fase IOTA (integração Controle de Bordo) + Fase KAPPA (UX polish + tracking documental + workflow)
+ÚLTIMA ATUALIZAÇÃO: 2026-04-21 tarde. Andre compartilhou a visão real do projeto. Criadas Fases IOTA (integração com ~/Controle de Bordo/) e KAPPA (UX + tracking documental + workflow). 3 ADRs novos (18, 19, 20) + 12 sprints novas (70-81) + golden test cases em docs/GOLDEN_TEST_CASES.md. Fase ETA quase completa -- só 68b em execução residual.
 ```
 
 ---
@@ -36,10 +36,13 @@ Catalogador universal artesanal da vida financeira do casal. O usuário joga QUA
 
 | Status | Sprints | Total |
 |--------|---------|-------|
-| Concluídas | 01-07, 12-14, 17-19, 22, 23, 30, 37-40, 41, 41b, 41c, 41d, 42, 43, 44, 44b, 45, 47c, 54 | 31 |
+| Concluídas (fases anteriores) | 01-07, 12-14, 17-19, 22, 23, 30, 37-40, 41, 41b, 41c, 41d, 42, 43, 44, 44b, 45, 47c, 54 | 31 |
+| Concluídas Fase ETA (auditoria 2026-04-21) | 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 68b, 69 | 16 |
 | Backlog ativo (ALFA→EPSILON) | 46-53 (inclui 47a, 47b) | 11 |
 | Backlog consumidor (ZETA) | 20, 21, 24, 25, 33, 34, 35, 36 (pós-EPSILON) | 8 |
-| Backlog higiene INFRA | -- | 0 |
+| Fase ETA residual sprint-nova | 82 (canonicalizer variantes curtas, achado 68b-A) | 1 |
+| **Backlog Fase IOTA (integração Controle de Bordo)** | **70, 71** | **2** |
+| **Backlog Fase KAPPA (UX polish + tracking documental + workflow)** | **72, 73, 74, 75, 76, 77, 78, 79, 80, 81** | **10** |
 | Arquivadas (substituídas) | 08, 09, 10, 11, 15, 16, 26, 27a, 28, 29a, 29b, 31, 32 | 13 |
 
 Cabeçalho de cada sprint arquivada explica motivo e substituta.
@@ -56,6 +59,127 @@ Bugs encontrados e corrigidos durante a sessão 2026-04-18, documentados como sp
 | 38 | Fix: Deduplicator fuzzy remove por (data+valor+local) | CONCLUÍDA | ALTA |
 | 39 | Fix: IRPF gerador_pacote sort com tag mista str/NaN | CONCLUÍDA | ALTA |
 | 40 | Fix: Categorizer fallback respeita tipo da transação | CONCLUÍDA | MEDIA |
+
+---
+
+## Fase ETA -- Correções da auditoria profunda (2026-04-21)
+
+Auditoria manual do dashboard em 2026-04-21 descobriu um bug estrutural de classificação de tipo que vinha distorcendo TODAS as métricas financeiras desde o MVP original (Sprints 01-04). Além disso, sprints 47a/b, 48, 49, 50 foram aprovadas com pytest verde mas têm grafo real vazio (plumbing existente, dados inexistentes). 15 sprints novas para restaurar confiança nos dados e corrigir UI/UX detectada. Sprints 67-69 derivaram dos achados M56-1/M56-2/M56-3 durante o smoke aritmético.
+
+**P0 (crítica, bloqueante):**
+
+| Sprint | Tema | Status | Prioridade |
+|--------|------|--------|------------|
+| 55 | Fix crítico classificador de tipo (1.761 transações falsamente "Receita") | CONCLUÍDA | **P0 CRÍTICA** |
+| 56 | Smoke runtime-real aritmético (contrato global do XLSX) | CONCLUÍDA | **P0** |
+
+**P1 (importante):**
+
+| Sprint | Tema | Status | Prioridade |
+|--------|------|--------|------------|
+| 57 | Ingestão de volume real (ativar Sprints 47a/b, 48, 49, 50) | CONCLUÍDA | P1 |
+| 59 | Fix chips de sugestão na Busca Global | CONCLUÍDA | P1 |
+| 60 | Labels humanos no grafo + truncamento correto em bar chart | CONCLUÍDA | P1 |
+| 67 | Fix classificação em Receita/Transferência Interna (achado M56-2) | BACKLOG | P1 |
+| 68 | Fix falso-positivo de transferência interna (achado M56-3) | BACKLOG | P1 |
+
+**P2 (polish):**
+
+| Sprint | Tema | Status | Prioridade |
+|--------|------|--------|------------|
+| 58 | Atualizar CLAUDE.md + VALIDATOR_BRIEF com contagens reais | EM EXECUÇÃO | P2 |
+| 61 | Projeções com contexto explícito (3 ritmos) | BACKLOG | P2 |
+| 62 | Responsividade dos cards em viewport <1200px | BACKLOG | P2 |
+| 63 | Remover prefixo numérico de sprint dos títulos | BACKLOG | P2 |
+| 64 | Contas: aviso snapshot + NaN→traço | BACKLOG | P2 |
+
+**P3 (refinamento):**
+
+| Sprint | Tema | Status | Prioridade |
+|--------|------|--------|------------|
+| 65 | Localização PT-BR dos gráficos Plotly | BACKLOG | P3 |
+| 66 | Canonicalização de nomes (acentuação plausível + razão social) | BACKLOG | P3 |
+| 69 | Higiene acentuação em scripts/reprocessar_documentos.py (achado M56-1) | BACKLOG | P3 |
+
+Ordem de execução sugerida: 55 → 56 → (57, 58, 59, 60 em paralelo) → (61-69 em paralelo).
+
+---
+
+## Fase IOTA -- Integração com ~/Controle de Bordo/ (2026-04-21 tarde)
+
+Gatilho: Andre compartilhou que o Controle de Bordo já é o hub central dele (vault Obsidian PARA com motor de inbox em `.sistema/scripts/`). Ouroboros deve consumir dessa inbox e escrever de volta no vault, sem duplicar processadores. **ADR-18** formaliza o contrato de coabitação estrutural.
+
+| Sprint | Tema | Status | Prioridade |
+|--------|------|--------|------------|
+| 70 | Inbox unificada (Ouroboros lê ~/Controle de Bordo/Inbox/ e roteia financeiros para data/raw/) | BACKLOG | **P0** |
+| 71 | Sync rico bidirecional: vault ganha Pessoal/Casal/Financeiro/{Documentos,Fornecedores,Meses,_Attachments} | BACKLOG | P1 |
+
+**ADR:** ADR-18 (integração Controle de Bordo).
+
+---
+
+## Fase KAPPA -- UX polish + tracking documental + workflow (2026-04-21 tarde)
+
+Gatilho: mesma sessão, 11 screenshots de problemas concretos + visão declarada: dashboard interativo (clique em gráfico navega), tracking documental completo (clique em "Natação André" abre boleto + recibo), gap analysis, workflow via `run.sh` interativo. **ADR-19** e **ADR-20** formalizam.
+
+### Tracking documental (coração ADR-20)
+
+| Sprint | Tema | Status | Prioridade |
+|--------|------|--------|------------|
+| 74 | Vinculação transação<->documento: matching heurístico + modal com preview do comprovante | BACKLOG | **P0** |
+| 75 | Gap Analysis: documentos faltantes por mês/categoria com alertas inteligentes | BACKLOG | P1 |
+
+### Interatividade (ADR-19)
+
+| Sprint | Tema | Status | Prioridade |
+|--------|------|--------|------------|
+| 72 | Filtro forma de pagamento (Pix/Débito/Crédito/Boleto/Transferência) | BACKLOG | P1 |
+| 73 | Dashboard interativo: clique em gráfico leva para Extrato filtrado (via query_params) | BACKLOG | P1 |
+| 78 | Grafo visual Obsidian-like: full-page + filtros laterais + clique navega | BACKLOG | P1 |
+| 79 | Aba Pagamentos: tracking por boletos/pix/crédito com status e vencimentos | BACKLOG | P2 |
+
+### Polish visual
+
+| Sprint | Tema | Status | Prioridade |
+|--------|------|--------|------------|
+| 76 | Fonte mínima 13px, logo acima do título, centralização, padding dos retângulos | BACKLOG | P1 |
+| 77 | Treemap estético, legendas abaixo do título, filtros avançados funcionais, Top 10 espaçada | BACKLOG | P1 |
+
+### Workflow
+
+| Sprint | Tema | Status | Prioridade |
+|--------|------|--------|------------|
+| 80 | `./run.sh` interativo: menu (Inbox / Dashboard / Relatório / Sync / Tudo) + pergunta pós-processamento | BACKLOG | P2 |
+
+### Higiene residual
+
+| Sprint | Tema | Status | Prioridade |
+|--------|------|--------|------------|
+| 81 | Sweep: acentuação em test_dashboard_titulos.py + ruff em scripts/ + noqa explícito | BACKLOG | P3 |
+
+**ADRs:** ADR-19 (dashboard interativo drill-down), ADR-20 (tracking documental completo).
+
+### Ordem de execução sugerida (Fases IOTA + KAPPA)
+
+Caminho crítico recomendado:
+
+```
+68b (Fase ETA residual, já em execução)
+  ↓
+81 (baseline limpa antes de entrar em IOTA)
+  ↓
+70 (Inbox unificada) ──────────────┬─→ 80 (run.sh interativo)
+  ↓                                │
+71 (Sync rico bidirecional)        │
+  ↓                                │
+74 (Vínculo doc↔tx) ─→ 75 (Gap analysis)
+                                   │
+72 (Filtro forma) ──→ 73 (Drill-down) ─→ 78 (Grafo full) ─→ 79 (Pagamentos)
+                                   │
+76 (UX v1) ──→ 77 (UX v2)
+```
+
+**Resumo linear sugerido:** 68b → 81 → 70 → 76 → 74 → 72 → 71 → 73 → 77 → 80 → 75 → 78 → 79.
 
 ---
 
@@ -86,7 +210,7 @@ Objetivo: aceitar qualquer arquivo, armazenar tudo no grafo, formalizar o workfl
 
 Sprint 41 e 42 podem rodar em paralelo. Sprint 43 depende da 42 (supervisor_contexto.sh consulta grafo).
 
-ADRs relevantes: ADR-13 (supervisor sem API), ADR-14 (schema grafo), ADR-15 (intake multiformato).
+ADRs relevantes: ADR-13 (supervisor sem API), ADR-14 (schema grafo), ADR-18 (intake multiformato).
 
 ---
 

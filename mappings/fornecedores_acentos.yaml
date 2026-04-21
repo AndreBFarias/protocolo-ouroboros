@@ -1,0 +1,88 @@
+# =============================================================================
+# fornecedores_acentos.yaml -- substituições de acentuação para nomes de fornecedores
+# =============================================================================
+#
+# PROPÓSITO:
+#   CSVs de bancos (em especial Nubank PF/PJ) exportam descrições sem
+#   acentuação e com razão social truncada: "BRASILIA", "AGENCIA DE
+#   RESTAURANTES", "AMERICANAS S A EM RECUPERACAO JUDICIAL". O dashboard
+#   exibe esses nomes tal e qual. Este arquivo é a fonte única da verdade
+#   para restaurar acentos plausíveis e preservar razões sociais.
+#
+# COMO É USADO:
+#   src/transform/canonicalizer_fornecedor.py carrega este YAML e expõe
+#   `canonicalizar(nome: str) -> str`. A função:
+#     1. Retorna intocado se a string é código técnico (CNPJ, CPF, hash).
+#     2. Aplica substituições word-boundary case-insensitive do dicionário
+#        `substituicoes` abaixo.
+#     3. Aplica correções de razão social (`razao_social_mapping`) para
+#        casos específicos de truncamento/abreviação.
+#     4. Preserva marcadores `S/A`, `S.A.`, `Ltda`.
+#
+# SCHEMA:
+#   substituicoes:
+#     <PALAVRA_SEM_ACENTO>: <palavra com acento>
+#   razao_social_mapping:
+#     <padrão completo>: <substituição completa>
+#
+# IMPORTANTE:
+#   - Substituição é idempotente: rodar canonicalizar(canonicalizar(x))
+#     retorna o mesmo valor que canonicalizar(x).
+#   - Matches são word-boundary para evitar colisão parcial (ex: SAO não
+#     casa dentro de SAODOMINGOS).
+# =============================================================================
+
+substituicoes:
+  # Cidades e topônimos comuns
+  BRASILIA: Brasília
+  SAO: São
+  PAO: Pão
+
+  # Substantivos comerciais frequentes
+  AGENCIA: Agência
+  SERVICO: Serviço
+  SERVICOS: Serviços
+  COMERCIO: Comércio
+  FARMACIA: Farmácia
+  MERCANTIL: Mercantil
+  EMPRESARIA: Empresária
+  PADARIA: Padaria
+  TRANSPORTE: Transporte
+  CONDICIONADO: Condicionado
+  TECNOLOGIA: Tecnologia
+
+  # Ações e estados jurídicos / contábeis
+  RECUPERACAO: Recuperação
+  ALIMENTACAO: Alimentação
+  CONSTRUCAO: Construção
+  EDUCACAO: Educação
+  SAUDE: Saúde
+  DISTRIBUICAO: Distribuição
+  PRODUCAO: Produção
+  INFORMACAO: Informação
+  EVOLUCAO: Evolução
+  ORGANIZACAO: Organização
+  PARTICIPACAO: Participação
+  ASSOCIACAO: Associação
+  CORPORACAO: Corporação
+  COMUNICACAO: Comunicação
+  LOCACAO: Locação
+  PRESTACAO: Prestação
+  SOLUCOES: Soluções
+  JUDICIAL: Judicial
+  INDUSTRIA: Indústria
+  LOGISTICA: Logística
+
+razao_social_mapping:
+  # Americanas: banco trunca "AMERICANAS" como "ICANAS" quando payload tem
+  # prefixo do operador. Sempre que a descrição começa por esse fragmento,
+  # completar para a razão canônica.
+  "ICANAS S A EM RECUPERACAO JUDICIAL": "Americanas S/A (em Recuperação Judicial)"
+  "AMERICANAS S A EM RECUPERACAO JUDICIAL": "Americanas S/A (em Recuperação Judicial)"
+  "AMERICANAS S A": "Americanas S/A"
+  "AMERICANAS SA": "Americanas S/A"
+
+  # Casos comuns de boleto recorrente
+  "OLETO SESC": "Boleto Sesc"
+
+# "Linguagem é forma, e forma é identidade." -- princípio cultural

@@ -54,5 +54,13 @@ Thumbs.db
 Task_Final/
 IMPORTANT.md
 
+# Artefatos transitórios de automação browser / captura
+.playwright-mcp/
+
+# Arquivos de trabalho pessoal (não entram no repo)
+docs_faltantes.xlsx
+PROMPT_INICIO.md
+docs/propostas/er_produtos/
+
 # Jupyter
 .ipynb_checkpoints/

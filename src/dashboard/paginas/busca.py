@@ -62,7 +62,7 @@ def renderizar(
 
     st.markdown(
         hero_titulo_html(
-            "52",
+            "",
             "Busca Global",
             "Input único permanente: digite fornecedor, CNPJ, item, data "
             "(YYYY-MM) ou valor. Retorna fornecedores agregados, documentos, "
@@ -104,14 +104,25 @@ def renderizar(
     _renderizar_itens(resultados["itens"])
 
 
+def _aplicar_chip_sugestao(valor: str) -> None:
+    """Callback do chip: injeta o termo no input da busca.
+
+    Ao ser usado como `on_click` do `st.button`, este callback roda ANTES
+    do próximo ciclo de render -- por isso o `st.text_input` com
+    `key="busca_termo_input"` abaixo já renderiza com o valor atualizado,
+    sem precisar de `st.rerun()` explícito (padrão canônico Streamlit e
+    contorno da armadilha A59-1: `st.rerun` em callback inline gera loop).
+    """
+    st.session_state["busca_termo_input"] = valor
+
+
 def _renderizar_input_permanente() -> str:
-    """Input único permanente no topo + chips de sugestão (disabled)."""
+    """Input único permanente no topo + chips de sugestão clicáveis."""
     termo = st.text_input(
         "Busca global",
-        value="",
         placeholder="fornecedor, CNPJ, item, data (YYYY-MM), valor...",
         label_visibility="collapsed",
-        key="busca_global_input",
+        key="busca_termo_input",
     )
 
     cols = st.columns(len(SUGESTOES_RAPIDAS))
@@ -121,7 +132,8 @@ def _renderizar_input_permanente() -> str:
                 sug,
                 key=f"busca_sug_{idx}",
                 use_container_width=True,
-                disabled=True,
+                on_click=_aplicar_chip_sugestao,
+                args=(sug,),
             )
 
     return (termo or "").strip()

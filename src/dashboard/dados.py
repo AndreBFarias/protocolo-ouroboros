@@ -88,6 +88,20 @@ def filtrar_por_mes(df: pd.DataFrame, mes: str, coluna: str = "mes_ref") -> pd.D
     return df[df[coluna] == mes].copy()
 
 
+def renderizar_dataframe(df: pd.DataFrame, na_rep: str = "—") -> pd.DataFrame:
+    """Substitui valores nulos por `na_rep` antes de enviar ao `st.dataframe`.
+
+    Evita que células com `NaN` apareçam serializadas como a string
+    literal `nan` no dashboard. A substituição é feita em todas as
+    colunas (numéricas e de texto) via conversão para `object` para
+    permitir misturar tipos. A operação é não destrutiva: retorna uma
+    cópia, preserva o DataFrame original.
+    """
+    if df.empty:
+        return df.copy()
+    return df.astype(object).where(df.notna(), na_rep)
+
+
 def filtrar_por_pessoa(df: pd.DataFrame, pessoa: str) -> pd.DataFrame:
     """Filtra DataFrame por pessoa (André/Vitória/Todos)."""
     if pessoa == "Todos" or "quem" not in df.columns:
@@ -609,19 +623,27 @@ def carregar_subgrafo(node_id: int, radius: int = 1) -> dict:
             return vazio
         placeholders_n = ",".join("?" * len(visitados))
         nodes: list[dict] = []
-        for row in conn.execute(
-            f"SELECT id, tipo, nome_canonico, metadata FROM node WHERE id IN ({placeholders_n})",
-            list(visitados),
-        ):
+        sql_nodes = (
+            "SELECT id, tipo, nome_canonico, aliases, metadata "
+            f"FROM node WHERE id IN ({placeholders_n})"
+        )
+        for row in conn.execute(sql_nodes, list(visitados)):
             try:
                 meta = json.loads(row["metadata"] or "{}")
             except (json.JSONDecodeError, TypeError):
                 meta = {}
+            try:
+                aliases_list = json.loads(row["aliases"] or "[]")
+                if not isinstance(aliases_list, list):
+                    aliases_list = []
+            except (json.JSONDecodeError, TypeError):
+                aliases_list = []
             nodes.append(
                 {
                     "id": int(row["id"]),
                     "tipo": row["tipo"],
                     "nome_canonico": row["nome_canonico"],
+                    "aliases": aliases_list,
                     "metadata": meta,
                 }
             )
@@ -730,11 +752,28 @@ def listar_fornecedores_com_id() -> list[dict]:
     try:
         resultados: list[dict] = []
         for row in conn.execute(
-            "SELECT id, nome_canonico FROM node WHERE tipo = 'fornecedor' "
-            "ORDER BY nome_canonico LIMIT 500"
+            "SELECT id, nome_canonico, aliases, metadata FROM node "
+            "WHERE tipo = 'fornecedor' ORDER BY nome_canonico LIMIT 500"
         ):
+            try:
+                aliases_list = json.loads(row["aliases"] or "[]")
+                if not isinstance(aliases_list, list):
+                    aliases_list = []
+            except (json.JSONDecodeError, TypeError):
+                aliases_list = []
+            try:
+                meta = json.loads(row["metadata"] or "{}")
+                if not isinstance(meta, dict):
+                    meta = {}
+            except (json.JSONDecodeError, TypeError):
+                meta = {}
             resultados.append(
-                {"id": int(row["id"]), "nome_canonico": row["nome_canonico"]}
+                {
+                    "id": int(row["id"]),
+                    "nome_canonico": row["nome_canonico"],
+                    "aliases": aliases_list,
+                    "metadata": meta,
+                }
             )
     finally:
         conn.close()

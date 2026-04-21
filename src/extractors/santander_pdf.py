@@ -15,6 +15,7 @@ from typing import Optional
 import pdfplumber
 
 from src.extractors.base import ExtratorBase, Transacao
+from src.transform.canonicalizer_casal import e_transferencia_do_casal
 from src.utils.logger import configurar_logger
 
 REGEX_PARCELA: re.Pattern[str] = re.compile(
@@ -304,8 +305,9 @@ class ExtratorSantanderPDF(ExtratorBase):
             valor: float = self._parse_valor_br(valor_str)
 
             e_pagamento: bool = REGEX_PAGAMENTO.search(descricao_limpa) is not None
+            e_transferencia_casal: bool = e_transferencia_do_casal(descricao_limpa)
 
-            if e_pagamento:
+            if e_pagamento or e_transferencia_casal:
                 tipo: str = "Transferência Interna"
                 valor = -abs(valor)
             else:

@@ -18,6 +18,7 @@ from src.dashboard.tema import (
     FONTE_SUBTITULO,
     LAYOUT_PLOTLY,
     MAPA_CLASSIFICACAO,
+    aplicar_locale_ptbr,
 )
 
 MAPA_CLASSIFICACAO_COR: dict[str, str] = MAPA_CLASSIFICACAO
@@ -95,6 +96,7 @@ def _treemap_categorias(df: pd.DataFrame) -> None:
         textfont=dict(size=FONTE_CORPO),
     )
 
+    aplicar_locale_ptbr(fig)
     st.plotly_chart(fig, width="stretch")
 
 
@@ -269,6 +271,7 @@ def _evolucao_categorias(
         xaxis_title="Mês",
     )
 
+    aplicar_locale_ptbr(fig, valores_eixo_x=meses_periodo)
     st.plotly_chart(fig, width="stretch")
 
 

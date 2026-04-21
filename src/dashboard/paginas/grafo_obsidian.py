@@ -37,11 +37,13 @@ from src.dashboard.tema import (
     FONTE_LABEL,
     LAYOUT_PLOTLY,
     SPACING,
+    aplicar_locale_ptbr,
     hero_titulo_html,
     rgba_cor,
     rgba_cor_inline,
     subtitulo_secao_html,
 )
+from src.graph.queries import label_humano
 
 CORES_TIPO: dict[str, str] = {
     "documento": CORES["destaque"],
@@ -70,7 +72,7 @@ def renderizar(
 
     st.markdown(
         hero_titulo_html(
-            "53",
+            "",
             "Grafo Visual + Obsidian",
             "Subgrafo interativo de um fornecedor, preview do MOC "
             "mensal sincronizado com Obsidian e fluxo "
@@ -126,7 +128,7 @@ def _renderizar_subgrafo() -> None:
         st.info("Nenhum fornecedor registrado no grafo ainda.")
         return
 
-    rotulos = {f["id"]: f["nome_canonico"] for f in fornecedores}
+    rotulos = {f["id"]: label_humano(f) for f in fornecedores}
     ids_ordenados = [f["id"] for f in fornecedores]
 
     id_selecionado = st.selectbox(
@@ -207,11 +209,16 @@ def _construir_figura_grafo(
     for node in nodes:
         tipo = node.get("tipo", "outro")
         cores_marker.append(CORES_TIPO.get(tipo, CORES["texto_sec"]))
-        nome = node.get("nome_canonico", "")
-        label_curto = nome if len(nome) <= 22 else nome[:19] + "..."
+        nome_canonico = node.get("nome_canonico", "")
+        rotulo_humano = label_humano(node)
+        label_curto = (
+            rotulo_humano if len(rotulo_humano) <= 22 else rotulo_humano[:19] + "..."
+        )
         labels.append(label_curto)
         meta = node.get("metadata", {}) or {}
-        partes = [f"<b>{tipo}</b>", nome]
+        partes = [f"<b>{tipo}</b>", rotulo_humano]
+        if nome_canonico and nome_canonico != rotulo_humano:
+            partes.append(f"id_canonico: {nome_canonico}")
         for chave in ("data", "data_emissao", "valor", "total", "cnpj"):
             if chave in meta and meta[chave]:
                 partes.append(f"{chave}: {meta[chave]}")
@@ -387,20 +394,24 @@ def _bar_chart(
         )
         return
 
-    rotulos = [it["rotulo"] for it in itens]
+    rotulos_completos = [str(it["rotulo"]) for it in itens]
+    rotulos_truncados = [
+        r if len(r) <= 30 else r[:30] + "..." for r in rotulos_completos
+    ]
     valores = [it["valor"] for it in itens]
     textos = [formatar_moeda(v) for v in valores]
 
     fig = go.Figure(
         go.Bar(
             x=valores,
-            y=rotulos,
+            y=rotulos_truncados,
             orientation="h",
             marker={"color": cor},
             text=textos,
             textposition="outside",
             textfont={"color": CORES["texto"], "size": FONTE_LABEL},
-            hovertemplate="%{y}<br>%{x:.2f}<extra></extra>",
+            customdata=rotulos_completos,
+            hovertemplate="%{customdata}<br>R$ %{x:.2f}<extra></extra>",
         )
     )
     layout_override = dict(LAYOUT_PLOTLY)
@@ -421,6 +432,7 @@ def _bar_chart(
         },
         showlegend=False,
     )
+    aplicar_locale_ptbr(fig)
     st.plotly_chart(fig, use_container_width=True, key=key)
 
 

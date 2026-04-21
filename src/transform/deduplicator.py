@@ -1,5 +1,6 @@
 """Deduplicação de transações em múltiplos níveis."""
 
+from src.transform.canonicalizer_casal import e_transferencia_do_casal
 from src.utils.logger import configurar_logger
 
 logger = configurar_logger("deduplicator")
@@ -81,19 +82,32 @@ def deduplicar_por_hash_fuzzy(transacoes: list[dict]) -> list[dict]:
     return resultado
 
 
+def _descricao_para_match(transacao: dict) -> str:
+    """Extrai o melhor texto da transação para matching de identidade do casal.
+
+    Prioriza `_descricao_original` (string crua do extrator) e cai para `local`
+    quando a original não existe (histórico importado).
+    """
+    return str(transacao.get("_descricao_original") or transacao.get("local") or "")
+
+
 def marcar_transferencias_internas(transacoes: list[dict]) -> list[dict]:
     """Nível 3: Identifica pares de transferência interna.
 
     Procura pares onde:
     - Saída de uma conta = Entrada em outra
-    - Mesmo valor, mesma data (ou +/- 1 dia)
+    - Mesmo valor, mesma data
     - Entre contas do André e Vitória
+
+    Para evitar falso-positivo (Sprint 68), exige que PELO MENOS UM lado
+    do par contenha identidade do casal na descrição -- via
+    `canonicalizer_casal.e_transferencia_do_casal`. Se nenhum dos dois
+    lados bate com a whitelist, o par é ignorado (não vira TI).
 
     Marca ambos como Transferência Interna sem remover.
     """
     pares_encontrados = 0
 
-    # Indexar entradas por (data, valor absoluto)
     entradas: dict[str, list[int]] = {}
     for i, t in enumerate(transacoes):
         if t.get("tipo") == "Receita" or (
@@ -103,7 +117,6 @@ def marcar_transferencias_internas(transacoes: list[dict]) -> list[dict]:
             chave = f"{data_str}|{abs(t['valor']):.2f}"
             entradas.setdefault(chave, []).append(i)
 
-    # Para cada saída, procurar entrada correspondente
     for t in transacoes:
         if t.get("tipo") not in ("Despesa", None):
             continue
@@ -114,14 +127,23 @@ def marcar_transferencias_internas(transacoes: list[dict]) -> list[dict]:
         if chave not in entradas:
             continue
 
-        # Verificar se é entre pessoas diferentes (André <-> Vitória)
         for idx in entradas[chave]:
             entrada = transacoes[idx]
-            if entrada.get("quem") != t.get("quem"):
-                t["tipo"] = "Transferência Interna"
-                entrada["tipo"] = "Transferência Interna"
-                pares_encontrados += 1
-                break
+            if entrada.get("quem") == t.get("quem"):
+                continue
+
+            desc_saida = _descricao_para_match(t)
+            desc_entrada = _descricao_para_match(entrada)
+            if not (
+                e_transferencia_do_casal(desc_saida)
+                or e_transferencia_do_casal(desc_entrada)
+            ):
+                continue
+
+            t["tipo"] = "Transferência Interna"
+            entrada["tipo"] = "Transferência Interna"
+            pares_encontrados += 1
+            break
 
     if pares_encontrados > 0:
         logger.info(

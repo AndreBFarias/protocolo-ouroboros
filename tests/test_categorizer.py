@@ -33,12 +33,12 @@ def test_kisabor_padaria_valor_baixo(transacao):
     assert t["categoria"] != "Aluguel"
 
 
-def test_classificacao_sempre_valida(transacao):
-    """Classificação nunca pode sair vazia -- garantia do garantir_classificacao."""
+def test_classificacao_despesa_sempre_valida(transacao):
+    """Despesa sempre sai com classificação válida (fallback Questionável)."""
     cat = Categorizer()
-    t = transacao(local="Qualquer coisa")
+    t = transacao(local="Qualquer coisa", tipo="Despesa")
     cat.categorizar(t)
-    assert t["classificacao"] in ("Obrigatório", "Questionável", "Supérfluo", "N/A")
+    assert t["classificacao"] in ("Obrigatório", "Questionável", "Supérfluo")
 
 
 def test_imposto_sempre_obrigatorio(transacao):
@@ -49,29 +49,70 @@ def test_imposto_sempre_obrigatorio(transacao):
     assert t["classificacao"] == "Obrigatório"
 
 
-def test_receita_sem_match_cai_em_na(transacao):
-    """Sprint 40: Receita sem match vai pra N/A (não para Questionável)."""
+def test_receita_nao_recebe_classificacao(transacao):
+    """Sprint 67: Receita nunca tem classificação, independente de match/override.
+
+    Schema: classificação só é válida para Despesa/Imposto.
+    Receita é não-despesa -> classificacao=None (NaN no XLSX).
+    """
+    cat = Categorizer()
+    t = transacao(local="SALARIO", tipo="Receita", valor=7000.0)
+    cat.categorizar(t)
+    assert t["classificacao"] is None
+
+
+def test_receita_sem_match_fica_sem_classificacao(transacao):
+    """Sprint 67: Receita sem match também fica sem classificação (None)."""
     cat = Categorizer()
     t = transacao(local="Fonte Obscura ZZQWX", tipo="Receita")
     cat.categorizar(t)
-    assert t["classificacao"] == "N/A"
+    assert t["classificacao"] is None
 
 
-def test_transferencia_interna_sem_match_cai_em_na(transacao):
-    """Sprint 40: TI sem match vai pra N/A (não para Questionável)."""
+def test_transferencia_interna_nao_recebe_classificacao(transacao):
+    """Sprint 67: Transferência Interna nunca tem classificação (None)."""
+    cat = Categorizer()
+    t = transacao(
+        local="Pagamento fatura Nubank",
+        tipo="Transferência Interna",
+        valor=500.0,
+    )
+    cat.categorizar(t)
+    assert t["classificacao"] is None
+
+
+def test_transferencia_interna_sem_match_fica_sem_classificacao(transacao):
+    """Sprint 67: TI sem match fica com classificacao=None (não 'N/A')."""
     cat = Categorizer()
     t = transacao(local="Movimento ZZQWX", tipo="Transferência Interna")
     cat.categorizar(t)
-    assert t["classificacao"] == "N/A"
+    assert t["classificacao"] is None
+
+
+def test_despesa_recebe_classificacao(transacao):
+    """Sprint 67: Despesa sempre recebe classificação (Obrigatório/Questionável/Supérfluo)."""
+    cat = Categorizer()
+    t = transacao(local="NEOENERGIA", tipo="Despesa", valor=400.0)
+    cat.categorizar(t)
+    assert t["classificacao"] in ("Obrigatório", "Questionável", "Supérfluo")
+
+
+def test_regra_nao_sobrescreve_classificacao_em_receita(transacao):
+    """Sprint 67: se uma regra regex casa Receita mas declara classificação, é ignorada."""
+    cat = Categorizer()
+    # Salário bate regra de Receita; mesmo que categorias.yaml declare algo, Receita fica None
+    t = transacao(local="SALARIO G4F", tipo="Receita", valor=7000.0)
+    cat.categorizar(t)
+    assert t["classificacao"] is None
 
 
 def test_break_apos_match_garante_fallback(transacao):
     """Armadilha #5: após match, `break` (não `return`) permite que _garantir_classificacao rode."""
     cat = Categorizer()
-    # Cenário: regex casa mas não define classificação (raro mas possível em regras customizadas)
-    t = transacao(local="Qualquer texto sem match", valor=50.0)
+    # Cenário: Despesa sem match -> fallback Questionável
+    t = transacao(local="Qualquer texto sem match", valor=50.0, tipo="Despesa")
     cat.categorizar(t)
-    # Mesmo sem regra, classificação nunca é None após categorizar
+    # Despesa nunca fica com classificação None após categorizar
     assert t["classificacao"] is not None
 
 

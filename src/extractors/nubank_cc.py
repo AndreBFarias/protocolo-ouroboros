@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Optional
 
 from src.extractors.base import ExtratorBase, Transacao
+from src.transform.canonicalizer_casal import e_transferencia_do_casal
 from src.utils.logger import configurar_logger
 
 
@@ -193,11 +194,18 @@ class ExtratorNubankCC(ExtratorBase):
         return "Transferência"
 
     def _classificar_tipo(self, descricao: str, valor: float, pessoa: str) -> str:
-        """Classifica o tipo da transação baseado na descrição e valor."""
-        if self._e_transferencia_do_andre(descricao):
+        """Classifica o tipo da transação baseado na descrição e valor.
+
+        Sprint 68: substituída whitelist regex hardcoded (REGEX_ANDRE com
+        fragmentos genéricos como `ANDRE.*SILVA.*BATISTA`) pelo matcher
+        formal `canonicalizer_casal.e_transferencia_do_casal`, que consulta
+        `mappings/contas_casal.yaml`. Mantém exceções operacionais legítimas
+        (pagamento de fatura, resgate/aplicação CDB/RDB, agência 6450).
+        """
+        if e_transferencia_do_casal(descricao):
             return "Transferência Interna"
 
-        if self.REGEX_PAGAMENTO_FATURA.search(descricao):
+        if self._e_transferencia_do_andre(descricao):
             return "Transferência Interna"
 
         if self.REGEX_RESGATE.search(descricao) or self.REGEX_APLICACAO.search(descricao):
@@ -216,9 +224,13 @@ class ExtratorNubankCC(ExtratorBase):
         return "Despesa"
 
     def _e_transferencia_do_andre(self, descricao: str) -> bool:
-        """Verifica se a transação é uma transferência do André (interna ao casal)."""
-        if self.REGEX_ANDRE.search(descricao):
-            return True
+        """Verifica operacionalmente se a transação é do André via agência/conta.
+
+        Nota Sprint 68: a checagem por nome ("ANDRE.*SILVA.*BATISTA") migrou
+        para `canonicalizer_casal.e_transferencia_do_casal`. Este método
+        agora cobre apenas os sinalizadores operacionais que a whitelist de
+        nomes não captura (agência 6450 do Itaú).
+        """
         if self.REGEX_AGENCIA_ANDRE.search(descricao):
             return True
         return False

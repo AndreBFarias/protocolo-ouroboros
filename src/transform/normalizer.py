@@ -5,6 +5,8 @@ import re
 from datetime import date
 from typing import Optional
 
+from src.transform.canonicalizer_casal import e_transferencia_do_casal
+from src.transform.canonicalizer_fornecedor import canonicalizar as canonicalizar_fornecedor
 from src.utils.logger import configurar_logger
 
 logger = configurar_logger("normalizer")
@@ -37,19 +39,37 @@ def inferir_forma_pagamento(descricao: str, banco_origem: str, tipo_extrato: str
     return "Débito" if tipo_extrato == "cc" else "Crédito"
 
 
-def inferir_tipo_transacao(valor: float, descricao: str) -> str:
-    """Infere se é Despesa, Receita, Transferência Interna ou Imposto."""
+def inferir_tipo_transacao(
+    valor: float,
+    descricao: str,
+    tipo_sugerido: Optional[str] = None,
+    valor_com_sinal: Optional[float] = None,
+) -> str:
+    """Infere se é Despesa, Receita, Transferência Interna ou Imposto.
+
+    Ordem de prioridade:
+        1. Regex de Transferência Interna (sempre prevalece, mesmo sobre `tipo_sugerido`).
+        2. Regex de Imposto (prevalece sobre `tipo_sugerido`).
+        3. `tipo_sugerido` do extrator (respeita sinal original do CSV).
+        4. Regex de Receita.
+        5. Sinal de `valor_com_sinal` (se fornecido) ou `valor` (legado).
+        6. Default: Despesa.
+
+    `tipo_sugerido` aceita os valores: "Receita", "Despesa",
+    "Transferência Interna", "Imposto". Qualquer outro é ignorado.
+    """
     desc_upper = descricao.upper()
 
-    padroes_transferencia_interna = [
-        r"TRANSFERENCIA\s+(RECEBIDA|ENVIADA).*ANDRE.*SILVA",
-        r"TRANSFERENCIA\s+(RECEBIDA|ENVIADA).*VITORIA.*MARIA",
-        r"NU.PAGAMENT.*BOLETO",
-        r"PAGAMENTO DE BOLETO.*NU PAGAMENTOS",
-        r"RESGATE RDB|APLICAÇÃO RDB|RESGATE CDB",
-        r"VALOR ADICIONADO.*CRÉDITO",
+    if e_transferencia_do_casal(descricao):
+        return "Transferência Interna"
+
+    padroes_transferencia_interna_operacional = [
+        r"RESGATE RDB|APLICAÇÃO RDB|RESGATE CDB|APLICAÇÃO CDB",
+        r"FATURA\s+DE\s+CART[ÃA]O",
+        r"PAGAMENTO\s+DE\s+FATURA",
+        r"PGTO\s+FAT\s+CARTAO",
     ]
-    for padrao in padroes_transferencia_interna:
+    for padrao in padroes_transferencia_interna_operacional:
         if re.search(padrao, desc_upper):
             return "Transferência Interna"
 
@@ -60,6 +80,10 @@ def inferir_tipo_transacao(valor: float, descricao: str) -> str:
         if re.search(padrao, desc_upper):
             return "Imposto"
 
+    tipos_validos = {"Receita", "Despesa", "Transferência Interna", "Imposto"}
+    if tipo_sugerido in tipos_validos:
+        return tipo_sugerido
+
     padroes_receita = [
         r"SALARIO|PAGTO.*SALARIO",
         r"TRANSFERENCIA RECEBIDA.*PAIM",
@@ -69,7 +93,19 @@ def inferir_tipo_transacao(valor: float, descricao: str) -> str:
         if re.search(padrao, desc_upper):
             return "Receita"
 
-    if valor > 0:
+    padroes_despesa_forte = [
+        r"JUROS\s+POR\s+FATURA",
+        r"IOF\s+POR\s+FATURA",
+        r"MULTA\s+POR\s+FATURA",
+        r"TRANSF\s+ENVIADA",
+        r"TRANSFER[EÊ]NCIA\s+ENVIADA",
+    ]
+    for padrao in padroes_despesa_forte:
+        if re.search(padrao, desc_upper):
+            return "Despesa"
+
+    valor_ref = valor_com_sinal if valor_com_sinal is not None else valor
+    if valor_ref > 0:
         return "Receita"
 
     return "Despesa"
@@ -139,19 +175,34 @@ def normalizar_transacao(
     identificador: Optional[str] = None,
     subtipo: Optional[str] = None,
     arquivo_origem: Optional[str] = None,
+    tipo_sugerido: Optional[str] = None,
+    valor_original_com_sinal: Optional[float] = None,
 ) -> dict:
     """Normaliza uma transação para o schema padrão do XLSX.
 
     Retorna dict com as 12 colunas do schema:
     data, valor, forma_pagamento, local, quem, categoria, classificação,
     banco_origem, tipo, mes_ref, tag_irpf, obs
+
+    Parâmetros novos (Sprint 55):
+        tipo_sugerido: tipo ("Receita"/"Despesa"/"Transferência Interna"/
+            "Imposto") vindo do extrator. Respeitado exceto quando regex
+            de Transferência Interna ou Imposto prevalece.
+        valor_original_com_sinal: valor com sinal preservado do CSV bruto,
+            usado como fallback quando `tipo_sugerido` não é fornecido.
     """
     descricao_limpa = descricao.replace("&amp;", "&").strip()
 
     pessoa = inferir_pessoa(banco_origem, subtipo, descricao_limpa)
     forma = inferir_forma_pagamento(descricao_limpa, banco_origem, tipo_extrato)
-    tipo = inferir_tipo_transacao(valor, descricao_limpa)
+    tipo = inferir_tipo_transacao(
+        valor,
+        descricao_limpa,
+        tipo_sugerido=tipo_sugerido,
+        valor_com_sinal=valor_original_com_sinal,
+    )
     local = extrair_local(descricao_limpa)
+    local = canonicalizar_fornecedor(local)
 
     if identificador is None:
         identificador = gerar_hash_transacao(data_transacao, descricao_limpa, valor)

@@ -10,6 +10,7 @@ import msoffcrypto
 import openpyxl
 
 from src.extractors.base import ExtratorBase, Transacao
+from src.transform.canonicalizer_casal import e_transferencia_do_casal
 from src.utils.logger import configurar_logger
 from src.utils.senhas import carregar_senhas_pdf
 
@@ -23,16 +24,6 @@ COLUNAS: dict[str, int] = {
     "saida": 5,
     "saldo": 6,
 }
-
-REGEX_VITORIA: re.Pattern[str] = re.compile(
-    r"Vit[oó]ria\s+Maria|VITORIA\s+MARIA",
-    re.IGNORECASE,
-)
-
-REGEX_ANDRE_PROPRIO: re.Pattern[str] = re.compile(
-    r"Andr[eé]\s+da\s+Silva|ANDRE.*SILVA.*BATISTA",
-    re.IGNORECASE,
-)
 
 REGEX_FATURA_CARTAO: re.Pattern[str] = re.compile(
     r"PGTO\s+FAT\s+CARTAO|Fatura\s+de\s+cart[aã]o",
@@ -239,7 +230,16 @@ class ExtratorC6CC(ExtratorBase):
 
     @staticmethod
     def _classificar_tipo(titulo: str, descricao: str, valor: float) -> str:
-        """Classifica o tipo da transação."""
+        """Classifica o tipo da transação.
+
+        Sprint 68b: substituiu `REGEX_VITORIA` e `REGEX_ANDRE_PROPRIO`
+        (fragmentos genéricos como `ANDRE.*SILVA.*BATISTA` que casavam
+        falsos-positivos com terceiros homônimos) pelo matcher formal
+        `canonicalizer_casal.e_transferencia_do_casal`, que consulta
+        `mappings/contas_casal.yaml`. `REGEX_FATURA_CARTAO` e `REGEX_CDB`
+        preservados como regras operacionais legítimas (pagamento de
+        fatura do próprio cartão; resgate/aplicação de CDB C6).
+        """
         texto_completo: str = f"{titulo} {descricao}"
 
         if REGEX_SALARIO.search(texto_completo):
@@ -251,10 +251,7 @@ class ExtratorC6CC(ExtratorBase):
         if REGEX_CDB.search(texto_completo):
             return "Transferência Interna"
 
-        if REGEX_VITORIA.search(texto_completo):
-            return "Transferência Interna"
-
-        if REGEX_ANDRE_PROPRIO.search(texto_completo):
+        if e_transferencia_do_casal(texto_completo):
             return "Transferência Interna"
 
         if REGEX_IMPOSTO.search(texto_completo):

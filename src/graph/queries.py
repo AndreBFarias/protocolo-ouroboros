@@ -7,6 +7,7 @@ isso é responsabilidade do caller (CLI, dashboard, scripts de auditoria).
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import Any
 
@@ -14,6 +15,60 @@ from src.graph.db import GrafoDB, caminho_padrao
 from src.utils.logger import configurar_logger
 
 logger = configurar_logger("graph.queries")
+
+# Comprimento máximo do fallback de nome_canonico antes de truncar (Sprint 60).
+_LIMITE_LABEL_FALLBACK = 40
+
+
+def label_humano(node: dict[str, Any]) -> str:
+    """Devolve o rótulo mais legível possível para um node do grafo.
+
+    Ordem de preferência (Sprint 60):
+    1. Primeiro elemento de `aliases` (JSON string ou lista já decodificada).
+    2. `metadata.razao_social` quando presente.
+    3. `nome_canonico` truncado em 40 caracteres com reticências se maior.
+
+    Aceita `aliases` e `metadata` como string JSON (formato de `GrafoDB`) ou
+    como estruturas Python já deserializadas (formato usado pelo dashboard
+    após `json.loads`). Assim pode ser chamado em qualquer camada.
+    """
+    aliases_raw = node.get("aliases")
+    aliases: list[Any] = []
+    if isinstance(aliases_raw, list):
+        aliases = aliases_raw
+    elif isinstance(aliases_raw, str) and aliases_raw.strip():
+        try:
+            decodificado = json.loads(aliases_raw)
+            if isinstance(decodificado, list):
+                aliases = decodificado
+        except (json.JSONDecodeError, TypeError):
+            aliases = []
+
+    if aliases:
+        primeiro = aliases[0]
+        if primeiro is not None and str(primeiro).strip():
+            return str(primeiro)
+
+    metadata_raw = node.get("metadata")
+    metadata: dict[str, Any] = {}
+    if isinstance(metadata_raw, dict):
+        metadata = metadata_raw
+    elif isinstance(metadata_raw, str) and metadata_raw.strip():
+        try:
+            decodificado = json.loads(metadata_raw)
+            if isinstance(decodificado, dict):
+                metadata = decodificado
+        except (json.JSONDecodeError, TypeError):
+            metadata = {}
+
+    razao_social = metadata.get("razao_social")
+    if razao_social and str(razao_social).strip():
+        return str(razao_social)
+
+    canonico = str(node.get("nome_canonico") or "")
+    if len(canonico) > _LIMITE_LABEL_FALLBACK:
+        return canonico[:_LIMITE_LABEL_FALLBACK] + "..."
+    return canonico
 
 
 def estatisticas(db: GrafoDB | None = None) -> dict[str, Any]:

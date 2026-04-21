@@ -1,6 +1,7 @@
 """Orquestrador principal do pipeline ETL financeiro."""
 
 import argparse
+import re
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -8,6 +9,7 @@ from pathlib import Path
 from src.extractors.contracheque_pdf import processar_holerites
 from src.load.relatorio import gerar_relatorios
 from src.load.xlsx_writer import gerar_xlsx
+from src.transform.canonicalizer_casal import e_transferencia_do_casal
 from src.transform.categorizer import Categorizer
 from src.transform.deduplicator import deduplicar
 from src.transform.irpf_tagger import aplicar_tags_irpf
@@ -210,6 +212,8 @@ def _extrair_tudo(arquivos: list[Path], classes_extratores: list) -> list[dict]:
                             identificador=t.identificador,
                             subtipo=_inferir_subtipo(arquivo),
                             arquivo_origem=str(arquivo),
+                            tipo_sugerido=t.tipo,
+                            valor_original_com_sinal=t.valor,
                         )
                         transacoes_brutas.append(transacao_norm)
 
@@ -322,6 +326,60 @@ def _importar_historico() -> list[dict]:
     except Exception as e:
         logger.error("Erro ao importar histórico: %s", e)
 
+    return transacoes
+
+
+def _reclassificar_ti_orfas(transacoes: list[dict]) -> list[dict]:
+    """Reclassifica TIs cuja descrição NÃO bate identidade do casal.
+
+    Sprint 68b: rede de segurança pós-deduplicação. Qualquer transação
+    marcada como `Transferência Interna` cuja descrição original não
+    passa pelo matcher formal `e_transferencia_do_casal` é degradada
+    para `Despesa` (quando valor negativo) ou `Receita` (valor positivo).
+
+    Exceções operacionais legítimas (pagamento de fatura do próprio
+    banco, resgate/aplicação CDB/RDB, agência 6450 Itaú) são preservadas
+    via heurísticas textuais simples -- essas regras ainda vivem nos
+    extratores e já foram aplicadas antes deste ponto; aqui o objetivo é
+    apenas caçar falsos-positivos que escaparam (ex: linhas importadas
+    do `controle_antigo.xlsx` cujo `local` cita terceiro homônimo).
+    """
+    regex_operacional = re.compile(
+        r"PAGAMENTO\s+DE\s+FATURA|PGTO\s+FAT\s+CARTAO|PGTO\s+FATURA|"
+        r"Fatura\s+de\s+cart[aã]o|PAGAMENTO\s+FATURA\s+NU|PAGTO\s+NU\s*PAGAMENT|"
+        r"DEBITO\s+DE\s+CARTAO|DEB\s+CART|PIX\s+QRS\s+BANCO\s+SANTA|"
+        r"CDB\s+C6|LIM\.\s*GARANT|RESGATE\s+CDB|APLICA[CÇ][AÃ]O\s+CDB|"
+        r"AG\s*6450|AGENCIA\s+6450|Valor\s+adicionado\s+na\s+conta|Pix\s+no\s+Cr[eé]dito",
+        re.IGNORECASE,
+    )
+
+    reclassificadas = 0
+    for t in transacoes:
+        if t.get("tipo") != "Transferência Interna":
+            continue
+
+        descricao = str(t.get("_descricao_original") or t.get("local") or "")
+
+        if e_transferencia_do_casal(descricao):
+            continue
+
+        if regex_operacional.search(descricao):
+            continue
+
+        try:
+            valor = float(t.get("valor", 0) or 0)
+        except (TypeError, ValueError):
+            valor = 0.0
+
+        novo_tipo = "Receita" if valor > 0 else "Despesa"
+        t["tipo"] = novo_tipo
+        reclassificadas += 1
+
+    if reclassificadas:
+        logger.info(
+            "Sprint 68b: %d TI órfãs reclassificadas (sem match casal + sem regra operacional)",
+            reclassificadas,
+        )
     return transacoes
 
 
@@ -453,6 +511,19 @@ def executar(mes: str | None = None, processar_tudo: bool = False) -> None:
     # 6. Categorizar
     categorizer = Categorizer()
     transacoes = categorizer.categorizar_lote(transacoes)
+
+    # 6b. Reclassificar TIs órfãs (Sprint 68b) -- rede de segurança
+    # pós-categorização contra falsos-positivos residuais. O categorizer
+    # (mappings/categorias.yaml) aplica regras regex amplas como
+    # `NU.PAGAMENT|BANCO.SANTA` que marcam `tipo: Transferência Interna`
+    # em qualquer PIX que passe por Nubank/Santander como intermediário
+    # financeiro -- inclusive PIX para terceiros (DEIVID, JOAO, etc.).
+    # Esta passagem reverte a marcação quando a descrição NÃO casa
+    # identidade do casal e não bate regra operacional legítima (pagamento
+    # de fatura do próprio banco, CDB, agência 6450). Rodar DEPOIS do
+    # categorizer é crítico: o categorizer pode reintroduzir falsos-
+    # positivos se rodarmos antes.
+    transacoes = _reclassificar_ti_orfas(transacoes)
 
     # 7. Aplicar tags IRPF
     transacoes = aplicar_tags_irpf(transacoes)
