@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<procEventoNFe xmlns="http://www.portalfiscal.inf.br/nfe" versao="1.00">
+  <evento versao="1.00">
+    <infEvento Id="ID11011153260411222333000144550010000000991555444333000001">
+      <cOrgao>91</cOrgao>
+      <tpAmb>1</tpAmb>
+      <CNPJ>11222333000144</CNPJ>
+      <chNFe>53260411222333000144550010000000991555444333</chNFe>
+      <dhEvento>2026-04-02T09:15:00-03:00</dhEvento>
+      <tpEvento>110111</tpEvento>
+      <nSeqEvento>1</nSeqEvento>
+      <verEvento>1.00</verEvento>
+      <detEvento versao="1.00">
+        <descEvento>Cancelamento</descEvento>
+        <nProt>153260001234567</nProt>
+        <xJust>Emissao em duplicidade</xJust>
+      </detEvento>
+    </infEvento>
+  </evento>
+  <retEvento versao="1.00">
+    <infEvento>
+      <tpAmb>1</tpAmb>
+      <verAplic>SVRS202604</verAplic>
+      <cOrgao>91</cOrgao>
+      <cStat>135</cStat>
+      <xMotivo>Evento registrado e vinculado a NF-e</xMotivo>
+      <chNFe>53260411222333000144550010000000991555444333</chNFe>
+      <tpEvento>110111</tpEvento>
+      <nSeqEvento>1</nSeqEvento>
+      <dhRegEvento>2026-04-02T09:15:10-03:00</dhRegEvento>
+      <nProt>253260001111111</nProt>
+    </infEvento>
+  </retEvento>
+  <NFe xmlns="http://www.portalfiscal.inf.br/nfe">
+    <infNFe versao="4.00" Id="NFe53260411222333000144550010000000991555444333">
+      <ide>
+        <cUF>53</cUF>
+        <cNF>55544433</cNF>
+        <natOp>VENDA CANCELADA</natOp>
+        <mod>55</mod>
+        <serie>1</serie>
+        <nNF>99</nNF>
+        <dhEmi>2026-04-01T16:45:00-03:00</dhEmi>
+        <tpNF>1</tpNF>
+        <cMunFG>5300108</cMunFG>
+        <tpEmis>1</tpEmis>
+        <cDV>3</cDV>
+        <tpAmb>1</tpAmb>
+      </ide>
+      <emit>
+        <CNPJ>11222333000144</CNPJ>
+        <xNome>COMERCIO EXEMPLO CANCELADO LTDA</xNome>
+        <enderEmit>
+          <xLgr>QUADRA 99</xLgr>
+          <nro>1</nro>
+          <xBairro>CENTRO</xBairro>
+          <cMun>5300108</cMun>
+          <xMun>BRASILIA</xMun>
+          <UF>DF</UF>
+          <CEP>70000000</CEP>
+        </enderEmit>
+        <CRT>3</CRT>
+      </emit>
+      <dest>
+        <CPF>00000000000</CPF>
+        <xNome>CONSUMIDOR</xNome>
+      </dest>
+      <det nItem="1">
+        <prod>
+          <cProd>PROD001</cProd>
+          <xProd>PRODUTO TESTE CANCELADO</xProd>
+          <NCM>00000000</NCM>
+          <CFOP>5102</CFOP>
+          <uCom>UN</uCom>
+          <qCom>1.0000</qCom>
+          <vUnCom>99.9000</vUnCom>
+          <vProd>99.90</vProd>
+          <indTot>1</indTot>
+        </prod>
+        <imposto>
+          <ICMS>
+            <ICMS00>
+              <orig>0</orig>
+              <CST>00</CST>
+              <vBC>99.90</vBC>
+              <pICMS>18.00</pICMS>
+              <vICMS>17.98</vICMS>
+            </ICMS00>
+          </ICMS>
+        </imposto>
+      </det>
+      <total>
+        <ICMSTot>
+          <vProd>99.90</vProd>
+          <vNF>99.90</vNF>
+        </ICMSTot>
+      </total>
+    </infNFe>
+  </NFe>
+</procEventoNFe>

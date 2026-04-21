@@ -32,7 +32,7 @@ sprint:
 
 # Sprint 46 -- Extrator de XML NFe
 
-**Status:** PENDENTE
+**Status:** CONCLUÍDA
 **Data:** 2026-04-19
 **Prioridade:** MEDIA
 **Tipo:** Feature

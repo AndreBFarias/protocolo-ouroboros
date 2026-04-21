@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<nfeProc xmlns="http://www.portalfiscal.inf.br/nfe" versao="4.00">
+  <NFe xmlns="http://www.portalfiscal.inf.br/nfe">
+    <infNFe versao="4.00" Id="NFe53260488999777000100550010000012341112233445">
+      <ide>
+        <cUF>53</cUF>
+        <cNF>11223344</cNF>
+        <natOp>VENDA DE MERCADORIA</natOp>
+        <mod>55</mod>
+        <serie>1</serie>
+        <nNF>1234</nNF>
+        <dhEmi>2026-02-10T11:00:00-03:00</dhEmi>
+        <tpNF>1</tpNF>
+        <cMunFG>5300108</cMunFG>
+        <tpEmis>1</tpEmis>
+        <cDV>5</cDV>
+        <tpAmb>1</tpAmb>
+      </ide>
+      <emit>
+        <CNPJ>88999777000100</CNPJ>
+        <xNome>ELETRO PREMIUM COMERCIO LTDA</xNome>
+        <enderEmit>
+          <xLgr>RUA DAS INDUSTRIAS</xLgr>
+          <nro>1200</nro>
+          <xBairro>SIA</xBairro>
+          <cMun>5300108</cMun>
+          <xMun>BRASILIA</xMun>
+          <UF>DF</UF>
+          <CEP>71200200</CEP>
+        </enderEmit>
+        <IE>0799999900100</IE>
+        <CRT>3</CRT>
+      </emit>
+      <dest>
+        <CPF>12345678900</CPF>
+        <xNome>CLIENTE PF EXEMPLO</xNome>
+      </dest>
+      <det nItem="1">
+        <prod>
+          <cProd>TV55OLED</cProd>
+          <xProd>TV OLED 55 POLEGADAS MODELO PREMIUM</xProd>
+          <NCM>85287220</NCM>
+          <CFOP>5102</CFOP>
+          <uCom>UN</uCom>
+          <qCom>1.0000</qCom>
+          <vUnCom>5499.0000</vUnCom>
+          <vProd>5499.00</vProd>
+          <indTot>1</indTot>
+        </prod>
+        <imposto>
+          <ICMS>
+            <ICMS00>
+              <orig>0</orig>
+              <CST>00</CST>
+              <vBC>5499.00</vBC>
+              <pICMS>18.00</pICMS>
+              <vICMS>989.82</vICMS>
+            </ICMS00>
+          </ICMS>
+          <IPI>
+            <cEnq>999</cEnq>
+            <IPITrib>
+              <CST>50</CST>
+              <vBC>5499.00</vBC>
+              <pIPI>15.00</pIPI>
+              <vIPI>824.85</vIPI>
+            </IPITrib>
+          </IPI>
+          <PIS>
+            <PISAliq>
+              <CST>01</CST>
+              <vBC>5499.00</vBC>
+              <pPIS>1.65</pPIS>
+              <vPIS>90.73</vPIS>
+            </PISAliq>
+          </PIS>
+          <COFINS>
+            <COFINSAliq>
+              <CST>01</CST>
+              <vBC>5499.00</vBC>
+              <pCOFINS>7.60</pCOFINS>
+              <vCOFINS>417.92</vCOFINS>
+            </COFINSAliq>
+          </COFINS>
+        </imposto>
+      </det>
+      <total>
+        <ICMSTot>
+          <vBC>5499.00</vBC>
+          <vICMS>989.82</vICMS>
+          <vProd>5499.00</vProd>
+          <vIPI>824.85</vIPI>
+          <vPIS>90.73</vPIS>
+          <vCOFINS>417.92</vCOFINS>
+          <vNF>5499.00</vNF>
+        </ICMSTot>
+      </total>
+    </infNFe>
+  </NFe>
+  <protNFe versao="4.00">
+    <infProt>
+      <chNFe>53260488999777000100550010000012341112233445</chNFe>
+      <dhRecbto>2026-02-10T11:00:05-03:00</dhRecbto>
+      <nProt>153260007777777</nProt>
+      <cStat>100</cStat>
+      <xMotivo>Autorizado o uso da NF-e</xMotivo>
+    </infProt>
+  </protNFe>
+</nfeProc>
