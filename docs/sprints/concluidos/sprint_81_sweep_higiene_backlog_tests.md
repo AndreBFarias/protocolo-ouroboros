@@ -33,7 +33,7 @@ sprint:
 
 # Sprint 81 — Sweep higiene
 
-**Status:** BACKLOG
+**Status:** CONCLUÍDA (2026-04-21)
 **Prioridade:** P3
 **Dependências:** nenhuma
 **Issue:** INFRA-POS-AUDITORIA
@@ -63,9 +63,14 @@ Decisão recomendada: **Opção A** com `# noqa` explícito onde necessário —
 
 ## Evidências
 
-- [ ] `make lint` exit 0 sem nenhuma exception
-- [ ] Zero violação residual de acentuação em prosa humana
-- [ ] Documentação atualizada se Opção B
+- [x] `make lint` exit 0 (ruff check src/ tests/ scripts/ + check_acentuacao --all)
+- [x] Zero violação residual de acentuação em prosa humana
+- [x] Decisão: **Opção A aplicada** — Makefile agora roda `ruff check src/ tests/ scripts/` (rigor consistente)
+- [x] `scripts/reprocessar_documentos.py`: 14 imports marcados com `# noqa: E402` (padrão necessário após `sys.path.insert`)
+- [x] `scripts/ci/validate_sprint_structure.py`: 2 fixes E501 (quebra de linha em docstring + dict literal)
+- [x] `scripts/sprint41_prova_fogo.py`: 1 fix E501 (quebra de linha em help string)
+- [x] Regressão zero: 894 passed, 10 skipped (mesma baseline da Sprint 68b)
+- [x] Smoke strict: 8/8 contratos OK
 
 ---
 

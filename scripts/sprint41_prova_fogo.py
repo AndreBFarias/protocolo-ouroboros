@@ -188,7 +188,8 @@ def main() -> int:
         default=None,
         help=(
             "varre uma pasta recursivamente como fonte (alternativa aos 2 PDFs fixos da inbox/). "
-            "Útil para validar contra histórico em data/raw/. Imprime resumo agregado em vez do detalhado."
+            "Útil para validar contra histórico em data/raw/. Imprime resumo agregado "
+            "em vez do detalhado."
         ),
     )
     args = parser.parse_args()

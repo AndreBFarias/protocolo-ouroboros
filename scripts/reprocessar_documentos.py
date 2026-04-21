@@ -56,19 +56,19 @@ _RAIZ_REPO: Path = Path(__file__).resolve().parents[1]
 if str(_RAIZ_REPO) not in sys.path:
     sys.path.insert(0, str(_RAIZ_REPO))
 
-from src.extractors.cupom_garantia_estendida_pdf import ExtratorCupomGarantiaEstendida
-from src.extractors.cupom_termico_foto import ExtratorCupomTermicoFoto
-from src.extractors.danfe_pdf import ExtratorDanfePDF
-from src.extractors.garantia import ExtratorGarantiaFabricante
-from src.extractors.nfce_pdf import ExtratorNfcePDF
-from src.extractors.receita_medica import ExtratorReceitaMedica
-from src.extractors.recibo_nao_fiscal import ExtratorReciboNaoFiscal
-from src.extractors.xml_nfe import ExtratorXmlNFe
-from src.graph.db import GrafoDB, caminho_padrao
-from src.intake.orchestrator import detectar_mime
-from src.intake.preview import gerar_preview
-from src.intake.registry import detectar_tipo
-from src.utils.logger import configurar_logger
+from src.extractors.cupom_garantia_estendida_pdf import ExtratorCupomGarantiaEstendida  # noqa: E402
+from src.extractors.cupom_termico_foto import ExtratorCupomTermicoFoto  # noqa: E402
+from src.extractors.danfe_pdf import ExtratorDanfePDF  # noqa: E402
+from src.extractors.garantia import ExtratorGarantiaFabricante  # noqa: E402
+from src.extractors.nfce_pdf import ExtratorNfcePDF  # noqa: E402
+from src.extractors.receita_medica import ExtratorReceitaMedica  # noqa: E402
+from src.extractors.recibo_nao_fiscal import ExtratorReciboNaoFiscal  # noqa: E402
+from src.extractors.xml_nfe import ExtratorXmlNFe  # noqa: E402
+from src.graph.db import GrafoDB, caminho_padrao  # noqa: E402
+from src.intake.orchestrator import detectar_mime  # noqa: E402
+from src.intake.preview import gerar_preview  # noqa: E402
+from src.intake.registry import detectar_tipo  # noqa: E402
+from src.utils.logger import configurar_logger  # noqa: E402
 
 logger = configurar_logger("scripts.reprocessar_documentos")
 
@@ -162,7 +162,11 @@ def _detectar_leve(caminho: Path) -> str:
         return "cupom_garantia_estendida"
     if "holerite" in caminho_lower or "contracheque" in caminho_lower:
         return "holerite"
-    if "receita" in caminho_lower or "receituario" in caminho_lower or "prescricao" in caminho_lower:
+    if (
+        "receita" in caminho_lower
+        or "receituario" in caminho_lower
+        or "prescricao" in caminho_lower
+    ):
         return "receita_medica"
     if "garantia" in caminho_lower and "estendida" not in caminho_lower:
         return "garantia_fabricante"
