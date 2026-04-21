@@ -32,7 +32,7 @@ sprint:
 
 # Sprint 48 -- Linking Documento ↔ Transação
 
-**Status:** PENDENTE
+**Status:** CONCLUÍDA
 **Data:** 2026-04-19
 **Prioridade:** ALTA
 **Tipo:** Feature
