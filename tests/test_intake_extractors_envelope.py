@@ -74,7 +74,7 @@ def test_expandir_pdf_scan_gera_4_paginas_com_diagnostico_scan():
 
 def test_expandir_pdf_inexistente_devolve_erros_sem_levantar(tmp_path):
     falso = tmp_path / "nao_existe.pdf"
-    falso.write_bytes(b"%PDF-1.4 conteudo invalido")
+    falso.write_bytes("%PDF-1.4 conteúdo inválido".encode("utf-8"))
     resultado = env.expandir_pdf_multipage(falso)
     assert resultado.artefatos == []
     assert len(resultado.erros) >= 1
@@ -182,7 +182,7 @@ def test_zip_aborta_se_estoura_limite(tmp_path, monkeypatch):
 
 def test_zip_invalido_devolve_artefatos_vazio(tmp_path):
     falso = tmp_path / "falso.zip"
-    falso.write_bytes(b"isso nao e um zip")
+    falso.write_bytes("isso não é um zip".encode("utf-8"))
     resultado = env.expandir_zip(falso)
     assert resultado.artefatos == []
     assert len(resultado.erros) == 1

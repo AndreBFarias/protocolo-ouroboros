@@ -104,7 +104,7 @@ def expandir_pdf_multipage(pdf_path: Path) -> ResultadoEnvelope:
 
     Devolve `ResultadoEnvelope` com:
       - `artefatos`: caminhos dos PDFs splittados (para o router)
-      - `paginas`: tupla de PaginaPdf com indice + diagnostico + texto_nativo
+      - `paginas`: tupla de PaginaPdf com indice + diagnostico + texto_nativo  # noqa: accent
         do MESMO pass de leitura (sem precisar reabrir o PDF no router)
 
     Em caso de erro irrecuperável (PDF corrompido), devolve

@@ -3,7 +3,7 @@ ponto de entrada por arquivo da inbox.
 
 Função principal:
 
-    relatorio = processar_arquivo_inbox(caminho_inbox, pessoa="andre")
+    relatorio = processar_arquivo_inbox(caminho_inbox, pessoa="andre")  # noqa: accent
 
 Fluxo:
 

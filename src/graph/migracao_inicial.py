@@ -3,7 +3,7 @@
 Lê `data/output/ouroboros_*.xlsx` aba `extrato`, popula:
 
   Nodes:
-    - transacao  (1 por linha; nome_canonico = hash data+valor+local+banco)
+    - transacao  (1 por linha; nome_canonico = hash data+valor+local+banco)  # noqa: accent
     - fornecedor (contraparte, com entity resolution via rapidfuzz)
     - categoria  (1 por categoria distinta)
     - periodo    (1 por YYYY-MM distinto)
@@ -11,11 +11,11 @@ Lê `data/output/ouroboros_*.xlsx` aba `extrato`, popula:
     - tag_irpf   (1 por tag distinta)
 
   Edges:
-    - origem      transacao -> conta   (sempre)
-    - ocorre_em   transacao -> periodo (sempre)
-    - categoria_de transacao -> categoria (sempre)
-    - contraparte transacao -> fornecedor (quando local != banco/transferência)
-    - irpf        transacao -> tag_irpf (quando tag_irpf não-nulo)
+    - origem      transacao -> conta   (sempre)  # noqa: accent
+    - ocorre_em   transacao -> periodo (sempre)  # noqa: accent
+    - categoria_de transacao -> categoria (sempre)  # noqa: accent
+    - contraparte transacao -> fornecedor (quando local != banco/transferência)  # noqa: accent
+    - irpf        transacao -> tag_irpf (quando tag_irpf não-nulo)  # noqa: accent
 
 Idempotente: rodar duas vezes não duplica (UNIQUE em node e edge).
 

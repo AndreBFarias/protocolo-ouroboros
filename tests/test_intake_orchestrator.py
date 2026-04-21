@@ -57,7 +57,7 @@ def isolar_caminhos(tmp_path, monkeypatch):
 
 def test_detect_pdf_por_magic_bytes(tmp_path):
     arq = tmp_path / "qq.bin"
-    arq.write_bytes(b"%PDF-1.7 conteudo")
+    arq.write_bytes("%PDF-1.7 conteúdo".encode("utf-8"))
     assert orq.detectar_mime(arq) == "application/pdf"
 
 
@@ -178,7 +178,7 @@ def test_processar_arquivo_desconhecido_vai_pra_classificar(tmp_path, isolar_cam
     pseudo_inbox = tmp_path / "inbox"
     pseudo_inbox.mkdir()
     arq = pseudo_inbox / "misterio.dat"
-    arq.write_bytes(b"conteudo qualquer sem assinatura")
+    arq.write_bytes("conteúdo qualquer sem assinatura".encode("utf-8"))
     relatorio = orq.processar_arquivo_inbox(arq, pessoa="andre")
     assert len(relatorio.artefatos) == 1
     assert relatorio.artefatos[0].decisao.tipo is None

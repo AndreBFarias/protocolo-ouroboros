@@ -65,7 +65,7 @@ sprint:
 
 # Sprint 54 -- Limpeza de acentuação pré-existente (baseline verde INFRA)
 
-**Status:** PENDENTE
+**Status:** CONCLUÍDA
 **Data:** 2026-04-20
 **Prioridade:** MEDIA (higiene; desbloqueia medição limpa de regressões em sprints futuras)
 **Tipo:** Infra
@@ -237,8 +237,30 @@ Cada um deve continuar verde (tests passed sem regressão).
 ```bash
 .venv/bin/python scripts/check_acentuacao.py --all   # deve imprimir nada e retornar 0
 make lint                                             # deve retornar 0
-.venv/bin/pytest tests/ -q                            # deve preservar 319 passed, 8 skipped
+.venv/bin/pytest tests/ -q                            # deve preservar baseline atual
 ```
+
+---
+
+## Verificação
+
+Comandos end-to-end que o validador e o `finish_sprint.sh` usam para confirmar que a sprint cumpriu os acceptance criteria:
+
+```bash
+# 1. Checker oficial do projeto -- zero violações, exit 0
+.venv/bin/python scripts/check_acentuacao.py --all
+
+# 2. Lint completo (ruff + checker) -- exit 0
+make lint
+
+# 3. Suite completa -- baseline atual preservado, zero regressão
+.venv/bin/pytest tests/ -q
+
+# 4. Forbidden intocados -- saída VAZIA
+git diff --stat src/graph/db.py src/graph/models.py src/graph/ingestor_documento.py src/transform/irpf_tagger.py src/extractors/ mappings/ scripts/check_acentuacao.py
+```
+
+Baseline atualizado no ato da execução: **383 passed, 8 skipped** (após Sprints 44/44b/45; o valor inicial do spec "319 passed" foi redigido antes dessas sprints fecharem).
 
 ---
 

@@ -72,7 +72,7 @@ DELETE de um node remove edges automaticamente via FK. Isso é crítico para fut
 
 ### 4. Tipos de nó canônicos ainda fora do escopo
 
-Sprint 42 implementou tipos REUSADOS pela migração: transacao, fornecedor, categoria, periodo, conta, tag_irpf. Os tipos do ADR-14 ainda PENDENTES de uso (documento, item, prescricao, garantia, apolice, seguradora) entram quando os extratores das Sprints 44/44b/45/47*/47c populá-los.
+Sprint 42 implementou tipos REUSADOS pela migração: transacao, fornecedor, categoria, periodo, conta, tag_irpf. Os tipos do ADR-14 ainda PENDENTES de uso (documento, item, prescricao, garantia, apolice, seguradora) entram quando os extratores das Sprints 44/44b/45/47*/47c populá-los. <!-- noqa: accent -->
 
 A API do `GrafoDB.upsert_node` é agnóstica a tipo -- aceita qualquer string. Adicionar novos tipos não exige mudança de schema.
 

@@ -1,9 +1,9 @@
 # Roadmap -- Protocolo Ouroboros
 
 ```
-VERSÃO: 7.1 | SPRINTS: 63 (30 concluídas, 0 em produção, 20 backlog, 13 arquivadas)
+VERSÃO: 7.2 | SPRINTS: 63 (31 concluídas, 0 em produção, 19 backlog, 13 arquivadas)
 ROTA: Catalogador universal artesanal (Fases ALFA → ZETA) + higiene INFRA pontual
-ÚLTIMA ATUALIZAÇÃO: 2026-04-20 (Sprint 45 CONCLUÍDA -- extrator de cupom térmico foto via OCR tesseract, 63 testes, 3 layouts com recall >=80%, fallback supervisor, cache OCR por hash, round-trip JPG real; Sprints 43, 44, 44b, 47c também CONCLUÍDAS neste ciclo; Sprint 54 PLANEJADA para COL-44-A)
+ÚLTIMA ATUALIZAÇÃO: 2026-04-20 (Sprint 54 CONCLUÍDA -- baseline verde: 22 violações de acentuação pré-existentes resolvidas, `make lint` exit 0, convenção única `# noqa: accent`/`<!-- noqa: accent -->`; Sprints 43, 44, 44b, 45, 47c também CONCLUÍDAS neste ciclo)
 ```
 
 ---
@@ -36,10 +36,10 @@ Catalogador universal artesanal da vida financeira do casal. O usuário joga QUA
 
 | Status | Sprints | Total |
 |--------|---------|-------|
-| Concluídas | 01-07, 12-14, 17-19, 22, 23, 30, 37-40, 41, 41b, 41c, 41d, 42, 43, 44, 44b, 45, 47c | 30 |
+| Concluídas | 01-07, 12-14, 17-19, 22, 23, 30, 37-40, 41, 41b, 41c, 41d, 42, 43, 44, 44b, 45, 47c, 54 | 31 |
 | Backlog ativo (ALFA→EPSILON) | 46-53 (inclui 47a, 47b) | 11 |
 | Backlog consumidor (ZETA) | 20, 21, 24, 25, 33, 34, 35, 36 (pós-EPSILON) | 8 |
-| Backlog higiene INFRA | 54 | 1 |
+| Backlog higiene INFRA | -- | 0 |
 | Arquivadas (substituídas) | 08, 09, 10, 11, 15, 16, 26, 27a, 28, 29a, 29b, 31, 32 | 13 |
 
 Cabeçalho de cada sprint arquivada explica motivo e substituta.
@@ -65,7 +65,7 @@ Sprints pontuais derivadas de achados colaterais do validador-sprint. Não bloqu
 
 | Sprint | Tema | Status | Prioridade | Origem |
 |--------|------|--------|------------|--------|
-| 54 | Limpeza de 22 violações de acentuação pré-existentes | PENDENTE | MEDIA | COL-44-A (validador Sprint 44) |
+| 54 | Limpeza de 22 violações de acentuação pré-existentes | CONCLUÍDA | MEDIA | COL-44-A (validador Sprint 44) |
 
 Objetivo: reconstruir baseline verde de `make lint` e `scripts/check_acentuacao.py --all` para permitir medição limpa de regressões em sprints futuras. Sem ruído de dívida herdada, uma nova violação vira sinal claro de regressão introduzida.
 

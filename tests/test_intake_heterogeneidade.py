@@ -82,7 +82,7 @@ def test_pdf_scan_real_sem_texto_extrai_e_homogeneo():
 
 
 def test_pdf_uma_pagina_e_homogeneo(tmp_path):
-    pdf = _criar_pdf_com_paginas(tmp_path, ["Conteudo qualquer com CPF: 051.273.731-22"])
+    pdf = _criar_pdf_com_paginas(tmp_path, ["Conteúdo qualquer com CPF: 051.273.731-22"])
     assert het.e_heterogeneo(pdf) is False
 
 
@@ -137,7 +137,7 @@ def test_pdf_extrato_bancario_simulado_mesmo_cpf_em_4_pgs_e_homogeneo(tmp_path):
         "EXTRATO DE CONTA -- ITAU\n"
         "CPF: 051.273.731-22\n"
         "Saldo Anterior: R$ 1000,00\n"
-        "Linha de transacao"
+        "Linha de transação"
     )
     pdf = _criar_pdf_com_paginas(
         tmp_path,
@@ -170,7 +170,7 @@ def test_pdf_dois_cpfs_em_paginas_diferentes_e_heterogeneo(tmp_path):
 
 def test_pdf_corrompido_devolve_false_sem_levantar(tmp_path):
     falso = tmp_path / "falso.pdf"
-    falso.write_bytes(b"isto nao eh um PDF valido")
+    falso.write_bytes("isto não é um PDF válido".encode("utf-8"))
     assert het.e_heterogeneo(falso) is False
 
 
