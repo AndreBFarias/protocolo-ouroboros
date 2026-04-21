@@ -394,6 +394,41 @@ def _executar_er_produtos() -> None:
         logger.warning("ER de produtos falhou: %s", erro)
 
 
+def _executar_item_categorizer() -> None:
+    """Aplica categorização por regex a todos os nodes `item` do grafo.
+
+    Sprint 50: roda DEPOIS do ER de produtos (Sprint 49) para que a agregação
+    por `produto_canonico` já exista antes da atribuição de categoria. Também
+    importação lazy e falhas não-fatais.
+    """
+    try:
+        from src.graph.db import caminho_padrao
+    except ImportError as erro:
+        logger.warning(
+            "Módulo src.graph indisponível: %s -- categorização de itens pulada",
+            erro,
+        )
+        return
+
+    caminho_grafo = caminho_padrao()
+    if not caminho_grafo.exists():
+        logger.info(
+            "Grafo SQLite ausente em %s -- categorização de itens pulada",
+            caminho_grafo,
+        )
+        return
+
+    try:
+        from src.graph.db import GrafoDB
+        from src.transform.item_categorizer import categorizar_todos_items_no_grafo
+
+        with GrafoDB(caminho_grafo) as db:
+            stats = categorizar_todos_items_no_grafo(db)
+        logger.info("Categorização de itens: %s", stats)
+    except Exception as erro:
+        logger.warning("Categorização de itens falhou: %s", erro)
+
+
 def executar(mes: str | None = None, processar_tudo: bool = False) -> None:
     """Executa o pipeline completo."""
     logger.info("=== Protocolo Ouroboros -- Pipeline ===")
@@ -459,6 +494,14 @@ def executar(mes: str | None = None, processar_tudo: bool = False) -> None:
     # Roda depois do linking para que itens de documentos ainda por linkar
     # não fiquem pendurados sem agregado. Ausência de grafo é no-op.
     _executar_er_produtos()
+
+    # 14. Categorização de itens (Sprint 50): aplica regras regex em
+    # `mappings/categorias_item.yaml` a todos os nodes `item`, criando
+    # aresta `categoria_de` -> node `categoria` (com tipo_categoria=item
+    # no metadata, alinhado ao ADR-14). Roda depois do ER para que a
+    # agregação por produto canônico já esteja pronta. Itens em "Outros"
+    # com frequência >=3 geram proposta MD para revisão supervisor.
+    _executar_item_categorizer()
 
     logger.info("=== Pipeline concluído ===")
     logger.info("XLSX: %s", caminho_xlsx)
