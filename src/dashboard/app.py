@@ -20,6 +20,7 @@ from src.dashboard.dados import (  # noqa: E402
 )
 from src.dashboard.paginas import (  # noqa: E402
     analise_avancada,
+    busca,
     catalogacao,
     categorias,
     contas,
@@ -192,6 +193,7 @@ def main() -> None:
         tab_analise,
         tab_irpf,
         tab_catalogacao,
+        tab_busca,
     ) = st.tabs(
         [
             "Visão Geral",
@@ -203,6 +205,7 @@ def main() -> None:
             "Análise",
             "IRPF",
             "Catalogação",
+            "Busca Global",
         ]
     )
 
@@ -234,6 +237,9 @@ def main() -> None:
 
     with tab_catalogacao:
         catalogacao.renderizar(dados, periodo, pessoa, ctx)
+
+    with tab_busca:
+        busca.renderizar(dados, periodo, pessoa, ctx)
 
 
 if __name__ == "__main__":

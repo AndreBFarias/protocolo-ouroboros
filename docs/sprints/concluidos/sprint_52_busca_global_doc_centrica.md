@@ -31,7 +31,7 @@ sprint:
 
 # Sprint 52 -- Busca Global Doc-Cêntrica
 
-**Status:** PENDENTE
+**Status:** CONCLUÍDA
 **Data:** 2026-04-19
 **Prioridade:** ALTA
 **Tipo:** Feature

@@ -320,4 +320,213 @@ def contar_propostas_linking() -> int:
     return sum(1 for _ in CAMINHO_PROPOSTAS_LINKING.glob("*.md"))
 
 
+@st.cache_data(ttl=60)
+def buscar_global(termo: str) -> dict[str, list[dict]]:
+    """Busca case-insensitive no grafo SQLite (read-only).
+
+    Executa LIKE contra `nome_canonico`, `aliases` (JSON textual) e
+    `metadata` (JSON textual) para os quatro tipos principais:
+    fornecedor, documento, transacao e item.                       # noqa: accent
+
+    Returns:
+        Dict com 4 chaves: ``fornecedores``, ``documentos``,
+        ``transacoes`` e ``itens``. Cada valor é lista de dicts    # noqa: accent
+        enxutos (id + campos principais) pronta para renderizar.
+        Se o grafo não existe ou termo é vazio, todas as listas vêm
+        vazias.
+    """
+    vazio: dict[str, list[dict]] = {
+        "fornecedores": [],
+        "documentos": [],
+        "transacoes": [],
+        "itens": [],
+    }
+
+    if not termo or not termo.strip():
+        return vazio
+
+    if not CAMINHO_GRAFO.exists():
+        logger.warning("grafo não encontrado em %s", CAMINHO_GRAFO)
+        return vazio
+
+    import sqlite3
+
+    termo_norm = termo.strip()
+    padrao = f"%{termo_norm.lower()}%"
+
+    conn = sqlite3.connect(f"file:{CAMINHO_GRAFO}?mode=ro", uri=True)
+    conn.row_factory = sqlite3.Row
+    try:
+        fornecedores = _buscar_fornecedores(conn, padrao)
+        documentos = _buscar_documentos(conn, padrao)
+        transacoes = _buscar_transacoes(conn, padrao)
+        itens = _buscar_itens(conn, padrao)
+    finally:
+        conn.close()
+
+    return {
+        "fornecedores": fornecedores,
+        "documentos": documentos,
+        "transacoes": transacoes,
+        "itens": itens,
+    }
+
+
+def _buscar_fornecedores(conn, padrao: str) -> list[dict]:
+    """Retorna fornecedores cujo nome/alias/metadata casa com padrão."""
+    sql = (
+        "SELECT id, nome_canonico, aliases, metadata "
+        "FROM node "
+        "WHERE tipo = 'fornecedor' "
+        "  AND (LOWER(nome_canonico) LIKE ? "
+        "    OR LOWER(aliases) LIKE ? "
+        "    OR LOWER(metadata) LIKE ?) "
+        "LIMIT 50"
+    )
+    resultados: list[dict] = []
+    for row in conn.execute(sql, (padrao, padrao, padrao)):
+        try:
+            aliases = json.loads(row["aliases"] or "[]")
+        except (json.JSONDecodeError, TypeError):
+            aliases = []
+        try:
+            meta = json.loads(row["metadata"] or "{}")
+        except (json.JSONDecodeError, TypeError):
+            meta = {}
+        fornecedor_id = int(row["id"])
+        ndocs, total = _agregados_fornecedor(conn, fornecedor_id)
+        resultados.append(
+            {
+                "id": fornecedor_id,
+                "nome_canonico": row["nome_canonico"],
+                "aliases": aliases,
+                "cnpj": meta.get("cnpj", meta.get("cnpj_emitente", "")),
+                "categoria": meta.get("categoria", ""),
+                "total_documentos": ndocs,
+                "total_gasto": total,
+            }
+        )
+    return resultados
+
+
+def _agregados_fornecedor(conn, fornecedor_id: int) -> tuple[int, float]:
+    """Conta documentos e soma transações ligadas ao fornecedor."""
+    ndocs = 0
+    total = 0.0
+    for row in conn.execute(
+        "SELECT src_id FROM edge "
+        "WHERE dst_id = ? AND tipo = 'fornecido_por'",
+        (fornecedor_id,),
+    ):
+        doc_row = conn.execute(
+            "SELECT tipo FROM node WHERE id = ?", (row["src_id"],)
+        ).fetchone()
+        if doc_row and doc_row["tipo"] == "documento":
+            ndocs += 1
+
+    for row in conn.execute(
+        "SELECT src_id FROM edge "
+        "WHERE dst_id = ? AND tipo = 'fornecido_por'",
+        (fornecedor_id,),
+    ):
+        tx_row = conn.execute(
+            "SELECT tipo, metadata FROM node WHERE id = ?", (row["src_id"],)
+        ).fetchone()
+        if tx_row and tx_row["tipo"] == "transacao":
+            try:
+                meta_tx = json.loads(tx_row["metadata"] or "{}")
+                valor = float(meta_tx.get("valor", 0.0) or 0.0)
+                total += abs(valor)
+            except (json.JSONDecodeError, TypeError, ValueError):
+                continue
+    return ndocs, total
+
+
+def _buscar_documentos(conn, padrao: str) -> list[dict]:
+    """Retorna documentos cujo nome/metadata casa com padrão."""
+    sql = (
+        "SELECT id, nome_canonico, metadata "
+        "FROM node "
+        "WHERE tipo = 'documento' "
+        "  AND (LOWER(nome_canonico) LIKE ? OR LOWER(metadata) LIKE ?) "
+        "LIMIT 100"
+    )
+    resultados: list[dict] = []
+    for row in conn.execute(sql, (padrao, padrao)):
+        try:
+            meta = json.loads(row["metadata"] or "{}")
+        except (json.JSONDecodeError, TypeError):
+            meta = {}
+        resultados.append(
+            {
+                "id": int(row["id"]),
+                "nome_canonico": row["nome_canonico"],
+                "tipo_documento": meta.get("tipo_documento", "desconhecido"),
+                "data": meta.get("data_emissao", ""),
+                "razao_social": meta.get("razao_social", ""),
+                "total": float(meta.get("total", 0.0) or 0.0),
+            }
+        )
+    return resultados
+
+
+def _buscar_transacoes(conn, padrao: str) -> list[dict]:
+    """Retorna transações cujo nome/metadata casa com padrão."""
+    sql = (
+        "SELECT id, nome_canonico, metadata "
+        "FROM node "
+        "WHERE tipo = 'transacao' "
+        "  AND (LOWER(nome_canonico) LIKE ? OR LOWER(metadata) LIKE ?) "
+        "LIMIT 200"
+    )
+    resultados: list[dict] = []
+    for row in conn.execute(sql, (padrao, padrao)):
+        try:
+            meta = json.loads(row["metadata"] or "{}")
+        except (json.JSONDecodeError, TypeError):
+            meta = {}
+        data_raw = meta.get("data", "")
+        data_str = str(data_raw)[:10] if data_raw else ""
+        resultados.append(
+            {
+                "id": int(row["id"]),
+                "data": data_str,
+                "local": meta.get("local", ""),
+                "valor": float(meta.get("valor", 0.0) or 0.0),
+                "banco": meta.get("banco", ""),
+                "tipo_transacao": meta.get("tipo", ""),
+            }
+        )
+    resultados.sort(key=lambda r: r["data"], reverse=True)
+    return resultados
+
+
+def _buscar_itens(conn, padrao: str) -> list[dict]:
+    """Retorna itens cujo nome/metadata casa com padrão."""
+    sql = (
+        "SELECT id, nome_canonico, metadata "
+        "FROM node "
+        "WHERE tipo = 'item' "
+        "  AND (LOWER(nome_canonico) LIKE ? OR LOWER(metadata) LIKE ?) "
+        "LIMIT 100"
+    )
+    resultados: list[dict] = []
+    for row in conn.execute(sql, (padrao, padrao)):
+        try:
+            meta = json.loads(row["metadata"] or "{}")
+        except (json.JSONDecodeError, TypeError):
+            meta = {}
+        resultados.append(
+            {
+                "id": int(row["id"]),
+                "descricao": meta.get("descricao", row["nome_canonico"]),
+                "data": meta.get("data_compra", ""),
+                "valor": float(meta.get("valor_total", 0.0) or 0.0),
+                "qtde": float(meta.get("qtde", 0.0) or 0.0),
+                "cnpj": meta.get("cnpj_varejo", meta.get("cnpj", "")),
+            }
+        )
+    return resultados
+
+
 # "Não é o homem que tem pouco, mas o que deseja mais, que é pobre." -- Sêneca
