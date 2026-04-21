@@ -2,7 +2,7 @@
 
 Schema 2-tabelas (node + edge) declarado em ADR-14. Tipos de nó canônicos:
 transacao, documento, item, fornecedor, categoria, conta, periodo, tag_irpf,  # noqa: accent
-prescricao, garantia, apolice, seguradora.
+prescricao, garantia, apolice, seguradora, produto_canonico.
 
 Sub-módulos:
 - models: dataclasses Node e Edge
