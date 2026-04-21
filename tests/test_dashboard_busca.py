@@ -339,7 +339,7 @@ d.CAMINHO_GRAFO = Path({str(caminho_grafo)!r})
 d.buscar_global.clear()
 
 # injeta termo inicial via session_state ANTES do widget
-st.session_state["busca_global_input"] = {termo_inicial!r}
+st.session_state["busca_termo_input"] = {termo_inicial!r}
 
 from src.dashboard.paginas import busca
 busca.renderizar()

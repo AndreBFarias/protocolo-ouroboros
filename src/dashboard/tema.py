@@ -53,6 +53,19 @@ FONTE_TITULO: int = 22
 FONTE_VALOR: int = 24  # cards KPI
 FONTE_HERO: int = 28  # hero de página
 
+# --- Tipografia fluida (Sprint 62) ------------------------------------------
+# Tokens `clamp(min, preferido, max)` para redimensionamento contínuo em
+# viewports estreitos. Evita truncamento de valores monetários grandes como
+# "R$ 1.463,35" em cards KPI quando a coluna encolhe abaixo de 1200px.
+FLUID_VALOR_KPI: str = "clamp(14px, 2vw, 22px)"
+FLUID_LABEL_KPI: str = "clamp(10px, 1.2vw, 14px)"
+FLUID_TITULO_GRAFICO: str = "clamp(14px, 1.6vw, 18px)"
+
+# Breakpoints em px para media queries. Escolhas baseadas na auditoria
+# 2026-04-21 que detectou quebra em 900×700.
+BREAKPOINT_COMPACTO: int = 1000  # abaixo disso, cards 2×2
+BREAKPOINT_MINIMO: int = 700  # abaixo disso, 1 coluna
+
 # --- Spacing scale (Sprint 20) ----------------------------------------------
 SPACING: dict[str, int] = {
     "xs": 4,
@@ -248,6 +261,69 @@ def css_global() -> str:
     }}
     .element-container {{ margin-bottom: {SPACING["md"]}px; }}
     [data-testid="stHorizontalBlock"] {{ gap: {SPACING["md"]}px; }}
+
+    /* --- Grid responsivo de KPI cards (Sprint 62) ------------------------ */
+    /* Grid fluido com minmax: 3 colunas em telas largas, 2 em médias e 1 em
+       estreitas. Substitui `st.columns(3)` rígido quando renderizado como
+       bloco HTML custom via kpi_grid_html(). */
+    .kpi-grid {{
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: {SPACING["md"]}px;
+        width: 100%;
+    }}
+    .kpi-grid > .kpi-card {{
+        min-width: 0;  /* permite shrink abaixo do conteúdo */
+    }}
+    .kpi-card .kpi-label {{
+        color: {CORES["texto_sec"]};
+        font-size: {FLUID_LABEL_KPI};
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        margin: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }}
+    .kpi-card .kpi-valor {{
+        font-size: {FLUID_VALOR_KPI};
+        font-weight: bold;
+        margin: {SPACING["xs"]}px 0 0 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }}
+    @media (max-width: {BREAKPOINT_COMPACTO}px) {{
+        .kpi-grid {{
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }}
+        /* Streamlit columns fallback: quando visao_geral ainda usa st.columns(3),
+           força cada coluna a 50% em viewports compactos. */
+        [data-testid="stHorizontalBlock"] {{
+            flex-wrap: wrap !important;
+        }}
+        [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] {{
+            flex: 1 1 calc(50% - {SPACING["md"]}px) !important;
+            min-width: calc(50% - {SPACING["md"]}px) !important;
+        }}
+    }}
+    @media (max-width: {BREAKPOINT_MINIMO}px) {{
+        .kpi-grid {{
+            grid-template-columns: 1fr;
+        }}
+        [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] {{
+            flex: 1 1 100% !important;
+            min-width: 100% !important;
+        }}
+    }}
+
+    /* --- Gráfico: título não sobrepõe legenda (Sprint 62) --------------- */
+    /* Plotly em viewport estreito cola a legenda horizontal no topo do
+       gráfico. Garante espaçamento mínimo entre título e legenda. */
+    .js-plotly-plot .plotly .g-gtitle {{
+        margin-bottom: {SPACING["md"]}px;
+    }}
     </style>
     """
 
@@ -257,6 +333,9 @@ LAYOUT_PLOTLY: dict = {
     "paper_bgcolor": CORES["fundo"],
     "font": {"color": CORES["texto"], "size": FONTE_CORPO},
     "margin": {"l": 50, "r": 20, "t": 50, "b": 40},
+    # Separadores PT-BR: vírgula decimal, ponto milhar. Aplicado globalmente
+    # via spread em cada update_layout das páginas. Sprint 65.
+    "separators": ",.",
 }
 
 
@@ -265,6 +344,85 @@ def rgba_cor(cor_hex: str, alpha: float) -> str:
     cor = cor_hex.lstrip("#")
     r, g, b = int(cor[0:2], 16), int(cor[2:4], 16), int(cor[4:6], 16)
     return f"rgba({r}, {g}, {b}, {alpha})"
+
+
+# --- Localização PT-BR de eixos de tempo (Sprint 65) ------------------------
+# Plotly não traz locale pt-BR nativo. O projeto usa `mes_ref` no formato
+# "YYYY-MM" como eixo x em vários gráficos (Receita vs Despesa, evolução de
+# categorias, projeções). Este helper traduz rótulos para "Mmm/AA" (ex: Nov/25,
+# Abr/26) e garante separadores decimais brasileiros. Usa `tickmode="array"`
+# com `ticktext` explícito, pois Plotly sem locale renderiza "Nov 2025" em
+# inglês ao interpretar strings "YYYY-MM" como datas.
+
+MESES_PTBR: dict[int, str] = {
+    1: "Jan",
+    2: "Fev",
+    3: "Mar",
+    4: "Abr",
+    5: "Mai",
+    6: "Jun",
+    7: "Jul",
+    8: "Ago",
+    9: "Set",
+    10: "Out",
+    11: "Nov",
+    12: "Dez",
+}
+
+MESES_PTBR_COMPLETO: dict[int, str] = {
+    1: "Janeiro",
+    2: "Fevereiro",
+    3: "Março",
+    4: "Abril",
+    5: "Maio",
+    6: "Junho",
+    7: "Julho",
+    8: "Agosto",
+    9: "Setembro",
+    10: "Outubro",
+    11: "Novembro",
+    12: "Dezembro",
+}
+
+
+def formatar_mes_ptbr(mes_ref: str, *, completo: bool = False) -> str:
+    """Traduz 'YYYY-MM' para 'Mmm/AA' (ou 'Mês Completo AAAA' se completo)."""
+    if not isinstance(mes_ref, str) or "-" not in mes_ref:
+        return str(mes_ref)
+    partes = mes_ref.split("-")
+    if len(partes) < 2:
+        return mes_ref
+    try:
+        ano = int(partes[0])
+        mes = int(partes[1])
+    except ValueError:
+        return mes_ref
+    if mes not in MESES_PTBR:
+        return mes_ref
+    if completo:
+        return f"{MESES_PTBR_COMPLETO[mes]} {ano}"
+    return f"{MESES_PTBR[mes]}/{str(ano)[-2:]}"
+
+
+def aplicar_locale_ptbr(fig, *, valores_eixo_x: list[str] | None = None):
+    """Aplica locale PT-BR ao gráfico Plotly.
+
+    - Traduz eixo x de 'YYYY-MM' para 'Mmm/AA' quando valores são passados.
+    - Garante `separators=",."` (vírgula decimal, ponto milhar).
+    - Retorna a figura (mutação in-place + retorno para encadeamento).
+
+    Se `valores_eixo_x` for None, aplica apenas os separadores -- útil para
+    gráficos cujo eixo x não é temporal (ex: bar chart de fornecedores).
+    """
+    fig.update_layout(separators=",.")
+    if valores_eixo_x is not None and len(valores_eixo_x) > 0:
+        ticktext = [formatar_mes_ptbr(v) for v in valores_eixo_x]
+        fig.update_xaxes(
+            tickmode="array",
+            tickvals=list(valores_eixo_x),
+            ticktext=ticktext,
+        )
+    return fig
 
 
 # "Design não é como parece. Design é como funciona." -- Steve Jobs

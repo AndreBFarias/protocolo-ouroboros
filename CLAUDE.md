@@ -1,15 +1,16 @@
 # CLAUDE.md -- Protocolo Ouroboros
 
 ```
-VERSÃO: 4.0 | STATUS: PRODUÇÃO (catalogador universal em construção) | LANG: PT-BR
-TRANSAÇÕES: 6.136 | MESES: 82 (out/2019 a mar/2026) | BANCOS: 6 | EXTRATORES: 9
-SPRINTS: 63 (31 concluídas, 0 produção, 19 backlog, 13 arquivadas) -- Sprint 54 CONCLUÍDA: baseline verde de higiene INFRA (22 violações de acentuação pré-existentes em sprints 41/42 resolvidas, `make lint` exit 0). Convenção única no corpus: `# noqa: accent` (Python) e `<!-- noqa: accent -->` (Markdown) para identificadores técnicos do schema do grafo; acentuação correta em prosa PT-BR humana. Sprint 45 CONCLUÍDA: extrator de cupom fiscal térmico via OCR tesseract (pytesseract + Pillow), 63 testes, 3 layouts distintos com recall >=80% (Americanas, Mercado, Posto), fallback supervisor quando confidence <70%, cache OCR por SHA256 do conteúdo, rotação EXIF, round-trip JPG real 527KB marcado @slow; `_ocr_comum.py` reusável por futuros extratores de foto. Sprint 47c CONCLUÍDA: extrator de cupom bilhete de garantia estendida (apólice SUSEP) com 28 testes, fixtures nativas + scan, glyph_tolerant para CNPJ OCR. Sprint 44b CONCLUÍDA: extrator NFC-e modelo 65 (mini-cupom QR SEFAZ) com 40 testes. Sprint 44 CONCLUÍDA: extrator DANFE NFe modelo 55 com parser de cabeçalho + itens, validação de chave 44 (DV SEFAZ), cross-check CNPJ texto vs chave, ingestão no grafo via ingerir_documento_fiscal reusada, 32 testes (recall 100% em 3 DANFEs). Sprint 42 CONCLUÍDA: grafo SQLite com 7.378 nodes (6086 transações + 1099 fornecedores entity-resolved + 100 categorias + 82 períodos + 7 contas + 4 tags IRPF) e 24.506 edges, populados do XLSX, idempotente. Inbox_processor.py integrado com intake universal (Sprint 41/b/c/d).
-CATEGORIZAÇÃO: 100% | IRPF TAGS: 167 (75 com CNPJ) | HOLERITES: 24 (G4F + Infobase)
-TESTES: 44 unitários (transform/ 82% média, extractors/contracheque_pdf 59%)
-ROTA: Catalogador universal artesanal via Claude Code Opus (ver docs/ROADMAP.md fases ALFA→ZETA)
+VERSÃO: 4.1 | STATUS: PRODUÇÃO (catalogador universal em construção) | LANG: PT-BR
+TRANSAÇÕES: 6.086 | MESES: 82 (out/2019 a mar/2026) | BANCOS: 6 | EXTRATORES: 9
+GRAFO: 7.421 nodes (6086 transações + 1100 fornecedores entity-resolved + 104 categorias + 82 períodos + 7 contas + 4 tags IRPF + 33 itens + 2 documentos + 2 apólices + 1 seguradora) e 24.584 edges, populados do XLSX, idempotente.
+SPRINTS: 69 (36 concluídas, 0 produção, 20 backlog, 13 arquivadas) -- Sprint 55-57, 59, 60 CONCLUÍDAS em 2026-04-21 (Fase ETA): 55 fix crítico do classificador de tipo (1.761 transações falsamente "Receita" corrigidas), 56 smoke runtime-real aritmético (8 contratos globais via `make smoke`), 57 reprocessamento de volume real, 59 chips de busca global, 60 labels humanos no grafo + bar chart. Sprint 54 CONCLUÍDA: baseline verde de higiene INFRA (22 violações de acentuação pré-existentes em sprints 41/42 resolvidas, `make lint` exit 0). Convenção única no corpus: `# noqa: accent` (Python) e `<!-- noqa: accent -->` (Markdown) para identificadores técnicos do schema do grafo; acentuação correta em prosa PT-BR humana. Sprint 45 CONCLUÍDA: extrator de cupom fiscal térmico via OCR tesseract (pytesseract + Pillow), 63 testes, 3 layouts distintos com recall >=80% (Americanas, Mercado, Posto), fallback supervisor quando confidence <70%, cache OCR por SHA256 do conteúdo, rotação EXIF, round-trip JPG real 527KB marcado @slow; `_ocr_comum.py` reusável por futuros extratores de foto. Sprint 47c CONCLUÍDA: extrator de cupom bilhete de garantia estendida (apólice SUSEP) com 28 testes, fixtures nativas + scan, glyph_tolerant para CNPJ OCR. Sprint 44b CONCLUÍDA: extrator NFC-e modelo 65 (mini-cupom QR SEFAZ) com 40 testes. Sprint 44 CONCLUÍDA: extrator DANFE NFe modelo 55 com parser de cabeçalho + itens, validação de chave 44 (DV SEFAZ), cross-check CNPJ texto vs chave, ingestão no grafo via ingerir_documento_fiscal reusada, 32 testes (recall 100% em 3 DANFEs). Sprint 42 CONCLUÍDA: grafo SQLite populado do XLSX (contagens atualizadas nesta revisão). Inbox_processor.py integrado com intake universal (Sprint 41/b/c/d).
+CATEGORIZAÇÃO: 100% | IRPF TAGS: 164 (75 com CNPJ) | HOLERITES: 24 (G4F + Infobase)
+TESTES: 736 passed / 8 skipped (baseline Sprint 56)
+ROTA: Catalogador universal artesanal via Claude Code Opus (ver docs/ROADMAP.md fases ALFA→ZETA + Fase ETA)
 SUPERVISOR: Claude Code (sessão interativa) -- nenhuma API programática (ADR-13)
 INTEGRAÇÕES: OFX (pronto), Belvo (em teste), Gmail (setup pendente), MeuPluggy (disponível)
-ROTA ATUAL: Plano 30/60/90 dias -- base honesta + supervisor IA + cérebro MVP
+ROTA ATUAL: Fase ETA (correções da auditoria 2026-04-21) -- sprints 55-69 agrupadas
 ```
 
 ---
@@ -140,7 +141,7 @@ Fonte primária: extrator de contracheque PDF (`src/extractors/contracheque_pdf.
 
 ### prazos
 
-**AVISO:** 6 prazos importados do histórico. Leitura frágil (depende de índices de coluna). Cabeçalho de aviso na linha 1 do XLSX; colunas começam na linha 2.
+**AVISO:** 6 prazos importados do histórico. Leitura frágil (depende de índices de coluna). Cabeçalho de aviso na linha 1 do XLSX; colunas começam na linha 2. **Nota 2026-04-21:** auditoria visual do dashboard detectou que o cabeçalho de aviso existe no XLSX mas NÃO é exibido na página "Contas" do Streamlit (consome direto a partir da linha 2). Sprint 64 (backlog P2) reabilita a faixa de aviso na UI + trata NaN→traço nas células ausentes.
 
 | Coluna | Tipo |
 |--------|------|
@@ -178,7 +179,7 @@ CNPJ/CPF extraídos contextualmente pelo tagger (`src/transform/irpf_tagger.py:_
 
 ### análise
 
-**AVISO:** Marcada como DEPRECATED no XLSX (linha 1 da aba). Produz apenas totais e contagens ("Total de X transações, top 10 categorias, balanço por pessoa"). Análise interpretativa real depende do resumo narrativo diagnóstico (Sprint 33, não implementada).
+Aba viva desde Sprint 53 (grafo visual + Obsidian rico). Produz visualizações ricas na página "Análise" do dashboard Streamlit: Sankey de fluxo de categorias, heatmap mensal por classificação, bar charts de top fornecedores e cobertura de itens. A antiga marcação DEPRECATED (resíduo da revisão 2026-04-18) foi removida em 2026-04-21 após a auditoria visual confirmar que a aba rende diagnóstico multimodal. Sprint 33 (backlog ZETA) ainda contempla resumo narrativo textual complementar, mas NÃO substitui a aba atual.
 
 ---
 
@@ -374,7 +375,7 @@ Auditoria por leitura direta do código -- não confie apenas em sprints antigas
 
 | Lacuna | Impacto | Fase do plano 30/60/90 |
 |--------|---------|------------------------|
-| Aba `analise`: texto estático sem diagnóstico | Agora marcada como DEPRECATED; análise real só via LLM narrativo | Fase 2 §2.3 (Sprint 33) |
+| Aba `analise`: resumo narrativo textual ausente | Sankey/heatmap/bar charts ricos desde Sprint 53; narrativa textual interpretativa permanece pendente | Fase ZETA (Sprint 33) |
 | Abas `dividas_ativas`/`inventario`/`prazos`: congeladas em 2023 | Marcadas com cabeçalho de snapshot histórico; reabilitação depende de automação bancária | Pós-90d (Sprint 24) |
 | Zero infraestrutura LLM | Sem `anthropic` em deps, sem `src/llm/`, sem cache, sem cost_tracker | Fase 1 §1.6 |
 | Relatórios mensais são descritivos, não diagnósticos | Listam totais mas não comparam períodos nem sinalizam anomalias | Fase 1 §1.5 |
@@ -391,6 +392,16 @@ Auditoria identificou afirmações do CLAUDE.md v3.1 que contradiziam o código.
 
 - **`energia_ocr.py` está registrado no pipeline** (`src/pipeline.py:71-76`). A sprint 23 corrigiu isso antes; a documentação não acompanhou.
 - **Obsidian sync gera frontmatter YAML válido** (`src/obsidian/sync.py:114-156`) com `tipo`, `mes`, `receita`, `despesa`, `saldo`, `tags`, `aliases`, `created`. O "frontmatter nulo" que CLAUDE.md mencionava não existe mais.
+
+### Mentiras corrigidas na auditoria 2026-04-21 (Fase ETA)
+
+Auditoria visual profunda do dashboard identificou afirmações do CLAUDE.md v4.0 que divergiam da realidade executável. Corrigidas nesta revisão (Sprint 58):
+
+- **Bug estrutural #1 do classificador de tipo** (`src/transform/normalizer.py` pré-Sprint 55). 1.761 transações eram classificadas como "Receita" indevidamente, contaminando ~R$ 280K em métricas de receita total e gerando distorção histórica em todas as métricas financeiras derivadas. Corrigido via Sprint 55 (P0 CRÍTICA); detectado apenas via inspeção visual do dashboard, NUNCA apareceu em teste unitário (pytest não cobria invariante global "receita não excede salário × 2"). Consequência metodológica: criada Sprint 56 com smoke runtime-real aritmético (`scripts/smoke_aritmetico.py`) que valida 8 contratos globais do XLSX; agora obrigatório em `make smoke` antes de declarar sprint CONCLUÍDA.
+- **Contagens do grafo estavam desatualizadas.** Anterior: 7.378 nodes / 24.506 edges / 167 IRPF tags. Real em 2026-04-21: 7.421 nodes / 24.584 edges / 164 IRPF tags (164 edges do tipo `irpf` no grafo, 164 linhas na aba `irpf` do XLSX, das quais 75 com CNPJ/CPF).
+- **Aba Análise não é DEPRECATED.** Desde Sprint 53 (grafo visual + Obsidian rico), a página "Análise" do dashboard exibe Sankey + heatmap + bar charts ricos. A marcação DEPRECATED era resquício de antes do pipeline de visualizações ser ligado.
+- **Cabeçalho de aviso na aba Contas existe no XLSX mas NÃO no dashboard.** Auditoria visual 2026-04-21 confirmou que a página "Contas" lê direto da linha 2 sem exibir a faixa de snapshot histórico. Sprint 64 reabilita.
+- **Arquivo órfão `data/grafo.sqlite`** (0 bytes, raiz de `data/`) removido nesta sprint. Único arquivo ativo é `data/output/grafo.sqlite` (~5MB).
 
 ---
 

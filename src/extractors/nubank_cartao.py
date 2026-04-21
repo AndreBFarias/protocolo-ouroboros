@@ -2,11 +2,13 @@
 
 import csv
 import hashlib
+import re
 from datetime import date, datetime
 from pathlib import Path
 from typing import Optional
 
 from src.extractors.base import ExtratorBase, Transacao
+from src.transform.canonicalizer_casal import e_transferencia_do_casal
 from src.utils.logger import configurar_logger
 
 
@@ -18,16 +20,6 @@ class ExtratorNubankCartao(ExtratorBase):
         - André: data/raw/andre/nubank_cartao/
         - Vitória PJ: data/raw/vitoria/nubank_pj_cartao/
     """
-
-    PARCEIROS: dict[str, str] = {
-        "André": "Vitória",
-        "Vitória": "André",
-    }
-
-    PADROES_PARCEIRO: dict[str, list[str]] = {
-        "André": ["vitória", "vitoria", "vitoria maria"],
-        "Vitória": ["andré", "andre", "andre da silva"],
-    }
 
     def __init__(self, caminho: Path) -> None:
         super().__init__(caminho)
@@ -119,17 +111,33 @@ class ExtratorNubankCartao(ExtratorBase):
             return None
 
     def _classificar_tipo(self, titulo: str, pessoa: str) -> str:
-        """Classifica o tipo da transação baseado no título."""
+        """Classifica o tipo da transação baseado no título.
+
+        Regra de cartão de crédito: default é Despesa (fatura é débito).
+
+        Sprint 68b: substituídas listas hardcoded `PADROES_PARCEIRO` /
+        `PARCEIROS` (fragmentos genéricos como `andre`, `vitoria` que
+        podiam casar estabelecimentos comerciais com esses nomes) pelo
+        matcher formal `canonicalizer_casal.e_transferencia_do_casal`,
+        que consulta `mappings/contas_casal.yaml`. Na prática, PIX entre
+        casal não aparece em fatura de cartão; a checagem permanece como
+        defesa em profundidade para descrições de estorno que citem o
+        parceiro ou eventuais créditos internos.
+
+        Exceções:
+            - Transferência Interna: descrição casa identidade do casal.
+            - Receita: estorno, reembolso, crédito na fatura (entradas).
+        """
         titulo_lower: str = titulo.lower()
-        parceiro: str = self.PARCEIROS.get(pessoa, "")
-        padroes: list[str] = self.PADROES_PARCEIRO.get(pessoa, [])
 
-        for padrao in padroes:
-            if padrao in titulo_lower:
-                return "Transferência Interna"
-
-        if parceiro.lower() in titulo_lower:
+        if e_transferencia_do_casal(titulo):
             return "Transferência Interna"
+
+        if re.search(
+            r"\bestorno\b|\breembolso\b|cr[eé]dito\s+a\s+fatura|cr[eé]dito\s+na\s+fatura",
+            titulo_lower,
+        ):
+            return "Receita"
 
         return "Despesa"
 

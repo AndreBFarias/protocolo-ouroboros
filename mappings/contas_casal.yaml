@@ -1,0 +1,60 @@
+# =============================================================================
+# contas_casal.yaml -- whitelist de identidades do casal para Transferência Interna
+# =============================================================================
+#
+# PROPÓSITO:
+#   CLAUDE.md define que Transferência Interna acontece apenas entre contas do
+#   casal (André <-> Vitória). Este arquivo é a fonte única da verdade para
+#   decidir se uma descrição bancária bate com o casal.
+#
+# COMO É USADO:
+#   src/transform/canonicalizer_casal.py carrega este YAML e expõe
+#   `e_transferencia_do_casal(descricao: str) -> bool`. Retorna True se a
+#   descrição casa com algum nome aceito (com \b word boundary, .upper()) ou
+#   com algum CPF explícito (tolerante a pontuação).
+#
+# IMPORTANTE:
+#   - CPFs reais NÃO devem ser commitados em claro. Substitua os placeholders
+#     <CPF_ANDRE> e <CPF_VITORIA> pelos valores corretos localmente. Este
+#     arquivo fica no repo SEM os CPFs reais (use apenas os placeholders aqui
+#     commitados) -- o matcher tolera placeholders e ainda faz match por nome.
+#   - Para matchear CPF real, preencha os campos abaixo na sua cópia local e
+#     adicione o arquivo ao .gitignore se contiver dados sensíveis. A primeira
+#     versão commitada usa apenas placeholders.
+#
+# SCHEMA:
+#   andre/vitoria:
+#     cpf: string (placeholder ou CPF real; só dígitos e pontuação comum)
+#     nomes_aceitos: list[str] -- nomes completos que podem aparecer em
+#       extratos. Comparação é case-insensitive com \b word boundary, então
+#       fragmentos genéricos ("ANDRE") devem ser evitados se podem casar com
+#       terceiros ("ANDRE BARATA"). Preferir nome completo ou prefixo único
+#       ("ANDRE DA SILVA BATISTA").
+#     contas: list[dict] -- contas rastreadas, usadas para validar proveniência
+#       (não participam do matcher de descrição, mas ficam documentadas).
+# =============================================================================
+
+andre:
+  cpf: "<CPF_ANDRE>"  # preencher com CPF real do André (formato XXX.XXX.XXX-XX)
+  nomes_aceitos:
+    - "ANDRE DA SILVA BATISTA"
+    - "ANDRE DA SILVA BATISTA DE FARIAS"
+    - "ANDRE BATISTA DE FARIAS"
+    - "ANDRE FARIAS"
+  contas:
+    - {banco: "Itaú", agencia: "6450"}
+    - {banco: "Santander"}
+    - {banco: "C6"}
+    - {banco: "Nubank"}
+
+vitoria:
+  cpf: "<CPF_VITORIA>"  # preencher com CPF real da Vitória (formato XXX.XXX.XXX-XX)
+  nomes_aceitos:
+    - "VITORIA MARIA SILVA DOS SANTOS"
+    - "VITORIA MARIA SILVA"
+    - "VITORIA MARIA"
+  contas:
+    - {banco: "Nubank PF", conta: "97737068-1"}
+    - {banco: "Nubank PJ", conta: "96470242-3"}
+
+# "A moeda de ouro é o colar do servo e a coleira do ingênuo." -- Antístenes

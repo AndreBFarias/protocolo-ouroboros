@@ -75,18 +75,23 @@ def test_nivel2_inclui_transferencia_interna(transacao):
 
 
 def test_nivel3_par_transferencia_marca_ambos_lados(transacao):
-    """Nível 3: Pix André→Vitória marca ambas pontas como Transferência Interna."""
+    """Nível 3: Pix André→Vitória marca ambas pontas como Transferência Interna.
+
+    Sprint 68 exige identidade formal do casal (nome composto da whitelist
+    em `mappings/contas_casal.yaml`) em pelo menos um dos lados do par.
+    Fixture ajustada na Sprint 68b para refletir o novo contrato.
+    """
     saida = transacao(
         data_t=date(2025, 5, 10),
         valor=500.0,
-        local="Pix para Vitória",
+        local="Pix para VITORIA MARIA SILVA DOS SANTOS",
         tipo="Despesa",
         quem="André",
     )
     entrada = transacao(
         data_t=date(2025, 5, 10),
         valor=500.0,
-        local="Pix recebido de André",
+        local="Pix recebido de ANDRE DA SILVA BATISTA DE FARIAS",
         tipo="Receita",
         quem="Vitória",
     )

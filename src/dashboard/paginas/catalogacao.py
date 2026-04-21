@@ -70,7 +70,7 @@ def renderizar(
 
     st.markdown(
         hero_titulo_html(
-            "51",
+            "",
             "Catalogação de Documentos",
             "Visão consolidada do catálogo: tipos de documento, volume de "
             "chegadas, conflitos de linking aguardando revisão e meses com "

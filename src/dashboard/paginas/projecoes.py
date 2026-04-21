@@ -5,7 +5,14 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from src.dashboard.dados import filtrar_por_pessoa, formatar_moeda
-from src.dashboard.tema import CORES, FONTE_MINIMA, FONTE_SUBTITULO, LAYOUT_PLOTLY, rgba_cor
+from src.dashboard.tema import (
+    CORES,
+    FONTE_MINIMA,
+    FONTE_SUBTITULO,
+    LAYOUT_PLOTLY,
+    aplicar_locale_ptbr,
+    rgba_cor,
+)
 
 
 def _card_cenario(
@@ -58,6 +65,64 @@ def _transacoes_do_extrato(
     return registros
 
 
+def _formatar_ritmo(valor: float | None) -> str:
+    """Formata um ritmo mensal para exibição. ``None`` vira texto explicativo."""
+    if valor is None:
+        return "Dados insuficientes"
+    return formatar_moeda(valor)
+
+
+def _saldo_do_mes(
+    dados: dict[str, pd.DataFrame],
+    mes: str,
+    pessoa: str,
+) -> float:
+    """Saldo parcial (receita - despesa) do mês selecionado, já filtrado por pessoa."""
+    if "extrato" not in dados or not mes:
+        return 0.0
+    df = filtrar_por_pessoa(dados["extrato"], pessoa)
+    if "mes_ref" not in df.columns:
+        return 0.0
+    df = df[df["mes_ref"] == mes]
+    df = df[df["tipo"] != "Transferência Interna"]
+    receita = df[df["tipo"] == "Receita"]["valor"].sum()
+    despesa = df[df["tipo"].isin(["Despesa", "Imposto"])]["valor"].sum()
+    return float(receita - despesa)
+
+
+def _renderizar_ritmos(
+    ritmos: dict[str, float | None],
+    mes_selecionado: str,
+    dados: dict[str, pd.DataFrame],
+    pessoa: str,
+) -> None:
+    """Renderiza os três cartões de ritmo e callouts explicativos."""
+    st.subheader("Ritmo de Saldo Médio Mensal")
+
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Ritmo histórico", _formatar_ritmo(ritmos.get("historico")))
+    col2.metric("Ritmo 12 meses", _formatar_ritmo(ritmos.get("12_meses")))
+    col3.metric("Ritmo 3 meses", _formatar_ritmo(ritmos.get("3_meses")))
+
+    st.info(
+        "Ritmo = saldo médio mensal observado (receita menos despesa). "
+        "O ritmo histórico cobre todo o período disponível; "
+        "os ritmos de 12 e 3 meses mostram tendências mais recentes. "
+        "Se houver divergência grande entre eles, "
+        "a rotina financeira mudou recentemente."
+    )
+
+    saldo_mes = _saldo_do_mes(dados, mes_selecionado, pessoa)
+    if mes_selecionado:
+        st.warning(
+            f"Mês corrente ({mes_selecionado}): saldo parcial de "
+            f"{formatar_moeda(saldo_mes)}. "
+            "Este valor NÃO está incluído na projeção, "
+            "pois o mês pode estar incompleto "
+            "(snapshot até a última transação importada)."
+        )
+
+
 def renderizar(
     dados: dict[str, pd.DataFrame],
     mes_selecionado: str,
@@ -69,6 +134,7 @@ def renderizar(
         return
 
     from src.projections.scenarios import (
+        calcular_ritmos,
         projetar_cenarios,
         projetar_com_economia,
     )
@@ -80,6 +146,11 @@ def renderizar(
         return
 
     cenarios = projetar_cenarios(transacoes)
+    ritmos = calcular_ritmos(transacoes)
+
+    _renderizar_ritmos(ritmos, mes_selecionado, dados, pessoa)
+
+    st.markdown("---")
 
     st.subheader("Cenários de Projeção")
 
@@ -131,7 +202,7 @@ def renderizar(
 
     st.subheader("Patrimônio Acumulado Projetado (12 meses)")
 
-    _grafico_projecao(cenarios)
+    _grafico_projecao(cenarios, ritmos)
 
     st.markdown("---")
 
@@ -152,8 +223,13 @@ def renderizar(
         _grafico_simulacao(projecao_base, projecao_custom, economia_extra)
 
 
-def _grafico_projecao(cenarios: dict) -> None:
-    """Gráfico de linha: patrimônio acumulado projetado."""
+def _grafico_projecao(cenarios: dict, ritmos: dict[str, float | None] | None = None) -> None:
+    """Gráfico de linha: patrimônio acumulado projetado.
+
+    Traça linhas para os cenários histórico (Ritmo Atual), Pós-Infobase e,
+    quando ``ritmos`` é fornecido, também para os cenários "últimos 12 meses"
+    e "últimos 3 meses" (tendências recentes).
+    """
     proj_atual = cenarios["cenario_atual"]["projecao_12_meses"]
     proj_pos = cenarios["cenario_pos_infobase"]["projecao_12_meses"]
 
@@ -161,7 +237,12 @@ def _grafico_projecao(cenarios: dict) -> None:
     valores_atual = [p["acumulado"] for p in proj_atual]
     valores_pos = [p["acumulado"] for p in proj_pos]
 
-    from src.projections.scenarios import VALOR_ENTRADA_APE, VALOR_RESERVA_EMERGENCIA
+    from src.projections.scenarios import (
+        MESES_PROJECAO,
+        VALOR_ENTRADA_APE,
+        VALOR_RESERVA_EMERGENCIA,
+        _projecao_acumulada,
+    )
 
     fig = go.Figure()
 
@@ -169,12 +250,38 @@ def _grafico_projecao(cenarios: dict) -> None:
         go.Scatter(
             x=meses_labels,
             y=valores_atual,
-            name="Ritmo Atual",
+            name="Ritmo histórico",
             mode="lines+markers",
             line=dict(color=CORES["positivo"], width=3),
             marker=dict(size=6),
         )
     )
+
+    if ritmos is not None:
+        if ritmos.get("12_meses") is not None:
+            proj_12 = _projecao_acumulada(float(ritmos["12_meses"]), 0.0, MESES_PROJECAO)
+            fig.add_trace(
+                go.Scatter(
+                    x=[p["mes"] for p in proj_12],
+                    y=[p["acumulado"] for p in proj_12],
+                    name="Ritmo 12 meses",
+                    mode="lines+markers",
+                    line=dict(color=CORES["destaque"], width=2, dash="dot"),
+                    marker=dict(size=5),
+                )
+            )
+        if ritmos.get("3_meses") is not None:
+            proj_3 = _projecao_acumulada(float(ritmos["3_meses"]), 0.0, MESES_PROJECAO)
+            fig.add_trace(
+                go.Scatter(
+                    x=[p["mes"] for p in proj_3],
+                    y=[p["acumulado"] for p in proj_3],
+                    name="Ritmo 3 meses",
+                    mode="lines+markers",
+                    line=dict(color=CORES["neutro"], width=2, dash="dashdot"),
+                    marker=dict(size=5),
+                )
+            )
 
     fig.add_trace(
         go.Scatter(
@@ -213,6 +320,7 @@ def _grafico_projecao(cenarios: dict) -> None:
         hovermode="x unified",
     )
 
+    aplicar_locale_ptbr(fig, valores_eixo_x=meses_labels)
     st.plotly_chart(fig, width="stretch")
 
 
@@ -280,6 +388,7 @@ def _grafico_simulacao(
         xaxis_title="Mês",
     )
 
+    aplicar_locale_ptbr(fig, valores_eixo_x=meses_labels)
     st.plotly_chart(fig, width="stretch")
 
 

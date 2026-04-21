@@ -8,6 +8,7 @@ from src.transform.normalizer import (
     inferir_forma_pagamento,
     inferir_pessoa,
     inferir_tipo_transacao,
+    normalizar_transacao,
 )
 
 
@@ -85,6 +86,117 @@ def test_pessoa_nubank_default_eh_andre():
 
 def test_pessoa_desconhecido_eh_casal():
     assert inferir_pessoa("BancoX") == "Casal"
+
+
+# --- Sprint 55: regressão do classificador de tipo ---
+
+
+def test_juros_fatura_atrasada_e_despesa():
+    """Juros de fatura nunca são Receita, mesmo com valor absoluto positivo."""
+    resultado = normalizar_transacao(
+        data_transacao=date(2026, 4, 1),
+        valor=53.23,
+        descricao="Juros por fatura atrasada",
+        banco_origem="Nubank",
+        tipo_extrato="cartao",
+        tipo_sugerido="Despesa",
+    )
+    assert resultado["tipo"] == "Despesa"
+
+
+def test_transf_enviada_pix_e_despesa():
+    """TRANSF ENVIADA PIX é saída, não Receita."""
+    resultado = normalizar_transacao(
+        data_transacao=date(2026, 4, 3),
+        valor=96.15,
+        descricao="TRANSF ENVIADA PIX",
+        banco_origem="Nubank",
+        tipo_extrato="cc",
+        tipo_sugerido="Despesa",
+        valor_original_com_sinal=-96.15,
+    )
+    assert resultado["tipo"] == "Despesa"
+
+
+def test_fatura_cartao_em_cc_e_transferencia_interna():
+    """Pagamento de fatura de cartão em CC = Transferência Interna (não despesa)."""
+    resultado = normalizar_transacao(
+        data_transacao=date(2026, 4, 14),
+        valor=90.64,
+        descricao="Fatura de cartão",
+        banco_origem="Nubank",
+        tipo_extrato="cc",
+        tipo_sugerido="Despesa",
+        valor_original_com_sinal=-90.64,
+    )
+    assert resultado["tipo"] == "Transferência Interna"
+
+
+def test_salario_e_receita():
+    """Salário permanece Receita (contrato existente)."""
+    resultado = normalizar_transacao(
+        data_transacao=date(2026, 4, 8),
+        valor=7442.38,
+        descricao="PAGTO SALARIO",
+        banco_origem="Itaú",
+        tipo_extrato="cc",
+        tipo_sugerido="Receita",
+        valor_original_com_sinal=7442.38,
+    )
+    assert resultado["tipo"] == "Receita"
+
+
+def test_compra_varejo_e_despesa():
+    """Compra em drogaria com tipo sugerido Despesa não vira Receita."""
+    resultado = normalizar_transacao(
+        data_transacao=date(2026, 4, 10),
+        valor=52.00,
+        descricao="DROGARIA SILVA FARMA",
+        banco_origem="Nubank",
+        tipo_extrato="cartao",
+        tipo_sugerido="Despesa",
+    )
+    assert resultado["tipo"] == "Despesa"
+
+
+def test_transferencia_interna_prevalece_sobre_tipo_sugerido():
+    """Regex de TI sempre ganha, mesmo que extrator diga Despesa."""
+    resultado = inferir_tipo_transacao(
+        valor=500.0,
+        descricao="Transferencia enviada - VITORIA MARIA",
+        tipo_sugerido="Despesa",
+    )
+    assert resultado == "Transferência Interna"
+
+
+def test_imposto_prevalece_sobre_tipo_sugerido():
+    """Regex de Imposto sempre ganha."""
+    resultado = inferir_tipo_transacao(
+        valor=100.0,
+        descricao="DARF Imposto Federal",
+        tipo_sugerido="Despesa",
+    )
+    assert resultado == "Imposto"
+
+
+def test_tipo_sugerido_invalido_cai_para_regex():
+    """tipo_sugerido fora do conjunto válido é ignorado."""
+    resultado = inferir_tipo_transacao(
+        valor=500.0,
+        descricao="Crédito qualquer",
+        tipo_sugerido="Coisa Inválida",
+        valor_com_sinal=500.0,
+    )
+    assert resultado == "Receita"
+
+
+def test_estorno_em_cartao_vira_receita():
+    """Título com 'Estorno' no cartão vira Receita via regex."""
+    resultado = inferir_tipo_transacao(
+        valor=150.0,
+        descricao="Estorno de compra - LOJA X",
+    )
+    assert resultado == "Receita"
 
 
 # "Quem conhece os outros é sábio; quem conhece a si próprio é iluminado." -- Lao-Tsé

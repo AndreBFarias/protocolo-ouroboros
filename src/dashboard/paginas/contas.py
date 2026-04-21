@@ -5,21 +5,37 @@ from datetime import date
 import pandas as pd
 import streamlit as st
 
-from src.dashboard.dados import filtrar_por_mes, filtrar_por_pessoa, formatar_moeda
+from src.dashboard.dados import (
+    filtrar_por_mes,
+    filtrar_por_pessoa,
+    formatar_moeda,
+    renderizar_dataframe,
+)
 from src.dashboard.tema import CORES, FONTE_CORPO, FONTE_MINIMA, card_html, rgba_cor
+
+AVISO_SNAPSHOT: str = (
+    "Dados congelados desde 2023 — snapshot histórico não é atualizado "
+    "automaticamente. Para atualizar, edite manualmente "
+    "`data/output/ouroboros_2026.xlsx` nas abas dividas_ativas, "
+    "inventario e prazos."
+)
 
 
 def renderizar(dados: dict[str, pd.DataFrame], mes_selecionado: str, pessoa: str) -> None:
     """Renderiza a página de contas e dívidas."""
     tem_dividas = "dividas_ativas" in dados
+    tem_inventario = "inventario" in dados
     tem_prazos = "prazos" in dados
 
-    if not tem_dividas and not tem_prazos:
+    if not tem_dividas and not tem_inventario and not tem_prazos:
         st.warning("Nenhum dado encontrado para contas e dívidas.")
         return
 
     if tem_dividas:
         _secao_dividas(dados["dividas_ativas"], mes_selecionado, pessoa)
+
+    if tem_inventario:
+        _secao_inventario(dados["inventario"])
 
     if tem_prazos:
         _secao_prazos(dados["prazos"])
@@ -28,6 +44,7 @@ def renderizar(dados: dict[str, pd.DataFrame], mes_selecionado: str, pessoa: str
 def _secao_dividas(df: pd.DataFrame, mes: str, pessoa: str) -> None:
     """Exibe tabela de dívidas ativas com indicadores visuais."""
     st.subheader("Dívidas Ativas")
+    st.warning(AVISO_SNAPSHOT)
 
     df_mes = filtrar_por_mes(df, mes)
     if "recorrente" in df.columns:
@@ -43,6 +60,8 @@ def _secao_dividas(df: pd.DataFrame, mes: str, pessoa: str) -> None:
 
     _resumo_pagamentos(df_mes)
 
+    df_mes = renderizar_dataframe(df_mes)
+
     linhas_html: list[str] = []
     for _, row in df_mes.iterrows():
         status = row.get("status", "")
@@ -53,7 +72,8 @@ def _secao_dividas(df: pd.DataFrame, mes: str, pessoa: str) -> None:
             else rgba_cor(CORES["negativo"], 0.08)
         )
         status_texto = "Pago" if status == "Pago" else "Pendente"
-        obs = row.get("obs", "") or "-"
+        obs_raw = row.get("obs", "")
+        obs = obs_raw if obs_raw not in ("", "—", None) else "—"
 
         linhas_html.append(
             f'<tr style="background-color: {cor_fundo};'
@@ -113,9 +133,23 @@ def _resumo_pagamentos(df: pd.DataFrame) -> None:
         )
 
 
+def _secao_inventario(df: pd.DataFrame) -> None:
+    """Exibe inventário de bens com depreciação."""
+    st.subheader("Inventário")
+    st.warning(AVISO_SNAPSHOT)
+
+    if df.empty:
+        st.info("Sem bens cadastrados no inventário.")
+        return
+
+    df = renderizar_dataframe(df)
+    st.dataframe(df, width="stretch", hide_index=True)
+
+
 def _secao_prazos(df: pd.DataFrame) -> None:
     """Exibe prazos de vencimento com indicador de urgência."""
     st.subheader("Prazos de Vencimento")
+    st.warning(AVISO_SNAPSHOT)
 
     if df.empty:
         st.info("Sem prazos cadastrados.")

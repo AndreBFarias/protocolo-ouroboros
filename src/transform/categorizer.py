@@ -138,11 +138,21 @@ class Categorizer:
             if override["categoria"] is not None:
                 transacao["categoria"] = override["categoria"]
 
-            if override["classificacao"] is not None:
-                transacao["classificacao"] = override["classificacao"]
-
             if override["tipo"] is not None:
                 transacao["tipo"] = override["tipo"]
+
+            # Classificação só é atribuída quando o tipo final é Despesa/Imposto.
+            # Receita e Transferência Interna não são despesas classificáveis
+            # (schema do projeto: classificação deve ser None nesses casos).
+            if override["classificacao"] is not None:
+                if transacao.get("tipo") in ("Despesa", "Imposto"):
+                    transacao["classificacao"] = override["classificacao"]
+                else:
+                    logger.debug(
+                        "Override '%s' ignorado para classificação: tipo=%s",
+                        override["descricao"],
+                        transacao.get("tipo"),
+                    )
 
             if override["tag_irpf"] is not None:
                 transacao["tag_irpf"] = override["tag_irpf"]
@@ -181,11 +191,14 @@ class Categorizer:
             if regra["categoria"] is not None:
                 transacao["categoria"] = regra["categoria"]
 
-            if regra["classificacao"] is not None:
-                transacao["classificacao"] = regra["classificacao"]
-
             if regra["tipo"] is not None:
                 transacao["tipo"] = regra["tipo"]
+
+            # Classificação só é atribuída quando o tipo final é Despesa/Imposto.
+            # Ver _aplicar_override para detalhe do schema.
+            if regra["classificacao"] is not None:
+                if transacao.get("tipo") in ("Despesa", "Imposto"):
+                    transacao["classificacao"] = regra["classificacao"]
 
             if regra["tag_irpf"] is not None:
                 transacao["tag_irpf"] = regra["tag_irpf"]
@@ -201,18 +214,25 @@ class Categorizer:
         return transacao
 
     def _garantir_classificacao(self, transacao: dict) -> None:
-        """Garante que classificação nunca fique nula."""
-        if transacao.get("classificacao") is not None:
+        """Normaliza a classificação conforme o `tipo` final.
+
+        Schema (Sprint 67): classificação só é válida para Despesa/Imposto.
+        Receita e Transferência Interna têm classificação None (NaN no XLSX),
+        pois não são despesas classificáveis. Qualquer valor residual
+        herdado de regra/override genérico é sobrescrito aqui.
+        """
+        tipo = transacao.get("tipo", "")
+
+        if tipo in ("Receita", "Transferência Interna"):
+            transacao["classificacao"] = None
             return
 
-        tipo = transacao.get("tipo", "")
-        if tipo == "Transferência Interna":
-            transacao["classificacao"] = "N/A"
-        elif tipo == "Receita":
-            transacao["classificacao"] = "N/A"
-        elif tipo == "Imposto":
-            transacao["classificacao"] = "Obrigatório"
-        else:
+        if tipo == "Imposto":
+            if transacao.get("classificacao") is None:
+                transacao["classificacao"] = "Obrigatório"
+            return
+
+        if transacao.get("classificacao") is None:
             transacao["classificacao"] = "Questionável"
 
     def _detectar_padroes_novos(self, transacoes: list[dict]) -> None:

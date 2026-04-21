@@ -1,4 +1,4 @@
-.PHONY: help process inbox tudo dashboard test lint format docs validate check install clean gauntlet
+.PHONY: help process inbox tudo dashboard test lint format docs validate check install clean gauntlet smoke
 
 SHELL := /bin/bash
 VENV := .venv
@@ -72,6 +72,10 @@ check: ## Health check do ambiente
 
 gauntlet: ## Executa gauntlet de testes (validação completa)
 	$(PYTHON) -m scripts.gauntlet.gauntlet
+
+smoke: ## Smoke runtime-real (health check + contratos aritméticos)
+	@./run.sh --check
+	@$(PYTHON) scripts/smoke_aritmetico.py --strict
 
 clean: ## Remove artefatos de build (não remove dados)
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true

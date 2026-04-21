@@ -90,6 +90,43 @@ def _calcular_medias(transacoes: list[dict], n_meses: int = 3) -> dict[str, floa
     }
 
 
+def calcular_ritmos(transacoes: list[dict]) -> dict[str, float | None]:
+    """Calcula três ritmos de saldo médio mensal em janelas distintas.
+
+    Ritmo = saldo médio mensal (receita - despesa) considerando apenas
+    os meses já completos disponíveis no extrato.
+
+    Retorna dicionário com três chaves:
+    - ``historico``: média sobre todo o histórico disponível.
+    - ``12_meses``: média dos últimos 12 meses.
+    - ``3_meses``: média dos últimos 3 meses.
+
+    Cada valor é ``None`` quando não há meses suficientes para a janela
+    (ex.: ``3_meses`` é ``None`` se só há 2 meses no extrato).
+    """
+    if not transacoes:
+        return {"historico": None, "12_meses": None, "3_meses": None}
+
+    meses_disponiveis: set[str] = {
+        t.get("mes_ref", "") for t in transacoes if t.get("mes_ref")
+    }
+    total_meses = len(meses_disponiveis)
+
+    def _ritmo(janela: int | None) -> float | None:
+        if janela is not None and total_meses < janela:
+            return None
+        n = janela if janela is not None else total_meses
+        if n <= 0:
+            return None
+        return _calcular_medias(transacoes, n_meses=n)["saldo_medio"]
+
+    return {
+        "historico": _ritmo(None),
+        "12_meses": _ritmo(12),
+        "3_meses": _ritmo(3),
+    }
+
+
 def meses_ate_objetivo(saldo_mensal: float, objetivo: float, atual: float = 0.0) -> int | None:
     """Calcula quantos meses até atingir um objetivo financeiro.
 

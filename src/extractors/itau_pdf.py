@@ -9,6 +9,7 @@ from typing import Optional
 import pdfplumber
 
 from src.extractors.base import ExtratorBase, Transacao
+from src.transform.canonicalizer_casal import e_transferencia_do_casal
 from src.utils.logger import configurar_logger
 from src.utils.senhas import carregar_senhas_pdf
 
@@ -48,11 +49,6 @@ REGEX_SALARIO: re.Pattern[str] = re.compile(
 
 REGEX_RENDIMENTO: re.Pattern[str] = re.compile(
     r"REND\s+PAGO\s+APLIC",
-    re.IGNORECASE,
-)
-
-REGEX_VITORIA: re.Pattern[str] = re.compile(
-    r"Vit[oó]ria|VITORIA",
     re.IGNORECASE,
 )
 
@@ -225,8 +221,16 @@ class ExtratorItauPDF(ExtratorBase):
 
     @staticmethod
     def _classificar_tipo(historico: str, valor: float) -> str:
-        """Classifica o tipo da transação baseado no histórico e valor."""
-        if REGEX_VITORIA.search(historico):
+        """Classifica o tipo da transação baseado no histórico e valor.
+
+        Sprint 68b: substituiu `REGEX_VITORIA` (fragmento genérico que casa
+        qualquer "Vitória", inclusive cidade) pelo matcher formal
+        `canonicalizer_casal.e_transferencia_do_casal`, que consulta
+        `mappings/contas_casal.yaml`. `REGEX_PAGAMENTO_FATURA` preservado
+        como regra operacional legítima (pagamento da fatura do próprio
+        cartão emitido pelo Nubank/Santander).
+        """
+        if e_transferencia_do_casal(historico):
             return "Transferência Interna"
 
         if REGEX_PAGAMENTO_FATURA.search(historico):

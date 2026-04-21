@@ -65,5 +65,11 @@ echo "[info] Movendo para $CONCLUIDOS/..."
 mkdir -p "$CONCLUIDOS"
 git mv "$ARQUIVO" "$DESTINO"
 
+echo "[info] Rodando smoke aritmético (contratos globais do XLSX)..."
+if ! "$VENV/bin/python" scripts/smoke_aritmetico.py --strict; then
+    echo "[erro] REPROVADO: smoke aritmético falhou. Revise antes de declarar sprint concluída."
+    exit 1
+fi
+
 echo "[info] Sprint ${NN} encerrada em $DESTINO"
 echo "      Próximo passo: revisar diff e criar commit descritivo (S${NN})."

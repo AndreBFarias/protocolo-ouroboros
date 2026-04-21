@@ -4,6 +4,7 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
+from src.dashboard.componentes import kpi_grid_html
 from src.dashboard.dados import (
     filtrar_por_mes,
     filtrar_por_periodo,
@@ -17,7 +18,7 @@ from src.dashboard.tema import (
     FONTE_SUBTITULO,
     LAYOUT_PLOTLY,
     MAPA_CLASSIFICACAO,
-    card_html,
+    aplicar_locale_ptbr,
 )
 
 
@@ -58,33 +59,23 @@ def renderizar(
     maior_gasto_cat = top_cat.idxmax() if not top_cat.empty else "---"
     maior_gasto_val = top_cat.max() if not top_cat.empty else 0.0
 
-    col1, col2, col3 = st.columns(3)
+    cor_taxa = (
+        CORES["positivo"]
+        if taxa_poupanca > 10
+        else (CORES["alerta"] if taxa_poupanca > 0 else CORES["negativo"])
+    )
+    cor_sup = CORES["superfluo"] if superfluo > 500 else CORES["texto_sec"]
 
-    with col1:
-        cor_taxa = (
-            CORES["positivo"]
-            if taxa_poupanca > 10
-            else (CORES["alerta"] if taxa_poupanca > 0 else CORES["negativo"])
-        )
-        st.markdown(
-            card_html("Taxa de poupança", f"{taxa_poupanca:.1f}%", cor_taxa),
-            unsafe_allow_html=True,
-        )
-    with col2:
-        cor_sup = CORES["superfluo"] if superfluo > 500 else CORES["texto_sec"]
-        st.markdown(
-            card_html("Gastos supérfluos", formatar_moeda(superfluo), cor_sup),
-            unsafe_allow_html=True,
-        )
-    with col3:
-        st.markdown(
-            card_html(
-                f"Maior gasto: {maior_gasto_cat}",
-                formatar_moeda(maior_gasto_val),
-                CORES["alerta"],
-            ),
-            unsafe_allow_html=True,
-        )
+    cards_kpi = [
+        ("Taxa de poupança", f"{taxa_poupanca:.1f}%", cor_taxa),
+        ("Gastos supérfluos", formatar_moeda(superfluo), cor_sup),
+        (
+            f"Maior gasto: {maior_gasto_cat}",
+            formatar_moeda(maior_gasto_val),
+            CORES["alerta"],
+        ),
+    ]
+    st.markdown(kpi_grid_html(cards_kpi), unsafe_allow_html=True)
 
     _indicador_saude(receitas, saldo, superfluo)
 
@@ -199,11 +190,23 @@ def _grafico_barras_historico(
         )
     )
 
+    layout_barras = {**LAYOUT_PLOTLY, "margin": dict(l=50, r=20, t=70, b=80)}
     fig.update_layout(
-        **LAYOUT_PLOTLY,
-        title=dict(text="Receita vs Despesa", font=dict(size=FONTE_SUBTITULO)),
+        **layout_barras,
+        title=dict(
+            text="Receita vs Despesa",
+            font=dict(size=FONTE_SUBTITULO),
+            y=0.96,
+            yanchor="top",
+        ),
         barmode="group",
-        legend=dict(orientation="h", yanchor="bottom", y=1.02),
+        legend=dict(
+            orientation="h",
+            yanchor="top",
+            y=-0.18,
+            xanchor="center",
+            x=0.5,
+        ),
         yaxis_title="Valor (R$)",
         yaxis2=dict(
             title=dict(text="Saldo (R$)", font=dict(color=CORES["destaque"])),
@@ -214,6 +217,7 @@ def _grafico_barras_historico(
         ),
     )
 
+    aplicar_locale_ptbr(fig, valores_eixo_x=meses_sel)
     st.plotly_chart(fig, width="stretch")
 
 
@@ -252,6 +256,7 @@ def _grafico_classificacao(extrato_mes: pd.DataFrame) -> None:
         showlegend=False,
     )
 
+    aplicar_locale_ptbr(fig)
     st.plotly_chart(fig, width="stretch")
 
 
