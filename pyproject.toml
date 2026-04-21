@@ -69,5 +69,8 @@ select = ["E", "F", "W", "I"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
+markers = [
+    "slow: teste que depende de OCR real em imagem (tesseract, ~30s por página)",
+]
 
 # "A simplicidade é a sofisticação suprema." -- Leonardo da Vinci

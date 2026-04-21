@@ -55,6 +55,8 @@ from src.graph.ingestor_documento import ingerir_documento_fiscal
 from src.transform.irpf_tagger import _REGEX_CNPJ
 from src.utils.chave_nfe import (
     extrair_cnpj_emitente as cnpj_da_chave,
+)
+from src.utils.chave_nfe import (
     extrair_modelo,
     valida_digito_verificador,
 )

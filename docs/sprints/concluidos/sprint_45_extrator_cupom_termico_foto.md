@@ -37,7 +37,7 @@ sprint:
 
 # Sprint 45 -- Extrator de Cupom Fiscal Térmico
 
-**Status:** PENDENTE
+**Status:** CONCLUÍDA
 **Data:** 2026-04-19
 **Prioridade:** ALTA
 **Tipo:** Feature

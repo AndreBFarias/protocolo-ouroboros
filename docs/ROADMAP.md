@@ -1,9 +1,9 @@
 # Roadmap -- Protocolo Ouroboros
 
 ```
-VERSÃO: 7.0 | SPRINTS: 63 (29 concluídas, 0 em produção, 21 backlog, 13 arquivadas)
+VERSÃO: 7.1 | SPRINTS: 63 (30 concluídas, 0 em produção, 20 backlog, 13 arquivadas)
 ROTA: Catalogador universal artesanal (Fases ALFA → ZETA) + higiene INFRA pontual
-ÚLTIMA ATUALIZAÇÃO: 2026-04-20 (Sprint 47c CONCLUÍDA -- extrator de cupom bilhete de garantia estendida, 28 testes; Sprints 44, 44b, 43 também CONCLUÍDAS neste ciclo; Sprint 54 PLANEJADA para COL-44-A)
+ÚLTIMA ATUALIZAÇÃO: 2026-04-20 (Sprint 45 CONCLUÍDA -- extrator de cupom térmico foto via OCR tesseract, 63 testes, 3 layouts com recall >=80%, fallback supervisor, cache OCR por hash, round-trip JPG real; Sprints 43, 44, 44b, 47c também CONCLUÍDAS neste ciclo; Sprint 54 PLANEJADA para COL-44-A)
 ```
 
 ---
@@ -36,8 +36,8 @@ Catalogador universal artesanal da vida financeira do casal. O usuário joga QUA
 
 | Status | Sprints | Total |
 |--------|---------|-------|
-| Concluídas | 01-07, 12-14, 17-19, 22, 23, 30, 37-40, 41, 41b, 41c, 41d, 42, 43, 44, 44b, 47c | 29 |
-| Backlog ativo (ALFA→EPSILON) | 45-53 (inclui 47a, 47b) | 12 |
+| Concluídas | 01-07, 12-14, 17-19, 22, 23, 30, 37-40, 41, 41b, 41c, 41d, 42, 43, 44, 44b, 45, 47c | 30 |
+| Backlog ativo (ALFA→EPSILON) | 46-53 (inclui 47a, 47b) | 11 |
 | Backlog consumidor (ZETA) | 20, 21, 24, 25, 33, 34, 35, 36 (pós-EPSILON) | 8 |
 | Backlog higiene INFRA | 54 | 1 |
 | Arquivadas (substituídas) | 08, 09, 10, 11, 15, 16, 26, 27a, 28, 29a, 29b, 31, 32 | 13 |
@@ -98,7 +98,7 @@ Objetivo: transformar arquivos em itens estruturados no grafo.
 |--------|------|--------|------------|
 | 44 | Extrator NFe modelo 55 (DANFE PDF formal) | CONCLUÍDA | ALTA |
 | 44b | Extrator NFC-e modelo 65 (mini-cupom QR SEFAZ) | CONCLUÍDA | ALTA |
-| 45 | Extrator Cupom Fiscal Térmico (foto) | PENDENTE | ALTA |
+| 45 | Extrator Cupom Fiscal Térmico (foto) | CONCLUÍDA | ALTA |
 | 46 | Extrator XML NFe | PENDENTE | MEDIA |
 | 47 | Extrator Recibo Não-Fiscal | PENDENTE | MEDIA |
 | 47a | Extrator Receita Médica e Prescrição | PENDENTE | MEDIA |
