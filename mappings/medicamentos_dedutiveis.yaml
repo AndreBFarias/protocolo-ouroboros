@@ -1,0 +1,146 @@
+# Medicamentos de uso contínuo potencialmente dedutíveis no IRPF
+# (Sprint 47a). Só entram como dedução com aval médico e comprovação
+# via nota fiscal/prescrição. A lei não dedutibiliza medicamento
+# isoladamente -- a despesa farmacêutica é dedutível quando:
+#   1. Há receita médica vinculada (princípio ativo ou marca na prescrição).
+#   2. O medicamento é de uso contínuo (tratamento prolongado com duração
+#      declarada ou tarja vermelha/controlada com renovação mensal).
+#   3. Há nota fiscal no nome do contribuinte ou dependente.
+#
+# O extrator usa esta lista para flagear `elegivel_dedutivel_irpf=True`
+# no metadata do nó `prescricao` -- nunca para lançar dedução automática.
+# A decisão final é sempre do supervisor humano (ADR-08 -- Supervisor-Aprovador).
+#
+# Chave canônica: princípio ativo (DCB -- Denominação Comum Brasileira).
+# `nomes_comerciais` ajuda no casamento com nota fiscal onde só aparece
+# a marca. Lista incompleta de propósito: cresce por proposta gerada
+# quando extrator encontra medicamento novo marcado como "uso contínuo".
+
+medicamentos:
+  - principio_ativo: losartana
+    classe: anti_hipertensivo
+    nomes_comerciais:
+      - cozaar
+      - aradois
+      - corus
+    observacao_legal: "Uso contínuo em hipertensão arterial; dedutível com receita vigente."
+
+  - principio_ativo: enalapril
+    classe: anti_hipertensivo
+    nomes_comerciais:
+      - renitec
+      - vasopril
+    observacao_legal: "Uso contínuo em hipertensão; requer prescrição médica."
+
+  - principio_ativo: metformina
+    classe: antidiabetico
+    nomes_comerciais:
+      - glifage
+      - glucophage
+      - dimefor
+    observacao_legal: "Uso contínuo em diabetes tipo 2; dedutível com receita."
+
+  - principio_ativo: glibenclamida
+    classe: antidiabetico
+    nomes_comerciais:
+      - daonil
+      - glidiab
+    observacao_legal: "Uso contínuo em diabetes tipo 2."
+
+  - principio_ativo: levotiroxina
+    classe: hormonio_tireoidiano
+    nomes_comerciais:
+      - puran t4
+      - synthroid
+      - euthyrox
+    observacao_legal: "Reposição hormonal crônica; uso contínuo previsível."
+
+  - principio_ativo: sinvastatina
+    classe: estatina
+    nomes_comerciais:
+      - zocor
+      - sinvascor
+      - lipovastatin
+    observacao_legal: "Controle de colesterol; uso contínuo em dislipidemia."
+
+  - principio_ativo: atorvastatina
+    classe: estatina
+    nomes_comerciais:
+      - citalor
+      - lipitor
+    observacao_legal: "Controle de colesterol; uso contínuo."
+
+  - principio_ativo: esomeprazol
+    classe: inibidor_bomba_protons
+    nomes_comerciais:
+      - nexium
+      - esomezol
+    observacao_legal: "Uso crônico em doença do refluxo; renovação periódica da receita."
+
+  - principio_ativo: omeprazol
+    classe: inibidor_bomba_protons
+    nomes_comerciais:
+      - losec
+      - peprazol
+    observacao_legal: "Uso crônico em refluxo gastroesofágico."
+
+  - principio_ativo: fluoxetina
+    classe: antidepressivo_issrs
+    nomes_comerciais:
+      - prozac
+      - daforin
+      - verotina
+    observacao_legal: "Uso contínuo em depressão/ansiedade; receita B1 quando retinada."
+
+  - principio_ativo: sertralina
+    classe: antidepressivo_issrs
+    nomes_comerciais:
+      - zoloft
+      - assert
+      - tolrest
+    observacao_legal: "Uso contínuo em depressão/transtornos de ansiedade."
+
+  - principio_ativo: escitalopram
+    classe: antidepressivo_issrs
+    nomes_comerciais:
+      - lexapro
+      - reconter
+    observacao_legal: "Uso contínuo em depressão/ansiedade."
+
+  - principio_ativo: clonazepam
+    classe: benzodiazepinico
+    nomes_comerciais:
+      - rivotril
+      - clonatril
+    observacao_legal: "Controle especial (tarja preta); validade de receita reduzida a 30 dias."
+
+  - principio_ativo: metilfenidato
+    classe: psicoestimulante
+    nomes_comerciais:
+      - ritalina
+      - concerta
+    observacao_legal: "Tarja preta A3; validade da receita é 30 dias."
+
+  - principio_ativo: anticoncepcional_etinilestradiol
+    classe: hormonio_contraceptivo
+    nomes_comerciais:
+      - yasmin
+      - selene
+      - diane
+    observacao_legal: "Uso contínuo; dedutibilidade depende de enquadramento e receita."
+
+  - principio_ativo: salbutamol
+    classe: broncodilatador
+    nomes_comerciais:
+      - aerolin
+      - aerogold
+    observacao_legal: "Uso crônico em asma; receita com posologia PRN é comum."
+
+  - principio_ativo: budesonida
+    classe: corticoide_inalatorio
+    nomes_comerciais:
+      - pulmicort
+      - busonid
+    observacao_legal: "Controle crônico de asma/DPOC; uso contínuo."
+
+# "Remédio é despesa do corpo que a alma aceita no papel." -- máxima de boticário

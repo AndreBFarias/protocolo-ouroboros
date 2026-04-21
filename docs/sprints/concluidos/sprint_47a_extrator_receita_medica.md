@@ -33,7 +33,7 @@ sprint:
 
 # Sprint 47a -- Extrator de Receita Médica e Prescrição
 
-**Status:** PENDENTE
+**Status:** CONCLUÍDA
 **Data:** 2026-04-19
 **Prioridade:** MEDIA
 **Tipo:** Feature
