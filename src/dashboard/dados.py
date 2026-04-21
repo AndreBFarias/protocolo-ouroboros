@@ -529,4 +529,216 @@ def _buscar_itens(conn, padrao: str) -> list[dict]:
     return resultados
 
 
+@st.cache_data(ttl=60)
+def carregar_subgrafo(node_id: int, radius: int = 1) -> dict:
+    """Retorna subgrafo a `radius` hops do node alvo (read-only, BFS).
+
+    Graceful degradation (ADR-10): grafo ausente devolve estrutura vazia.
+    Retorno:
+        {
+            "nodes": [{"id", "tipo", "nome_canonico", "metadata"}...],
+            "edges": [{"src_id", "dst_id", "tipo"}...],
+            "center_id": node_id,
+        }
+    """
+    vazio: dict = {"nodes": [], "edges": [], "center_id": node_id}
+    if not CAMINHO_GRAFO.exists():
+        logger.warning("grafo não encontrado em %s", CAMINHO_GRAFO)
+        return vazio
+    if radius < 0:
+        return vazio
+
+    import sqlite3
+
+    conn = sqlite3.connect(f"file:{CAMINHO_GRAFO}?mode=ro", uri=True)
+    conn.row_factory = sqlite3.Row
+    try:
+        visitados: set[int] = {node_id}
+        fronteira: set[int] = {node_id}
+        arestas_coletadas: list[dict] = []
+
+        for _ in range(max(1, radius)):
+            if not fronteira:
+                break
+            placeholders = ",".join("?" * len(fronteira))
+            lista_ids = list(fronteira)
+            sql_out = (
+                f"SELECT src_id, dst_id, tipo FROM edge "
+                f"WHERE src_id IN ({placeholders})"
+            )
+            sql_in = (
+                f"SELECT src_id, dst_id, tipo FROM edge "
+                f"WHERE dst_id IN ({placeholders})"
+            )
+            nova_fronteira: set[int] = set()
+            for row in conn.execute(sql_out, lista_ids):
+                arestas_coletadas.append(
+                    {
+                        "src_id": int(row["src_id"]),
+                        "dst_id": int(row["dst_id"]),
+                        "tipo": row["tipo"],
+                    }
+                )
+                if int(row["dst_id"]) not in visitados:
+                    nova_fronteira.add(int(row["dst_id"]))
+            for row in conn.execute(sql_in, lista_ids):
+                arestas_coletadas.append(
+                    {
+                        "src_id": int(row["src_id"]),
+                        "dst_id": int(row["dst_id"]),
+                        "tipo": row["tipo"],
+                    }
+                )
+                if int(row["src_id"]) not in visitados:
+                    nova_fronteira.add(int(row["src_id"]))
+            visitados.update(nova_fronteira)
+            fronteira = nova_fronteira
+
+        # dedup de arestas (src,dst,tipo)
+        vistos: set[tuple[int, int, str]] = set()
+        arestas_unicas: list[dict] = []
+        for ar in arestas_coletadas:
+            chave = (ar["src_id"], ar["dst_id"], ar["tipo"])
+            if chave in vistos:
+                continue
+            vistos.add(chave)
+            arestas_unicas.append(ar)
+
+        # carrega nodes visitados
+        if not visitados:
+            return vazio
+        placeholders_n = ",".join("?" * len(visitados))
+        nodes: list[dict] = []
+        for row in conn.execute(
+            f"SELECT id, tipo, nome_canonico, metadata FROM node WHERE id IN ({placeholders_n})",
+            list(visitados),
+        ):
+            try:
+                meta = json.loads(row["metadata"] or "{}")
+            except (json.JSONDecodeError, TypeError):
+                meta = {}
+            nodes.append(
+                {
+                    "id": int(row["id"]),
+                    "tipo": row["tipo"],
+                    "nome_canonico": row["nome_canonico"],
+                    "metadata": meta,
+                }
+            )
+    finally:
+        conn.close()
+
+    return {"nodes": nodes, "edges": arestas_unicas, "center_id": node_id}
+
+
+@st.cache_data(ttl=60)
+def obter_fluxo_receita_categoria_fornecedor(mes_ref: str) -> dict:
+    """Agrega valores do extrato em três séries (para 3 bar charts).
+
+    Retorno:
+        {
+            "receita": [{"rotulo", "valor"}...],     # top receitas por local
+            "despesa": [{"rotulo", "valor"}...],     # top 10 categorias
+            "fornecedor": [{"rotulo", "valor"}...],  # top 10 locais de despesa
+            "mes_ref": mes_ref,
+        }
+    Se XLSX ausente ou sem dados no mês, todas as listas vêm vazias.
+    """
+    vazio: dict = {
+        "receita": [],
+        "despesa": [],
+        "fornecedor": [],
+        "mes_ref": mes_ref,
+    }
+    dados = carregar_dados()
+    if "extrato" not in dados or dados["extrato"].empty:
+        return vazio
+
+    df = dados["extrato"].copy()
+    if "mes_ref" in df.columns:
+        df = df[df["mes_ref"] == mes_ref]
+    if df.empty:
+        return vazio
+
+    # --- receita por local ---
+    receita_df = df[df["tipo"] == "Receita"]
+    receita_list: list[dict] = []
+    if not receita_df.empty:
+        agrup = (
+            receita_df.groupby("local")["valor"]
+            .sum()
+            .abs()
+            .sort_values(ascending=False)
+            .head(10)
+        )
+        receita_list = [
+            {"rotulo": str(rotulo), "valor": float(valor)}
+            for rotulo, valor in agrup.items()
+        ]
+
+    # --- despesa por categoria ---
+    despesa_df = df[df["tipo"].isin(["Despesa", "Imposto"])]
+    despesa_list: list[dict] = []
+    if not despesa_df.empty and "categoria" in despesa_df.columns:
+        agrup = (
+            despesa_df.groupby("categoria")["valor"]
+            .sum()
+            .abs()
+            .sort_values(ascending=False)
+            .head(10)
+        )
+        despesa_list = [
+            {"rotulo": str(rotulo), "valor": float(valor)}
+            for rotulo, valor in agrup.items()
+        ]
+
+    # --- fornecedor: top 10 locais de despesa ---
+    fornecedor_list: list[dict] = []
+    if not despesa_df.empty and "local" in despesa_df.columns:
+        agrup = (
+            despesa_df.groupby("local")["valor"]
+            .sum()
+            .abs()
+            .sort_values(ascending=False)
+            .head(10)
+        )
+        fornecedor_list = [
+            {"rotulo": str(rotulo), "valor": float(valor)}
+            for rotulo, valor in agrup.items()
+        ]
+
+    return {
+        "receita": receita_list,
+        "despesa": despesa_list,
+        "fornecedor": fornecedor_list,
+        "mes_ref": mes_ref,
+    }
+
+
+def listar_fornecedores_com_id() -> list[dict]:
+    """Lista fornecedores do grafo com id + nome para seleção no selectbox.
+
+    Ordenado alfabeticamente. Read-only. Devolve lista vazia se grafo ausente.
+    """
+    if not CAMINHO_GRAFO.exists():
+        return []
+
+    import sqlite3
+
+    conn = sqlite3.connect(f"file:{CAMINHO_GRAFO}?mode=ro", uri=True)
+    conn.row_factory = sqlite3.Row
+    try:
+        resultados: list[dict] = []
+        for row in conn.execute(
+            "SELECT id, nome_canonico FROM node WHERE tipo = 'fornecedor' "
+            "ORDER BY nome_canonico LIMIT 500"
+        ):
+            resultados.append(
+                {"id": int(row["id"]), "nome_canonico": row["nome_canonico"]}
+            )
+    finally:
+        conn.close()
+    return resultados
+
+
 # "Não é o homem que tem pouco, mas o que deseja mais, que é pobre." -- Sêneca

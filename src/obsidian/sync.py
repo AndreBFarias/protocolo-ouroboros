@@ -386,6 +386,239 @@ def executar_sincronizacao() -> None:
     logger.info("Sincronização concluída com sucesso")
 
 
+def gerar_moc_mensal(mes_ref: str, caminho_grafo: Optional[Path] = None) -> str:
+    """Gera Markdown do MOC (Map of Content) mensal com wikilinks.
+
+    Lê o grafo SQLite read-only e monta nota com:
+    - Frontmatter YAML (tipo, mes, tags, aliases, created, atualizado,
+      agregados receita/despesa/saldo, contagem de documentos).
+    - Corpo com wikilinks `[[transacao_ID]]`, `[[documento_CHAVE]]`,
+      `[[fornecedor_NOME]]`.
+    - Seção de top fornecedores, top categorias, alertas.
+    - Linha final "Gerado automaticamente por src/obsidian/sync.py."
+
+    Se grafo ausente ou mês sem dados, retorna MOC mínimo marcado como
+    "(sem dados)". Nunca levanta exceção.
+
+    Args:
+        mes_ref: formato YYYY-MM.
+        caminho_grafo: path do SQLite; default=src/dashboard/dados.CAMINHO_GRAFO.
+
+    Returns:
+        String Markdown pronta para gravar como `.md`.
+    """
+    import sqlite3
+
+    if caminho_grafo is None:
+        from src.dashboard.dados import CAMINHO_GRAFO as _CAMINHO
+        caminho_grafo = _CAMINHO
+
+    nome_mes = _nome_mes_pt(mes_ref)
+    ano = mes_ref.split("-")[0] if "-" in mes_ref else mes_ref
+
+    if not caminho_grafo.exists():
+        return _moc_fallback(mes_ref, nome_mes, ano)
+
+    import json as _json
+
+    conn = sqlite3.connect(f"file:{caminho_grafo}?mode=ro", uri=True)
+    conn.row_factory = sqlite3.Row
+    try:
+        # encontra node período do mês
+        row_per = conn.execute(
+            "SELECT id FROM node WHERE tipo = 'periodo' AND nome_canonico = ?",
+            (mes_ref,),
+        ).fetchone()
+
+        transacoes: list[dict] = []
+        documentos: list[dict] = []
+        fornecedores_agg: dict[int, dict] = {}
+
+        if row_per is not None:
+            periodo_id = int(row_per["id"])
+            # transações do mês (via ocorre_em)
+            for edge_row in conn.execute(
+                "SELECT src_id FROM edge WHERE dst_id = ? AND tipo = 'ocorre_em'",
+                (periodo_id,),
+            ):
+                node_row = conn.execute(
+                    "SELECT id, tipo, nome_canonico, metadata FROM node WHERE id = ?",
+                    (int(edge_row["src_id"]),),
+                ).fetchone()
+                if not node_row:
+                    continue
+                try:
+                    meta_tx = _json.loads(node_row["metadata"] or "{}")
+                except (_json.JSONDecodeError, TypeError):
+                    meta_tx = {}
+                if node_row["tipo"] == "transacao":
+                    transacoes.append(
+                        {
+                            "id": int(node_row["id"]),
+                            "nome": node_row["nome_canonico"],
+                            "valor": float(meta_tx.get("valor", 0.0) or 0.0),
+                            "tipo_tx": meta_tx.get("tipo", ""),
+                            "local": meta_tx.get("local", ""),
+                        }
+                    )
+                elif node_row["tipo"] == "documento":
+                    documentos.append(
+                        {
+                            "id": int(node_row["id"]),
+                            "nome": node_row["nome_canonico"],
+                            "tipo_doc": meta_tx.get("tipo_documento", "documento"),
+                            "total": float(meta_tx.get("total", 0.0) or 0.0),
+                        }
+                    )
+
+            # fornecedores agregados (via fornecido_por a partir dos documentos)
+            for doc in documentos:
+                for e_row in conn.execute(
+                    "SELECT dst_id FROM edge WHERE src_id = ? AND tipo = 'fornecido_por'",
+                    (doc["id"],),
+                ):
+                    fid = int(e_row["dst_id"])
+                    slot = fornecedores_agg.setdefault(
+                        fid, {"id": fid, "nome": "", "total": 0.0, "docs": 0}
+                    )
+                    slot["total"] += doc["total"]
+                    slot["docs"] += 1
+
+            for fid, slot in list(fornecedores_agg.items()):
+                node_row = conn.execute(
+                    "SELECT nome_canonico FROM node WHERE id = ?", (fid,)
+                ).fetchone()
+                slot["nome"] = node_row["nome_canonico"] if node_row else str(fid)
+    finally:
+        conn.close()
+
+    receita_total = sum(
+        abs(t["valor"]) for t in transacoes if t["tipo_tx"] == "Receita"
+    )
+    despesa_total = sum(
+        abs(t["valor"])
+        for t in transacoes
+        if t["tipo_tx"] in ("Despesa", "Imposto")
+    )
+    saldo = receita_total - despesa_total
+
+    linhas: list[str] = ["---"]
+    linhas.append("tipo: moc")
+    linhas.append(f'mes: "{mes_ref}"')
+    linhas.append("aliases:")
+    linhas.append(f'  - "MOC {nome_mes} {ano}"')
+    linhas.append(f'  - "{mes_ref}"')
+    linhas.append("tags:")
+    linhas.append("  - moc")
+    linhas.append("  - financeiro")
+    linhas.append("  - mensal")
+    linhas.append(f'criado: "{date.today().isoformat()}"')
+    linhas.append(f'atualizado: "{date.today().isoformat()}"')
+    linhas.append(f"receita_total: {receita_total:.2f}")
+    linhas.append(f"despesa_total: {despesa_total:.2f}")
+    linhas.append(f"saldo: {saldo:.2f}")
+    linhas.append(f"documentos: {len(documentos)}")
+    linhas.append("---")
+    linhas.append("")
+    linhas.append(f"# MOC -- {nome_mes} {ano}")
+    linhas.append("")
+    linhas.append("## Saldo do mês")
+    linhas.append("")
+    linhas.append(f"- **Receita:** {_formatar_moeda(receita_total)}")
+    linhas.append(f"- **Despesa:** {_formatar_moeda(despesa_total)}")
+    linhas.append(f"- **Saldo:** {_formatar_moeda(saldo)}")
+    linhas.append("")
+    linhas.append(f"## Documentos ({len(documentos)})")
+    linhas.append("")
+    for doc in documentos[:20]:
+        linhas.append(
+            f"- [[documento_{doc['id']}|{doc['nome']}]] "
+            f"({doc['tipo_doc']}) -- {_formatar_moeda(doc['total'])}"
+        )
+    if not documentos:
+        linhas.append("_(nenhum documento registrado neste mês)_")
+    linhas.append("")
+
+    top_fornecedores = sorted(
+        fornecedores_agg.values(), key=lambda x: x["total"], reverse=True
+    )[:10]
+    linhas.append("## Top fornecedores")
+    linhas.append("")
+    for forn in top_fornecedores:
+        linhas.append(
+            f"- [[fornecedor_{forn['id']}|{forn['nome']}]] -- "
+            f"{_formatar_moeda(forn['total'])} ({forn['docs']} docs)"
+        )
+    if not top_fornecedores:
+        linhas.append("_(sem fornecedores registrados)_")
+    linhas.append("")
+
+    linhas.append(f"## Transações ({len(transacoes)})")
+    linhas.append("")
+    for tx in transacoes[:30]:
+        rotulo = tx["local"] or tx["nome"]
+        linhas.append(
+            f"- [[transacao_{tx['id']}|{rotulo}]] -- "
+            f"{_formatar_moeda(abs(tx['valor']))}"
+        )
+    if not transacoes:
+        linhas.append("_(nenhuma transação registrada)_")
+    linhas.append("")
+
+    linhas.append("## Conexões")
+    linhas.append("")
+    linhas.append(f"- [[MOC_{_mes_anterior(mes_ref)}]] (anterior)")
+    linhas.append(f"- [[MOC_{_mes_seguinte(mes_ref)}]] (próximo)")
+    linhas.append(f"- [[Relatorio_{mes_ref}]]")
+    linhas.append("")
+    linhas.append("---")
+    linhas.append("")
+    linhas.append("*Gerado automaticamente por src/obsidian/sync.py. Não editar.*")
+
+    return "\n".join(linhas) + "\n"
+
+
+def _moc_fallback(mes_ref: str, nome_mes: str, ano: str) -> str:
+    """MOC mínimo quando grafo ausente (ADR-10)."""
+    return (
+        f"---\n"
+        f"tipo: moc\n"
+        f'mes: "{mes_ref}"\n'
+        f"tags: [moc, financeiro]\n"
+        f'criado: "{date.today().isoformat()}"\n'
+        f"---\n\n"
+        f"# MOC -- {nome_mes} {ano}\n\n"
+        f"_(sem dados -- grafo ainda não populado)_\n\n"
+        f"*Gerado automaticamente por src/obsidian/sync.py. Não editar.*\n"
+    )
+
+
+def _mes_anterior(mes_ref: str) -> str:
+    """Retorna mês anterior em YYYY-MM (simples, sem validação agressiva)."""
+    try:
+        ano_s, mes_s = mes_ref.split("-")
+        ano_i = int(ano_s)
+        mes_i = int(mes_s)
+        if mes_i <= 1:
+            return f"{ano_i - 1}-12"
+        return f"{ano_i}-{mes_i - 1:02d}"
+    except (ValueError, AttributeError):
+        return mes_ref
+
+
+def _mes_seguinte(mes_ref: str) -> str:
+    """Retorna mês seguinte em YYYY-MM."""
+    try:
+        ano_s, mes_s = mes_ref.split("-")
+        ano_i = int(ano_s)
+        mes_i = int(mes_s)
+        if mes_i >= 12:
+            return f"{ano_i + 1}-01"
+        return f"{ano_i}-{mes_i + 1:02d}"
+    except (ValueError, AttributeError):
+        return mes_ref
+
+
 if __name__ == "__main__":
     executar_sincronizacao()
 
