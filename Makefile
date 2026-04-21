@@ -33,12 +33,12 @@ test-cov: ## Executa testes com relatório de cobertura
 	$(PYTHON) -m pytest tests/ --cov=src/transform --cov=src/extractors --cov-report=term-missing
 
 lint: ## Verifica código com ruff + acentuação
-	$(RUFF) check src/ tests/
+	$(RUFF) check src/ tests/ scripts/
 	$(PYTHON) scripts/check_acentuacao.py --all
 
 format: ## Formata código com ruff
-	$(RUFF) format src/ tests/
-	$(RUFF) check --fix src/ tests/
+	$(RUFF) format src/ tests/ scripts/
+	$(RUFF) check --fix src/ tests/ scripts/
 
 docs: ## Gera documentação dos extratores
 	$(PYTHON) -m src.utils.doc_generator

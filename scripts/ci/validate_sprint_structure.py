@@ -7,7 +7,8 @@ bloqueia merge em CI.
 
 Uso:
     .venv/bin/python scripts/ci/validate_sprint_structure.py
-    .venv/bin/python scripts/ci/validate_sprint_structure.py docs/sprints/producao/sprint_22_consolidacao.md
+    .venv/bin/python scripts/ci/validate_sprint_structure.py \\
+        docs/sprints/producao/sprint_22_consolidacao.md
     .venv/bin/python scripts/ci/validate_sprint_structure.py --strict
 """
 
@@ -224,7 +225,9 @@ def main() -> int:
         total_avisos += len(avisos)
         resultados.append(
             {
-                "arquivo": str(caminho.relative_to(BASE_DIR) if BASE_DIR in caminho.parents else caminho),
+                "arquivo": str(
+                    caminho.relative_to(BASE_DIR) if BASE_DIR in caminho.parents else caminho
+                ),
                 "sucesso": sucesso,
                 "erros": erros,
                 "avisos": avisos,
