@@ -439,6 +439,22 @@ def ingerir_documento_fiscal(
             "valor_unit": item.get("valor_unit"),
             "valor_total": item.get("valor_total"),
         }
+        # Campos opcionais ricos (Sprint 46 XML NFe): NCM/CFOP/tributos  # noqa: accent
+        # federais + origem_fonte. Propagados só quando presentes; None é
+        # descartado para não poluir metadata de items DANFE/NFC-e que não
+        # os carregam.
+        for chave_extra in (
+            "ncm",
+            "cfop",
+            "icms_valor",
+            "ipi_valor",
+            "pis_valor",
+            "cofins_valor",
+            "origem_fonte",
+        ):
+            valor_extra = item.get(chave_extra)
+            if valor_extra is not None:
+                meta_item[chave_extra] = valor_extra
         item_id = upsert_item(
             db,
             cnpj_varejo=documento["cnpj_emitente"],

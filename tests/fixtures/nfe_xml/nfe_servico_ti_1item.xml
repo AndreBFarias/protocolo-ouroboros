@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<nfeProc xmlns="http://www.portalfiscal.inf.br/nfe" versao="4.00">
+  <NFe xmlns="http://www.portalfiscal.inf.br/nfe">
+    <infNFe versao="4.00" Id="NFe53260422333444000155550020000000771999888772">
+      <ide>
+        <cUF>53</cUF>
+        <cNF>99988877</cNF>
+        <natOp>PRESTACAO DE SERVICO DE TI</natOp>
+        <mod>55</mod>
+        <serie>2</serie>
+        <nNF>77</nNF>
+        <dhEmi>2026-03-28T14:00:00-03:00</dhEmi>
+        <tpNF>1</tpNF>
+        <idDest>1</idDest>
+        <cMunFG>5300108</cMunFG>
+        <tpEmis>1</tpEmis>
+        <cDV>2</cDV>
+        <tpAmb>1</tpAmb>
+      </ide>
+      <emit>
+        <CNPJ>22333444000155</CNPJ>
+        <xNome>CONSULTORIA TECNOLOGIA LTDA ME</xNome>
+        <enderEmit>
+          <xLgr>SCN QUADRA 5</xLgr>
+          <nro>10</nro>
+          <xBairro>ASA NORTE</xBairro>
+          <cMun>5300108</cMun>
+          <xMun>BRASILIA</xMun>
+          <UF>DF</UF>
+          <CEP>70711000</CEP>
+        </enderEmit>
+        <IE>ISENTO</IE>
+        <CRT>1</CRT>
+      </emit>
+      <dest>
+        <CNPJ>11222333000144</CNPJ>
+        <xNome>CLIENTE CORPORATIVO LTDA</xNome>
+        <enderDest>
+          <xLgr>AVENIDA W3 SUL</xLgr>
+          <nro>500</nro>
+          <xBairro>ASA SUL</xBairro>
+          <cMun>5300108</cMun>
+          <xMun>BRASILIA</xMun>
+          <UF>DF</UF>
+          <CEP>70200630</CEP>
+        </enderDest>
+        <indIEDest>9</indIEDest>
+      </dest>
+      <det nItem="1">
+        <prod>
+          <cProd>SVC001</cProd>
+          <xProd>IMPLANTACAO SISTEMA ERP MODULO FINANCEIRO</xProd>
+          <NCM>00000000</NCM>
+          <CFOP>5933</CFOP>
+          <uCom>HR</uCom>
+          <qCom>40.0000</qCom>
+          <vUnCom>250.0000</vUnCom>
+          <vProd>10000.00</vProd>
+          <indTot>1</indTot>
+        </prod>
+        <imposto>
+          <ICMS>
+            <ICMSSN102>
+              <orig>0</orig>
+              <CSOSN>400</CSOSN>
+            </ICMSSN102>
+          </ICMS>
+          <PIS>
+            <PISNT>
+              <CST>07</CST>
+            </PISNT>
+          </PIS>
+          <COFINS>
+            <COFINSNT>
+              <CST>07</CST>
+            </COFINSNT>
+          </COFINS>
+        </imposto>
+      </det>
+      <total>
+        <ICMSTot>
+          <vBC>0.00</vBC>
+          <vICMS>0.00</vICMS>
+          <vProd>10000.00</vProd>
+          <vFrete>0.00</vFrete>
+          <vDesc>0.00</vDesc>
+          <vIPI>0.00</vIPI>
+          <vPIS>0.00</vPIS>
+          <vCOFINS>0.00</vCOFINS>
+          <vNF>10000.00</vNF>
+        </ICMSTot>
+      </total>
+      <transp>
+        <modFrete>9</modFrete>
+      </transp>
+    </infNFe>
+  </NFe>
+  <protNFe versao="4.00">
+    <infProt>
+      <chNFe>53260422333444000155550020000000771999888772</chNFe>
+      <dhRecbto>2026-03-28T14:00:12-03:00</dhRecbto>
+      <nProt>153260009876543</nProt>
+      <cStat>100</cStat>
+      <xMotivo>Autorizado o uso da NF-e</xMotivo>
+    </infProt>
+  </protNFe>
+</nfeProc>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<outroDocumento xmlns="http://example.com/outro">
+  <cabecalho>
+    <numero>123</numero>
+    <data>2026-04-15</data>
+  </cabecalho>
+  <conteudo>XML nao-NFe (sem namespace SEFAZ).</conteudo>
+</outroDocumento>

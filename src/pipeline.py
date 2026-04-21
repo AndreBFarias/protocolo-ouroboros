@@ -113,6 +113,13 @@ def _descobrir_extratores() -> list:
     except ImportError as e:
         logger.warning("Extrator cupom_termico_foto indisponível: %s", e)
 
+    try:
+        from src.extractors.xml_nfe import ExtratorXmlNFe
+
+        extratores.append(ExtratorXmlNFe)
+    except ImportError as e:
+        logger.warning("Extrator xml_nfe indisponível: %s", e)
+
     return extratores
 
 
@@ -122,6 +129,7 @@ def _escanear_arquivos(diretorio: Path) -> list[Path]:
         ".csv",
         ".xlsx",
         ".xls",
+        ".xml",
         ".pdf",
         ".ofx",
         ".jpg",
