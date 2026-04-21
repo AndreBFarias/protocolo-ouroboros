@@ -99,6 +99,13 @@ def _descobrir_extratores() -> list:
     except ImportError as e:
         logger.warning("Extrator nfce_pdf indisponível: %s", e)
 
+    try:
+        from src.extractors.danfe_pdf import ExtratorDanfePDF
+
+        extratores.append(ExtratorDanfePDF)
+    except ImportError as e:
+        logger.warning("Extrator danfe_pdf indisponível: %s", e)
+
     return extratores
 
 
