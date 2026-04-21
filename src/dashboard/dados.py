@@ -1,5 +1,6 @@
 """Módulo de carregamento e cache de dados do Protocolo Ouroboros."""
 
+import json
 from pathlib import Path
 
 import pandas as pd
@@ -10,6 +11,10 @@ from src.utils.logger import configurar_logger
 logger = configurar_logger("dashboard.dados")
 
 CAMINHO_XLSX: Path = Path(__file__).resolve().parents[2] / "data" / "output" / "ouroboros_2026.xlsx"
+CAMINHO_GRAFO: Path = Path(__file__).resolve().parents[2] / "data" / "output" / "grafo.sqlite"
+CAMINHO_PROPOSTAS_LINKING: Path = (
+    Path(__file__).resolve().parents[2] / "docs" / "propostas" / "linking"
+)
 
 ABAS: list[str] = [
     "extrato",
@@ -211,6 +216,108 @@ def formatar_moeda(valor: float) -> str:
     sinal = "-" if valor < 0 else ""
     valor_abs = abs(valor)
     return f"{sinal}R$ {valor_abs:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
+
+@st.cache_data(ttl=300)
+def carregar_documentos_grafo() -> pd.DataFrame:
+    """Carrega documentos do grafo SQLite como DataFrame read-only.
+
+    Retorna DataFrame com colunas: doc_id, tipo_documento, cnpj_emitente,
+    razao_social, data_emissao, total, status_linking, arquivo_origem.
+
+    Status_linking é derivado assim:
+      - "Vinculado": existe aresta documento_de saindo do documento
+      - "Conflito": existe proposta em docs/propostas/linking/ cujo nome casa
+                    com a chave canônica do documento (substring)
+      - "Sem transação": caso contrário
+
+    Se o grafo não existe, devolve DataFrame vazio (ADR-10).
+    """
+    if not CAMINHO_GRAFO.exists():
+        logger.warning("grafo não encontrado em %s", CAMINHO_GRAFO)
+        return pd.DataFrame(
+            columns=[
+                "doc_id",
+                "tipo_documento",
+                "cnpj_emitente",
+                "razao_social",
+                "data_emissao",
+                "total",
+                "status_linking",
+                "arquivo_origem",
+            ]
+        )
+
+    import sqlite3
+
+    conn = sqlite3.connect(f"file:{CAMINHO_GRAFO}?mode=ro", uri=True)
+    conn.row_factory = sqlite3.Row
+    try:
+        docs: list[dict] = []
+        for row in conn.execute(
+            "SELECT id, nome_canonico, metadata FROM node WHERE tipo = 'documento'"
+        ):
+            meta_raw = row["metadata"] or "{}"
+            try:
+                meta = json.loads(meta_raw)
+            except (json.JSONDecodeError, TypeError):
+                meta = {}
+            docs.append(
+                {
+                    "doc_id": int(row["id"]),
+                    "nome_canonico": row["nome_canonico"],
+                    "tipo_documento": meta.get("tipo_documento", "desconhecido"),
+                    "cnpj_emitente": meta.get("cnpj_emitente", ""),
+                    "razao_social": meta.get("razao_social", ""),
+                    "data_emissao": meta.get("data_emissao", ""),
+                    "total": float(meta.get("total", 0.0) or 0.0),
+                    "arquivo_origem": meta.get("arquivo_origem", ""),
+                }
+            )
+
+        ids_vinculados: set[int] = set()
+        for row in conn.execute(
+            "SELECT DISTINCT src_id FROM edge WHERE tipo = 'documento_de'"
+        ):
+            ids_vinculados.add(int(row["src_id"]))
+    finally:
+        conn.close()
+
+    chaves_conflito: set[str] = set()
+    if CAMINHO_PROPOSTAS_LINKING.exists():
+        for arquivo in CAMINHO_PROPOSTAS_LINKING.glob("*.md"):
+            chaves_conflito.add(arquivo.stem)
+
+    for doc in docs:
+        if doc["doc_id"] in ids_vinculados:
+            doc["status_linking"] = "Vinculado"
+        elif any(doc["nome_canonico"][:20] in chave for chave in chaves_conflito):
+            doc["status_linking"] = "Conflito"
+        else:
+            doc["status_linking"] = "Sem transação"
+
+    df = pd.DataFrame(docs)
+    if df.empty:
+        df = pd.DataFrame(
+            columns=[
+                "doc_id",
+                "tipo_documento",
+                "cnpj_emitente",
+                "razao_social",
+                "data_emissao",
+                "total",
+                "status_linking",
+                "arquivo_origem",
+            ]
+        )
+    return df
+
+
+def contar_propostas_linking() -> int:
+    """Conta arquivos .md em docs/propostas/linking/ (não conta subpastas)."""
+    if not CAMINHO_PROPOSTAS_LINKING.exists():
+        return 0
+    return sum(1 for _ in CAMINHO_PROPOSTAS_LINKING.glob("*.md"))
 
 
 # "Não é o homem que tem pouco, mas o que deseja mais, que é pobre." -- Sêneca
