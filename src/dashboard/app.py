@@ -20,6 +20,7 @@ from src.dashboard.dados import (  # noqa: E402
 )
 from src.dashboard.paginas import (  # noqa: E402
     analise_avancada,
+    catalogacao,
     categorias,
     contas,
     extrato,
@@ -190,6 +191,7 @@ def main() -> None:
         tab_metas,
         tab_analise,
         tab_irpf,
+        tab_catalogacao,
     ) = st.tabs(
         [
             "Visão Geral",
@@ -200,6 +202,7 @@ def main() -> None:
             "Metas",
             "Análise",
             "IRPF",
+            "Catalogação",
         ]
     )
 
@@ -228,6 +231,9 @@ def main() -> None:
 
     with tab_irpf:
         irpf.renderizar(dados, periodo, pessoa, ctx)
+
+    with tab_catalogacao:
+        catalogacao.renderizar(dados, periodo, pessoa, ctx)
 
 
 if __name__ == "__main__":
