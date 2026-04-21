@@ -271,7 +271,7 @@ def test_customdata_obrigatorio_no_trace():
 
 - [ ] `streamlit>=1.31` no pyproject.toml e venv instala sem conflito
 - [ ] Teste de debounce passa
-- [ ] 4 páginas usam `aplicar_drilldown` (Visão Geral, Categorias, Analise Avançada, Grafo+Obsidian)
+- [ ] 4 páginas usam `aplicar_drilldown` (Visão Geral, Categorias, Análise Avançada, Grafo+Obsidian)
 - [ ] Playwright: capturar screenshot ANTES e DEPOIS de clicar no treemap
 - [ ] URL compartilhável reproduz estado
 
