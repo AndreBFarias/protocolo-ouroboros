@@ -85,6 +85,100 @@ def fornecedores_recorrentes(
     return [{"id": r[0], "nome_canonico": r[1], "ocorrencias": r[2]} for r in cursor.fetchall()]
 
 
+def obter_documentos_por_tipo_e_periodo(
+    db: GrafoDB,
+    tipos_documento: list[str] | None = None,
+    mes_ref: str | None = None,
+) -> list[dict[str, Any]]:
+    """Devolve documentos filtrados por `metadata.tipo_documento` e por período.
+
+    `tipos_documento=None` traz todos os tipos. `mes_ref=None` traz todos os
+    meses. Itera sobre o retorno de `listar_nodes('documento')` filtrando em
+    memória -- volumes de documentos no grafo são baixos (dezenas, não milhares)
+    e não justificam índice dedicado em metadata.
+    """
+    resultado: list[dict[str, Any]] = []
+    for nd in db.listar_nodes(tipo="documento"):
+        tipo_doc = nd.metadata.get("tipo_documento")
+        if tipos_documento is not None and tipo_doc not in tipos_documento:
+            continue
+        if mes_ref is not None:
+            data_emissao = nd.metadata.get("data_emissao") or ""
+            if not str(data_emissao).startswith(mes_ref):
+                continue
+        resultado.append(
+            {
+                "id": nd.id,
+                "tipo_documento": tipo_doc,
+                "nome_canonico": nd.nome_canonico,
+                "metadata": nd.metadata,
+            }
+        )
+    return resultado
+
+
+def obter_transacoes_candidatas_para_documento(
+    db: GrafoDB,
+    data_iso: str,
+    total: float,
+    janela_dias: int,
+    diff_valor_percentual: float,
+) -> list[dict[str, Any]]:
+    """Lista transações em (data ± janela_dias) cujo valor bate com `total`.
+
+    Critério de match de valor: `|valor - total| <= max(total * diff_pct, 0.01)`.
+    O centavo fixo absorve arredondamentos quando `diff_pct=0` e evita excluir
+    casos exatos por ruído binário.
+
+    Resultado: lista de dict {id, nome_canonico, metadata} ordenada por
+    proximidade da data (ascendente).
+    """
+    from datetime import date, timedelta
+
+    try:
+        data_ref = date.fromisoformat(str(data_iso)[:10])
+    except ValueError:
+        return []
+
+    tolerancia = max(abs(total) * diff_valor_percentual, 0.01)
+    datas_alvo = {
+        (data_ref + timedelta(days=delta)).isoformat()
+        for delta in range(-janela_dias, janela_dias + 1)
+    }
+
+    candidatas: list[tuple[int, dict[str, Any], int]] = []
+    for nd in db.listar_nodes(tipo="transacao"):
+        meta = nd.metadata
+        data_t = str(meta.get("data") or "")[:10]
+        if data_t not in datas_alvo:
+            continue
+        try:
+            valor_t = float(meta.get("valor") or 0.0)
+        except (TypeError, ValueError):
+            continue
+        if abs(abs(valor_t) - abs(total)) > tolerancia:
+            continue
+        try:
+            delta_dias = abs((date.fromisoformat(data_t) - data_ref).days)
+        except ValueError:
+            delta_dias = janela_dias
+        candidatas.append(
+            (
+                nd.id,  # type: ignore[arg-type]
+                {
+                    "id": nd.id,
+                    "nome_canonico": nd.nome_canonico,
+                    "metadata": meta,
+                    "delta_dias": delta_dias,
+                },
+                delta_dias,
+            )
+        )
+
+    candidatas.sort(key=lambda t: t[2])
+    return [c[1] for c in candidatas]
+
+
 def cli_imprimir_estatisticas(caminho: Path | None = None) -> None:
     """Helper para `python -m src.graph.queries` -- imprime estatísticas."""
     db_path = caminho or caminho_padrao()

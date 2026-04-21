@@ -330,6 +330,38 @@ def _filtrar_por_mes(transacoes: list[dict], mes: str) -> list[dict]:
     return [t for t in transacoes if t.get("mes_ref") == mes]
 
 
+def _executar_linking_documentos() -> None:
+    """Aciona o motor de linking documento->transação quando o grafo existe.
+
+    Importação lazy para não pagar custo quando o grafo não existe ainda
+    (usuário que roda só o pipeline XLSX clássico). Falhas são logadas
+    como warning e não quebram a execução.
+    """
+    try:
+        from src.graph.db import caminho_padrao
+    except ImportError as erro:
+        logger.warning("Módulo src.graph indisponível: %s -- linking ignorado", erro)
+        return
+
+    caminho_grafo = caminho_padrao()
+    if not caminho_grafo.exists():
+        logger.info(
+            "Grafo SQLite ausente em %s -- linking de documentos pulado",
+            caminho_grafo,
+        )
+        return
+
+    try:
+        from src.graph.db import GrafoDB
+        from src.graph.linking import linkar_documentos_a_transacoes
+
+        with GrafoDB(caminho_grafo) as db:
+            stats = linkar_documentos_a_transacoes(db)
+        logger.info("Linking documento->transação: %s", stats)
+    except Exception as erro:
+        logger.warning("Linking de documentos falhou: %s", erro)
+
+
 def executar(mes: str | None = None, processar_tudo: bool = False) -> None:
     """Executa o pipeline completo."""
     logger.info("=== Protocolo Ouroboros -- Pipeline ===")
@@ -382,6 +414,13 @@ def executar(mes: str | None = None, processar_tudo: bool = False) -> None:
     gerar_relatorios(
         transacoes, DIR_OUTPUT, meses_filtro=[mes] if (mes and not processar_tudo) else None
     )
+
+    # 12. Linking de documentos fiscais às transações bancárias (Sprint 48).
+    # Roda apenas se o grafo SQLite já existir (populado via
+    # `python -m src.graph.migracao_inicial` e ingestão de documentos pelos
+    # extratores fiscais). Ausência do grafo não é erro -- pipeline principal
+    # do XLSX segue funcionando sem ele.
+    _executar_linking_documentos()
 
     logger.info("=== Pipeline concluído ===")
     logger.info("XLSX: %s", caminho_xlsx)
