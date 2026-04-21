@@ -31,7 +31,7 @@ sprint:
 
 # Sprint 53 -- Grafo Visual + Obsidian Rico
 
-**Status:** PENDENTE
+**Status:** CONCLUÍDA
 **Data:** 2026-04-19
 **Prioridade:** MEDIA
 **Tipo:** Feature
