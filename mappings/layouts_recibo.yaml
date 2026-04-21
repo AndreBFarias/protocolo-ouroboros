@@ -1,0 +1,83 @@
+# Regex por layout de recibo não-fiscal (Sprint 47).
+#
+# Recibo não-fiscal é toda evidência de pagamento que NÃO tem estrutura
+# de nota fiscal: comprovante de Pix impresso (app bancário), voucher
+# de serviço (iFood, 99, Uber), recibo manuscrito ou foto de recibo de
+# balcão. Nunca traz CNPJ do emitente no formato SEFAZ -- quando tem
+# CNPJ/CPF na contraparte, é quem recebeu o pagamento, não quem emitiu
+# o documento.
+#
+# Cada entrada descreve um LAYOUT:
+#   identificador   -- lista de strings; texto OCR é aceito se QUALQUER
+#                      uma aparece (procura case-insensitive)
+#   regex_valor     -- captura o valor principal da transação
+#   regex_data      -- captura data (DD/MM/YYYY ou "DD de Mês de YYYY")
+#   regex_contraparte -- captura nome do destinatário/beneficiário
+#   regex_descricao -- opcional; serviço descrito (pedido #, corrida, etc.)
+#
+# Fallback: se nenhum identificador bate mas o texto tem pelo menos
+# valor + data, o extrator devolve `layout=None` e `confianca` reduzida
+# -- fica a critério do `extrair()` mandar pra supervisor.
+#
+# N-para-N: alterações aqui exigem atualização de
+# `tests/test_recibo_nao_fiscal.py` e das fixtures em
+# `tests/fixtures/recibos/`.
+
+layouts:
+
+  # Comprovante de Pix enviado pelo app Nubank (impresso ou screenshot).
+  # Pistas visuais: cabeçalho "Comprovante" com logo Nubank; linhas
+  # "Valor", "Para"/"De", "Data/hora do envio", "CPF/CNPJ".
+  - id: pix_nubank
+    identificadores:
+      - "Nubank"
+      - "Nu Pagamentos"
+      - "Comprovante do Pix"
+    regex_valor: "(?:Valor|Valor\\s+enviado)\\s*R\\$\\s*(\\d{1,7}[.,]\\d{2})"
+    regex_data: "(\\d{2}/\\d{2}/\\d{4})(?:\\s+(?:às|as)\\s+\\d{2}[h:]\\d{2})?"
+    regex_contraparte: "(?:Para|Nome(?:\\s+do\\s+destinatário)?|Destino)\\s*:?\\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ][A-Za-zÁÉÍÓÚÂÊÔÃÕÇáéíóúâêôãõç .']{3,60}?)(?=\\s*(?:CPF|CNPJ|Instituição|Banco|Chave|$))"
+    sinal: "despesa"
+
+  # Comprovante Pix do app Itaú. Cabeçalho típico: "Comprovante de
+  # transação Pix" ou "Comprovante de envio". Usa "Data" em formato
+  # textual DD/MM/YYYY HH:MM.
+  - id: pix_itau
+    identificadores:
+      - "Itaú"
+      - "Itau Unibanco"
+      - "Comprovante de transação PIX"
+      - "Comprovante de transação Pix"
+    regex_valor: "Valor\\s*:?\\s*R\\$\\s*(\\d{1,7}[.,]\\d{2})"
+    regex_data: "Data\\s*:?\\s*(\\d{2}/\\d{2}/\\d{4})"
+    regex_contraparte: "Para\\s*:?\\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ][A-Za-zÁÉÍÓÚÂÊÔÃÕÇáéíóúâêôãõç .']{3,60}?)(?=\\s*(?:CPF|CNPJ|Chave\\s+Pix|Agência|$))"
+    sinal: "despesa"
+
+  # Voucher/recibo de pedido iFood. Pistas: "iFood", "Pedido #NNNNN",
+  # "Total do pedido", "Entregue em DD/MM/YYYY".
+  - id: voucher_ifood
+    identificadores:
+      - "iFood"
+      - "Pedido\\s+#"
+    regex_valor: "(?<!Sub)(?:Total\\s+do\\s+pedido|Total|Valor\\s+pago)\\s*R?\\$?\\s*(\\d{1,5}[.,]\\d{2})"
+    regex_data: "(?:Entregue|Pedido\\s+realizado|Data)\\s*(?:em)?\\s*:?\\s*(\\d{2}/\\d{2}/\\d{4})"
+    regex_contraparte: "(?:Restaurante|Estabelecimento|Loja)\\s*:?\\s*([A-Za-zÁÉÍÓÚÂÊÔÃÕÇáéíóúâêôãõç0-9 .'&\\-]{3,60})"
+    regex_descricao: "Pedido\\s+#?\\s*(\\d{4,12})"
+    sinal: "despesa"
+
+  # Recibo de corrida 99/Uber. Pistas: "99 Tecnologia", "Uber", "Corrida",
+  # "Origem", "Destino", "Total da corrida".
+  - id: voucher_99
+    identificadores:
+      - "99\\s+Tecnologia"
+      - "99Pop"
+      - "\\b99\\s+App\\b"
+      - "Uber"
+      - "Total\\s+da\\s+corrida"
+    regex_valor: "(?:Total\\s+da\\s+corrida|Total|Valor\\s+da\\s+corrida|Valor)\\s*R?\\$?\\s*(\\d{1,4}[.,]\\d{2})"
+    regex_data: "(?:Corrida|Data|Realizada\\s+em)\\s*(?:em)?\\s*:?\\s*(\\d{2}/\\d{2}/\\d{4})"
+    regex_contraparte: "(?:Origem)\\s*:?\\s*([A-Za-zÁÉÍÓÚÂÊÔÃÕÇáéíóúâêôãõç0-9 .',\\-]{3,80})"
+    regex_descricao: "(?:Corrida|Viagem|ID)\\s*:\\s*([A-Z0-9\\-]{6,20})"
+    sinal: "despesa"
+
+
+# "A memória do recibo é maior que a do banco." -- princípio do registrador

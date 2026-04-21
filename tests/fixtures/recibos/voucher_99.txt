@@ -1,0 +1,17 @@
+99 Tecnologia
+Recibo de corrida
+
+Corrida: ABC12345XYZ
+Data: 12/04/2026
+Horário: 22:18
+
+Origem: Rua das Flores, 100, Asa Sul, Brasília
+Destino: SQN 208, Bloco C, Asa Norte, Brasília
+
+Distância: 8,2 km
+Duração: 17 min
+
+Total da corrida R$ 27,45
+
+Forma de pagamento: PIX
+Motorista: Carlos Mendes

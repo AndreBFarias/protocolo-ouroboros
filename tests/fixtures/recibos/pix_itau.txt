@@ -1,0 +1,18 @@
+Itaú Unibanco S.A.
+Comprovante de transação PIX
+
+Valor: R$ 350,00
+
+Para: JOAO PEREIRA LIMA
+CPF: 123.456.789-00
+Instituição: Banco Inter
+
+De: ANDRE BATISTA FARIAS
+Agência: 6450
+Conta: 12345-6
+
+Data: 20/03/2026
+Horário: 09:15
+
+Chave Pix: 123.456.789-00
+ID: ITAU20260320091500XYZ
