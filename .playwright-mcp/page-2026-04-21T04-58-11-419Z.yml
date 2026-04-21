@@ -1,0 +1,239 @@
+- generic:
+  - generic [ref=e2]:
+    - generic [ref=e7]:
+      - button "keyboard_double_arrow_left" [ref=e10] [cursor=pointer]:
+        - generic [ref=e12]: keyboard_double_arrow_left
+      - generic [ref=e15]:
+        - heading "Mockups Ouroboros" [level=2] [ref=e20]
+        - paragraph [ref=e25]: Wireframes navegáveis antes da implementação. Dados fictícios.
+        - radiogroup "Sprint" [ref=e28] [cursor=pointer]:
+          - generic [ref=e29]:
+            - radio "51 — Catalogação de Documentos"
+            - paragraph [ref=e34]: 51 — Catalogação de Documentos
+          - generic [ref=e35]:
+            - radio "52 — Busca Global" [checked] [active]
+            - paragraph [ref=e40]: 52 — Busca Global
+          - generic [ref=e41]:
+            - radio "53 — Grafo + Obsidian"
+            - paragraph [ref=e46]: 53 — Grafo + Obsidian
+          - generic [ref=e47]:
+            - radio "20 — Redesign Tipográfico"
+            - paragraph [ref=e52]: 20 — Redesign Tipográfico
+        - generic [ref=e57]:
+          - paragraph [ref=e58]: Aviso
+          - paragraph [ref=e59]: Este app é mockup de UX. Não consulta grafo SQLite nem XLSX. Clique em ações não tem efeito real.
+    - generic [ref=e3]:
+      - banner [ref=e62]:
+        - generic [ref=e65]:
+          - button "Deploy" [ref=e67] [cursor=pointer]:
+            - generic [ref=e69]: Deploy
+          - button "Main menu" [ref=e71] [cursor=pointer]:
+            - img [ref=e72]
+      - generic [ref=e75]:
+        - generic [ref=e80]:
+          - generic [ref=e81]:
+            - generic [ref=e82]: "52"
+            - generic [ref=e83]: Busca Global
+          - paragraph [ref=e84]: "Input único: digite fornecedor, CNPJ, item, data ou valor. Retorna fornecedor agregado, documentos, transações, itens e timeline cronológica em < 500ms."
+        - paragraph [ref=e491]: Busca global
+        - textbox "Busca global" [ref=e496]:
+          - /placeholder: fornecedor, CNPJ, item, data (YYYY-MM), valor...
+          - text: neoenergia
+        - generic [ref=e498]:
+          - button "neoenergia" [disabled] [ref=e503]:
+            - paragraph [ref=e507]: neoenergia
+          - button "CNPJ 00.394.460/0058-87" [disabled] [ref=e512]:
+            - paragraph [ref=e516]: CNPJ 00.394.460/0058-87
+          - button "farmácia" [disabled] [ref=e521]:
+            - paragraph [ref=e525]: farmácia
+          - button "americanas" [disabled] [ref=e530]:
+            - paragraph [ref=e534]: americanas
+          - button "2026-03" [disabled] [ref=e539]:
+            - paragraph [ref=e543]: 2026-03
+          - button "R$ 487,23" [disabled] [ref=e548]:
+            - paragraph [ref=e552]: R$ 487,23
+          - button "posto shell" [disabled] [ref=e557]:
+            - paragraph [ref=e561]: posto shell
+        - generic [ref=e566]:
+          - paragraph [ref=e567]:
+            - text: Resultados para
+            - strong [ref=e568]: "\"neoenergia\""
+          - paragraph [ref=e569]: 16 itens · 387 ms
+        - heading "Fornecedor" [level=3] [ref=e571]:
+          - text: Fornecedor
+          - generic [ref=e572]:
+            - link "Link to heading":
+              - /url: "#fornecedor"
+              - img
+        - generic [ref=e577]:
+          - generic [ref=e578]:
+            - generic [ref=e579]:
+              - heading "Neoenergia Distribuição Brasília" [level=3] [ref=e581]:
+                - text: Neoenergia Distribuição Brasília
+                - generic [ref=e582]:
+                  - link "Link to heading":
+                    - /url: "#neoenergia-distribuicao-brasilia"
+                    - img
+              - paragraph [ref=e583]: CNPJ 00.394.460/0058-87
+            - generic [ref=e584]: Moradia / Energia
+          - generic [ref=e585]:
+            - generic [ref=e586]:
+              - paragraph [ref=e587]: Documentos
+              - paragraph [ref=e588]: "48"
+            - generic [ref=e589]:
+              - paragraph [ref=e590]: Total gasto
+              - paragraph [ref=e591]: "-R$ 23.487,12"
+            - generic [ref=e592]:
+              - paragraph [ref=e593]: Primeiro registro
+              - paragraph [ref=e594]: 2022-08-14
+            - generic [ref=e595]:
+              - paragraph [ref=e596]: Último registro
+              - paragraph [ref=e597]: 2026-04-08
+          - paragraph [ref=e598]: Aliases reconhecidos
+          - generic [ref=e599]:
+            - generic [ref=e600]: NEOENERGIA DF
+            - generic [ref=e601]: CEB-DIS
+            - generic [ref=e602]: NEOENERGIA S.A.
+            - generic [ref=e603]: NEOENERGIA BRASILIA
+        - heading "Timeline — faturas e transações" [level=3] [ref=e609]:
+          - text: Timeline — faturas e transações
+          - generic [ref=e610]:
+            - link "Link to heading":
+              - /url: "#timeline-faturas-e-transacoes"
+              - img
+        - generic [ref=e616]:
+          - img:
+            - generic:
+              - generic:
+                - generic:
+                  - generic:
+                    - generic: Sep 2025
+                  - generic:
+                    - generic: Nov 2025
+                  - generic:
+                    - generic: Jan 2026
+                  - generic:
+                    - generic: Mar 2026
+          - img:
+            - generic [ref=e633]:
+              - generic [ref=e635]: Documentos
+              - generic [ref=e642]: Transações
+          - toolbar [ref=e648]:
+            - button "Download plot as a PNG" [ref=e650] [cursor=pointer]:
+              - img [ref=e651]
+            - generic [ref=e653]:
+              - button "Zoom" [ref=e654] [cursor=pointer]:
+                - img [ref=e655]
+              - button "Pan" [ref=e657] [cursor=pointer]:
+                - img [ref=e658]
+            - generic [ref=e660]:
+              - button "Zoom in" [ref=e661] [cursor=pointer]:
+                - img [ref=e662]
+              - button "Zoom out" [ref=e664] [cursor=pointer]:
+                - img [ref=e665]
+              - button "Autoscale" [ref=e667] [cursor=pointer]:
+                - img [ref=e668]
+              - button "Reset axes" [ref=e670] [cursor=pointer]:
+                - img [ref=e671]
+            - button "Fullscreen" [ref=e674] [cursor=pointer]:
+              - img [ref=e675]
+          - img
+        - separator [ref=e681]
+        - generic [ref=e683]:
+          - generic [ref=e685]:
+            - heading "Documentos (5)" [level=3] [ref=e691]:
+              - text: Documentos (5)
+              - generic [ref=e692]:
+                - link "Link to heading":
+                  - /url: "#documentos-5"
+                  - img
+            - generic [ref=e697]:
+              - generic [ref=e698]:
+                - paragraph [ref=e699]: Fatura energia 2026-04
+                - paragraph [ref=e700]: 2026-04-08 · 1 item(s)
+              - paragraph [ref=e701]: "-R$ 487,23"
+            - generic [ref=e706]:
+              - generic [ref=e707]:
+                - paragraph [ref=e708]: Fatura energia 2026-03
+                - paragraph [ref=e709]: 2026-03-08 · 1 item(s)
+              - paragraph [ref=e710]: "-R$ 512,11"
+            - generic [ref=e715]:
+              - generic [ref=e716]:
+                - paragraph [ref=e717]: Fatura energia 2026-02
+                - paragraph [ref=e718]: 2026-02-09 · 1 item(s)
+              - paragraph [ref=e719]: "-R$ 498,67"
+            - generic [ref=e724]:
+              - generic [ref=e725]:
+                - paragraph [ref=e726]: Fatura energia 2026-01
+                - paragraph [ref=e727]: 2026-01-08 · 1 item(s)
+              - paragraph [ref=e728]: "-R$ 543,88"
+            - generic [ref=e733]:
+              - generic [ref=e734]:
+                - paragraph [ref=e735]: Fatura energia 2025-12
+                - paragraph [ref=e736]: 2025-12-10 · 1 item(s)
+              - paragraph [ref=e737]: "-R$ 612,42"
+          - generic [ref=e739]:
+            - heading "Transações (8)" [level=3] [ref=e745]:
+              - text: Transações (8)
+              - generic [ref=e746]:
+                - link "Link to heading":
+                  - /url: "#transacoes-8"
+                  - img
+            - generic [ref=e751]:
+              - generic [ref=e752]:
+                - paragraph [ref=e753]: DEB AUTOMATICO NEOENERGIA
+                - paragraph [ref=e754]: 2026-04-09 · Itaú
+              - paragraph [ref=e755]: "-R$ 487,23"
+            - generic [ref=e760]:
+              - generic [ref=e761]:
+                - paragraph [ref=e762]: DEB AUTOMATICO NEOENERGIA
+                - paragraph [ref=e763]: 2026-03-10 · Itaú
+              - paragraph [ref=e764]: "-R$ 512,11"
+            - generic [ref=e769]:
+              - generic [ref=e770]:
+                - paragraph [ref=e771]: DEB AUTOMATICO NEOENERGIA
+                - paragraph [ref=e772]: 2026-02-10 · Itaú
+              - paragraph [ref=e773]: "-R$ 498,67"
+            - generic [ref=e778]:
+              - generic [ref=e779]:
+                - paragraph [ref=e780]: DEB AUTOMATICO NEOENERGIA
+                - paragraph [ref=e781]: 2026-01-09 · Itaú
+              - paragraph [ref=e782]: "-R$ 543,88"
+            - generic [ref=e787]:
+              - generic [ref=e788]:
+                - paragraph [ref=e789]: PIX NEOENERGIA
+                - paragraph [ref=e790]: 2025-12-11 · Itaú
+              - paragraph [ref=e791]: "-R$ 612,42"
+            - generic [ref=e796]:
+              - generic [ref=e797]:
+                - paragraph [ref=e798]: DEB AUTOMATICO CEB-DIS
+                - paragraph [ref=e799]: 2025-11-10 · Itaú
+              - paragraph [ref=e800]: "-R$ 589,90"
+            - generic [ref=e805]:
+              - generic [ref=e806]:
+                - paragraph [ref=e807]: DEB AUTOMATICO NEOENERGIA
+                - paragraph [ref=e808]: 2025-10-09 · Itaú
+              - paragraph [ref=e809]: "-R$ 601,33"
+            - generic [ref=e814]:
+              - generic [ref=e815]:
+                - paragraph [ref=e816]: DEB AUTOMATICO CEB-DIS
+                - paragraph [ref=e817]: 2025-09-08 · Itaú
+              - paragraph [ref=e818]: "-R$ 578,14"
+          - generic [ref=e820]:
+            - heading "Itens (2)" [level=3] [ref=e826]:
+              - text: Itens (2)
+              - generic [ref=e827]:
+                - link "Link to heading":
+                  - /url: "#itens-2"
+                  - img
+            - generic [ref=e832]:
+              - paragraph [ref=e833]: Energia elétrica residencial (kWh)
+              - generic [ref=e834]:
+                - paragraph [ref=e835]: 48 ocorrências
+                - paragraph [ref=e836]: "-R$ 22.891,44"
+            - generic [ref=e841]:
+              - paragraph [ref=e842]: Iluminação pública (contribuição)
+              - generic [ref=e843]:
+                - paragraph [ref=e844]: 48 ocorrências
+                - paragraph [ref=e845]: "-R$ 595,68"
+  - img [ref=e484]

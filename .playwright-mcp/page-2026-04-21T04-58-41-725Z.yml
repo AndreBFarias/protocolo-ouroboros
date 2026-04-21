@@ -1,0 +1,230 @@
+- generic:
+  - generic [ref=e2]:
+    - generic [ref=e7]:
+      - button "keyboard_double_arrow_left" [ref=e10] [cursor=pointer]:
+        - generic [ref=e12]: keyboard_double_arrow_left
+      - generic [ref=e15]:
+        - heading "Mockups Ouroboros" [level=2] [ref=e20]
+        - paragraph [ref=e25]: Wireframes navegáveis antes da implementação. Dados fictícios.
+        - radiogroup "Sprint" [ref=e28] [cursor=pointer]:
+          - generic [ref=e29]:
+            - radio "51 — Catalogação de Documentos"
+            - paragraph [ref=e34]: 51 — Catalogação de Documentos
+          - generic [ref=e35]:
+            - radio "52 — Busca Global"
+            - paragraph [ref=e40]: 52 — Busca Global
+          - generic [ref=e41]:
+            - radio "53 — Grafo + Obsidian"
+            - paragraph [ref=e46]: 53 — Grafo + Obsidian
+          - generic [ref=e47]:
+            - radio "20 — Redesign Tipográfico" [checked] [active]
+            - paragraph [ref=e52]: 20 — Redesign Tipográfico
+        - generic [ref=e57]:
+          - paragraph [ref=e58]: Aviso
+          - paragraph [ref=e59]: Este app é mockup de UX. Não consulta grafo SQLite nem XLSX. Clique em ações não tem efeito real.
+    - generic [ref=e3]:
+      - banner [ref=e62]:
+        - generic [ref=e65]:
+          - button "Deploy" [ref=e67] [cursor=pointer]:
+            - generic [ref=e69]: Deploy
+          - button "Main menu" [ref=e71] [cursor=pointer]:
+            - img [ref=e72]
+      - generic [ref=e75]:
+        - generic [ref=e80]:
+          - generic [ref=e81]:
+            - generic [ref=e82]: "20"
+            - generic [ref=e83]: Redesign Tipográfico
+          - paragraph [ref=e84]: Comparação lado a lado do estado atual vs proposta (tipografia hierárquica, cards consistentes, contraste WCAG AA) e exposição dos tokens de design que regem o sistema.
+        - heading "Antes × Depois" [level=3] [ref=e1134]:
+          - text: Antes × Depois
+          - generic [ref=e848]:
+            - link "Link to heading":
+              - /url: "#subgrafo-interativo-exemplo-1-documento"
+              - img
+        - generic [ref=e1136]:
+          - generic [ref=e1143]:
+            - generic [ref=e1144]:
+              - generic [ref=e1145]: ANTES
+              - generic [ref=e1146]: Tipografia
+            - paragraph [ref=e1147]: tamanhos próximos (13-18) sem saltos, contraste abaixo do WCAG
+            - paragraph [ref=e1148]: Visão Geral
+            - paragraph [ref=e1149]: Resumo Mensal
+            - paragraph [ref=e1150]: "Receita: R$ 18.432,77"
+            - paragraph [ref=e1151]: "Despesa: R$ 12.987,43"
+            - paragraph [ref=e1152]: "comment #6272A4 — contraste 3.9:1 (abaixo do WCAG AA)"
+            - paragraph [ref=e1153]:
+              - text: "tamanhos: 18 · 16 · 14 · 13 · 13"
+              - text: escala compactada, hierarquia visual quase nula
+          - generic [ref=e1160]:
+            - generic [ref=e1161]:
+              - generic [ref=e1162]: DEPOIS
+              - generic [ref=e1163]: Tipografia
+            - paragraph [ref=e1164]: escala com saltos claros, hierarquia imediata, contraste WCAG AA
+            - paragraph [ref=e1165]: Visão Geral
+            - paragraph [ref=e1166]: Resumo Mensal
+            - paragraph [ref=e1167]: R$ 18.432,77
+            - paragraph [ref=e1168]: receita total
+            - paragraph [ref=e1169]: "#8892B0 — contraste 5.2:1 (WCAG AA OK)"
+            - paragraph [ref=e1170]:
+              - text: hero 28 · h3 13up · body 15 · caption 12
+              - text: escala clara com saltos reconhecíveis
+        - generic [ref=e1173]:
+          - generic [ref=e1180]:
+            - generic [ref=e1181]:
+              - generic [ref=e1182]: ANTES
+              - generic [ref=e1183]: Cards KPI
+            - paragraph [ref=e1184]: paddings desalinhados, sem cor semântica, tipografia aleatória
+            - generic [ref=e1185]:
+              - generic [ref=e1186]:
+                - paragraph [ref=e1187]: Receita
+                - paragraph [ref=e1188]: R$ 18.432
+              - generic [ref=e1189]:
+                - paragraph [ref=e1190]: Despesa
+                - paragraph [ref=e1191]: R$ 12.987
+              - generic [ref=e1192]:
+                - paragraph [ref=e1193]: Saldo
+                - paragraph [ref=e1194]: R$ 5.445
+            - paragraph [ref=e1195]:
+              - text: paddings 6 · 8 · 10 inconsistentes
+              - text: sem border-left semântico
+              - text: tipografia diferente em cada card
+          - generic [ref=e1202]:
+            - generic [ref=e1203]:
+              - generic [ref=e1204]: DEPOIS
+              - generic [ref=e1205]: Cards KPI
+            - paragraph [ref=e1206]: grid consistente, border-left semântico, tipografia uniforme
+            - generic [ref=e1207]:
+              - generic [ref=e1208]:
+                - paragraph [ref=e1209]: Receita
+                - paragraph [ref=e1210]: R$ 18.432
+              - generic [ref=e1211]:
+                - paragraph [ref=e1212]: Despesa
+                - paragraph [ref=e1213]: R$ 12.987
+              - generic [ref=e1214]:
+                - paragraph [ref=e1215]: Saldo
+                - paragraph [ref=e1216]: R$ 5.445
+            - paragraph [ref=e1217]:
+              - text: padding 20 (token lg) consistente
+              - text: border-left 4px com cor semântica
+              - text: gap 16 (token md), shadow uniforme
+        - separator [ref=e1218]
+        - heading "Paleta — tokens de cor" [level=3] [ref=e1224]:
+          - text: Paleta — tokens de cor
+          - generic [ref=e1225]:
+            - link "Link to heading":
+              - /url: "#paleta-tokens-de-cor"
+              - img
+        - generic [ref=e1227]:
+          - generic [ref=e1229]:
+            - generic [ref=e1234]:
+              - paragraph [ref=e1236]: background
+              - paragraph [ref=e1237]: "#282A36"
+              - paragraph [ref=e1238]: fundo da página
+            - generic [ref=e1243]:
+              - paragraph [ref=e1245]: cyan
+              - paragraph [ref=e1246]: "#8BE9FD"
+              - paragraph [ref=e1247]: info / neutro
+          - generic [ref=e1249]:
+            - generic [ref=e1254]:
+              - paragraph [ref=e1256]: current_line
+              - paragraph [ref=e1257]: "#44475A"
+              - paragraph [ref=e1258]: card / surface
+            - generic [ref=e1263]:
+              - paragraph [ref=e1265]: green
+              - paragraph [ref=e1266]: "#50FA7B"
+              - paragraph [ref=e1267]: positivo / obrigatório
+          - generic [ref=e1269]:
+            - generic [ref=e1274]:
+              - paragraph [ref=e1276]: foreground
+              - paragraph [ref=e1277]: "#F8F8F2"
+              - paragraph [ref=e1278]: texto primário
+            - generic [ref=e1283]:
+              - paragraph [ref=e1285]: red
+              - paragraph [ref=e1286]: "#FF5555"
+              - paragraph [ref=e1287]: negativo / crítico
+          - generic [ref=e1289]:
+            - generic [ref=e1294]:
+              - paragraph [ref=e1296]: "comment → #8892B0"
+              - paragraph [ref=e1297]: "#8892B0"
+              - paragraph [ref=e1298]: texto secundário (WCAG AA)
+            - generic [ref=e1303]:
+              - paragraph [ref=e1305]: orange
+              - paragraph [ref=e1306]: "#FFB86C"
+              - paragraph [ref=e1307]: alerta / questionável
+          - generic [ref=e1309]:
+            - generic [ref=e1314]:
+              - paragraph [ref=e1316]: purple
+              - paragraph [ref=e1317]: "#BD93F9"
+              - paragraph [ref=e1318]: destaque / ação
+            - generic [ref=e1323]:
+              - paragraph [ref=e1325]: pink
+              - paragraph [ref=e1326]: "#FF79C6"
+              - paragraph [ref=e1327]: supérfluo
+        - separator [ref=e1328]
+        - heading "Escala tipográfica — 7 níveis" [level=3] [ref=e1330]:
+          - text: Escala tipográfica — 7 níveis
+          - generic [ref=e1331]:
+            - link "Link to heading":
+              - /url: "#escala-tipografica-7-niveis"
+              - img
+        - generic [ref=e1332]:
+          - paragraph [ref=e1333]: Display / hero
+          - paragraph [ref=e1334]: 34px / 700
+          - paragraph [ref=e1335]: título de página
+        - generic [ref=e1340]:
+          - paragraph [ref=e1341]: H1 — título
+          - paragraph [ref=e1342]: 28px / 700
+          - paragraph [ref=e1343]: cabeçalho principal
+        - generic [ref=e1348]:
+          - paragraph [ref=e1349]: H2 — seção
+          - paragraph [ref=e1350]: 22px / 600
+          - paragraph [ref=e1351]: abertura de bloco
+        - generic [ref=e1356]:
+          - paragraph [ref=e1357]: H3 — subseção
+          - paragraph [ref=e1358]: 13px up / 700
+          - paragraph [ref=e1359]: rótulos de grupo
+        - generic [ref=e1364]:
+          - paragraph [ref=e1365]: Body
+          - paragraph [ref=e1366]: 15px / 400
+          - paragraph [ref=e1367]: texto corrido
+        - generic [ref=e1372]:
+          - paragraph [ref=e1373]: Caption
+          - paragraph [ref=e1374]: 12px / 500
+          - paragraph [ref=e1375]: metadados e legendas
+        - generic [ref=e1380]:
+          - paragraph [ref=e1381]: Mono
+          - paragraph [ref=e1382]: 12px monospace / 500
+          - paragraph [ref=e1383]: valores, datas, CNPJ
+        - separator [ref=e1388]
+        - heading "Spacing scale — 6 tokens" [level=3] [ref=e1394]:
+          - text: Spacing scale — 6 tokens
+          - generic [ref=e1395]:
+            - link "Link to heading":
+              - /url: "#spacing-scale-6-tokens"
+              - img
+        - generic [ref=e1397]:
+          - generic [ref=e1404]:
+            - paragraph [ref=e1406]: xs
+            - paragraph [ref=e1407]: 4px
+            - paragraph [ref=e1408]: gap entre badges
+          - generic [ref=e1415]:
+            - paragraph [ref=e1417]: sm
+            - paragraph [ref=e1418]: 8px
+            - paragraph [ref=e1419]: padding interno compacto
+          - generic [ref=e1426]:
+            - paragraph [ref=e1428]: md
+            - paragraph [ref=e1429]: 16px
+            - paragraph [ref=e1430]: gap padrão entre blocos
+          - generic [ref=e1437]:
+            - paragraph [ref=e1439]: lg
+            - paragraph [ref=e1440]: 24px
+            - paragraph [ref=e1441]: margem entre seções
+          - generic [ref=e1448]:
+            - paragraph [ref=e1450]: xl
+            - paragraph [ref=e1451]: 32px
+            - paragraph [ref=e1452]: separação de grandes áreas
+          - generic [ref=e1459]:
+            - paragraph [ref=e1461]: 2xl
+            - paragraph [ref=e1462]: 48px
+            - paragraph [ref=e1463]: respiração do hero
+  - img [ref=e484]
