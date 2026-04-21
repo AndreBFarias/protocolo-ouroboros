@@ -44,7 +44,7 @@ sprint:
 
 # Sprint 47c -- Extrator de Cupom Bilhete de Seguro (Garantia Estendida)
 
-**Status:** PENDENTE
+**Status:** CONCLUÍDA
 **Aprovação:** aprovada em 2026-04-19 -- ver `docs/propostas/sprint_nova/sprint_47c_cupom_garantia_estendida.md`. Implementação aguarda apenas Sprint 41 e 42 concluírem (dependências declaradas)
 **Data:** 2026-04-19 (criada na Conferência Artesanal Opus da Sprint 41)
 **Prioridade:** MEDIA (volume real observado: 5 bilhetes em 1 dia de inbox)
