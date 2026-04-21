@@ -38,7 +38,7 @@ sprint:
 
 # Sprint 44b -- Extrator NFC-e modelo 65
 
-**Status:** PENDENTE
+**Status:** CONCLUÍDA
 **Data:** 2026-04-19 (criada após descoberta na Conferência Artesanal Opus da Sprint 41 -- amostra `inbox/notas de garantia e compras.pdf` pg 1 e pg 4)
 **Prioridade:** ALTA
 **Tipo:** Feature
