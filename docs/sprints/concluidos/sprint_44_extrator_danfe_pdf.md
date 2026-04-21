@@ -37,7 +37,7 @@ sprint:
 
 # Sprint 44 -- Extrator NFe modelo 55 (DANFE PDF formal)
 
-**Status:** PENDENTE
+**Status:** CONCLUÍDA
 **Data:** 2026-04-19 (renomeada 2026-04-19 -- escopo era ambíguo entre modelo 55 e 65)
 **Prioridade:** ALTA
 **Tipo:** Feature
