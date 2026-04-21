@@ -1,9 +1,9 @@
 # Roadmap -- Protocolo Ouroboros
 
 ```
-VERSÃO: 6.9 | SPRINTS: 63 (28 concluídas, 0 em produção, 22 backlog, 13 arquivadas)
+VERSÃO: 7.0 | SPRINTS: 63 (29 concluídas, 0 em produção, 21 backlog, 13 arquivadas)
 ROTA: Catalogador universal artesanal (Fases ALFA → ZETA) + higiene INFRA pontual
-ÚLTIMA ATUALIZAÇÃO: 2026-04-20 (Sprint 44b CONCLUÍDA -- extrator NFC-e modelo 65, 40 testes passando; Sprint 44 DANFE também CONCLUÍDA; Sprint 54 PLANEJADA para COL-44-A)
+ÚLTIMA ATUALIZAÇÃO: 2026-04-20 (Sprint 47c CONCLUÍDA -- extrator de cupom bilhete de garantia estendida, 28 testes; Sprints 44, 44b, 43 também CONCLUÍDAS neste ciclo; Sprint 54 PLANEJADA para COL-44-A)
 ```
 
 ---
@@ -36,8 +36,8 @@ Catalogador universal artesanal da vida financeira do casal. O usuário joga QUA
 
 | Status | Sprints | Total |
 |--------|---------|-------|
-| Concluídas | 01-07, 12-14, 17-19, 22, 23, 30, 37-40, 41, 41b, 41c, 41d, 42, 43, 44, 44b | 28 |
-| Backlog ativo (ALFA→EPSILON) | 45-53 (inclui 47a, 47b, 47c) | 13 |
+| Concluídas | 01-07, 12-14, 17-19, 22, 23, 30, 37-40, 41, 41b, 41c, 41d, 42, 43, 44, 44b, 47c | 29 |
+| Backlog ativo (ALFA→EPSILON) | 45-53 (inclui 47a, 47b) | 12 |
 | Backlog consumidor (ZETA) | 20, 21, 24, 25, 33, 34, 35, 36 (pós-EPSILON) | 8 |
 | Backlog higiene INFRA | 54 | 1 |
 | Arquivadas (substituídas) | 08, 09, 10, 11, 15, 16, 26, 27a, 28, 29a, 29b, 31, 32 | 13 |
@@ -103,7 +103,7 @@ Objetivo: transformar arquivos em itens estruturados no grafo.
 | 47 | Extrator Recibo Não-Fiscal | PENDENTE | MEDIA |
 | 47a | Extrator Receita Médica e Prescrição | PENDENTE | MEDIA |
 | 47b | Extrator Termo de Garantia (fabricante) | PENDENTE | BAIXA |
-| 47c | Extrator Cupom Bilhete de Seguro Garantia Estendida (apólice SUSEP) | PROPOSTA | MEDIA |
+| 47c | Extrator Cupom Bilhete de Seguro Garantia Estendida (apólice SUSEP) | CONCLUÍDA | MEDIA |
 
 Após BETA, qualquer das GAMA pode começar. DANFE/NFC-e e cupom térmico têm maior impacto imediato (fontes dominantes do dia a dia). Sprint 47c aguarda aprovação humana via `docs/propostas/sprint_nova/sprint_47c_cupom_garantia_estendida.md`.
 
