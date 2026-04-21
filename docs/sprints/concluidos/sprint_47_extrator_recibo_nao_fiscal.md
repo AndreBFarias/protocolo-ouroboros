@@ -33,7 +33,7 @@ sprint:
 
 # Sprint 47 -- Extrator de Recibo Não-Fiscal
 
-**Status:** PENDENTE
+**Status:** CONCLUÍDA
 **Data:** 2026-04-19
 **Prioridade:** MEDIA
 **Tipo:** Feature

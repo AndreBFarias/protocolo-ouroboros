@@ -120,6 +120,16 @@ def _descobrir_extratores() -> list:
     except ImportError as e:
         logger.warning("Extrator xml_nfe indisponível: %s", e)
 
+    # Recibo não-fiscal é catch-all de baixa prioridade (Sprint 47):
+    # registrado depois dos extratores fiscais para não capturar arquivo
+    # que pertence a cupom térmico, NFC-e ou DANFE.
+    try:
+        from src.extractors.recibo_nao_fiscal import ExtratorReciboNaoFiscal
+
+        extratores.append(ExtratorReciboNaoFiscal)
+    except ImportError as e:
+        logger.warning("Extrator recibo_nao_fiscal indisponível: %s", e)
+
     return extratores
 
 
