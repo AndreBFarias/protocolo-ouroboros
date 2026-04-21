@@ -12,13 +12,16 @@ Tipos de nó manipulados:
 - periodo     (Sprint 42)  -- chave: YYYY-MM
 - item        (futuro 44/44b) -- chave: <cnpj_varejo>|<data>|<descricao_norm>
 - documento   (futuro 44/44b) -- chave: chave-44 ou número da nota
+- prescricao  (Sprint 47a) -- chave: PRESC|<data>|<crm>|<hash>
+- garantia    (Sprint 47b) -- chave: GAR|<cnpj>|<serial>|<data_compra>
 
 Tipos de aresta:
 
-- emitida_por  (apolice -> seguradora)
+- emitida_por  (apolice|prescricao|garantia -> seguradora|fornecedor)
 - vendida_em   (apolice -> fornecedor/varejo)
-- ocorre_em    (apolice|documento -> periodo)
+- ocorre_em    (apolice|documento|prescricao|garantia -> periodo)
 - assegura     (apolice -> item)   -- opcional; só se o item já estiver no grafo
+- cobre        (garantia -> item)  -- opcional; só se o item já estiver no grafo
 - fornecido_por (documento -> fornecedor)  -- futuro
 - contem_item   (documento -> item)         -- futuro
 """
@@ -706,6 +709,89 @@ def _localizar_item_farmacia_por_principio(
         if node.id is not None:
             return node.id
     return None
+
+
+# ============================================================================
+# Ingestão de garantia de fabricante (Sprint 47b)
+# ============================================================================
+
+CAMPOS_OBRIGATORIOS_GARANTIA: tuple[str, ...] = (
+    "chave_garantia", "fornecedor_cnpj", "data_inicio", "prazo_meses",
+)
+
+
+def ingerir_garantia(
+    db: GrafoDB,
+    garantia: dict[str, Any],
+    caminho_arquivo: Path | None = None,
+) -> int:
+    """Insere termo de garantia de fabricante (Sprint 47b) e suas arestas.
+
+    Modela garantia NATIVA do produto ou do varejista (pedido) -- distinta
+    da Sprint 47c (`ingerir_apolice`: garantia estendida SUSEP com seguradora).
+    Campos obrigatórios: chave_garantia (`GAR|<cnpj>|<serial>|<data>`),
+    fornecedor_cnpj, data_inicio (YYYY-MM-DD), prazo_meses. Opcionais
+    preservados em metadata: data_fim, produto, numero_serie, fornecedor_nome,
+    categoria_produto, condicoes, tipo_garantia, expirando. Campos com
+    prefixo `_` são filtrados. Arestas: garantia->fornecedor (emitida_por),
+    garantia->periodo (ocorre_em), garantia->item (cobre, opcional via
+    `localizar_item`). Idempotente: chave_garantia única. Devolve id do nó.
+    """
+    for campo in CAMPOS_OBRIGATORIOS_GARANTIA:
+        if garantia.get(campo) in (None, ""):
+            raise ValueError(
+                f"garantia sem '{campo}' -- ingestão abortada "
+                "(nó garantia ou aresta ficaria órfão)"
+            )
+    metadata = {
+        chave: valor for chave, valor in garantia.items()
+        if valor is not None and not chave.startswith("_")
+    }
+    metadata.setdefault("tipo_documento", "garantia_fabricante")
+    if caminho_arquivo is not None:
+        metadata["arquivo_origem"] = str(caminho_arquivo)
+
+    garantia_id = db.upsert_node(
+        "garantia", garantia["chave_garantia"], metadata=metadata,
+    )
+    fornecedor_id = upsert_fornecedor(
+        db, garantia["fornecedor_cnpj"],
+        razao_social=garantia.get("fornecedor_nome"),
+    )
+    db.adicionar_edge(garantia_id, fornecedor_id, "emitida_por")
+    mes_ref = _extrair_mes_ref(garantia["data_inicio"])
+    if mes_ref:
+        periodo_id = upsert_periodo(db, mes_ref)
+        db.adicionar_edge(garantia_id, periodo_id, "ocorre_em")
+
+    # Linking opcional: item já ingerido de NF (44/44b/45) via localizar_item
+    # (mesmo casamento heurístico da apólice 47c: cnpj+janela+rapidfuzz).
+    produto_descricao = garantia.get("produto") or garantia.get("bem_segurado") or ""
+    if produto_descricao:
+        item_id = localizar_item(
+            db,
+            descricao=produto_descricao,
+            cnpj_varejo=garantia["fornecedor_cnpj"],
+            data_iso=garantia["data_inicio"],
+        )
+        if item_id is not None:
+            db.adicionar_edge(
+                garantia_id, item_id, "cobre",
+                evidencia={"match": "descricao+cnpj+janela_data"},
+            )
+            logger.info("garantia %s linkada a item %s via 'cobre'",
+                        garantia["chave_garantia"], item_id)
+
+    if garantia.get("expirando"):
+        logger.warning(
+            "garantia %s (produto %s) expira em %s -- faltam <=30 dias",
+            garantia["chave_garantia"], produto_descricao or "?",
+            garantia.get("data_fim"),
+        )
+    logger.info("garantia %s ingerida: fornecedor %s, prazo %s meses",
+                garantia["chave_garantia"], garantia["fornecedor_cnpj"],
+                garantia["prazo_meses"])
+    return garantia_id
 
 
 # "Cada documento é um nó; cada nó é uma memória." -- princípio de arquivista

@@ -1,0 +1,108 @@
+# Padrões conhecidos de termo de garantia de FABRICANTE (Sprint 47b).
+#
+# Distinção importante: este YAML cobre garantia NATIVA do produto
+# (Electrolux, Samsung, LG), NÃO apólice SUSEP de garantia estendida
+# (aquilo é Sprint 47c -- `mappings/seguradoras.yaml`).
+#
+# Termos de fabricante têm três origens comuns:
+#   1. Folheto/certificado do fabricante impresso na caixa.
+#   2. Confirmação de registro de produto enviada por e-mail.
+#   3. Print do pedido do varejista (Americanas, Magalu, Amazon) com
+#      prazo declarado na linha "Garantia: N meses".
+#
+# O extrator usa este YAML para reconhecer fornecedores conhecidos e
+# aumentar a confiança do parse (regex específica > regex genérica).
+# Quando o texto não casa com nenhum dos fabricantes/varejistas listados,
+# o extrator cai no `fabricante_generico` (fallback permissivo).
+#
+# Acentuação: campos são idiomáticos em português; chaves técnicas
+# seguem a convenção N-para-N do grafo (sem acento).
+
+fabricantes:
+  - nome: Electrolux
+    aliases:
+      - "electrolux do brasil"
+      - "electrolux s.a."
+    cnpj: "17.474.294/0001-40"
+    padrao_produto: 'GELADEIRA|GELADEIRAS|FOG(AO|ÃO)|LAVA\s*E\s*SECA|LAVADORA|SECADORA|FREEZER|FORNO'
+    padrao_serial: 'S[ée]rie[:\s]*(?P<serial>[A-Z0-9\-]{6,20})'
+    prazo_padrao_meses: 12
+    categoria_produto: eletrodomestico
+
+  - nome: Samsung
+    aliases:
+      - "samsung eletronica"
+      - "samsung brasil"
+    cnpj: "00.280.273/0001-37"
+    padrao_produto: 'GALAXY|SMART\s*TV|REFRIGERADOR|LAVA|MICROONDAS'
+    padrao_serial: 'IMEI[:\s]*(?P<serial>\d{14,15})|S/?N[:\s]*(?P<serial_sn>[A-Z0-9]{8,20})'
+    prazo_padrao_meses: 12
+    categoria_produto: eletronico
+
+  - nome: LG
+    aliases:
+      - "lg eletronics"
+      - "lg brasil"
+    cnpj: "01.166.372/0001-55"
+    padrao_produto: 'SMART\s*TV|GELADEIRA|LAVA|REFRIGERADOR|MICROONDAS|AR\s*CONDICIONADO'
+    padrao_serial: 'S[ée]rie[:\s]*(?P<serial>[A-Z0-9]{8,20})'
+    prazo_padrao_meses: 12
+    categoria_produto: eletronico
+
+  - nome: Whirlpool
+    aliases:
+      - "brastemp"
+      - "consul"
+      - "whirlpool s.a."
+    cnpj: "59.105.999/0001-86"
+    padrao_produto: 'GELADEIRA|LAVADORA|FOG(AO|ÃO)|FORNO|BRASTEMP|CONSUL'
+    padrao_serial: 'S[ée]rie[:\s]*(?P<serial>[A-Z0-9]{8,20})'
+    prazo_padrao_meses: 12
+    categoria_produto: eletrodomestico
+
+  - nome: Apple
+    aliases:
+      - "apple computer"
+      - "apple do brasil"
+    cnpj: "00.623.904/0001-73"
+    padrao_produto: 'IPHONE|IPAD|MACBOOK|MAC\s*MINI|AIRPODS|APPLE\s*WATCH'
+    padrao_serial: 'IMEI[:\s]*(?P<serial>\d{14,15})|Serial[:\s]*(?P<serial_sn>[A-Z0-9]{10,14})'
+    prazo_padrao_meses: 12
+    categoria_produto: eletronico
+
+varejistas:
+  - nome: Americanas
+    aliases:
+      - "lojas americanas"
+      - "b2w"
+      - "americanas s.a."
+    cnpj: "00.776.574/0006-60"
+    padrao_linha_garantia: 'Garantia[:\s]+(?P<prazo>\d{1,3})\s*(?P<unidade>meses?|anos?|dias?)'
+
+  - nome: Magalu
+    aliases:
+      - "magazine luiza"
+      - "magazine luiza s.a."
+    cnpj: "47.960.950/0001-21"
+    padrao_linha_garantia: 'Garantia[:\s]+(?P<prazo>\d{1,3})\s*(?P<unidade>meses?|anos?)'
+
+  - nome: Amazon
+    aliases:
+      - "amazon servicos de varejo"
+      - "amazon.com.br"
+    cnpj: "15.436.940/0001-03"
+    padrao_linha_garantia: 'Garantia[:\s]+(?P<prazo>\d{1,3})\s*(?P<unidade>meses?|anos?|dias?)'
+
+  - nome: Mercado Livre
+    aliases:
+      - "mercadolivre"
+      - "mercado libre"
+    cnpj: "03.007.331/0001-41"
+    padrao_linha_garantia: 'Garantia[:\s]+(?P<prazo>\d{1,3})\s*(?P<unidade>meses?|anos?|dias?)'
+
+fallback:
+  nome: fabricante_generico
+  padrao_linha_garantia: 'Prazo\s+de\s+Garantia[:\s]+(?P<prazo>\d{1,3})\s*(?P<unidade>meses?|anos?|dias?)'
+  prazo_padrao_meses: 12
+
+# "O que vale comprar vale lembrar." -- princípio do consumidor cauteloso

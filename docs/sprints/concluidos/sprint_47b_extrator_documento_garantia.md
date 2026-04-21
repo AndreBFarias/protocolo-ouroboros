@@ -31,7 +31,7 @@ sprint:
 
 # Sprint 47b -- Extrator de Documento de Garantia
 
-**Status:** PENDENTE
+**Status:** CONCLUÍDA
 **Data:** 2026-04-19
 **Prioridade:** BAIXA
 **Tipo:** Feature
@@ -106,7 +106,7 @@ Dashboard Sprint 51 exibe; pipeline loga warnings.
 
 ### Fase 4: testes
 
-Fixtures em `tests/fixtures/garantias/`:
+Fixtures em `tests/fixtures/garantias_fabricante/`:
 - `garantia_americanas_12m.pdf`
 - `garantia_magalu_24m.pdf`
 - `garantia_email.eml`
@@ -136,7 +136,7 @@ Testes:
 ## Verificação end-to-end
 
 ```bash
-cp tests/fixtures/garantias/*.* data/raw/andre/garantias/
+cp tests/fixtures/garantias_fabricante/*.* data/raw/andre/garantias/
 ./run.sh --tudo
 sqlite3 data/output/grafo.sqlite "SELECT nome_canonico, JSON_EXTRACT(metadata, '\$.data_fim') FROM node WHERE tipo='garantia';"
 ```

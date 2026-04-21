@@ -132,6 +132,17 @@ def _descobrir_extratores() -> list:
     except ImportError as e:
         logger.warning("Extrator receita_medica indisponível: %s", e)
 
+    # Garantia de fabricante (Sprint 47b). Prioridade baixa: registrada
+    # ANTES do catch-all recibo_nao_fiscal e DEPOIS da receita médica.
+    # Pistas específicas (`termo_garantia`, `certificado_garantia`,
+    # `garantia_fabricante`) evitam colisão com apólice estendida (47c).
+    try:
+        from src.extractors.garantia import ExtratorGarantiaFabricante
+
+        extratores.append(ExtratorGarantiaFabricante)
+    except ImportError as e:
+        logger.warning("Extrator garantia_fabricante indisponível: %s", e)
+
     # Recibo não-fiscal é catch-all de baixa prioridade (Sprint 47):
     # registrado depois dos extratores fiscais para não capturar arquivo
     # que pertence a cupom térmico, NFC-e ou DANFE.
