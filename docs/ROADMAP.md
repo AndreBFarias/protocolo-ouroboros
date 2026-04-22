@@ -41,8 +41,7 @@ Catalogador universal artesanal da vida financeira do casal. O usuário joga QUA
 | Backlog ativo (ALFA→EPSILON) | 46-53 (inclui 47a, 47b) | 11 |
 | Backlog consumidor (ZETA) | 20, 21, 24, 25, 33, 34, 35, 36 (pós-EPSILON) | 8 |
 | Fase ETA residual sprint-nova | 82 (canonicalizer variantes curtas, achado 68b-A) | 1 |
-| **Concluídas Fase IOTA (integração Controle de Bordo)** | **70** | **1** |
-| **Backlog Fase IOTA (integração Controle de Bordo)** | **71** | **1** |
+| **Concluídas Fase IOTA (integração Controle de Bordo)** | **70, 71** | **2** |
 | **Concluídas Fase KAPPA** | **72, 74, 76, 81** | **4** |
 | **Backlog Fase KAPPA (UX polish + tracking documental + workflow)** | **73, 75, 77, 78, 79, 80** | **6** |
 | Arquivadas (substituídas) | 08, 09, 10, 11, 15, 16, 26, 27a, 28, 29a, 29b, 31, 32 | 13 |
