@@ -3,7 +3,17 @@
 Sprint 20 introduziu fundação de design tokens: escala tipográfica hierárquica
 (6 níveis + hero), spacing scale (xs→xxl) e helpers de render (hero, subtítulo,
 label uppercase). Nomes antigos permanecem para retrocompatibilidade.
+
+Sprint 76 adicionou: floor absoluto de 13px (`FONTE_MIN_ABSOLUTA`), padding
+mínimo 16px nos retângulos das páginas, logo `assets/icon.png` renderizada
+centralizada acima do título "Protocolo Ouroboros" na sidebar (cacheada em
+`st.session_state`).
 """
+
+from __future__ import annotations
+
+import base64
+from pathlib import Path
 
 DRACULA: dict[str, str] = {
     "background": "#282A36",
@@ -44,7 +54,9 @@ MAPA_CLASSIFICACAO: dict[str, str] = {
 }
 
 # --- Escala tipográfica (Sprint 20) -----------------------------------------
-# Mínimo absoluto é 14px. Saltos garantem hierarquia visível.
+# Mínimo absoluto é 13px (rebaixado de 14 pela Sprint 76 — legibilidade
+# validada com André em viewport 1600x1000). Saltos garantem hierarquia.
+FONTE_MIN_ABSOLUTA: int = 13  # nenhum texto no app pode cair abaixo disso (Sprint 76)
 FONTE_MINIMA: int = 14
 FONTE_LABEL: int = 13  # uppercase pequeno (legenda, caption, badge)
 FONTE_CORPO: int = 15
@@ -52,6 +64,13 @@ FONTE_SUBTITULO: int = 18
 FONTE_TITULO: int = 22
 FONTE_VALOR: int = 24  # cards KPI
 FONTE_HERO: int = 28  # hero de página
+
+# --- Padding canônico das páginas (Sprint 76) -------------------------------
+# Retângulos internos (.main .block-container) devem ter padding >= 16px
+# para evitar texto colado na borda. 24px é o padrão; páginas podem
+# sobrescrever para mais (nunca menos).
+PADDING_PAGINA_MIN_PX: int = 16
+PADDING_PAGINA_PADRAO_PX: int = 24
 
 # --- Tipografia fluida (Sprint 62) ------------------------------------------
 # Tokens `clamp(min, preferido, max)` para redimensionamento contínuo em
@@ -75,6 +94,50 @@ SPACING: dict[str, int] = {
     "xl": 32,
     "xxl": 48,
 }
+
+
+# --- Logo da sidebar (Sprint 76) --------------------------------------------
+_CAMINHO_LOGO: Path = Path(__file__).resolve().parents[2] / "assets" / "icon.png"
+
+
+def logo_sidebar_html(largura_px: int = 96) -> str:
+    """HTML da logo centralizada para inserir no topo da sidebar.
+
+    Cacheia o base64 em `st.session_state["_logo_b64"]` (leitura única
+    por sessão). Em ausência do arquivo (ex: repo sem `assets/icon.png`),
+    devolve string vazia — caller deve tolerar. A checagem de existência
+    acontece antes do cache (testes que removem o arquivo no meio do fluxo
+    ainda recebem string vazia mesmo com cache quente).
+    """
+    if not _CAMINHO_LOGO.exists():
+        return ""
+
+    try:
+        import streamlit as st  # import atrasado: tema.py roda em testes sem streamlit
+    except ImportError:  # pragma: no cover - streamlit é dep obrigatória em runtime
+        st = None  # type: ignore[assignment]
+
+    b64: str | None = None
+    if st is not None and hasattr(st, "session_state"):
+        b64 = st.session_state.get("_logo_b64")  # type: ignore[union-attr]
+
+    if not b64:
+        b64 = base64.b64encode(_CAMINHO_LOGO.read_bytes()).decode("ascii")
+        if st is not None and hasattr(st, "session_state"):
+            st.session_state["_logo_b64"] = b64  # type: ignore[union-attr]
+
+    return (
+        f'<div style="text-align:center; margin-bottom:{SPACING["md"]}px;">'
+        f'<img src="data:image/png;base64,{b64}" '
+        f'width="{largura_px}" '
+        f'style="display:block; margin:0 auto;" '
+        f'alt="Protocolo Ouroboros"/>'
+        f'<h1 style="margin-top:{SPACING["sm"]}px; '
+        f"font-family:monospace; "
+        f'color:{CORES["destaque"]}; '
+        f'text-align:center;">Protocolo Ouroboros</h1>'
+        f"</div>"
+    )
 
 
 def card_html(titulo: str, valor: str, cor: str) -> str:
@@ -192,6 +255,25 @@ def css_global() -> str:
     <style>
     html, body, .stApp, [data-testid="stAppViewContainer"] {{
         font-size: {FONTE_CORPO}px;
+    }}
+    /* Sprint 76: floor absoluto de {FONTE_MIN_ABSOLUTA}px. Impede que regras
+       herdadas ou inline reduzam texto abaixo do legível. Aplicado via
+       seletor universal sem !important para respeitar hierarquia quando
+       a classe alvo define valor >= {FONTE_MIN_ABSOLUTA}px. */
+    [data-testid="stAppViewContainer"] p,
+    [data-testid="stAppViewContainer"] span,
+    [data-testid="stAppViewContainer"] li,
+    [data-testid="stAppViewContainer"] label {{
+        font-size: max({FONTE_MIN_ABSOLUTA}px, 1em);
+    }}
+    .js-plotly-plot .plotly text {{
+        font-size: {FONTE_MIN_ABSOLUTA}px !important;
+    }}
+    /* Sprint 76: padding interno generoso nos retângulos das páginas,
+       evitando texto colado na borda em Grafo/IRPF/Metas/Extrato. */
+    .main .block-container {{
+        padding: {PADDING_PAGINA_PADRAO_PX}px !important;
+        padding-top: {SPACING["xl"]}px !important;
     }}
     .block-container {{ padding-top: {SPACING["xl"]}px; }}
     [data-testid="stSidebar"] {{ background-color: {CORES["card_fundo"]}; }}

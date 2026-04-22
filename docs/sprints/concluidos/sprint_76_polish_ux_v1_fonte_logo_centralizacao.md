@@ -39,7 +39,7 @@ sprint:
 
 # Sprint 76 — Polish UX v1
 
-**Status:** BACKLOG
+**Status:** CONCLUÍDA (2026-04-22)
 **Prioridade:** P1
 **Dependências:** Sprint 62 (responsividade base)
 **Issue:** UX-ANDRE-04
@@ -124,10 +124,18 @@ Ou via CSS global:
 
 ## Evidências
 
-- [ ] Screenshot da sidebar com logo centralizada
-- [ ] Screenshot de 3 páginas sem texto colado
-- [ ] Inspect CSS mostra `font-size: 13px` mínimo
-- [ ] Teste automático lendo a CSS gerada
+- [x] `FONTE_MIN_ABSOLUTA = 13` publicado em `src/dashboard/tema.py` como token canônico.
+- [x] `PADDING_PAGINA_PADRAO_PX = 24` (>= `PADDING_PAGINA_MIN_PX = 16` exigido pelo spec).
+- [x] `css_global()` declara regra `max(13px, 1em)` no container principal + `.js-plotly-plot .plotly text` com `13px !important` para Plotly não cair abaixo do floor.
+- [x] `.main .block-container { padding: 24px !important; }` — padding interno das páginas.
+- [x] `logo_sidebar_html()` novo em `tema.py`: lê `assets/icon.png`, cacheia base64 em `st.session_state["_logo_b64"]`, revalida existência antes de devolver cache (graceful degradation).
+- [x] `src/dashboard/app.py`: sidebar troca `st.title("Protocolo Ouroboros")` por markdown com logo + título centralizados.
+- [x] 9 testes novos em `tests/test_ux_tokens.py` — todos verdes (token floor, hierarquia, regra CSS, graceful degradation, largura configurável).
+- [x] Gauntlet: `make lint` exit 0, 921 passed / 10 skipped (+9 vs 912), smoke strict 8/8 OK.
+
+### Ressalvas
+
+- [R76-1] **Screenshot ANTES/DEPOIS**: spec pede proof-of-work visual em 3 páginas (Visão Geral, Grafo, IRPF) via viewport 1600x1000. Validação automática cobre invariantes CSS/tokens (o que é detectável sem browser), mas o confronto visual humano fica para a primeira sessão do André com o dashboard pós-Sprint 76. Skill `validacao-visual` pode ser invocada sob demanda.
 
 ---
 
