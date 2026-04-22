@@ -6,8 +6,10 @@ import pandas as pd
 import streamlit as st
 
 from src.dashboard.dados import (
+    filtrar_por_forma_pagamento,
     filtrar_por_mes,
     filtrar_por_pessoa,
+    filtro_forma_ativo,
     formatar_moeda,
     renderizar_dataframe,
 )
@@ -52,7 +54,9 @@ def _secao_dividas(df: pd.DataFrame, mes: str, pessoa: str) -> None:
             (df["recorrente"] == True) & (df["status"] != "Pago")  # noqa: E712
         ]
         df_mes = pd.concat([df_mes, df_recorrentes]).drop_duplicates()
-    df_mes = filtrar_por_pessoa(df_mes, pessoa)
+    df_mes = filtrar_por_forma_pagamento(
+        filtrar_por_pessoa(df_mes, pessoa), filtro_forma_ativo()
+    )
 
     if df_mes.empty:
         st.info("Sem dívidas registradas para este período.")

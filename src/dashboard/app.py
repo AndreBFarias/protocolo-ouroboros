@@ -139,6 +139,20 @@ def _sidebar(dados: dict) -> tuple[str, str, str]:
             key="seletor_pessoa",
         )
 
+        # Sprint 72: filtro global por forma de pagamento. O valor é
+        # salvo em session_state sob a chave "filtro_forma"; cada página
+        # consulta via dados.filtro_forma_ativo() e aplica via
+        # dados.filtrar_por_forma_pagamento().
+        forma_sel: str = st.selectbox(
+            "Forma de pagamento",
+            ["Todas", "Pix", "Débito", "Crédito", "Boleto", "Transferência"],
+            index=0,
+            key="seletor_forma_pagamento",
+        )
+        st.session_state["filtro_forma"] = (
+            None if forma_sel == "Todas" else forma_sel
+        )
+
         st.markdown("---")
 
         _cards_sidebar(dados, periodo, pessoa, granularidade)
@@ -151,9 +165,14 @@ def _cards_sidebar(dados: dict, periodo: str, pessoa: str, granularidade: str) -
     if "extrato" not in dados:
         return
 
-    ext = filtrar_por_pessoa(
-        filtrar_por_periodo(dados["extrato"], granularidade, periodo),
-        pessoa,
+    from src.dashboard.dados import filtrar_por_forma_pagamento, filtro_forma_ativo
+
+    ext = filtrar_por_forma_pagamento(
+        filtrar_por_pessoa(
+            filtrar_por_periodo(dados["extrato"], granularidade, periodo),
+            pessoa,
+        ),
+        filtro_forma_ativo(),
     )
     receita = ext[ext["tipo"] == "Receita"]["valor"].sum()
     despesa = ext[ext["tipo"].isin(["Despesa", "Imposto"])]["valor"].sum()
