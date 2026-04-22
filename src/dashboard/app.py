@@ -9,6 +9,7 @@ RAIZ_PROJETO: Path = Path(__file__).resolve().parents[2]
 if str(RAIZ_PROJETO) not in sys.path:
     sys.path.insert(0, str(RAIZ_PROJETO))
 
+from src.dashboard.componentes.drilldown import ler_filtros_da_url  # noqa: E402
 from src.dashboard.dados import (  # noqa: E402
     CAMINHO_XLSX,
     carregar_dados,
@@ -197,6 +198,10 @@ def _cards_sidebar(dados: dict, periodo: str, pessoa: str, granularidade: str) -
 def main() -> None:
     """Função principal do dashboard."""
     _configurar_pagina()
+
+    # Sprint 73 (ADR-19): lê filtros de drill-down da URL antes de renderizar
+    # qualquer componente, populando session_state com chaves filtro_*.
+    ler_filtros_da_url()
 
     dados = carregar_dados()
 

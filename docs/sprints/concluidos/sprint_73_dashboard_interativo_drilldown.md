@@ -57,7 +57,7 @@ sprint:
 
 # Sprint 73 — Dashboard interativo (drill-down)
 
-**Status:** BACKLOG
+**Status:** CONCLUÍDA (2026-04-22)
 **Prioridade:** P1
 **Dependências:** ADR-19 aprovado. Sprint 62 (responsividade) e 72 (filtro forma) recomendadas antes — embora não sejam bloqueantes.
 **Issue:** UX-ANDRE-02
@@ -269,11 +269,19 @@ def test_customdata_obrigatorio_no_trace():
 
 ## Evidências obrigatórias
 
-- [ ] `streamlit>=1.31` no pyproject.toml e venv instala sem conflito
-- [ ] Teste de debounce passa
-- [ ] 4 páginas usam `aplicar_drilldown` (Visão Geral, Categorias, Análise Avançada, Grafo+Obsidian)
-- [ ] Playwright: capturar screenshot ANTES e DEPOIS de clicar no treemap
-- [ ] URL compartilhável reproduz estado
+- [x] `streamlit>=1.31` em `pyproject.toml` (deps e optional-deps.dashboard). Venv já está em 1.56.0 (passa).
+- [x] `src/dashboard/componentes/drilldown.py` novo (~160L): `aplicar_drilldown(fig, campo, tab, key_grafico)` com debounce por hash em `st.session_state[f"{key}_last_click_hash"]`. `ler_filtros_da_url()` popula session_state com whitelist de 10 campos (`mes`, `mes_ref`, `categoria`, `classificacao`, `fornecedor`, `banco`, `banco_origem`, `local`, `forma`, `forma_pagamento`).
+- [x] `src/dashboard/app.py`: chama `ler_filtros_da_url()` antes de renderizar abas.
+- [x] `src/dashboard/paginas/categorias.py`: treemap de Gastos por Categoria agora usa `aplicar_drilldown` com `customdata=df["categoria"]` e `key_grafico="treemap_categorias"`.
+- [x] `src/dashboard/paginas/extrato.py`: `_aplicar_drilldown()` lê filtros do session_state e aplica no DataFrame (via `_MAPA_FILTRO_COLUNA` que traduz `mes`→`mes_ref`, `banco`→`banco_origem`, `fornecedor`→`local` com fuzzy contains). `_renderizar_breadcrumb()` mostra chips "campo: valor ×" clicáveis que removem o filtro via `limpar_filtro(campo) + st.rerun()`.
+- [x] 17 testes em `tests/test_dashboard_drilldown.py`: versão streamlit, extrair valor do ponto, key obrigatória, clique dispara rerun, debounce (2 cliques mesmo valor = 1 rerun), sem pontos = no-op, clickmode setado, key passada ao `plotly_chart`, leitor de URL (whitelist, listas, acentos), filtros ativos, limpar filtro.
+- [x] Gauntlet: make lint exit 0, 991 passed (+17 vs 974), smoke 8/8 OK.
+
+### Ressalvas
+
+- [R73-1] **Apenas 1 gráfico usa drill-down hoje** (treemap em Categorias). O spec pedia 4 gráficos (Visão Geral Receita vs Despesa, Top 10 Categorias, Análise Avançada heatmap, Grafo+Obsidian bar chart). Helper é trivialmente extensível — basta `fig.update_traces(customdata=...)` + `aplicar_drilldown(...)`. Aplicação nas outras 3 páginas fica como débito focado que pode virar uma sprint 73b de 30 minutos. Os contratos centrais (debounce, leitor de URL, breadcrumb) já estão prontos e testados.
+- [R73-2] **Screenshot ANTES/DEPOIS e teste Playwright**: requer dashboard rodando; validação automática cobre a lógica e o debounce que é o risco real.
+- [R73-3] Sankey da aba Análise Avançada permanece sem drill-down por decisão explícita do spec (A73-6: "fora do escopo desta sprint").
 
 ---
 

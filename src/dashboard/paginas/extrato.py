@@ -7,6 +7,10 @@ import pandas as pd
 import streamlit as st
 import yaml
 
+from src.dashboard.componentes.drilldown import (
+    filtros_ativos_do_session_state,
+    limpar_filtro,
+)
 from src.dashboard.componentes.modal_transacao import mostrar_modal
 from src.dashboard.dados import (
     filtrar_por_forma_pagamento,
@@ -15,6 +19,61 @@ from src.dashboard.dados import (
     filtro_forma_ativo,
 )
 from src.dashboard.tema import CORES, FONTE_CORPO
+
+# Sprint 73: mapeamento dos filtros vindos de drill-down para colunas do DF.
+_MAPA_FILTRO_COLUNA: dict[str, str] = {
+    "mes": "mes_ref",
+    "mes_ref": "mes_ref",
+    "categoria": "categoria",
+    "classificacao": "classificacao",
+    "fornecedor": "local",  # fuzzy contains, case-insensitive
+    "local": "local",
+    "banco": "banco_origem",
+    "banco_origem": "banco_origem",
+    "forma": "forma_pagamento",
+    "forma_pagamento": "forma_pagamento",
+}
+
+
+def _aplicar_drilldown(df: pd.DataFrame) -> tuple[pd.DataFrame, dict[str, str]]:
+    """Aplica filtros vindos de drill-down (Sprint 73). Retorna df filtrado
+    e dict dos filtros efetivos aplicados (para breadcrumb)."""
+    filtros = filtros_ativos_do_session_state()
+    aplicados: dict[str, str] = {}
+    for campo, valor in filtros.items():
+        coluna = _MAPA_FILTRO_COLUNA.get(campo)
+        if not coluna or coluna not in df.columns:
+            continue
+        if campo in ("fornecedor", "local"):
+            mascara = df[coluna].fillna("").astype(str).str.contains(
+                valor, case=False, na=False, regex=False
+            )
+            df = df[mascara]
+        else:
+            df = df[df[coluna].astype(str) == valor]
+        aplicados[campo] = valor
+    return df, aplicados
+
+
+def _renderizar_breadcrumb(filtros: dict[str, str]) -> None:
+    """Exibe breadcrumb com X para remover cada filtro ativo (Sprint 73)."""
+    if not filtros:
+        return
+    import streamlit as st
+
+    st.markdown(
+        f'<p style="color: {CORES["destaque"]}; font-size: {FONTE_CORPO}px;">'
+        "Filtros ativos (clique no X para remover):</p>",
+        unsafe_allow_html=True,
+    )
+    cols = st.columns(len(filtros))
+    for i, (campo, valor) in enumerate(filtros.items()):
+        with cols[i]:
+            rotulo = f"{campo}: {valor}   ×"
+            if st.button(rotulo, key=f"limpar_filtro_{campo}"):
+                limpar_filtro(campo)
+                st.rerun()
+
 
 _CAMINHO_CATEGORIAS_TRACKING: Path = (
     Path(__file__).resolve().parents[3] / "mappings" / "categorias_tracking.yaml"
@@ -52,6 +111,9 @@ def renderizar(
     df = filtrar_por_periodo(extrato, gran, periodo)
     df = filtrar_por_pessoa(df, pessoa)
     df = filtrar_por_forma_pagamento(df, filtro_forma_ativo())
+    # Sprint 73 (ADR-19): aplica filtros vindos de drill-down (URL / clique).
+    df, filtros_drilldown = _aplicar_drilldown(df)
+    _renderizar_breadcrumb(filtros_drilldown)
 
     if df.empty:
         st.info("Sem transações para o período selecionado.")
