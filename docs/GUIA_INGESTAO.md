@@ -8,13 +8,34 @@ Base empírica: auditoria 2026-04-21 descobriu que as features das Sprints 47a, 
 
 ## 1. Onde colocar cada tipo de arquivo
 
-Existem dois fluxos: **inbox triada** (automático, recomendado para usuário final) e **raw direto** (quando o arquivo já está no nome/pasta correta).
+Existem dois fluxos: **inbox unificada** (automático, recomendado) e **raw direto** (quando o arquivo já está no nome/pasta correta).
 
-### 1.1 Fluxo triado: `data/inbox/`
+### 1.1 Fluxo unificado: vault + legado (Sprint 70)
 
-Jogue o arquivo em `data/inbox/` sem se preocupar com nome ou pasta. O intake (`./run.sh --inbox`) detecta o tipo por magic bytes + regex de conteúdo (via `mappings/tipos_documento.yaml`), renomeia com SHA8 + data e move para a pasta canônica.
+A partir da Sprint 70 (Fase IOTA), o adapter `src.integrations.controle_bordo` varre 3 fontes em ordem de prioridade, todas declaradas em `mappings/inbox_routing.yaml`:
 
-Extensões aceitas: `.pdf`, `.xml`, `.eml`, `.zip`, `.jpg`, `.jpeg`, `.png`, `.heic`, `.heif`, `.webp`, `.csv`, `.xlsx`, `.xls`, `.ofx`, `.txt`.
+1. **`$BORDO_DIR/Inbox/`** (default `~/Controle de Bordo/Inbox/`) — canônica a partir de agora. Jogue aqui qualquer arquivo: o adapter identifica os financeiros e os extrai; notas pessoais (`.md`) permanecem no vault para o motor do Obsidian cuidar.
+2. **`./inbox/`** (raiz do projeto) — legado. Continua funcionando para quem prefere isolar dev do vault.
+3. **`./data/inbox/`** — destino interno antigo. Preservado para retrocompatibilidade.
+
+O adapter:
+
+- Preserva cópia de cada arquivo absorvido em `data/raw/originais/{sha256[:16]}.ext` **antes** de qualquer movimento (idempotente por hash).
+- Delega detecção de tipo ao `src/intake/registry.py` (detector legado bancário + YAML documental).
+- Move somente tipos declarados em `tipos_absorvidos` do YAML (lista completa em `mappings/inbox_routing.yaml`).
+- Arquivos de tipo desconhecido **permanecem na origem**; adapter nunca remove o que não sabe absorver (ADR-18).
+- Nunca desce em forbidden zones do vault (`.sistema/`, `Trabalho/`, `Segredos/`, `Arquivo/`, `.obsidian/`).
+
+Comandos:
+
+```bash
+BORDO_DIR="$HOME/Controle de Bordo" ./run.sh --inbox-dry   # inspeção sem efeito
+BORDO_DIR="$HOME/Controle de Bordo" ./run.sh --inbox       # efetiva o roteamento
+```
+
+A flag `--inbox` faz em cadeia: (1) adapter varre e roteia financeiros do vault + legado, (2) `inbox_processor` faz fallback para legado local (arquivos que porventura restem).
+
+Extensões aceitas: `.pdf`, `.xml`, `.eml`, `.zip`, `.jpg`, `.jpeg`, `.png`, `.heic`, `.heif`, `.webp`, `.csv`, `.xlsx`, `.xls`, `.ofx`, `.txt`. Arquivos `.md` e `.markdown` são tratados como nota pessoal e ficam na origem.
 
 ### 1.2 Fluxo direto: `data/raw/<pessoa>/<tipo>/`
 

@@ -52,7 +52,7 @@ sprint:
 
 # Sprint 70 — Inbox unificada
 
-**Status:** BACKLOG
+**Status:** CONCLUÍDA (2026-04-22)
 **Prioridade:** P0 (fundação da integração com Controle de Bordo)
 **Dependências:** ADR-18 aprovado
 **Desbloqueia:** 71, 74, 80
@@ -213,11 +213,19 @@ def test_adapter_copia_para_originais_antes_de_mover(tmp_path, monkeypatch):
 
 ## Evidências
 
-- [ ] `./run.sh --inbox` processa vault inbox real sem quebrar arquivos não-financeiros
-- [ ] `data/raw/originais/{hash}.ext` tem cópia de cada arquivo movido
-- [ ] Relatório stdout lista roteamento
-- [ ] Testes verdes
-- [ ] Documentação em `docs/GUIA_INGESTAO.md` (Sprint 57) atualizada para fluxo unificado
+- [x] `./run.sh --inbox` processa inbox unificada (adapter + inbox_processor) sem quebrar não-financeiros — flag também ganhou `--inbox-dry` para inspecionar sem efeito colateral.
+- [x] `data/raw/originais/{sha256_16}.ext` tem cópia de cada arquivo movido (GTC-01: `6c553618e5a550f3.pdf` + `94a77a64d6f7e9c0.pdf`).
+- [x] Relatório estruturado via logger (stdout + arquivo): lista por arquivo [origem, source, tipo, ação, destino, preservado_em] + sumário por ação.
+- [x] 18 testes novos em `tests/test_controle_bordo_adapter.py` — todos verdes (config, planejamento, preservação, forbidden zones, CLI).
+- [x] **GTC-01 cumprido em execução real**: `inbox/natacao_andre.pdf` + `inbox/natacao_andre2.pdf` detectados como `boleto_servico`, movidos para `data/raw/casal/boletos/` (renomeados `BOLETO_2026-04-21_94a77a64.pdf` e `BOLETO_2026-04-21_6c553618.pdf`), com cópia em `data/raw/originais/`.
+- [x] Baseline pytest crescido: 894 → 912 passed (+18), 10 skipped.
+- [x] Smoke strict 8/8 OK. Make lint exit 0.
+
+### Ressalvas formais
+
+- [R70-1] **Pessoa=casal, não andre**: GTC-01 esperava `data/raw/andre/boletos/`. O `pessoa_detector` busca CPF no conteúdo do PDF (não no nome do arquivo); o boleto do Sesc não carrega CPF específico, então cai no fallback `casal`. Arquivo FOI roteado corretamente; apenas a segmentação por pessoa é subótima. Remediação não-bloqueante em sprint futura (heurística por nome de arquivo, ou extração de CPF em camada de extração de boleto).
+- [R70-2] **Tipo `None` no relatório**: quando o registry devolve `Decisao` com `tipo` nulo (regras YAML não casam), o log mostra literal `tipo=None`. Comportamento correto (ação é `skip_nao_identificado`), mas visual ruído. Polish cosmético.
+- [R70-3] **PDFs de IRPF do inbox legado**: 17 parcelas IRPF + 3 "ANDRE DA SILVA BATISTA" + comprovantes (25 arquivos total) ficaram `skip_nao_identificado` porque `tipos_documento.yaml` não tem regra para DAS/parcelamento MEI nem para comprovante CPF. Escopo de sprint futura de extratores; adapter agiu corretamente deixando-os na origem.
 
 ---
 

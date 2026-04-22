@@ -192,12 +192,14 @@ exibir_menu() {
 # ─────────────────────────────────────────────────────────
 acao_processar_inbox() {
     echo ""
-    msg_info "Processando inbox..."
+    msg_info "Processando inbox unificada (vault + legado)..."
     echo ""
     backup_xlsx
+    # Sprint 70 (Fase IOTA): adapter varre vault + legado, roteia financeiros
+    python -m src.integrations.controle_bordo --executar || msg_aviso "Adapter do vault reportou erro(s); seguindo."
     if python -m src.inbox_processor; then
         echo ""
-        msg_ok "Inbox processado."
+        msg_ok "Inbox processada."
     else
         echo ""
         msg_erro "Falha ao processar inbox."
@@ -395,7 +397,8 @@ exibir_help() {
     echo -e "  Sem argumentos abre o menu interativo."
     echo ""
     echo -e "  ${WHITE}Processamento${NC}"
-    echo -e "    ${GREEN}--inbox${NC}             Processa arquivos do inbox/"
+    echo -e "    ${GREEN}--inbox${NC}             Processa inbox unificada (vault + legado)"
+    echo -e "    ${GREEN}--inbox-dry${NC}         Inspeciona inbox unificada sem mover nada"
     echo -e "    ${GREEN}--mes${NC} ${DIM}YYYY-MM${NC}       Processa um mês específico"
     echo -e "    ${GREEN}--tudo${NC}              Processa todos os dados"
     echo ""
@@ -428,10 +431,16 @@ trap 'echo -e "\n    ${DIM}Até a próxima.${NC}\n"; exit 0' INT
 
 case "${1:-}" in
     --inbox)
-        msg_info "Processando inbox..."
+        msg_info "Processando inbox unificada (vault + legado)..."
         backup_xlsx
+        # Sprint 70 (Fase IOTA): adapter varre vault + legado primeiro
+        python -m src.integrations.controle_bordo --executar || msg_aviso "Adapter do vault reportou erro(s); seguindo."
         python -m src.inbox_processor
-        msg_ok "Inbox processado."
+        msg_ok "Inbox processada."
+        ;;
+    --inbox-dry)
+        msg_info "Inspecionando inbox unificada (dry-run, sem efeito colateral)..."
+        python -m src.integrations.controle_bordo
         ;;
     --mes)
         MES="${2:?Informe o mês no formato YYYY-MM}"
