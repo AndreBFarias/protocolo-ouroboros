@@ -5,6 +5,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
+from src.dashboard.componentes.drilldown import aplicar_drilldown
 from src.dashboard.dados import (
     filtrar_por_forma_pagamento,
     filtrar_por_mes,
@@ -98,10 +99,18 @@ def _treemap_categorias(df: pd.DataFrame) -> None:
         textinfo="label+value",
         texttemplate="%{label}<br>R$ %{value:,.2f}",
         textfont=dict(size=FONTE_CORPO),
+        customdata=agrupado["categoria"],
     )
 
     aplicar_locale_ptbr(fig)
-    st.plotly_chart(fig, width="stretch")
+    # Sprint 73 (ADR-19): clique em folha do treemap navega para aba Extrato
+    # com filtro de categoria aplicado via query_params.
+    aplicar_drilldown(
+        fig,
+        campo_customdata="categoria",
+        tab_destino="Extrato",
+        key_grafico="treemap_categorias",
+    )
 
 
 def _ranking_com_variacao(extrato_filtrado: pd.DataFrame, mes_atual: str) -> None:
