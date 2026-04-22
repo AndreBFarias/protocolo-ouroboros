@@ -90,11 +90,75 @@ def renderizar(
 
     mes_ref = _extrair_mes_ref(dados, periodo)
 
+    # Sprint 78: nova visão full-page Obsidian-like com filtros laterais
+    # e clique em nó via URL navigation. Colocada como expander para não
+    # deslocar as seções existentes (subgrafo 1-hop, MOC, bar charts).
+    with st.expander("Grafo Full-Page (Obsidian-like)", expanded=True):
+        _renderizar_fullpage()
+    st.markdown(_divisor(), unsafe_allow_html=True)
+
     _renderizar_subgrafo()
     st.markdown(_divisor(), unsafe_allow_html=True)
     _renderizar_obsidian(mes_ref)
     st.markdown(_divisor(), unsafe_allow_html=True)
     _renderizar_fluxo(mes_ref)
+
+
+def _renderizar_fullpage() -> None:
+    """Sprint 78: grafo full-page com painel de filtros + click handler JS."""
+    import streamlit.components.v1 as components
+
+    from src.dashboard.componentes.grafo_pyvis import (
+        COR_POR_TIPO,
+        construir_grafo_html,
+    )
+    from src.graph.db import GrafoDB
+    from src.graph.queries import grafo_filtrado
+
+    col_grafo, col_filtros = st.columns([7, 3], gap="medium")
+
+    tipos_disponiveis = list(COR_POR_TIPO.keys())
+
+    with col_filtros:
+        st.caption("Filtros do grafo")
+        tipos = st.multiselect(
+            "Tipos de nó",
+            options=tipos_disponiveis,
+            default=["fornecedor", "documento", "categoria", "transacao"],
+            key="grafo_tipos",
+        )
+        orfaos = st.toggle("Mostrar órfãos", value=False, key="grafo_orfaos")
+        limite = st.slider(
+            "Limite de nós", min_value=100, max_value=2000, value=500, step=100,
+            key="grafo_limite",
+        )
+        st.divider()
+        st.caption("Legenda por tipo")
+        for tipo, cor in COR_POR_TIPO.items():
+            st.markdown(
+                f'<span style="color:{cor}; font-weight:bold;">●</span> '
+                f'<span>{tipo}</span>',
+                unsafe_allow_html=True,
+            )
+
+    with col_grafo:
+        with st.spinner("Montando grafo..."):
+            with GrafoDB(_dados.CAMINHO_GRAFO) as db:
+                nodes, edges = grafo_filtrado(
+                    db,
+                    tipos=tipos,
+                    incluir_orfaos=orfaos,
+                    limite=limite,
+                )
+            st.caption(f"{len(nodes)} nós, {len(edges)} arestas")
+            if not nodes:
+                st.info(
+                    "Nenhum nó para os filtros atuais. Amplie o limite, "
+                    "habilite órfãos ou ajuste os tipos."
+                )
+                return
+            html = construir_grafo_html(nodes, edges, altura_px=800)
+            components.html(html, height=820, scrolling=False)
 
 
 def _extrair_mes_ref(

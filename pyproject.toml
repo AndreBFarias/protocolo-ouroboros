@@ -46,6 +46,7 @@ Changelog = "https://github.com/AndreBFarias/protocolo-ouroboros/blob/main/CHANG
 dashboard = [
     "streamlit>=1.31",
     "plotly>=5.18",
+    "pyvis>=0.3",
 ]
 integrations = [
     "belvo-python>=0.35",
