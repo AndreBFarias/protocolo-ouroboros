@@ -24,6 +24,7 @@ from src.dashboard.paginas import (  # noqa: E402
     busca,
     catalogacao,
     categorias,
+    completude,
     contas,
     extrato,
     grafo_obsidian,
@@ -226,6 +227,7 @@ def main() -> None:
         tab_catalogacao,
         tab_busca,
         tab_grafo_obsidian,
+        tab_completude,
     ) = st.tabs(
         [
             "Visão Geral",
@@ -239,6 +241,7 @@ def main() -> None:
             "Catalogação",
             "Busca Global",
             "Grafo + Obsidian",
+            "Completude",
         ]
     )
 
@@ -276,6 +279,9 @@ def main() -> None:
 
     with tab_grafo_obsidian:
         grafo_obsidian.renderizar(dados, periodo, pessoa, ctx)
+
+    with tab_completude:
+        completude.renderizar(dados, periodo, pessoa, ctx)
 
 
 if __name__ == "__main__":

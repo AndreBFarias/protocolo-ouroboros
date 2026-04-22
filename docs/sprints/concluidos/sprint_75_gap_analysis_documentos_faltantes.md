@@ -42,7 +42,7 @@ sprint:
 
 # Sprint 75 — Gap Analysis
 
-**Status:** BACKLOG
+**Status:** CONCLUÍDA (2026-04-22)
 **Prioridade:** P1
 **Dependências:** Sprint 74 (vínculo existe), ADR-20
 **Issue:** UX-ANDRE-03
@@ -115,10 +115,16 @@ def renderizar():
 
 ## Evidências
 
-- [ ] Heatmap por mês/categoria
-- [ ] Alertas inteligentes na tela
-- [ ] Export CSV de transações sem doc
-- [ ] Teste com grafo sintético
+- [x] **Módulo `src/analysis/gap_documental.py`** (~190L): `calcular_completude(df, categorias_obrigatorias, ids_com_doc)`, `alertas(resumo, valor_alto, min_meses_recorrencia)`, `orfas_para_csv(resumo)`, `carregar_categorias_obrigatorias()` com lru_cache.
+- [x] **Aba "Completude" no dashboard** (`src/dashboard/paginas/completude.py`): heatmap mês × categoria com cor proporcional a % cobertura, caixas de alertas inteligentes (recorrência, valor alto, zero-cobertura), selectbox para detalhe mês/categoria, botão export CSV.
+- [x] **`app.py` registra a 12ª aba** "Completude" após "Grafo + Obsidian".
+- [x] 3 heurísticas de alerta: (1) fornecedor sem doc em >= 3 meses do mesmo ano ≥ R$ 100 = "recorrência contratual?"; (2) transação individual >= R$ 500 sem doc = revisar; (3) categoria com 0 comprovantes em mês com >=2 transações = "IRPF pode perder dedução".
+- [x] 10 testes em `tests/test_gap_documental.py`: filtro por categoria obrigatória, respeito a `tipo in (Despesa, Imposto)`, `ids_com_doc` marca cobertura, DF vazio / categorias vazias não quebram, alerta de valor alto, alerta zero-cobertura, CSV com colunas canônicas.
+- [x] Gauntlet: `make lint` exit 0, 1021 passed (+10), smoke 8/8 OK.
+
+### Ressalva
+
+- [R75-1] **Cobertura real do grafo ainda é zero**: a Sprint 74 criou o motor de matching, mas nenhuma aresta `documento_de` foi populada em volume. Em produção, `ids_com_doc` fica quase vazio e tudo aparece como órfão. Esse é O SINAL que o André quer ver (terapêutico), mas quando a Sprint 48 rodar em volume real via `./run.sh --inbox`, a cobertura vai subir organicamente. Não é bloqueante; é característica da Fase KAPPA começar antes da ingestão em massa.
 
 ---
 
