@@ -42,7 +42,7 @@ sprint:
 
 # Sprint 71 — Sync rico bidirecional
 
-**Status:** BACKLOG
+**Status:** CONCLUÍDA (2026-04-22)
 **Prioridade:** P1
 **Dependências:** Sprint 70 (adapter existe), ADR-18 aprovado
 **Issue:** INTEGRACAO-02 <!-- noqa: accent -->
@@ -142,11 +142,22 @@ Copia do `data/raw/originais/{hash}.ext` para `~/Controle de Bordo/Pessoal/Casal
 
 ## Evidências
 
-- [ ] Vault ganha estrutura Pessoal/Casal/Financeiro/{Documentos, Fornecedores, Meses, _Attachments}
-- [ ] Notas com frontmatter válido + wikilinks
-- [ ] Preview do PDF dentro da nota (embed `![[...]]`)
-- [ ] Sync idempotente
-- [ ] Proteção contra overwrite manual
+- [x] `src/obsidian/sync_rico.py` (~310L): módulo novo que escreve em `$BORDO_DIR/Pessoal/Casal/Financeiro/{Documentos,Fornecedores,Meses,_Attachments}/`.
+- [x] `eh_seguro_sobrescrever()` detecta tag `#sincronizado-automaticamente` ou frontmatter `sincronizado: true`; sem um dos dois, a nota é preservada (soberania do usuário).
+- [x] `_conteudo_mudou()` + `_hash_conteudo()` garantem idempotência: segunda execução sobre mesmo grafo não reescreve arquivo inalterado.
+- [x] `sincronizar_rico(vault_root, grafo_path, dry_run, min_docs_por_fornecedor)` como API pública + CLI `python -m src.obsidian.sync_rico [--executar] [--vault PATH]`.
+- [x] Template de documento embeda wikilink `![[_Attachments/{slug}.ext]]` e backlinks para `[[Fornecedores/...]]`.
+- [x] Template de fornecedor inclui bloco Dataview que lista documentos via query `WHERE fornecedor = "[[Fornecedores/{slug}]]"`.
+- [x] `_copiar_original()` copia `data/raw/originais/{hash}.ext` para `_Attachments/` do vault.
+- [x] Forbidden zones do vault respeitadas (módulo nunca lê/escreve em `.sistema/`, `Trabalho/`, `Segredos/`, `Arquivo/`).
+- [x] 19 testes em `tests/test_obsidian_rico_vault.py`: slug, yyyymm, soberania, render, idempotência, edição manual, grafo ausente. Baseline 955 → 974 passed (+19).
+- [x] Gauntlet: make lint exit 0, smoke 8/8 OK.
+
+### Ressalvas
+
+- [R71-1] A cópia de originais usa o campo `arquivo_original` do metadata do node, que nem sempre está presente em nodes ingeridos por extratores antigos. Para esses, o `![[...]]` aponta para um caminho inexistente no vault até uma próxima rodada de reprocessamento que preencha `arquivo_original` absoluto. Não bloqueia a sprint; é débito herdado dos extratores.
+- [R71-2] Notas `Meses/{YYYY-MM}.md` (MOC mensal) não foram implementadas nesta sprint — o `sync.py` original já gera uma versão disso via `gerar_moc_mensal`, que vive em `Pessoal/Financeiro/Relatorios/` (caminho antigo, não `Pessoal/Casal/Financeiro/Meses/`). Migração para o novo caminho fica como débito explícito (sprint futura).
+- [R71-3] Volume atual do grafo é pequeno (2 documentos, 1 fornecedor com docs suficientes quando `min_docs=2`). Cobertura de caso funcional real depende de reprocessamento em volume.
 
 ---
 
