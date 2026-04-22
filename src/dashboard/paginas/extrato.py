@@ -130,26 +130,30 @@ def renderizar(
         unsafe_allow_html=True,
     )
 
+    # Sprint 77: keys prefixadas com `avancado_` evitam colisão com as
+    # chaves `filtro_*` que o drilldown.ler_filtros_da_url() popula via
+    # query_params (Sprint 73). Sem esse prefixo, selectbox e drill-down
+    # disputavam o mesmo slot em session_state.
     with st.expander("Filtros avançados", expanded=False):
         col1, col2 = st.columns(2)
 
         with col1:
             categorias = ["Todas"] + sorted(df["categoria"].dropna().unique().tolist())
-            categoria_sel = st.selectbox("Categoria", categorias, key="filtro_categoria")
+            categoria_sel = st.selectbox("Categoria", categorias, key="avancado_categoria")
 
             bancos = ["Todos"] + sorted(df["banco_origem"].dropna().unique().tolist())
-            banco_sel = st.selectbox("Banco", bancos, key="filtro_banco")
+            banco_sel = st.selectbox("Banco", bancos, key="avancado_banco")
 
         with col2:
             classificacoes = ["Todas"] + sorted(df["classificacao"].dropna().unique().tolist())
             classificacao_sel = st.selectbox(
                 "Classificação",
                 classificacoes,
-                key="filtro_classificacao",
+                key="avancado_classificacao",
             )
 
             tipos = ["Todos"] + sorted(df["tipo"].dropna().unique().tolist())
-            tipo_sel = st.selectbox("Tipo", tipos, key="filtro_tipo")
+            tipo_sel = st.selectbox("Tipo", tipos, key="avancado_tipo")
 
     resultado = df.copy()
 

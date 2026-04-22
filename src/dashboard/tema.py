@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import base64
 from pathlib import Path
+from typing import Any
 
 DRACULA: dict[str, str] = {
     "background": "#282A36",
@@ -419,6 +420,31 @@ LAYOUT_PLOTLY: dict = {
     # via spread em cada update_layout das páginas. Sprint 65.
     "separators": ",.",
 }
+
+
+def legenda_abaixo(
+    fig: Any,
+    y: float = -0.18,
+    espaco_topo: int = 60,
+    espaco_base: int = 80,
+) -> Any:
+    """Coloca a legenda Plotly horizontal abaixo do gráfico (Sprint 77).
+
+    Evita sobreposição entre título e legenda. Ajusta margens top/bottom
+    para garantir área clicável. Retorna o próprio `fig` para encadear
+    `.update_layout(...)`.
+    """
+    fig.update_layout(
+        legend=dict(
+            orientation="h",
+            yanchor="top",
+            y=y,
+            xanchor="center",
+            x=0.5,
+        ),
+        margin=dict(t=espaco_topo, b=espaco_base, l=40, r=20),
+    )
+    return fig
 
 
 def rgba_cor(cor_hex: str, alpha: float) -> str:
