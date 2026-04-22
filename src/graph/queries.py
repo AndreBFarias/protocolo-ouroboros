@@ -234,6 +234,69 @@ def obter_transacoes_candidatas_para_documento(
     return [c[1] for c in candidatas]
 
 
+def grafo_filtrado(
+    db: GrafoDB,
+    tipos: list[str] | None = None,
+    incluir_orfaos: bool = False,
+    limite: int = 500,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    """Query da Sprint 78: devolve (nodes, edges) para o grafo visual.
+
+    - Filtra nós por `tipos` (default: fornecedor, documento, categoria, transacao).
+    - Ordena por grau decrescente e aplica `limite`.
+    - Se `incluir_orfaos=False`, remove nós com grau 0.
+    - Edges devolvidos conectam apenas nós do subconjunto retornado.
+    """
+    # None = default canônico; [] = filtro explícito "nada"
+    if tipos is None:
+        tipos = ["fornecedor", "documento", "categoria", "transacao"]
+    if not tipos:
+        return [], []
+
+    placeholders = ",".join("?" * len(tipos))
+    query_nodes = f"""
+        SELECT n.id, n.tipo, n.nome_canonico, n.aliases, n.metadata,
+               (SELECT COUNT(*) FROM edge e
+                WHERE e.src_id = n.id OR e.dst_id = n.id) as grau
+        FROM node n
+        WHERE n.tipo IN ({placeholders})
+        ORDER BY grau DESC, n.id ASC
+        LIMIT ?
+    """
+    cursor = db._conn.execute(query_nodes, (*tipos, int(limite)))
+    nodes_raw = cursor.fetchall()
+    nodes: list[dict[str, Any]] = [
+        {
+            "id": row[0],
+            "tipo": row[1],
+            "nome_canonico": row[2],
+            "aliases": row[3],
+            "metadata": row[4],
+            "grau": row[5] or 0,
+        }
+        for row in nodes_raw
+    ]
+    if not incluir_orfaos:
+        nodes = [n for n in nodes if n["grau"] > 0]
+
+    ids = [n["id"] for n in nodes]
+    if not ids:
+        return nodes, []
+
+    placeholders_edge = ",".join("?" * len(ids))
+    query_edges = f"""
+        SELECT src_id, dst_id, tipo, peso
+        FROM edge
+        WHERE src_id IN ({placeholders_edge}) AND dst_id IN ({placeholders_edge})
+    """
+    cursor = db._conn.execute(query_edges, (*ids, *ids))
+    edges: list[dict[str, Any]] = [
+        {"src": row[0], "dst": row[1], "tipo": row[2], "peso": row[3] or 1.0}
+        for row in cursor.fetchall()
+    ]
+    return nodes, edges
+
+
 def cli_imprimir_estatisticas(caminho: Path | None = None) -> None:
     """Helper para `python -m src.graph.queries` -- imprime estatísticas."""
     db_path = caminho or caminho_padrao()
