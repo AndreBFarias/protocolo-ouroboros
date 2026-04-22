@@ -30,6 +30,7 @@ from src.dashboard.paginas import (  # noqa: E402
     grafo_obsidian,
     irpf,
     metas,
+    pagamentos,
     projecoes,
     visao_geral,
 )
@@ -220,6 +221,7 @@ def main() -> None:
         tab_categorias,
         tab_extrato,
         tab_contas,
+        tab_pagamentos,
         tab_projecoes,
         tab_metas,
         tab_analise,
@@ -234,6 +236,7 @@ def main() -> None:
             "Categorias",
             "Extrato",
             "Contas",
+            "Pagamentos",
             "Projeções",
             "Metas",
             "Análise",
@@ -258,6 +261,9 @@ def main() -> None:
 
     with tab_contas:
         contas.renderizar(dados, periodo, pessoa)
+
+    with tab_pagamentos:
+        pagamentos.renderizar(dados, periodo, pessoa, ctx)
 
     with tab_projecoes:
         projecoes.renderizar(dados, periodo, pessoa)
