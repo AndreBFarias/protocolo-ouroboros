@@ -1,0 +1,71 @@
+# Sprint 70 — roteamento unificado de inbox (Fase IOTA)
+#
+# Declara as fontes de arquivos brutos que o Ouroboros varre ao rodar
+# `./run.sh --inbox`. Ordem importa: a primeira fonte vale como canônica
+# para novos arquivos; as demais existem para preservar histórico legado
+# até que o usuário esvazie.
+
+inbox_sources:
+  - path: "${BORDO_DIR}/Inbox"
+    prioridade: 1
+    descricao: "Vault Obsidian Controle de Bordo (canônica a partir da Sprint 70)"
+  - path: "./inbox"
+    prioridade: 2
+    descricao: "Legado: raiz do projeto (ainda contém arquivos pré-Sprint 70)"
+  - path: "./data/inbox"
+    prioridade: 3
+    descricao: "Legado: destino interno antigo do pipeline"
+
+# Tipos canônicos que o Ouroboros absorve. Lista derivada de:
+#   - mappings/tipos_documento.yaml (ids documentais)
+#   - src/intake/registry.py (tipos bancários "bancario_<banco>_<variante>")
+#
+# Arquivos com tipo FORA desta lista permanecem na inbox de origem para o
+# motor do vault (ou outro consumidor) processar. Princípio: Ouroboros não
+# mexe em arquivo que não sabe absorver.
+tipos_absorvidos:
+  # Documentais (tipos_documento.yaml)
+  - cupom_garantia_estendida
+  - nfce_consumidor_eletronica
+  - danfe_nfe55
+  - xml_nfe
+  - holerite
+  - receita_medica
+  - garantia_fabricante
+  - fatura_cartao
+  - extrato_bancario
+  - conta_luz
+  - conta_agua
+  - boleto_servico
+  - contrato
+  - cupom_fiscal_foto
+  - recibo_nao_fiscal
+  # Bancários (registry/legado)
+  - bancario_nubank_cartao
+  - bancario_nubank_cc
+  - bancario_c6_cartao
+  - bancario_c6_cc
+  - bancario_itau_cc
+  - bancario_santander_cartao
+  - bancario_santander_cc
+  - bancario_nubank_ofx
+  - bancario_c6_ofx
+  - bancario_itau_ofx
+  - bancario_santander_ofx
+  - bancario_desconhecido_ofx
+
+# Preservação de originais (auditoria)
+preservar_original: true
+original_dir: data/raw/originais
+hash_algoritmo: sha256
+hash_prefixo_chars: 16
+
+# Forbidden zones do vault — adapter jamais entra nessas subpastas
+# (ADR-18: coabitação estrutural com motor do vault).
+vault_forbidden:
+  - .sistema
+  - Trabalho
+  - Segredos
+  - Arquivo
+  - .obsidian
+  - .git
