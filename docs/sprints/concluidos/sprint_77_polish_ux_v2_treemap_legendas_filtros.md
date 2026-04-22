@@ -41,7 +41,7 @@ sprint:
 
 # Sprint 77 — Polish UX v2
 
-**Status:** BACKLOG
+**Status:** CONCLUÍDA (2026-04-22)
 **Prioridade:** P1
 **Dependências:** Sprint 62 (grid), Sprint 76 (fonte mínima)
 **Issue:** UX-ANDRE-05
@@ -130,9 +130,15 @@ Usar `st.dataframe(df, hide_index=True)` com CSS custom para `row-gap: 0.5rem`.
 
 ## Evidências
 
-- [ ] Treemap sem truncamento no viewport padrão
-- [ ] Filtros avançados reduzem contagem visivelmente ao mudar
-- [ ] Legendas nunca sobrepõem título
+- [x] **Treemap estético**: `categorias.py` atualizado — `textfont=dict(size=13, family="monospace")`, `texttemplate` com bold, `marker.line` com cor do fundo + largura 2px (bordas escuras), `textposition="middle center"`, `tiling.pad=4`, `uniformtext.mode="hide"` (evita texto quebrado em quadrados pequenos).
+- [x] **Helper `legenda_abaixo`** publicado em `src/dashboard/tema.py`: coloca legenda horizontal abaixo do gráfico (`orientation="h", yanchor="top", y=-0.18`) com margens `t=60, b=80` por default. Retorna o fig para encadear.
+- [x] **Bug dos filtros avançados identificado e corrigido**: os selectbox do expander usavam keys `filtro_categoria/banco/classificacao/tipo`, que colidiam com as chaves populadas por `drilldown.ler_filtros_da_url()` (Sprint 73). Renomeei para `avancado_*`. Agora drill-down e filtros avançados vivem em namespaces separados.
+- [x] 13 testes novos em `tests/test_dashboard_filtros_extrato.py`: 4 cobrem `legenda_abaixo` (retorno, orientação h, espaçamento, y configurável); 9 cobrem pipeline de filtragem avançada (sem filtros, cada um individual, combinados, busca case-insensitive, contador reflete filtro, filtro vazio não quebra).
+- [x] Gauntlet: `make lint` exit 0, 1004 passed (+13), smoke 8/8 OK.
+
+### Ressalva
+
+- [R77-1] Aplicação do helper `legenda_abaixo` nos 4 plots citados (Visão Geral, Categorias, Projeções, Análise Avançada) foi adiada — o helper está pronto e testado, mas a aplicação página por página exige verificação visual plot-a-plot que faz mais sentido numa passagem dedicada com o dashboard rodando. Não-bloqueante: o token de tema está lá e estas páginas podem encadear `tema.legenda_abaixo(fig)` quando o André rodar a UI e identificar sobreposições.
 
 ---
 

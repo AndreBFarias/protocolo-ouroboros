@@ -89,16 +89,24 @@ def _treemap_categorias(df: pd.DataFrame) -> None:
         color_discrete_map=MAPA_CLASSIFICACAO_COR,
     )
 
-    layout = {**LAYOUT_PLOTLY, "margin": dict(l=10, r=10, t=60, b=10)}
+    # Sprint 77: treemap estético — título compacto, margens mínimas,
+    # textfont monospace, bordas escuras entre quadrados, padding interno.
+    layout = {
+        **LAYOUT_PLOTLY,
+        "margin": dict(l=0, r=0, t=10, b=0),
+    }
     fig.update_layout(
         **layout,
-        title=dict(text="Gastos por Categoria", font=dict(size=FONTE_SUBTITULO)),
+        uniformtext=dict(minsize=12, mode="hide"),
     )
 
     fig.update_traces(
         textinfo="label+value",
-        texttemplate="%{label}<br>R$ %{value:,.2f}",
-        textfont=dict(size=FONTE_CORPO),
+        texttemplate="<b>%{label}</b><br>R$ %{value:,.2f}",
+        textfont=dict(size=13, family="monospace"),
+        marker=dict(line=dict(color=CORES["fundo"], width=2)),
+        textposition="middle center",
+        tiling=dict(pad=4),
         customdata=agrupado["categoria"],
     )
 
