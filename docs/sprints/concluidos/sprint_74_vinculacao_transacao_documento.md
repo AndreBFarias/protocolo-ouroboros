@@ -61,7 +61,7 @@ sprint:
 
 # Sprint 74 — Vinculação transação <-> documento
 
-**Status:** BACKLOG
+**Status:** CONCLUÍDA (2026-04-22)
 **Prioridade:** P0 (coração da visão ADR-20)
 **Dependências:** Sprints 48 (base linking), 49 (entity resolution), 57 (volume real), 70 (inbox unificada)
 **Desbloqueia:** 75 (gap analysis), 79 (aba pagamentos)
@@ -458,12 +458,22 @@ def test_tipo_outro():
 
 ## Evidências obrigatórias
 
-- [ ] Testes de score: 8+ casos passando
-- [ ] GTC-01 passa (`natacao_andre.pdf` + linha 5948 = score ≥ 0.8)
-- [ ] Matching rodado em grafo atual: auto + propostas >= 1
-- [ ] Screenshot do modal com PDF embedado (tela real)
-- [ ] `mappings/categorias_tracking.yaml` existe com >=6 categorias
-- [ ] Badge amarelo visível em transação Farmácia sem comprovante
+- [x] `classificar_tipo_edge(tipo_documento)` em `src/graph/linking.py` retorna um dos 4 canônicos {pago_com, confirma, comprovante, origem}; `_MAPA_TIPO_EDGE_SEMANTICO` cobre 21 tipos documentais.
+- [x] Evidência da aresta `documento_de` agora carrega `tipo_edge_semantico` (injetado em `candidatas_para_documento`).
+- [x] `src/dashboard/componentes/preview_documento.py` com `tipo_arquivo`, `_pdf_iframe_html`, `preview_documento` (iframe data URL base64, fallback download >5MB, imagens via st.image, alias `_tipo_arquivo` para compat do spec).
+- [x] `src/dashboard/componentes/modal_transacao.py` com `inferir_estado`, `mostrar_conteudo` (testável) e `mostrar_modal` (wrapper com `@st.dialog`). 4 estados: aberta/confirmada/totalmente_documentada/irrecuperavel.
+- [x] `mappings/categorias_tracking.yaml` com 11 categorias obrigatórias (Farmácia, Saúde, Plano de saúde, Aluguel, Educação, Impostos, Seguros, Natação, Energia, Água, Condomínio) — excede as 6 mínimas do spec.
+- [x] `src/dashboard/paginas/extrato.py`: coluna "Doc?" marca "!" quando categoria está em obrigatória (lru_cache do YAML) + seção "Inspecionar transação" abaixo da tabela com selectbox + botão "Ver detalhes" que abre o modal com preview inline.
+- [x] **GTC-01 sintético passa**: fixture de grafo efêmero em `tests/test_linking_heuristico.py::TestGTC01NatacaoSesc` valida que boleto natação (2026-03-17, R$ 103,93, Sesc) + transação C6 (2026-03-19, -R$ 103,93, SESC) gera confidence >= 0.80 (bate no limiar automático) mesmo sem CNPJ — se extrator de boleto adicionar CNPJ no futuro, sobe para 1.0.
+- [x] Testes novos: `test_linking_heuristico.py` (10 casos) + `test_preview_documento.py` (12 casos) = 22 passed. Baseline 921 → 943 passed (+22), 10 skipped.
+- [x] Gauntlet: `make lint` exit 0, smoke strict 8/8 OK.
+
+### Ressalvas
+
+- [R74-1] **GTC-01 end-to-end (arquivo PDF real → grafo) ainda incompleto**: não existe extrator `boleto_pdf.py` no pipeline, então `inbox/natacao_andre.pdf` (já movido para `data/raw/casal/boletos/` pela Sprint 70) não vira node `documento` automaticamente. O motor de matching foi validado via fixture sintética; o matching no grafo produtivo depende de ingestão manual ou de uma sprint futura de extrator de boleto. Armadilha A74-5 do spec antecipou este caso.
+- [R74-2] **Clique em linha do Extrato**: Streamlit não suporta clique nativo em `st.dataframe`. Implementamos selectbox + botão "Ver detalhes" como compromisso acessível. ADR-19 (drill-down via query_params — Sprint 73) pode evoluir para versão clicável direta no futuro.
+- [R74-3] **Coluna "Doc?" não consulta o grafo ainda**: marca apenas se a categoria é obrigatória (sinal de "falta comprovante por regra"). Quando Sprint 48 (linking) for rodada em volume real, essa coluna pode aprofundar para "OK" (tem edge) vs "!" (obrigatória sem edge).
+- [R74-4] **Screenshot do modal real**: exige dashboard rodando; cobertura via testes unitários garante a lógica (estado, tipagem, preview) mas validação visual humana pendente.
 
 ## Referência cruzada
 

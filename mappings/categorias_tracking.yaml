@@ -1,0 +1,18 @@
+# Sprint 74 — Categorias onde documento comprobatório é OBRIGATÓRIO.
+#
+# Quando uma transação cai numa dessas categorias e não tem aresta
+# `documento_de` no grafo, o dashboard renderiza badge "sem comprovante"
+# na linha do Extrato (Sprint 74) e a aba Pagamentos lista como pendência
+# (Sprint 79). Base: ADR-20 §Regras.1.
+obrigatoria_tracking:
+  - Farmácia          # IRPF — dedução médica
+  - Saúde             # IRPF — dedução médica
+  - Plano de saúde    # IRPF — dedução médica
+  - Aluguel           # comprovação moradia (contrato + recibo)
+  - Educação          # IRPF — dedução educacional
+  - Impostos          # legal — guia DAS/DARF/IPTU/IPVA
+  - Seguros           # apólice SUSEP arquivada
+  - Natação           # recorrente (SESC); André pediu explicitamente
+  - Energia           # conta Neoenergia/CEB mensal
+  - Água              # conta CAESB mensal
+  - Condomínio        # recibo/boleto mensal

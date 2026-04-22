@@ -49,6 +49,66 @@ _PATH_PROPOSTAS_PADRAO: Path = _RAIZ_REPO / "docs" / "propostas" / "linking"
 EDGE_TIPO_DOCUMENTO_DE: str = "documento_de"
 EDGE_TIPO_CONTRAPARTE: str = "contraparte"
 
+# Sprint 74 (ADR-20): classificação semântica do tipo de vínculo entre um
+# documento e a transação que ele comprova. Armazenado em `evidencia.tipo_edge_semantico`
+# da aresta `documento_de` para preservar idempotência e retrocompatibilidade com
+# o motor da Sprint 48.
+TIPO_EDGE_SEMANTICO_PAGO_COM: str = "pago_com"    # fatura/extrato que origina a transação
+TIPO_EDGE_SEMANTICO_CONFIRMA: str = "confirma"    # boleto que instrui a transação
+TIPO_EDGE_SEMANTICO_COMPROVANTE: str = "comprovante"  # cupom/recibo/NFC-e recebido
+TIPO_EDGE_SEMANTICO_ORIGEM: str = "origem"        # contrato/apólice que origina a obrigação
+
+# Mapeamento canônico tipo_documento -> tipo_edge_semantico. Usado por
+# `classificar_tipo_edge` e pela UI do dashboard (modal) para colorir o vínculo.
+_MAPA_TIPO_EDGE_SEMANTICO: dict[str, str] = {
+    # Boletos / faturas que "instruem" um pagamento futuro
+    "boleto": TIPO_EDGE_SEMANTICO_CONFIRMA,
+    "boleto_servico": TIPO_EDGE_SEMANTICO_CONFIRMA,
+    "fatura_cartao": TIPO_EDGE_SEMANTICO_CONFIRMA,
+    "conta_luz": TIPO_EDGE_SEMANTICO_CONFIRMA,
+    "conta_agua": TIPO_EDGE_SEMANTICO_CONFIRMA,
+    # Cupons/recibos/NFs que "comprovam" um pagamento passado
+    "cupom_termico": TIPO_EDGE_SEMANTICO_COMPROVANTE,
+    "cupom_fiscal_foto": TIPO_EDGE_SEMANTICO_COMPROVANTE,
+    "cupom_termico_foto": TIPO_EDGE_SEMANTICO_COMPROVANTE,
+    "cupom_nao_fiscal": TIPO_EDGE_SEMANTICO_COMPROVANTE,
+    "recibo": TIPO_EDGE_SEMANTICO_COMPROVANTE,
+    "recibo_nao_fiscal": TIPO_EDGE_SEMANTICO_COMPROVANTE,
+    "nfce": TIPO_EDGE_SEMANTICO_COMPROVANTE,
+    "nfce_consumidor_eletronica": TIPO_EDGE_SEMANTICO_COMPROVANTE,
+    "danfe": TIPO_EDGE_SEMANTICO_COMPROVANTE,
+    "danfe_nfe55": TIPO_EDGE_SEMANTICO_COMPROVANTE,
+    "xml_nfe": TIPO_EDGE_SEMANTICO_COMPROVANTE,
+    "voucher": TIPO_EDGE_SEMANTICO_COMPROVANTE,
+    "holerite": TIPO_EDGE_SEMANTICO_COMPROVANTE,
+    # Documentos que originam uma obrigação recorrente
+    "contrato": TIPO_EDGE_SEMANTICO_ORIGEM,
+    "apolice": TIPO_EDGE_SEMANTICO_ORIGEM,
+    "cupom_garantia": TIPO_EDGE_SEMANTICO_ORIGEM,
+    "cupom_garantia_estendida": TIPO_EDGE_SEMANTICO_ORIGEM,
+    "garantia_fabricante": TIPO_EDGE_SEMANTICO_ORIGEM,
+    "receita_medica": TIPO_EDGE_SEMANTICO_ORIGEM,
+    # Extrato bancário "paga com" a própria conta-origem
+    "extrato_bancario": TIPO_EDGE_SEMANTICO_PAGO_COM,
+}
+
+
+def classificar_tipo_edge(tipo_documento: str | None) -> str:
+    """Mapeia um `tipo_documento` para o tipo de edge semântico (Sprint 74).
+
+    Retorna um dos 4 valores canônicos:
+      - ``pago_com``      (extrato origem)
+      - ``confirma``      (boleto/fatura/conta)
+      - ``comprovante``   (cupom/recibo/NFC-e/NF/holerite)
+      - ``origem``        (contrato/apólice/receita médica/garantia)
+
+    Tipos desconhecidos caem em ``pago_com`` (conservador — o documento
+    carrega o registro do pagamento sem semântica adicional).
+    """
+    if not tipo_documento:
+        return TIPO_EDGE_SEMANTICO_PAGO_COM
+    return _MAPA_TIPO_EDGE_SEMANTICO.get(tipo_documento, TIPO_EDGE_SEMANTICO_PAGO_COM)
+
 
 # ============================================================================
 # Carregamento de config
@@ -229,6 +289,7 @@ def candidatas_para_documento(
             "confidence": score,
             "cnpj_bate": cnpj_bate,
             "tipo_documento": tipo_doc,
+            "tipo_edge_semantico": classificar_tipo_edge(tipo_doc),
         }
         resultado.append((transacao_id, evidencia))
 
