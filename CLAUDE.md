@@ -1,17 +1,53 @@
 # CLAUDE.md -- Protocolo Ouroboros
 
 ```
-VERSÃO: 4.1 | STATUS: PRODUÇÃO (catalogador universal em construção) | LANG: PT-BR
+VERSÃO: 5.0 | STATUS: PRODUÇÃO (Fases IOTA e KAPPA CONCLUÍDAS 2026-04-22) | LANG: PT-BR
 TRANSAÇÕES: 6.086 | MESES: 82 (out/2019 a mar/2026) | BANCOS: 6 | EXTRATORES: 9
-GRAFO: 7.421 nodes (6086 transações + 1100 fornecedores entity-resolved + 104 categorias + 82 períodos + 7 contas + 4 tags IRPF + 33 itens + 2 documentos + 2 apólices + 1 seguradora) e 24.584 edges, populados do XLSX, idempotente.
-SPRINTS: 69 (36 concluídas, 0 produção, 20 backlog, 13 arquivadas) -- Sprint 55-57, 59, 60 CONCLUÍDAS em 2026-04-21 (Fase ETA): 55 fix crítico do classificador de tipo (1.761 transações falsamente "Receita" corrigidas), 56 smoke runtime-real aritmético (8 contratos globais via `make smoke`), 57 reprocessamento de volume real, 59 chips de busca global, 60 labels humanos no grafo + bar chart. Sprint 54 CONCLUÍDA: baseline verde de higiene INFRA (22 violações de acentuação pré-existentes em sprints 41/42 resolvidas, `make lint` exit 0). Convenção única no corpus: `# noqa: accent` (Python) e `<!-- noqa: accent -->` (Markdown) para identificadores técnicos do schema do grafo; acentuação correta em prosa PT-BR humana. Sprint 45 CONCLUÍDA: extrator de cupom fiscal térmico via OCR tesseract (pytesseract + Pillow), 63 testes, 3 layouts distintos com recall >=80% (Americanas, Mercado, Posto), fallback supervisor quando confidence <70%, cache OCR por SHA256 do conteúdo, rotação EXIF, round-trip JPG real 527KB marcado @slow; `_ocr_comum.py` reusável por futuros extratores de foto. Sprint 47c CONCLUÍDA: extrator de cupom bilhete de garantia estendida (apólice SUSEP) com 28 testes, fixtures nativas + scan, glyph_tolerant para CNPJ OCR. Sprint 44b CONCLUÍDA: extrator NFC-e modelo 65 (mini-cupom QR SEFAZ) com 40 testes. Sprint 44 CONCLUÍDA: extrator DANFE NFe modelo 55 com parser de cabeçalho + itens, validação de chave 44 (DV SEFAZ), cross-check CNPJ texto vs chave, ingestão no grafo via ingerir_documento_fiscal reusada, 32 testes (recall 100% em 3 DANFEs). Sprint 42 CONCLUÍDA: grafo SQLite populado do XLSX (contagens atualizadas nesta revisão). Inbox_processor.py integrado com intake universal (Sprint 41/b/c/d).
+GRAFO: 7.421 nodes + 24.584 edges (data/output/grafo.sqlite, ~5MB). Volume real do grafo aguarda reprocessamento (Sprint 86 item 86.12).
+SPRINTS: 97 (58 concluídas, 0 em produção, 26 backlog, 13 arquivadas)
 CATEGORIZAÇÃO: 100% | IRPF TAGS: 164 (75 com CNPJ) | HOLERITES: 24 (G4F + Infobase)
-TESTES: 736 passed / 8 skipped (baseline Sprint 56)
-ROTA: Catalogador universal artesanal via Claude Code Opus (ver docs/ROADMAP.md fases ALFA→ZETA + Fase ETA)
-SUPERVISOR: Claude Code (sessão interativa) -- nenhuma API programática (ADR-13)
-INTEGRAÇÕES: OFX (pronto), Belvo (em teste), Gmail (setup pendente), MeuPluggy (disponível)
-ROTA ATUAL: Fase ETA (correções da auditoria 2026-04-21) -- sprints 55-69 agrupadas
+TESTES: 1.046 passed / 15 skipped (baseline Sprint 79, +310 vs baseline inicial 736)
+ROTA: Catalogador universal artesanal via supervisor interativo (ADR-13)
+SUPERVISOR: Claude Code sessão interativa — nenhuma API programática
+INTEGRAÇÕES: OFX (pronto), Controle de Bordo vault (Sprint 70/71 integrado), Belvo (em teste), Gmail (setup pendente), MeuPluggy (disponível)
+ROTA ATUAL: Fase KAPPA completa — próximo: Sprint 86 (ressalvas humanas) + Sprint 87 (ressalvas técnicas)
 ```
+
+### Caminho crítico IOTA + KAPPA concluído em 2026-04-22
+
+Sessão única de orquestração supervisionada: 14 commits em sequência, gauntlet verde em cada passo (make lint exit 0, smoke 8/8, pytest sem regressão). Das Sprints 68b até 79 mais 80, 81, tudo fechou. Resumo por ordem de execução:
+
+| # | Sprint | Commit | Entregas-chave |
+|---|--------|--------|----------------|
+| 0 | Consolidador | `3ac3f41` | 30 modificados + 74 novos (ADRs 18/19/20, specs 70–85, canonicalizers, GOLDEN_TEST_CASES) |
+| 1 | 68b Fix TI completo | `927ad07` | canonicalizer_casal em 5 extratores + pipeline rede de segurança + 47 testes; zero falsos-positivos DEIVID/JOAO |
+| 2 | 81 Sweep higiene | `c2f5956` | make lint cobre scripts/; 14 `# noqa: E402` em reprocessar_documentos.py; 3 fixes E501 |
+| 3 | 70 Inbox unificada | `3fcf2db` | src/integrations/controle_bordo.py (adapter vault); mappings/inbox_routing.yaml; 18 testes; GTC-01 cumprido (natacao_andre*.pdf → data/raw/casal/boletos/) |
+| 4 | 76 Polish UX v1 | `8f45559` | FONTE_MIN_ABSOLUTA=13; logo_sidebar_html() cacheado; padding 24px em .main .block-container; 9 testes |
+| 5 | 74 Vínculo tx↔doc | `571a709` | classificar_tipo_edge() 4 canônicos; preview_documento.py (iframe base64); modal_transacao.py (st.dialog); categorias_tracking.yaml; coluna "Doc?" no Extrato; 22 testes |
+| 6 | 72 Filtro forma pagamento | `b5d9d7e` | filtrar_por_forma_pagamento() + canonicalização TED/DOC→Transferência; sidebar+KPIs+6 páginas integradas; 12 testes |
+| 7 | 71 Sync rico vault | `b6f8b99` | src/obsidian/sync_rico.py (~310L); soberania via #sincronizado-automaticamente; idempotência por hash; 19 testes |
+| 8 | 73 Drill-down | `73a06f4` | drilldown.py com debounce; ler_filtros_da_url() whitelist 10 campos; breadcrumb no Extrato; 17 testes |
+| 9 | 77 Polish UX v2 | `a8f8dd8` | treemap monospace+bordas; legenda_abaixo() helper; filtros avançados com keys `avancado_*` (fix colisão Sprint 73); 13 testes |
+| 10 | 80 Menu interativo | `3c3ffa9` | scripts/menu_interativo.py com rich; flag --menu; 5 testes |
+| 11 | 75 Gap analysis | `0f24b94` | src/analysis/gap_documental.py; 12ª aba "Completude" com heatmap+alertas+CSV; 10 testes |
+| 12 | 78 Grafo full-page | `21f6e9f` | grafo_pyvis.py com click handler JS via window.parent; queries.grafo_filtrado(); pyvis>=0.3 nas deps; 16 testes (5 skip por pyvis indisponível local) |
+| 13 | 79 Aba Pagamentos | `67c3847` | src/analysis/pagamentos.py (boletos/pix/crédito); aba "Pagamentos" 3 sub-abas; 12 testes |
+| 14 | 86+87 Ressalvas | `0a39938` | Sprint 86 (checklist humano 16 itens) + Sprint 87 (spec técnico 9 itens) |
+
+**20 ressalvas consolidadas em Sprints 86+87**: validação visual + ambiente bzip2 + ingestão em volume + decisões arquiteturais (86); drill-down em mais plots + extrator de boleto PDF + MOC mensal + regras YAML para IRPF/DAS/CPF + backfill arquivo_original + reconciliação via grafo + legenda_abaixo em 4 plots (87).
+
+### Padrões canônicos estabelecidos em 2026-04-22
+
+Estes padrões foram descobertos/consolidados durante a sessão e devem ser respeitados por sprints futuras:
+
+1. **Integração com sistema vivo** (Sprint 70, ADR-18): adapter em `src/integrations/<sistema>.py`, YAML declara tipos absorvidos + forbidden zones, dry-run por default + `--executar` explícito, preservação idempotente antes de mover, testes em `tmp_path` (nunca vault real).
+2. **Soberania do usuário** (Sprint 71): nota editada sem tag `#sincronizado-automaticamente` e sem frontmatter `sincronizado: true` é PRESERVADA. Idempotência por hash de conteúdo impede reescrita desnecessária.
+3. **Drill-down canônico** (Sprint 73): helper `aplicar_drilldown` com debounce por hash em `session_state[f"{key}_last_click_hash"]`. URL navigation via `st.query_params`, leitor `ler_filtros_da_url()` com whitelist. Nunca postMessage.
+4. **Chaves de session_state separadas por namespace** (Sprint 77): `filtro_*` é domínio do drill-down; `avancado_*` é domínio dos filtros manuais do Extrato. Colisão entre os dois (caso original) causa seletor preso em valor errado.
+5. **Tipagem semântica de edges** (Sprint 74): `tipo_edge_semantico` em `evidencia` é `pago_com | confirma | comprovante | origem`. `classificar_tipo_edge(tipo_documento)` mapeia. Edge canônica no grafo continua `documento_de` — a semântica é carregada na evidência, preservando idempotência.
+6. **Graceful degradation visual** (Sprint 78): pyvis depende de bzip2 no sistema; código retorna placeholder HTML quando import falha. Testes pulam com `@pytest.mark.skipif(not _PYVIS_DISPONIVEL)`. Ambiente pode ser consertado depois (Sprint 86 item 86.1) sem bloquear commit.
+7. **Ressalva = sprint-nova, nunca "issue depois"** (anti-débito): toda ressalva não resolvida na sprint virou item em Sprint 86 (humano) ou Sprint 87 (Claude), com caminho de execução claro. Zero "TODO futuro" solto no código.
 
 ---
 
