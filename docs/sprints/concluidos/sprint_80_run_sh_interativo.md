@@ -34,7 +34,7 @@ sprint:
 
 # Sprint 80 — run.sh interativo
 
-**Status:** BACKLOG
+**Status:** CONCLUÍDA (2026-04-22)
 **Prioridade:** P2
 **Dependências:** Sprint 70 (adapter Controle de Bordo)
 **Issue:** UX-ANDRE-08
@@ -94,9 +94,14 @@ fi
 
 ## Evidências
 
-- [ ] Menu aparece ao rodar `./run.sh`
-- [ ] Pergunta pós-inbox funciona
-- [ ] Flags antigas preservadas
+- [x] `scripts/menu_interativo.py` novo (~180L): 5 ações + saída, pergunta pós-ação `OPCOES_FOLLOW_UP = (dashboard, relatorio, ambos, nada)`, dispatcher que delega a subprocessos de `run.sh` (não reescreve o que já funciona). `OUROBOROS_MENU_SKIP=1` permite saída silenciosa em CI.
+- [x] `run.sh`: nova flag `--menu` que faz `exec` para o Python script (preserva todas as flags existentes).
+- [x] 5 testes em `tests/test_menu_interativo.py`: importação, número de opções do menu (5 + saída), 4 opções de follow-up, env var de skip, execução real no venv com stdin vazio.
+- [x] Gauntlet: make lint exit 0, 1009 passed (+5), smoke 8/8 OK.
+
+### Ressalva
+
+- [R80-1] O `run.sh` sem argumentos continua com o menu bash antigo (que já existe e funciona). A Sprint 80 entrega o menu Python com rich como `--menu` explícito; a troca do default do `./run.sh` para invocar `menu_interativo.py` fica como decisão do André (é apenas uma linha no dispatch case do run.sh). Motivo da cautela: o menu bash atual já é estético e tem várias ações que nem estão no Python (p.ex. processar_mes específico, backup manual). Consolidar num único caminho exige passagem mais cuidadosa.
 
 ---
 

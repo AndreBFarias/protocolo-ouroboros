@@ -442,6 +442,10 @@ case "${1:-}" in
         msg_info "Inspecionando inbox unificada (dry-run, sem efeito colateral)..."
         python -m src.integrations.controle_bordo
         ;;
+    --menu)
+        # Sprint 80: menu interativo em Python com rich.
+        exec "$VENV/bin/python" scripts/menu_interativo.py
+        ;;
     --mes)
         MES="${2:?Informe o mês no formato YYYY-MM}"
         msg_info "Processando ${MES}..."
