@@ -35,6 +35,7 @@ from src.dashboard.tema import (  # noqa: E402
     CORES,
     card_sidebar_html,
     css_global,
+    logo_sidebar_html,
 )
 
 
@@ -56,7 +57,12 @@ def _sidebar(dados: dict) -> tuple[str, str, str]:
         Tupla com (período selecionado, pessoa, granularidade).
     """
     with st.sidebar:
-        st.title("Protocolo Ouroboros")
+        # Sprint 76: logo acima do título, centralizados, cacheado em session_state.
+        logo_html = logo_sidebar_html()
+        if logo_html:
+            st.markdown(logo_html, unsafe_allow_html=True)
+        else:
+            st.title("Protocolo Ouroboros")
 
         if CAMINHO_XLSX.exists():
             import os
