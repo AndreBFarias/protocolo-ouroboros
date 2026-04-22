@@ -5,8 +5,10 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from src.dashboard.dados import (
+    filtrar_por_forma_pagamento,
     filtrar_por_periodo,
     filtrar_por_pessoa,
+    filtro_forma_ativo,
 )
 from src.dashboard.tema import (
     CORES,
@@ -301,7 +303,9 @@ def renderizar(
     periodo_filtro = ctx.get("periodo", periodo) if ctx else periodo
 
     extrato = dados["extrato"]
-    extrato_pessoa = filtrar_por_pessoa(extrato, pessoa)
+    extrato_pessoa = filtrar_por_forma_pagamento(
+        filtrar_por_pessoa(extrato, pessoa), filtro_forma_ativo()
+    )
     extrato_periodo = filtrar_por_periodo(extrato_pessoa, gran, periodo_filtro)
 
     st.subheader("Fluxo de Despesas")

@@ -109,6 +109,59 @@ def filtrar_por_pessoa(df: pd.DataFrame, pessoa: str) -> pd.DataFrame:
     return df[df["quem"] == pessoa].copy()
 
 
+# Sprint 72: normalização de variações históricas de `forma_pagamento`.
+# A coluna pode conter rótulos diferentes para a mesma intenção (ex.: "TED"
+# contado como "Transferência"). Mantemos um dict canônico; valores fora do
+# dict passam intactos (respeito à fonte) e aparecem no selectbox como
+# grupos extras quando presentes.
+_FORMAS_CANONICAS: dict[str, str] = {
+    "TED": "Transferência",
+    "DOC": "Transferência",
+    "Transferência Interna": "Transferência",
+    "Débito automático": "Débito",
+    "Debito": "Débito",
+    "Credito": "Crédito",
+}
+
+
+def filtro_forma_ativo() -> str | None:
+    """Lê o filtro de forma de pagamento da session_state (Sprint 72).
+
+    Retorna ``None`` quando não há seleção (ou streamlit ausente), o que
+    permite que `filtrar_por_forma_pagamento` pule o filtro. Serve como
+    adaptador entre a sidebar e as páginas que aplicam o filtro.
+    """
+    try:
+        import streamlit as st
+    except ImportError:
+        return None
+    if not hasattr(st, "session_state"):
+        return None
+    valor = st.session_state.get("filtro_forma")  # type: ignore[union-attr]
+    if not valor or valor == "Todas":
+        return None
+    return str(valor)
+
+
+def filtrar_por_forma_pagamento(
+    df: pd.DataFrame, forma: str | None
+) -> pd.DataFrame:
+    """Filtra DataFrame por `forma_pagamento` (Sprint 72).
+
+    - `forma=None` ou ``"Todas"``: devolve o df sem filtrar.
+    - Aplica canonicalização: "TED" e "DOC" são agrupados sob "Transferência",
+      etc. (ver `_FORMAS_CANONICAS`).
+    - Se a coluna `forma_pagamento` não existe, devolve o df intacto.
+    """
+    if not forma or forma == "Todas" or "forma_pagamento" not in df.columns:
+        return df
+    coluna_canonica = df["forma_pagamento"].fillna("").map(
+        lambda v: _FORMAS_CANONICAS.get(v, v)
+    )
+    mascara = coluna_canonica == forma
+    return df[mascara].copy()
+
+
 def calcular_saldo_acumulado(
     dados: dict[str, pd.DataFrame],
     mes: str,

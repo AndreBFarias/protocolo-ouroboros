@@ -6,9 +6,11 @@ import streamlit as st
 
 from src.dashboard.componentes import kpi_grid_html
 from src.dashboard.dados import (
+    filtrar_por_forma_pagamento,
     filtrar_por_mes,
     filtrar_por_periodo,
     filtrar_por_pessoa,
+    filtro_forma_ativo,
     formatar_moeda,
 )
 from src.dashboard.tema import (
@@ -37,7 +39,9 @@ def renderizar(
     periodo = ctx.get("periodo", mes_selecionado) if ctx else mes_selecionado
 
     extrato = dados["extrato"]
-    extrato_filtrado = filtrar_por_pessoa(extrato, pessoa)
+    extrato_filtrado = filtrar_por_forma_pagamento(
+        filtrar_por_pessoa(extrato, pessoa), filtro_forma_ativo()
+    )
     extrato_mes = filtrar_por_periodo(extrato_filtrado, gran, periodo)
 
     receitas = extrato_mes[extrato_mes["tipo"] == "Receita"]["valor"].sum()

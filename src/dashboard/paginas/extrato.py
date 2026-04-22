@@ -8,7 +8,12 @@ import streamlit as st
 import yaml
 
 from src.dashboard.componentes.modal_transacao import mostrar_modal
-from src.dashboard.dados import filtrar_por_periodo, filtrar_por_pessoa
+from src.dashboard.dados import (
+    filtrar_por_forma_pagamento,
+    filtrar_por_periodo,
+    filtrar_por_pessoa,
+    filtro_forma_ativo,
+)
 from src.dashboard.tema import CORES, FONTE_CORPO
 
 _CAMINHO_CATEGORIAS_TRACKING: Path = (
@@ -46,6 +51,7 @@ def renderizar(
     extrato = dados["extrato"]
     df = filtrar_por_periodo(extrato, gran, periodo)
     df = filtrar_por_pessoa(df, pessoa)
+    df = filtrar_por_forma_pagamento(df, filtro_forma_ativo())
 
     if df.empty:
         st.info("Sem transações para o período selecionado.")

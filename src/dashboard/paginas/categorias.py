@@ -6,9 +6,11 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from src.dashboard.dados import (
+    filtrar_por_forma_pagamento,
     filtrar_por_mes,
     filtrar_por_periodo,
     filtrar_por_pessoa,
+    filtro_forma_ativo,
     formatar_moeda,
 )
 from src.dashboard.tema import (
@@ -45,7 +47,9 @@ def renderizar(
     periodo = ctx.get("periodo", mes_selecionado) if ctx else mes_selecionado
 
     extrato = dados["extrato"]
-    df_filtrado = filtrar_por_pessoa(extrato, pessoa)
+    df_filtrado = filtrar_por_forma_pagamento(
+        filtrar_por_pessoa(extrato, pessoa), filtro_forma_ativo()
+    )
     df = filtrar_por_periodo(df_filtrado, gran, periodo)
     df = df[df["tipo"].isin(["Despesa", "Imposto"])].copy()
 

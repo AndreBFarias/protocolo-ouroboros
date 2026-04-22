@@ -38,7 +38,7 @@ sprint:
 
 # Sprint 72 — Filtro forma de pagamento
 
-**Status:** BACKLOG
+**Status:** CONCLUÍDA (2026-04-22)
 **Prioridade:** P1
 **Dependências:** nenhuma
 **Issue:** UX-ANDRE-01
@@ -81,9 +81,16 @@ Cada página consome via `st.session_state.get("filtro_forma")`.
 
 ## Evidências
 
-- [ ] Filtro funciona em todas as abas
-- [ ] KPIs da sidebar refletem filtro
-- [ ] Screenshot com sidebar + filtro ativo
+- [x] `src/dashboard/dados.py`: `filtrar_por_forma_pagamento` + `filtro_forma_ativo` + `_FORMAS_CANONICAS` (TED/DOC agrupam em "Transferência", "Débito automático"→"Débito", "Credito"/"Debito" sem acento normalizados).
+- [x] `src/dashboard/app.py`: sidebar com selectbox "Forma de pagamento" logo após "Pessoa" — opções Todas/Pix/Débito/Crédito/Boleto/Transferência; estado em `st.session_state["filtro_forma"]`.
+- [x] KPIs da sidebar (Receita/Despesa/Saldo) respeitam o filtro via `filtrar_por_forma_pagamento`.
+- [x] Filtro propagado em 6 páginas: extrato, categorias, visao_geral, projecoes, contas, analise_avancada. Todas passam `filtrar_por_forma_pagamento(df, filtro_forma_ativo())` após `filtrar_por_pessoa`.
+- [x] 12 testes em `tests/test_dashboard_filtro_forma.py` — cobrem None/Todas/cada forma, canonicalização TED+DOC→Transferência, coluna ausente, invariante "total com filtro <= total sem filtro" (acceptance #5).
+- [x] Gauntlet: make lint exit 0, 955 passed (+12 vs 943), smoke 8/8 OK.
+
+### Ressalva
+
+- [R72-1] Screenshot ANTES/DEPOIS da sidebar + aba Extrato filtrada por "Crédito" requer dashboard rodando; lógica coberta 100% por testes unitários.
 
 ---
 

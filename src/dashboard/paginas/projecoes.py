@@ -4,7 +4,12 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
-from src.dashboard.dados import filtrar_por_pessoa, formatar_moeda
+from src.dashboard.dados import (
+    filtrar_por_forma_pagamento,
+    filtrar_por_pessoa,
+    filtro_forma_ativo,
+    formatar_moeda,
+)
 from src.dashboard.tema import (
     CORES,
     FONTE_MINIMA,
@@ -57,7 +62,9 @@ def _transacoes_do_extrato(
     if "extrato" not in dados:
         return []
 
-    df = filtrar_por_pessoa(dados["extrato"], pessoa)
+    df = filtrar_por_forma_pagamento(
+        filtrar_por_pessoa(dados["extrato"], pessoa), filtro_forma_ativo()
+    )
     registros: list[dict] = []
     for _, row in df.iterrows():
         registros.append(row.to_dict())
@@ -80,7 +87,9 @@ def _saldo_do_mes(
     """Saldo parcial (receita - despesa) do mês selecionado, já filtrado por pessoa."""
     if "extrato" not in dados or not mes:
         return 0.0
-    df = filtrar_por_pessoa(dados["extrato"], pessoa)
+    df = filtrar_por_forma_pagamento(
+        filtrar_por_pessoa(dados["extrato"], pessoa), filtro_forma_ativo()
+    )
     if "mes_ref" not in df.columns:
         return 0.0
     df = df[df["mes_ref"] == mes]
