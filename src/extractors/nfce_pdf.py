@@ -52,6 +52,7 @@ from src.utils.chave_nfe import (
     normalizar as normalizar_chave,
 )
 from src.utils.logger import configurar_logger
+from src.utils.parse_br import parse_valor_br
 
 logger = configurar_logger("nfce_pdf")
 
@@ -319,7 +320,7 @@ def _parse_cabecalho_nfce(texto: str) -> dict[str, Any] | None:
 
     numero, serie = _extrair_numero_serie(texto)
     data_emissao = _extrair_data_emissao(texto)
-    total = _parse_valor_br(_match_grupo(RE_TOTAL, texto))
+    total = parse_valor_br(_match_grupo(RE_TOTAL, texto))
     cpf_consumidor = extrair_cpf(texto) or _extrair_cpf_consumidor(texto)
     forma_pagamento = normalizar_forma_pagamento(
         _match_grupo(RE_FORMA_PAGAMENTO_BLOCO, texto)
@@ -384,10 +385,10 @@ def _item_de_match(match: re.Match[str]) -> dict[str, Any]:
     return {
         "codigo": match.group("codigo"),
         "descricao": _limpar_espacos(match.group("descricao")),
-        "qtde": _parse_valor_br(match.group("qtde")),
+        "qtde": parse_valor_br(match.group("qtde")),
         "unidade": match.group("unidade").upper(),
-        "valor_unit": _parse_valor_br(match.group("valor_unit")),
-        "valor_total": _parse_valor_br(match.group("valor_total")),
+        "valor_unit": parse_valor_br(match.group("valor_unit")),
+        "valor_total": parse_valor_br(match.group("valor_total")),
     }
 
 
@@ -534,16 +535,6 @@ def _ler_paginas_pdf(caminho: Path) -> list[str]:
 # ============================================================================
 # Helpers numéricos
 # ============================================================================
-
-
-def _parse_valor_br(bruto: str | None) -> float | None:
-    if not bruto:
-        return None
-    limpo = bruto.replace(".", "").replace(",", ".")
-    try:
-        return float(limpo)
-    except ValueError:
-        return None
 
 
 def _match_grupo(padrao: re.Pattern[str], texto: str) -> str | None:

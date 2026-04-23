@@ -50,6 +50,7 @@ from src.intake.glyph_tolerant import (
     extrair_cpf,
 )
 from src.utils.logger import configurar_logger
+from src.utils.parse_br import parse_valor_br
 
 logger = configurar_logger("cupom_garantia_estendida_pdf")
 
@@ -326,10 +327,10 @@ def _parse_bilhete(texto: str) -> dict[str, Any] | None:
         "processo_susep": _normalizar_processo_susep(_match_grupo(RE_PROCESSO_SUSEP, texto)),
         "cpf_segurado": extrair_cpf(texto),
         "bem_segurado": _limpar_linha(_match_grupo(RE_BEM_SEGURADO, texto)),
-        "valor_bem": _parse_valor_br(_match_grupo(RE_LIMITE, texto)),
-        "premio_liquido": _parse_valor_br(_match_grupo(RE_PREMIO_LIQUIDO, texto)),
-        "iof": _parse_valor_br(_match_grupo(RE_IOF, texto)),
-        "premio_total": _parse_valor_br(_match_grupo(RE_PREMIO_TOTAL, texto)),
+        "valor_bem": parse_valor_br(_match_grupo(RE_LIMITE, texto)),
+        "premio_liquido": parse_valor_br(_match_grupo(RE_PREMIO_LIQUIDO, texto)),
+        "iof": parse_valor_br(_match_grupo(RE_IOF, texto)),
+        "premio_total": parse_valor_br(_match_grupo(RE_PREMIO_TOTAL, texto)),
         "forma_pagamento": _limpar_linha(_match_grupo(RE_FORMA_PAGAMENTO, texto)),
         "vigencia_inicio": _br_para_iso(_match_grupo(RE_VIGENCIA_INICIO, texto)),
         "vigencia_fim": _br_para_iso(_match_grupo(RE_VIGENCIA_FIM, texto)),
@@ -508,16 +509,6 @@ def _normalizar_processo_susep(bruto: str | None) -> str | None:
     if not match:
         return digitos
     return f"{match.group(1)}.{match.group(2)}/{match.group(3)}-{match.group(4)}"
-
-
-def _parse_valor_br(bruto: str | None) -> float | None:
-    if not bruto:
-        return None
-    limpo = bruto.replace(".", "").replace(",", ".")
-    try:
-        return float(limpo)
-    except ValueError:
-        return None
 
 
 def _br_para_iso(data_br: str | None) -> str | None:

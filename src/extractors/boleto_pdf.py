@@ -68,6 +68,7 @@ from src.extractors.base import ExtratorBase, Transacao
 from src.graph.db import GrafoDB, caminho_padrao
 from src.graph.ingestor_documento import ingerir_documento_fiscal
 from src.utils.logger import configurar_logger
+from src.utils.parse_br import parse_valor_br
 
 logger = configurar_logger("boleto_pdf")
 
@@ -197,27 +198,6 @@ _RE_SACADO = re.compile(
 )
 
 
-# ============================================================================
-# Parsing helpers
-# ============================================================================
-
-
-def _parse_valor_br(valor_str: str | None) -> float | None:
-    """Converte '1.234,56' em 1234.56. None em entrada inválida.
-
-    Redefinido localmente por coerência com o padrão do projeto
-    (BRIEF §91 -- 7 extratores fazem o mesmo; refactor para
-    `src/utils/parse_br.py` é sprint INFRA futura, não blocker).
-    """
-    if valor_str is None:
-        return None
-    limpo = valor_str.replace(".", "").replace(",", ".").strip()
-    try:
-        return float(limpo)
-    except (ValueError, TypeError):
-        return None
-
-
 def _parse_data_para_iso(data_br: str | None) -> str | None:
     """Aceita 'DD/MM/YYYY' e devolve ISO 'YYYY-MM-DD' ou None."""
     if not data_br:
@@ -261,7 +241,7 @@ def _extrair_valor(texto: str) -> float | None:
     for padrao in (_RE_VALOR_COBRADO, _RE_VALOR_DOCUMENTO, _RE_VALOR_GENERICO):
         match = padrao.search(texto)
         if match:
-            valor = _parse_valor_br(match.group(1))
+            valor = parse_valor_br(match.group(1))
             if valor is not None and valor > 0:
                 return valor
     return None

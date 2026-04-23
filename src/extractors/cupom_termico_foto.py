@@ -51,6 +51,7 @@ from src.graph.db import GrafoDB, caminho_padrao
 from src.graph.ingestor_documento import ingerir_documento_fiscal
 from src.transform.irpf_tagger import _REGEX_CNPJ
 from src.utils.logger import configurar_logger
+from src.utils.parse_br import parse_valor_br
 
 logger = configurar_logger("cupom_termico_foto")
 
@@ -293,17 +294,6 @@ def _detectar_emissor(
     raise RuntimeError("nenhum emissor definido em ocr_cupom_regex.yaml")
 
 
-def _parse_valor_br(bruto: str | None) -> float | None:
-    """Converte '1.234,56' em 1234.56. Devolve None em entrada inválida."""
-    if bruto is None:
-        return None
-    limpo = bruto.replace(".", "").replace(",", ".")
-    try:
-        return float(limpo)
-    except (ValueError, TypeError):
-        return None
-
-
 def _parse_itens_cupom(
     texto: str, emissor: dict[str, Any]
 ) -> list[dict[str, Any]]:
@@ -328,9 +318,9 @@ def _parse_itens_cupom(
             contador_sem_codigo += 1
             codigo = f"SEMCOD{contador_sem_codigo:04d}"
 
-        qtde = _parse_valor_br(grupos.get("qtde")) or 1.0
-        valor_unit = _parse_valor_br(grupos.get("valor_unit"))
-        valor_total = _parse_valor_br(grupos.get("valor_total"))
+        qtde = parse_valor_br(grupos.get("qtde")) or 1.0
+        valor_unit = parse_valor_br(grupos.get("valor_unit"))
+        valor_total = parse_valor_br(grupos.get("valor_total"))
 
         if valor_total is None:
             continue
