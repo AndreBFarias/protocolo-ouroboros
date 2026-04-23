@@ -35,7 +35,7 @@ Auditoria de fidelidade em 760 arquivos `data/raw/` + inbox + XLSX + grafo.
 
 ### P1 — Alto valor
 - [x] **P1.1 — Extrator DAS PARCSN**: +47 documentos no grafo. **CONCLUÍDA.**
-- [ ] **P1.2 — Sprint 89 OCR fallback PDF-imagem**: fecha inbox.
+- [x] **P1.2 — Sprint 89 OCR fallback PDF-imagem**: fecha inbox. **CONCLUÍDA.**
 
 ### P2 — Higiene
 - [ ] **P2.1 — Sprint 87d fallback idempotente**.
@@ -107,7 +107,25 @@ Runtime real pós-ingestão:
 - Pytest: 1176 → **1182 passed** (+6).
 - Smoke 8/8 OK.
 
-### _Próximo: P1.2 (Sprint 89 OCR fallback PDF-imagem)_
+### 2026-04-23 — P1.2 concluída: Sprint 89 OCR fallback PDF-imagem
+
+Modificados:
+- `src/intake/preview.py::_preview_pdf`: quando pdfplumber devolve <50 chars, invoca fallback OCR via `_preview_pdf_via_ocr` (pypdfium2 + tesseract).
+- `MIN_CHARS_TEXTO_NATIVO=50` constante nova.
+- `_preview_pdf_via_ocr(caminho, paginas=1)`: renderiza 1ª página com pypdfium2 (scale=2), tesseract lang='por+eng'. Fallback graceful: ImportError ou erro interno devolve None sem crashar.
+
+Criado:
+- `tests/test_preview_ocr_fallback.py` (4 testes): PDF nativo não invoca OCR, PDF-imagem cai em OCR, pypdfium2 ausente, erro interno.
+
+Runtime real: `notas de garantia e compras.pdf` do inbox (4p, 0 chars nativos) agora extrai **1064 chars via OCR**, reconhecido como `nfce_consumidor_eletronica` (Americanas CNPJ 00.776.574/0160-79, PS5 DualSense R$ 449,99). Roteado para `data/raw/casal/nfs_fiscais/nfce/`.
+
+Inbox: 2 arquivos → 1 (sobrou só o IRPF `.DEC` que P3.1 endereça).
+
+Ressalva: o extrator `ExtratorNfcePDF` downstream ainda usa pdfplumber sem OCR, então o NFCe-imagem não é extraído para o grafo ainda (escopo estendido). A classificação funcionou -- o arquivo está no lugar correto -- a extração completa exige sprint dedicada.
+
+Pytest: 1182 → **1186 passed** (+4). Smoke 8/8 OK.
+
+### _Próximo: P2.1 (Sprint 87d fallback supervisor idempotente)_
 
 ---
 
