@@ -1,9 +1,9 @@
 # Roadmap -- Protocolo Ouroboros
 
 ```
-VERSÃO: 7.7 | SPRINTS: 101 (62 concluídas, 0 em produção, 14 backlog, 13 arquivadas)
-ROTA: Catalogador universal artesanal (Fases ALFA → ZETA) + Fase ETA (auditoria) + Fase IOTA (integração Controle de Bordo) + Fase KAPPA (UX polish + tracking documental + workflow) + Sprint 87 (ressalvas IOTA/KAPPA, concluída) + Rota A (87c + 87b + INFRA-parse-br, concluída 2026-04-24)
-ÚLTIMA ATUALIZAÇÃO: 2026-04-24. Rota A executada em sessão única (3 sprints, 3 commits atômicos). Baseline 1.109 → 1.127 passed (+18 testes). 87c fecha silent bug de `listar_edges`/`_contar_docs_do_fornecedor`; 87b destrava coluna Doc? do Extrato em runtime real via simetria bit-a-bit do hash canônico (`.upper()` alinhando XLSX e grafo); INFRA-parse-br consolida 6 de 8 extratores em `src/utils/parse_br.py` (santander/itau intactos por auditoria comportamental). Sprint 86 (humano) permanece aguardando ambiente + volume real. Retomada canônica: docs/HANDOFF_2026-04-24.md.
+VERSÃO: 7.8 | SPRINTS: 103 (63 concluídas, 0 em produção, 14 backlog, 13 arquivadas)
+ROTA: Catalogador universal artesanal (Fases ALFA → ZETA) + Fase ETA (auditoria) + Fase IOTA (integração Controle de Bordo) + Fase KAPPA (UX polish + tracking documental + workflow) + Sprint 87 (concluída) + Rota A (87c+87b+INFRA, concluída) + Sprint 88 (regras YAML volume real) + Bloco A/B/C da Sprint 86 (ambiente + ingestão real + docs, concluídos 2026-04-24)
+ÚLTIMA ATUALIZAÇÃO: 2026-04-24. Sessão expandida concluída: Rota A + Sprint 88 + Bloco A (libbz2-dev + recompilar Python) + Bloco B (ingestão em volume real dos 27 arquivos do inbox) + Bloco C (docs). Baseline 1.109 → 1.138 passed (+29 testes; 5 pyvis destravados). Sprint 88 calibrou 5 regras YAML (das_parcsn, certidao_receita_cnpj, extrato_c6_pdf, cupom_fiscal_foto, das_mei fix); dry-run foi de 1/27 para 26/27 roteados. Bloco B moveu 26 arquivos, populou grafo com 2 boletos SESC novos (7.421→7.424 nodes), regenerou XLSX com coluna identificador em runtime real, rodou sync_rico bidirecional (4 docs + 2 fornecedores + 1 MOC + 4 PDFs no vault). 2 follow-ups formalizados: Sprint 89 (OCR pré-classificação) + Sprint 90 (pessoa_detector robusto). Retomada: docs/HANDOFF_2026-04-24.md.
 ```
 
 ---
