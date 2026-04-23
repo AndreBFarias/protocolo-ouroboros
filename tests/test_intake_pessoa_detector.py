@@ -274,4 +274,125 @@ def test_orchestrator_pessoa_explicita_pula_autodetect(tmp_path, monkeypatch):
     assert "/vitoria/" in str(relatorio.artefatos[0].caminho_final)
 
 
+# ============================================================================
+# Sprint 90 -- identidade rica via pessoas.yaml (CNPJ + razão social + alias)
+# ============================================================================
+
+
+def _yaml_pessoas(tmp_path: Path, conteudo: str) -> Path:
+    arq = tmp_path / "pessoas.yaml"
+    arq.write_text(conteudo, encoding="utf-8")
+    return arq
+
+
+@pytest.fixture
+def pessoas_yaml_casal(tmp_path, monkeypatch):
+    """Fixture: yaml de pessoas.yaml configurado para o casal real."""
+    arq = _yaml_pessoas(
+        tmp_path,
+        """
+pessoas:
+  andre:
+    cpfs:
+      - "051.273.731-22"
+    cnpjs:
+      - "45.850.636/0001-60"
+    razao_social:
+      - "ANDRE DA SILVA BATISTA DE FARIAS"
+      - "ANDRE SILVA BATISTA FARIAS"
+    aliases:
+      - "ANDRE FARIAS"
+  vitoria:
+    cpfs:
+      - "070.475.321-96"
+    cnpjs:
+      - "52.488.753"
+    razao_social:
+      - "VITORIA MARIA SILVA DOS SANTOS"
+    aliases:
+      - "VITORIA"
+fallback_pessoa: casal
+""",
+    )
+    monkeypatch.setattr(pd, "_PATH_PESSOAS", arq)
+    monkeypatch.setattr(pd, "_PATH_MAPPING", tmp_path / "cpfs_inexistente.yaml")
+    pd._CACHE_PESSOAS = None
+    pd._CACHE_CPFS = None
+    return arq
+
+
+def test_detecta_andre_por_cnpj_mei_desativado(tmp_path, pessoas_yaml_casal):
+    """DAS PARCSN tem CNPJ 45.850.636/0001-60 + razão social ANDRE..."""
+    arq = tmp_path / "das.pdf"
+    arq.write_bytes(b"x")
+    texto = (
+        "Documento de Arrecadação do Simples Nacional\n"
+        "CNPJ Razão Social\n"
+        "45.850.636/0001-60 ANDRE DA SILVA BATISTA DE FARIAS\n"
+    )
+    pessoa, fonte = pd.detectar_pessoa(arq, texto)
+    assert pessoa == "andre"
+    assert "CNPJ" in fonte or "razão social" in fonte
+
+
+def test_detecta_andre_por_razao_social_sem_cpf(tmp_path, pessoas_yaml_casal):
+    """Certidão Receita CNPJ sem CPF, só razão social."""
+    arq = tmp_path / "cert.pdf"
+    arq.write_bytes(b"x")
+    texto = "Certidão emitida para: ANDRE DA SILVA BATISTA DE FARIAS"
+    pessoa, fonte = pd.detectar_pessoa(arq, texto)
+    assert pessoa == "andre"
+
+
+def test_detecta_vitoria_por_razao_social(tmp_path, pessoas_yaml_casal):
+    arq = tmp_path / "doc.pdf"
+    arq.write_bytes(b"x")
+    texto = "PIX recebido de VITORIA MARIA SILVA DOS SANTOS - 070.475..."
+    pessoa, _ = pd.detectar_pessoa(arq, texto)
+    assert pessoa == "vitoria"
+
+
+def test_detecta_vitoria_por_cnpj_mei_ativo(tmp_path, pessoas_yaml_casal):
+    arq = tmp_path / "doc.pdf"
+    arq.write_bytes(b"x")
+    texto = "Nota Fiscal emitida por CNPJ 52.488.753/0001-10"
+    pessoa, fonte = pd.detectar_pessoa(arq, texto)
+    assert pessoa == "vitoria"
+    assert "CNPJ" in fonte
+
+
+def test_cnpj_vence_razao_social_ambigua(tmp_path, pessoas_yaml_casal):
+    """CNPJ é mais específico que razão social -- vence ordem."""
+    arq = tmp_path / "doc.pdf"
+    arq.write_bytes(b"x")
+    texto = "CNPJ 45.850.636/0001-60 VITORIA MARIA SILVA DOS SANTOS"
+    pessoa, fonte = pd.detectar_pessoa(arq, texto)
+    # CNPJ do André vence razão social da Vitória no mesmo texto
+    assert pessoa == "andre"
+    assert "CNPJ" in fonte
+
+
+def test_fallback_casal_sem_identificador(tmp_path, pessoas_yaml_casal):
+    arq = tmp_path / "doc.pdf"
+    arq.write_bytes(b"x")
+    pessoa, fonte = pd.detectar_pessoa(arq, "documento genérico sem dados")
+    assert pessoa == "casal"
+    assert "fallback" in fonte
+
+
+def test_cpf_literal_ainda_vence_cnpj(tmp_path, monkeypatch):
+    """Retrocompat: CPF mapeado em cpfs_pessoas.yaml vence mesmo se pessoas.yaml não existe."""
+    cpfs_yaml = _yaml_mapping(tmp_path, 'cpfs:\n  "05127373122": andre\n')
+    monkeypatch.setattr(pd, "_PATH_MAPPING", cpfs_yaml)
+    monkeypatch.setattr(pd, "_PATH_PESSOAS", tmp_path / "pessoas_inexistente.yaml")
+    pd._CACHE_CPFS = None
+    pd._CACHE_PESSOAS = None
+
+    arq = tmp_path / "doc.pdf"
+    arq.write_bytes(b"x")
+    pessoa, fonte = pd.detectar_pessoa(arq, "CPF: 051.273.731-22 tudo mais")
+    assert pessoa == "andre"
+    assert "CPF" in fonte
+
+
 # "Onde não há prova, não há acusação." -- princípio do direito civilizado
