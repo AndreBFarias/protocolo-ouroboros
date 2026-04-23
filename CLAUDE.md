@@ -13,6 +13,14 @@ INTEGRAÇÕES: OFX (pronto), Controle de Bordo vault (Sprint 70/71 integrado), B
 ROTA ATUAL: Sprint 87 completa (ressalvas técnicas IOTA/KAPPA) — próximo: Sprint 86 (humano-checklist) + Sprint 87b (propagar identificador tx no XLSX)
 ```
 
+### Próxima sessão — retomada canônica
+
+Antes de tocar código, leia **`docs/HANDOFF_2026-04-23.md`**. Esse arquivo contém o mapa completo de onde paramos, baseline atual, sprints pendentes com prioridade, comandos de sanidade de entrada e rota recomendada para a próxima sessão.
+
+### Sessão 2026-04-23 — Sprint 87 executada
+
+8 sub-itens da Sprint 87 (ressalvas técnicas IOTA/KAPPA) concluídos em sequência única, 9 commits atômicos, gauntlet verde em cada passo. Baseline 1.046 → 1.109 passed. 3 specs novas formalizam débitos residuais descobertos durante a execução (50b, 87c, INFRA-parse-br). Ver commits `3810ac7..aed7bfd` e `VALIDATOR_BRIEF.md` rodapé de 2026-04-23 para detalhes.
+
 ### Caminho crítico IOTA + KAPPA concluído em 2026-04-22
 
 Sessão única de orquestração supervisionada: 14 commits em sequência, gauntlet verde em cada passo (make lint exit 0, smoke 8/8, pytest sem regressão). Das Sprints 68b até 79 mais 80, 81, tudo fechou. Resumo por ordem de execução:
