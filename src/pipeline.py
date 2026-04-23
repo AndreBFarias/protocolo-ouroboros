@@ -579,12 +579,40 @@ def executar(mes: str | None = None, processar_tudo: bool = False) -> None:
     logger.info("Relatórios: %s", DIR_OUTPUT)
 
 
-def main() -> None:
+def _executar_backfill_metadata() -> int:
+    """Rota administrativa da Sprint 87.5: backfill de arquivo_original.
+
+    Isola-se do pipeline regular; chama apenas o módulo dedicado e sai.
+    Retorna exit code (0 sempre que conclui sem exceção)."""
+    from src.graph.backfill_arquivo_original import backfill_arquivo_original
+    from src.graph.db import GrafoDB, caminho_padrao
+
+    db = GrafoDB(caminho_padrao())
+    try:
+        stats = backfill_arquivo_original(db)
+    finally:
+        db.fechar()
+    logger.info("backfill-metadata stats: %s", stats)
+    # Saída legível no stdout do operador; pipeline não produz outros prints.
+    for chave, valor in stats.items():
+        sys.stdout.write(f"{chave}: {valor}\n")
+    return 0
+
+
+def main(argv: list[str] | None = None) -> None:
     """Entrypoint CLI."""
     parser = argparse.ArgumentParser(description="Pipeline ETL Financeiro")
     parser.add_argument("--mes", type=str, help="Mês para processar (YYYY-MM)")
     parser.add_argument("--tudo", action="store_true", help="Processar todos os dados")
-    args = parser.parse_args()
+    parser.add_argument(
+        "--backfill-metadata",
+        action="store_true",
+        help="Rota administrativa: preenche arquivo_original em nodes documento (Sprint 87.5)",
+    )
+    args = parser.parse_args(argv)
+
+    if args.backfill_metadata:
+        sys.exit(_executar_backfill_metadata())
 
     if not args.mes and not args.tudo:
         parser.print_help()
