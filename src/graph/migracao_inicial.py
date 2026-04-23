@@ -48,10 +48,37 @@ _PATH_OUTPUT: Path = _RAIZ_REPO / "data" / "output"
 # ============================================================================
 
 
-def _hash_transacao(data: Any, valor: float, local: str, banco: str) -> str:
-    """Identificador canônico determinístico para uma transação."""
+def hash_transacao_canonico(data: Any, valor: float, local: str, banco: str) -> str:
+    """Identificador canônico determinístico para uma transação.
+
+    API pública (Sprint 87b): usada tanto para popular o `nome_canonico` do
+    node `transacao` no grafo quanto para preencher a coluna `identificador`  # noqa: accent
+    do XLSX. Simetria bit-a-bit entre as duas superfícies é contrato.
+
+    Retorna sempre em MAIÚSCULAS para bater com o `nome_canonico` efetivo
+    gravado pelo grafo: `GrafoDB.upsert_node` aplica `normalizar_nome_canonico`
+    (`strip().upper()`), então `transacoes_com_documento(db)` devolve hashes
+    em maiúsculas. Simetria bit-a-bit exige que o XLSX grave o mesmo formato.
+    """
     chave = f"{data}|{valor:.2f}|{local}|{banco}"
-    return hashlib.sha256(chave.encode("utf-8")).hexdigest()[:16]
+    return hashlib.sha256(chave.encode("utf-8")).hexdigest()[:16].upper()
+
+
+def hash_transacao_do_tx(tx: dict[str, Any]) -> str | None:
+    """Computa identificador canônico a partir do dict de transação do pipeline.
+
+    Retorna o mesmo hash que `migracao_inicial.executar` gera para o node
+    `transacao` no grafo, garantindo simetria bit-a-bit entre XLSX e grafo.  # noqa: accent
+    Retorna None quando a transação não tem local ou banco_origem -- a
+    migração também pula essas linhas (`if not local or not banco: continue`).
+    """
+    data = tx.get("data")
+    valor = float(tx.get("valor") or 0.0)
+    local = _str_normalizada(tx.get("local", ""))
+    banco = _str_normalizada(tx.get("banco_origem", ""))
+    if data is None or not local or not banco:
+        return None
+    return hash_transacao_canonico(data, valor, local, banco)
 
 
 def _localizar_xlsx_mais_recente() -> Path:
@@ -241,7 +268,7 @@ def _migrar_transacoes_e_arestas(
         if not local or not banco:
             continue  # linhas inválidas (sem local ou banco) -- pulam
 
-        hash_t = _hash_transacao(data, valor, local, banco)
+        hash_t = hash_transacao_canonico(data, valor, local, banco)
         metadata: dict[str, Any] = {
             "data": str(data),
             "valor": valor,
