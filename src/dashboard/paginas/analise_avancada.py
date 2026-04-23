@@ -4,6 +4,7 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
+from src.dashboard import tema
 from src.dashboard.dados import (
     filtrar_por_forma_pagamento,
     filtrar_por_periodo,
@@ -174,6 +175,9 @@ def _renderizar_sankey(df: pd.DataFrame) -> None:
         ),
     )
 
+    # Sprint 87.8 (R77-1): padroniza margens via helper mesmo no sankey
+    # (sem legenda, mas o helper ajusta margin top/bottom para consistência).
+    tema.legenda_abaixo(fig)
     st.plotly_chart(fig, use_container_width=True)
 
 
@@ -216,6 +220,9 @@ def _renderizar_heatmap(df: pd.DataFrame) -> None:
         yaxis=dict(autorange="reversed"),
     )
 
+    # Sprint 87.8 (R77-1): padroniza margens via helper (heatmap não tem
+    # legenda, mas o helper ajusta margin top/bottom para consistência).
+    tema.legenda_abaixo(fig)
     st.plotly_chart(fig, use_container_width=True)
 
 
