@@ -1,22 +1,20 @@
 # Roadmap -- Protocolo Ouroboros
 
 ```
-VERSÃO: 7.6 | SPRINTS: 101 (59 concluídas, 0 em produção, 17 backlog, 13 arquivadas)
-ROTA: Catalogador universal artesanal (Fases ALFA → ZETA) + Fase ETA (auditoria) + Fase IOTA (integração Controle de Bordo) + Fase KAPPA (UX polish + tracking documental + workflow) + Sprint 87 (ressalvas técnicas IOTA/KAPPA, concluída)
-ÚLTIMA ATUALIZAÇÃO: 2026-04-23. Sprint 87 executada em sessão única (8 sub-itens, 9 commits). Baseline 1.046 → 1.109 passed. 3 specs novas criadas (50b, 87c, INFRA-parse-br) formalizando débitos residuais. Sprint 86 (humano) permanece aguardando ambiente + volume real. Retomada canônica: docs/HANDOFF_2026-04-23.md.
+VERSÃO: 7.7 | SPRINTS: 101 (62 concluídas, 0 em produção, 14 backlog, 13 arquivadas)
+ROTA: Catalogador universal artesanal (Fases ALFA → ZETA) + Fase ETA (auditoria) + Fase IOTA (integração Controle de Bordo) + Fase KAPPA (UX polish + tracking documental + workflow) + Sprint 87 (ressalvas IOTA/KAPPA, concluída) + Rota A (87c + 87b + INFRA-parse-br, concluída 2026-04-24)
+ÚLTIMA ATUALIZAÇÃO: 2026-04-24. Rota A executada em sessão única (3 sprints, 3 commits atômicos). Baseline 1.109 → 1.127 passed (+18 testes). 87c fecha silent bug de `listar_edges`/`_contar_docs_do_fornecedor`; 87b destrava coluna Doc? do Extrato em runtime real via simetria bit-a-bit do hash canônico (`.upper()` alinhando XLSX e grafo); INFRA-parse-br consolida 6 de 8 extratores em `src/utils/parse_br.py` (santander/itau intactos por auditoria comportamental). Sprint 86 (humano) permanece aguardando ambiente + volume real. Retomada canônica: docs/HANDOFF_2026-04-24.md.
 ```
 
 ---
 
-## Próxima sessão — rota recomendada (2026-04-24+)
+## Próxima sessão — rotas candidatas (2026-04-25+)
 
-**Rota A (baixo risco, alto valor — ~2h):**
+**Rota C (higiene residual, baixo risco):**
 ```
-87c (fix _contar_docs_do_fornecedor, ~30min)
-  ↓
-87b (propagar identificador tx no XLSX, ~1h, destrava 87.2 em runtime real)
-  ↓
-INFRA-parse-br (consolidar _parse_valor_br, ~30min, zero risco funcional)
+50b  (item_categorizer remove edges categoria_de antigas ao mutar YAML, ~30min)
+82   (canonicalizer: variantes curtas + conta-espelho de cartão, ~1-2h, reduz órfãos TI 72% → meta 10%)
+85   (XLSX docs faltantes expandido, ~1h)
 ```
 
 **Rota B (ambiciosa, pede humano primeiro):**
@@ -26,7 +24,7 @@ INFRA-parse-br (consolidar _parse_valor_br, ~30min, zero risco funcional)
 Sprint 21 (relatórios diagnósticos, abre Fase ZETA)
 ```
 
-Detalhe de retomada + sanidade de entrada: `docs/HANDOFF_2026-04-23.md`.
+Detalhe de retomada + sanidade de entrada: `docs/HANDOFF_2026-04-24.md`.
 
 ---
 
