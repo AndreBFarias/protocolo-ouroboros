@@ -43,7 +43,9 @@ Catalogador universal artesanal da vida financeira do casal. O usuário joga QUA
 | Fase ETA residual sprint-nova | 82 (canonicalizer variantes curtas, achado 68b-A) | 1 |
 | **Concluídas Fase IOTA (integração Controle de Bordo)** | **70, 71** | **2** |
 | **Concluídas Fase KAPPA (completa)** | **72, 73, 74, 75, 76, 77, 78, 79, 80, 81** | **10** |
-| **Ressalvas IOTA/KAPPA (pós-caminho crítico)** | **86 (humano, checklist), 87 (Claude, spec)** | **2** |
+| **Ressalva IOTA/KAPPA — Claude** | **87 (concluída 2026-04-23, 8 sub-itens 87.1-87.8)** | **1** |
+| **Ressalva IOTA/KAPPA — humano** | **86 (checklist pendente, aguarda ambiente + volume real)** | **1** |
+| **Débito técnico pós-87** | **87b (propagar identificador de transação no XLSX, backlog)** | **1** |
 | Arquivadas (substituídas) | 08, 09, 10, 11, 15, 16, 26, 27a, 28, 29a, 29b, 31, 32 | 13 |
 
 Cabeçalho de cada sprint arquivada explica motivo e substituta.
