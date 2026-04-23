@@ -124,11 +124,16 @@ def _criar_aba_renda(
             ws.cell(row=row_idx, column=col).number_format = VALOR_FORMAT
         row_idx += 1
 
+    from src.utils.fontes_renda import eh_fonte_real_de_renda
+
     receitas_por_mes: dict[str, list[dict]] = {}
     for t in transacoes:
         if t.get("tipo") == "Receita":
             mes = t.get("mes_ref", "")
             if mes in meses_com_holerite:
+                continue
+            descricao = t.get("local", "") or t.get("descricao", "")
+            if not eh_fonte_real_de_renda(descricao):
                 continue
             receitas_por_mes.setdefault(mes, []).append(t)
 
