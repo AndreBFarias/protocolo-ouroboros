@@ -140,7 +140,32 @@ def rotear_artefato(artefato_origem: Path, decisao: Decisao) -> ArtefatoArquivad
             decisao,
             motivo=f"falha ao criar pasta destino {decisao.pasta_destino}: {exc}",
         )
-    destino = _resolver_destino_sem_colisao(decisao.pasta_destino, decisao.nome_canonico)
+    destino = _resolver_destino_sem_colisao(
+        decisao.pasta_destino, decisao.nome_canonico, arquivo_origem=artefato_origem
+    )
+    # P2.3 2026-04-23: se destino resolvido == origem (idempotência por
+    # conteúdo), pula o move -- nada a fazer.
+    if destino.resolve() == artefato_origem.resolve():
+        logger.info(
+            "rotear_artefato idempotente (mesmo conteúdo já em %s): %s",
+            destino,
+            artefato_origem.name,
+        )
+        return ArtefatoArquivado(
+            artefato_origem=artefato_origem,
+            decisao=decisao,
+            caminho_final=destino,
+            sucesso=True,
+            motivo=None,
+        )
+    # P2.3: se destino existe com mesmo hash mas path diferente (origem é
+    # staging temporário), move sobrescrevendo (destino canônico ganha,
+    # origem descartada). Evita cópias `_1.pdf`, `_2.pdf` literais.
+    if destino.exists():
+        try:
+            destino.unlink()
+        except OSError:
+            pass
     try:
         shutil.move(str(artefato_origem), str(destino))
     except (OSError, shutil.Error) as exc:

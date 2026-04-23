@@ -23,6 +23,7 @@ from __future__ import annotations
 import email
 import email.message
 import email.policy
+import hashlib
 import re
 import shutil
 import zipfile
@@ -324,18 +325,37 @@ def expandir_zip(zip_path: Path) -> ResultadoEnvelope:
     )
 
 
-def _resolver_destino_sem_colisao(diretorio: Path, nome_basico: str) -> Path:
+def _resolver_destino_sem_colisao(
+    diretorio: Path,
+    nome_basico: str,
+    arquivo_origem: Path | None = None,
+) -> Path:
     """Resolve `diretorio/nome_basico` evitando sobrescrita silenciosa.
 
     Se já existir, sufixa o stem com `_1`, `_2`, ... até achar slot livre.
     Mantém a extensão original.
 
-    Caso real: ZIP bancário com `janeiro/extrato.pdf` + `fevereiro/extrato.pdf`.
-    Achatar sem desambiguar perderia o segundo silenciosamente.
+    P2.3 2026-04-23: quando `arquivo_origem` é fornecido, compara hash
+    SHA-256 antes de desambiguar. Se o destino existente tem o mesmo
+    conteúdo, devolve o próprio destino (idempotência por conteúdo --
+    evita criar _1.pdf/_2.pdf que são cópias literais do original).
+
+    Caso real: ZIP bancário com `janeiro/extrato.pdf` + `fevereiro/extrato.pdf`
+    (conteúdos distintos) -- ainda gera `_1.pdf` corretamente.
+    Caso inverso (pós-auditoria 2026-04-23): reprocessamento do mesmo
+    extrato já roteado antes -- agora retorna o destino existente.
     """
     destino = diretorio / nome_basico
     if not destino.exists():
         return destino
+    if arquivo_origem is not None and arquivo_origem.exists():
+        try:
+            sha_origem = hashlib.sha256(arquivo_origem.read_bytes()).hexdigest()
+            sha_destino = hashlib.sha256(destino.read_bytes()).hexdigest()
+            if sha_origem == sha_destino:
+                return destino
+        except OSError:
+            pass
     stem = destino.stem
     suffix = destino.suffix
     contador = 1
@@ -343,6 +363,14 @@ def _resolver_destino_sem_colisao(diretorio: Path, nome_basico: str) -> Path:
         candidato = diretorio / f"{stem}_{contador}{suffix}"
         if not candidato.exists():
             return candidato
+        if arquivo_origem is not None and arquivo_origem.exists():
+            try:
+                sha_origem = hashlib.sha256(arquivo_origem.read_bytes()).hexdigest()
+                sha_candidato = hashlib.sha256(candidato.read_bytes()).hexdigest()
+                if sha_origem == sha_candidato:
+                    return candidato
+            except OSError:
+                pass
         contador += 1
 
 
