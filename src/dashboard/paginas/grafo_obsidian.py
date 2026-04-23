@@ -25,6 +25,7 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from src.dashboard import dados as _dados
+from src.dashboard.componentes.drilldown import aplicar_drilldown
 from src.dashboard.dados import (
     carregar_subgrafo,
     formatar_moeda,
@@ -426,18 +427,33 @@ def _renderizar_fluxo(mes_ref: str) -> None:
             key="bar_despesa",
         )
     with col_c:
+        # Sprint 87.1 (R73-1): Top Fornecedores ganha drill-down para Extrato.
+        # Receita e Despesa (col_a, col_b) permanecem sem drill por enquanto
+        # (rótulos não mapeiam 1-para-1 em campos do Extrato).
         _bar_chart(
             fluxo["fornecedor"],
             titulo="Top 10 fornecedores",
             cor=CORES["destaque"],
             key="bar_fornecedor",
+            drilldown_campo="fornecedor",
         )
 
 
 def _bar_chart(
-    itens: list[dict], *, titulo: str, cor: str, key: str
+    itens: list[dict],
+    *,
+    titulo: str,
+    cor: str,
+    key: str,
+    drilldown_campo: str | None = None,
+    drilldown_tab: str = "Extrato",
 ) -> None:
-    """Renderiza bar chart horizontal simples."""
+    """Renderiza bar chart horizontal simples.
+
+    Quando `drilldown_campo` é fornecido, o clique numa barra navega para
+    `drilldown_tab` filtrada pelo rótulo clicado (via `aplicar_drilldown`,
+    Sprint 73). Sem `drilldown_campo`, renderiza chart estático.
+    """
     st.markdown(
         f'<p style="color: {CORES["texto_sec"]};'
         f" font-size: {FONTE_LABEL}px;"
@@ -497,7 +513,15 @@ def _bar_chart(
         showlegend=False,
     )
     aplicar_locale_ptbr(fig)
-    st.plotly_chart(fig, use_container_width=True, key=key)
+    if drilldown_campo:
+        aplicar_drilldown(
+            fig,
+            campo_customdata=drilldown_campo,
+            tab_destino=drilldown_tab,
+            key_grafico=key,
+        )
+    else:
+        st.plotly_chart(fig, use_container_width=True, key=key)
 
 
 def _divisor() -> str:

@@ -5,6 +5,7 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from src.dashboard.componentes import kpi_grid_html
+from src.dashboard.componentes.drilldown import aplicar_drilldown
 from src.dashboard.dados import (
     filtrar_por_forma_pagamento,
     filtrar_por_mes,
@@ -172,6 +173,7 @@ def _grafico_barras_historico(
             y=receitas_list,
             name="Receita",
             marker_color=CORES["positivo"],
+            customdata=meses_sel,
         )
     )
     fig.add_trace(
@@ -180,6 +182,7 @@ def _grafico_barras_historico(
             y=despesas_list,
             name="Despesa",
             marker_color=CORES["negativo"],
+            customdata=meses_sel,
         )
     )
     fig.add_trace(
@@ -222,7 +225,14 @@ def _grafico_barras_historico(
     )
 
     aplicar_locale_ptbr(fig, valores_eixo_x=meses_sel)
-    st.plotly_chart(fig, width="stretch")
+    # Sprint 87.1 (R73-1): clique em barra Receita/Despesa navega para aba
+    # Extrato filtrada pelo mês. Scatter de saldo (trace 2) fica sem drill.
+    aplicar_drilldown(
+        fig,
+        campo_customdata="mes_ref",
+        tab_destino="Extrato",
+        key_grafico="bar_receita_despesa",
+    )
 
 
 def _grafico_classificacao(extrato_mes: pd.DataFrame) -> None:
