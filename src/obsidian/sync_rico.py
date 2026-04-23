@@ -65,12 +65,13 @@ class SyncReport:
 
     documentos_escritos: int = 0
     fornecedores_escritos: int = 0
+    mocs_gerados: int = 0  # MOCs mensais escritos em Meses/YYYY-MM.md
     notas_preservadas: int = 0  # usuário editou manualmente
     inalteradas: int = 0  # hash igual → nada mudou
     erros: list[str] = field(default_factory=list)
 
     def total_escritas(self) -> int:
-        return self.documentos_escritos + self.fornecedores_escritos
+        return self.documentos_escritos + self.fornecedores_escritos + self.mocs_gerados
 
 
 # ============================================================================
@@ -254,6 +255,158 @@ def _render_fornecedor(nome: str, meta: dict[str, Any], qtd_docs: int) -> str:
 
 
 # ============================================================================
+# MOC mensal (Sprint 87.6)
+# ============================================================================
+
+
+_NOMES_MESES_PT: dict[str, str] = {
+    "01": "Janeiro",
+    "02": "Fevereiro",
+    "03": "Março",
+    "04": "Abril",
+    "05": "Maio",
+    "06": "Junho",
+    "07": "Julho",
+    "08": "Agosto",
+    "09": "Setembro",
+    "10": "Outubro",
+    "11": "Novembro",
+    "12": "Dezembro",
+}
+
+
+def _agregar_docs_por_mes(
+    documentos: list[Any],
+) -> dict[str, dict[str, Any]]:
+    """Agrupa nodes de documento por `YYYY-MM` extraído de `data_emissao`.
+
+    Retorna `{mes_ref: {"docs": [...], "fornecedores": set[str], "total": float}}`.
+    Docs sem `data_emissao` vão para a chave sentinela ``"sem-data"`` (para que o
+    chamador possa descartar ou logar antes de renderizar a MOC).
+    """
+    agregado: dict[str, dict[str, Any]] = {}
+    for doc in documentos:
+        if getattr(doc, "nome_canonico", None) is None:
+            continue
+        meta = doc.metadata or {}
+        mes_ref = _yyyymm(meta.get("data_emissao"))
+        bucket = agregado.setdefault(
+            mes_ref,
+            {"docs": [], "fornecedores": set(), "total": 0.0},
+        )
+        bucket["docs"].append(doc)
+        fornecedor = str(meta.get("fornecedor") or "").strip()
+        if fornecedor:
+            bucket["fornecedores"].add(fornecedor)
+        try:
+            bucket["total"] += float(meta.get("total") or 0.0)
+        except (TypeError, ValueError):
+            # valor corrompido no metadata — ignorar em silêncio; vai
+            # refletir como subestimativa no "total" da MOC.
+            pass
+    return agregado
+
+
+def _label_mes_humano(mes_ref: str) -> str:
+    """Traduz 'YYYY-MM' em 'Nome AAAA' (ex: '2026-04' → 'Abril 2026')."""
+    partes = mes_ref.split("-")
+    if len(partes) != 2:
+        return mes_ref
+    ano, mm = partes
+    nome = _NOMES_MESES_PT.get(mm, mm)
+    return f"{nome} {ano}"
+
+
+def _render_moc_mensal(mes_ref: str, agregado: dict[str, Any]) -> str:
+    """Gera o Markdown da MOC mensal em `Meses/YYYY-MM.md`.
+
+    Inclui frontmatter, tabela de documentos, lista de fornecedores únicos e
+    uma consulta Dataview viva para navegação dentro do Obsidian. A query
+    Dataview é escrita com aspas triplas para não colidir com o parser do
+    Python — os backticks são literais no Markdown final.
+    """
+    docs: list[Any] = agregado.get("docs", [])
+    fornecedores: set[str] = agregado.get("fornecedores", set())
+    total_valor: float = float(agregado.get("total", 0.0))
+    total_docs = len(docs)
+    total_fornecedores = len(fornecedores)
+    label_humano = _label_mes_humano(mes_ref)
+
+    # Frontmatter
+    frontmatter = (
+        "---\n"
+        "tipo: moc\n"
+        f'mes: "{mes_ref}"\n'
+        f"total_documentos: {total_docs}\n"
+        f"total_fornecedores: {total_fornecedores}\n"
+        f"total_valor: {total_valor:.2f}\n"
+        f"tags: [sincronizado-automaticamente, moc, mes-{mes_ref}]\n"
+        f'aliases: ["{label_humano}", "{mes_ref}"]\n'
+        "sincronizado: true\n"
+        "gerado_por: ouroboros.sync_rico\n"
+        "---\n\n"
+    )
+
+    # Tabela de documentos (ordenada por data)
+    def _chave_ordenacao(doc: Any) -> str:
+        return str((doc.metadata or {}).get("data_emissao") or "")
+
+    docs_ordenados = sorted(docs, key=_chave_ordenacao)
+
+    linhas_tabela: list[str] = []
+    linhas_tabela.append("| Data | Tipo | Fornecedor | Valor | Nota |")
+    linhas_tabela.append("|---|---|---|---|---|")
+    for doc in docs_ordenados:
+        meta = doc.metadata or {}
+        data = str(meta.get("data_emissao") or "sem-data")[:10]
+        tipo_doc = str(meta.get("tipo_documento") or "documento")
+        fornecedor = str(meta.get("fornecedor") or "desconhecido")
+        valor = _formatar_valor_br(meta.get("total"))
+        slug = slugify(doc.nome_canonico)
+        link = f"[[Documentos/{mes_ref}/{slug}]]"
+        linhas_tabela.append(
+            f"| {data} | {tipo_doc} | {fornecedor} | R$ {valor} | {link} |"
+        )
+
+    tabela_docs = "\n".join(linhas_tabela)
+
+    # Lista de fornecedores únicos
+    if fornecedores:
+        linhas_forn = [
+            f"- [[Fornecedores/{slugify(nome)}|{nome}]]"
+            for nome in sorted(fornecedores)
+        ]
+        lista_fornecedores = "\n".join(linhas_forn)
+    else:
+        lista_fornecedores = "_Nenhum fornecedor identificado._"
+
+    # Consulta Dataview viva. Usamos `chr(96) * 3` para compor os três
+    # backticks sem ambiguidade na leitura do código-fonte.
+    tripla = chr(96) * 3
+    query_dataview = (
+        f"{tripla}dataview\n"
+        'TABLE file.link as "Nota", tipo_documento, valor as "Valor"\n'
+        f'FROM "Pessoal/Casal/Financeiro/Documentos/{mes_ref}"\n'
+        'WHERE tipo = "documento"\n'
+        "SORT data_emissao ASC\n"
+        f"{tripla}"
+    )
+
+    corpo = (
+        f"# {label_humano}\n\n"
+        f"## Documentos ({total_docs})\n\n"
+        f"{tabela_docs}\n\n"
+        f"## Fornecedores únicos ({total_fornecedores})\n\n"
+        f"{lista_fornecedores}\n\n"
+        "## Dataview — consulta viva\n\n"
+        f"{query_dataview}\n\n"
+        f"_Gerado automaticamente por Ouroboros._ {_TAG_SINCRONIZADO}\n"
+    )
+
+    return frontmatter + corpo
+
+
+# ============================================================================
 # Escrita de notas
 # ============================================================================
 
@@ -286,6 +439,8 @@ def _escrever_nota(
         report.documentos_escritos += 1
     elif categoria == "fornecedor":
         report.fornecedores_escritos += 1
+    elif categoria == "moc":
+        report.mocs_gerados += 1
     return True
 
 
@@ -341,6 +496,23 @@ def sincronizar_rico(
             except Exception as exc:  # noqa: BLE001
                 logger.error("erro ao escrever %s: %s", destino, exc)
                 report.erros.append(f"doc:{doc.nome_canonico}:{exc}")
+
+        # --- MOCs mensais (Sprint 87.6, resolve R71-2) ---
+        agregado_por_mes = _agregar_docs_por_mes(documentos)
+        for mes_ref, bucket in sorted(agregado_por_mes.items()):
+            if mes_ref == "sem-data":
+                logger.warning(
+                    "MOC mensal: %d docs sem data_emissao — ignorados",
+                    len(bucket.get("docs", [])),
+                )
+                continue
+            destino_moc = fin / "Meses" / f"{mes_ref}.md"
+            conteudo_moc = _render_moc_mensal(mes_ref, bucket)
+            try:
+                _escrever_nota(destino_moc, conteudo_moc, dry_run, report, "moc")
+            except Exception as exc:  # noqa: BLE001
+                logger.error("erro ao escrever MOC %s: %s", destino_moc, exc)
+                report.erros.append(f"moc:{mes_ref}:{exc}")
 
         fornecedores = db.listar_nodes(tipo="fornecedor")
         for forn in fornecedores:
@@ -432,9 +604,10 @@ def main(argv: list[str] | None = None) -> int:
     )
     report = sincronizar_rico(vault, dry_run=not args.executar)
     logger.info(
-        "sync rico: %d docs escritas, %d fornecedores, %d preservadas, %d inalteradas, %d erros",
+        "sync rico: %d docs, %d fornecedores, %d MOCs, %d preservadas, %d inalteradas, %d erros",
         report.documentos_escritos,
         report.fornecedores_escritos,
+        report.mocs_gerados,
         report.notas_preservadas,
         report.inalteradas,
         len(report.erros),

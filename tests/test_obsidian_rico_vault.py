@@ -206,3 +206,219 @@ class TestSincronizarRico:
         )
         assert report.erros
         assert report.documentos_escritos == 0
+
+
+# ============================================================================
+# MOC mensal (Sprint 87.6)
+# ============================================================================
+
+
+class _DocFake:
+    """Substituto leve de `Node` para testar funções puras."""
+
+    def __init__(
+        self,
+        nome_canonico: str | None,
+        metadata: dict[str, object],
+    ) -> None:
+        self.nome_canonico = nome_canonico
+        self.metadata = metadata
+
+
+class TestAgregarDocsPorMes:
+    def test_lista_vazia_devolve_dict_vazio(self) -> None:
+        assert sr._agregar_docs_por_mes([]) == {}
+
+    def test_agrupa_por_mes_ref(self) -> None:
+        docs = [
+            _DocFake(
+                "boleto-a",
+                {"data_emissao": "2026-03-05", "fornecedor": "Sesc", "total": 50.0},
+            ),
+            _DocFake(
+                "boleto-b",
+                {"data_emissao": "2026-03-22", "fornecedor": "CAESB", "total": 80.0},
+            ),
+            _DocFake(
+                "boleto-c",
+                {"data_emissao": "2026-04-10", "fornecedor": "Sesc", "total": 101.60},
+            ),
+        ]
+        agregado = sr._agregar_docs_por_mes(docs)
+        assert set(agregado.keys()) == {"2026-03", "2026-04"}
+        assert len(agregado["2026-03"]["docs"]) == 2
+        assert len(agregado["2026-04"]["docs"]) == 1
+
+    def test_contabiliza_fornecedores_unicos(self) -> None:
+        docs = [
+            _DocFake(
+                "doc-1",
+                {"data_emissao": "2026-04-01", "fornecedor": "Sesc", "total": 100.0},
+            ),
+            _DocFake(
+                "doc-2",
+                {"data_emissao": "2026-04-15", "fornecedor": "Sesc", "total": 200.0},
+            ),
+            _DocFake(
+                "doc-3",
+                {"data_emissao": "2026-04-20", "fornecedor": "CAESB", "total": 80.0},
+            ),
+        ]
+        agregado = sr._agregar_docs_por_mes(docs)
+        abril = agregado["2026-04"]
+        assert abril["fornecedores"] == {"Sesc", "CAESB"}
+        assert len(abril["docs"]) == 3
+        assert abril["total"] == pytest.approx(380.0)
+
+    def test_docs_sem_data_vao_para_bucket_sentinela(self) -> None:
+        docs = [
+            _DocFake("sem-info", {"fornecedor": "X", "total": 10.0}),
+        ]
+        agregado = sr._agregar_docs_por_mes(docs)
+        assert "sem-data" in agregado
+
+    def test_doc_sem_nome_canonico_e_ignorado(self) -> None:
+        docs = [
+            _DocFake(
+                None,
+                {"data_emissao": "2026-04-10", "fornecedor": "X", "total": 1.0},
+            ),
+        ]
+        agregado = sr._agregar_docs_por_mes(docs)
+        assert agregado == {}
+
+
+class TestRenderMocMensal:
+    def _agregado_exemplo(self) -> dict[str, object]:
+        docs = [
+            _DocFake(
+                "boleto-sesc-abril",
+                {
+                    "data_emissao": "2026-04-10",
+                    "tipo_documento": "boleto_servico",
+                    "fornecedor": "Sesc",
+                    "total": 101.60,
+                },
+            ),
+            _DocFake(
+                "fatura-caesb-abril",
+                {
+                    "data_emissao": "2026-04-22",
+                    "tipo_documento": "fatura_agua",
+                    "fornecedor": "CAESB",
+                    "total": 230.33,
+                },
+            ),
+        ]
+        return {
+            "docs": docs,
+            "fornecedores": {"Sesc", "CAESB"},
+            "total": 331.93,
+        }
+
+    def test_contem_frontmatter(self) -> None:
+        md = sr._render_moc_mensal("2026-04", self._agregado_exemplo())
+        assert md.startswith("---\n")
+        assert "tipo: moc" in md
+        assert 'mes: "2026-04"' in md
+        assert "sincronizado: true" in md
+        assert "total_documentos: 2" in md
+        assert "total_fornecedores: 2" in md
+        assert "total_valor: 331.93" in md
+
+    def test_contem_dataview_query(self) -> None:
+        md = sr._render_moc_mensal("2026-04", self._agregado_exemplo())
+        assert "```dataview" in md
+        assert "FROM " in md
+        assert '"Pessoal/Casal/Financeiro/Documentos/2026-04"' in md
+
+    def test_lista_docs_em_tabela(self) -> None:
+        md = sr._render_moc_mensal("2026-04", self._agregado_exemplo())
+        # Cabeçalho de tabela
+        assert "| Data | Tipo | Fornecedor | Valor | Nota |" in md
+        # Linhas dos docs
+        assert "2026-04-10" in md
+        assert "2026-04-22" in md
+        assert "boleto_servico" in md
+        assert "R$ 101,60" in md
+        assert "R$ 230,33" in md
+        # Lista de fornecedores únicos com wikilink
+        assert "[[Fornecedores/sesc|Sesc]]" in md
+        assert "[[Fornecedores/caesb|CAESB]]" in md
+        # Título humano em PT-BR
+        assert "# Abril 2026" in md
+
+
+@pytest.fixture
+def grafo_multi_mes(tmp_path: Path) -> Path:
+    g = tmp_path / "grafo_multi.sqlite"
+    db = GrafoDB(g)
+    db.criar_schema()
+    db.upsert_node(
+        tipo="documento",
+        nome_canonico="boleto-sesc-mar-2026",
+        metadata={
+            "tipo_documento": "boleto_servico",
+            "data_emissao": "2026-03-15",
+            "fornecedor": "Sesc",
+            "total": 98.50,
+        },
+    )
+    db.upsert_node(
+        tipo="documento",
+        nome_canonico="boleto-sesc-abr-2026",
+        metadata={
+            "tipo_documento": "boleto_servico",
+            "data_emissao": "2026-04-10",
+            "fornecedor": "Sesc",
+            "total": 101.60,
+        },
+    )
+    db.fechar()
+    return g
+
+
+class TestSincronizarRicoMoc:
+    def test_executar_gera_arquivos_meses(
+        self, vault_sintetico: Path, grafo_multi_mes: Path
+    ) -> None:
+        report = sr.sincronizar_rico(
+            vault_sintetico, grafo_multi_mes, dry_run=False
+        )
+        fin = vault_sintetico / "Pessoal" / "Casal" / "Financeiro"
+        moc_mar = fin / "Meses" / "2026-03.md"
+        moc_abr = fin / "Meses" / "2026-04.md"
+        assert moc_mar.exists(), "MOC de março ausente"
+        assert moc_abr.exists(), "MOC de abril ausente"
+        assert report.mocs_gerados == 2
+
+        conteudo_mar = moc_mar.read_text(encoding="utf-8")
+        assert "tipo: moc" in conteudo_mar
+        assert 'mes: "2026-03"' in conteudo_mar
+        assert "Sesc" in conteudo_mar
+
+    def test_soberania_preserva_moc_sem_tag(
+        self, vault_sintetico: Path, grafo_multi_mes: Path
+    ) -> None:
+        """MOC editada manualmente (sem tag/frontmatter) não deve ser reescrita."""
+        sr.sincronizar_rico(vault_sintetico, grafo_multi_mes, dry_run=False)
+        moc_abr = (
+            vault_sintetico
+            / "Pessoal"
+            / "Casal"
+            / "Financeiro"
+            / "Meses"
+            / "2026-04.md"
+        )
+        # Usuário sobrescreve na mão, remove todos os marcadores
+        moc_abr.write_text(
+            "# Abril — edição manual\n\nConteúdo humano\n", encoding="utf-8"
+        )
+        report = sr.sincronizar_rico(
+            vault_sintetico, grafo_multi_mes, dry_run=False
+        )
+        assert report.notas_preservadas >= 1
+        assert (
+            moc_abr.read_text(encoding="utf-8")
+            == "# Abril — edição manual\n\nConteúdo humano\n"
+        )
