@@ -422,3 +422,71 @@ class TestSincronizarRicoMoc:
             moc_abr.read_text(encoding="utf-8")
             == "# Abril — edição manual\n\nConteúdo humano\n"
         )
+
+
+# ============================================================================
+# _contar_docs_do_fornecedor (Sprint 87c)
+# ============================================================================
+
+
+class TestContarDocsDoFornecedor:
+    def test_retorna_zero_quando_forn_id_none(self, tmp_path: Path) -> None:
+        db = GrafoDB(tmp_path / "grafo.sqlite")
+        db.criar_schema()
+        assert sr._contar_docs_do_fornecedor(db, None) == 0
+        db.fechar()
+
+    def test_retorna_zero_quando_fornecedor_sem_documentos(
+        self, tmp_path: Path
+    ) -> None:
+        db = GrafoDB(tmp_path / "grafo.sqlite")
+        db.criar_schema()
+        forn_id = db.upsert_node(
+            "fornecedor", "SESC", metadata={"cnpj": "03288908000130"}
+        )
+        assert sr._contar_docs_do_fornecedor(db, forn_id) == 0
+        db.fechar()
+
+    def test_contar_docs_do_fornecedor_retorna_contagem_real(
+        self, tmp_path: Path
+    ) -> None:
+        """Sprint 87c: bug silencioso pré-fix retornava 0 sempre.
+
+        Cenário: 3 documentos distintos com aresta `fornecido_por` apontando
+        para o mesmo fornecedor. A função deve retornar 3, não 0.
+        """
+        db = GrafoDB(tmp_path / "grafo.sqlite")
+        db.criar_schema()
+        forn_id = db.upsert_node(
+            "fornecedor", "SESC", metadata={"cnpj": "03288908000130"}
+        )
+        for i in range(3):
+            doc_id = db.upsert_node(
+                "documento",
+                f"BOLETO-{i}",
+                metadata={
+                    "tipo_documento": "boleto_servico",
+                    "data_emissao": f"2026-0{i + 1}-15",
+                },
+            )
+            db.adicionar_edge(doc_id, forn_id, "fornecido_por")
+
+        assert sr._contar_docs_do_fornecedor(db, forn_id) == 3
+        db.fechar()
+
+    def test_ignora_arestas_de_outros_tipos(self, tmp_path: Path) -> None:
+        """Apenas `fornecido_por` deve contar, não qualquer aresta para o fornecedor."""
+        db = GrafoDB(tmp_path / "grafo.sqlite")
+        db.criar_schema()
+        forn_id = db.upsert_node("fornecedor", "SESC")
+        doc_id = db.upsert_node(
+            "documento",
+            "BOLETO-A",
+            metadata={"tipo_documento": "boleto_servico"},
+        )
+        outro_id = db.upsert_node("fornecedor", "OUTRO")
+        db.adicionar_edge(doc_id, forn_id, "fornecido_por")
+        db.adicionar_edge(outro_id, forn_id, "ocorre_em")  # tipo diferente, ignorar
+
+        assert sr._contar_docs_do_fornecedor(db, forn_id) == 1
+        db.fechar()
