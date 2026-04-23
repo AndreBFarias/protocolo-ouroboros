@@ -1,16 +1,16 @@
 # CLAUDE.md -- Protocolo Ouroboros
 
 ```
-VERSÃO: 5.1 | STATUS: PRODUÇÃO (Fases IOTA e KAPPA CONCLUÍDAS; Sprint 87 + Rota A de débito residual concluídas 2026-04-24) | LANG: PT-BR
+VERSÃO: 5.2 | STATUS: PRODUÇÃO (Fases IOTA/KAPPA CONCLUÍDAS + Sprint 87 + Rota A + Sprint 88 + Bloco A/B/C da Sprint 86 concluídos 2026-04-24) | LANG: PT-BR
 TRANSAÇÕES: 6.086 | MESES: 82 (out/2019 a mar/2026) | BANCOS: 6 | EXTRATORES: 9
-GRAFO: 7.421 nodes + 24.584 edges (data/output/grafo.sqlite, ~5MB). Volume real do grafo aguarda reprocessamento (Sprint 86 item 86.12).
-SPRINTS: 101 (62 concluídas, 0 em produção, 14 backlog, 13 arquivadas)
+GRAFO: 7.424 nodes + 24.588 edges (data/output/grafo.sqlite, ~5MB). 4 documentos (antes 2), incluindo 2 boletos SESC novos.
+SPRINTS: 103 (63 concluídas, 0 em produção, 14 backlog, 13 arquivadas)
 CATEGORIZAÇÃO: 100% | IRPF TAGS: 164 (75 com CNPJ) | HOLERITES: 24 (G4F + Infobase)
-TESTES: 1.127 passed / 15 skipped (baseline Rota A, +18 vs 1.109 pós-Sprint 87, +391 vs inicial 736)
+TESTES: 1.138 passed / 10 skipped (+11 vs Rota A, +29 vs 1.109 pós-Sprint 87; 5 testes pyvis antes skipped agora passam)
 ROTA: Catalogador universal artesanal via supervisor interativo (ADR-13)
 SUPERVISOR: Claude Code sessão interativa — nenhuma API programática
-INTEGRAÇÕES: OFX (pronto), Controle de Bordo vault (Sprint 70/71 integrado), Belvo (em teste), Gmail (setup pendente), MeuPluggy (disponível)
-ROTA ATUAL: Rota A concluída (87c + 87b + INFRA-parse-br) — próximo: Sprint 86 (humano-checklist) OU Sprint 82 (canonicalizer variantes curtas) OU Sprint 85 (XLSX docs faltantes). Retomada: docs/HANDOFF_2026-04-24.md.
+INTEGRAÇÕES: OFX (pronto), Controle de Bordo vault (Sprint 70/71/88 integrado; sync rico bidirecional rodou em volume real), Belvo (em teste), Gmail (setup pendente), MeuPluggy (disponível)
+ROTA ATUAL: Rota A + Sprint 88 + Bloco A/B/C (86) concluídos — próximo: Sprint 89 (OCR pré-classificação), Sprint 90 (pessoa_detector robusto), Sprint 82/85 (higiene residual). Retomada: docs/HANDOFF_2026-04-24.md.
 ```
 
 ### Próxima sessão — retomada canônica
