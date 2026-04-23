@@ -538,6 +538,17 @@ def executar(mes: str | None = None, processar_tudo: bool = False) -> None:
     # 9. Ordenar por data
     transacoes_filtradas.sort(key=lambda t: t.get("data", ""))
 
+    # 9b. Computar identificador canônico (mesmo hash dos nodes `transacao` do  # noqa: accent
+    # grafo) para ativar `Doc?` no Extrato em runtime real (Sprint 87b).
+    from src.graph.migracao_inicial import hash_transacao_do_tx
+
+    for tx in transacoes_filtradas:
+        if tx.get("identificador"):
+            continue  # contrato defensivo: não sobrescrever se já existir
+        ident = hash_transacao_do_tx(tx)
+        if ident is not None:
+            tx["identificador"] = ident
+
     # 10. Processar holerites (contracheques) -- fonte extra para a aba renda
     contracheques = processar_holerites(DIR_RAW / "andre" / "holerites")
 

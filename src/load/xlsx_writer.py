@@ -25,6 +25,7 @@ COLUNAS_EXTRATO = [
     "mes_ref",
     "tag_irpf",
     "obs",
+    "identificador",
 ]
 
 AVISO_SNAPSHOT = (
