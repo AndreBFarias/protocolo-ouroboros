@@ -21,6 +21,7 @@ from pathlib import Path
 import pandas as pd
 
 RAIZ = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(RAIZ))
 XLSX = RAIZ / "data" / "output" / "ouroboros_2026.xlsx"
 
 # Limiares calibrados empiricamente sobre corpus 2019-2026 (6.086 transações).
@@ -60,10 +61,21 @@ def contrato_receita_nao_exagera_salario(
 
     Detecta o tipo de regressão que a Sprint 55 corrigiu: classificador marcando
     despesas como receita, inflando o total em ordens de grandeza.
+
+    Aplica blacklist de fontes_renda.yaml antes de somar: reembolsos, estornos,
+    cashback e devoluções não são receita operacional (ruído legítimo que de
+    outra forma mascara o contrato -- descoberto na auditoria 2026-04-23).
     """
     if renda.empty:
         return None
-    receita_mes = df[df["tipo"] == "Receita"].groupby("mes_ref")["valor"].sum()
+
+    from src.utils.fontes_renda import _carregar_padroes
+
+    _, blacklist = _carregar_padroes()
+    locais = df["local"].astype(str)
+    mask_blacklist = locais.apply(lambda s: any(p.search(s) for p in blacklist))
+    df_receita = df[(df["tipo"] == "Receita") & ~mask_blacklist]
+    receita_mes = df_receita.groupby("mes_ref")["valor"].sum()
     salario_mes = renda.groupby("mes_ref")["bruto"].sum()
     meses_comuns = sorted(set(receita_mes.index) & set(salario_mes.index))
     violacoes = []

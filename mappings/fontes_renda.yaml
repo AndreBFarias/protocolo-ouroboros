@@ -1,0 +1,84 @@
+# mappings/fontes_renda.yaml
+# Whitelist determinística de fontes REAIS de renda operacional.
+# Usado por src/load/xlsx_writer.py::_criar_aba_renda para filtrar quais
+# transações com tipo="Receita" aparecem na aba `renda` do XLSX.
+#
+# Princípio: "renda" é receita operacional recorrente (salário, MEI, bolsa,
+# rendimento de aplicação). NÃO é renda: reembolso, estorno, cashback, PIX
+# entre amigos/família, transferência bancária entre contas próprias.
+#
+# As transações filtradas FORA da aba renda permanecem no extrato como
+# "Receita" (para não quebrar agregados históricos); apenas não contaminam
+# a aba de renda específica.
+#
+# Cada bloco é uma lista de regex case-insensitive (aplicada via re.search)
+# contra a coluna `local` (ou `descricao_original` se disponível).
+
+fontes:
+  salario_clt:
+    - "(?i)^PAGTO\\s+SALARIO"
+    - "(?i)PAGAMENTO\\s+DE\\s+SAL[AÁ]RIO"
+    - "(?i)SAL[AÁ]RIO\\s+LIQUIDO"
+
+  mei_andre:
+    # MEI André (CNPJ 45.850.636, desativado com parcelamento SN ativo).
+    # Empresas cliente/pagadoras conhecidas do histórico de 2022-2026.
+    - "(?i)\\bPAIM\\b"
+    - "(?i)SUNOPAIM"
+    - "(?i)SUNO\\s+COMUNICA"
+    - "(?i)SUPA\\s+COMUNICA"
+    - "(?i)F2\\s+MARKETING"
+    - "(?i)SOCIAL\\s+AG[EÊ]NCIA\\s+DIGITAL"
+    - "(?i)PAIM\\s+E\\s+ASSOCIADOS"
+    - "(?i)GRUPO\\s+COMUM\\s+CONSULTORIA"
+    - "(?i)HARPIA\\s+TECNOLOG"
+    - "(?i)FIXTELL"
+    - "(?i)EBANX"
+    - "(?i)CATARSE"
+    # CPF do André aparecendo em descrição bruta = MEI recebendo pagamento
+    # (alguns layouts de OFX prefixam com CPF antes do nome).
+    - "(?i)5127373122-ANDRE\\s+SILVA\\s+BATISTA\\s+FARIAS"
+
+  bolsa_vitoria:
+    # Bolsa NEES/UFAL R$ 3.700/mês (isenta IR).
+    - "(?i)\\bNEES\\b"
+    - "(?i)\\bUFAL\\b"
+    - "(?i)UNIVERSIDADE\\s+FEDERAL\\s+DE\\s+ALAGOAS"
+
+  rendimento_aplicacao:
+    # Rendimento de aplicações financeiras (CDB, RDB, Nubank caixinhas, etc.).
+    # Valor geralmente pequeno por transação mas acumula como renda tributável.
+    - "(?i)REND\\s+PAGO\\s+APLIC"
+    - "(?i)RENDIMENTO\\s+RDB"
+    - "(?i)JCP\\s+RECEBIDO"
+    - "(?i)DIVIDENDO\\s+RECEBIDO"
+    - "(?i)JUROS\\s+SOBRE\\s+CAPITAL"
+
+  # Banco de origem específico: holerites extraídos pelo contracheque_pdf.py
+  # já têm `fonte` canônica ("G4F", "Infobase", etc.) e vão direto para a aba
+  # sem passar pelo filtro (são autoritários). Whitelist acima cobre APENAS
+  # as receitas INFERIDAS do extrato bancário para meses sem holerite.
+
+# Padrões que NUNCA são renda (ainda que valor > 0):
+blacklist:
+  - "(?i)REEMBOLSO"
+  - "(?i)ESTORNO"
+  - "(?i)CASHBACK"
+  - "(?i)DEVOL\\s+RECEBIDA"
+  - "(?i)DEVOLU[CÇ][AÃ]O"
+  - "(?i)TRANSFER[EÊ]NCIA\\s+RECEBIDA"  # ambíguo; só cai aqui se não bateu whitelist acima
+  - "(?i)\\bPIX\\s+RECEBIDO"
+  - "(?i)PIX\\s+RECEBIDO\\s+DE"
+  - "(?i)CRED\\s+CANC\\s+SUSP"
+  # Aplicações financeiras: resgate/aplicação RDB/CDB são movimento de conta
+  # propria, não renda operacional. (Classificador de tipo ocasionalmente
+  # deixa passar como Receita por divergência entre descrição extraída e
+  # descrição original -- blacklist na aba renda corrige o sintoma.)
+  - "(?i)APLICA[CÇ][AÃ]O\\s+RDB"
+  - "(?i)RESGATE\\s+RDB"
+  - "(?i)APLICA[CÇ][AÃ]O\\s+CDB"
+  - "(?i)RESGATE\\s+CDB"
+  # Operações cripto também não são renda operacional (compra/venda de ativo).
+  - "(?i)BRASIL\\s+BITCOIN"
+
+# "Senao em dúvida, fora da renda." — princípio de honestidade de agregados
