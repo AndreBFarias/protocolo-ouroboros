@@ -38,7 +38,7 @@ Auditoria de fidelidade em 760 arquivos `data/raw/` + inbox + XLSX + grafo.
 - [x] **P1.2 — Sprint 89 OCR fallback PDF-imagem**: fecha inbox. **CONCLUÍDA.**
 
 ### P2 — Higiene
-- [ ] **P2.1 — Sprint 87d fallback idempotente**.
+- [x] **P2.1 — Sprint 87d fallback idempotente**. **CONCLUÍDA.**
 - [ ] **P2.2 — Sprint 91 UX v3** (6 fixes visuais).
 - [ ] **P2.3 — Dedupe roteamento adapter**.
 
@@ -125,7 +125,23 @@ Ressalva: o extrator `ExtratorNfcePDF` downstream ainda usa pdfplumber sem OCR, 
 
 Pytest: 1182 → **1186 passed** (+4). Smoke 8/8 OK.
 
-### _Próximo: P2.1 (Sprint 87d fallback supervisor idempotente)_
+### 2026-04-23 — P2.1 concluída: Sprint 87d fallback supervisor idempotente
+
+Modificados:
+- `src/extractors/cupom_termico_foto.py::_registrar_fallback_supervisor`: `uuid.uuid4().hex[:12]` → `cache_key(caminho_foto)[:12]`. `cache_key` já importado. `import uuid` removido (morto).
+
+Criado:
+- `tests/test_cupom_termico_foto.py::TestFallbackSupervisorIdempotente` (2 testes): mesmo cupom × 3 iterações → 1 proposta; cupons diferentes → 2 propostas distintas.
+
+Runtime real:
+- Limpeza: deletados 6 `docs/propostas/extracao_cupom/*.md` + 6 pastas `data/raw/_conferir/*/` antigos (órfãos do bug uuid).
+- Reprocessamento: 2 cupons × 3 iterações → `2e43640dde52.md` + `6554d7045e36.md` (**exatamente 2, não 6**). Hashes batem com cache OCR.
+
+Spec movida: `docs/sprints/backlog/sprint_87d_*.md` → `docs/sprints/concluidos/`.
+
+Pytest: 1186 → **1188 passed** (+2). Smoke 8/8 OK.
+
+### _Próximo: P2.2 (Sprint 91 UX v3)_
 
 ---
 
