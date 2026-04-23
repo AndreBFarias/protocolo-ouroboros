@@ -11,7 +11,7 @@ from src.analysis.pagamentos import (
     STATUS_PAGO,
     STATUS_PENDENTE,
     alertas_vencimento,
-    carregar_boletos,
+    carregar_boletos_inteligente,
     faturas_credito,
     top_beneficiarios_pix,
 )
@@ -61,8 +61,35 @@ def renderizar(
         _renderizar_credito(extrato)
 
 
+def _carregar_db_grafo():  # type: ignore[no-untyped-def]
+    """Sprint 87.7: abre GrafoDB quando existe; retorna None se ausente.
+
+    Graceful degradation: se módulo ou arquivo do grafo não existir,
+    `carregar_boletos_inteligente` cai para a heurística textual antiga.
+    """
+    try:
+        from src.graph.db import GrafoDB, caminho_padrao
+    except ImportError:  # pragma: no cover -- módulo de grafo ausente no dev local
+        return None
+    try:
+        db_path = caminho_padrao()
+        if not db_path.exists():
+            return None
+        return GrafoDB(db_path)
+    except Exception:  # noqa: BLE001 -- dashboard nunca quebra por grafo ausente
+        return None
+
+
 def _renderizar_boletos(extrato: pd.DataFrame, prazos: pd.DataFrame) -> None:
-    boletos = carregar_boletos(extrato, prazos)
+    db = _carregar_db_grafo()
+    try:
+        boletos = carregar_boletos_inteligente(extrato, prazos, db=db)
+    finally:
+        if db is not None:
+            try:
+                db.fechar()
+            except Exception:  # noqa: BLE001
+                pass
     if boletos.empty:
         st.info("Nenhum boleto identificado no período/filtros atuais.")
         return

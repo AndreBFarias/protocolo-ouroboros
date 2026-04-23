@@ -261,6 +261,25 @@ def transacoes_com_documento(db: GrafoDB) -> set[str]:
     return {str(row[0]) for row in cursor.fetchall() if row[0] is not None}
 
 
+def total_arestas_por_tipo(db: GrafoDB, tipo_edge: str) -> int:
+    """Sprint 87.7: contagem de arestas de um tipo específico no grafo.
+
+    Usado pelo módulo de análise de pagamentos para decidir quando o grafo
+    tem cobertura suficiente para ser fonte primária de reconciliação
+    boleto-transação. Abaixo do limiar configurado, o caller deve cair na
+    heurística textual (`src.analysis.pagamentos.carregar_boletos`).
+
+    Retorna 0 quando o grafo está vazio ou o tipo não existe. Não levanta
+    exceção para grafo recém-criado -- o SELECT COUNT sempre responde.
+    """
+    cursor = db._conn.execute(
+        "SELECT COUNT(*) FROM edge WHERE tipo = ?",
+        (tipo_edge,),
+    )
+    row = cursor.fetchone()
+    return int(row[0]) if row and row[0] is not None else 0
+
+
 def grafo_filtrado(
     db: GrafoDB,
     tipos: list[str] | None = None,
