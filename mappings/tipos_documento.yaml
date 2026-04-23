@@ -280,7 +280,7 @@ tipos:
       - "C[óo]digo\\s+de\\s+barras"
       - "\\d{5}\\.\\d{5}\\s+\\d{5}\\.\\d{6}\\s+\\d{5}\\.\\d{6}\\s+\\d\\s+\\d{14}"   # padrão linha digitável
       - "Vencimento.{0,40}\\d{2}/\\d{2}/\\d{4}"
-    extrator_modulo: null   # extrator de boleto ainda não existe
+    extrator_modulo: src.extractors.boleto_pdf
     origem_sprint: 41
     pasta_destino_template: "data/raw/{pessoa}/boletos/"
     renomear_template:

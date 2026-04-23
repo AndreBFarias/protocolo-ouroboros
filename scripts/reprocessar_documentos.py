@@ -56,6 +56,7 @@ _RAIZ_REPO: Path = Path(__file__).resolve().parents[1]
 if str(_RAIZ_REPO) not in sys.path:
     sys.path.insert(0, str(_RAIZ_REPO))
 
+from src.extractors.boleto_pdf import ExtratorBoletoPDF  # noqa: E402
 from src.extractors.cupom_garantia_estendida_pdf import ExtratorCupomGarantiaEstendida  # noqa: E402
 from src.extractors.cupom_termico_foto import ExtratorCupomTermicoFoto  # noqa: E402
 from src.extractors.danfe_pdf import ExtratorDanfePDF  # noqa: E402
@@ -96,6 +97,7 @@ EXTRATORES_DOCUMENTAIS: tuple[type, ...] = (
     ExtratorXmlNFe,                  # XML NFe (Sprint 46)
     ExtratorReceitaMedica,           # receita medica (Sprint 47a)
     ExtratorGarantiaFabricante,      # garantia de fabricante (Sprint 47b)
+    ExtratorBoletoPDF,               # boleto bancario PDF nativo (Sprint 87.3)
     ExtratorReciboNaoFiscal,         # catch-all (Sprint 47)
 )
 
@@ -172,6 +174,8 @@ def _detectar_leve(caminho: Path) -> str:
         return "garantia_fabricante"
     if "cupom" in caminho_lower:
         return "cupom_fiscal_foto"
+    if "boletos" in caminho_lower or caminho.name.upper().startswith("BOLETO_"):
+        return "boleto_servico"
     if "santander" in caminho_lower:
         return "fatura_cartao"
     if "itau" in caminho_lower:
@@ -426,6 +430,7 @@ def main(argv: list[str] | None = None) -> int:
                 "receita_medica": "src.extractors.receita_medica",
                 "garantia_fabricante": "src.extractors.garantia",
                 "cupom_fiscal_foto": "src.extractors.cupom_termico_foto",
+                "boleto_servico": "src.extractors.boleto_pdf",
                 "fatura_cartao": "src.extractors.santander_pdf",
                 "extrato_bancario": "src.extractors.itau_pdf",
             }
