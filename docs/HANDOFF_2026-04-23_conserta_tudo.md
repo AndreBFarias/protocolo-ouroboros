@@ -40,7 +40,7 @@ Auditoria de fidelidade em 760 arquivos `data/raw/` + inbox + XLSX + grafo.
 ### P2 — Higiene
 - [x] **P2.1 — Sprint 87d fallback idempotente**. **CONCLUÍDA.**
 - [x] **P2.2 — Sprint 91 UX v3** (6 fixes visuais). **CONCLUÍDA.**
-- [ ] **P2.3 — Dedupe roteamento adapter**.
+- [x] **P2.3 — Dedupe roteamento adapter**. **CONCLUÍDA.**
 
 ### P3 — Estratégico
 - [ ] **P3.1 — Extrator DIRPF `.DEC`**.
@@ -153,7 +153,18 @@ Modificados (6 fixes):
 
 Pytest: 1188 passed (sem change, ajustei 2 testes existentes para acomodar mudanças: `test_node_id_como_ultimissimo_recurso` e `test_analise_avancada_usa_legenda_abaixo_heatmap_e_sankey`). Smoke 8/8 OK.
 
-### _Próximo: P2.3 (dedupe roteamento adapter)_
+### 2026-04-23 — P2.3 concluída: dedupe roteamento por hash
+
+Modificados:
+- `src/intake/extractors_envelope.py::_resolver_destino_sem_colisao`: novo parâmetro opcional `arquivo_origem`. Quando fornecido, compara hash SHA-256 antes de desambiguar com `_1`, `_2`, `_N`. Destino existente com mesmo hash → retorna sem criar cópia.
+- `src/intake/router.py::rotear_artefato`: passa `arquivo_origem` + detecta caso "destino==origem" + sobrescreve destino com mesmo hash quando origem é staging temporário.
+- `tests/test_router_dedupe_conteudo.py` (5 testes novos): destino inexistente, idempotência por hash, desambiguação com hash diferente, retrocompat sem origem, idempotência em N-ésima cópia.
+
+Runtime real esperado em próxima ingestão: Itaú 5 únicos não vão virar 29 físicos (5.8×); Santander 18 não vão virar 102 (5.7×). Dedupe é acionado só quando mesmo conteúdo é reingerido -- não impacta ingestões limpas.
+
+Pytest: 1188 → **1193 passed** (+5). Smoke 8/8 OK.
+
+### _Próximo: P3.1 (extrator DIRPF .DEC)_
 
 ---
 
