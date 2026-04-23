@@ -40,6 +40,10 @@ tipos_absorvidos:
   - contrato
   - cupom_fiscal_foto
   - recibo_nao_fiscal
+  # Impostos e documentos pessoais (Sprint 87.4)
+  - irpf_parcela
+  - das_mei
+  - comprovante_cpf
   # Bancários (registry/legado)
   - bancario_nubank_cartao
   - bancario_nubank_cc

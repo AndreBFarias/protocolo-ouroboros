@@ -300,7 +300,9 @@ tipos:
 def test_yaml_real_passa_validacao():
     """O mappings/tipos_documento.yaml de produção passa a validação."""
     tipos = clf.recarregar_tipos()  # sem path -> usa o de produção
-    assert len(tipos) == 15
+    # Baseline 15 (pós-Sprint 46). Sprint 87.4 acrescentou 3: irpf_parcela,
+    # das_mei, comprovante_cpf. Total atual = 18.
+    assert len(tipos) == 18
     for tipo in tipos:
         assert tipo["prioridade"] in clf._PRIORIDADES_VALIDAS
         assert tipo["match_mode"] in clf._MATCH_MODES_VALIDOS

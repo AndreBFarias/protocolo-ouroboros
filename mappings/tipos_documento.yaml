@@ -95,6 +95,59 @@ tipos:
       com_data: "XMLNFe_{data:%Y-%m-%d}_{sha8}.xml"
       sem_data: "XMLNFe_{sha8}.xml"
 
+  # --- Sprint 87.4: impostos e documentos pessoais (reduz skip_nao_identificado)
+  # Ordem: irpf_parcela antes de das_mei antes de comprovante_cpf.
+  # irpf_parcela vem primeiro porque 'PARCELA' é âncora exclusiva; DAS e CPF
+  # têm assinaturas que também casariam regras mais genéricas (boleto_servico
+  # tem 'Linha digitável' que DARFs de parcelamento podem ter). Prioridade
+  # 'especifico' garante avaliação antes de 'normal'.
+
+  - id: irpf_parcela
+    descricao: "DARF de parcela IRPF (quotas de parcelamento do imposto de renda -- distinto de boleto_servico)"
+    prioridade: especifico
+    match_mode: all
+    mimes: ["application/pdf"]
+    regex_conteudo:
+      - "DARF"
+      - "Receita\\s+Federal"
+      - "\\d{1,2}[ªa]\\s*(VIA\\s*)?PARCELA|Parcela\\s+\\d"
+    extrator_modulo: null   # roteamento apenas; extrator documental é sprint futura
+    origem_sprint: 87
+    pasta_destino_template: "data/raw/{pessoa}/impostos/irpf_parcelas/"
+    renomear_template:
+      com_data: "IRPF_PARCELA_{data:%Y-%m-%d}_{sha8}.pdf"
+      sem_data: "IRPF_PARCELA_{sha8}.pdf"
+
+  - id: das_mei
+    descricao: "DAS -- Documento de Arrecadação do Simples Nacional (MEI)"
+    prioridade: especifico
+    match_mode: all
+    mimes: ["application/pdf"]
+    regex_conteudo:
+      - "DAS\\s*-?\\s*Documento\\s+de\\s+Arrecada[çc][ãa]o"
+      - "Simples\\s+Nacional"
+    extrator_modulo: null   # roteamento apenas
+    origem_sprint: 87
+    pasta_destino_template: "data/raw/{pessoa}/impostos/das/"
+    renomear_template:
+      com_data: "DAS_{data:%Y-%m-%d}_{sha8}.pdf"
+      sem_data: "DAS_{sha8}.pdf"
+
+  - id: comprovante_cpf
+    descricao: "Comprovante de Situação Cadastral no CPF emitido pela Receita Federal"
+    prioridade: especifico
+    match_mode: all
+    mimes: ["application/pdf"]
+    regex_conteudo:
+      - "Comprovante\\s+de\\s+Situa[çc][ãa]o\\s+Cadastral"
+      - "CPF"
+    extrator_modulo: null   # roteamento apenas
+    origem_sprint: 87
+    pasta_destino_template: "data/raw/{pessoa}/documentos_pessoais/"
+    renomear_template:
+      com_data: "CPF_CAD_{data:%Y-%m-%d}_{sha8}.pdf"
+      sem_data: "CPF_CAD_{sha8}.pdf"
+
   # ===================================================
   # === NORMAL (9) -- documentos pessoais e bancários ===
   # ===================================================
