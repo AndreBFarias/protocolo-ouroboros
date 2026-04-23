@@ -122,7 +122,14 @@ def _treemap_categorias(df: pd.DataFrame) -> None:
 
 
 def _ranking_com_variacao(extrato_filtrado: pd.DataFrame, mes_atual: str) -> None:
-    """Top 10 categorias com variação vs mês anterior."""
+    """Top 10 categorias com variação vs mês anterior.
+
+    Nota (Sprint 87.1 / R73-1): este ranking é renderizado como tabela HTML,
+    não como gráfico Plotly. Drill-down via clique não se aplica porque o
+    Streamlit não suporta `on_select` em tabelas HTML/`st.dataframe` (mesma
+    limitação registrada em R74-2). O drill-down da família "categoria"
+    permanece garantido pelo treemap `_treemap_categorias` acima.
+    """
     st.markdown(
         f'<p style="font-size: {FONTE_SUBTITULO}px; font-weight: bold;'
         f' color: {CORES["texto"]}; margin-bottom: 10px;">'
