@@ -1,10 +1,32 @@
 # Roadmap -- Protocolo Ouroboros
 
 ```
-VERSÃO: 7.5 | SPRINTS: 95 (46 concluídas, 0 em produção, 36 backlog, 13 arquivadas)
-ROTA: Catalogador universal artesanal (Fases ALFA → ZETA) + Fase ETA (auditoria) + Fase IOTA (integração Controle de Bordo) + Fase KAPPA (UX polish + tracking documental + workflow)
-ÚLTIMA ATUALIZAÇÃO: 2026-04-21 tarde. Andre compartilhou a visão real do projeto. Criadas Fases IOTA (integração com ~/Controle de Bordo/) e KAPPA (UX + tracking documental + workflow). 3 ADRs novos (18, 19, 20) + 12 sprints novas (70-81) + golden test cases em docs/GOLDEN_TEST_CASES.md. Fase ETA quase completa -- só 68b em execução residual.
+VERSÃO: 7.6 | SPRINTS: 101 (59 concluídas, 0 em produção, 17 backlog, 13 arquivadas)
+ROTA: Catalogador universal artesanal (Fases ALFA → ZETA) + Fase ETA (auditoria) + Fase IOTA (integração Controle de Bordo) + Fase KAPPA (UX polish + tracking documental + workflow) + Sprint 87 (ressalvas técnicas IOTA/KAPPA, concluída)
+ÚLTIMA ATUALIZAÇÃO: 2026-04-23. Sprint 87 executada em sessão única (8 sub-itens, 9 commits). Baseline 1.046 → 1.109 passed. 3 specs novas criadas (50b, 87c, INFRA-parse-br) formalizando débitos residuais. Sprint 86 (humano) permanece aguardando ambiente + volume real. Retomada canônica: docs/HANDOFF_2026-04-23.md.
 ```
+
+---
+
+## Próxima sessão — rota recomendada (2026-04-24+)
+
+**Rota A (baixo risco, alto valor — ~2h):**
+```
+87c (fix _contar_docs_do_fornecedor, ~30min)
+  ↓
+87b (propagar identificador tx no XLSX, ~1h, destrava 87.2 em runtime real)
+  ↓
+INFRA-parse-br (consolidar _parse_valor_br, ~30min, zero risco funcional)
+```
+
+**Rota B (ambiciosa, pede humano primeiro):**
+```
+86.1 (humano: instalar libbz2-dev) + 86.12 (humano: popular inbox real)
+  ↓
+Sprint 21 (relatórios diagnósticos, abre Fase ZETA)
+```
+
+Detalhe de retomada + sanidade de entrada: `docs/HANDOFF_2026-04-23.md`.
 
 ---
 
@@ -45,7 +67,7 @@ Catalogador universal artesanal da vida financeira do casal. O usuário joga QUA
 | **Concluídas Fase KAPPA (completa)** | **72, 73, 74, 75, 76, 77, 78, 79, 80, 81** | **10** |
 | **Ressalva IOTA/KAPPA — Claude** | **87 (concluída 2026-04-23, 8 sub-itens 87.1-87.8)** | **1** |
 | **Ressalva IOTA/KAPPA — humano** | **86 (checklist pendente, aguarda ambiente + volume real)** | **1** |
-| **Débito técnico pós-87** | **87b (propagar identificador de transação no XLSX, backlog)** | **1** |
+| **Débitos técnicos pós-87** | **87b, 87c, 50b, INFRA-parse-br** (backlog com spec completa) | **4** |
 | Arquivadas (substituídas) | 08, 09, 10, 11, 15, 16, 26, 27a, 28, 29a, 29b, 31, 32 | 13 |
 
 Cabeçalho de cada sprint arquivada explica motivo e substituta.
