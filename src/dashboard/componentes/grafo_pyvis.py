@@ -127,7 +127,11 @@ def _parse_metadata(metadata: Any) -> dict[str, Any]:
 
 
 def _label_humano(node: dict[str, Any]) -> str:
-    """Fallback: aliases[0] → razao_social → nome_canonico truncado."""
+    """Fallback: aliases[0] → razao_social → descrição → tipo#id curto.
+
+    P2.2 2026-04-23: quando nome_canonico é hash SHA-256 (caso transações e
+    documentos), mostra `<tipo>#<id>` em vez do hash truncado.
+    """
     aliases = _parse_aliases(node.get("aliases"))
     if aliases:
         return str(aliases[0])
@@ -136,8 +140,14 @@ def _label_humano(node: dict[str, Any]) -> str:
         if metadata.get(chave):
             return str(metadata[chave])
     nc = str(node.get("nome_canonico") or "")
+    tipo = node.get("tipo")
+    node_id = node.get("id", "?")
+    # Hash SHA-256 tem 64 hex chars; se o nome canônico é hash-like, mostra
+    # <tipo>#<id> que é mais legível ("transacao#4575" vs "5C277BC27E632...").
+    if nc and len(nc) >= 32 and all(c in "0123456789abcdefABCDEF" for c in nc) and tipo:
+        return f"{tipo}#{node_id}"
     if not nc:
-        return f"node-{node.get('id', '?')}"
+        return f"node-{node_id}"
     return nc if len(nc) <= 40 else nc[:37] + "..."
 
 

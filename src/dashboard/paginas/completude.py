@@ -53,13 +53,15 @@ def _heatmap(resumo: dict) -> go.Figure | None:
         z.append(linha_z)
         texto.append(linha_t)
 
+    # P2.2 2026-04-23: texto removido das células (ilegível em viewport 1600x
+    # 1000 com 7 anos × N categorias). Mantido no hover via customdata.
     fig = go.Figure(
         data=go.Heatmap(
             z=z,
             x=meses,
             y=categorias,
-            text=texto,
-            texttemplate="%{text}",
+            customdata=texto,
+            hovertemplate="<b>%{y}</b><br>%{x}: %{customdata} com doc (%{z:.0f}%%)<extra></extra>",
             colorscale=[
                 [0.0, CORES["negativo"]],
                 [0.5, CORES["alerta"]],
