@@ -1,21 +1,21 @@
 # CLAUDE.md -- Protocolo Ouroboros
 
 ```
-VERSÃO: 5.0 | STATUS: PRODUÇÃO (Fases IOTA e KAPPA CONCLUÍDAS 2026-04-22) | LANG: PT-BR
+VERSÃO: 5.1 | STATUS: PRODUÇÃO (Fases IOTA e KAPPA CONCLUÍDAS; Sprint 87 + Rota A de débito residual concluídas 2026-04-24) | LANG: PT-BR
 TRANSAÇÕES: 6.086 | MESES: 82 (out/2019 a mar/2026) | BANCOS: 6 | EXTRATORES: 9
 GRAFO: 7.421 nodes + 24.584 edges (data/output/grafo.sqlite, ~5MB). Volume real do grafo aguarda reprocessamento (Sprint 86 item 86.12).
-SPRINTS: 98 (59 concluídas, 0 em produção, 26 backlog, 13 arquivadas)
+SPRINTS: 101 (62 concluídas, 0 em produção, 14 backlog, 13 arquivadas)
 CATEGORIZAÇÃO: 100% | IRPF TAGS: 164 (75 com CNPJ) | HOLERITES: 24 (G4F + Infobase)
-TESTES: 1.109 passed / 15 skipped (baseline Sprint 87, +63 vs 1.046 pós-KAPPA, +373 vs inicial 736)
+TESTES: 1.127 passed / 15 skipped (baseline Rota A, +18 vs 1.109 pós-Sprint 87, +391 vs inicial 736)
 ROTA: Catalogador universal artesanal via supervisor interativo (ADR-13)
 SUPERVISOR: Claude Code sessão interativa — nenhuma API programática
 INTEGRAÇÕES: OFX (pronto), Controle de Bordo vault (Sprint 70/71 integrado), Belvo (em teste), Gmail (setup pendente), MeuPluggy (disponível)
-ROTA ATUAL: Sprint 87 completa (ressalvas técnicas IOTA/KAPPA) — próximo: Sprint 86 (humano-checklist) + Sprint 87b (propagar identificador tx no XLSX)
+ROTA ATUAL: Rota A concluída (87c + 87b + INFRA-parse-br) — próximo: Sprint 86 (humano-checklist) OU Sprint 82 (canonicalizer variantes curtas) OU Sprint 85 (XLSX docs faltantes). Retomada: docs/HANDOFF_2026-04-24.md.
 ```
 
 ### Próxima sessão — retomada canônica
 
-Antes de tocar código, leia **`docs/HANDOFF_2026-04-23.md`**. Esse arquivo contém o mapa completo de onde paramos, baseline atual, sprints pendentes com prioridade, comandos de sanidade de entrada e rota recomendada para a próxima sessão.
+Antes de tocar código, leia **`docs/HANDOFF_2026-04-24.md`**. Esse arquivo contém o mapa completo de onde paramos, baseline atual, sprints pendentes com prioridade, comandos de sanidade de entrada e rota recomendada para a próxima sessão.
 
 ### Sessão 2026-04-23 — Sprint 87 executada
 
