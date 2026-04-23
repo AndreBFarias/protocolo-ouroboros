@@ -31,7 +31,7 @@ Auditoria de fidelidade em 760 arquivos `data/raw/` + inbox + XLSX + grafo.
 
 ### P0 — Blocker de qualidade de dados
 - [x] **P0.1 — Fix aba `renda`**: restringir a holerites + receitas bancárias explícitas. **CONCLUÍDA.**
-- [ ] **P0.2 — Sprint 90 pessoa_detector**: CPF Vitória + yaml + executor.
+- [x] **P0.2 — Sprint 90 pessoa_detector**: CPF Vitória + yaml + executor. **CONCLUÍDA.**
 
 ### P1 — Alto valor
 - [ ] **P1.1 — Extrator DAS PARCSN**: +47 documentos no grafo.
@@ -73,7 +73,24 @@ Runtime real pós-fix:
 - Pytest: 1139 → 1169 passed (+30 novos).
 - Lint: OK.
 
-### _Próximo: P0.2 (Sprint 90 pessoa_detector)_
+### 2026-04-23 — P0.2 concluída: Sprint 90 pessoa_detector
+
+Criados:
+- `mappings/pessoas.yaml` (NO GITIGNORE -- contém CPFs/CNPJs reais): identidade completa do casal com cpfs/cnpjs/razao_social/aliases.
+- 7 testes novos em `tests/test_intake_pessoa_detector.py` cobrindo CNPJ, razão social, alias, ordem de precedência (CNPJ > razão > alias), fallback, retrocompat com cpfs_pessoas.yaml.
+
+Modificados:
+- `.gitignore`: `mappings/pessoas.yaml` adicionado.
+- `src/intake/pessoa_detector.py`: novo camada 1.5 (`_casar_via_pessoas_yaml`) entre CPF-literal e pasta-pai. Ordem: CPF literal > CNPJ raiz 8 dígitos > razão social literal > alias > pasta-pai > fallback casal.
+
+Runtime real pós-fix:
+- Simulação em 22 arquivos (19 DAS + 3 certidões Receita) que estavam em `data/raw/casal/`: **22/22 detectados como 'andre' via CNPJ 45.850.636/0001-60**.
+- Teste end-to-end `./run.sh --inbox` com 1 DAS: roteado corretamente para `data/raw/andre/impostos/das_parcsn/`.
+- Observação: os 22 arquivos antigos continuam fisicamente em `data/raw/casal/` (migração física requer sprint adicional ou script ad-hoc; o DETECTOR está funcionando para ingestões futuras).
+- Pytest: 1169 → 1176 passed (+7).
+- Smoke 8/8 OK.
+
+### _Próximo: P1.1 (extrator DAS PARCSN)_
 
 ---
 

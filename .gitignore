@@ -64,3 +64,6 @@ docs/propostas/er_produtos/
 
 # Jupyter
 .ipynb_checkpoints/
+
+# Sprint 90: identidade completa do casal (CPFs + CNPJs + razao social)
+mappings/pessoas.yaml
