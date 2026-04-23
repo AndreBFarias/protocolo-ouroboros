@@ -145,6 +145,15 @@ def _descobrir_extratores() -> list:
     except ImportError as e:
         logger.warning("Extrator garantia_fabricante indisponível: %s", e)
 
+    # DAS PARCSN (P1.1 2026-04-23). Registrado antes do catch-all para
+    # capturar arquivos em `casal/impostos/das_parcsn/` e `_envelopes/originais/`.
+    try:
+        from src.extractors.das_parcsn_pdf import ExtratorDASPARCSNPDF
+
+        extratores.append(ExtratorDASPARCSNPDF)
+    except ImportError as e:
+        logger.warning("Extrator das_parcsn_pdf indisponível: %s", e)
+
     # Recibo não-fiscal é catch-all de baixa prioridade (Sprint 47):
     # registrado depois dos extratores fiscais para não capturar arquivo
     # que pertence a cupom térmico, NFC-e ou DANFE.

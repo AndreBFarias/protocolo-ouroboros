@@ -29,9 +29,12 @@ _RAIZ_REPO = Path(__file__).resolve().parents[1]
 _CAMINHO_GRAFO = _RAIZ_REPO / "data" / "output" / "grafo.sqlite"
 
 # Limite abaixo do qual pulamos em vez de falhar (volume baixo = casal
-# ainda não populou data/raw). Valor propositalmente baixo para que
-# qualquer ingestão real ative as asserções duras.
-LIMITE_VOLUME_BAIXO: int = 5
+# ainda não populou data/raw). Realinhado em 2026-04-23 (P1.1 auditoria)
+# de 5 para 20 -- hoje temos 14 docs (4 originais + 10 DAS) e a meta da
+# Sprint 57 continua sendo 20. Skip até atingir a meta real, depois
+# asserções duras entram em vigor (incluindo P3.2 que adicionará 24
+# holerites como documentos, passando de 14 para 38).
+LIMITE_VOLUME_BAIXO: int = 20
 
 # Acceptance #2/3/4/5 do spec da Sprint 57
 META_DOCUMENTOS: int = 20

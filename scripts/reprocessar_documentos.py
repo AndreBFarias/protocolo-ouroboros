@@ -60,6 +60,7 @@ from src.extractors.boleto_pdf import ExtratorBoletoPDF  # noqa: E402
 from src.extractors.cupom_garantia_estendida_pdf import ExtratorCupomGarantiaEstendida  # noqa: E402
 from src.extractors.cupom_termico_foto import ExtratorCupomTermicoFoto  # noqa: E402
 from src.extractors.danfe_pdf import ExtratorDanfePDF  # noqa: E402
+from src.extractors.das_parcsn_pdf import ExtratorDASPARCSNPDF  # noqa: E402
 from src.extractors.garantia import ExtratorGarantiaFabricante  # noqa: E402
 from src.extractors.nfce_pdf import ExtratorNfcePDF  # noqa: E402
 from src.extractors.receita_medica import ExtratorReceitaMedica  # noqa: E402
@@ -98,6 +99,7 @@ EXTRATORES_DOCUMENTAIS: tuple[type, ...] = (
     ExtratorReceitaMedica,           # receita medica (Sprint 47a)
     ExtratorGarantiaFabricante,      # garantia de fabricante (Sprint 47b)
     ExtratorBoletoPDF,               # boleto bancario PDF nativo (Sprint 87.3)
+    ExtratorDASPARCSNPDF,            # DAS PARCSN (P1.1 auditoria 2026-04-23)
     ExtratorReciboNaoFiscal,         # catch-all (Sprint 47)
 )
 

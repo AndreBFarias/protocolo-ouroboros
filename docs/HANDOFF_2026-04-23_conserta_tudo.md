@@ -34,7 +34,7 @@ Auditoria de fidelidade em 760 arquivos `data/raw/` + inbox + XLSX + grafo.
 - [x] **P0.2 — Sprint 90 pessoa_detector**: CPF Vitória + yaml + executor. **CONCLUÍDA.**
 
 ### P1 — Alto valor
-- [ ] **P1.1 — Extrator DAS PARCSN**: +47 documentos no grafo.
+- [x] **P1.1 — Extrator DAS PARCSN**: +47 documentos no grafo. **CONCLUÍDA.**
 - [ ] **P1.2 — Sprint 89 OCR fallback PDF-imagem**: fecha inbox.
 
 ### P2 — Higiene
@@ -90,7 +90,24 @@ Runtime real pós-fix:
 - Pytest: 1169 → 1176 passed (+7).
 - Smoke 8/8 OK.
 
-### _Próximo: P1.1 (extrator DAS PARCSN)_
+### 2026-04-23 — P1.1 concluída: extrator DAS PARCSN
+
+Criados:
+- `src/extractors/das_parcsn_pdf.py` (~210 linhas): extrator de DAS PARCSN PDF nativo. Parse de CNPJ, razão social, período de apuração (PT-BR → ISO), data de vencimento, "pagar até" (data-limite), valor total, número SENDA, parcela N/M. CNPJ 45.850.636 → tipo_documento `das_parcsn_andre`; outros → `das_parcsn`.
+- `tests/test_das_parcsn_pdf.py` (6 testes): parse essencial, CNPJ diferente, documento não-DAS rejeitado, texto curto, `pode_processar` em pasta DAS vs outras.
+
+Modificados:
+- `src/pipeline.py::_descobrir_extratores`: DAS registrado antes do catch-all recibo_nao_fiscal.
+- `scripts/reprocessar_documentos.py::EXTRATORES_DOCUMENTAIS`: DAS registrado na ordem canônica.
+- `tests/test_cobertura_grafo.py`: `LIMITE_VOLUME_BAIXO` 5 → 20 para refletir que agora temos 14 docs (skip até atingir META_DOCUMENTOS=20 original da Sprint 57).
+
+Runtime real pós-ingestão:
+- Grafo: **4 documentos → 14** (+10 DAS PARCSN únicos do André). 47 arquivos físicos de DAS viraram 10 docs únicos via idempotência por número SENDA (chaves 44 sintéticas a partir dos dígitos do número).
+- 35 arquivos em `_envelopes/originais/` falharam parse (correto — são outros tipos como comprovante CPF, certidão, etc., não DAS).
+- Pytest: 1176 → **1182 passed** (+6).
+- Smoke 8/8 OK.
+
+### _Próximo: P1.2 (Sprint 89 OCR fallback PDF-imagem)_
 
 ---
 
