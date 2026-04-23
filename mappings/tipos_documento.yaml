@@ -96,14 +96,48 @@ tipos:
       sem_data: "XMLNFe_{sha8}.xml"
 
   # --- Sprint 87.4: impostos e documentos pessoais (reduz skip_nao_identificado)
-  # Ordem: irpf_parcela antes de das_mei antes de comprovante_cpf.
-  # irpf_parcela vem primeiro porque 'PARCELA' é âncora exclusiva; DAS e CPF
-  # têm assinaturas que também casariam regras mais genéricas (boleto_servico
-  # tem 'Linha digitável' que DARFs de parcelamento podem ter). Prioridade
-  # 'especifico' garante avaliação antes de 'normal'.
+  # Ordem (mais específica primeiro): das_parcsn > das_mei > irpf_parcela > comprovante_cpf
+  # > certidao_receita_cnpj > extrato_c6_pdf.
+  #
+  # das_parcsn tem âncora "PARCSN" exclusiva; das_mei precisa do "DAS de (MEI|SIMEI)"
+  # para distinguir do PARCSN. irpf_parcela exige DARF + Receita Federal
+  # (distinto de DAS do Simples Nacional). Sprint 88 reajustou regex de
+  # das_mei em volume real e criou das_parcsn dedicado.
+
+  - id: das_parcsn
+    descricao: "DAS de parcelamento do Simples Nacional (PARCSN) -- MEI em baixa/desativado com dívida parcelada"
+    prioridade: especifico
+    match_mode: all
+    mimes: ["application/pdf"]
+    regex_conteudo:
+      - "Documento\\s+de\\s+Arrecada[çc][ãa]o"
+      - "Simples\\s+Nacional"
+      - "(DAS\\s+de\\s+PARCSN|PARCSN|Parcelamento.*Simples|Número\\s+do\\s+Parcelamento)"
+    extrator_modulo: null   # roteamento apenas
+    origem_sprint: 88
+    pasta_destino_template: "data/raw/{pessoa}/impostos/das_parcsn/"
+    renomear_template:
+      com_data: "DAS_PARCSN_{data:%Y-%m-%d}_{sha8}.pdf"
+      sem_data: "DAS_PARCSN_{sha8}.pdf"
+
+  - id: das_mei
+    descricao: "DAS -- Documento de Arrecadação do Simples Nacional (MEI ativo)"
+    prioridade: especifico
+    match_mode: all
+    mimes: ["application/pdf"]
+    regex_conteudo:
+      - "Documento\\s+de\\s+Arrecada[çc][ãa]o"
+      - "Simples\\s+Nacional"
+      - "DAS\\s+de\\s+(MEI|SIMEI)"
+    extrator_modulo: null   # roteamento apenas
+    origem_sprint: 88
+    pasta_destino_template: "data/raw/{pessoa}/impostos/das/"
+    renomear_template:
+      com_data: "DAS_{data:%Y-%m-%d}_{sha8}.pdf"
+      sem_data: "DAS_{sha8}.pdf"
 
   - id: irpf_parcela
-    descricao: "DARF de parcela IRPF (quotas de parcelamento do imposto de renda -- distinto de boleto_servico)"
+    descricao: "DARF de parcela IRPF (quotas de parcelamento do imposto de renda -- distinto de boleto_servico e de DAS PARCSN)"
     prioridade: especifico
     match_mode: all
     mimes: ["application/pdf"]
@@ -117,21 +151,6 @@ tipos:
     renomear_template:
       com_data: "IRPF_PARCELA_{data:%Y-%m-%d}_{sha8}.pdf"
       sem_data: "IRPF_PARCELA_{sha8}.pdf"
-
-  - id: das_mei
-    descricao: "DAS -- Documento de Arrecadação do Simples Nacional (MEI)"
-    prioridade: especifico
-    match_mode: all
-    mimes: ["application/pdf"]
-    regex_conteudo:
-      - "DAS\\s*-?\\s*Documento\\s+de\\s+Arrecada[çc][ãa]o"
-      - "Simples\\s+Nacional"
-    extrator_modulo: null   # roteamento apenas
-    origem_sprint: 87
-    pasta_destino_template: "data/raw/{pessoa}/impostos/das/"
-    renomear_template:
-      com_data: "DAS_{data:%Y-%m-%d}_{sha8}.pdf"
-      sem_data: "DAS_{sha8}.pdf"
 
   - id: comprovante_cpf
     descricao: "Comprovante de Situação Cadastral no CPF emitido pela Receita Federal"
@@ -147,6 +166,37 @@ tipos:
     renomear_template:
       com_data: "CPF_CAD_{data:%Y-%m-%d}_{sha8}.pdf"
       sem_data: "CPF_CAD_{sha8}.pdf"
+
+  - id: certidao_receita_cnpj
+    descricao: "Informações de apoio para emissão de certidão -- Receita Federal + PGFN (dados cadastrais CNPJ)"
+    prioridade: especifico
+    match_mode: all
+    mimes: ["application/pdf"]
+    regex_conteudo:
+      - "MINIST[ÉE]RIO\\s+DA\\s+FAZENDA"
+      - "(INFORMA[ÇC][ÕO]ES\\s+DE\\s+APOIO|EMISS[ÃA]O\\s+DE\\s+CERTID[ÃA]O|PROCURADORIA-GERAL\\s+DA\\s+FAZENDA)"
+      - "CNPJ\\s*:?\\s*\\d{2}\\.\\d{3}\\.\\d{3}"
+    extrator_modulo: null   # roteamento apenas
+    origem_sprint: 88
+    pasta_destino_template: "data/raw/{pessoa}/documentos/certidoes_receita/"
+    renomear_template:
+      com_data: "CERT_RF_{data:%Y-%m-%d}_{sha8}.pdf"
+      sem_data: "CERT_RF_{sha8}.pdf"
+
+  - id: extrato_c6_pdf
+    descricao: "Extrato C6 em PDF exportado do app (distinto do CSV/XLS cujo extrator bancário já existe)"
+    prioridade: especifico
+    match_mode: all
+    mimes: ["application/pdf"]
+    regex_conteudo:
+      - "Extrato\\s+(exportado|Per[íi]odo)"
+      - "(Saldo\\s+do\\s+dia|CDB\\s+C6|FAT\\s+CARTAO\\s+C6|C6\\s+LIM\\.?\\s+GARANT)"
+    extrator_modulo: null   # extrator PDF dedicado é sprint futura
+    origem_sprint: 88
+    pasta_destino_template: "data/raw/{pessoa}/c6_cc/"
+    renomear_template:
+      com_data: "EXTRATO_C6_{data:%Y-%m-%d}_{sha8}.pdf"
+      sem_data: "EXTRATO_C6_{sha8}.pdf"
 
   # ===================================================
   # === NORMAL (9) -- documentos pessoais e bancários ===
@@ -316,6 +366,8 @@ tipos:
       - "CCF[\\s:]"
       - "EXTRATO\\s+CF[-\\s]?e"
       - "SAT[-\\s]"
+      - "(Tributos|Consumidor)"           # Sprint 88: OCR-tolerante -- palavras de NFC-e/cupom
+      - "78\\d{11,12}"                    # Sprint 88: código EAN-13/14 em cupons de mercado
     extrator_modulo: null   # Sprint 45
     origem_sprint: 45
     pasta_destino_template: "data/raw/{pessoa}/nfs_fiscais/cupom_foto/"

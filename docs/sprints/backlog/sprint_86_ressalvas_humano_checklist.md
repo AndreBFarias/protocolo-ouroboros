@@ -31,6 +31,8 @@ marcar todos, a Sprint 86 está pronta para move para `concluidos/`.
   - Validar: `.venv/bin/python -c "import pyvis; print(pyvis.__version__)"` deve imprimir versão
   - Rodar `.venv/bin/pytest tests/test_grafo_filtrado.py -v` e ver **16 passed / 0 skipped** (hoje: 11 passed / 5 skipped)
 
+Isso deveria estar no install.sh automaticamente, pode fazer isso pra gente? Caso necessário use 10203040 na senha sudo.
+
 - [ ] **86.2 — Confirmar que `~/Controle de Bordo/` está com backup antes de rodar sync rico em modo executar.** A Sprint 71 escreve em `Pessoal/Casal/Financeiro/{Documentos,Fornecedores,Meses,_Attachments}`. O módulo respeita `sincronizado: true` + tag `#sincronizado-automaticamente` para não sobrescrever edição manual, mas se houver notas antigas em outros paths próximos (ex: um `Pessoal/Casal/Financeiro/` pré-existente), convém snapshotar antes.
   - Comando de backup: `cp -r "$HOME/Controle de Bordo" "$HOME/Controle de Bordo.backup-$(date +%Y%m%d)"`
 
