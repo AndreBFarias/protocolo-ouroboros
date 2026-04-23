@@ -538,11 +538,7 @@ def _contar_docs_do_fornecedor(db: GrafoDB, forn_id: int | None) -> int:
     """Conta arestas `fornecido_por` apontando para o fornecedor."""
     if forn_id is None:
         return 0
-    try:
-        edges = db.listar_edges(dst_id=forn_id, tipo="fornecido_por")
-    except Exception:  # noqa: BLE001 — tipo pode não existir no grafo vazio
-        return 0
-    return len(edges)
+    return len(db.listar_edges(dst_id=forn_id, tipo="fornecido_por"))
 
 
 def _copiar_original(

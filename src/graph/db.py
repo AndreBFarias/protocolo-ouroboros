@@ -205,13 +205,21 @@ class GrafoDB:
         )
         self._conn.commit()
 
-    def listar_edges(self, src_id: int | None = None, tipo: str | None = None) -> list[Edge]:
+    def listar_edges(
+        self,
+        src_id: int | None = None,
+        dst_id: int | None = None,
+        tipo: str | None = None,
+    ) -> list[Edge]:
         sql = "SELECT id, src_id, dst_id, tipo, peso, evidencia, created_at FROM edge"
         condicoes: list[str] = []
         params: list[Any] = []
         if src_id is not None:
             condicoes.append("src_id = ?")
             params.append(src_id)
+        if dst_id is not None:
+            condicoes.append("dst_id = ?")
+            params.append(dst_id)
         if tipo:
             condicoes.append("tipo = ?")
             params.append(tipo)

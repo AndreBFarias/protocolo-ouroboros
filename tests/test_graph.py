@@ -99,6 +99,40 @@ def test_adicionar_edge_dedup_por_tripla(db):
     assert tipos == ["ocorre_em", "outra_aresta"]
 
 
+def test_listar_edges_filtra_por_dst_id_e_tipo(db):
+    """Sprint 87c: dst_id permite contar arestas que apontam para um node.
+
+    Cenário: A->B (ocorre_em), A->C (ocorre_em), B->C (fornecido_por).
+    - listar_edges(dst_id=C.id) deve retornar 2 arestas (A->C, B->C)
+    - listar_edges(dst_id=B.id) deve retornar 1 aresta (A->B)
+    - listar_edges(dst_id=C.id, tipo="fornecido_por") deve retornar 1 (B->C)
+    - listar_edges(src_id=A, dst_id=C) deve retornar 1 (A->C)
+    """
+    a = db.upsert_node("fornecedor", "A")
+    b = db.upsert_node("fornecedor", "B")
+    c = db.upsert_node("periodo", "2026-04")
+    db.adicionar_edge(a, b, "ocorre_em")
+    db.adicionar_edge(a, c, "ocorre_em")
+    db.adicionar_edge(b, c, "fornecido_por")
+
+    edges_dst_c = db.listar_edges(dst_id=c)
+    assert len(edges_dst_c) == 2
+    assert sorted(e.tipo for e in edges_dst_c) == ["fornecido_por", "ocorre_em"]
+
+    edges_dst_b = db.listar_edges(dst_id=b)
+    assert len(edges_dst_b) == 1
+    assert edges_dst_b[0].src_id == a
+    assert edges_dst_b[0].tipo == "ocorre_em"
+
+    edges_dst_c_fp = db.listar_edges(dst_id=c, tipo="fornecido_por")
+    assert len(edges_dst_c_fp) == 1
+    assert edges_dst_c_fp[0].src_id == b
+
+    edges_src_a_dst_c = db.listar_edges(src_id=a, dst_id=c)
+    assert len(edges_src_a_dst_c) == 1
+    assert edges_src_a_dst_c[0].tipo == "ocorre_em"
+
+
 def test_listar_nodes_filtra_por_tipo(db):
     db.upsert_node("fornecedor", "F1")
     db.upsert_node("categoria", "Energia")
