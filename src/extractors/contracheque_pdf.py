@@ -18,6 +18,7 @@ import pypdfium2 as pdfium
 import pytesseract
 
 from src.utils.logger import configurar_logger
+from src.utils.parse_br import parse_valor_br_float
 
 logger = configurar_logger("ExtratorContrachequePDF")
 
@@ -50,15 +51,6 @@ CODIGOS_INFOBASE: dict[str, str] = {
     "998": "inss",
     "999": "irrf",
 }
-
-
-def _parse_valor_br(texto: str) -> float:
-    """Converte string monetária brasileira (1.234,56) em float."""
-    limpo = texto.strip().replace(".", "").replace(",", ".")
-    try:
-        return float(limpo)
-    except ValueError:
-        return 0.0
 
 
 def _extrair_texto(caminho: Path) -> str:
@@ -104,7 +96,7 @@ def _parse_g4f(texto: str) -> Optional[dict]:
     tipo = "Folha Mensal"
     for match in REGEX_G4F_PROVENTO.finditer(texto):
         descricao, valor = match.groups()
-        bruto += _parse_valor_br(valor)
+        bruto += parse_valor_br_float(valor)
         descricao_norm = descricao.strip()
         if "13" in descricao_norm and "Adiantado" in descricao_norm:
             tipo = "13º Adiantamento"
@@ -114,7 +106,7 @@ def _parse_g4f(texto: str) -> Optional[dict]:
     inss = irrf = vr_va = 0.0
     for match in REGEX_G4F_DESCONTO.finditer(texto):
         descricao, valor = match.groups()
-        valor_num = _parse_valor_br(valor)
+        valor_num = parse_valor_br_float(valor)
         descricao_upper = descricao.upper()
         if "IRRF" in descricao_upper:
             irrf += valor_num
@@ -124,7 +116,7 @@ def _parse_g4f(texto: str) -> Optional[dict]:
             vr_va += valor_num
 
     m_liq = REGEX_G4F_LIQUIDO.search(texto)
-    liquido = _parse_valor_br(m_liq.group(1)) if m_liq else 0.0
+    liquido = parse_valor_br_float(m_liq.group(1)) if m_liq else 0.0
     if liquido == 0.0 and bruto > 0:
         liquido = bruto - inss - irrf - vr_va
 
@@ -164,7 +156,7 @@ def _parse_infobase(texto: str) -> Optional[dict]:
         numeros = REGEX_INFOBASE_VALOR.findall(linha)
         if not numeros:
             continue
-        valor = _parse_valor_br(numeros[-1])
+        valor = parse_valor_br_float(numeros[-1])
         linha_upper = linha.upper()
 
         if eh_13:

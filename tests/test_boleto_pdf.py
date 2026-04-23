@@ -17,9 +17,9 @@ from src.extractors.boleto_pdf import (
     _cnpj_sintetico,
     _montar_documento,
     _normalizar_linha_digitavel,
-    _parse_valor_br,
 )
 from src.graph.db import GrafoDB
+from src.utils.parse_br import parse_valor_br
 
 # ---------------------------------------------------------------------------
 # Fixtures textuais
@@ -75,11 +75,14 @@ TEXTO_VAZIO_OCR = "  \n\n  "
 
 
 def test_parse_valor_br_aceita_formatos_canonicos():
-    assert _parse_valor_br("127,00") == pytest.approx(127.00)
-    assert _parse_valor_br("1.234,56") == pytest.approx(1234.56)
-    assert _parse_valor_br("103,93") == pytest.approx(103.93)
-    assert _parse_valor_br(None) is None
-    assert _parse_valor_br("abc") is None
+    # Contrato agora é garantido pelo helper canônico src.utils.parse_br
+    # (Sprint INFRA-parse-br). Mantemos este teste para documentar o
+    # contrato usado pelo extrator de boleto especificamente.
+    assert parse_valor_br("127,00") == pytest.approx(127.00)
+    assert parse_valor_br("1.234,56") == pytest.approx(1234.56)
+    assert parse_valor_br("103,93") == pytest.approx(103.93)
+    assert parse_valor_br(None) is None
+    assert parse_valor_br("abc") is None
 
 
 def test_normalizar_linha_digitavel_47_digitos():

@@ -39,7 +39,7 @@ Armadilhas Sprint 44 (ver docs/sprints/producao/sprint_44_extrator_danfe_pdf.md)
     A44-2: chave 44 pode quebrar em múltiplas linhas -> normalizar antes.
     A44-3: CFOP 5XXX = saída (este extrator assume saída).
     A44-4: DANFE multipágina -> iterar pdf.pages e concatenar.
-    A44-5: valores em R$ com ponto de milhar -> `_parse_valor_br`.
+    A44-5: valores em R$ com ponto de milhar -> `parse_valor_br` (src.utils.parse_br).
     A44-6: NFe CANCELADA mantém DANFE -> flag `cancelada`, não linkar.
 """
 
@@ -64,6 +64,7 @@ from src.utils.chave_nfe import (
     normalizar as normalizar_chave,
 )
 from src.utils.logger import configurar_logger
+from src.utils.parse_br import parse_valor_br
 
 logger = configurar_logger("danfe_pdf")
 
@@ -355,7 +356,7 @@ def _parse_cabecalho_danfe(texto: str) -> dict[str, Any] | None:
     numero = _match_grupo(RE_NUMERO_NOTA, texto)
     serie = _match_grupo(RE_SERIE_NOTA, texto)
     data_emissao = _extrair_data_emissao(texto)
-    total = _parse_valor_br(_match_grupo(RE_TOTAL_NOTA, texto))
+    total = parse_valor_br(_match_grupo(RE_TOTAL_NOTA, texto))
     cfop = _match_grupo(RE_CFOP_CABECALHO, texto)
     endereco = _extrair_endereco(texto)
     cancelada = bool(RE_MARCA_CANCELADA.search(texto))
@@ -428,11 +429,11 @@ def _item_de_match(match: re.Match[str]) -> dict[str, Any]:
         "ncm": grupos["ncm"],
         "cfop": grupos["cfop"],
         "unidade": grupos["unidade"].upper(),
-        "qtde": _parse_valor_br(grupos["qtde"]),
-        "valor_unit": _parse_valor_br(grupos["valor_unit"]),
-        "valor_total": _parse_valor_br(grupos["valor_total"]),
-        "icms_valor": _parse_valor_br(grupos.get("icms_valor")),
-        "ipi_valor": _parse_valor_br(grupos.get("ipi_valor")),
+        "qtde": parse_valor_br(grupos["qtde"]),
+        "valor_unit": parse_valor_br(grupos["valor_unit"]),
+        "valor_total": parse_valor_br(grupos["valor_total"]),
+        "icms_valor": parse_valor_br(grupos.get("icms_valor")),
+        "ipi_valor": parse_valor_br(grupos.get("ipi_valor")),
     }
 
 
@@ -569,17 +570,6 @@ def _ler_paginas_pdf(caminho: Path) -> list[str]:
 # ============================================================================
 # Helpers numéricos / textuais
 # ============================================================================
-
-
-def _parse_valor_br(bruto: str | None) -> float | None:
-    """Converte string monetária brasileira (1.234,56) em float. Devolve None se falhar."""
-    if not bruto:
-        return None
-    limpo = bruto.replace(".", "").replace(",", ".")
-    try:
-        return float(limpo)
-    except ValueError:
-        return None
 
 
 def _match_grupo(padrao: re.Pattern[str], texto: str) -> str | None:
