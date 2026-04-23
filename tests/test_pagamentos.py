@@ -113,6 +113,44 @@ class TestBoletos:
         assert not condom.empty
         assert condom.iloc[0]["status"] == pg.STATUS_ATRASADO
 
+    def test_carregar_boletos_mix_timestamp_e_string_nao_explode(self) -> None:
+        """Regression: carregar_boletos sortava por coluna 'vencimento' com mix
+        Timestamp (vindo do extrato lido via openpyxl) + string ISO (vindo de
+        _projetar_boletos_esperados). TypeError quebrava Pagamentos + abas
+        posteriores no dashboard. Fix: coerce para datetime antes do sort.
+        """
+        extrato = pd.DataFrame(
+            [
+                {
+                    # Timestamp real (padrão openpyxl ao ler XLSX com coluna data)
+                    "data": pd.Timestamp("2026-04-10"),
+                    "valor": -103.93,
+                    "local": "Sesc Natação",
+                    "forma_pagamento": "Boleto",
+                    "banco_origem": "c6",
+                    "mes_ref": "2026-04",
+                    "tipo": "Despesa",
+                }
+            ]
+        )
+        prazos = pd.DataFrame(
+            [
+                {
+                    "conta": "Condominio",
+                    "dia_vencimento": 5,
+                    "banco_pagamento": "itau",
+                    "auto_debito": False,
+                }
+            ]
+        )
+        hoje = date(2026, 4, 22)
+        bol = pg.carregar_boletos(extrato, prazos, hoje=hoje)
+        # Não explode + coluna vencimento é datetime homogêneo
+        assert not bol.empty
+        assert pd.api.types.is_datetime64_any_dtype(bol["vencimento"])
+        # Condomínio vem primeiro (vencimento 2026-04-05) antes do Sesc pago (2026-04-10)
+        assert bol.iloc[0]["fornecedor"] in {"Condominio", "Sesc Natação"}
+
     def test_boleto_futuro_vira_pendente(self, df_extrato: pd.DataFrame) -> None:
         prazos = pd.DataFrame(
             [

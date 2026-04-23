@@ -62,6 +62,12 @@ def carregar_boletos(
     for col in colunas:
         if col not in df.columns:
             df[col] = None
+    # Normaliza `vencimento` para Timestamp antes de sort. `_extrair_boletos_pagos`
+    # grava Timestamp (vindo do extrato); `_projetar_boletos_esperados` grava
+    # string ISO (`date.isoformat()`). Sem coerce, `sort_values` levanta
+    # TypeError ao comparar tipos diferentes. Inválidos viram NaT e caem no
+    # fim via `na_position="last"`.
+    df["vencimento"] = pd.to_datetime(df["vencimento"], errors="coerce")
     return df[colunas].sort_values(by="vencimento", na_position="last").reset_index(
         drop=True
     )
