@@ -4,6 +4,7 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
+from src.dashboard import tema
 from src.dashboard.componentes import kpi_grid_html
 from src.dashboard.componentes.drilldown import aplicar_drilldown
 from src.dashboard.dados import (
@@ -207,13 +208,6 @@ def _grafico_barras_historico(
             yanchor="top",
         ),
         barmode="group",
-        legend=dict(
-            orientation="h",
-            yanchor="top",
-            y=-0.18,
-            xanchor="center",
-            x=0.5,
-        ),
         yaxis_title="Valor (R$)",
         yaxis2=dict(
             title=dict(text="Saldo (R$)", font=dict(color=CORES["destaque"])),
@@ -224,6 +218,8 @@ def _grafico_barras_historico(
         ),
     )
 
+    # Sprint 87.8 (R77-1): legenda padronizada abaixo do gráfico.
+    tema.legenda_abaixo(fig)
     aplicar_locale_ptbr(fig, valores_eixo_x=meses_sel)
     # Sprint 87.1 (R73-1): clique em barra Receita/Despesa navega para aba
     # Extrato filtrada pelo mês. Scatter de saldo (trace 2) fica sem drill.

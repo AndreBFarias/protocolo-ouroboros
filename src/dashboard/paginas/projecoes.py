@@ -4,6 +4,7 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
+from src.dashboard import tema
 from src.dashboard.dados import (
     filtrar_por_forma_pagamento,
     filtrar_por_pessoa,
@@ -323,12 +324,13 @@ def _grafico_projecao(cenarios: dict, ritmos: dict[str, float | None] | None = N
 
     fig.update_layout(
         **LAYOUT_PLOTLY,
-        legend=dict(orientation="h", yanchor="bottom", y=1.02),
         yaxis_title="Patrimônio Acumulado (R$)",
         xaxis_title="Mês",
         hovermode="x unified",
     )
 
+    # Sprint 87.8 (R77-1): legenda padronizada abaixo do gráfico.
+    tema.legenda_abaixo(fig)
     aplicar_locale_ptbr(fig, valores_eixo_x=meses_labels)
     st.plotly_chart(fig, width="stretch")
 
@@ -392,11 +394,12 @@ def _grafico_simulacao(
 
     fig.update_layout(
         **LAYOUT_PLOTLY,
-        legend=dict(orientation="h", yanchor="bottom", y=1.02),
         yaxis_title="Patrimônio Acumulado (R$)",
         xaxis_title="Mês",
     )
 
+    # Sprint 87.8 (R77-1): legenda padronizada abaixo do gráfico.
+    tema.legenda_abaixo(fig)
     aplicar_locale_ptbr(fig, valores_eixo_x=meses_labels)
     st.plotly_chart(fig, width="stretch")
 
