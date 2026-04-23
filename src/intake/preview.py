@@ -59,6 +59,8 @@ except ImportError:
 DPI_OCR_PREVIEW: int = 150
 LIMITE_BYTES_TEXTO: int = 64 * 1024  # 64KB de texto bruto basta para preview
 TESSERACT_LANG: str = "por+eng"
+# Abaixo deste threshold, assume PDF-imagem e aciona fallback OCR (Sprint 89).
+MIN_CHARS_TEXTO_NATIVO: int = 50
 
 _MIMES_IMAGEM: frozenset[str] = frozenset(
     {"image/jpeg", "image/png", "image/heic", "image/heif", "image/webp"}
@@ -116,12 +118,47 @@ def _preview_pdf(caminho: Path) -> str | None:
     `gerar_preview` diretamente sobre um PDF não-envelope.
 
     Lê APENAS a primeira página -- preview é para classificação, basta.
+    Se pdfplumber devolver texto muito curto (< MIN_CHARS_TEXTO_NATIVO),
+    tenta fallback OCR via pypdfium2 + tesseract (P1.2 / Sprint 89 --
+    PDFs-imagem sem texto extraível).
     """
     with pdfplumber.open(caminho) as pdf:
         if not pdf.pages:
             return None
         texto = pdf.pages[0].extract_text() or ""
-        return texto.strip() or None
+        texto_limpo = texto.strip()
+        if len(texto_limpo) >= MIN_CHARS_TEXTO_NATIVO:
+            return texto_limpo
+    # Fallback OCR: PDF-imagem (notas de garantia, scans sem layer de texto).
+    return _preview_pdf_via_ocr(caminho)
+
+
+def _preview_pdf_via_ocr(caminho: Path, paginas: int = 1) -> str | None:
+    """Renderiza as primeiras páginas com pypdfium2 e passa por tesseract.
+
+    Custo: ~1-3s por página. Só é chamado como fallback quando pdfplumber
+    retorna texto curto. Não aplica preprocessamento (deskew/threshold) --
+    preview é para casar regex de classificação, não extração fina.
+    """
+    try:
+        import pypdfium2 as pdfium
+    except ImportError:
+        logger.warning("preview OCR pulado (pypdfium2 ausente): %s", caminho.name)
+        return None
+    try:
+        pdf = pdfium.PdfDocument(str(caminho))
+        partes: list[str] = []
+        for i in range(min(paginas, len(pdf))):
+            pagina = pdf[i]
+            pil_img = pagina.render(scale=2).to_pil()
+            texto = pytesseract.image_to_string(pil_img, lang=TESSERACT_LANG)
+            if texto:
+                partes.append(texto)
+        resultado = "\n".join(partes).strip()
+        return resultado or None
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("preview OCR falhou em %s: %s", caminho.name, exc)
+        return None
 
 
 def _preview_imagem(caminho: Path) -> str | None:
