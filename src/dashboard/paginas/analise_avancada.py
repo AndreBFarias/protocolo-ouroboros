@@ -174,10 +174,11 @@ def _renderizar_sankey(df: pd.DataFrame) -> None:
             font=dict(size=FONTE_SUBTITULO),
         ),
     )
-
-    # Sprint 87.8 (R77-1): padroniza margens via helper mesmo no sankey
-    # (sem legenda, mas o helper ajusta margin top/bottom para consistência).
+    # Sprint 87.8: helper de legenda padroniza margem top/bottom.
     tema.legenda_abaixo(fig)
+    # P2.2 2026-04-23: sobrepõe margem direita para 140px evitando
+    # labels "Juros/Encargos", "Impostos", "Farmácia" cortados.
+    fig.update_layout(margin=dict(l=40, r=140, t=fig.layout.margin.t, b=fig.layout.margin.b))
     st.plotly_chart(fig, use_container_width=True)
 
 

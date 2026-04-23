@@ -39,7 +39,7 @@ Auditoria de fidelidade em 760 arquivos `data/raw/` + inbox + XLSX + grafo.
 
 ### P2 — Higiene
 - [x] **P2.1 — Sprint 87d fallback idempotente**. **CONCLUÍDA.**
-- [ ] **P2.2 — Sprint 91 UX v3** (6 fixes visuais).
+- [x] **P2.2 — Sprint 91 UX v3** (6 fixes visuais). **CONCLUÍDA.**
 - [ ] **P2.3 — Dedupe roteamento adapter**.
 
 ### P3 — Estratégico
@@ -141,7 +141,19 @@ Spec movida: `docs/sprints/backlog/sprint_87d_*.md` → `docs/sprints/concluidos
 
 Pytest: 1186 → **1188 passed** (+2). Smoke 8/8 OK.
 
-### _Próximo: P2.2 (Sprint 91 UX v3)_
+### 2026-04-23 — P2.2 concluída: Sprint 91 UX v3 (6 fixes visuais)
+
+Modificados (6 fixes):
+1. `completude.py`: heatmap sem `text=`/`texttemplate=` (ilegível), mantido só `customdata`+`hovertemplate` (tooltip).
+2. `pagamentos.py`: coluna `vencimento` formatada como `YYYY-MM-DD` via `dt.strftime` (era `YYYY-MM-DD 00:00:00`).
+3. `analise_avancada.py`: Sankey com `margin r=140` para evitar labels cortados ("Juros/Encargos", "Impostos", "Farmácia"). Mantido `legenda_abaixo(fig)` helper Sprint 87.8.
+4. `grafo_pyvis.py::_label_humano`: nós com `nome_canonico` tipo hash SHA-256 viram `<tipo>#<id>` legível (ex: `transacao#4575` em vez de `5C277BC27E632...`). Preservado fallback `node-{id}` quando sem tipo.
+5. `tema.py::css_global`: alertas do Streamlit (`[data-testid="stAlert"]`) trocados para fundo Dracula card + border accent destaque.
+6. `app.py::_sidebar`: logo 96px → **64px** (libera ~32px vertical na sidebar, antes 150px totais).
+
+Pytest: 1188 passed (sem change, ajustei 2 testes existentes para acomodar mudanças: `test_node_id_como_ultimissimo_recurso` e `test_analise_avancada_usa_legenda_abaixo_heatmap_e_sankey`). Smoke 8/8 OK.
+
+### _Próximo: P2.3 (dedupe roteamento adapter)_
 
 ---
 

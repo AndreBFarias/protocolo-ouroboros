@@ -112,8 +112,16 @@ def _renderizar_boletos(extrato: pd.DataFrame, prazos: pd.DataFrame) -> None:
             "Atrasados", int((boletos["status"] == STATUS_ATRASADO).sum())
         )
 
+    # P2.2 2026-04-23: vencimento formatado como date-only (YYYY-MM-DD)
+    # em vez de "2019-11-04 00:00:00" default do pandas Timestamp.
+    boletos_fmt = boletos.copy()
+    if "vencimento" in boletos_fmt.columns and pd.api.types.is_datetime64_any_dtype(
+        boletos_fmt["vencimento"]
+    ):
+        boletos_fmt["vencimento"] = boletos_fmt["vencimento"].dt.strftime("%Y-%m-%d")
+
     st.dataframe(
-        boletos,
+        boletos_fmt,
         use_container_width=True,
         hide_index=True,
         column_config={

@@ -60,8 +60,9 @@ def _sidebar(dados: dict) -> tuple[str, str, str]:
         Tupla com (período selecionado, pessoa, granularidade).
     """
     with st.sidebar:
-        # Sprint 76: logo acima do título, centralizados, cacheado em session_state.
-        logo_html = logo_sidebar_html()
+        # P2.2 2026-04-23: logo compacto (64px) para liberar espaço vertical
+        # na sidebar -- antes 96px gastava ~150px totais só no cabeçalho.
+        logo_html = logo_sidebar_html(largura_px=64)
         if logo_html:
             st.markdown(logo_html, unsafe_allow_html=True)
         else:

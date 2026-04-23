@@ -345,6 +345,20 @@ def css_global() -> str:
     .element-container {{ margin-bottom: {SPACING["md"]}px; }}
     [data-testid="stHorizontalBlock"] {{ gap: {SPACING["md"]}px; }}
 
+    /* P2.2 2026-04-23: alertas do Streamlit alinhados ao tema Dracula.
+       Default usa amarelo pálido que destoa do tema escuro. */
+    [data-testid="stAlert"] {{
+        background-color: {CORES["card_fundo"]} !important;
+        color: {CORES["texto"]} !important;
+        border-left: 4px solid {CORES["destaque"]} !important;
+        border-radius: 6px;
+    }}
+    [data-testid="stAlert"] p,
+    [data-testid="stAlert"] span,
+    [data-testid="stAlert"] div {{
+        color: {CORES["texto"]} !important;
+    }}
+
     /* --- Grid responsivo de KPI cards (Sprint 62) ------------------------ */
     /* Grid fluido com minmax: 3 colunas em telas largas, 2 em médias e 1 em
        estreitas. Substitui `st.columns(3)` rígido quando renderizado como
