@@ -4,13 +4,13 @@
 VERSÃO: 5.0 | STATUS: PRODUÇÃO (Fases IOTA e KAPPA CONCLUÍDAS 2026-04-22) | LANG: PT-BR
 TRANSAÇÕES: 6.086 | MESES: 82 (out/2019 a mar/2026) | BANCOS: 6 | EXTRATORES: 9
 GRAFO: 7.421 nodes + 24.584 edges (data/output/grafo.sqlite, ~5MB). Volume real do grafo aguarda reprocessamento (Sprint 86 item 86.12).
-SPRINTS: 97 (58 concluídas, 0 em produção, 26 backlog, 13 arquivadas)
+SPRINTS: 98 (59 concluídas, 0 em produção, 26 backlog, 13 arquivadas)
 CATEGORIZAÇÃO: 100% | IRPF TAGS: 164 (75 com CNPJ) | HOLERITES: 24 (G4F + Infobase)
-TESTES: 1.046 passed / 15 skipped (baseline Sprint 79, +310 vs baseline inicial 736)
+TESTES: 1.109 passed / 15 skipped (baseline Sprint 87, +63 vs 1.046 pós-KAPPA, +373 vs inicial 736)
 ROTA: Catalogador universal artesanal via supervisor interativo (ADR-13)
 SUPERVISOR: Claude Code sessão interativa — nenhuma API programática
 INTEGRAÇÕES: OFX (pronto), Controle de Bordo vault (Sprint 70/71 integrado), Belvo (em teste), Gmail (setup pendente), MeuPluggy (disponível)
-ROTA ATUAL: Fase KAPPA completa — próximo: Sprint 86 (ressalvas humanas) + Sprint 87 (ressalvas técnicas)
+ROTA ATUAL: Sprint 87 completa (ressalvas técnicas IOTA/KAPPA) — próximo: Sprint 86 (humano-checklist) + Sprint 87b (propagar identificador tx no XLSX)
 ```
 
 ### Caminho crítico IOTA + KAPPA concluído em 2026-04-22
