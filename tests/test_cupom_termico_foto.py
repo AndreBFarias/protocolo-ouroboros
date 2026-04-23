@@ -713,5 +713,82 @@ class TestRoundTripOCRReal:
         assert len(arquivos_cache) == 1
 
 
+class TestFallbackSupervisorIdempotente:
+    """P2.1 2026-04-23: fallback supervisor deve ser idempotente.
+
+    Antes: `_registrar_fallback_supervisor` usava uuid.uuid4().hex[:12], gerando
+    propostas novas a cada reprocessamento do mesmo cupom. Agora: cache_key
+    (SHA-256 por conteúdo), mesmo cupom -> mesmo identificador -> sobrescrita.
+    """
+
+    def test_mesmo_cupom_invocado_duas_vezes_gera_uma_proposta(
+        self, tmp_path: Path
+    ) -> None:
+        foto = tmp_path / "cupom.jpg"
+        foto.write_bytes(b"\xff\xd8\xff" + b"CONTEUDO_UNICO" * 100)
+
+        texto_baixo_recall = (
+            "CNPJ: 99.888.777/0001-55 LOJA INCOMPLETA\n"
+            "CUPOM FISCAL\n"
+            "PRODUTO ITEM A 1 UN x 10,00 10,00\n"
+            "TOTAL R$ 500,00\n"
+            "20/04/2026 10:00:00\n"
+        )
+        for _ in range(3):
+            ext = ExtratorCupomTermicoFoto(
+                foto,
+                diretorio_cache=tmp_path / "cache",
+                diretorio_conferir=tmp_path / "conferir",
+                diretorio_propostas=tmp_path / "propostas",
+            )
+            with patch.object(
+                ext,
+                "_rodar_ocr_com_cache",
+                return_value=(texto_baixo_recall, 50.0),
+            ):
+                ext.extrair()
+
+        propostas = list((tmp_path / "propostas").glob("*.md"))
+        dirs_conferir = list((tmp_path / "conferir").iterdir())
+        assert len(propostas) == 1, (
+            f"esperado 1 proposta idempotente, achei {len(propostas)}: "
+            f"{[p.name for p in propostas]}"
+        )
+        assert len(dirs_conferir) == 1, (
+            f"esperado 1 dir _conferir idempotente, achei {len(dirs_conferir)}"
+        )
+
+    def test_cupons_diferentes_geram_propostas_distintas(
+        self, tmp_path: Path
+    ) -> None:
+        foto_a = tmp_path / "cupom_a.jpg"
+        foto_a.write_bytes(b"\xff\xd8\xff" + b"CONTEUDO_A" * 100)
+        foto_b = tmp_path / "cupom_b.jpg"
+        foto_b.write_bytes(b"\xff\xd8\xff" + b"CONTEUDO_B" * 100)
+
+        texto_baixo_recall = (
+            "CNPJ: 99.888.777/0001-55 LOJA X\n"
+            "TOTAL R$ 500,00\n"
+            "20/04/2026 10:00:00\n"
+        )
+
+        for foto in (foto_a, foto_b):
+            ext = ExtratorCupomTermicoFoto(
+                foto,
+                diretorio_cache=tmp_path / "cache",
+                diretorio_conferir=tmp_path / "conferir",
+                diretorio_propostas=tmp_path / "propostas",
+            )
+            with patch.object(
+                ext,
+                "_rodar_ocr_com_cache",
+                return_value=(texto_baixo_recall, 50.0),
+            ):
+                ext.extrair()
+
+        propostas = list((tmp_path / "propostas").glob("*.md"))
+        assert len(propostas) == 2
+
+
 # "Código que não passa num teste não passa numa foto borrada."
 # -- adaptação do princípio de testabilidade

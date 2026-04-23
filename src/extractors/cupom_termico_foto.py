@@ -31,7 +31,6 @@ Não confunde com:
 from __future__ import annotations
 
 import re
-import uuid
 from datetime import date, datetime
 from pathlib import Path
 from typing import Any
@@ -379,8 +378,14 @@ def _registrar_fallback_supervisor(
 
     Devolve o caminho do novo diretório. Não levanta exceção se o
     arquivo de origem não existir mais (idempotência em reprocessamento).
+
+    P2.1 2026-04-23: identificador derivado de `cache_key(caminho_foto)[:12]`
+    (SHA-256 determinístico por conteúdo) em vez de `uuid.uuid4().hex[:12]`.
+    Antes: cada reprocessamento gerava UUID novo -> N propostas distintas
+    por cupom. Agora: mesmo conteúdo -> mesmo dir <hash>/ e mesmo arquivo
+    <hash>.md, sobrescrita idempotente.
     """
-    identificador = uuid.uuid4().hex[:12]
+    identificador = cache_key(caminho_foto)[:12]
     dir_alvo = diretorio_conferir / identificador
     dir_alvo.mkdir(parents=True, exist_ok=True)
     destino_foto = dir_alvo / caminho_foto.name
