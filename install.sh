@@ -29,6 +29,19 @@ pip install -e ".[dashboard,dev]" --quiet
 # Dependências de sistema
 echo "Verificando dependências de sistema..."
 
+# Libs para o Python compilar módulos nativos completos (Sprint 86.1).
+# Sem libbz2-dev, o módulo _bz2 fica fora do build do pyenv e networkx/pyvis
+# levantam ImportError em runtime. Checagem rápida: _bz2 precisa importar.
+if ! python3 -c "import _bz2" 2>/dev/null; then
+    echo "Instalando libs de compilação nativa (libbz2-dev + libffi-dev + libssl-dev + zlib1g-dev)..."
+    sudo apt install -y libbz2-dev libffi-dev libssl-dev zlib1g-dev xz-utils || \
+        echo "[AVISO] Libs nativas faltando. Rode: sudo apt install -y libbz2-dev libffi-dev libssl-dev zlib1g-dev xz-utils"
+    echo "[AVISO] Após instalar as libs, recompile o Python alvo via pyenv e recrie .venv:"
+    echo "        pyenv uninstall 3.12.1 && pyenv install 3.12.1 && rm -rf .venv && ./install.sh"
+else
+    echo "[OK] _bz2 disponível no Python"
+fi
+
 # OCR (para screenshots de contas de energia)
 if ! command -v tesseract &> /dev/null; then
     echo "Instalando tesseract-ocr (necessário para OCR de contas de energia)..."
