@@ -93,6 +93,58 @@ def _carregar_categorias_obrigatorias() -> frozenset[str]:
     return frozenset(str(c) for c in lista)
 
 
+def _marcar_tracking(
+    row: pd.Series,
+    obrigatorias: frozenset[str],
+    ids_com_doc: set[str],
+) -> str:
+    """Sprint 87.2 (ADR-20): devolve o marcador da coluna "Doc?" do Extrato.
+
+    Prioridade:
+      1. Transação com `identificador` em `ids_com_doc` (aresta `documento_de`
+         no grafo) -> "OK".
+      2. Transação em categoria obrigatória sem vínculo -> "!".
+      3. Caso contrário -> "".
+
+    Função pura para permitir teste sem mockar streamlit. `row` é uma `pd.Series`
+    de uma linha do DataFrame do extrato (pode ou não ter coluna `identificador`).
+    """
+    ident = row.get("identificador") if hasattr(row, "get") else None
+    if ident is not None and not pd.isna(ident):
+        ident_str = str(ident)
+        if ident_str and ident_str in ids_com_doc:
+            return "OK"
+    categoria = row.get("categoria", "") if hasattr(row, "get") else ""
+    return "!" if categoria in obrigatorias else ""
+
+
+@st.cache_data(ttl=30)
+def _carregar_ids_com_doc() -> set[str]:
+    """Sprint 87.2 (ADR-20): transações do grafo com documento vinculado.
+
+    Consulta `src.graph.queries.transacoes_com_documento` uma vez por render
+    (TTL 30s) e devolve o conjunto de `nome_canonico` de nodes `transacao`  # noqa: accent
+    com ao menos uma aresta `documento_de`. Graceful degradation: se o grafo
+    não existir ou houver erro de import, loga info e devolve set vazio —
+    a coluna "Doc?" cai no comportamento antigo (apenas heurística de
+    categoria obrigatória).
+    """
+    try:
+        from src.graph.db import GrafoDB, caminho_padrao
+        from src.graph.queries import transacoes_com_documento
+    except ImportError:  # pragma: no cover -- módulo de grafo ausente no dev local
+        return set()
+
+    try:
+        db_path = caminho_padrao()
+        if not db_path.exists():
+            return set()
+        with GrafoDB(db_path) as db:
+            return transacoes_com_documento(db)
+    except Exception:  # noqa: BLE001 -- dashboard nunca deve quebrar por grafo ausente
+        return set()
+
+
 def renderizar(
     dados: dict[str, pd.DataFrame],
     mes_selecionado: str,
@@ -201,15 +253,19 @@ def _exibir_tabela(df: pd.DataFrame) -> None:
     colunas_presentes = [c for c in colunas_exibicao if c in df.columns]
     df_exibir = df[colunas_presentes].copy()
 
-    # Sprint 74 (ADR-20): coluna de tracking documental. Marca com "•" quando
-    # a categoria é obrigatória e ainda não há comprovante conhecido no grafo.
-    # Hoje usamos heurística simples por categoria; Sprint futura cruzará com
-    # arestas `documento_de` para marcar como "OK" quando já há vínculo.
+    # Sprint 74 (ADR-20) + Sprint 87.2: coluna de tracking documental.
+    # Se a transação tem aresta `documento_de` no grafo -> "OK".
+    # Se a categoria é obrigatória e ainda não há vínculo -> "!".
+    # Senão -> vazio. Graceful degradation: quando o grafo não existe ou a
+    # coluna `identificador` não chegou ao df, o resultado cai no fallback
+    # histórico (apenas heurística de categoria).
     obrigatorias = _carregar_categorias_obrigatorias()
-    if obrigatorias and "categoria" in df_exibir.columns:
-        df_exibir["tracking"] = df_exibir["categoria"].apply(
-            lambda c: "!" if c in obrigatorias else ""
-        )
+    if obrigatorias and "categoria" in df.columns:
+        ids_com_doc = _carregar_ids_com_doc()
+        df_exibir["tracking"] = df.apply(
+            lambda row: _marcar_tracking(row, obrigatorias, ids_com_doc),
+            axis=1,
+        ).values
 
     nomes_colunas: dict[str, str] = {
         "data": "Data",

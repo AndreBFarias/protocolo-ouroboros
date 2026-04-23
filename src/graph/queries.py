@@ -234,6 +234,33 @@ def obter_transacoes_candidatas_para_documento(
     return [c[1] for c in candidatas]
 
 
+def transacoes_com_documento(db: GrafoDB) -> set[str]:
+    """Sprint 87.2 (ADR-20): identificadores de transações com documento vinculado.
+
+    Retorna o conjunto de `nome_canonico` dos nodes `transacao` que possuem ao  # noqa: accent
+    menos uma aresta `documento_de` apontando para eles. Usado pela coluna
+    "Doc?" do Extrato e pela gap analysis (`calcular_completude`) para marcar
+    cobertura documental real sem percorrer o grafo inteiro em cada render.
+
+    A aresta canônica é `documento -> transacao` com `tipo='documento_de'`  # noqa: accent
+    (ver `src/graph/linking.py::EDGE_TIPO_DOCUMENTO_DE`). O lado da transação
+    é o `dst_id` e o lado do documento é o `src_id`. Idempotência do edge é
+    garantida por UNIQUE(src,dst,tipo) no schema.
+
+    Retorna set vazio quando não há arestas `documento_de` no grafo. Não
+    levanta exceção se o grafo estiver vazio -- retorno está sempre definido.
+    """
+    cursor = db._conn.execute(
+        """
+        SELECT DISTINCT n.nome_canonico
+        FROM node n
+        JOIN edge e ON e.dst_id = n.id
+        WHERE n.tipo = 'transacao' AND e.tipo = 'documento_de'
+        """,
+    )
+    return {str(row[0]) for row in cursor.fetchall() if row[0] is not None}
+
+
 def grafo_filtrado(
     db: GrafoDB,
     tipos: list[str] | None = None,
