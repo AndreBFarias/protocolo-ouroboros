@@ -14,13 +14,21 @@ DataFrame vazio ou dict vazio em vez de levantar exceção.
 from __future__ import annotations
 
 from datetime import date
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import pandas as pd
+
+if TYPE_CHECKING:  # pragma: no cover -- só para anotações de tipo
+    from src.graph.db import GrafoDB
 
 STATUS_PAGO: str = "pago"
 STATUS_PENDENTE: str = "pendente"
 STATUS_ATRASADO: str = "atrasado"
+
+# Sprint 87.7: abaixo deste número de arestas `documento_de` no grafo,
+# a reconciliação via grafo não é representativa e o caller deve cair na
+# heurística textual (`carregar_boletos`).
+LIMIAR_GRAFO_PADRAO: int = 10
 
 
 def carregar_boletos(
@@ -210,6 +218,126 @@ def faturas_credito(extrato: pd.DataFrame) -> dict[str, pd.DataFrame]:
         )
         resultado[str(banco)] = agrupado.rename(columns={"valor": "valor_total"})
     return resultado
+
+
+def _reconciliar_via_grafo(
+    db: "GrafoDB", boleto_node: Any, hoje: date
+) -> str:
+    """Sprint 87.7: decide status de um node `documento` de tipo `boleto_servico`.
+
+    Critério:
+      - Se há ao menos uma aresta `documento_de` saindo deste node -> `pago`.
+      - Caso contrário, compara `metadata.vencimento` com `hoje`:
+          - vencimento < hoje -> `atrasado`
+          - vencimento >= hoje -> `pendente`
+          - vencimento ausente -> `pendente` (graceful; sem condição de atrasado)
+    """
+    arestas = db.listar_edges(src_id=boleto_node.id, tipo="documento_de")
+    if arestas:
+        return STATUS_PAGO
+
+    venc_raw = (boleto_node.metadata or {}).get("vencimento")
+    if not venc_raw:
+        return STATUS_PENDENTE
+    try:
+        venc = date.fromisoformat(str(venc_raw)[:10])
+    except (TypeError, ValueError):
+        return STATUS_PENDENTE
+    return STATUS_ATRASADO if venc < hoje else STATUS_PENDENTE
+
+
+def carregar_boletos_via_grafo(
+    db: "GrafoDB",
+    prazos: pd.DataFrame | None = None,
+    hoje: date | None = None,
+    limiar: int = LIMIAR_GRAFO_PADRAO,
+) -> pd.DataFrame | None:
+    """Sprint 87.7: reconciliação boleto-transação via arestas `documento_de`.
+
+    Varre nodes `documento` com `metadata.tipo_documento == 'boleto_servico'`
+    e classifica cada um em `pago` (tem aresta `documento_de`) ou
+    `pendente`/`atrasado` (sem aresta, vencimento no futuro ou no passado).
+
+    Retorna `None` -- sentinela que sinaliza ao caller para cair no fallback
+    textual -- quando o grafo tem menos de `limiar` arestas `documento_de`
+    no total. Isso protege contra reconciliação enganosa enquanto o motor
+    da Sprint 48 ainda não rodou em volume.
+
+    Schema do DataFrame devolvido é idêntico ao de `carregar_boletos`:
+    (data, fornecedor, valor, vencimento, status, banco_origem).
+
+    `prazos` é aceito para compatibilidade de assinatura, mas hoje a função
+    não cruza com a aba prazos -- a verdade vem do grafo. Projeções de aba
+    `prazos` permanecem responsabilidade de `carregar_boletos`.
+    """
+    from src.graph.queries import total_arestas_por_tipo
+
+    del prazos  # reservado para uso futuro (união com aba prazos)
+    hoje = hoje or date.today()
+
+    total_edges = total_arestas_por_tipo(db, "documento_de")
+    if total_edges < limiar:
+        return None
+
+    linhas: list[dict[str, Any]] = []
+    for nd in db.listar_nodes(tipo="documento"):
+        meta = nd.metadata or {}
+        if meta.get("tipo_documento") != "boleto_servico":
+            continue
+        status = _reconciliar_via_grafo(db, nd, hoje)
+        valor_raw = meta.get("total")
+        try:
+            valor = float(valor_raw) if valor_raw is not None else None
+        except (TypeError, ValueError):
+            valor = None
+        fornecedor = meta.get("razao_social") or nd.nome_canonico
+        vencimento = meta.get("vencimento")
+        data_emissao = meta.get("data_emissao")
+        linhas.append(
+            {
+                "data": data_emissao,
+                "fornecedor": fornecedor,
+                "valor": valor,
+                "vencimento": vencimento,
+                "status": status,
+                "banco_origem": meta.get("banco_origem"),
+            }
+        )
+
+    colunas = ["data", "fornecedor", "valor", "vencimento", "status", "banco_origem"]
+    if not linhas:
+        return pd.DataFrame(columns=colunas)
+    df = pd.DataFrame(linhas)
+    for col in colunas:
+        if col not in df.columns:
+            df[col] = None
+    return df[colunas].sort_values(by="vencimento", na_position="last").reset_index(
+        drop=True
+    )
+
+
+def carregar_boletos_inteligente(
+    extrato: pd.DataFrame,
+    prazos: pd.DataFrame | None = None,
+    hoje: date | None = None,
+    db: "GrafoDB | None" = None,
+    limiar: int = LIMIAR_GRAFO_PADRAO,
+) -> pd.DataFrame:
+    """Sprint 87.7: wrapper que prefere grafo e cai para heurística textual.
+
+    - Se `db` é None: chama diretamente `carregar_boletos` (comportamento antigo).
+    - Se `db` existe: tenta `carregar_boletos_via_grafo`. Se retorna `None`
+      (cobertura abaixo do limiar), cai para `carregar_boletos`.
+
+    Preserva retrocompatibilidade total: o dashboard pode adotar a função
+    nova sem mudar testes antigos de `carregar_boletos`.
+    """
+    if db is None:
+        return carregar_boletos(extrato, prazos, hoje)
+    via_grafo = carregar_boletos_via_grafo(db, prazos, hoje, limiar=limiar)
+    if via_grafo is None:
+        return carregar_boletos(extrato, prazos, hoje)
+    return via_grafo
 
 
 # "Por forma de pagamento é como o banco pensa; precisamos pensar assim também." — Sprint 79
