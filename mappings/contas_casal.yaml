@@ -41,6 +41,18 @@ andre:
     - "ANDRE DA SILVA BATISTA DE FARIAS"
     - "ANDRE BATISTA DE FARIAS"
     - "ANDRE FARIAS"
+  # Sprint 82: variantes curtas casam apenas sob contexto específico
+  # (banco origem + marcadores obrigatórios). Nunca usar fragmentos
+  # genéricos em `nomes_aceitos` -- prefira `nomes_variantes` com
+  # `min_matches >= 2` + `marcadores` obrigatórios.
+  nomes_variantes:
+    - tokens: ["ANDRE", "SILVA", "BATISTA"]
+      min_matches: 3
+      bancos: ["Nubank", "Nubank (PF)", "Nubank (PJ)", "Itaú", "C6", "Santander"]
+    - tokens: ["ANDRE", "FARIAS"]
+      min_matches: 2
+      bancos: ["Nubank", "Nubank (PF)", "Nubank (PJ)", "Itaú"]
+      marcadores: ["PIX", "TRANSF", "TED"]
   contas:
     - {banco: "Itaú", agencia: "6450"}
     - {banco: "Santander"}
@@ -53,6 +65,15 @@ vitoria:
     - "VITORIA MARIA SILVA DOS SANTOS"
     - "VITORIA MARIA SILVA"
     - "VITORIA MARIA"
+  # Sprint 82: primeiro nome "Vitória" é ambíguo (pode ser cidade ou
+  # terceiro). Regra abaixo só casa se vier do Itaú (forma abreviada do
+  # histórico do extrato) E trouxer marcador PIX/TRANSF E data DD/MM.
+  nomes_variantes:
+    - tokens: ["VITORIA"]
+      min_matches: 1
+      bancos: ["Itaú"]
+      marcadores: ["PIX TRANSF", "TRANSF", "TED"]
+      data_no_texto: true
   contas:
     - {banco: "Nubank PF", conta: "97737068-1"}
     - {banco: "Nubank PJ", conta: "96470242-3"}
