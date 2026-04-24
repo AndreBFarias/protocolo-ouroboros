@@ -40,6 +40,7 @@ from src.extractors.c6_cc import ExtratorC6CC  # noqa: E402
 from src.extractors.itau_pdf import ExtratorItauPDF  # noqa: E402
 from src.extractors.nubank_cartao import ExtratorNubankCartao  # noqa: E402
 from src.extractors.nubank_cc import ExtratorNubankCC  # noqa: E402
+from src.extractors.ofx_parser import ExtratorOFX  # noqa: E402
 from src.extractors.santander_pdf import ExtratorSantanderPDF  # noqa: E402
 from src.transform.deduplicator import (  # noqa: E402
     deduplicar_por_hash_fuzzy,
@@ -100,7 +101,22 @@ class FiltroXLSX:
 
 @dataclass(frozen=True)
 class DefinicaoBanco:
-    """Metadados para auditar um banco específico."""
+    """Metadados para auditar um banco específico.
+
+    Campos novos Sprint 93b:
+      - `aceita_ofx_complementar`: quando True, a flag global `--com-ofx`
+        faz o auditor incluir tx dos arquivos `.ofx` do diretório na soma
+        do extrator. Reflete o fato de que o pipeline real consome OFX
+        em paralelo ao extrator canônico para esse banco.
+      - `aceita_ignorar_ti`: quando True, a flag global `--ignorar-ti`
+        remove do lado XLSX as linhas com `tipo=Transferência Interna`.
+        Usado quando a contraparte de uma TI (ex: pagamento de fatura
+        C6 via débito em CC) entra no XLSX com o mesmo `banco_origem`
+        mas não provém do extrator auditado.
+
+    Ambas as flags são opt-in por banco: bancos sem esses switches as
+    ignoram, mantendo comportamento retrocompatível.
+    """
 
     chave: str
     titulo: str
@@ -108,6 +124,8 @@ class DefinicaoBanco:
     diretorio_relativo: Path
     filtro_xlsx: FiltroXLSX
     extensoes: tuple[str, ...]
+    aceita_ofx_complementar: bool = False
+    aceita_ignorar_ti: bool = False
 
 
 BANCOS: dict[str, DefinicaoBanco] = {
@@ -140,6 +158,8 @@ BANCOS: dict[str, DefinicaoBanco] = {
             formas_pagamento=("Débito", "Pix", "Boleto"),
         ),
         extensoes=(".xlsx",),
+        aceita_ofx_complementar=True,
+        aceita_ignorar_ti=True,
     ),
     "c6_cartao": DefinicaoBanco(
         chave="c6_cartao",
@@ -151,6 +171,7 @@ BANCOS: dict[str, DefinicaoBanco] = {
             formas_pagamento=("Crédito",),
         ),
         extensoes=(".xls",),
+        aceita_ignorar_ti=True,
     ),
     "nubank_cartao": DefinicaoBanco(
         chave="nubank_cartao",
@@ -163,6 +184,7 @@ BANCOS: dict[str, DefinicaoBanco] = {
             quem=("André",),
         ),
         extensoes=(".csv",),
+        aceita_ignorar_ti=True,
     ),
     "nubank_cc": DefinicaoBanco(
         chave="nubank_cc",
@@ -175,6 +197,7 @@ BANCOS: dict[str, DefinicaoBanco] = {
             quem=("André",),
         ),
         extensoes=(".csv",),
+        aceita_ofx_complementar=True,
     ),
     "nubank_pf_cc": DefinicaoBanco(
         chave="nubank_pf_cc",
@@ -240,6 +263,10 @@ class ResultadoAuditoria:
     n_pos_dedup: int = 0
     total_pos_dedup: float = 0.0
     modo_dedup: bool = False
+    n_ofx_complementar: int = 0
+    total_ofx_complementar: float = 0.0
+    n_xlsx_ti_ignoradas: int = 0
+    total_xlsx_ti_ignoradas: float = 0.0
 
     @property
     def delta(self) -> float:
@@ -337,6 +364,34 @@ def _extrair_com_dedup_fisica(
     return transacoes
 
 
+def _extrair_ofx_complementar(diretorio: Path) -> list[Transacao]:
+    """Roda `ExtratorOFX` sobre arquivos `.ofx` únicos por SHA do diretório.
+
+    Sprint 93b: diagnosticou que o XLSX consolidado acumula tx provenientes
+    tanto do extrator canônico do banco (PDF/CSV/XLS) quanto de arquivos OFX
+    baixados via Open Finance. O pipeline real processa ambos; o auditor
+    precisa reproduzir esse comportamento quando a flag `--com-ofx` é usada
+    para auditar fidelidade runtime-real.
+
+    Retorna lista vazia quando o diretório não tem arquivos `.ofx` únicos.
+    """
+    arquivos = sorted(
+        f
+        for f in diretorio.iterdir()
+        if f.is_file() and f.suffix.lower() == ".ofx"
+    )
+    unicos = _unicos_por_sha(arquivos)
+    transacoes: list[Transacao] = []
+    for arquivo in unicos:
+        try:
+            transacoes.extend(ExtratorOFX(arquivo).extrair())
+        except Exception as exc:  # noqa: BLE001 -- registrar e seguir
+            logging.getLogger("auditar_extratores").warning(
+                "OFX complementar falhou em %s: %s", arquivo.name, exc
+            )
+    return transacoes
+
+
 def _aplicar_dedup_pipeline(transacoes: list[Transacao]) -> list[Transacao]:
     """Replica os níveis 1 e 2 do deduplicador do pipeline principal.
 
@@ -407,6 +462,8 @@ def auditar_banco(
     carregador_xlsx: Callable[[Path], pd.DataFrame] = _carregar_xlsx,
     modo_abrangente: bool = False,
     deduplicado: bool = False,
+    com_ofx: bool = False,
+    ignorar_ti: bool = False,
 ) -> ResultadoAuditoria:
     """Audita um banco em um mês específico.
 
@@ -431,6 +488,18 @@ def auditar_banco(
             rodar o extrator e (2) aplica os níveis 1 e 2 do deduplicador
             do pipeline (identificador + hash fuzzy data|valor|local).
             Reproduz o que o `pipeline.py` real faz -- Sprint 93a.
+        com_ofx: quando True (Sprint 93b), complementa a extração do banco
+            com as transações de quaisquer arquivos `.ofx` únicos por SHA
+            existentes no mesmo diretório. Reproduz o fato de que o
+            pipeline real consome tanto PDF/CSV/XLS como OFX via
+            `src/extractors/ofx_parser.py`. Útil para bancos cujo XLSX
+            consolidado acumula tx de múltiplas fontes (notadamente c6_cc
+            com 1784 tx em OFX de 2022-2026 contra 285 no .xlsx canônico).
+        ignorar_ti: quando True (Sprint 93b), remove do lado XLSX as linhas
+            com `tipo=Transferência Interna`. Útil para c6_cartao onde a
+            contraparte de pagamento de fatura entra no XLSX como
+            `banco_origem=C6 + forma_pagamento=Crédito + tipo=TI`, mas
+            não provém do extrator de cartão.
     """
     diretorio_alvo = raiz / definicao.diretorio_relativo
     usar_diretorio_completo = arquivo is None and mes_ref is None and modo_abrangente
@@ -489,6 +558,24 @@ def auditar_banco(
             )
         extrator = definicao.extrator_cls(arquivo_escolhido)
         transacoes = extrator.extrair()
+
+    # Sprint 93b: complementa com OFX do mesmo diretório quando solicitado.
+    # Só faz sentido em modo diretório completo e para bancos que o
+    # aceitam explicitamente via `DefinicaoBanco.aceita_ofx_complementar`.
+    # Em modo arquivo único o usuário indicou um arquivo específico e
+    # não queremos injetar OFX silenciosamente.
+    n_ofx_complementar = 0
+    total_ofx_complementar = 0.0
+    if (
+        com_ofx
+        and usar_diretorio_completo
+        and definicao.aceita_ofx_complementar
+    ):
+        tx_ofx = _extrair_ofx_complementar(diretorio_alvo)
+        n_ofx_complementar = len(tx_ofx)
+        total_ofx_complementar = _soma_absoluta(tx_ofx)
+        transacoes = transacoes + tx_ofx
+
     total_extrator = _soma_absoluta(transacoes)
     n_extrator = len(transacoes)
 
@@ -534,6 +621,24 @@ def auditar_banco(
         df_filtro = df_banco[df_banco["mes_ref"] == mes_ref]
     else:
         df_filtro = df_banco.iloc[0:0]
+
+    # Sprint 93b: flag `--ignorar-ti` remove contrapartes de transferência
+    # interna do lado XLSX (ex: pagamento de fatura C6 aparece como
+    # `banco_origem=C6 + forma=Crédito + tipo=TI`, mas não sai do extrator
+    # de cartão). Opt-in por banco via `DefinicaoBanco.aceita_ignorar_ti`.
+    # Aplicado APÓS o filtro de meses para instrumentar o que foi removido.
+    n_xlsx_ti_ignoradas = 0
+    total_xlsx_ti_ignoradas = 0.0
+    if (
+        ignorar_ti
+        and definicao.aceita_ignorar_ti
+        and "tipo" in df_filtro.columns
+    ):
+        df_ti = df_filtro[df_filtro["tipo"] == "Transferência Interna"]
+        n_xlsx_ti_ignoradas = len(df_ti)
+        total_xlsx_ti_ignoradas = float(df_ti["valor"].abs().sum())
+        df_filtro = df_filtro[df_filtro["tipo"] != "Transferência Interna"]
+
     total_xlsx = float(df_filtro["valor"].abs().sum())
     n_xlsx = len(df_filtro)
 
@@ -571,6 +676,20 @@ def auditar_banco(
         )
         observacao = f"{observacao}; {obs_dedup}" if observacao else obs_dedup
 
+    if com_ofx and n_ofx_complementar:
+        obs_ofx = (
+            f"OFX complementar: +{n_ofx_complementar} tx "
+            f"(R$ {total_ofx_complementar:,.2f})"
+        )
+        observacao = f"{observacao}; {obs_ofx}" if observacao else obs_ofx
+
+    if ignorar_ti and n_xlsx_ti_ignoradas:
+        obs_ti = (
+            f"TI ignoradas no XLSX: -{n_xlsx_ti_ignoradas} tx "
+            f"(R$ {total_xlsx_ti_ignoradas:,.2f})"
+        )
+        observacao = f"{observacao}; {obs_ti}" if observacao else obs_ti
+
     return ResultadoAuditoria(
         banco=definicao.chave,
         mes_ref=mes_label,
@@ -586,6 +705,10 @@ def auditar_banco(
         n_pos_dedup=n_pos_dedup,
         total_pos_dedup=total_pos_dedup,
         modo_dedup=deduplicado,
+        n_ofx_complementar=n_ofx_complementar,
+        total_ofx_complementar=total_ofx_complementar,
+        n_xlsx_ti_ignoradas=n_xlsx_ti_ignoradas,
+        total_xlsx_ti_ignoradas=total_xlsx_ti_ignoradas,
     )
 
 
@@ -747,6 +870,32 @@ def _parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
             "`--tudo` para audit pós-pipeline fiel."
         ),
     )
+    p.add_argument(
+        "--com-ofx",
+        action="store_true",
+        dest="com_ofx",
+        help=(
+            "Sprint 93b: complementa a extração do banco com as tx dos "
+            "arquivos `.ofx` únicos por SHA presentes no mesmo diretório. "
+            "Reproduz o fato de que o pipeline real consome tanto o "
+            "extrator canônico do banco quanto `src/extractors/ofx_parser.py`. "
+            "Essencial para c6_cc (OFX 2022-2026 com 1784 tx vs 285 no .xlsx) "
+            "e nubank_cc (múltiplos OFX cobrindo anos de histórico)."
+        ),
+    )
+    p.add_argument(
+        "--ignorar-ti",
+        action="store_true",
+        dest="ignorar_ti",
+        help=(
+            "Sprint 93b: remove do lado XLSX as linhas com "
+            "`tipo=Transferência Interna`. Usado quando a contraparte de "
+            "um pagamento (ex: fatura de cartão C6 feita via débito em CC) "
+            "é marcada no XLSX como parte do mesmo banco_origem mas não "
+            "emerge do extrator canônico auditado. Aplica-se apenas ao "
+            "lado XLSX da comparação."
+        ),
+    )
     return p.parse_args(argv)
 
 
@@ -783,6 +932,8 @@ def main(argv: Optional[list[str]] = None) -> int:
             xlsx=args.xlsx,
             modo_abrangente=args.modo_abrangente,
             deduplicado=args.deduplicado,
+            com_ofx=args.com_ofx,
+            ignorar_ti=args.ignorar_ti,
         )
         resultados.append(resultado)
 
