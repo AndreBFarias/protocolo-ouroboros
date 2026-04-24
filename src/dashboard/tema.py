@@ -457,6 +457,87 @@ def css_global() -> str:
     .js-plotly-plot .plotly .g-gtitle {{
         margin-bottom: {SPACING["md"]}px;
     }}
+
+    /* --- Sprint 92c: classes utilitarias de layout ---------------------- */
+    /* Substitui inline <div style="display: flex; ..."> pontuais nas paginas
+       pelo menor conjunto possivel de classes reutilizaveis. CSS vars acima
+       em :root garantem coerencia de spacing e cor. */
+    .ouroboros-row-between {{
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: var(--spacing-sm);
+    }}
+    .ouroboros-row-flex {{
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--spacing-sm);
+        align-items: center;
+    }}
+    .ouroboros-row-flex-xs {{
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--spacing-xs);
+    }}
+    .ouroboros-label-icon {{
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+        color: var(--color-destaque);
+        font-size: var(--font-corpo);
+        font-weight: 600;
+        margin-bottom: var(--spacing-xs);
+    }}
+    .ouroboros-row-resumo-busca {{
+        margin: var(--spacing-md) 0;
+    }}
+    .ouroboros-card-hero-busca {{
+        background-color: var(--color-card-fundo);
+        border-radius: 10px;
+        padding: var(--spacing-md);
+        margin-bottom: var(--spacing-sm);
+        border-left: 4px solid var(--color-destaque);
+    }}
+    .ouroboros-aliases-line {{
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--spacing-xs);
+    }}
+    .ouroboros-ritmo-card {{
+        padding: var(--spacing-xs) 0;
+    }}
+    .ouroboros-timeline-container {{
+        background-color: var(--color-card-fundo);
+        border-radius: 8px;
+        padding: var(--spacing-lg);
+    }}
+    .ouroboros-timeline-tronco {{
+        border-left: 2px solid var(--color-card-fundo);
+        padding-left: var(--spacing-lg);
+        margin-left: var(--spacing-sm);
+    }}
+    .ouroboros-chips-tipos {{
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--spacing-xs);
+        margin-top: var(--spacing-sm);
+    }}
+    .ouroboros-moc-preview {{
+        background-color: var(--color-card-fundo);
+        border-radius: 10px;
+        padding: var(--spacing-md) calc(var(--spacing-md) + 4px);
+        margin-top: var(--spacing-sm);
+        max-height: 520px;
+        overflow-y: auto;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: var(--font-label);
+        line-height: 1.6;
+        color: var(--color-texto);
+    }}
+    .ouroboros-timeline-evento {{
+        position: relative;
+        margin-bottom: var(--spacing-lg);
+    }}
     </style>
     """
 

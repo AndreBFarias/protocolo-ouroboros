@@ -214,14 +214,16 @@ def _renderizar_card_regime(
             if rotulo.startswith("=")
             else ""
         )
+        # Sprint 92c: classe .ouroboros-row-between absorve display:flex.
+        # separador eh border-top dinamico por linha total.
         linhas_html += (
-            f'<div style="display: flex; justify-content: space-between;'
-            f' padding: 4px 0;{separador}">'
-            f'<span style="color: {CORES["texto_sec"]};'
+            '<div class="ouroboros-row-between"'
+            f' style="padding: 4px 0;{separador}">'
+            '<span style="color: var(--color-texto-sec);'
             f' font-size: {FONTE_CORPO}px;{negrito}">{rotulo}</span>'
             f'<span style="color: {cor};'
             f' font-size: {FONTE_CORPO}px;{negrito}">{formatar_moeda(valor)}</span>'
-            f"</div>"
+            "</div>"
         )
 
     html = (

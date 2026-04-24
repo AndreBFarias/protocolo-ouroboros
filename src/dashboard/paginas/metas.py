@@ -145,24 +145,23 @@ def _card_meta(meta: dict[str, Any]) -> str:
             f' margin: 4px 0 0 0;">Depende de: {deps_itens}</p>'
         )
 
-    fundo = CORES["card_fundo"]
-
+    # Sprint 92c: o wrapper do card mantém border-left dinâmico por
+    # prioridade (CSS var única não resolve N cores). Classe
+    # .ouroboros-row-between absorve o encadeamento nome/prioridade.
     return (
-        f'<div style="background-color: {fundo};'
+        '<div style="background-color: var(--color-card-fundo);'
         f" border-left: 4px solid {cor};"
         " border-radius: 8px; padding: 20px;"
         ' margin: 8px 0;">'
-        '<div style="display: flex;'
-        " justify-content: space-between;"
-        ' align-items: center;">'
-        f'<p style="color: {CORES["texto"]};'
+        '<div class="ouroboros-row-between" style="align-items: center;">'
+        '<p style="color: var(--color-texto);'
         f" font-size: {FONTE_SUBTITULO}px; font-weight: bold;"
         f' margin: 0;">{nome}</p>'
         f'<span style="color: {cor};'
         f" font-size: {FONTE_MINIMA}px;"
         f' font-weight: bold;">P{prioridade}</span>'
         "</div>"
-        f'<p style="color: {CORES["texto_sec"]};'
+        '<p style="color: var(--color-texto-sec);'
         f" font-size: {FONTE_MINIMA}px;"
         f' margin: 4px 0;">{status}</p>'
         f"{detalhe}"
@@ -269,23 +268,22 @@ def _timeline_metas(metas: list[dict[str, Any]]) -> None:
     hoje_str = hoje.strftime("%Y-%m")
 
     cor_pos = CORES["positivo"]
-    fundo = CORES["card_fundo"]
 
+    # Sprint 92c: classes CSS globais .ouroboros-timeline-container,
+    # .ouroboros-timeline-tronco e .ouroboros-timeline-evento substituem
+    # o encadeamento de <div style=> anterior. Os nodes da timeline
+    # (bolinhas coloridas) mantêm style inline porque a cor varia por
+    # prioridade e não por regra geral.
     linhas: list[str] = []
-    linhas.append(f'<div style="background-color: {fundo}; border-radius: 8px; padding: 20px;">')
-    linhas.append(
-        f'<div style="border-left: 2px solid {CORES["card_fundo"]};'
-        ' padding-left: 20px; margin-left: 10px;">'
-    )
+    linhas.append('<div class="ouroboros-timeline-container">')
+    linhas.append('<div class="ouroboros-timeline-tronco">')
 
     linhas.append(
-        '<div style="position: relative;'
-        ' margin-bottom: 24px;">'
-        '<div style="position: absolute;'
-        " left: -27px; top: 3px;"
+        '<div class="ouroboros-timeline-evento">'
+        f'<span style="position: absolute; left: -27px; top: 3px;'
         " width: 12px; height: 12px;"
         f" background-color: {cor_pos};"
-        ' border-radius: 50%;"></div>'
+        ' border-radius: 50%; display: block;"></span>'
         f'<p style="color: {cor_pos};'
         f" font-size: {FONTE_MINIMA}px;"
         ' font-weight: bold; margin: 0;">'
@@ -310,14 +308,12 @@ def _timeline_metas(metas: list[dict[str, Any]]) -> None:
             cor_status = cor
 
         linhas.append(
-            '<div style="position: relative;'
-            ' margin-bottom: 24px;">'
-            '<div style="position: absolute;'
-            " left: -27px; top: 3px;"
+            '<div class="ouroboros-timeline-evento">'
+            f'<span style="position: absolute; left: -27px; top: 3px;'
             " width: 12px; height: 12px;"
             f" background-color: {cor};"
-            ' border-radius: 50%;"></div>'
-            f'<p style="color: {CORES["texto"]};'
+            ' border-radius: 50%; display: block;"></span>'
+            '<p style="color: var(--color-texto);'
             f' font-size: {FONTE_MINIMA}px; margin: 0;">'
             f'<span style="color: {cor_status};'
             f' font-weight: bold;">{prazo}</span>'

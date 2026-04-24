@@ -30,19 +30,23 @@ def _card_cenario(
 ) -> str:
     """Gera HTML de card para um cenário de projeção."""
     itens = "".join(
-        f'<p style="color: {CORES["texto_sec"]}; font-size: {FONTE_MINIMA}px;'
+        '<p style="color: var(--color-texto-sec);'
+        f" font-size: {FONTE_MINIMA}px;"
         f' margin: 3px 0;">{label}: '
-        f'<span style="color: {CORES["texto"]}; font-weight: bold;">'
+        '<span style="color: var(--color-texto); font-weight: bold;">'
         f"{valor}</span></p>"
         for label, valor in linhas
     )
+    # Sprint 92c: o card de cenário não tem um padrão reutilizável ainda
+    # (border-left por cor semântica varia). Preservamos a tag div mas
+    # usando var(--...) no lugar de hex direto do f-string.
     return (
-        f'<div style="background-color: {CORES["card_fundo"]};'
+        '<div style="background-color: var(--color-card-fundo);'
         f" border-left: 4px solid {cor};"
-        f" border-radius: 8px; padding: 18px;"
-        f' margin: 5px 0 10px 0;">'
+        " border-radius: 8px; padding: 18px;"
+        ' margin: 5px 0 10px 0;">'
         f'<p style="color: {cor}; font-size: {FONTE_SUBTITULO}px;'
-        f" font-weight: bold;"
+        " font-weight: bold;"
         f' margin: 0 0 10px 0;">{titulo}</p>'
         f"{itens}</div>"
     )
@@ -103,16 +107,17 @@ def _metric_ritmo_html(titulo: str, valor: float | None) -> str:
     """
     cor = _cor_por_sinal_ritmo(valor)
     texto = _formatar_ritmo(valor)
+    # Sprint 92c: classe utilitaria .ouroboros-ritmo-card absorve o padding.
     return (
-        f'<div style="padding: 4px 0;">'
-        f'<p style="color: {CORES["texto_sec"]};'
+        '<div class="ouroboros-ritmo-card">'
+        '<p style="color: var(--color-texto-sec);'
         f" font-size: {FONTE_MINIMA}px;"
         f' margin: 0 0 2px 0;">{titulo}</p>'
         f'<p style="color: {cor};'
-        f" font-size: 28px;"
-        f" font-weight: 700;"
+        " font-size: 28px;"
+        " font-weight: 700;"
         f' margin: 0;">{texto}</p>'
-        f"</div>"
+        "</div>"
     )
 
 

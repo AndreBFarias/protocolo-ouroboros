@@ -380,65 +380,71 @@ def _card_tipo_html(rotulo: str, contagem: int, cor: str) -> str:
 
 
 def _card_conflito_html(nome: str, severidade: str, cor: str, caminho: str) -> str:
-    """Card de conflito pendente."""
+    """Card de conflito pendente.
+
+    Sprint 92c: classe ``.ouroboros-row-between`` consolida o cabecalho
+    (nome + chip de severidade). Wrapper preserva div inline porque
+    border-left varia por severidade.
+    """
     return (
-        f'<div style="'
-        f"background-color: {CORES['card_fundo']};"
-        f" border-radius: 10px;"
+        '<div style="background-color: var(--color-card-fundo);'
+        " border-radius: 10px;"
         f" padding: {SPACING['sm'] + 4}px {SPACING['md']}px;"
         f" margin-bottom: {SPACING['sm'] + 2}px;"
         f' border-left: 3px solid {cor};">'
-        f'<div style="display: flex; justify-content: space-between;'
-        f' align-items: center; margin-bottom: {SPACING["xs"]}px;">'
-        f'<p style="color: {CORES["texto"]};'
+        '<div class="ouroboros-row-between"'
+        f' style="align-items: center; margin-bottom: {SPACING["xs"]}px;">'
+        '<p style="color: var(--color-texto);'
         f" font-size: {FONTE_CORPO}px;"
-        f" font-weight: 600;"
-        f" margin: 0;"
+        " font-weight: 600;"
+        " margin: 0;"
         f' word-break: break-all;">{nome}</p>'
         f'<span style="background-color: {cor};'
-        f" color: {CORES['fundo']};"
-        f" border-radius: 4px;"
-        f" padding: 2px 6px;"
+        " color: var(--color-fundo);"
+        " border-radius: 4px;"
+        " padding: 2px 6px;"
         f" font-size: {FONTE_LABEL - 2}px;"
-        f" font-weight: 700;"
-        f" text-transform: uppercase;"
+        " font-weight: 700;"
+        " text-transform: uppercase;"
         f' margin-left: {SPACING["sm"]}px;">{severidade}</span>'
-        f"</div>"
-        f'<p style="color: {CORES["neutro"]};'
+        "</div>"
+        '<p style="color: var(--color-neutro);'
         f" font-size: {FONTE_LABEL - 1}px;"
-        f" font-family: monospace;"
+        " font-family: monospace;"
         f' margin: 0;">{caminho}</p>'
-        f"</div>"
+        "</div>"
     )
 
 
 def _card_gap_html(mes: str, contagem: int) -> str:
-    """Card horizontal de gap de cobertura."""
+    """Card horizontal de gap de cobertura.
+
+    Sprint 92c: classe ``.ouroboros-row-between`` consolida o layout
+    horizontal; cores migram para ``var(--color-*)``.
+    """
     return (
-        f'<div style="'
-        f"background-color: {CORES['card_fundo']};"
-        f" border-radius: 10px;"
+        '<div class="ouroboros-row-between"'
+        ' style="background-color: var(--color-card-fundo);'
+        " border-radius: 10px;"
         f" padding: {SPACING['sm'] + 4}px {SPACING['md']}px;"
         f" margin-bottom: {SPACING['sm']}px;"
-        f" display: flex;"
-        f" justify-content: space-between;"
-        f' align-items: center;">'
-        f'<div><p style="color: {CORES["texto"]};'
+        ' align-items: center;">'
+        '<div><p style="color: var(--color-texto);'
         f" font-size: {FONTE_CORPO}px;"
-        f" font-weight: 600;"
+        " font-weight: 600;"
         f' margin: 0;">{mes}</p>'
-        f'<p style="color: {CORES["texto_sec"]};'
+        '<p style="color: var(--color-texto-sec);'
         f" font-size: {FONTE_LABEL - 1}px;"
-        f' margin: 2px 0 0 0;">esperado: 5+</p></div>'
-        f'<div style="text-align: right;">'
-        f'<p style="color: {CORES["negativo"]};'
+        ' margin: 2px 0 0 0;">esperado: 5+</p></div>'
+        "<div style=\"text-align: right;\">"
+        '<p style="color: var(--color-negativo);'
         f" font-size: {FONTE_SUBTITULO + 4}px;"
-        f" font-weight: 700;"
+        " font-weight: 700;"
         f' margin: 0; line-height: 1;">{contagem}</p>'
-        f'<p style="color: {CORES["texto_sec"]};'
+        '<p style="color: var(--color-texto-sec);'
         f" font-size: {FONTE_LABEL - 2}px;"
-        f' margin: 2px 0 0 0;">docs</p></div>'
-        f"</div>"
+        ' margin: 2px 0 0 0;">docs</p></div>'
+        "</div>"
     )
 
 

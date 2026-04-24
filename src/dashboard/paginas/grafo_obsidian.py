@@ -366,11 +366,11 @@ def _renderizar_legenda_tipos(nodes: list[dict]) -> None:
         )
         for tipo in tipos_presentes
     )
+    # Sprint 92c: .ouroboros-row-flex-xs (CSS global) substitui o
+    # display:flex + wrap + gap inline anterior. margin-top em helper
+    # dedicado evita style inline.
     st.markdown(
-        f'<div style="display: flex; flex-wrap: wrap;'
-        f' gap: 6px; margin-top: {SPACING["sm"]}px;">'
-        + chips_html
-        + "</div>",
+        '<div class="ouroboros-chips-tipos">' + chips_html + "</div>",
         unsafe_allow_html=True,
     )
 
@@ -396,22 +396,15 @@ def _renderizar_obsidian(mes_ref: str) -> None:
         key="download_moc_obsidian",
     )
 
+    # Sprint 92c: classe .ouroboros-moc-preview (CSS global) absorve todos
+    # os tokens de layout; borda destaque fica inline porque depende de
+    # rgba_cor com alpha custom (não expresso em --color-destaque puro).
+    borda_destaque = rgba_cor_inline(CORES["destaque"], 0.3)
     st.markdown(
-        f'<div style="'
-        f"background-color: {CORES['card_fundo']};"
-        f" border-radius: 10px;"
-        f" padding: {SPACING['md']}px {SPACING['md'] + 4}px;"
-        f" margin-top: {SPACING['sm']}px;"
-        f" max-height: 520px;"
-        f" overflow-y: auto;"
-        f" font-family: 'JetBrains Mono', monospace;"
-        f" font-size: {FONTE_LABEL}px;"
-        f" line-height: 1.6;"
-        f" color: {CORES['texto']};"
-        f' border: 1px solid {rgba_cor_inline(CORES["destaque"], 0.3)};">'
-        f'<pre style="margin: 0; white-space: pre-wrap;'
+        f'<div class="ouroboros-moc-preview" style="border: 1px solid {borda_destaque};">'
+        '<pre style="margin: 0; white-space: pre-wrap;'
         f' color: inherit; font-family: inherit;">{moc_md}</pre>'
-        f"</div>",
+        "</div>",
         unsafe_allow_html=True,
     )
 

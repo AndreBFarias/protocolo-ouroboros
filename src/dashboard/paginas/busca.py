@@ -138,16 +138,10 @@ def _renderizar_input_permanente() -> str:
     do input, com label nativo colapsado (``label_visibility="collapsed"``).
     """
     svg_busca = icon_html("search", tamanho=18, cor=CORES["destaque"])
+    # Sprint 92c: classe utilitaria .ouroboros-label-icon (em css_global)
+    # consolida display:flex + gap + cor destaque + margin.
     st.markdown(
-        f'<div style="display: flex; align-items: center; '
-        f"gap: {SPACING['xs']}px; "
-        f"color: {CORES['destaque']}; "
-        f"font-size: {FONTE_CORPO}px; "
-        f"font-weight: 600; "
-        f'margin-bottom: {SPACING["xs"]}px;">'
-        f"{svg_busca}"
-        f"<span>Busca global</span>"
-        f"</div>",
+        f'<div class="ouroboros-label-icon">{svg_busca}<span>Busca global</span></div>',
         unsafe_allow_html=True,
     )
     termo = st.text_input(
@@ -172,20 +166,20 @@ def _renderizar_input_permanente() -> str:
 
 
 def _renderizar_resumo(termo: str, resultados: dict[str, list[dict]]) -> None:
-    """Linha de resumo mostrando contagem total."""
+    """Linha de resumo mostrando contagem total.
+
+    Sprint 92c: classe utilitaria ``ouroboros-row-flex`` consolida o layout
+    inline anterior; inner <p> usa var CSS para cor e fonte.
+    """
     total = sum(len(v) for v in resultados.values())
     st.markdown(
-        f'<div style="display: flex; gap: {SPACING["md"]}px; '
-        f"align-items: center; margin: {SPACING['md']}px 0;\">"
-        f'<p style="color: {CORES["texto"]}; '
-        f"font-size: {FONTE_CORPO}px; "
-        f'margin: 0;">Resultados para '
-        f'<strong style="color: {CORES["destaque"]};">"{termo}"</strong>'
-        f"</p>"
-        f'<p style="color: {CORES["texto_sec"]}; '
-        f"font-size: {FONTE_LABEL}px; "
-        f'margin: 0;">{total} itens encontrados</p>'
-        f"</div>",
+        '<div class="ouroboros-row-flex ouroboros-row-resumo-busca">'
+        '<p style="color: var(--color-texto); font-size: var(--font-corpo);'
+        ' margin: 0;">Resultados para '
+        f'<strong style="color: var(--color-destaque);">"{termo}"</strong></p>'
+        '<p style="color: var(--color-texto-sec); font-size: var(--font-label);'
+        f' margin: 0;">{total} itens encontrados</p>'
+        '</div>',
         unsafe_allow_html=True,
     )
 
@@ -224,79 +218,81 @@ def _renderizar_fornecedores(fornecedores: list[dict]) -> None:
                 f' text-transform: uppercase;">{categoria}</span>'
             )
 
+        # Sprint 92c: classes .ouroboros-card-hero-busca e .ouroboros-row-between
+        # substituem o antigo encadeamento de <div style=> inline. O inner
+        # "flex: 1" (unico) permanece por ser aplicado a um elemento especifico
+        # que compete com o irmao de categoria.
+        total_str = formatar_moeda(total)
         st.markdown(
-            f'<div style="'
-            f"background-color: {CORES['card_fundo']};"
-            f" border-radius: 10px;"
-            f" padding: {SPACING['md']}px {SPACING['md'] + 2}px;"
-            f" margin-bottom: {SPACING['sm']}px;"
-            f" border-left: 4px solid {CORES['destaque']};"
-            f'">'
-            f'<div style="display: flex; justify-content: space-between;'
-            f' align-items: flex-start; gap: {SPACING["sm"]}px;">'
-            f'<div style="flex: 1;">'
-            f'<p style="color: {CORES["texto"]};'
-            f" font-size: {FONTE_CORPO + 1}px;"
-            f" font-weight: 700;"
-            f' margin: 0;">{nome}</p>'
-            f'<p style="color: {CORES["neutro"]};'
-            f" font-size: {FONTE_LABEL}px;"
-            f" font-family: monospace;"
-            f' margin: 4px 0 0 0;">CNPJ {cnpj}</p>'
-            f"</div>"
+            '<div class="ouroboros-card-hero-busca">'
+            '<div class="ouroboros-row-between">'
+            '<div style="flex: 1;">'
+            '<p style="color: var(--color-texto); '
+            f"font-size: {FONTE_CORPO + 1}px; "
+            "font-weight: 700; "
+            f'margin: 0;">{nome}</p>'
+            '<p style="color: var(--color-neutro); '
+            "font-size: var(--font-label); "
+            "font-family: monospace; "
+            f'margin: 4px 0 0 0;">CNPJ {cnpj}</p>'
+            "</div>"
             f"<div>{categoria_html}</div>"
-            f"</div>"
-            f'<div style="display: flex; gap: {SPACING["lg"]}px;'
-            f' margin: {SPACING["md"]}px 0 {SPACING["sm"]}px 0;">'
-            f"<div>"
-            f'<p style="color: {CORES["texto_sec"]};'
-            f" font-size: {FONTE_LABEL - 2}px;"
-            f" text-transform: uppercase;"
-            f' letter-spacing: 0.08em; margin: 0;">Documentos</p>'
-            f'<p style="color: {CORES["texto"]};'
-            f" font-size: {FONTE_CORPO + 4}px;"
-            f" font-weight: 700;"
-            f' margin: 2px 0 0 0;">{ndocs}</p>'
-            f"</div>"
-            f"<div>"
-            f'<p style="color: {CORES["texto_sec"]};'
-            f" font-size: {FONTE_LABEL - 2}px;"
-            f" text-transform: uppercase;"
-            f' letter-spacing: 0.08em; margin: 0;">Total transações</p>'
-            f'<p style="color: {CORES["negativo"]};'
-            f" font-size: {FONTE_CORPO + 4}px;"
-            f" font-weight: 700;"
-            f' margin: 2px 0 0 0;">{formatar_moeda(total)}</p>'
-            f"</div>"
-            f"</div>"
+            "</div>"
+            '<div class="ouroboros-row-flex" '
+            f'style="gap: {SPACING["lg"]}px; margin: {SPACING["md"]}px 0 {SPACING["sm"]}px 0;">'
+            "<div>"
+            '<p style="color: var(--color-texto-sec); '
+            f"font-size: {FONTE_LABEL - 2}px; "
+            "text-transform: uppercase; "
+            'letter-spacing: 0.08em; margin: 0;">Documentos</p>'
+            '<p style="color: var(--color-texto); '
+            f"font-size: {FONTE_CORPO + 4}px; "
+            "font-weight: 700; "
+            f'margin: 2px 0 0 0;">{ndocs}</p>'
+            "</div>"
+            "<div>"
+            '<p style="color: var(--color-texto-sec); '
+            f"font-size: {FONTE_LABEL - 2}px; "
+            "text-transform: uppercase; "
+            'letter-spacing: 0.08em; margin: 0;">Total transações</p>'
+            '<p style="color: var(--color-negativo); '
+            f"font-size: {FONTE_CORPO + 4}px; "
+            "font-weight: 700; "
+            f'margin: 2px 0 0 0;">{total_str}</p>'
+            "</div>"
+            "</div>"
             f"{aliases_html}"
-            f"</div>",
+            "</div>",
             unsafe_allow_html=True,
         )
 
 
 def _aliases_html(aliases: list[str]) -> str:
-    """Renderiza aliases como badges horizontais; vazio se não houver."""
+    """Renderiza aliases como badges horizontais; vazio se não houver.
+
+    Sprint 92c: ``.ouroboros-aliases-line`` (CSS global) substitui o
+    ``display: flex`` inline anterior; cores migram para ``var(--color-*)``.
+    """
     if not aliases:
         return ""
     badges = []
     for alias in aliases[:6]:
         badges.append(
-            f'<span style="background-color: '
+            '<span style="background-color: '
             f"{rgba_cor_inline(CORES['texto_sec'], 0.25)};"
-            f" color: {CORES['texto']};"
-            f" border-radius: 4px;"
-            f" padding: 2px 6px;"
+            " color: var(--color-texto);"
+            " border-radius: 4px;"
+            " padding: 2px 6px;"
             f" font-size: {FONTE_LABEL - 2}px;"
             f' margin-right: 4px;">{alias}</span>'
         )
     return (
-        f'<p style="color: {CORES["texto_sec"]};'
+        '<p style="color: var(--color-texto-sec);'
         f" font-size: {FONTE_LABEL - 1}px;"
-        f' margin: 0 0 4px 0;">Aliases</p>'
-        f'<div style="display: flex; flex-wrap: wrap; gap: 4px;">'
+        ' margin: 0 0 4px 0;">Aliases</p>'
+        '<div class="ouroboros-aliases-line">'
         f"{''.join(badges)}"
-        f"</div>"
+        "</div>"
     )
 
 
