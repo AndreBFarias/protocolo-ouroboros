@@ -34,6 +34,150 @@ def _agrupar_por_mes(transacoes: list[dict]) -> dict[str, list[dict]]:
     return por_mes
 
 
+def _mes_anterior_str(mes_ref: str) -> str:
+    """'2026-04' -> '2026-03'; '2026-01' -> '2025-12'."""
+    ano, mes = mes_ref.split("-")
+    ano_int = int(ano)
+    mes_int = int(mes)
+    if mes_int == 1:
+        return f"{ano_int - 1}-12"
+    return f"{ano_int}-{mes_int - 1:02d}"
+
+
+def _meses_anteriores(mes_ref: str, n: int) -> list[str]:
+    """Lista dos N meses anteriores a mes_ref (exclusivo, ordem cronológica)."""
+    meses: list[str] = []
+    atual = mes_ref
+    for _ in range(n):
+        atual = _mes_anterior_str(atual)
+        meses.insert(0, atual)
+    return meses
+
+
+def _despesa_por_categoria(transacoes: list[dict]) -> dict[str, float]:
+    """Soma despesas+imposto por categoria (ignora transferências e receitas)."""
+    por_cat: dict[str, float] = {}
+    for t in transacoes:
+        if t.get("tipo") not in ("Despesa", "Imposto"):
+            continue
+        cat = t.get("categoria") or "Outros"
+        por_cat[cat] = por_cat.get(cat, 0) + float(t.get("valor") or 0.0)
+    return por_cat
+
+
+def gerar_secao_diagnostica(
+    transacoes: list[dict],
+    mes_ref: str,
+    janela_meses: int = 3,
+) -> list[str]:
+    """Sprint 21 / B1 2026-04-23: seção diagnóstica comparando o mês atual
+    com mês-1 e média móvel dos N meses anteriores.
+
+    Calcula:
+    - Variação % do total de despesas vs mes-1 e vs média.
+    - Top 5 categorias com maior variação (+/-) vs média.
+    - Alertas: categorias novas com valor > R$ 100, categorias acima de
+      150% da média, quedas bruscas (<50% da média).
+    """
+    linhas: list[str] = []
+    mes_anterior = _mes_anterior_str(mes_ref)
+    meses_janela = _meses_anteriores(mes_ref, janela_meses)
+
+    tx_mes = [t for t in transacoes if t.get("mes_ref") == mes_ref]
+    tx_anterior = [t for t in transacoes if t.get("mes_ref") == mes_anterior]
+    tx_janela = [t for t in transacoes if t.get("mes_ref") in meses_janela]
+
+    def _total_despesa(txs: list[dict]) -> float:
+        return sum(
+            float(t.get("valor") or 0.0) for t in txs if t.get("tipo") in ("Despesa", "Imposto")
+        )
+
+    total_mes = _total_despesa(tx_mes)
+    total_anterior = _total_despesa(tx_anterior)
+    total_janela = _total_despesa(tx_janela)
+    media_janela = total_janela / janela_meses if janela_meses > 0 else 0.0
+
+    if total_mes == 0.0 and total_anterior == 0.0 and total_janela == 0.0:
+        return []
+
+    linhas.append("## Diagnóstico comparativo")
+    linhas.append("")
+    var_mes1 = (total_mes - total_anterior) / total_anterior * 100 if total_anterior > 0 else 0.0
+    var_media = (total_mes - media_janela) / media_janela * 100 if media_janela > 0 else 0.0
+    linhas.append(
+        f"Total de despesas: **{formatar_valor(total_mes)}** "
+        f"| vs {mes_anterior}: **{var_mes1:+.1f}%** "
+        f"| vs média {janela_meses}m: **{var_media:+.1f}%**"
+    )
+    linhas.append("")
+
+    cat_mes = _despesa_por_categoria(tx_mes)
+    cat_janela = _despesa_por_categoria(tx_janela)
+    medias_cat = {c: (v / janela_meses) if janela_meses > 0 else 0.0 for c, v in cat_janela.items()}
+
+    variacoes: list[tuple[str, float, float, float]] = []
+    for cat, valor_mes in cat_mes.items():
+        media = medias_cat.get(cat, 0.0)
+        if media > 0:
+            variacoes.append((cat, valor_mes, media, (valor_mes - media) / media * 100))
+        elif valor_mes > 0:
+            variacoes.append((cat, valor_mes, 0.0, float("inf")))
+
+    top_altas = sorted(variacoes, key=lambda x: x[3], reverse=True)[:5]
+    top_baixas = sorted([v for v in variacoes if v[3] != float("inf")], key=lambda x: x[3])[:5]
+
+    linhas.append("### Variações por categoria vs média")
+    linhas.append("")
+    linhas.append("| Categoria | Mês atual | Média | Variação |")
+    linhas.append("|:----------|----------:|------:|---------:|")
+    for cat, valor_mes, media, var in top_altas:
+        var_txt = "NOVA" if var == float("inf") else f"{var:+.1f}%"
+        linhas.append(
+            f"| {cat} | {formatar_valor(valor_mes)} | {formatar_valor(media)} | {var_txt} |"
+        )
+    if top_baixas:
+        linhas.append("")
+        linhas.append("### Maiores quedas vs média")
+        linhas.append("")
+        linhas.append("| Categoria | Mês atual | Média | Variação |")
+        linhas.append("|:----------|----------:|------:|---------:|")
+        for cat, valor_mes, media, var in top_baixas:
+            linhas.append(
+                f"| {cat} | {formatar_valor(valor_mes)} | {formatar_valor(media)} | {var:+.1f}% |"
+            )
+
+    alertas: list[str] = []
+    for cat, valor_mes, media, var in variacoes:
+        if var == float("inf") and valor_mes > 100:
+            alertas.append(
+                f"Categoria **{cat}** apareceu pela primeira vez nos últimos "
+                f"{janela_meses} meses com {formatar_valor(valor_mes)}"
+            )
+        elif media > 0 and var > 150:
+            v_mes_fmt = formatar_valor(valor_mes)
+            media_fmt = formatar_valor(media)
+            alertas.append(
+                f"Categoria **{cat}** está {var:+.0f}% acima da média "
+                f"({v_mes_fmt} vs {media_fmt})"
+            )
+        elif media > 100 and valor_mes < media * 0.3:
+            v_mes_fmt = formatar_valor(valor_mes)
+            media_fmt = formatar_valor(media)
+            alertas.append(
+                f"Categoria **{cat}** caiu para {v_mes_fmt} "
+                f"(média era {media_fmt} -- queda brusca)"
+            )
+    if alertas:
+        linhas.append("")
+        linhas.append("### Alertas")
+        linhas.append("")
+        for a in alertas[:10]:
+            linhas.append(f"- {a}")
+
+    linhas.append(separador_secao())
+    return linhas
+
+
 def _carregar_metas() -> list[dict[str, Any]]:
     """Carrega metas do arquivo YAML."""
     if not CAMINHO_METAS.exists():
@@ -263,6 +407,10 @@ def gerar_relatorio_mes(
         destaques += f" | Saldo negativo: **{formatar_valor(saldo)}**"
     linhas.append(f"> {destaques}")
     linhas.append(separador_secao())
+
+    # Sprint 21 / B1 2026-04-23: seção diagnóstica (variações vs mês-1 e média).
+    secao_diag = gerar_secao_diagnostica(transacoes, mes_ref)
+    linhas.extend(secao_diag)
 
     # Resumo em tabela
     linhas.append("## Resumo")

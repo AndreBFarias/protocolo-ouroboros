@@ -233,7 +233,21 @@ Criado:
 
 Runtime: 1200 → **1201 passed** (+1). Smoke 8/8 OK. Lint OK. Fecha ressalva M50-1 do BRIEF (Sprint 50 APROVADO_COM_RESSALVAS).
 
-### _Próximo: B1 (Sprint 21 Relatórios diagnósticos)_
+### 2026-04-23 — B1 concluída: Sprint 21 Relatórios diagnósticos
+
+Criados:
+- `src/load/relatorio.py::gerar_secao_diagnostica(transacoes, mes_ref, janela=3)`: compara mês atual com mês-1 e média móvel de N meses. Gera variação % total, top 5 categorias com maior variação (+/-), alertas (categoria nova >R$100, >150% média, <30% média).
+- Helpers `_mes_anterior_str`, `_meses_anteriores`, `_despesa_por_categoria`.
+- `tests/test_relatorio_diagnostico.py` (8 testes).
+
+Modificado:
+- `gerar_relatorio_mes` chama a nova seção entre "Destaques" e "Resumo".
+
+Runtime real: relatório `data/output/2026-04_relatorio.md` agora tem seção "## Diagnóstico comparativo" com variação vs mar/2026 (-80.3%) + tabelas de variação por categoria + alertas.
+
+Pytest: 1201 → **1209 passed** (+8). Smoke 8/8 OK. Lint OK.
+
+### _Próximo: B2 (Sprint 33 Resumo mensal narrativo)_
 
 ---
 
