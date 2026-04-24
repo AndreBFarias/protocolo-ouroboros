@@ -9,9 +9,10 @@ Cada PDF gera UMA entrada. Meses com 13º salário produzem entrada adicional
 (tipo "13º Adiantamento" ou "13º Integral") em paralelo à folha mensal.
 """
 
+import hashlib
 import re
 from pathlib import Path
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 import pdfplumber
 import pypdfium2 as pdfium
@@ -19,6 +20,9 @@ import pytesseract
 
 from src.utils.logger import configurar_logger
 from src.utils.parse_br import parse_valor_br_float
+
+if TYPE_CHECKING:
+    from src.graph.db import GrafoDB
 
 logger = configurar_logger("ExtratorContrachequePDF")
 
@@ -200,11 +204,56 @@ def _parse_infobase(texto: str) -> Optional[dict]:
     }
 
 
-def processar_holerites(diretorio: Path) -> list[dict]:
+def _ingerir_holerite_no_grafo(
+    grafo: "GrafoDB",
+    registro: dict,
+    arquivo: Path,
+) -> None:
+    """Insere node `documento` tipo `holerite` (P3.2 2026-04-23).
+
+    Chave canônica: `HOLERITE|<fonte>|<mes_ref>` (idempotente por fonte+mês,
+    sobrescreve mesmo se o arquivo físico mudar). CNPJ sintético derivado
+    do nome da fonte (G4F/Infobase) via hash -- mesma estratégia do boleto.
+    """
+    from src.graph.ingestor_documento import ingerir_documento_fiscal
+
+    fonte = registro.get("fonte") or "HOLERITE"
+    mes_ref = registro["mes_ref"]
+    empregador = fonte.split(" - ")[0] if " - " in fonte else fonte
+    cnpj_sintetico = (
+        f"HOLERITE|{hashlib.sha256(empregador.encode('utf-8')).hexdigest()[:12]}"
+    )
+    chave = f"HOLERITE|{fonte}|{mes_ref}".replace(" ", "_")
+    documento = {
+        "chave_44": chave,
+        "cnpj_emitente": cnpj_sintetico,
+        "data_emissao": f"{mes_ref}-01",
+        "tipo_documento": "holerite",
+        "total": float(registro.get("bruto") or 0.0),
+        "razao_social": empregador.upper(),
+        "numero": chave,
+        "arquivo_original": str(arquivo.resolve()),
+        "periodo_apuracao": mes_ref,
+    }
+    try:
+        ingerir_documento_fiscal(grafo, documento, itens=[], caminho_arquivo=arquivo)
+    except ValueError as exc:
+        logger.warning("holerite %s não ingerido no grafo: %s", arquivo.name, exc)
+
+
+def processar_holerites(
+    diretorio: Path,
+    grafo: "GrafoDB | None" = None,
+) -> list[dict]:
     """Varre o diretório de holerites e retorna lista de dicts da aba renda.
 
     Ignora arquivos com sufixo ' (1)' ou ' (2)' — convenção do inbox processor
     para duplicatas de download. Se o diretório não existir, retorna lista vazia.
+
+    Sprint P3.2 (2026-04-23): quando `grafo` é fornecido, cada holerite
+    parseado também é ingerido como node `documento` no grafo (tipo
+    holerite). Fecha o gap ADR-20 de tracking documental para folha de
+    pagamento: +24 docs no grafo em runtime real.
     """
     if not diretorio.exists():
         logger.info("Diretório de holerites não encontrado: %s", diretorio)
@@ -241,6 +290,8 @@ def processar_holerites(diretorio: Path) -> list[dict]:
             registro["bruto"],
             registro["liquido"],
         )
+        if grafo is not None:
+            _ingerir_holerite_no_grafo(grafo, registro, arquivo)
         registros.append(registro)
 
     registros.sort(key=lambda r: (r["mes_ref"], r["fonte"]))

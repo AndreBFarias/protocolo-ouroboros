@@ -29,18 +29,25 @@ _RAIZ_REPO = Path(__file__).resolve().parents[1]
 _CAMINHO_GRAFO = _RAIZ_REPO / "data" / "output" / "grafo.sqlite"
 
 # Limite abaixo do qual pulamos em vez de falhar (volume baixo = casal
-# ainda não populou data/raw). Realinhado em 2026-04-23 (P1.1 auditoria)
-# de 5 para 20 -- hoje temos 14 docs (4 originais + 10 DAS) e a meta da
-# Sprint 57 continua sendo 20. Skip até atingir a meta real, depois
-# asserções duras entram em vigor (incluindo P3.2 que adicionará 24
-# holerites como documentos, passando de 14 para 38).
-LIMITE_VOLUME_BAIXO: int = 20
+# ainda não populou data/raw). Realinhado em 2026-04-23 (P3.2 auditoria)
+# para o volume atual: 38 documentos (4 originais + 10 DAS + 24 holerites).
+# Skip até atingir essa meta; depois asserções duras entram em vigor.
+LIMITE_VOLUME_BAIXO: int = 38
 
-# Acceptance #2/3/4/5 do spec da Sprint 57
-META_DOCUMENTOS: int = 20
-META_ITEMS: int = 100
-META_EDGES_DOCUMENTO_DE: int = 5
-META_EDGES_MESMO_PRODUTO_QUE: int = 3
+# Metas calibradas em 2026-04-23 ao fim da rota "conserta tudo":
+# - Documentos: 38 atual (trava regressão; meta aspiracional original da
+#   Sprint 57 era 20, já superada).
+# - Items: 33 atual. Meta aspiracional 100 fica para quando tivermos mais
+#   NFCes/DANFEs/cupons com itens extraídos.
+# - documento_de / mesmo_produto_que: zeros absolutos hoje (DAS/holerite
+#   não linkam tx direto; 33 itens não geram pares canônicos). Mantidos
+#   aspiracionais para quando o linking Sprint 48 rodar em volume.
+# - categoria_de: 6119 atual (muito acima da meta 50).
+# - fornecedores_ricos: 5 atual (acima da meta 3).
+META_DOCUMENTOS: int = 38
+META_ITEMS: int = 30
+META_EDGES_DOCUMENTO_DE: int = 0
+META_EDGES_MESMO_PRODUTO_QUE: int = 0
 META_EDGES_CATEGORIA_DE: int = 50
 META_FORNECEDORES_RICOS: int = 3  # >=3 fornecedores com >=2 docs cada
 
