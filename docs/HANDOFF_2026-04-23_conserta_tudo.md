@@ -213,7 +213,17 @@ Runtime real: 30 candidatos em `data/raw/casal/`, 26 migrados para `andre/` (19 
 
 Pós-migração: casal 31→6 arquivos; andre 404→431. Pipeline `--tudo` verde. Smoke 8/8 OK. Pytest 1200 passed. Lint OK.
 
-### _Próximo: A2 (ExtratorNfcePDF com OCR fallback)_
+### 2026-04-23 — A2 concluída: ExtratorNfcePDF com OCR fallback
+
+Modificado:
+- `src/extractors/nfce_pdf.py::_ler_paginas_pdf`: quando soma de chars nativos < 50, chama `_ler_paginas_pdf_via_ocr` (novo helper) que renderiza cada página com pypdfium2 + tesseract (lang `por+eng`, scale=2).
+
+Runtime real:
+- `data/raw/casal/nfs_fiscais/nfce/NFCE_2026-04-19_6c1cc203.pdf` (PDF-imagem 4p, 0 chars nativos): **2 NFCes extraídos + 16 itens** via OCR. CNPJ Americanas 00.776.574/0160-79 reconhecido.
+- Grafo: 39 → **41 documentos**.
+- Pytest: 1200 passed (zero regressão). Smoke 8/8 OK.
+
+### _Próximo: A3 (Sprint 50b categorizer delete-before-insert)_
 
 ---
 
