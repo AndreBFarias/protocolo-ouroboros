@@ -251,9 +251,45 @@ def rgba_cor_inline(cor_hex: str, alpha: float) -> str:
 
 
 def css_global() -> str:
-    """Retorna bloco CSS global para o dashboard Dracula."""
+    """Retorna bloco CSS global para o dashboard Dracula.
+
+    Sprint 92c: publica CSS custom properties em ``:root`` a partir dos tokens
+    Python já existentes (``CORES``, ``SPACING``, fontes). Helpers HTML novos
+    (callout, progress_inline, metric_semantic, breadcrumb) referenciam esses
+    tokens via ``var(--color-*)`` em vez de interpolar hex, permitindo que
+    temas futuros sobrescrevam apenas o bloco ``:root`` sem tocar em helper
+    algum. Componentes Plotly continuam usando hex direto pois JSON inline
+    não resolve ``var()``.
+    """
     return f"""
     <style>
+    :root {{
+        --color-fundo: {CORES["fundo"]};
+        --color-card-fundo: {CORES["card_fundo"]};
+        --color-texto: {CORES["texto"]};
+        --color-texto-sec: {CORES["texto_sec"]};
+        --color-positivo: {CORES["positivo"]};
+        --color-negativo: {CORES["negativo"]};
+        --color-alerta: {CORES["alerta"]};
+        --color-destaque: {CORES["destaque"]};
+        --color-neutro: {CORES["neutro"]};
+        --color-info: {CORES["info"]};
+        --color-superfluo: {CORES["superfluo"]};
+        --color-obrigatorio: {CORES["obrigatorio"]};   /* noqa: accent (CSS ident ASCII) */
+        --color-questionavel: {CORES["questionavel"]}; /* noqa: accent (CSS ident ASCII) */
+        --spacing-xs: {SPACING["xs"]}px;
+        --spacing-sm: {SPACING["sm"]}px;
+        --spacing-md: {SPACING["md"]}px;
+        --spacing-lg: {SPACING["lg"]}px;
+        --spacing-xl: {SPACING["xl"]}px;
+        --spacing-xxl: {SPACING["xxl"]}px;
+        --font-min: {FONTE_MIN_ABSOLUTA}px;
+        --font-label: {FONTE_LABEL}px;
+        --font-corpo: {FONTE_CORPO}px;
+        --font-subtitulo: {FONTE_SUBTITULO}px;
+        --font-titulo: {FONTE_TITULO}px;
+        --font-hero: {FONTE_HERO}px;
+    }}
     html, body, .stApp, [data-testid="stAppViewContainer"] {{
         font-size: {FONTE_CORPO}px;
     }}
@@ -466,6 +502,245 @@ def rgba_cor(cor_hex: str, alpha: float) -> str:
     cor = cor_hex.lstrip("#")
     r, g, b = int(cor[0:2], 16), int(cor[2:4], 16), int(cor[4:6], 16)
     return f"rgba({r}, {g}, {b}, {alpha})"
+
+
+# --- Sprint 92c: helpers canônicos de design system -------------------------
+# Substituem padrões ad-hoc espalhados nas páginas (`st.warning`, `st.metric`,
+# `st.progress`, `<div style=` manuais). Todos retornam string HTML; caller
+# escolhe `st.markdown(..., unsafe_allow_html=True)`. Cores referenciam
+# `var(--color-*)` publicadas em `css_global()`; fallback hex preservado via
+# dupla atribuição `background: var(--color-x, #hex);` só quando faz diferença
+# visual (alguns navegadores móveis ignoram vars em gradientes antigos).
+
+_CALLOUT_CORES: dict[str, str] = {
+    "info": CORES["neutro"],
+    "warning": CORES["alerta"],
+    "error": CORES["negativo"],
+    "success": CORES["positivo"],
+}
+
+_CALLOUT_ICONE: dict[str, str] = {
+    "info": "info",
+    "warning": "alert-triangle",
+    "error": "alert-circle",
+    "success": "check-circle",
+}
+
+
+def icon_html(nome_feather: str, tamanho: int = 16, cor: str | None = None) -> str:
+    """Sprint 92c: renderiza ícone Feather SVG inline.
+
+    ``nome_feather`` deve ser um dos 11 ícones registrados em
+    ``src/dashboard/componentes/icons.py``. ``tamanho`` em px. ``cor`` aceita
+    hex (``"#BD93F9"``), nome CSS ou ``None`` (usa ``currentColor``, herda do
+    texto pai). Retorna string vazia quando o ícone não existe — caller não
+    precisa validar.
+    """
+    from src.dashboard.componentes.icons import renderizar_svg
+
+    cor_efetiva = cor if cor else "currentColor"
+    return renderizar_svg(nome_feather, tamanho=tamanho, cor=cor_efetiva)
+
+
+def callout_html(
+    tipo: str,
+    mensagem: str,
+    titulo: str | None = None,
+) -> str:
+    """Sprint 92c: callout Dracula-consistente.
+
+    ``tipo`` in ``{"info", "warning", "error", "success"}`` define cor da
+    borda e ícone Feather. ``mensagem`` é o corpo; ``titulo`` opcional vira
+    um `<strong>` acima da mensagem.
+
+    Substitui ``st.warning`` / ``st.info`` / ``st.success`` / ``st.error``
+    (paleta amarelada default do Streamlit destoa do tema escuro). Tipos
+    desconhecidos caem em ``info`` para degradação silenciosa.
+    """
+    cor = _CALLOUT_CORES.get(tipo, _CALLOUT_CORES["info"])
+    nome_icone = _CALLOUT_ICONE.get(tipo, _CALLOUT_ICONE["info"])
+    icone = icon_html(nome_icone, tamanho=18, cor=cor)
+    titulo_html = ""
+    if titulo:
+        titulo_html = (
+            f'<strong style="color: {cor}; font-size: var(--font-corpo);'
+            f' display: block; margin-bottom: var(--spacing-xs);">{titulo}</strong>'
+        )
+    return (
+        '<div style="'
+        "background-color: var(--color-card-fundo);"
+        f" border-left: 4px solid {cor};"
+        " border-radius: 6px;"
+        " padding: var(--spacing-md);"
+        " margin: var(--spacing-sm) 0;"
+        " display: flex;"
+        " gap: var(--spacing-sm);"
+        ' align-items: flex-start;">'
+        f'<span style="color: {cor}; flex-shrink: 0; line-height: 1;">{icone}</span>'
+        '<div style="flex: 1;">'
+        f"{titulo_html}"
+        f'<span style="color: var(--color-texto); font-size: var(--font-corpo);">'
+        f"{mensagem}</span>"
+        "</div>"
+        "</div>"
+    )
+
+
+def progress_inline_html(
+    pct: float,
+    cor: str | None = None,
+    label: str | None = None,
+) -> str:
+    """Sprint 92c: barra de progresso fina para embutir em card/linha.
+
+    ``pct`` no intervalo ``[0.0, 1.0]`` (clampado). ``cor`` do preenchido:
+    quando ``None``, usa ``--color-destaque`` (Dracula roxo brand). ``label``
+    opcional fica acima da barra (ex: ``"78% -- R$ 7.800 / R$ 10.000"``).
+
+    Consolida a versão local de ``metas.py::_progress_inline_html`` (Sprint
+    92a.9): agora single-source no tema.
+    """
+    pct_clamped = max(0.0, min(float(pct), 1.0))
+    largura = pct_clamped * 100
+    cor_final = cor if cor else "var(--color-destaque)"
+    label_html = ""
+    if label:
+        label_html = (
+            '<p style="color: var(--color-texto-sec);'
+            " font-size: var(--font-label);"
+            ' margin: 0 0 var(--spacing-xs) 0;">'
+            f"{label}</p>"
+        )
+    return (
+        f"{label_html}"
+        '<div style="height: 4px;'
+        f" background: {rgba_cor(CORES['texto_sec'], 0.25)};"
+        " border-radius: 2px;"
+        ' margin: var(--spacing-xs) 0 0 0;">'
+        f'<div style="width: {largura:.1f}%; height: 100%;'
+        f" background: {cor_final};"
+        ' border-radius: 2px;"></div>'
+        "</div>"
+    )
+
+
+def metric_semantic_html(
+    label: str,
+    valor: str,
+    delta: float | None = None,
+    cor: str | None = None,
+) -> str:
+    """Sprint 92c: metric card com coloração semântica por sinal.
+
+    Substitui ``st.metric`` que não permite colorir o valor (apenas o delta).
+    Regra de cor automática quando ``cor`` é ``None``:
+      * ``delta`` > 0 -> ``--color-positivo``
+      * ``delta`` < 0 -> ``--color-negativo``
+      * ``delta`` == 0 ou ``None`` -> ``--color-texto-sec`` (neutro)
+
+    Caller pode forçar cor específica passando ``cor`` em hex. ``label`` em
+    caps-lock reduzido; ``valor`` é string já formatada (ex: ``"R$ 1.234,56"``).
+    """
+    if cor:
+        cor_efetiva = cor
+    elif delta is None or delta == 0:
+        cor_efetiva = "var(--color-texto-sec)"
+    elif delta > 0:
+        cor_efetiva = "var(--color-positivo)"
+    else:
+        cor_efetiva = "var(--color-negativo)"
+
+    delta_html = ""
+    if delta is not None and delta != 0:
+        sinal = "+" if delta > 0 else ""
+        delta_cor = (
+            "var(--color-positivo)" if delta > 0 else "var(--color-negativo)"
+        )
+        delta_html = (
+            f'<p style="color: {delta_cor};'
+            " font-size: var(--font-label);"
+            ' margin: var(--spacing-xs) 0 0 0;">'
+            f"{sinal}{delta:.1f}%</p>"
+        )
+
+    return (
+        '<div style="padding: var(--spacing-xs) 0;">'
+        '<p style="color: var(--color-texto-sec);'
+        " font-size: var(--font-label);"
+        ' margin: 0 0 var(--spacing-xs) 0;">'
+        f"{label}</p>"
+        f'<p style="color: {cor_efetiva};'
+        " font-size: var(--font-hero);"
+        " font-weight: 700;"
+        ' margin: 0;">'
+        f"{valor}</p>"
+        f"{delta_html}"
+        "</div>"
+    )
+
+
+def chip_html(
+    texto: str,
+    cor: str | None = None,
+    clicavel: bool = True,
+) -> str:
+    """Sprint 92c: chip visual para tags, tipos, filtros ativos.
+
+    ``cor`` da borda + texto; padrão ``--color-destaque``. Quando
+    ``clicavel=True``, adiciona ``cursor: pointer`` e hover sutil; quando
+    ``False``, chip é puramente decorativo (sem pointer).
+
+    Uso canônico: tipos do multiselect do Grafo Obsidian, tags de filtros
+    ativos no breadcrumb do Extrato.
+    """
+    cor_final = cor if cor else "var(--color-destaque)"
+    cursor = "pointer" if clicavel else "default"
+    hover_opacity = "0.85" if clicavel else "1"
+    return (
+        '<span style="'
+        "display: inline-block;"
+        " padding: var(--spacing-xs) var(--spacing-sm);"
+        " margin: 2px 4px 2px 0;"
+        " border-radius: 12px;"
+        f" border: 1px solid {cor_final};"
+        f" color: {cor_final};"
+        " font-size: var(--font-label);"
+        " font-weight: 600;"
+        f" cursor: {cursor};"
+        f" opacity: {hover_opacity};"
+        ' background-color: transparent;">'
+        f"{texto}"
+        "</span>"
+    )
+
+
+def breadcrumb_drilldown_html(filtros: dict[str, str]) -> str:
+    """Sprint 92c: breadcrumb de filtros ativos de drill-down.
+
+    Renderiza um bloco inteiro com prefixo descritivo + chip para cada
+    filtro. Substitui o loop manual de ``st.button`` em ``extrato.py`` (que
+    força rerun a cada clique). Este helper é apenas visual; o mecanismo
+    de "X clicável para remover filtro" permanece no caller via
+    ``st.button("×", key=...)`` + ``limpar_filtro(campo)``.
+
+    Retorna HTML vazio quando ``filtros`` está vazio (degradação silenciosa).
+    """
+    if not filtros:
+        return ""
+    chips = "".join(
+        chip_html(f"{campo}: {valor}", clicavel=False) for campo, valor in filtros.items()
+    )
+    return (
+        '<div style="margin: var(--spacing-sm) 0;">'
+        '<p style="color: var(--color-destaque);'
+        " font-size: var(--font-corpo);"
+        ' margin: 0 0 var(--spacing-xs) 0;">'
+        "Filtros ativos:</p>"
+        f'<div style="display: flex; flex-wrap: wrap; gap: var(--spacing-xs);">'
+        f"{chips}"
+        "</div>"
+        "</div>"
+    )
 
 
 # --- Localização PT-BR de eixos de tempo (Sprint 65) ------------------------
