@@ -325,9 +325,52 @@ Documentos mestres atualizados:
 - `README.md` atualizado (21 extratores, 13 abas, 1.261 tests, 41 docs no grafo).
 - `docs/ARCHITECTURE.md` atualizado.
 
-### Resta apenas Fase D
+### Sessão encerrada em 2026-04-23 23:30
 
-- [ ] **Fase D — SPRINT AUDITORIA ARTESANAL FINAL**: mover tudo para inbox + reprocessar + revisar 1-a-1 com o usuário. Spec em `docs/sprints/backlog/sprint_AUDITORIA_ARTESANAL_FINAL.md`.
+**Estado final:** 19 sprints executadas + 1 auditoria técnica + 5 novas sprints-filhas formalizadas. 31 commits pushed em main. Pytest 1.261 passed / 9 skipped. Smoke 8/8. Lint OK.
+
+### Sprints-filhas em backlog (todas formalizadas, prontas para executar)
+
+| Sprint | Spec | Prioridade | Tempo |
+|---|---|---|---|
+| 82b | `docs/sprints/backlog/sprint_82b_conta_espelho_cartao.md` | P2 | ~2h |
+| 87e | `docs/sprints/backlog/sprint_87e_registrar_boleto_pdf_no_pipeline.md` | P1 | ~30min |
+| 92a | `docs/sprints/backlog/sprint_92a_fixes_cirurgicos.md` | P0/P1/P2 (11 itens) | ~13h |
+| 92b | `docs/sprints/backlog/sprint_92b_clusters.md` | P0 estrutural | ~4h |
+| 92c | `docs/sprints/backlog/sprint_92c_design_system.md` | P1 consolidação | ~8h |
+| 93a | `docs/sprints/backlog/sprint_93a_dedup_agressiva_extratores.md` | P1 | ~5h |
+| 93b | `docs/sprints/backlog/sprint_93b_origem_historica_cruzada.md` | P1 | ~3h |
+| 93c | `docs/sprints/backlog/sprint_93c_rotulagem_nubank_pj.md` | P1 | ~2h |
+| F | `docs/sprints/backlog/sprint_F_testes_extratores_bancarios.md` | P1 cobertura | ~3h |
+| D | `docs/sprints/backlog/sprint_AUDITORIA_ARTESANAL_FINAL.md` | última, artesanal com humano | ~4-6h interativo |
+
+### Ordem recomendada para próxima sessão
+
+**Rota curta** (só desbloqueios antes da D):
+1. **Sprint 87e** (~30min) -- registra boleto_pdf no pipeline.
+2. **Sprint 92a P0** (~6h) -- 4 fixes UX críticos (labels pyvis, treemap contraste, completude, rename pagamentos).
+3. **Sprint D** artesanal.
+
+**Rota longa** (fechar tudo antes da D):
+1. Sprint 87e → Sprint F → Sprint 93a → 93b → 93c (cobertura + fidelidade bancária).
+2. Sprint 92a → 92b → 92c (UX completo).
+3. Sprint 82b (conta-espelho cartão).
+4. Sprint D artesanal.
+
+### Como retomar
+
+Ler nesta ordem:
+1. `docs/auditoria_tecnica_2026-04-23.md` -- relatório honesto de bugs/órfãos/dívida.
+2. `CLAUDE.md` -- visão geral do projeto.
+3. `VALIDATOR_BRIEF.md` rodapé -- padrões canônicos e armadilhas.
+4. `docs/sprints/backlog/sprint_92a_fixes_cirurgicos.md` (ou outra sprint escolhida).
+
+Rodar sanidade antes de tocar código:
+```bash
+make lint    # OK
+.venv/bin/pytest tests/ -q    # 1261 passed
+make smoke    # 23/0 + 8/8
+```
 
 ---
 
