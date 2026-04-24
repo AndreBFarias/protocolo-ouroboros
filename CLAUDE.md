@@ -4,9 +4,9 @@
 VERSÃO: 5.4 | STATUS: PRODUÇÃO (rota longa 2026-04-24 concluiu 9/10 sprints; resta só Sprint D artesanal) | LANG: PT-BR
 TRANSAÇÕES: 6.088 | MESES: 82 (out/2019 a out/2026) | BANCOS: 6 | EXTRATORES: 11 (9 bancários + DAS PARCSN + DIRPF) + 10 documentais
 GRAFO: 7.480 nodes + 24.700 edges (data/output/grafo.sqlite, ~5MB). 41 documentos catalogados.
-SPRINTS: 120 (86 concluídas, 21 backlog, 13 arquivadas; 5 sprints-filhas novas em 2026-04-24: Fa, 93d, 93e, 93f, 93g)
+SPRINTS: 120 (87 concluídas, 20 backlog, 13 arquivadas; 5 sprints-filhas novas em 2026-04-24: Fa, 93d, 93e, 93f, 93g)
 CATEGORIZAÇÃO: 100% | IRPF TAGS: 164 (75 com CNPJ) | HOLERITES: 24 (todos node documento no grafo)
-TESTES: 1.537 passed / 9 skipped / 1 xfailed (+276 vs baseline pré-sessão 2026-04-24 de 1.261; +7 da Sprint 93f)
+TESTES: 1.537 passed / 9 skipped / 1 xfailed (+276 vs baseline pré-sessão 2026-04-24 de 1.261; +7 da Sprint 93f; 93g foi limpeza operacional sem testes novos)
 ABA RENDA: 99 linhas (24 holerites + 75 MEI legítimos via mappings/fontes_renda.yaml)
 ROTA: Catalogador universal artesanal via supervisor interativo (ADR-13)
 SUPERVISOR: Claude Code sessão interativa — nenhuma API programática
@@ -23,10 +23,12 @@ Antes de tocar código, leia nesta ordem:
 3. `VALIDATOR_BRIEF.md` rodapé — padrões canônicos.
 
 **Rota recomendada:**
-1. **Sprint 93g** (operacional, P1) — limpeza de cópias mal-roteadas em `data/raw/andre/nubank_cartao/` que clonam arquivos PJ da Vitória. Spec em `docs/sprints/backlog/sprint_93g_dedup_pj_vs_pf_andre_inbox.md`. Sem isso, dedup engole as 841 tx PJ.
-2. **Sprint D** (artesanal, interativa com humano) — auditoria linha-a-linha após 93g garantir que PJ aparece no XLSX.
+1. **Sprint D** (artesanal, interativa com humano) — auditoria linha-a-linha agora que PJ da Vitória aparece no XLSX (828 tx, R$ 169k). Spec em `docs/sprints/backlog/sprint_AUDITORIA_ARTESANAL_FINAL.md`.
 
-**Sprint 93f concluída em 2026-04-24** — dois fixes de código aplicados: (a) `src/transform/normalizer.py:158-159` alinhado ao contrato canônico `Nubank (PF)/(PJ)` com parênteses (eram sem) — resolveu 2310 tx PF Vitória que iam para Casal; (b) `src/extractors/nubank_cartao.py::_gerar_hash` inclui `banco_origem` na chave para evitar colisão entre cartão PF do André e PJ da Vitória. Resultado runtime: Vitória 575 -> 2885 tx no XLSX; Casal 2310 -> 0. Cartão PJ ainda 0 por colisão fuzzy com cópias mal-roteadas (Sprint 93g formalizada).
+**Sprints 93f + 93g concluídas em 2026-04-24** — visibilidade PJ da Vitória restaurada no XLSX:
+- **93f** (2 fixes de código): (a) `src/transform/normalizer.py:158-159` alinhado ao contrato canônico `Nubank (PF)/(PJ)` com parênteses — resolveu 2310 tx PF Vitória que iam para Casal; (b) `src/extractors/nubank_cartao.py::_gerar_hash` inclui `banco_origem` na chave para evitar colisão entre cartão PF do André e PJ da Vitória.
+- **93g** (limpeza operacional): 91 clones SHA-idênticos deletados de `andre/nubank_{cartao,cc}/` e `vitoria/nubank_cc/` que engoliam tx PJ no dedup. Relatório em `docs/auditoria_familia_C_93g_2026-04-24.md`.
+- **Resultado runtime:** Vitória 575 → **3160 tx** (PJ 0→828, PF 0→1757); Casal 2310 → 0; valor PJ R$ 169.131,13.
 
 **Rota alternativa** (direto na D sem 93f): sistema tecnicamente saudável (gauntlet verde, smoke 8/8). Durante a D você vai descobrir visualmente o gap do PJ e consertar no meio do caminho.
 
