@@ -9,7 +9,10 @@ from pathlib import Path
 from src.extractors.contracheque_pdf import processar_holerites
 from src.load.relatorio import gerar_relatorios
 from src.load.xlsx_writer import gerar_xlsx
-from src.transform.canonicalizer_casal import e_transferencia_do_casal
+from src.transform.canonicalizer_casal import (
+    e_transferencia_do_casal,
+    variantes_curtas,
+)
 from src.transform.categorizer import Categorizer
 from src.transform.deduplicator import deduplicar
 from src.transform.irpf_tagger import aplicar_tags_irpf
@@ -401,6 +404,49 @@ def _reclassificar_ti_orfas(transacoes: list[dict]) -> list[dict]:
     return transacoes
 
 
+def _promover_variantes_para_ti(transacoes: list[dict]) -> list[dict]:
+    """Promove Receita/Despesa para Transferência Interna via variantes curtas.
+
+    Sprint 82: rede de captura pós-reclassificação. Qualquer transação
+    ainda marcada como Receita ou Despesa cuja descrição casa o nível 2
+    do matcher (`variantes_curtas(descricao, banco_origem)`) é promovida  # noqa: accent
+    a Transferência Interna. Preserva a simetria com
+    `_reclassificar_ti_orfas`: a função anterior degrada falsos-positivos;
+    esta captura os falsos-negativos do matcher rigoroso.
+
+    Não toca linhas já marcadas como Transferência Interna (evita
+    dupla-contagem) nem Imposto.
+    """
+    promovidas = 0
+    for t in transacoes:
+        tipo_atual = t.get("tipo")
+        if tipo_atual not in {"Receita", "Despesa"}:
+            continue
+
+        descricao = str(t.get("_descricao_original") or t.get("local") or "")
+        banco = str(t.get("banco_origem") or "")
+        if not descricao or not banco:
+            continue
+
+        if e_transferencia_do_casal(descricao):
+            # Casou no matcher rigoroso mas tipo não é TI -- aproveita
+            # e reclassifica aqui (defesa em profundidade).
+            t["tipo"] = "Transferência Interna"
+            promovidas += 1
+            continue
+
+        if variantes_curtas(descricao, banco):
+            t["tipo"] = "Transferência Interna"
+            promovidas += 1
+
+    if promovidas:
+        logger.info(
+            "Sprint 82: %d transações promovidas a Transferência Interna via variantes curtas",
+            promovidas,
+        )
+    return transacoes
+
+
 def _filtrar_por_mes(transacoes: list[dict], mes: str) -> list[dict]:
     """Filtra transações por mês específico."""
     return [t for t in transacoes if t.get("mes_ref") == mes]
@@ -542,6 +588,15 @@ def executar(mes: str | None = None, processar_tudo: bool = False) -> None:
     # categorizer é crítico: o categorizer pode reintroduzir falsos-
     # positivos se rodarmos antes.
     transacoes = _reclassificar_ti_orfas(transacoes)
+
+    # 6c. Promover variantes curtas para Transferência Interna (Sprint 82)
+    # -- rede de captura simétrica. A Sprint 68b cobriu o rigoroso
+    # (nome_aceitos completo + CPF); a 82 cobre formas abreviadas que só
+    # são seguras sob contexto bancário (ex: "Vitória" no Itaú com
+    # marcador PIX/TRANSF + data DD/MM, "ANDRE SILVA BATISTA FARIAS"
+    # sem o "DA"). Roda DEPOIS do reclassificar para não reintroduzir
+    # falsos-positivos que acabaram de ser degradados.
+    transacoes = _promover_variantes_para_ti(transacoes)
 
     # 7. Aplicar tags IRPF
     transacoes = aplicar_tags_irpf(transacoes)
