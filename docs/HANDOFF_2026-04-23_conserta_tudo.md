@@ -43,7 +43,7 @@ Auditoria de fidelidade em 760 arquivos `data/raw/` + inbox + XLSX + grafo.
 - [x] **P2.3 — Dedupe roteamento adapter**. **CONCLUÍDA.**
 
 ### P3 — Estratégico
-- [ ] **P3.1 — Extrator DIRPF `.DEC`**.
+- [x] **P3.1 — Extrator DIRPF `.DEC`**. **CONCLUÍDA.**
 - [x] **P3.2 — Holerite vira node documento no grafo**. **CONCLUÍDA.**
 
 ---
@@ -178,7 +178,27 @@ Runtime real:
 - Pytest: 1193 → **1194 passed** (+1: test_cobertura_grafo agora ativo).
 - Smoke 8/8 OK.
 
-### _Próximo: P3.1 (extrator DIRPF .DEC)_
+### 2026-04-23 — P3.1 concluída: extrator DIRPF .DEC (MVP)
+
+Criados:
+- `src/extractors/dirpf_dec.py` (~130L): parse do cabeçalho fixed-width da linha 1 da DEC (ano-exercício, ano-base, código, CPF, nome). Detecta retificadora via "RETIF" no nome do arquivo. Chave canônica: `DIRPF|<cpf>|<ano_base>[_RETIF]`. tipo_documento: `dirpf` ou `dirpf_retif`. CNPJ sintético `DIRPF|<sha256(cpf)[:12]>` (PF como fornecedor). Não parseia valores individuais (seções 17/18/19/20 -- MVP).
+- `tests/test_dirpf_dec.py` (6 testes): parse retif, parse original, parse Vitória, texto sem cabeçalho, extensão `.dec`, rejeição de outros formatos.
+
+Modificados:
+- `src/pipeline.py::_descobrir_extratores`: DIRPFDec registrado.
+- `src/pipeline.py::_escanear_arquivos`: `.dec` adicionado à lista de extensões.
+
+Runtime real:
+- `inbox/05127373122-IRPF-A-2026-2025-RETIF.DEC` ingerido: CPF André, ano-base 2025, retificadora=True.
+- Arquivo movido para `data/raw/andre/documentos/dirpf/`.
+- **Inbox ZERADA** (após P1.2 movido NFCe + P3.1 movido DIRPF).
+- Grafo: 38 → **39 documentos** (+1 dirpf_retif).
+- Pytest: 1194 → **1200 passed** (+6).
+- Smoke 8/8 OK.
+
+### ROTA "CONSERTA TUDO" COMPLETA (9/9)
+
+Todas as 9 tarefas P0/P1/P2/P3 concluídas. 9 commits pushed em main.
 
 ---
 
