@@ -155,8 +155,8 @@ def inferir_pessoa(
 ) -> str:
     """Infere quem fez a transação pelo banco de origem."""
     bancos_andre = {"Itaú", "C6", "Santander"}
-    bancos_vitoria_pf = {"Nubank PF"}
-    bancos_vitoria_pj = {"Nubank PJ"}
+    bancos_vitoria_pf = {"Nubank (PF)"}
+    bancos_vitoria_pj = {"Nubank (PJ)"}
 
     if banco_origem in bancos_andre:
         return "André"

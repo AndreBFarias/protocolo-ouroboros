@@ -101,9 +101,16 @@ class ExtratorNubankCartao(ExtratorBase):
             data_transacao: date = datetime.strptime(data_str, "%Y-%m-%d").date()
             valor: float = abs(float(valor_str))
             tipo: str = self._classificar_tipo(titulo, pessoa)
-            identificador: str = self._gerar_hash(data_str, titulo, valor_str)
 
             banco_origem: str = self._rotular_banco_origem(arquivo)
+            # Sprint 93f: hash inclui banco_origem para evitar colisão entre
+            # cartão PF do André (`Nubank`) e cartão PJ da Vitória
+            # (`Nubank (PJ)`) quando uma compra recorrente (ex: assinatura
+            # mensal) aparece em ambos com mesmo `(date, title, amount)`.
+            # Sem o sufixo, dedup nível 1 por identificador descartava a PJ.
+            identificador: str = self._gerar_hash(
+                data_str, titulo, valor_str, banco_origem
+            )
 
             return Transacao(
                 data=data_transacao,
@@ -166,9 +173,15 @@ class ExtratorNubankCartao(ExtratorBase):
         return "Despesa"
 
     @staticmethod
-    def _gerar_hash(data: str, titulo: str, valor: str) -> str:
-        """Gera hash determinístico como identificador único."""
-        conteudo: str = f"{data}|{titulo}|{valor}"
+    def _gerar_hash(data: str, titulo: str, valor: str, banco: str = "") -> str:
+        """Gera hash determinístico como identificador único.
+
+        Sprint 93f: parâmetro `banco` faz parte da chave para distinguir
+        cartão PF do André de cartão PJ da Vitória quando linhas
+        compartilham `(date, title, amount)`. Default vazio mantém
+        backward-compat para chamadas legadas em tests.
+        """
+        conteudo: str = f"{data}|{titulo}|{valor}|{banco}"
         return hashlib.sha256(conteudo.encode("utf-8")).hexdigest()[:16]
 
 

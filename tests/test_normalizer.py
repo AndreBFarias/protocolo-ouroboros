@@ -76,7 +76,10 @@ def test_pessoa_itau_eh_andre():
 
 
 def test_pessoa_nubank_pf_eh_vitoria():
-    assert inferir_pessoa("Nubank PF") == "Vitória"
+    """Sprint 93f: rótulo canônico `Nubank (PF)` (com parênteses) mapeia
+    para Vitória. Antes da 93f o set esperava `Nubank PF` sem parênteses
+    enquanto extratores emitiam com parênteses, produzindo fallback Casal."""
+    assert inferir_pessoa("Nubank (PF)") == "Vitória"
 
 
 def test_pessoa_nubank_default_eh_andre():
