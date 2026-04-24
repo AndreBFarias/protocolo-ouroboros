@@ -81,6 +81,40 @@ def _formatar_ritmo(valor: float | None) -> str:
     return formatar_moeda(valor)
 
 
+def _cor_por_sinal_ritmo(valor: float | None) -> str:
+    """Sprint 92a.10: cor Dracula do ritmo conforme o sinal do valor.
+
+    Retorna hex pronto para CSS: verde quando positivo, vermelho quando
+    negativo, cinza (``texto_sec``) quando ``None``. Valor exatamente zero
+    é tratado como neutro (cinza) para não fingir saudável sem ritmo real.
+    """
+    if valor is None or valor == 0:
+        return CORES["texto_sec"]
+    return CORES["positivo"] if valor > 0 else CORES["negativo"]
+
+
+def _metric_ritmo_html(titulo: str, valor: float | None) -> str:
+    """Sprint 92a.10: renderização custom do cartão de ritmo com cor por sinal.
+
+    Substitui ``st.metric`` para permitir coloração por sinal do valor
+    (verde positivo, vermelho negativo, cinza quando ``None``). Mantém
+    contraste visual Dracula e tipografia equivalente ao widget nativo.
+    """
+    cor = _cor_por_sinal_ritmo(valor)
+    texto = _formatar_ritmo(valor)
+    return (
+        f'<div style="padding: 4px 0;">'
+        f'<p style="color: {CORES["texto_sec"]};'
+        f" font-size: {FONTE_MINIMA}px;"
+        f' margin: 0 0 2px 0;">{titulo}</p>'
+        f'<p style="color: {cor};'
+        f" font-size: 28px;"
+        f" font-weight: 700;"
+        f' margin: 0;">{texto}</p>'
+        f"</div>"
+    )
+
+
 def _saldo_do_mes(
     dados: dict[str, pd.DataFrame],
     mes: str,
@@ -110,10 +144,22 @@ def _renderizar_ritmos(
     """Renderiza os três cartões de ritmo e callouts explicativos."""
     st.subheader("Ritmo de Saldo Médio Mensal")
 
+    # Sprint 92a.10: ritmos renderizados com cor por sinal (verde positivo,
+    # vermelho negativo, cinza quando None). st.metric não suporta cor no
+    # valor -- só no delta -- por isso montamos HTML custom.
     col1, col2, col3 = st.columns(3)
-    col1.metric("Ritmo histórico", _formatar_ritmo(ritmos.get("historico")))
-    col2.metric("Ritmo 12 meses", _formatar_ritmo(ritmos.get("12_meses")))
-    col3.metric("Ritmo 3 meses", _formatar_ritmo(ritmos.get("3_meses")))
+    col1.markdown(
+        _metric_ritmo_html("Ritmo histórico", ritmos.get("historico")),
+        unsafe_allow_html=True,
+    )
+    col2.markdown(
+        _metric_ritmo_html("Ritmo 12 meses", ritmos.get("12_meses")),
+        unsafe_allow_html=True,
+    )
+    col3.markdown(
+        _metric_ritmo_html("Ritmo 3 meses", ritmos.get("3_meses")),
+        unsafe_allow_html=True,
+    )
 
     st.info(
         "Ritmo = saldo médio mensal observado (receita menos despesa). "
