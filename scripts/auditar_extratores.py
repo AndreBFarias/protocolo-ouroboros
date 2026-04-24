@@ -21,6 +21,7 @@ Veredito por linha:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import logging
 import sys
 from dataclasses import dataclass, field
@@ -40,6 +41,10 @@ from src.extractors.itau_pdf import ExtratorItauPDF  # noqa: E402
 from src.extractors.nubank_cartao import ExtratorNubankCartao  # noqa: E402
 from src.extractors.nubank_cc import ExtratorNubankCC  # noqa: E402
 from src.extractors.santander_pdf import ExtratorSantanderPDF  # noqa: E402
+from src.transform.deduplicator import (  # noqa: E402
+    deduplicar_por_hash_fuzzy,
+    deduplicar_por_identificador,
+)
 
 # Silencia os loggers dos extratores durante a auditoria. O que queremos ver é
 # o resumo tabular no final -- não o chatter de cada arquivo processado.
@@ -230,6 +235,11 @@ class ResultadoAuditoria:
     observacao: str = ""
     linhas_ausentes_no_xlsx: list[dict] = field(default_factory=list)
     linhas_fantasma_no_xlsx: list[dict] = field(default_factory=list)
+    arquivos_fisicos: int = 0
+    arquivos_unicos_sha: int = 0
+    n_pos_dedup: int = 0
+    total_pos_dedup: float = 0.0
+    modo_dedup: bool = False
 
     @property
     def delta(self) -> float:
@@ -258,6 +268,101 @@ def _soma_absoluta(transacoes: Iterable[Transacao]) -> float:
 def _mes_ref_da_transacao(t: Transacao) -> str:
     d: date = t.data
     return f"{d.year:04d}-{d.month:02d}"
+
+
+def _sha256_arquivo(caminho: Path, bloco: int = 65536) -> str:
+    """Calcula SHA-256 do conteúdo binário do arquivo."""
+    h = hashlib.sha256()
+    with caminho.open("rb") as fh:
+        for chunk in iter(lambda: fh.read(bloco), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def _unicos_por_sha(arquivos: list[Path]) -> list[Path]:
+    """Remove cópias físicas idênticas (mesmo conteúdo binário).
+
+    Preserva a primeira ocorrência pela ordem de entrada. Sprint 93a
+    mapeou que cerca de 86% dos arquivos nos diretórios bancários são
+    cópias baixadas múltiplas vezes com sufixos `_1.pdf`, `_2.pdf` etc.
+    O pipeline real processa o fluxo inbox → raw e o `inbox_processor`
+    detecta duplicatas antes de mover; a auditoria reproduz esse
+    comportamento quando roda em modo `--deduplicado`.
+    """
+    vistos: set[str] = set()
+    resultado: list[Path] = []
+    for arquivo in arquivos:
+        sha = _sha256_arquivo(arquivo)
+        if sha in vistos:
+            continue
+        vistos.add(sha)
+        resultado.append(arquivo)
+    return resultado
+
+
+def _transacao_para_dict(t: Transacao) -> dict:
+    """Converte a transação no dict esperado pelo `deduplicator`.
+
+    Simetria com `src/transform/normalizer.py`, que também popula
+    `local` a partir da descrição original antes da chamada de
+    `deduplicar()`.
+    """
+    return {
+        "data": t.data,
+        "valor": t.valor,
+        "local": t.descricao or "",
+        "_identificador": t.identificador,
+        "_descricao_original": t.descricao,
+        "banco_origem": t.banco_origem,
+    }
+
+
+def _extrair_com_dedup_fisica(
+    definicao: "DefinicaoBanco", diretorio: Path
+) -> list[Transacao]:
+    """Executa o extrator sobre cópias únicas por SHA-256 do diretório.
+
+    Aplica dedup físico ANTES de instanciar o extrator para evitar
+    reprocessar o mesmo arquivo 7x (padrão mais comum no diretório real).
+    """
+    arquivos = sorted(
+        f
+        for f in diretorio.iterdir()
+        if f.is_file() and f.suffix.lower() in definicao.extensoes
+    )
+    unicos = _unicos_por_sha(arquivos)
+    transacoes: list[Transacao] = []
+    for arquivo in unicos:
+        transacoes.extend(definicao.extrator_cls(arquivo).extrair())
+    return transacoes
+
+
+def _aplicar_dedup_pipeline(transacoes: list[Transacao]) -> list[Transacao]:
+    """Replica os níveis 1 e 2 do deduplicador do pipeline principal.
+
+    O nível 3 (`marcar_transferencias_internas`) não é aplicado aqui
+    porque ele muda `tipo` para "Transferência Interna" mas não remove
+    linhas; a soma absoluta do extrator ficaria igual. Manter fiel ao
+    que o XLSX consolidado contém.
+    """
+    dicts = [_transacao_para_dict(t) for t in transacoes]
+    dicts = deduplicar_por_identificador(dicts)
+    dicts = deduplicar_por_hash_fuzzy(dicts)
+    ids_preservados = {
+        (d.get("_identificador"), d["data"], float(d["valor"]), d["local"])
+        for d in dicts
+    }
+
+    resultado: list[Transacao] = []
+    ja_visto: set[tuple] = set()
+    for t in transacoes:
+        chave = (t.identificador, t.data, float(t.valor), t.descricao or "")
+        if chave in ja_visto:
+            continue
+        if chave in ids_preservados:
+            ja_visto.add(chave)
+            resultado.append(t)
+    return resultado
 
 
 def _carregar_xlsx(caminho: Path) -> pd.DataFrame:
@@ -301,6 +406,7 @@ def auditar_banco(
     xlsx: Optional[Path] = None,
     carregador_xlsx: Callable[[Path], pd.DataFrame] = _carregar_xlsx,
     modo_abrangente: bool = False,
+    deduplicado: bool = False,
 ) -> ResultadoAuditoria:
     """Audita um banco em um mês específico.
 
@@ -320,9 +426,17 @@ def auditar_banco(
             cobertos pelas tx extraídas. Recomendado para arquivos que
             naturalmente abrangem múltiplos meses (faturas com lançamentos
             atrasados, CSVs acumulados).
+        deduplicado: quando True e combinado com diretório completo,
+            (1) deduplica cópias físicas idênticas por SHA-256 antes de
+            rodar o extrator e (2) aplica os níveis 1 e 2 do deduplicador
+            do pipeline (identificador + hash fuzzy data|valor|local).
+            Reproduz o que o `pipeline.py` real faz -- Sprint 93a.
     """
     diretorio_alvo = raiz / definicao.diretorio_relativo
     usar_diretorio_completo = arquivo is None and mes_ref is None and modo_abrangente
+
+    arquivos_fisicos = 0
+    arquivos_unicos_sha = 0
 
     if usar_diretorio_completo:
         if not diretorio_alvo.exists():
@@ -336,8 +450,25 @@ def auditar_banco(
                 n_xlsx=0,
                 veredito="SEM_DADOS",
                 observacao=f"diretório ausente: {diretorio_alvo}",
+                modo_dedup=deduplicado,
             )
-        extrator = definicao.extrator_cls(diretorio_alvo)
+        if deduplicado:
+            arquivos_fisicos = sum(
+                1
+                for f in diretorio_alvo.iterdir()
+                if f.is_file() and f.suffix.lower() in definicao.extensoes
+            )
+            transacoes = _extrair_com_dedup_fisica(definicao, diretorio_alvo)
+            # Contagem de únicos: o helper já rodou sha; re-uso a lista
+            arquivos_ordenados = sorted(
+                f
+                for f in diretorio_alvo.iterdir()
+                if f.is_file() and f.suffix.lower() in definicao.extensoes
+            )
+            arquivos_unicos_sha = len(_unicos_por_sha(arquivos_ordenados))
+        else:
+            extrator = definicao.extrator_cls(diretorio_alvo)
+            transacoes = extrator.extrair()
         arquivo_escolhido = diretorio_alvo
     else:
         arquivo_escolhido = arquivo or _selecionar_arquivo_para_mes(
@@ -354,11 +485,24 @@ def auditar_banco(
                 n_xlsx=0,
                 veredito="SEM_DADOS",
                 observacao="arquivo bruto não encontrado",
+                modo_dedup=deduplicado,
             )
         extrator = definicao.extrator_cls(arquivo_escolhido)
-    transacoes = extrator.extrair()
+        transacoes = extrator.extrair()
     total_extrator = _soma_absoluta(transacoes)
     n_extrator = len(transacoes)
+
+    # Aplica dedup nível 1 e 2 do pipeline se solicitado.
+    n_pos_dedup = n_extrator
+    total_pos_dedup = total_extrator
+    if deduplicado and transacoes:
+        transacoes_dedup = _aplicar_dedup_pipeline(transacoes)
+        n_pos_dedup = len(transacoes_dedup)
+        total_pos_dedup = _soma_absoluta(transacoes_dedup)
+        # Usa o conjunto deduplicado como referência para comparar com XLSX.
+        total_extrator = total_pos_dedup
+        n_extrator = n_pos_dedup
+        transacoes = transacoes_dedup
 
     meses_cobertos = sorted({_mes_ref_da_transacao(t) for t in transacoes})
 
@@ -419,6 +563,14 @@ def auditar_banco(
         )
         observacao = f"meses cobertos: {', '.join(meses_cobertos)}"
 
+    if deduplicado and arquivos_fisicos:
+        obs_dedup = (
+            f"arquivos físicos: {arquivos_fisicos}; "
+            f"SHA únicos: {arquivos_unicos_sha}; "
+            f"duplicatas removidas: {arquivos_fisicos - arquivos_unicos_sha}"
+        )
+        observacao = f"{observacao}; {obs_dedup}" if observacao else obs_dedup
+
     return ResultadoAuditoria(
         banco=definicao.chave,
         mes_ref=mes_label,
@@ -429,6 +581,11 @@ def auditar_banco(
         n_xlsx=n_xlsx,
         veredito=veredito,
         observacao=observacao,
+        arquivos_fisicos=arquivos_fisicos,
+        arquivos_unicos_sha=arquivos_unicos_sha,
+        n_pos_dedup=n_pos_dedup,
+        total_pos_dedup=total_pos_dedup,
+        modo_dedup=deduplicado,
     )
 
 
@@ -576,6 +733,20 @@ def _parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
             "múltiplos meses (comportamento real, não suposição de nome)."
         ),
     )
+    p.add_argument(
+        "--deduplicado",
+        action="store_true",
+        dest="deduplicado",
+        help=(
+            "Reproduz o deduplicador do pipeline antes de comparar: "
+            "(1) descarta cópias físicas idênticas por SHA-256 do arquivo "
+            "(padrão Sprint 93a: ~86%% dos arquivos nos diretórios são "
+            "cópias baixadas múltiplas vezes); (2) aplica níveis 1 e 2 do "
+            "`src/transform/deduplicator.py` (identificador + hash fuzzy "
+            "data|valor|local). Recomendado com `--modo-abrangente` e "
+            "`--tudo` para audit pós-pipeline fiel."
+        ),
+    )
     return p.parse_args(argv)
 
 
@@ -611,6 +782,7 @@ def main(argv: Optional[list[str]] = None) -> int:
             arquivo=arquivo,
             xlsx=args.xlsx,
             modo_abrangente=args.modo_abrangente,
+            deduplicado=args.deduplicado,
         )
         resultados.append(resultado)
 
