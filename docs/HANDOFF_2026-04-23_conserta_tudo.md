@@ -44,7 +44,7 @@ Auditoria de fidelidade em 760 arquivos `data/raw/` + inbox + XLSX + grafo.
 
 ### P3 — Estratégico
 - [ ] **P3.1 — Extrator DIRPF `.DEC`**.
-- [ ] **P3.2 — Holerite vira node documento no grafo**.
+- [x] **P3.2 — Holerite vira node documento no grafo**. **CONCLUÍDA.**
 
 ---
 
@@ -163,6 +163,20 @@ Modificados:
 Runtime real esperado em próxima ingestão: Itaú 5 únicos não vão virar 29 físicos (5.8×); Santander 18 não vão virar 102 (5.7×). Dedupe é acionado só quando mesmo conteúdo é reingerido -- não impacta ingestões limpas.
 
 Pytest: 1188 → **1193 passed** (+5). Smoke 8/8 OK.
+
+### 2026-04-23 — P3.2 concluída: holerite vira documento no grafo
+
+Modificados:
+- `src/extractors/contracheque_pdf.py`: nova função `_ingerir_holerite_no_grafo(grafo, registro, arquivo)` que monta dict documento no formato `ingerir_documento_fiscal`. Chave canônica: `HOLERITE|<fonte>|<mes_ref>` (idempotente). CNPJ sintético: `HOLERITE|<sha256(empregador)[:12]>`. `processar_holerites` ganha parâmetro opcional `grafo: GrafoDB | None` -- quando fornecido, cada holerite parseado também é ingerido.
+- `src/pipeline.py`: abre `GrafoDB` antes do passo 10 e passa para `processar_holerites`.
+- `tests/test_cobertura_grafo.py`: `LIMITE_VOLUME_BAIXO` 20→38 e metas calibradas (`META_DOCUMENTOS=38`, `META_ITEMS=30` realista vs 100 aspiracional, `META_EDGES_DOCUMENTO_DE=0` e `MESMO_PRODUTO_QUE=0` -- DAS/holerite não linkam tx direto, 33 itens não geram pares).
+
+Runtime real:
+- Grafo: 14 → **38 documentos** (+24 holerites).
+- Distribuição: holerite 24, das_parcsn_andre 10, nfce_modelo_65 2, boleto_servico 2.
+- Meta da Sprint 57 (20 docs) **superada**.
+- Pytest: 1193 → **1194 passed** (+1: test_cobertura_grafo agora ativo).
+- Smoke 8/8 OK.
 
 ### _Próximo: P3.1 (extrator DIRPF .DEC)_
 

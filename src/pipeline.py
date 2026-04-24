@@ -558,8 +558,21 @@ def executar(mes: str | None = None, processar_tudo: bool = False) -> None:
         if ident is not None:
             tx["identificador"] = ident
 
-    # 10. Processar holerites (contracheques) -- fonte extra para a aba renda
-    contracheques = processar_holerites(DIR_RAW / "andre" / "holerites")
+    # 10. Processar holerites (contracheques) -- fonte extra para a aba renda.
+    # P3.2 (auditoria 2026-04-23): passa grafo para ingerir cada holerite como
+    # node `documento` tipo `holerite` (fecha ADR-20 tracking para folha).
+    from src.graph.db import GrafoDB, caminho_padrao
+
+    caminho_grafo_hol = caminho_padrao()
+    contracheques: list[dict] = []
+    if caminho_grafo_hol.exists():
+        with GrafoDB(caminho_grafo_hol) as grafo_hol:
+            grafo_hol.criar_schema()
+            contracheques = processar_holerites(
+                DIR_RAW / "andre" / "holerites", grafo=grafo_hol
+            )
+    else:
+        contracheques = processar_holerites(DIR_RAW / "andre" / "holerites")
 
     # 11. Gerar XLSX
     ano = mes[:4] if mes else str(datetime.now().year)
