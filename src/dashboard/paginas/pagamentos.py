@@ -142,10 +142,21 @@ def _formatar_boletos_para_exibicao(boletos: pd.DataFrame) -> pd.DataFrame:
     boletos_fmt = boletos.copy()
 
     for coluna_datetime in ("data", "vencimento"):
-        if coluna_datetime in boletos_fmt.columns and pd.api.types.is_datetime64_any_dtype(
-            boletos_fmt[coluna_datetime]
-        ):
-            boletos_fmt[coluna_datetime] = boletos_fmt[coluna_datetime].dt.strftime("%Y-%m-%d")
+        if coluna_datetime not in boletos_fmt.columns:
+            continue
+        serie = boletos_fmt[coluna_datetime]
+        if pd.api.types.is_datetime64_any_dtype(serie):
+            boletos_fmt[coluna_datetime] = serie.dt.strftime("%Y-%m-%d")
+            continue
+        # Dtype 'object' pode carregar pd.Timestamp misturados (caso real da
+        # Sprint 79 onde carregar_boletos junta `data` de extrato (datetime)
+        # com `None` de linhas futuras). Normalizamos via to_datetime+strftime.
+        if serie.dtype == object:
+            convertido = pd.to_datetime(serie, errors="coerce")
+            if convertido.notna().any():
+                boletos_fmt[coluna_datetime] = convertido.dt.strftime("%Y-%m-%d").fillna(
+                    serie.astype(str).where(convertido.isna(), "")
+                )
 
     rename_map = {
         "data": "Data",
