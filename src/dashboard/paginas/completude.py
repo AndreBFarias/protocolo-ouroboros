@@ -27,6 +27,31 @@ from src.dashboard.dados import (
 )
 from src.dashboard.tema import CORES, FONTE_CORPO, FONTE_SUBTITULO, LAYOUT_PLOTLY
 
+# Sprint 92a item 3: limiar mínimo de transações para uma categoria entrar no
+# heatmap quando o toggle "filtrar_ruido" está ativo. 2 é suficiente para
+# cortar os falsos positivos de categorias com 1 tx isolada.
+LIMIAR_MIN_TX_FILTRO_RUIDO: int = 2
+
+
+def filtrar_categorias_por_volume(
+    extrato: pd.DataFrame,
+    categorias_obrigatorias: list[str],
+    minimo_tx: int = LIMIAR_MIN_TX_FILTRO_RUIDO,
+) -> list[str]:
+    """Sprint 92a item 3: remove categorias com menos de `minimo_tx` transações.
+
+    Pura e testável: recebe o extrato e a lista canônica de categorias
+    obrigatórias, devolve a sublista com volume suficiente para não poluir
+    o heatmap com alarme falso (1 tx solta = laranja escuro).
+    """
+    if extrato is None or extrato.empty or not categorias_obrigatorias:
+        return list(categorias_obrigatorias)
+    contagem = extrato["categoria"].value_counts()
+    return [
+        c for c in categorias_obrigatorias
+        if int(contagem.get(c, 0)) >= minimo_tx
+    ]
+
 
 def _heatmap(resumo: dict) -> go.Figure | None:
     if not resumo:
@@ -55,6 +80,10 @@ def _heatmap(resumo: dict) -> go.Figure | None:
 
     # P2.2 2026-04-23: texto removido das células (ilegível em viewport 1600x
     # 1000 com 7 anos × N categorias). Mantido no hover via customdata.
+    # Sprint 92a item 3: paleta trocada de [negativo, alerta, positivo]
+    # (vermelho-laranja-verde, agressiva) para [alerta, info, positivo]
+    # (laranja-amarelo-verde, informativa). Sem vermelho saturado, o heatmap
+    # para de "gritar" com o usuario em meses incompletos por ruido.
     fig = go.Figure(
         data=go.Heatmap(
             z=z,
@@ -63,8 +92,8 @@ def _heatmap(resumo: dict) -> go.Figure | None:
             customdata=texto,
             hovertemplate="<b>%{y}</b><br>%{x}: %{customdata} com doc (%{z:.0f}%%)<extra></extra>",
             colorscale=[
-                [0.0, CORES["negativo"]],
-                [0.5, CORES["alerta"]],
+                [0.0, CORES["alerta"]],
+                [0.5, CORES["info"]],
                 [1.0, CORES["positivo"]],
             ],
             zmin=0,
@@ -111,6 +140,26 @@ def renderizar(
             "Configure as categorias obrigatórias para ver o gap analysis."
         )
         return
+
+    # Sprint 92a item 3: toggle para filtrar ruído (categorias obrigatórias
+    # com 0 ou 1 transação no período inflavam o heatmap de laranja).
+    filtrar_ruido = st.checkbox(
+        "Mostrar só categorias com >=2 transações",
+        value=True,
+        key="completude_filtrar_ruido",
+        help=(
+            "Remove do heatmap categorias obrigatórias com menos de 2 transações "
+            "no período filtrado -- reduz alarme falso por volume baixo."
+        ),
+    )
+    if filtrar_ruido:
+        categorias = filtrar_categorias_por_volume(extrato, categorias)
+        if not categorias:
+            st.info(
+                "Nenhuma categoria obrigatória tem 2+ transações no período atual. "
+                "Desative o filtro para ver o heatmap completo."
+            )
+            return
 
     resumo = calcular_completude(extrato, categorias_obrigatorias=categorias)
 
