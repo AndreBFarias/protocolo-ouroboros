@@ -69,7 +69,7 @@ Investigação inicial (Sprint 93 audit):
 
 ## Armadilhas
 
-- **MEI da Vitória** tem CNPJ 52.488.753 (`mappings/pessoas.yaml`). Dashboard filtra por `pessoa=Vitória` mas não por banco_origem específico -- PJ vs PF fica misturado em análises de receita.
+- **MEI da Vitória** tem CNPJ registrado em `mappings/pessoas.yaml` (arquivo no .gitignore — identidades reais fora do repo por LGPD). Dashboard filtra por `pessoa=Vitória` mas não por banco_origem específico -- PJ vs PF fica misturado em análises de receita.
 - **IRPF tagger** pode usar `banco_origem` para heurísticas de "rendimento_tributavel" (PJ) vs "rendimento_isento" (PF aplicação). Rotulagem errada distorce tags.
 
 ## Proof-of-work

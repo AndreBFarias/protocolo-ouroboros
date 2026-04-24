@@ -95,11 +95,13 @@ class ExtratorNubankCartao(ExtratorBase):
             tipo: str = self._classificar_tipo(titulo, pessoa)
             identificador: str = self._gerar_hash(data_str, titulo, valor_str)
 
+            banco_origem: str = self._rotular_banco_origem(arquivo)
+
             return Transacao(
                 data=data_transacao,
                 valor=valor,
                 descricao=titulo,
-                banco_origem="Nubank",
+                banco_origem=banco_origem,
                 pessoa=pessoa,
                 forma_pagamento="Crédito",
                 tipo=tipo,
@@ -109,6 +111,20 @@ class ExtratorNubankCartao(ExtratorBase):
         except (ValueError, KeyError) as erro:
             self.logger.warning("Linha ignorada em %s: %s - %s", arquivo.name, linha, erro)
             return None
+
+    def _rotular_banco_origem(self, caminho: Path) -> str:
+        """Rotula banco_origem conforme subconta detectada pelo caminho.
+
+        Sprint 93c: cartão PJ da Vitória ficava sob rótulo genérico ``Nubank``,
+        colidindo com o cartão PF do André. Agora detectamos o subtipo via
+        path (``data/raw/vitoria/nubank_pj_cartao/``) e emitimos ``Nubank (PJ)``
+        -- rótulo canônico já aceito pelo smoke aritmético e por
+        ``scripts/auditar_extratores.py``. PF do André permanece ``Nubank``.
+        """
+        partes: str = str(caminho).lower()
+        if "nubank_pj" in partes:
+            return "Nubank (PJ)"
+        return "Nubank"
 
     def _classificar_tipo(self, titulo: str, pessoa: str) -> str:
         """Classifica o tipo da transação baseado no título.
