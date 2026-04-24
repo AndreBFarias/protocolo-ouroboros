@@ -22,6 +22,7 @@ from src.dashboard.tema import (
     LAYOUT_PLOTLY,
     MAPA_CLASSIFICACAO,
     aplicar_locale_ptbr,
+    hero_titulo_html,
 )
 
 MAPA_CLASSIFICACAO_COR: dict[str, str] = MAPA_CLASSIFICACAO
@@ -71,6 +72,16 @@ def renderizar(
     ctx: dict | None = None,
 ) -> None:
     """Renderiza a página de categorias."""
+    st.markdown(
+        hero_titulo_html(
+            "02",
+            "Categorias",
+            "Treemap de despesas por categoria, comparativos e destaques "
+            "do período com drill-down clicável.",
+        ),
+        unsafe_allow_html=True,
+    )
+
     if "extrato" not in dados:
         st.warning("Nenhum dado encontrado para análise de categorias.")
         return

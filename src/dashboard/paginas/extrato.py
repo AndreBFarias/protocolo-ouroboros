@@ -18,7 +18,7 @@ from src.dashboard.dados import (
     filtrar_por_pessoa,
     filtro_forma_ativo,
 )
-from src.dashboard.tema import CORES, FONTE_CORPO
+from src.dashboard.tema import CORES, FONTE_CORPO, hero_titulo_html
 
 # Sprint 73: mapeamento dos filtros vindos de drill-down para colunas do DF.
 _MAPA_FILTRO_COLUNA: dict[str, str] = {
@@ -152,6 +152,16 @@ def renderizar(
     ctx: dict | None = None,
 ) -> None:
     """Renderiza a página de extrato."""
+    st.markdown(
+        hero_titulo_html(
+            "03",
+            "Extrato",
+            "Transações do período com filtros, busca, drill-down e "
+            "inspeção de documentos vinculados.",
+        ),
+        unsafe_allow_html=True,
+    )
+
     if "extrato" not in dados:
         st.warning("Nenhum dado encontrado para o extrato.")
         return

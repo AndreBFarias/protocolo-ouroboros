@@ -13,7 +13,14 @@ from src.dashboard.dados import (
     formatar_moeda,
     renderizar_dataframe,
 )
-from src.dashboard.tema import CORES, FONTE_CORPO, FONTE_MINIMA, card_html, rgba_cor
+from src.dashboard.tema import (
+    CORES,
+    FONTE_CORPO,
+    FONTE_MINIMA,
+    card_html,
+    hero_titulo_html,
+    rgba_cor,
+)
 
 AVISO_SNAPSHOT: str = (
     "Dados congelados desde 2023 — snapshot histórico não é atualizado "
@@ -25,6 +32,16 @@ AVISO_SNAPSHOT: str = (
 
 def renderizar(dados: dict[str, pd.DataFrame], mes_selecionado: str, pessoa: str) -> None:
     """Renderiza a página de contas e dívidas."""
+    st.markdown(
+        hero_titulo_html(
+            "04",
+            "Contas",
+            "Dívidas ativas, inventário patrimonial e prazos recorrentes "
+            "a partir do snapshot histórico.",
+        ),
+        unsafe_allow_html=True,
+    )
+
     tem_dividas = "dividas_ativas" in dados
     tem_inventario = "inventario" in dados
     tem_prazos = "prazos" in dados

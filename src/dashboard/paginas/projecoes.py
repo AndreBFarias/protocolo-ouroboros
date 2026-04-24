@@ -17,6 +17,7 @@ from src.dashboard.tema import (
     FONTE_SUBTITULO,
     LAYOUT_PLOTLY,
     aplicar_locale_ptbr,
+    hero_titulo_html,
     rgba_cor,
 )
 
@@ -139,6 +140,16 @@ def renderizar(
     pessoa: str,
 ) -> None:
     """Renderiza a página de projeções financeiras."""
+    st.markdown(
+        hero_titulo_html(
+            "06",
+            "Projeções",
+            "Ritmos de receita, despesa e saldo médio, com cenários atuais "
+            "e projeções de economia.",
+        ),
+        unsafe_allow_html=True,
+    )
+
     if "extrato" not in dados:
         st.warning("Nenhum dado de extrato disponível para projeções.")
         return

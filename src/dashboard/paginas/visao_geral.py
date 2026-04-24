@@ -23,6 +23,7 @@ from src.dashboard.tema import (
     LAYOUT_PLOTLY,
     MAPA_CLASSIFICACAO,
     aplicar_locale_ptbr,
+    hero_titulo_html,
 )
 
 
@@ -33,6 +34,16 @@ def renderizar(
     ctx: dict | None = None,
 ) -> None:
     """Renderiza a página de visão geral."""
+    st.markdown(
+        hero_titulo_html(
+            "01",
+            "Visão Geral",
+            "Panorama do período: receitas, despesas, saldo, taxa de poupança "
+            "e maior gasto por categoria.",
+        ),
+        unsafe_allow_html=True,
+    )
+
     if "extrato" not in dados:
         st.warning("Nenhum dado encontrado para a visão geral.")
         return

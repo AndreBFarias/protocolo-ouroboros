@@ -25,7 +25,13 @@ from src.dashboard.dados import (
     filtrar_por_pessoa,
     filtro_forma_ativo,
 )
-from src.dashboard.tema import CORES, FONTE_CORPO, FONTE_SUBTITULO, LAYOUT_PLOTLY
+from src.dashboard.tema import (
+    CORES,
+    FONTE_CORPO,
+    FONTE_SUBTITULO,
+    LAYOUT_PLOTLY,
+    hero_titulo_html,
+)
 
 # Sprint 92a item 3: limiar mínimo de transações para uma categoria entrar no
 # heatmap quando o toggle "filtrar_ruido" está ativo. 2 é suficiente para
@@ -119,8 +125,12 @@ def renderizar(
     del mes_selecionado, ctx  # Completude olha todos os meses por default.
 
     st.markdown(
-        f'<p style="color: {CORES["destaque"]}; font-size: {FONTE_SUBTITULO}px; '
-        f'font-weight: bold;">Completude Documental</p>',
+        hero_titulo_html(
+            "13",
+            "Completude",
+            "Gap analysis documental: heatmap mês × categoria, alertas e "
+            "transações órfãs de comprovante.",
+        ),
         unsafe_allow_html=True,
     )
 

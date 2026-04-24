@@ -8,7 +8,13 @@ import streamlit as st
 import yaml
 
 from src.dashboard.dados import calcular_saldo_acumulado, formatar_moeda
-from src.dashboard.tema import CORES, FONTE_CORPO, FONTE_MINIMA, FONTE_SUBTITULO
+from src.dashboard.tema import (
+    CORES,
+    FONTE_CORPO,
+    FONTE_MINIMA,
+    FONTE_SUBTITULO,
+    hero_titulo_html,
+)
 
 CAMINHO_METAS: Path = Path(__file__).resolve().parents[3] / "mappings" / "metas.yaml"
 
@@ -173,14 +179,22 @@ def _atualizar_valor_atual(
 
 def renderizar(dados: dict, mes_selecionado: str, pessoa: str) -> None:
     """Renderiza a página de metas financeiras."""
+    st.markdown(
+        hero_titulo_html(
+            "07",
+            "Metas",
+            "Objetivos financeiros monetários e binários com progresso "
+            "calculado a partir do saldo acumulado.",
+        ),
+        unsafe_allow_html=True,
+    )
+
     metas = _carregar_metas()
     metas = _atualizar_valor_atual(metas, dados, mes_selecionado, pessoa)
 
     if not metas:
         st.warning("Nenhuma meta encontrada. Verifique mappings/metas.yaml.")
         return
-
-    st.subheader("Metas Financeiras")
 
     metas_valor = [m for m in metas if m.get("tipo") != "binario"]
     metas_binarias = [m for m in metas if m.get("tipo") == "binario"]

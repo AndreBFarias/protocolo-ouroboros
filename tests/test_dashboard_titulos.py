@@ -117,18 +117,35 @@ def test_titulos_streamlit_nao_comecam_com_digito(caminho: Path) -> None:
 
 @pytest.mark.parametrize("caminho", _listar_paginas(), ids=lambda p: p.name)
 def test_hero_titulo_numero_nao_vaza_sprint_id(caminho: Path) -> None:
-    """Primeiro arg de ``hero_titulo_html`` não pode ser puramente dígitos.
+    """Primeiro arg de ``hero_titulo_html`` não pode vazar ID de sprint.
 
-    O helper aceita string vazia (omite o badge); o que NÃO pode é vazar um ID
-    de sprint (ex: ``"51"``, ``"52"``, ``"53"``).
+    O helper aceita string vazia (omite o badge). Sprint 92a instituiu
+    numeração canônica 01-13 para as 13 abas do dashboard (ordem em
+    ``src/dashboard/app.py::main``). Valores aceitos para o badge numérico:
+
+    - string vazia ``""`` — nenhum badge exibido (ex: aba Busca);
+    - dois dígitos ``"01"`` até ``"13"`` — índice de aba.
+
+    Qualquer outro valor puramente numérico (ex: ``"51"``, ``"52"``) indica
+    vazamento de ID de sprint e é rejeitado.
     """
     arvore = ast.parse(caminho.read_text(encoding="utf-8"))
     numeros = _coletar_numeros_hero(arvore)
-    violacoes = [
-        (linha, numero)
-        for linha, numero in numeros
-        if numero.strip() != "" and numero.strip().isdigit()
-    ]
+    violacoes = []
+    for linha, numero in numeros:
+        texto = numero.strip()
+        if texto == "":
+            continue
+        if not texto.isdigit():
+            continue
+        # Sprint 92a: 01-13 são índices canônicos de aba; o restante vaza ID.
+        try:
+            valor = int(texto)
+        except ValueError:  # pragma: no cover -- isdigit implica conversível
+            violacoes.append((linha, numero))
+            continue
+        if not (1 <= valor <= 13):
+            violacoes.append((linha, numero))
     assert not violacoes, (
         f"{caminho.name} passa prefixo numérico ao hero_titulo_html: {violacoes}"
     )
@@ -138,6 +155,45 @@ def test_listagem_de_paginas_nao_vazia() -> None:
     """Sanity: varredura encontra pelo menos uma página."""
     paginas = _listar_paginas()
     assert paginas, f"Nenhuma página encontrada em {RAIZ_PAGINAS}"
+
+
+# Sprint 92a.6: hero_titulo_html obrigatório nas 10 páginas numeradas.
+PAGINAS_COM_HERO_NUMERADO: frozenset[str] = frozenset(
+    {
+        "visao_geral.py",
+        "categorias.py",
+        "extrato.py",
+        "contas.py",
+        "pagamentos.py",
+        "projecoes.py",
+        "metas.py",
+        "analise_avancada.py",
+        "irpf.py",
+        "completude.py",
+    }
+)
+
+
+@pytest.mark.parametrize(
+    "nome_pagina", sorted(PAGINAS_COM_HERO_NUMERADO), ids=lambda s: s
+)
+def test_pagina_tem_hero_titulo_numerado(nome_pagina: str) -> None:
+    """Sprint 92a.6: cada página numerada chama ``hero_titulo_html`` com badge.
+
+    Garante que todas as 10 páginas do escopo P1 item 6 (exclui Catalogação,
+    Busca Global e Grafo + Obsidian) renderizam o cabeçalho canônico com
+    numeração ``"01"`` a ``"13"`` como primeiro argumento do helper.
+    """
+    caminho = RAIZ_PAGINAS / nome_pagina
+    arvore = ast.parse(caminho.read_text(encoding="utf-8"))
+    numeros = _coletar_numeros_hero(arvore)
+    numeros_validos = [
+        numero for _, numero in numeros if numero.strip().isdigit()
+    ]
+    assert numeros_validos, (
+        f"{nome_pagina} não chama hero_titulo_html com badge numérico "
+        f"(Sprint 92a.6). Chamadas encontradas: {numeros}"
+    )
 
 
 # "Produção não é changelog." -- princípio de release
