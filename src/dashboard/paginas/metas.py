@@ -14,6 +14,7 @@ from src.dashboard.tema import (
     FONTE_MINIMA,
     FONTE_SUBTITULO,
     hero_titulo_html,
+    rgba_cor,
 )
 
 CAMINHO_METAS: Path = Path(__file__).resolve().parents[3] / "mappings" / "metas.yaml"
@@ -64,6 +65,25 @@ def _cor_prioridade(prioridade: int) -> str:
     return mapa.get(prioridade, CORES["neutro"])
 
 
+def _progress_inline_html(pct: float, cor: str) -> str:
+    """Sprint 92a.9: barra de progresso horizontal inline para embutir no card.
+
+    Aceita ``pct`` em ``[0.0, 1.0]`` (clampado) e uma cor hex para o trilho
+    preenchido. Trilho de fundo usa ``CORES["texto_sec"]`` a 25 % de opacidade
+    para não concorrer com o conteúdo textual.
+    """
+    pct_clamped = max(0.0, min(float(pct), 1.0))
+    largura_pct = pct_clamped * 100
+    cor_trilho = rgba_cor(CORES["texto_sec"], 0.25)
+    return (
+        f'<div style="height: 4px; background: {cor_trilho};'
+        f' border-radius: 2px; margin: 8px 0 0 0;">'
+        f'<div style="width: {largura_pct:.1f}%; height: 100%;'
+        f' background: {cor}; border-radius: 2px;"></div>'
+        f"</div>"
+    )
+
+
 def _card_meta(meta: dict[str, Any]) -> str:
     """Gera HTML de card para uma meta."""
     nome = meta.get("nome", "Sem nome")
@@ -86,6 +106,7 @@ def _card_meta(meta: dict[str, Any]) -> str:
     else:
         cor_urgencia = CORES["alerta"]
 
+    progresso_html = ""
     if tipo == "binario":
         status = "Pendente"
         detalhe = ""
@@ -93,13 +114,22 @@ def _card_meta(meta: dict[str, Any]) -> str:
         valor_alvo = meta.get("valor_alvo", 0)
         valor_atual = meta.get("valor_atual", 0)
         status = f"{formatar_moeda(valor_atual)} / {formatar_moeda(valor_alvo)}"
-        progresso_pct = _calcular_progresso(meta) * 100
+        progresso = _calcular_progresso(meta)
+        progresso_pct = progresso * 100
         detalhe = (
             f'<p style="color: {CORES["texto_sec"]};'
             f" font-size: {FONTE_MINIMA}px;"
             ' margin: 2px 0;">'
             f"Progresso: {progresso_pct:.0f}%</p>"
         )
+        # Sprint 92a.9: barra inline DENTRO do card, cor por status.
+        if progresso_pct >= 100:
+            cor_barra = CORES["positivo"]
+        elif progresso_pct >= 50:
+            cor_barra = CORES["alerta"]
+        else:
+            cor_barra = CORES["negativo"]
+        progresso_html = _progress_inline_html(progresso, cor_barra)
 
     nota_html = ""
     if nota:
@@ -143,6 +173,7 @@ def _card_meta(meta: dict[str, Any]) -> str:
         f" font-size: {FONTE_MINIMA}px;"
         f' margin: 4px 0;">{status}</p>'
         f"{detalhe}"
+        f"{progresso_html}"
         f'<p style="color: {cor_urgencia};'
         f" font-size: {FONTE_MINIMA}px;"
         f' margin: 4px 0;">'
@@ -212,13 +243,10 @@ def renderizar(dados: dict, mes_selecionado: str, pessoa: str) -> None:
     if metas_valor:
         st.markdown("### Metas com Valor")
         for meta in sorted(metas_valor, key=lambda m: m.get("prioridade", 99)):
+            # Sprint 92a.9: barra de progresso agora vive dentro do card
+            # (ver _progress_inline_html); a chamada st.progress externa foi
+            # removida para o card ser unidade visual coesa.
             st.markdown(_card_meta(meta), unsafe_allow_html=True)
-            progresso = _calcular_progresso(meta)
-            progresso_visual = max(progresso, 0.01)
-            st.progress(
-                progresso_visual,
-                text=f"{progresso * 100:.0f}%",
-            )
 
     if metas_binarias:
         st.markdown("### Metas Binárias (Sim/Não)")
