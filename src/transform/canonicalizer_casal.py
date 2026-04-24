@@ -121,4 +121,94 @@ def e_transferencia_do_casal(descricao: str, caminho_yaml: Optional[str] = None)
     return False
 
 
+def variantes_curtas(
+    descricao: str,
+    banco_origem: str,
+    caminho_yaml: Optional[str] = None,
+) -> bool:
+    """Nível 2 do matcher: variantes curtas sob contexto bancário obrigatório.
+
+    Sprint 82: cobre descrições abreviadas que o matcher rigoroso
+    `e_transferencia_do_casal` deliberadamente recusa (para não gerar
+    falso-positivo com homônimos). Esta função só retorna True se a
+    descrição satisfizer TODAS as condições de uma regra declarada em
+    `mappings/contas_casal.yaml` na chave `nomes_variantes`:
+
+        * banco_origem está na whitelist `bancos` da regra;
+        * pelo menos `min_matches` tokens da regra aparecem no texto;
+        * se a regra tem `marcadores`, pelo menos 1 marcador aparece;
+        * se a regra tem `data_no_texto: true`, a descrição contém
+          um padrão `DD/MM` (dois dígitos + barra + dois dígitos).
+
+    Contrato de composição com `e_transferencia_do_casal`:
+        - O chamador tipicamente tenta PRIMEIRO `e_transferencia_do_casal`.
+          Se ele retornar True, encerra. Só se retornar False é que se
+          testa `variantes_curtas`. Nunca chame os dois em paralelo sem
+          essa precedência, senão a métrica de falso-positivo mistura
+          contribuição de ambos os níveis.
+
+    Fail-closed: se o YAML estiver ausente ou inválido, retorna False.
+    """
+    if not descricao or not banco_origem:
+        return False
+
+    config = _carregar_config(caminho_yaml)
+    if not config:
+        return False
+
+    desc_upper_sem_acento = _remover_acentos(descricao.upper())
+
+    for pessoa, perfil in config.items():
+        if not isinstance(perfil, dict):
+            continue
+
+        regras = perfil.get("nomes_variantes", []) or []
+        for regra in regras:
+            if not isinstance(regra, dict):
+                continue
+
+            bancos_aceitos = regra.get("bancos", []) or []
+            if banco_origem not in bancos_aceitos:
+                continue
+
+            tokens = regra.get("tokens", []) or []
+            min_matches = int(regra.get("min_matches", 1))
+            acertos = 0
+            for token in tokens:
+                token_norm = _remover_acentos(str(token).upper().strip())
+                if not token_norm:
+                    continue
+                # Início de palavra é obrigatório (evita casar "VITORIA"
+                # dentro de "MERCAVITORIA"), mas o FIM aceita limite de
+                # palavra OU dígito aderente (cobre "Vitória09/04" onde
+                # a data vem colada ao nome em extrato Itaú).
+                padrao = rf"(?<!\w){re.escape(token_norm)}(?=\W|\d|$)"
+                if re.search(padrao, desc_upper_sem_acento):
+                    acertos += 1
+            if acertos < min_matches:
+                continue
+
+            marcadores = regra.get("marcadores", []) or []
+            if marcadores:
+                marcador_ok = any(
+                    _remover_acentos(str(m).upper()) in desc_upper_sem_acento
+                    for m in marcadores
+                )
+                if not marcador_ok:
+                    continue
+
+            if regra.get("data_no_texto") and not re.search(r"\d{2}/\d{2}", descricao):
+                continue
+
+            logger.debug(
+                "Match por variante curta: pessoa=%s banco=%s tokens=%s",
+                pessoa,
+                banco_origem,
+                tokens,
+            )
+            return True
+
+    return False
+
+
 # "Conhecer é reconhecer." -- Heráclito

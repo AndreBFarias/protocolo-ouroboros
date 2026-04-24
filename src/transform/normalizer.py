@@ -5,7 +5,10 @@ import re
 from datetime import date
 from typing import Optional
 
-from src.transform.canonicalizer_casal import e_transferencia_do_casal
+from src.transform.canonicalizer_casal import (
+    e_transferencia_do_casal,
+    variantes_curtas,
+)
 from src.transform.canonicalizer_fornecedor import canonicalizar as canonicalizar_fornecedor
 from src.utils.logger import configurar_logger
 
@@ -44,16 +47,21 @@ def inferir_tipo_transacao(
     descricao: str,
     tipo_sugerido: Optional[str] = None,
     valor_com_sinal: Optional[float] = None,
+    banco_origem: Optional[str] = None,
 ) -> str:
     """Infere se é Despesa, Receita, Transferência Interna ou Imposto.
 
     Ordem de prioridade:
-        1. Regex de Transferência Interna (sempre prevalece, mesmo sobre `tipo_sugerido`).
-        2. Regex de Imposto (prevalece sobre `tipo_sugerido`).
-        3. `tipo_sugerido` do extrator (respeita sinal original do CSV).
-        4. Regex de Receita.
-        5. Sinal de `valor_com_sinal` (se fornecido) ou `valor` (legado).
-        6. Default: Despesa.
+        1. Matcher rigoroso do casal (sempre prevalece).
+        2. Matcher de variantes curtas (Sprint 82) -- exige `banco_origem`
+           para checar whitelist + marcadores; sem banco, é pulado.
+        3. Regex de Transferência Interna operacional (pagamento fatura,
+           resgate/aplicação CDB/RDB).
+        4. Regex de Imposto (prevalece sobre `tipo_sugerido`).
+        5. `tipo_sugerido` do extrator (respeita sinal original do CSV).
+        6. Regex de Receita.
+        7. Sinal de `valor_com_sinal` (se fornecido) ou `valor` (legado).
+        8. Default: Despesa.
 
     `tipo_sugerido` aceita os valores: "Receita", "Despesa",
     "Transferência Interna", "Imposto". Qualquer outro é ignorado.
@@ -61,6 +69,9 @@ def inferir_tipo_transacao(
     desc_upper = descricao.upper()
 
     if e_transferencia_do_casal(descricao):
+        return "Transferência Interna"
+
+    if banco_origem and variantes_curtas(descricao, banco_origem):
         return "Transferência Interna"
 
     padroes_transferencia_interna_operacional = [
