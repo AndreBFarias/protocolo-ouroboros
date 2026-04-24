@@ -165,6 +165,16 @@ def _descobrir_extratores() -> list:
     except ImportError as e:
         logger.warning("Extrator dirpf_dec indisponível: %s", e)
 
+    # Boleto PDF (Sprint 87.3 / 87e 2026-04-24). Registrado antes do catch-all
+    # recibo_nao_fiscal para que `./run.sh --tudo` ingira boletos no grafo sem
+    # depender de reprocessar_documentos.py manual.
+    try:
+        from src.extractors.boleto_pdf import ExtratorBoletoPDF
+
+        extratores.append(ExtratorBoletoPDF)
+    except ImportError as e:
+        logger.warning("Extrator boleto_pdf indisponível: %s", e)
+
     # Recibo não-fiscal é catch-all de baixa prioridade (Sprint 47):
     # registrado depois dos extratores fiscais para não capturar arquivo
     # que pertence a cupom térmico, NFC-e ou DANFE.
