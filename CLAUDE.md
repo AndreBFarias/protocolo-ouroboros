@@ -1,31 +1,68 @@
 # CLAUDE.md -- Protocolo Ouroboros
 
 ```
-VERSÃO: 5.3 | STATUS: PRODUÇÃO (Rota "conserta tudo" + Fases A + B + C concluídas 2026-04-23; Sprint E auditoria técnica concluída; resta Sprint D artesanal) | LANG: PT-BR
-TRANSAÇÕES: 6.088 | MESES: 82 (out/2019 a out/2026) | BANCOS: 6 | EXTRATORES: 11 (9 bancários + DAS PARCSN + DIRPF) + 10 documentais (NFCe, DANFE, boleto, cupom_termico, garantia, etc.)
-GRAFO: 7.480 nodes + 24.700 edges (data/output/grafo.sqlite, ~5MB). 41 documentos catalogados: 24 holerites + 10 DAS_PARCSN + 4 NFCe + 2 boletos + 1 DIRPF.
-SPRINTS: 115 (76 concluídas, 26 backlog, 13 arquivadas; 7 sprints-filhas novas em 2026-04-23: 82b, 92a/b/c, 93a/b/c)
-CATEGORIZAÇÃO: 100% | IRPF TAGS: 164 (75 com CNPJ) | HOLERITES: 24 (G4F + Infobase, todos também node documento no grafo desde P3.2)
-TESTES: 1.261 passed / 9 skipped (+122 vs baseline pré-sessão 1.139)
-ABA RENDA: 99 linhas (24 holerites + 75 MEI legítimos via mappings/fontes_renda.yaml; era 459 antes da P0.1)
+VERSÃO: 5.4 | STATUS: PRODUÇÃO (rota longa 2026-04-24 concluiu 9/10 sprints; resta só Sprint D artesanal) | LANG: PT-BR
+TRANSAÇÕES: 6.088 | MESES: 82 (out/2019 a out/2026) | BANCOS: 6 | EXTRATORES: 11 (9 bancários + DAS PARCSN + DIRPF) + 10 documentais
+GRAFO: 7.480 nodes + 24.700 edges (data/output/grafo.sqlite, ~5MB). 41 documentos catalogados.
+SPRINTS: 119 (85 concluídas, 21 backlog, 13 arquivadas; 4 sprints-filhas novas em 2026-04-24: Fa, 93d, 93e, 93f)
+CATEGORIZAÇÃO: 100% | IRPF TAGS: 164 (75 com CNPJ) | HOLERITES: 24 (todos node documento no grafo)
+TESTES: 1.530 passed / 9 skipped / 1 xfailed (+269 vs baseline pré-sessão 2026-04-24 de 1.261)
+ABA RENDA: 99 linhas (24 holerites + 75 MEI legítimos via mappings/fontes_renda.yaml)
 ROTA: Catalogador universal artesanal via supervisor interativo (ADR-13)
 SUPERVISOR: Claude Code sessão interativa — nenhuma API programática
-INTEGRAÇÕES: OFX (pronto), Controle de Bordo vault (Sprint 70/71/88 integrado; sync rico bidirecional rodou em volume real), Belvo (em teste), Gmail (setup pendente), MeuPluggy (disponível)
-ROTA ATUAL: Auditoria técnica (Sprint E) concluída. Resta Sprint D (auditoria artesanal com humano: mover tudo para inbox + reprocessar + revisar 1-a-1). Retomada: docs/HANDOFF_2026-04-23_conserta_tudo.md.
+INTEGRAÇÕES: OFX (pronto), Controle de Bordo vault (sync rico em produção), Belvo (em teste), Gmail (setup pendente)
+ROTA ATUAL: Sprint D (auditoria artesanal com humano) pendente. Recomendado: Sprint 93f antes (pipeline escanear PJ Vitória) -- 856 tx invisíveis hoje.
+RETOMADA: docs/HANDOFF_2026-04-24_rota_longa.md (HANDOFF mais recente, substitui o de 2026-04-23).
 ```
 
 ### Próxima sessão — retomada canônica
 
-Antes de tocar código, leia **`docs/HANDOFF_2026-04-23_conserta_tudo.md`** (HANDOFF mais recente) e depois **`docs/auditoria_tecnica_2026-04-23.md`** (relatório honesto de bugs/órfãos/dívida).
+Antes de tocar código, leia nesta ordem:
+1. `docs/HANDOFF_2026-04-24_rota_longa.md` — estado final com blocos 1/2/3 e achados por bloco.
+2. `docs/auditoria_tecnica_2026-04-23.md` — relatório honesto de bugs/órfãos/dívida (continua válido).
+3. `VALIDATOR_BRIEF.md` rodapé — padrões canônicos.
 
-Se a rota quer fechar débitos P1 antes da Sprint D artesanal, seguir a ordem recomendada na seção final da auditoria:
-1. Deletar YAMLs órfãos (`layouts_danfe.yaml`, `layouts_nfce.yaml`).
-2. Sprint 87e -- registrar `boleto_pdf` no pipeline (P1-01).
-3. Sprint 92a P0 -- 2 fixes críticos UX (pyvis labels, treemap contraste).
-4. Sprint 93a -- investigar dedup agressiva dos extratores bancários.
-5. Sprint F -- testes dedicados para 8 extratores bancários sem cobertura.
+**Rota recomendada:**
+1. **Sprint 93f** (~1h) — pipeline escanear `data/raw/vitoria/nubank_pj_*`. Fix 93c funciona em unit-teste mas runtime nem processa os 856 tx PJ da Vitória. Spec em `docs/sprints/backlog/sprint_93f_pipeline_escanear_vitoria_pj.md`.
+2. **Sprint D** (artesanal, interativa com humano) — auditoria linha-a-linha após 93f garantir que PJ aparece no XLSX.
 
-Se quiser pular direto para Sprint D artesanal, o sistema está tecnicamente saudável (gauntlet verde, smoke 8/8).
+**Rota alternativa** (direto na D sem 93f): sistema tecnicamente saudável (gauntlet verde, smoke 8/8). Durante a D você vai descobrir visualmente o gap do PJ e consertar no meio do caminho.
+
+**Sprint-filhas em backlog não-urgentes:**
+- **Fa** (P2) — OFX duplicação account+accounts. Teste `xfail(strict=True)` já no repo.
+- **93d** (P2) — preservação forte de downloads + reprocessamento cronológico (dataloss nubank_pf_cc).
+- **93e** (P3) — propagar `_arquivo_origem` como coluna do XLSX.
+
+### Sessão 2026-04-24 — rota longa (9 sprints + handoff)
+
+Continuação da sessão 2026-04-23. Executou a rota longa aprovada: Bloco 1 (cobertura+fidelidade bancária) + Bloco 2 (UX) + Bloco 3 (conta-espelho cartão). 30+ commits em main. Baseline pytest 1.261 → 1.530 (+269 testes). Zero regressão. Smoke 8/8 preservado.
+
+| # | Sprint | Commit(s) | Entregas-chave |
+|---|--------|-----------|----------------|
+| 1 | 87e registrar boleto_pdf | `cec25d0` + `59f6423` | `ExtratorBoletoPDF` em `_descobrir_extratores`; +3 testes |
+| 2 | F testes extratores bancários | `cc78c57` | 8 arquivos de teste + 8 fixtures sintéticas (c6_cc, c6_cartao, itau_pdf, santander_pdf, nubank_cc, nubank_cartao, ofx_parser, energia_ocr); +102 testes; bug OFX capturado por xfail |
+| 3 | 93a flag --deduplicado | `9762040` | SHA-dedup físico + dedup nível 1/2 do pipeline no auditor; itau_cc e santander_cartao delta R$ 0,00; +6 testes |
+| 4 | 93b flags --com-ofx/--ignorar-ti | `507c309` | c6_cartao delta R$ 0,00; nubank_cartao 95% reduzido; diagnóstico c6_cc + nubank_pf_cc; +6 testes |
+| 5 | 93c rotulagem Nubank PJ | `8c7a83c` | `_rotular_banco_origem` em nubank_cartao.py; +2 testes |
+| 6 | 92a P0 4 fixes cirúrgicos | `106227d` + `719cdce` + `ebf918e` + `ff8cca1` + `6d18d09` | labels pyvis humanos + contraste treemap WCAG + completude paleta+toggle + rename Pagamentos + fix dtype object |
+| 7 | 92a P0 screenshots | `994da5e` | 8 PNGs ANTES/DEPOIS |
+| 8 | 92a P1 4 fixes majors | `62045e3` + `9e3d267` + `dee56de` + `2162b7a` | hero_titulo_html em 10 páginas + paginação Extrato + progress inline Metas + metric colorido Projeções |
+| 9 | 92a P1 screenshots | `ff2069a` | 20 PNGs |
+| 10 | 92a P2 + fechamento | `769100f` | ROTULOS novos + hovertemplate Sankey + caption Doc? + spec → concluídos |
+| 11 | 92b 5 clusters + ADR-22 | `dc7565a` | sidebar radio "Área" + `MAPA_ABA_PARA_CLUSTER` + URL compat + 5 screenshots |
+| 12 | 92c design system | `69a3a49` + `efd6cc5` + `728c213` + `952323a` | CSS vars + 6 helpers + 11 SVGs Feather inline + migrar 13 páginas; `callout_html` substitui 51 `st.warning/info/success` |
+| 13 | 82b conta-espelho cartão | `003c98e` + `5f4e31a` + `cda1055` + `83b8ecb` | flag `_virtual` + espelho em c6_cartao e santander (nubank não aplicável); +13 testes |
+
+**Sprints-filhas novas formalizadas** (4 em backlog): Fa (OFX dedup), 93d (preservação forte), 93e (coluna arquivo_origem), 93f (pipeline escanear PJ).
+
+**Achados PII mascarados durante a sessão** (antes de commitar):
+- CPF André + nome no relatório Família B (sprint 93b).
+- CPF PF Vitória em path de CSV (sprint 93b).
+- CNPJ MEI Vitória na spec 93c (pré-sessão, mascarei ao mover p/ concluidos).
+
+Decisão do supervisor: aceitar PII histórico (pré-sessão) como está; history rewrite destrutivo dispensado.
+
+### Sessão 2026-04-23 — rota "conserta tudo" + Fases A + B + C + E
 
 ### Sessão 2026-04-23 — rota "conserta tudo" + Fases A + B + C + E
 
