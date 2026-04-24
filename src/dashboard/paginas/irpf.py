@@ -12,6 +12,7 @@ from src.dashboard.tema import (
     FONTE_SUBTITULO,
     FONTE_TITULO,
     LAYOUT_PLOTLY,
+    callout_html,
     card_html,
     hero_titulo_html,
     rgba_cor,
@@ -38,14 +39,20 @@ def renderizar(
     )
 
     if "extrato" not in dados:
-        st.warning("Nenhum dado de extrato encontrado para análise IRPF.")
+        st.markdown(
+            callout_html("warning", "Nenhum dado de extrato encontrado para análise IRPF."),
+            unsafe_allow_html=True,
+        )
         return
 
     extrato = dados["extrato"]
     anos_disponiveis = _extrair_anos(extrato)
 
     if not anos_disponiveis:
-        st.warning("Nenhum ano disponível para análise IRPF.")
+        st.markdown(
+            callout_html("warning", "Nenhum ano disponível para análise IRPF."),
+            unsafe_allow_html=True,
+        )
         return
 
     ano_selecionado = st.selectbox(
@@ -59,7 +66,10 @@ def renderizar(
     df_ano = extrato[extrato["mes_ref"].str.startswith(ano_selecionado)].copy()
 
     if df_ano.empty:
-        st.info(f"Sem transações para o ano {ano_selecionado}.")
+        st.markdown(
+            callout_html("info", f"Sem transações para o ano {ano_selecionado}."),
+            unsafe_allow_html=True,
+        )
         return
 
     totais = _calcular_totais_irpf(df_ano)
@@ -272,7 +282,10 @@ def _grafico_mensal(df_ano: pd.DataFrame, ano: str) -> None:
 
     df_tags = df_ano[df_ano["tag_irpf"].notna()].copy()
     if df_tags.empty:
-        st.info("Sem transações com tags IRPF para exibir gráfico mensal.")
+        st.markdown(
+            callout_html("info", "Sem transações com tags IRPF para exibir gráfico mensal."),
+            unsafe_allow_html=True,
+        )
         return
 
     tags_rendimento = {"rendimento_tributavel", "rendimento_isento"}
@@ -394,7 +407,10 @@ def _grafico_distribuicao_tags(df_ano: pd.DataFrame) -> None:
 
     df_tags = df_ano[df_ano["tag_irpf"].notna()].copy()
     if df_tags.empty:
-        st.info("Sem tags IRPF para exibir distribuição.")
+        st.markdown(
+            callout_html("info", "Sem tags IRPF para exibir distribuição."),
+            unsafe_allow_html=True,
+        )
         return
 
     nomes_tags: dict[str, str] = {

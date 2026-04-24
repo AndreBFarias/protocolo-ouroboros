@@ -28,6 +28,7 @@ from src.dashboard.tema import (
     FONTE_LABEL,
     FONTE_SUBTITULO,
     SPACING,
+    callout_html,
     card_html,
     hero_titulo_html,
     rgba_cor_inline,
@@ -83,10 +84,14 @@ def renderizar(
     )
 
     if not _dados.CAMINHO_GRAFO.exists():
-        st.warning(
-            "Grafo SQLite não encontrado. Popule o catálogo rodando "
-            "`./run.sh --tudo` (ou `make process`) para gerar "
-            "`data/output/grafo.sqlite`."
+        st.markdown(
+            callout_html(
+                "warning",
+                "Grafo SQLite não encontrado. Popule o catálogo rodando "
+                "`./run.sh --tudo` (ou `make process`) para gerar "
+                "`data/output/grafo.sqlite`.",
+            ),
+            unsafe_allow_html=True,
         )
         return
 
@@ -157,7 +162,10 @@ def _renderizar_cards_por_tipo(docs: pd.DataFrame) -> None:
     )
 
     if docs.empty:
-        st.info("Nenhum documento catalogado ainda.")
+        st.markdown(
+            callout_html("info", "Nenhum documento catalogado ainda."),
+            unsafe_allow_html=True,
+        )
         return
 
     contagem = docs["tipo_documento"].value_counts().to_dict()
@@ -193,7 +201,10 @@ def _renderizar_tabela_documentos(docs: pd.DataFrame) -> None:
     )
 
     if docs.empty:
-        st.info("Nenhum documento para exibir.")
+        st.markdown(
+            callout_html("info", "Nenhum documento para exibir."),
+            unsafe_allow_html=True,
+        )
         return
 
     docs_ordenados = docs.sort_values("data_emissao", ascending=False).head(20)
@@ -239,7 +250,10 @@ def _renderizar_painel_conflitos(docs: pd.DataFrame) -> None:
     )
 
     if not _dados.CAMINHO_PROPOSTAS_LINKING.exists():
-        st.info("Diretório de propostas de linking ainda não existe.")
+        st.markdown(
+            callout_html("info", "Diretório de propostas de linking ainda não existe."),
+            unsafe_allow_html=True,
+        )
         return
 
     arquivos = sorted(
@@ -249,7 +263,10 @@ def _renderizar_painel_conflitos(docs: pd.DataFrame) -> None:
     )
 
     if not arquivos:
-        st.success("Nenhum conflito de linking pendente.")
+        st.markdown(
+            callout_html("success", "Nenhum conflito de linking pendente."),
+            unsafe_allow_html=True,
+        )
         return
 
     for arq in arquivos[:10]:
@@ -276,12 +293,18 @@ def _renderizar_gaps(docs: pd.DataFrame) -> None:
     )
 
     if docs.empty or "data_emissao" not in docs.columns:
-        st.info("Sem dados de cobertura.")
+        st.markdown(
+            callout_html("info", "Sem dados de cobertura."),
+            unsafe_allow_html=True,
+        )
         return
 
     docs_com_data = docs[docs["data_emissao"].fillna("") != ""].copy()
     if docs_com_data.empty:
-        st.info("Documentos sem data de emissão.")
+        st.markdown(
+            callout_html("info", "Documentos sem data de emissão."),
+            unsafe_allow_html=True,
+        )
         return
 
     docs_com_data["mes_ref"] = docs_com_data["data_emissao"].str[:7]
@@ -291,7 +314,10 @@ def _renderizar_gaps(docs: pd.DataFrame) -> None:
     gaps.sort(key=lambda x: x[0], reverse=True)
 
     if not gaps:
-        st.success("Todos os meses com >=5 documentos.")
+        st.markdown(
+            callout_html("success", "Todos os meses com >=5 documentos."),
+            unsafe_allow_html=True,
+        )
         return
 
     for mes, qtd in gaps[:8]:

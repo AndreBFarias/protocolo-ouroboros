@@ -24,7 +24,9 @@ from src.dashboard.tema import (
     CORES,
     FONTE_CORPO,
     LAYOUT_PLOTLY,
+    callout_html,
     hero_titulo_html,
+    metric_semantic_html,
 )
 
 
@@ -47,7 +49,10 @@ def renderizar(
     )
 
     if "extrato" not in dados:
-        st.warning("Extrato não disponível.")
+        st.markdown(
+            callout_html("warning", "Extrato não disponível."),
+            unsafe_allow_html=True,
+        )
         return
 
     # Sprint 72: respeita o filtro global de forma de pagamento (mesmo estando
@@ -100,25 +105,42 @@ def _renderizar_boletos(extrato: pd.DataFrame, prazos: pd.DataFrame) -> None:
             except Exception:  # noqa: BLE001
                 pass
     if boletos.empty:
-        st.info("Nenhum boleto identificado no período/filtros atuais.")
+        st.markdown(
+            callout_html("info", "Nenhum boleto identificado no período/filtros atuais."),
+            unsafe_allow_html=True,
+        )
         return
 
     # Alertas acima da tabela
     alertas = alertas_vencimento(boletos, dias_aviso=3)
     for a in alertas[:10]:
-        st.warning(a)
+        st.markdown(callout_html("warning", a), unsafe_allow_html=True)
     if len(alertas) > 10:
         st.caption(f"+{len(alertas) - 10} alertas adicionais.")
 
     # Resumo por status
+    # Sprint 92c: metric_semantic_html permite colorir o valor por sinal do
+    # status (pagos em verde, atrasados em vermelho, pendentes neutros).
     if "status" in boletos.columns:
         col_pago, col_pend, col_atr = st.columns(3)
-        col_pago.metric("Pagos", int((boletos["status"] == STATUS_PAGO).sum()))
-        col_pend.metric(
-            "Pendentes", int((boletos["status"] == STATUS_PENDENTE).sum())
+        total_pagos = int((boletos["status"] == STATUS_PAGO).sum())
+        total_pendentes = int((boletos["status"] == STATUS_PENDENTE).sum())
+        total_atrasados = int((boletos["status"] == STATUS_ATRASADO).sum())
+        col_pago.markdown(
+            metric_semantic_html("Pagos", str(total_pagos), cor=CORES["positivo"]),
+            unsafe_allow_html=True,
         )
-        col_atr.metric(
-            "Atrasados", int((boletos["status"] == STATUS_ATRASADO).sum())
+        col_pend.markdown(
+            metric_semantic_html("Pendentes", str(total_pendentes)),
+            unsafe_allow_html=True,
+        )
+        col_atr.markdown(
+            metric_semantic_html(
+                "Atrasados",
+                str(total_atrasados),
+                cor=CORES["negativo"] if total_atrasados > 0 else CORES["texto_sec"],
+            ),
+            unsafe_allow_html=True,
         )
 
     # P2.2 2026-04-23: vencimento formatado como date-only (YYYY-MM-DD)
@@ -184,7 +206,10 @@ def _formatar_boletos_para_exibicao(boletos: pd.DataFrame) -> pd.DataFrame:
 def _renderizar_pix(extrato: pd.DataFrame) -> None:
     top = top_beneficiarios_pix(extrato, top_n=20)
     if top.empty:
-        st.info("Nenhum Pix encontrado no período/filtros atuais.")
+        st.markdown(
+            callout_html("info", "Nenhum Pix encontrado no período/filtros atuais."),
+            unsafe_allow_html=True,
+        )
         return
 
     total = float(top["total"].sum())
@@ -193,8 +218,16 @@ def _renderizar_pix(extrato: pd.DataFrame) -> None:
     total_br = (
         f"R$ {total:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
     )
-    col1.metric("Total Top 20", total_br)
-    col2.metric("Beneficiários", qtd_beneficiarios)
+    # Sprint 92c: metric_semantic_html substitui st.metric (texto_sec neutro,
+    # cor por sinal quando aplicavel). Aqui, sem delta, fica neutro.
+    col1.markdown(
+        metric_semantic_html("Total Top 20", total_br),
+        unsafe_allow_html=True,
+    )
+    col2.markdown(
+        metric_semantic_html("Beneficiários", str(qtd_beneficiarios)),
+        unsafe_allow_html=True,
+    )
 
     fig = px.bar(
         top,
@@ -224,7 +257,10 @@ def _renderizar_pix(extrato: pd.DataFrame) -> None:
 def _renderizar_credito(extrato: pd.DataFrame) -> None:
     faturas = faturas_credito(extrato)
     if not faturas:
-        st.info("Nenhuma despesa em Crédito no período/filtros atuais.")
+        st.markdown(
+            callout_html("info", "Nenhuma despesa em Crédito no período/filtros atuais."),
+            unsafe_allow_html=True,
+        )
         return
 
     for banco, df_banco in faturas.items():

@@ -39,6 +39,8 @@ from src.dashboard.tema import (
     LAYOUT_PLOTLY,
     SPACING,
     aplicar_locale_ptbr,
+    callout_html,
+    chip_html,
     hero_titulo_html,
     rgba_cor,
     rgba_cor_inline,
@@ -83,9 +85,13 @@ def renderizar(
     )
 
     if not _dados.CAMINHO_GRAFO.exists():
-        st.warning(
-            "Grafo SQLite não encontrado em `data/output/grafo.sqlite`. "
-            "Popule o catálogo rodando `./run.sh --tudo` para gerar o grafo."
+        st.markdown(
+            callout_html(
+                "warning",
+                "Grafo SQLite não encontrado em `data/output/grafo.sqlite`. "
+                "Popule o catálogo rodando `./run.sh --tudo` para gerar o grafo.",
+            ),
+            unsafe_allow_html=True,
         )
         return
 
@@ -158,9 +164,13 @@ def _renderizar_fullpage() -> None:
                 )
             st.caption(f"{len(nodes)} nós, {len(edges)} arestas")
             if not nodes:
-                st.info(
-                    "Nenhum nó para os filtros atuais. Amplie o limite, "
-                    "habilite órfãos ou ajuste os tipos."
+                st.markdown(
+                    callout_html(
+                        "info",
+                        "Nenhum nó para os filtros atuais. Amplie o limite, "
+                        "habilite órfãos ou ajuste os tipos.",
+                    ),
+                    unsafe_allow_html=True,
                 )
                 return
             html = construir_grafo_html(nodes, edges, altura_px=800)
@@ -195,7 +205,10 @@ def _renderizar_subgrafo() -> None:
 
     fornecedores = listar_fornecedores_com_id()
     if not fornecedores:
-        st.info("Nenhum fornecedor registrado no grafo ainda.")
+        st.markdown(
+            callout_html("info", "Nenhum fornecedor registrado no grafo ainda."),
+            unsafe_allow_html=True,
+        )
         return
 
     rotulos = {f["id"]: label_humano(f) for f in fornecedores}
@@ -216,7 +229,10 @@ def _renderizar_subgrafo() -> None:
     edges = sub.get("edges", [])
 
     if not nodes:
-        st.info("Nenhum vizinho encontrado para este fornecedor.")
+        st.markdown(
+            callout_html("info", "Nenhum vizinho encontrado para este fornecedor."),
+            unsafe_allow_html=True,
+        )
         return
 
     fig = _construir_figura_grafo(nodes, edges, int(id_selecionado))
@@ -333,28 +349,27 @@ def _construir_figura_grafo(
 
 
 def _renderizar_legenda_tipos(nodes: list[dict]) -> None:
-    """Mostra badges dos tipos presentes no subgrafo."""
+    """Mostra chips dos tipos presentes no subgrafo.
+
+    Sprint 92c: ``chip_html`` canônico substitui os ``<span>`` ad-hoc
+    anteriores. Cada chip usa a cor do tipo em ``CORES_TIPO`` (borda + texto)
+    e não é clicável -- função puramente informativa.
+    """
     tipos_presentes = sorted({n.get("tipo", "outro") for n in nodes})
     if not tipos_presentes:
         return
-    badges_html: list[str] = []
-    for tipo in tipos_presentes:
-        cor = CORES_TIPO.get(tipo, CORES["texto_sec"])
-        badges_html.append(
-            f'<span style="background-color: {cor};'
-            f" color: {CORES['fundo']};"
-            f" padding: 3px 10px;"
-            f" border-radius: 4px;"
-            f" font-size: {FONTE_LABEL}px;"
-            f" font-weight: 700;"
-            f" letter-spacing: 0.05em;"
-            f" margin-right: 6px;"
-            f' text-transform: uppercase;">{tipo}</span>'
+    chips_html = "".join(
+        chip_html(
+            tipo,
+            cor=CORES_TIPO.get(tipo, CORES["texto_sec"]),
+            clicavel=False,
         )
+        for tipo in tipos_presentes
+    )
     st.markdown(
         f'<div style="display: flex; flex-wrap: wrap;'
         f' gap: 6px; margin-top: {SPACING["sm"]}px;">'
-        + "".join(badges_html)
+        + chips_html
         + "</div>",
         unsafe_allow_html=True,
     )

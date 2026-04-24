@@ -231,7 +231,10 @@ class TestMOCMensal:
 
 class TestRenderizacaoPagina:
     def test_pagina_renderiza_sem_crash_grafo_vazio(self, tmp_path, monkeypatch):
-        """Grafo ausente: página mostra warning e não crasha."""
+        """Grafo ausente: página mostra callout warning e não crasha.
+
+        Sprint 92c: st.warning virou callout_html em st.markdown.
+        """
         from streamlit.testing.v1 import AppTest
 
         inexistente = tmp_path / "nao_existe.sqlite"
@@ -239,8 +242,8 @@ class TestRenderizacaoPagina:
         at = AppTest.from_string(script)
         at.run()
         assert not at.exception
-        textos_warn = [w.value for w in at.warning]
-        assert any("grafo" in t.lower() for t in textos_warn)
+        textos_markdown = " ".join(m.value for m in at.markdown).lower()
+        assert "grafo" in textos_markdown
 
     def test_pagina_renderiza_com_dados_reais(self, grafo_sprint53):
         """Grafo populado: página renderiza hero, selectbox e sem crash."""

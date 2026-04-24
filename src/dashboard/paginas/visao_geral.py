@@ -17,13 +17,14 @@ from src.dashboard.dados import (
 )
 from src.dashboard.tema import (
     CORES,
-    FONTE_CORPO,
     FONTE_MINIMA,
     FONTE_SUBTITULO,
     LAYOUT_PLOTLY,
     MAPA_CLASSIFICACAO,
     aplicar_locale_ptbr,
+    callout_html,
     hero_titulo_html,
+    progress_inline_html,
 )
 
 
@@ -45,7 +46,10 @@ def renderizar(
     )
 
     if "extrato" not in dados:
-        st.warning("Nenhum dado encontrado para a visão geral.")
+        st.markdown(
+            callout_html("warning", "Nenhum dado encontrado para a visão geral."),
+            unsafe_allow_html=True,
+        )
         return
 
     gran = ctx.get("granularidade", "Mês") if ctx else "Mês"
@@ -106,7 +110,14 @@ def renderizar(
 
 
 def _indicador_saude(receita: float, saldo: float, superfluo: float) -> None:
-    """Exibe indicador de saúde financeira com orientação."""
+    """Exibe indicador de saúde financeira com orientação.
+
+    Sprint 92c: o card visual passou a compor ``callout_html`` com o rótulo +
+    orientação (padrão tipo "info" quando saudável, "warning" em atenção,
+    "error" em crítico) + uma barra de progresso inline do % de poupança
+    (``progress_inline_html``) abaixo da mensagem. Mantém acessibilidade
+    visual (cor por severidade) e reaproveita a fonte única de cores.
+    """
     if receita <= 0:
         return
 
@@ -114,15 +125,18 @@ def _indicador_saude(receita: float, saldo: float, superfluo: float) -> None:
 
     if percentual > 30:
         nivel = "Saudável"
-        cor = CORES["positivo"]
+        tipo_callout = "success"
+        cor_barra = CORES["positivo"]
         orientacao = f"Poupança de {percentual:.0f}% da receita"
     elif percentual > 10:
         nivel = "Atenção"
-        cor = CORES["alerta"]
+        tipo_callout = "warning"
+        cor_barra = CORES["alerta"]
         orientacao = f"Poupança de {percentual:.0f}%. Ideal: acima de 30%"
     else:
         nivel = "Crítico"
-        cor = CORES["negativo"]
+        tipo_callout = "error"
+        cor_barra = CORES["negativo"]
         if superfluo > 0:
             economia_necessaria = receita * 0.1 - saldo
             orientacao = (
@@ -134,20 +148,17 @@ def _indicador_saude(receita: float, saldo: float, superfluo: float) -> None:
             orientacao = f"Poupança de apenas {percentual:.0f}%. Revisar despesas obrigatórias"
 
     st.markdown(
-        f'<div style="'
-        f"background-color: {CORES['card_fundo']};"
-        f" border-left: 4px solid {cor};"
-        f" border-radius: 8px;"
-        f" padding: 20px;"
-        f" margin: 10px 0 20px 0;"
-        f'">'
-        f'<span style="color: {cor}; font-weight: bold;'
-        f' font-size: {FONTE_SUBTITULO}px;">'
-        f"Saúde financeira: {nivel}</span>"
-        f'<span style="color: {CORES["texto_sec"]};'
-        f" margin-left: 15px;"
-        f' font-size: {FONTE_CORPO}px;">'
-        f"{orientacao}</span></div>",
+        callout_html(
+            tipo_callout,
+            orientacao,
+            titulo=f"Saúde financeira: {nivel}",
+        ),
+        unsafe_allow_html=True,
+    )
+    # Barra inline do % de poupança (0..30% = range visível; acima vira 100%).
+    pct_visivel = max(0.0, min(percentual / 30.0, 1.0))
+    st.markdown(
+        progress_inline_html(pct_visivel, cor=cor_barra),
         unsafe_allow_html=True,
     )
 
@@ -247,7 +258,10 @@ def _grafico_classificacao(extrato_mes: pd.DataFrame) -> None:
     df = extrato_mes[extrato_mes["tipo"].isin(["Despesa", "Imposto"])]
 
     if df.empty:
-        st.info("Sem despesas para exibir a distribuição.")
+        st.markdown(
+            callout_html("info", "Sem despesas para exibir a distribuição."),
+            unsafe_allow_html=True,
+        )
         return
 
     agrupado = df.groupby("classificacao")["valor"].sum().reset_index()

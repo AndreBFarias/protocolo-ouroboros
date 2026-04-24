@@ -30,6 +30,7 @@ from src.dashboard.tema import (
     FONTE_CORPO,
     FONTE_SUBTITULO,
     LAYOUT_PLOTLY,
+    callout_html,
     hero_titulo_html,
 )
 
@@ -135,7 +136,10 @@ def renderizar(
     )
 
     if "extrato" not in dados:
-        st.warning("Extrato não disponível.")
+        st.markdown(
+            callout_html("warning", "Extrato não disponível."),
+            unsafe_allow_html=True,
+        )
         return
 
     extrato = filtrar_por_forma_pagamento(
@@ -145,9 +149,13 @@ def renderizar(
 
     categorias = carregar_categorias_obrigatorias()
     if not categorias:
-        st.warning(
-            "Nenhuma categoria em `mappings/categorias_tracking.yaml`. "
-            "Configure as categorias obrigatórias para ver o gap analysis."
+        st.markdown(
+            callout_html(
+                "warning",
+                "Nenhuma categoria em `mappings/categorias_tracking.yaml`. "
+                "Configure as categorias obrigatórias para ver o gap analysis.",
+            ),
+            unsafe_allow_html=True,
         )
         return
 
@@ -165,19 +173,27 @@ def renderizar(
     if filtrar_ruido:
         categorias = filtrar_categorias_por_volume(extrato, categorias)
         if not categorias:
-            st.info(
-                "Nenhuma categoria obrigatória tem 2+ transações no período atual. "
-                "Desative o filtro para ver o heatmap completo."
+            st.markdown(
+                callout_html(
+                    "info",
+                    "Nenhuma categoria obrigatória tem 2+ transações no período atual. "
+                    "Desative o filtro para ver o heatmap completo.",
+                ),
+                unsafe_allow_html=True,
             )
             return
 
     resumo = calcular_completude(extrato, categorias_obrigatorias=categorias)
 
     if not resumo:
-        st.info(
-            "Nenhuma transação de categoria obrigatória no período. "
-            "Verifique filtros ou a lista de categorias em "
-            "`mappings/categorias_tracking.yaml`."
+        st.markdown(
+            callout_html(
+                "info",
+                "Nenhuma transação de categoria obrigatória no período. "
+                "Verifique filtros ou a lista de categorias em "
+                "`mappings/categorias_tracking.yaml`.",
+            ),
+            unsafe_allow_html=True,
         )
         return
 
@@ -194,10 +210,16 @@ def renderizar(
     )
     lista_alertas = alertas(resumo)
     if not lista_alertas:
-        st.success("Nenhum alerta para o período — todas as categorias estão cobertas.")
+        st.markdown(
+            callout_html(
+                "success",
+                "Nenhum alerta para o período — todas as categorias estão cobertas.",
+            ),
+            unsafe_allow_html=True,
+        )
     else:
         for a in lista_alertas[:20]:
-            st.warning(a)
+            st.markdown(callout_html("warning", a), unsafe_allow_html=True)
         if len(lista_alertas) > 20:
             st.caption(f"+{len(lista_alertas) - 20} alertas adicionais (export CSV abaixo).")
 

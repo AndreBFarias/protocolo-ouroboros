@@ -103,7 +103,18 @@ def dados_minimos() -> dict[str, pd.DataFrame]:
 
 
 def _coletar_warnings(mock_st: MagicMock) -> list[str]:
-    return [c.args[0] for c in mock_st.warning.call_args_list if c.args]
+    """Sprint 92c: callout_html passou a ser renderizado via st.markdown com
+    HTML Dracula; coletamos strings de ambas origens (st.warning legado +
+    st.markdown novo) para o teste funcionar em qualquer fase da migração.
+    """
+    mensagens: list[str] = []
+    for c in mock_st.warning.call_args_list:
+        if c.args:
+            mensagens.append(str(c.args[0]))
+    for c in mock_st.markdown.call_args_list:
+        if c.args:
+            mensagens.append(str(c.args[0]))
+    return mensagens
 
 
 def test_secao_dividas_exibe_banner_snapshot(dados_minimos: dict[str, pd.DataFrame]) -> None:

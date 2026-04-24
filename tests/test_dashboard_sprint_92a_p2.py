@@ -50,16 +50,26 @@ def test_sankey_injeta_hovertemplate_com_valor_formatado_em_reais() -> None:
 
 
 def test_extrato_exibe_caption_com_legenda_da_coluna_doc() -> None:
-    """Item 13: legenda textual da coluna `Doc?` abaixo da tabela do Extrato."""
+    """Item 13: legenda textual da coluna `Doc?` abaixo da tabela do Extrato.
+
+    Sprint 92c: a legenda deixou de ser ``st.caption`` (texto simples) e
+    passou a ser ``st.markdown`` com HTML contendo ícones Feather inline
+    (check-circle verde, alert-triangle laranja) + os rótulos PT-BR
+    ``Doc ok`` / ``Faltando``. A invariante educativa permanece: o usuário
+    precisa saber o que cada marcador significa.
+    """
     caminho = Path(__file__).parent.parent / "src" / "dashboard" / "paginas" / "extrato.py"
     source = caminho.read_text(encoding="utf-8")
 
-    assert "st.caption(" in source, "Extrato deveria usar st.caption para legenda."
-    assert "Legenda coluna 'Doc?'" in source, (
-        "Caption específica da Sprint 92a.13 não encontrada no Extrato."
-    )
+    assert "Doc?" in source, "Referência à coluna 'Doc?' ausente do Extrato."
     assert "documento vinculado no grafo" in source, (
-        "Texto explicativo do marcador 'OK' ausente; legenda não educa o usuário."
+        "Texto explicativo do marcador 'Doc ok' ausente; legenda não educa o usuário."
+    )
+    assert "icon_html(\"check-circle\"" in source or 'icon_html("check-circle"' in source, (
+        "Legenda da coluna Doc? precisa usar icon_html('check-circle', ...) (Sprint 92c)."
+    )
+    assert "icon_html(\"alert-triangle\"" in source or 'icon_html("alert-triangle"' in source, (
+        "Legenda da coluna Doc? precisa usar icon_html('alert-triangle', ...) (Sprint 92c)."
     )
 
 

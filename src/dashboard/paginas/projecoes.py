@@ -17,6 +17,7 @@ from src.dashboard.tema import (
     FONTE_SUBTITULO,
     LAYOUT_PLOTLY,
     aplicar_locale_ptbr,
+    callout_html,
     hero_titulo_html,
     rgba_cor,
 )
@@ -161,22 +162,30 @@ def _renderizar_ritmos(
         unsafe_allow_html=True,
     )
 
-    st.info(
-        "Ritmo = saldo médio mensal observado (receita menos despesa). "
-        "O ritmo histórico cobre todo o período disponível; "
-        "os ritmos de 12 e 3 meses mostram tendências mais recentes. "
-        "Se houver divergência grande entre eles, "
-        "a rotina financeira mudou recentemente."
+    st.markdown(
+        callout_html(
+            "info",
+            "Ritmo = saldo médio mensal observado (receita menos despesa). "
+            "O ritmo histórico cobre todo o período disponível; "
+            "os ritmos de 12 e 3 meses mostram tendências mais recentes. "
+            "Se houver divergência grande entre eles, "
+            "a rotina financeira mudou recentemente.",
+        ),
+        unsafe_allow_html=True,
     )
 
     saldo_mes = _saldo_do_mes(dados, mes_selecionado, pessoa)
     if mes_selecionado:
-        st.warning(
-            f"Mês corrente ({mes_selecionado}): saldo parcial de "
-            f"{formatar_moeda(saldo_mes)}. "
-            "Este valor NÃO está incluído na projeção, "
-            "pois o mês pode estar incompleto "
-            "(snapshot até a última transação importada)."
+        st.markdown(
+            callout_html(
+                "warning",
+                f"Mês corrente ({mes_selecionado}): saldo parcial de "
+                f"{formatar_moeda(saldo_mes)}. "
+                "Este valor NÃO está incluído na projeção, "
+                "pois o mês pode estar incompleto "
+                "(snapshot até a última transação importada).",
+            ),
+            unsafe_allow_html=True,
         )
 
 
@@ -197,7 +206,10 @@ def renderizar(
     )
 
     if "extrato" not in dados:
-        st.warning("Nenhum dado de extrato disponível para projeções.")
+        st.markdown(
+            callout_html("warning", "Nenhum dado de extrato disponível para projeções."),
+            unsafe_allow_html=True,
+        )
         return
 
     from src.projections.scenarios import (
@@ -209,7 +221,10 @@ def renderizar(
     transacoes = _transacoes_do_extrato(dados, pessoa)
 
     if not transacoes:
-        st.info("Sem transações suficientes para projeções.")
+        st.markdown(
+            callout_html("info", "Sem transações suficientes para projeções."),
+            unsafe_allow_html=True,
+        )
         return
 
     cenarios = projetar_cenarios(transacoes)

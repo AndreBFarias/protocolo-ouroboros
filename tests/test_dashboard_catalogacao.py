@@ -263,8 +263,13 @@ class TestRenderizacaoStreamlit:
         at = AppTest.from_string(script)
         at.run()
         assert not at.exception
-        # deve ter um warning ou info mencionando grafo
-        textos = [w.value for w in at.warning] + [i.value for i in at.info]
+        # Sprint 92c: warning/info migraram para callout_html via st.markdown.
+        # Coletamos de todas as fontes para robustez à migração em andamento.
+        textos = (
+            [w.value for w in at.warning]
+            + [i.value for i in at.info]
+            + [m.value for m in at.markdown]
+        )
         assert any("grafo" in t.lower() or "popule" in t.lower() for t in textos)
 
     def test_pagina_renderiza_com_grafo_vazio(self, grafo_vazio):

@@ -244,7 +244,11 @@ class TestRenderizacaoStreamlit:
     """Testes de renderização usando streamlit.testing.v1.AppTest."""
 
     def test_pagina_renderiza_com_input_vazio(self, grafo_busca):
-        """Sem termo: input e chips aparecem, resultados não."""
+        """Sem termo: input e chips aparecem, resultados não.
+
+        Sprint 92c: st.info foi substituido por callout_html em st.markdown;
+        o texto agora vive em at.markdown com o HTML do callout.
+        """
         from streamlit.testing.v1 import AppTest
 
         script = _script_teste_busca(grafo_busca, termo_inicial="")
@@ -253,20 +257,23 @@ class TestRenderizacaoStreamlit:
         assert not at.exception
         # text_input presente (input permanente no topo)
         assert len(at.text_input) >= 1
-        # com termo vazio, deve mostrar info pedindo para digitar
-        textos_info = [i.value for i in at.info]
-        assert any("digite" in t.lower() or "sugest" in t.lower() for t in textos_info)
+        # Com termo vazio, deve mostrar callout pedindo para digitar.
+        textos_markdown = " ".join(m.value for m in at.markdown).lower()
+        assert "digite" in textos_markdown or "sugest" in textos_markdown
 
     def test_pagina_renderiza_com_termo_sem_resultado(self, grafo_busca):
-        """Termo sem match: info 'nenhum resultado', sem crash."""
+        """Termo sem match: callout 'nenhum resultado', sem crash.
+
+        Sprint 92c: st.info virou callout_html em st.markdown.
+        """
         from streamlit.testing.v1 import AppTest
 
         script = _script_teste_busca(grafo_busca, termo_inicial="xyzzy_xyz")
         at = AppTest.from_string(script)
         at.run()
         assert not at.exception
-        textos_info = [i.value for i in at.info]
-        assert any("nenhum" in t.lower() for t in textos_info)
+        textos_markdown = " ".join(m.value for m in at.markdown).lower()
+        assert "nenhum" in textos_markdown
 
     def test_pagina_renderiza_com_termo_que_casa(self, grafo_busca):
         """Termo que casa: fornecedor aparece em markdown, sem crash."""
@@ -283,7 +290,10 @@ class TestRenderizacaoStreamlit:
         assert "NEOENERGIA" in markdowns
 
     def test_pagina_renderiza_com_grafo_ausente(self, tmp_path, monkeypatch):
-        """Grafo ausente: warning, não crasha."""
+        """Grafo ausente: callout warning, não crasha.
+
+        Sprint 92c: st.warning virou callout_html em st.markdown.
+        """
         from streamlit.testing.v1 import AppTest
 
         inexistente = tmp_path / "nao_existe.sqlite"
@@ -291,8 +301,8 @@ class TestRenderizacaoStreamlit:
         at = AppTest.from_string(script)
         at.run()
         assert not at.exception
-        textos_warn = [w.value for w in at.warning]
-        assert any("grafo" in t.lower() for t in textos_warn)
+        textos_markdown = " ".join(m.value for m in at.markdown).lower()
+        assert "grafo" in textos_markdown
 
     def test_input_permanente_no_topo(self, grafo_busca):
         """Invariante: text_input aparece ANTES de qualquer resultado.
