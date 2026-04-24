@@ -188,6 +188,7 @@ def normalizar_transacao(
     arquivo_origem: Optional[str] = None,
     tipo_sugerido: Optional[str] = None,
     valor_original_com_sinal: Optional[float] = None,
+    virtual: bool = False,
 ) -> dict:
     """Normaliza uma transação para o schema padrão do XLSX.
 
@@ -201,17 +202,30 @@ def normalizar_transacao(
             de Transferência Interna ou Imposto prevalece.
         valor_original_com_sinal: valor com sinal preservado do CSV bruto,
             usado como fallback quando `tipo_sugerido` não é fornecido.
+
+    Parâmetro novo (Sprint 82b):
+        virtual: flag interna que sinaliza linha sintética emitida por
+            extrator de cartão como contraparte espelho de pagamento de
+            fatura. Preserva-se em ``_virtual`` no dict retornado; quando
+            True, o tipo é forçado a "Transferência Interna" (contraparte
+            nunca entra em somatório de receita/despesa).
     """
     descricao_limpa = descricao.replace("&amp;", "&").strip()
 
     pessoa = inferir_pessoa(banco_origem, subtipo, descricao_limpa)
     forma = inferir_forma_pagamento(descricao_limpa, banco_origem, tipo_extrato)
-    tipo = inferir_tipo_transacao(
-        valor,
-        descricao_limpa,
-        tipo_sugerido=tipo_sugerido,
-        valor_com_sinal=valor_original_com_sinal,
-    )
+    if virtual:
+        # Sprint 82b: contraparte espelho de pagamento de fatura. Flag
+        # vence a inferência -- a linha existe por simetria com a saída
+        # real e nunca deve virar Despesa/Receita.
+        tipo = "Transferência Interna"
+    else:
+        tipo = inferir_tipo_transacao(
+            valor,
+            descricao_limpa,
+            tipo_sugerido=tipo_sugerido,
+            valor_com_sinal=valor_original_com_sinal,
+        )
     local = extrair_local(descricao_limpa)
     local = canonicalizar_fornecedor(local)
 
@@ -234,6 +248,7 @@ def normalizar_transacao(
         "_identificador": identificador,
         "_descricao_original": descricao_limpa,
         "_arquivo_origem": arquivo_origem,
+        "_virtual": virtual,
     }
 
 

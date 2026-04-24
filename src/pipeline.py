@@ -245,6 +245,7 @@ def _extrair_tudo(arquivos: list[Path], classes_extratores: list) -> list[dict]:
                             arquivo_origem=str(arquivo),
                             tipo_sugerido=t.tipo,
                             valor_original_com_sinal=t.valor,
+                            virtual=getattr(t, "_virtual", False),
                         )
                         transacoes_brutas.append(transacao_norm)
 
@@ -387,6 +388,12 @@ def _reclassificar_ti_orfas(transacoes: list[dict]) -> list[dict]:
     reclassificadas = 0
     for t in transacoes:
         if t.get("tipo") != "Transferência Interna":
+            continue
+
+        # Sprint 82b: espelho virtual de cartão é TI por design (contraparte
+        # de pagamento de fatura). Não depende de match textual do casal
+        # nem do regex operacional -- preserva a flag e pula a degradação.
+        if t.get("_virtual"):
             continue
 
         descricao = str(t.get("_descricao_original") or t.get("local") or "")

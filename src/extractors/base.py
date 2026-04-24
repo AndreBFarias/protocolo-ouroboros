@@ -11,7 +11,15 @@ from src.utils.logger import configurar_logger
 
 @dataclass
 class Transacao:
-    """Representa uma transação financeira normalizada."""
+    """Representa uma transação financeira normalizada.
+
+    Sprint 82b: o atributo ``_virtual`` sinaliza linha sintética emitida por
+    extrator de cartão quando detecta pagamento de fatura recebido. A linha
+    serve de contraparte espelho para o debito correspondente em conta-
+    corrente, permitindo que ``deduplicator.marcar_transferencias_internas``
+    paree os dois lados como Transferência Interna. A flag é interna do
+    pipeline e nunca vira coluna no XLSX (whitelist em ``xlsx_writer``).
+    """
 
     data: date
     valor: float
@@ -22,6 +30,7 @@ class Transacao:
     tipo: str
     identificador: Optional[str] = None
     arquivo_origem: Optional[str] = None
+    _virtual: bool = False
 
 
 class ExtratorBase(ABC):
