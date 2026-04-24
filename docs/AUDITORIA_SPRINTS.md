@@ -194,4 +194,63 @@ O irpf_tagger foi a entrega mais valiosa: transforma dados transacionais em info
 
 ---
 
+## Sessão 2026-04-23 -- rota "conserta tudo" + Fases A/B/C/E (19 sprints + auditoria)
+
+Baseline 1.139 → 1.261 passed. 30+ commits em main. Cada sprint auditada honestamente abaixo.
+
+### Rota "conserta tudo" (9 sprints)
+
+| Sprint | Commit | Veredicto | Ressalvas |
+|---|---|---|---|
+| P0.1 aba renda restritiva | `20c4366` | SUCESSO | Smoke aritmético exposto após fix (contrato mascarado por dado sujo; ver ARMADILHAS A-202304-05) |
+| P0.2 pessoa_detector CNPJ | `1a01c5d` | SUCESSO | Migração física dos 22 arquivos antigos ficou para Fase A1 |
+| P1.1 extrator DAS PARCSN | `ff0439a` | SUCESSO | 47 arquivos físicos viram 10 únicos no grafo (idempotência por número SENDA) |
+| P1.2 OCR fallback no preview | `fd04d41` | APROVADO_COM_RESSALVA | Extratores downstream precisam OCR próprio (NFCe coberto em A2) |
+| P2.1 Sprint 87d fallback idempotente | `c4ec725` | SUCESSO | 6 propostas dirty viraram 2 idempotentes em runtime |
+| P2.2 Sprint 91 UX v3 | `ad66dc1` | SUCESSO | 2 testes ajustados para acomodar novos patterns |
+| P2.3 dedupe roteamento por hash | `37479df` | SUCESSO | Só atua em reingestões novas; não é retroativo |
+| P3.1 extrator DIRPF .DEC | `f791421` | APROVADO_COM_RESSALVA | MVP parseia só cabeçalho; seções de rendimentos ficam para sprint dedicada |
+| P3.2 holerite como documento | `ba036e3` | SUCESSO | +24 docs destravaram teste cobertura (meta 20 superada) |
+
+### Fase A -- ressalvas (3 sprints)
+
+| Sprint | Commit | Veredicto | Ressalvas |
+|---|---|---|---|
+| A1 migração casal→andre | `8267b3a` | SUCESSO | 4/30 arquivos ficaram em casal/ legitimamente |
+| A2 NFCe com OCR | `2226661` | SUCESSO | NFCe Americanas 4p 0 chars extraiu 2 NFCe + 16 itens |
+| A3 categorizer idempotente | `6d65aa7` | SUCESSO | Fecha ressalva M50-1 da Sprint 50 |
+
+### Fase B -- ZETA (3 sprints)
+
+| Sprint | Commit | Veredicto | Ressalvas |
+|---|---|---|---|
+| B1 relatórios diagnósticos | `b3348bd` | SUCESSO | Alertas heurísticos por categoria (nova >R$100, >150% média, queda <30%) |
+| B2 resumo narrativo | `0d1cd36` | SUCESSO | Template heurístico sem LLM |
+| B3 IRPF YAML | `0542087` | SUCESSO | 22 regras declarativas; fallback hardcoded preservado |
+
+### Fase C -- backlog formal (3 sprints paralelas via worktrees)
+
+| Sprint | Commits | Veredicto | Ressalvas |
+|---|---|---|---|
+| C1 canonicalizer TI | `0c80bf2`+`9c66b19`→`8576127` | SUCESSO | Sprint 82b (conta-espelho) adiada formalmente |
+| C2 UX audit Nielsen | `58e99c7`→`e48970f` | SUCESSO | 0 LOC de produção; 3 sprints-filhas com 14 fixes priorizados |
+| C3 auditoria extratores | `6ad317d`→`a123501` | APROVADO_COM_RESSALVA | 8/9 bancos divergem em 3 famílias (93a/b/c) |
+
+### Fase E -- auditoria técnica
+
+| Sprint | Commit | Veredicto |
+|---|---|---|
+| E auditoria + docs mestres | (em andamento) | SUCESSO -- 0 P0, 5 P1 mapeados, 8 P2, 2 YAMLs órfãos |
+
+### Lições meta da sessão
+
+1. **Worktree isolado para sprints paralelas funciona** quando escopos são disjuntos. 3 agents em C1/C2/C3 simultâneos sem conflito.
+2. **Anti-débito dá frutos**: 7 sprints-filhas formalizadas, zero "TODO depois".
+3. **Contratos aritméticos podem mascarar dado sujo** (A-202304-05). Limpar os dois lados simultaneamente.
+4. **Padrão declarativo em YAML** consolidado: fontes_renda, pessoas, irpf_regras -- todos com schema + fallback + testes.
+5. **OCR fallback não se propaga automaticamente** entre intake e extratores (A-202304-06).
+6. **Auditoria automática** expôs bugs invisíveis: 8 de 9 extratores bancários divergem sem detecção prévia.
+
+---
+
 *"O que não se mede não se melhora; o que não se audita não se confia." -- Peter Drucker*

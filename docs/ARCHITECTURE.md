@@ -20,11 +20,16 @@ inbox_processor                  Detecta banco/pessoa pelo conteúdo,
 data/raw/{pessoa}/{banco}/       Arquivos organizados por pessoa e banco
   |
   v
-src/extractors/ (7 extratores)   Um extrator por banco/formato:
-  |                                nubank_cartao (CSV)
-  |                                nubank_cc (CSV)
-  |                                c6_cc (XLS encriptado)
-  |                                c6_cartao (CSV)
+src/extractors/ (21 extratores: 9 bancários + 12 documentais)
+  |  Bancários: nubank_cartao (CSV), nubank_cc (CSV), c6_cc (XLS encriptado),
+  |             c6_cartao (CSV), itau_pdf (PDF senha), santander_pdf (PDF),
+  |             ofx_parser (OFX genérico), contracheque_pdf (PDF G4F/Infobase),
+  |             energia_ocr (OCR conta de luz)
+  |  Documentais (ADR-20): nfce_pdf (com OCR fallback A2),
+  |             danfe_pdf, xml_nfe, boleto_pdf, cupom_termico_foto (OCR),
+  |             cupom_garantia_estendida_pdf, receita_medica, garantia,
+  |             recibo_nao_fiscal, das_parcsn_pdf (novo P1.1), dirpf_dec (novo P3.1)
+  |                                [original]
   |                                itau_pdf (PDF protegido)
   |                                santander_pdf (PDF)
   |                                energia_ocr (imagem -> tesseract)

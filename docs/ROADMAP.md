@@ -1,9 +1,9 @@
 # Roadmap -- Protocolo Ouroboros
 
 ```
-VERSÃO: 7.8 | SPRINTS: 103 (63 concluídas, 0 em produção, 14 backlog, 13 arquivadas)
-ROTA: Catalogador universal artesanal (Fases ALFA → ZETA) + Fase ETA (auditoria) + Fase IOTA (integração Controle de Bordo) + Fase KAPPA (UX polish + tracking documental + workflow) + Sprint 87 (concluída) + Rota A (87c+87b+INFRA, concluída) + Sprint 88 (regras YAML volume real) + Bloco A/B/C da Sprint 86 (ambiente + ingestão real + docs, concluídos 2026-04-24)
-ÚLTIMA ATUALIZAÇÃO: 2026-04-24. Sessão expandida concluída: Rota A + Sprint 88 + Bloco A (libbz2-dev + recompilar Python) + Bloco B (ingestão em volume real dos 27 arquivos do inbox) + Bloco C (docs). Baseline 1.109 → 1.138 passed (+29 testes; 5 pyvis destravados). Sprint 88 calibrou 5 regras YAML (das_parcsn, certidao_receita_cnpj, extrato_c6_pdf, cupom_fiscal_foto, das_mei fix); dry-run foi de 1/27 para 26/27 roteados. Bloco B moveu 26 arquivos, populou grafo com 2 boletos SESC novos (7.421→7.424 nodes), regenerou XLSX com coluna identificador em runtime real, rodou sync_rico bidirecional (4 docs + 2 fornecedores + 1 MOC + 4 PDFs no vault). 2 follow-ups formalizados: Sprint 89 (OCR pré-classificação) + Sprint 90 (pessoa_detector robusto). Retomada: docs/HANDOFF_2026-04-24.md.
+VERSÃO: 7.9 | SPRINTS: 115 (76 concluídas, 0 em produção, 26 backlog, 13 arquivadas)
+ROTA: Catalogador universal artesanal (Fases ALFA → KAPPA CONCLUÍDAS) + Fase LAMBDA (rota "conserta tudo" + A + B + C + E 2026-04-23 CONCLUÍDAS) + Fase MU (sprints-filhas em backlog) + Fase OMEGA (fusão total Sprint 94, estratégica 12-18 meses)
+ÚLTIMA ATUALIZAÇÃO: 2026-04-23. Maratona de 19 sprints + 1 auditoria técnica concluídas. Baseline 1.139 → 1.261 passed (+122 testes). Grafo 4 → 41 documentos catalogados (24 holerites + 10 DAS PARCSN + 4 NFCe + 2 boletos + 1 DIRPF). Aba renda 459 → 99 linhas (whitelist via mappings/fontes_renda.yaml). Pessoa_detector ampliado (CPF + CNPJ + razão social + alias). Fallback supervisor idempotente. Dedupe roteamento por hash. UX v3 (6 fixes visuais). Relatórios diagnósticos + narrativos. IRPF declarativo em YAML. Extrator DAS + extrator DIRPF. OCR fallback em NFCe. Canonicalizer variantes curtas. Script de auditoria fidelidade de extratores. UX audit Nielsen sistemático. 7 sprints-filhas novas formalizadas. 2 YAMLs órfãos detectados. Retomada: docs/HANDOFF_2026-04-23_conserta_tudo.md + docs/auditoria_tecnica_2026-04-23.md.
 ```
 
 ---
@@ -386,6 +386,62 @@ Scripts:
 - Armadilhas: `ARMADILHAS.md`
 - ADRs 13-15 ancoram decisões do re-roadmap
 - Template de sprint: `templates/SPRINT_TEMPLATE.md`
+
+---
+
+## Sessão 2026-04-23 -- Fase LAMBDA (19 sprints + auditoria técnica)
+
+Maratona disparada após auditoria artesanal de 760 arquivos em `data/raw/` + inbox + XLSX + grafo. Baseline 1.139 → 1.261 passed. 30+ commits em main.
+
+### Lambda-1 -- Rota "conserta tudo" (9 sprints) CONCLUÍDA
+
+- **P0.1** -- aba renda restritiva via `mappings/fontes_renda.yaml` (459 → 99 linhas).
+- **P0.2** -- Sprint 90 pessoa_detector por CNPJ + razão social + alias.
+- **P1.1** -- extrator DAS PARCSN (+10 docs).
+- **P1.2** -- Sprint 89 OCR fallback PDF-imagem no intake.
+- **P2.1** -- Sprint 87d fallback supervisor idempotente via cache_key.
+- **P2.2** -- Sprint 91 UX v3 (6 fixes visuais).
+- **P2.3** -- dedupe roteamento por hash SHA-256.
+- **P3.1** -- extrator DIRPF .DEC (+1 doc).
+- **P3.2** -- holerite vira node documento (+24 docs).
+
+### Lambda-2 -- Fase A ressalvas (3 sprints) CONCLUÍDA
+
+- **A1** migração 26 docs casal→andre. **A2** NFCe com OCR fallback próprio. **A3** Sprint 50b categorizer idempotente.
+
+### Lambda-3 -- Fase B ZETA (3 sprints) CONCLUÍDA
+
+- **B1** Sprint 21 relatórios diagnósticos. **B2** Sprint 33 resumo narrativo. **B3** Sprint 35 IRPF YAML.
+
+### Lambda-4 -- Fase C backlog formal (3 sprints paralelas via worktree) CONCLUÍDA
+
+- **C1** Sprint 82 canonicalizer variantes curtas. **C2** Sprint 92 UX audit Nielsen (13 screenshots Playwright). **C3** Sprint 93 auditoria fidelidade extratores.
+
+### Lambda-5 -- Fase E auditoria técnica CONCLUÍDA
+
+- Relatório `docs/auditoria_tecnica_2026-04-23.md`: 0 P0, 5 P1 mapeados em sprints-filhas, 8 P2, 2 YAMLs órfãos.
+- CLAUDE.md versão 5.3, VALIDATOR_BRIEF rodapé atualizado, ARMADILHAS com 7 armadilhas novas.
+
+### Lambda-6 -- Fase D auditoria artesanal final PENDENTE
+
+- Última sprint antes de produção estável. Spec em `docs/sprints/backlog/sprint_AUDITORIA_ARTESANAL_FINAL.md`.
+- Rota: `scripts/reset_para_inbox.py` + `./run.sh --tudo` + revisão 1-a-1 com humano.
+
+### Fase MU -- sprints-filhas descobertas na sessão (BACKLOG)
+
+- **82b** -- conta-espelho de cartão.
+- **87e** -- registrar boleto_pdf no pipeline principal.
+- **92a** -- 11 fixes UX cirúrgicos (4 P0, 4 P1, 3 P2).
+- **92b** -- reorganização em 5 clusters.
+- **92c** -- design system unificado.
+- **93a** -- dedup agressiva em 5 extratores bancários.
+- **93b** -- origem histórica cruzada (c6_cartao, nubank_pf_cc).
+- **93c** -- rotulagem Nubank PJ perdida no pipeline.
+- **F** (a criar) -- testes dedicados para 8 extratores bancários sem cobertura.
+
+### Fase OMEGA -- Fusão total (Sprint 94) ESTRATÉGICA 12-18 MESES
+
+ADR-21 (a formalizar) -- Ouroboros vira Central de Controle de Vida. 6 sub-sprints: 94a saúde, 94b documentos identidade, 94c profissional, 94d acadêmico, 94e busca global cross-domínio, 94f Obsidian mobile.
 
 ---
 

@@ -1,21 +1,46 @@
 # CLAUDE.md -- Protocolo Ouroboros
 
 ```
-VERSÃO: 5.2 | STATUS: PRODUÇÃO (Fases IOTA/KAPPA CONCLUÍDAS + Sprint 87 + Rota A + Sprint 88 + Bloco A/B/C da Sprint 86 concluídos 2026-04-24) | LANG: PT-BR
-TRANSAÇÕES: 6.086 | MESES: 82 (out/2019 a mar/2026) | BANCOS: 6 | EXTRATORES: 9
-GRAFO: 7.424 nodes + 24.588 edges (data/output/grafo.sqlite, ~5MB). 4 documentos (antes 2), incluindo 2 boletos SESC novos.
-SPRINTS: 103 (63 concluídas, 0 em produção, 14 backlog, 13 arquivadas)
-CATEGORIZAÇÃO: 100% | IRPF TAGS: 164 (75 com CNPJ) | HOLERITES: 24 (G4F + Infobase)
-TESTES: 1.138 passed / 10 skipped (+11 vs Rota A, +29 vs 1.109 pós-Sprint 87; 5 testes pyvis antes skipped agora passam)
+VERSÃO: 5.3 | STATUS: PRODUÇÃO (Rota "conserta tudo" + Fases A + B + C concluídas 2026-04-23; Sprint E auditoria técnica concluída; resta Sprint D artesanal) | LANG: PT-BR
+TRANSAÇÕES: 6.088 | MESES: 82 (out/2019 a out/2026) | BANCOS: 6 | EXTRATORES: 11 (9 bancários + DAS PARCSN + DIRPF) + 10 documentais (NFCe, DANFE, boleto, cupom_termico, garantia, etc.)
+GRAFO: 7.480 nodes + 24.700 edges (data/output/grafo.sqlite, ~5MB). 41 documentos catalogados: 24 holerites + 10 DAS_PARCSN + 4 NFCe + 2 boletos + 1 DIRPF.
+SPRINTS: 115 (76 concluídas, 26 backlog, 13 arquivadas; 7 sprints-filhas novas em 2026-04-23: 82b, 92a/b/c, 93a/b/c)
+CATEGORIZAÇÃO: 100% | IRPF TAGS: 164 (75 com CNPJ) | HOLERITES: 24 (G4F + Infobase, todos também node documento no grafo desde P3.2)
+TESTES: 1.261 passed / 9 skipped (+122 vs baseline pré-sessão 1.139)
+ABA RENDA: 99 linhas (24 holerites + 75 MEI legítimos via mappings/fontes_renda.yaml; era 459 antes da P0.1)
 ROTA: Catalogador universal artesanal via supervisor interativo (ADR-13)
 SUPERVISOR: Claude Code sessão interativa — nenhuma API programática
 INTEGRAÇÕES: OFX (pronto), Controle de Bordo vault (Sprint 70/71/88 integrado; sync rico bidirecional rodou em volume real), Belvo (em teste), Gmail (setup pendente), MeuPluggy (disponível)
-ROTA ATUAL: Rota A + Sprint 88 + Bloco A/B/C (86) concluídos — próximo: Sprint 89 (OCR pré-classificação), Sprint 90 (pessoa_detector robusto), Sprint 82/85 (higiene residual). Retomada: docs/HANDOFF_2026-04-24.md.
+ROTA ATUAL: Auditoria técnica (Sprint E) concluída. Resta Sprint D (auditoria artesanal com humano: mover tudo para inbox + reprocessar + revisar 1-a-1). Retomada: docs/HANDOFF_2026-04-23_conserta_tudo.md.
 ```
 
 ### Próxima sessão — retomada canônica
 
-Antes de tocar código, leia **`docs/HANDOFF_2026-04-24.md`**. Esse arquivo contém o mapa completo de onde paramos, baseline atual, sprints pendentes com prioridade, comandos de sanidade de entrada e rota recomendada para a próxima sessão.
+Antes de tocar código, leia **`docs/HANDOFF_2026-04-23_conserta_tudo.md`** (HANDOFF mais recente) e depois **`docs/auditoria_tecnica_2026-04-23.md`** (relatório honesto de bugs/órfãos/dívida).
+
+Se a rota quer fechar débitos P1 antes da Sprint D artesanal, seguir a ordem recomendada na seção final da auditoria:
+1. Deletar YAMLs órfãos (`layouts_danfe.yaml`, `layouts_nfce.yaml`).
+2. Sprint 87e -- registrar `boleto_pdf` no pipeline (P1-01).
+3. Sprint 92a P0 -- 2 fixes críticos UX (pyvis labels, treemap contraste).
+4. Sprint 93a -- investigar dedup agressiva dos extratores bancários.
+5. Sprint F -- testes dedicados para 8 extratores bancários sem cobertura.
+
+Se quiser pular direto para Sprint D artesanal, o sistema está tecnicamente saudável (gauntlet verde, smoke 8/8).
+
+### Sessão 2026-04-23 — rota "conserta tudo" + Fases A + B + C + E
+
+Sessão maratona de 19 sprints + 1 sprint de auditoria. 30+ commits em main. 111 testes novos, +122 no total (1.139 → 1.261). Resumo das fases:
+
+- **Rota "conserta tudo"** (9 sprints): P0.1 aba renda restritiva, P0.2 pessoa_detector CNPJ+razão, P1.1 extrator DAS PARCSN, P1.2 OCR fallback PDF-imagem, P2.1 fallback supervisor idempotente, P2.2 UX v3 (6 fixes), P2.3 dedupe roteamento por hash, P3.1 extrator DIRPF .DEC, P3.2 holerite como documento.
+- **Fase A ressalvas** (3): A1 migração 26 docs casal→andre, A2 NFCe com OCR fallback, A3 categorizer delete-before-insert.
+- **Fase B ZETA** (3): B1 relatórios diagnósticos comparativos, B2 resumo narrativo heurístico, B3 IRPF em YAML declarativo.
+- **Fase C backlog formal** (3 em paralelo via worktree): C1 canonicalizer variantes curtas, C2 UX audit Nielsen × 13 abas (com 13 screenshots Playwright), C3 auditoria fidelidade extratores.
+- **Fase E auditoria técnica**: este documento + atualização mestre.
+- **Fase D**: pendente, artesanal com humano.
+
+### Sessão 2026-04-23 (primeira parte) — Sprint 87 executada
+
+8 sub-itens da Sprint 87 (ressalvas técnicas IOTA/KAPPA) concluídos em sequência única, 9 commits atômicos, gauntlet verde em cada passo. Baseline 1.046 → 1.109 passed. 3 specs novas formalizam débitos residuais descobertos durante a execução (50b, 87c, INFRA-parse-br). Ver commits `3810ac7..aed7bfd` e `VALIDATOR_BRIEF.md` rodapé de 2026-04-23 para detalhes.
 
 ### Sessão 2026-04-23 — Sprint 87 executada
 

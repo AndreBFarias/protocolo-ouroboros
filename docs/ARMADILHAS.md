@@ -247,4 +247,72 @@ Dados manuais do XLSX antigo (2022-2023) com mesmo valor+data mas locais complet
 
 ---
 
+## Sessão 2026-04-23 (rota "conserta tudo" + Fases A/B/C/E) -- 7 armadilhas novas
+
+### A-202304-01. `uuid.uuid4()` em fallback supervisor gera duplicatas a cada rodada
+
+**Sintoma:** 2 cupons fotografados geraram 6 arquivos distintos em `docs/propostas/extracao_cupom/<uuid>.md` + 6 pastas `data/raw/_conferir/<uuid>/` após 3 rodadas do `cupom_termico_foto`. Cada reprocessamento gerava UUID novo.
+
+**Causa raiz:** `_registrar_fallback_supervisor` usava `uuid.uuid4().hex[:12]` como identificador. Não-determinístico.
+
+**Fix (Sprint 87d):** trocado por `cache_key(caminho)[:12]` (SHA-256 por conteúdo, já padrão do cache OCR). Mesma foto → mesmo hash → sobrescrita idempotente.
+
+**Princípio canônico:** qualquer rota que crie arquivos em `docs/propostas/` ou `data/raw/_conferir/` DEVE derivar identificador de `cache_key(caminho)` ou `sha256(conteudo)[:12]`. NUNCA `uuid.uuid4()`.
+
+### A-202304-02. `pessoa_detector` só com CPF literal falha em DAS/certidões
+
+**Sintoma:** 19 DAS PARCSN + 3 certidões Receita Federal do André (CNPJ 45.850.636 + razão social explícita) todos roteados para `data/raw/casal/` em vez de `andre/`.
+
+**Causa raiz:** `pessoa_detector.py` só buscava CPF literal no preview. Documentos legais do MEI mostram CNPJ + razão social, não o CPF do titular.
+
+**Fix (Sprint 90):** camada nova `_casar_via_pessoas_yaml` usando `mappings/pessoas.yaml` (no .gitignore) com schema cpfs/cnpjs/razao_social/aliases. Ordem: CPF > CNPJ > razão > alias > pasta > fallback.
+
+**Princípio canônico:** identificação de pessoa precisa de várias camadas semânticas, cada uma mais específica que a anterior.
+
+### A-202304-03. Roteador duplica arquivos sem dedupe por hash
+
+**Sintoma:** Itaú com 5 extratos únicos virou 29 arquivos físicos (`extrato.pdf`, `extrato_1.pdf`, ..., `_6.pdf`). Santander 18 únicos virou 102. Dedupe de transações salvou, mas storage inflou ~5.8x.
+
+**Causa raiz:** `_resolver_destino_sem_colisao` em `extractors_envelope.py` desambiguava com `_1`/`_N` quando o destino existia, SEM verificar se o conteúdo era idêntico ao da origem.
+
+**Fix (Sprint P2.3):** função ganha `arquivo_origem` opcional. Hash SHA-256 bate → retorna destino (sem criar cópia). Diverge → desambigua canonicamente.
+
+**Princípio canônico:** toda função de roteamento que pode colidir destino DEVE comparar hash antes de desambiguar. "Mesmo conteúdo = mesmo arquivo" é invariante.
+
+### A-202304-04. Aba `renda` sem whitelist vira dump de qualquer crédito
+
+**Sintoma:** Aba `renda` do XLSX com 459 linhas quando a realidade era 24 holerites + 75 MEI. Reembolsos PIX (iFood, Amazon, 99, RAIA), cashback, PIX entre amigos, transferências recebidas -- tudo virou "renda".
+
+**Causa raiz:** `_criar_aba_renda` aceitava qualquer `tipo=="Receita"` sem filtro. O classificador de tipo tem default `valor > 0 = Receita`.
+
+**Fix (Sprint P0.1):** `mappings/fontes_renda.yaml` declara whitelist (salário CLT, MEI por empresa conhecida, bolsa, rendimento) + blacklist (reembolso, estorno, cashback, devolução, PIX genérico, aplicação/resgate RDB, Brasil Bitcoin). Whitelist prioritária quando ambas casam.
+
+**Princípio canônico:** filtros semânticos (renda, IRPF dedutível, despesa essencial) precisam de whitelist declarativa em YAML. Default liberal contamina agregados silenciosamente.
+
+### A-202304-05. Contrato aritmético mascarado por dado sujo
+
+**Sintoma:** Contrato smoke #1 (`receita não exagera salário × limiar`) passava verde há meses. Após a Sprint P0.1 limpar a aba renda, o contrato virou vermelho em 5 meses de 2022-2023.
+
+**Causa raiz:** contrato comparava `receita_mes_extrato` com `salario_mes_aba_renda`. Ambos estavam inflados por falsos-positivos, então a razão passava. Limpando só o denominador, o numerador (que ainda carregava reembolsos como Receita) ficou relativamente maior.
+
+**Fix:** o contrato agora aplica a blacklist de `fontes_renda.yaml` antes de somar `receita_mes`. Compara "renda operacional real" em ambos os lados.
+
+**Princípio canônico:** quando se limpa um lado de um contrato, limpar o outro lado também. Verde em dado sujo é cego, não honesto.
+
+### A-202304-06. `ExtratorNfcePDF` sem OCR falhava em PDF-imagem silenciosamente
+
+**Sintoma:** PDF de NFCe com 0 chars extraíveis (4 páginas, 100% imagem) era **roteado corretamente** para `nfs_fiscais/nfce/` (via Sprint 89 que adicionou OCR no preview do intake), mas **não era extraído** -- o extrator retornava lista vazia de NFCe.
+
+**Causa raiz:** cada extrator tem seu próprio `_ler_paginas_pdf`. O fallback OCR do intake cobria só a classificação. Extração detalhada não herdava.
+
+**Fix (Sprint A2):** `_ler_paginas_pdf` em `nfce_pdf.py` ganhou `_ler_paginas_pdf_via_ocr` próprio (pypdfium2 + tesseract). "notas de garantia e compras.pdf" passou a extrair 2 NFCe + 16 itens da Americanas.
+
+**Princípio canônico:** OCR fallback do intake NÃO se propaga automaticamente para extratores downstream. `ExtratorDanfePDF` e `ExtratorBoletoPDF` ainda não têm -- sprint-filha pendente.
+
+### A-202304-07. Hash canônico precisa `.upper()` para simetria XLSX ↔ grafo
+
+Originalmente descoberta na Sprint 87b. Reforçando aqui: `GrafoDB.upsert_node` aplica `normalizar_nome_canonico` (`strip().upper()`). Helpers que geram hash canônico para consumo externo (XLSX, APIs) DEVEM retornar `.upper()` direto para manter simetria bit-a-bit com o que está gravado. Esquecer causa join XLSX↔grafo silenciosamente vazio.
+
+---
+
 *"Experiência é simplesmente o nome que damos aos nossos erros." -- Oscar Wilde*
