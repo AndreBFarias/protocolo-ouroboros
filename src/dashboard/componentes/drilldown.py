@@ -22,6 +22,11 @@ from typing import Any
 
 # Lista fechada de campos que o drill-down reconhece como filtros válidos
 # (espelha as colunas relevantes da aba Extrato).
+#
+# Sprint 92b (ADR-22): "cluster" entrou na whitelist como campo de navegação
+# de primeiro nível (cluster -> aba). Continua sendo tratado como filtro no
+# sentido de que é lido da URL e gravado em session_state, mas semanticamente
+# é nivel de hierarquia, não filtro de coluna.
 CAMPOS_FILTRO_RECONHECIDOS: frozenset[str] = frozenset(
     {
         "mes",
@@ -34,11 +39,41 @@ CAMPOS_FILTRO_RECONHECIDOS: frozenset[str] = frozenset(
         "local",
         "forma",
         "forma_pagamento",
+        "cluster",
     }
 )
 
 # Chaves canônicas que o Extrato usa para ler filtros vindos do drill-down.
 CHAVE_SESSION_ABA_ATIVA: str = "aba_ativa_requerida"
+
+# Sprint 92b (ADR-22): mapa canônico aba -> cluster. Permite que URL antiga
+# no formato ?tab=Extrato (sem parâmetro cluster) seja interpretada pelo
+# leitor inferindo o cluster implícito. URL nova ?cluster=Dinheiro&tab=Extrato
+# explicita o cluster e pula a inferência.
+MAPA_ABA_PARA_CLUSTER: dict[str, str] = {
+    "Visão Geral": "Hoje",
+    "Extrato": "Dinheiro",
+    "Contas": "Dinheiro",
+    "Pagamentos": "Dinheiro",
+    "Projeções": "Dinheiro",
+    "Catalogação": "Documentos",
+    "Completude": "Documentos",
+    "Busca Global": "Documentos",
+    "Grafo + Obsidian": "Documentos",
+    "Categorias": "Análise",
+    "Análise": "Análise",
+    "IRPF": "Análise",
+    "Metas": "Metas",
+}
+
+# Clusters válidos (ordem canônica do radio). Usado por testes e por validação
+# defensiva em app.py (rejeita cluster fora do conjunto ao ler da URL).
+CLUSTERS_VALIDOS: tuple[str, ...] = ("Hoje", "Dinheiro", "Documentos", "Análise", "Metas")
+
+# Chave canônica em session_state para o cluster ativo. Namespace próprio,
+# não colide com filtro_* (drill-down), avancado_* (filtros manuais Extrato)
+# ou seletor_* (selectbox da sidebar).
+CHAVE_SESSION_CLUSTER_ATIVO: str = "cluster_ativo"
 
 
 def _session_state() -> Any:
@@ -122,6 +157,14 @@ def ler_filtros_da_url() -> None:
 
     Deve ser chamado no início de `app.py` antes de renderizar abas. Idempotente:
     se o param não existe na URL, a session_state não é alterada.
+
+    Sprint 92b (ADR-22): além dos filtros de coluna, o leitor agora resolve
+    o cluster ativo com a seguinte ordem de precedência:
+
+    1. `?cluster=<X>` na URL (explícito) e X em CLUSTERS_VALIDOS -> usa X.
+    2. `?tab=<Y>` na URL e Y em MAPA_ABA_PARA_CLUSTER -> infere cluster.
+    3. Nenhum dos dois -> session_state[cluster_ativo] fica intocado (default
+       é definido pelo radio em app.py, tipicamente "Hoje").
     """
     try:
         import streamlit as st
@@ -143,6 +186,22 @@ def ler_filtros_da_url() -> None:
         if isinstance(valor_tab, list):
             valor_tab = valor_tab[0] if valor_tab else ""
         st.session_state[CHAVE_SESSION_ABA_ATIVA] = str(valor_tab)
+
+    # Sprint 92b: resolve cluster ativo (explícito ou inferido pela aba).
+    cluster_explicito: str = ""
+    if "cluster" in qp:
+        valor_cluster = qp["cluster"]
+        if isinstance(valor_cluster, list):
+            valor_cluster = valor_cluster[0] if valor_cluster else ""
+        cluster_explicito = str(valor_cluster)
+
+    if cluster_explicito and cluster_explicito in CLUSTERS_VALIDOS:
+        st.session_state[CHAVE_SESSION_CLUSTER_ATIVO] = cluster_explicito
+    elif "tab" in qp:
+        aba = st.session_state.get(CHAVE_SESSION_ABA_ATIVA, "")
+        cluster_inferido = MAPA_ABA_PARA_CLUSTER.get(aba, "")
+        if cluster_inferido:
+            st.session_state[CHAVE_SESSION_CLUSTER_ATIVO] = cluster_inferido
 
 
 def filtros_ativos_do_session_state() -> dict[str, str]:

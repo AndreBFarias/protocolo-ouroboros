@@ -9,7 +9,11 @@ RAIZ_PROJETO: Path = Path(__file__).resolve().parents[2]
 if str(RAIZ_PROJETO) not in sys.path:
     sys.path.insert(0, str(RAIZ_PROJETO))
 
-from src.dashboard.componentes.drilldown import ler_filtros_da_url  # noqa: E402
+from src.dashboard.componentes.drilldown import (  # noqa: E402
+    CHAVE_SESSION_CLUSTER_ATIVO,
+    CLUSTERS_VALIDOS,
+    ler_filtros_da_url,
+)
 from src.dashboard.dados import (  # noqa: E402
     CAMINHO_XLSX,
     carregar_dados,
@@ -53,11 +57,35 @@ def _configurar_pagina() -> None:
     st.markdown(css_global(), unsafe_allow_html=True)
 
 
-def _sidebar(dados: dict) -> tuple[str, str, str]:
+def _selecionar_cluster() -> str:
+    """Renderiza o radio de clusters na sidebar e devolve o cluster ativo.
+
+    Sprint 92b (ADR-22): 5 áreas canônicas (Hoje / Dinheiro / Documentos /
+    Análise / Metas). `CHAVE_SESSION_CLUSTER_ATIVO` é populado pela URL via
+    `ler_filtros_da_url` quando aplicável (backward compatibility); caso
+    contrário, default é o primeiro cluster ("Hoje").
+    """
+    cluster_na_url = st.session_state.get(CHAVE_SESSION_CLUSTER_ATIVO, "")
+    if cluster_na_url in CLUSTERS_VALIDOS:
+        indice_default = CLUSTERS_VALIDOS.index(cluster_na_url)
+    else:
+        indice_default = 0
+
+    cluster_escolhido: str = st.radio(
+        "Área",
+        list(CLUSTERS_VALIDOS),
+        index=indice_default,
+        key=CHAVE_SESSION_CLUSTER_ATIVO,
+        horizontal=False,
+    )
+    return cluster_escolhido
+
+
+def _sidebar(dados: dict) -> tuple[str, str, str, str]:
     """Renderiza sidebar com filtros globais e retorna seleções.
 
     Returns:
-        Tupla com (período selecionado, pessoa, granularidade).
+        Tupla com (período selecionado, pessoa, granularidade, cluster).
     """
     with st.sidebar:
         # P2.2 2026-04-23: logo compacto (64px) para liberar espaço vertical
@@ -78,11 +106,17 @@ def _sidebar(dados: dict) -> tuple[str, str, str]:
 
         st.markdown("---")
 
+        # Sprint 92b (ADR-22): seletor de cluster no topo. Fica acima dos
+        # filtros de período/pessoa para reforçar a hierarquia (área > filtros).
+        cluster_ativo = _selecionar_cluster()
+
+        st.markdown("---")
+
         meses = obter_meses_disponiveis(dados)
 
         if not meses:
             st.warning("Nenhum dado disponível.")
-            return "", "Todos", "Mês"
+            return "", "Todos", "Mês", cluster_ativo
 
         granularidade: str = st.selectbox(
             "Granularidade",
@@ -161,7 +195,7 @@ def _sidebar(dados: dict) -> tuple[str, str, str]:
 
         _cards_sidebar(dados, periodo, pessoa, granularidade)
 
-        return periodo, pessoa, granularidade
+        return periodo, pessoa, granularidade, cluster_ativo
 
 
 def _cards_sidebar(dados: dict, periodo: str, pessoa: str, granularidade: str) -> None:
@@ -212,83 +246,78 @@ def main() -> None:
         st.error("Nenhum dado encontrado. Verifique se o arquivo XLSX existe em data/output/.")
         st.stop()
 
-    periodo, pessoa, granularidade = _sidebar(dados)
+    periodo, pessoa, granularidade, cluster = _sidebar(dados)
 
     if not periodo:
         st.stop()
 
-    (
-        tab_visao,
-        tab_categorias,
-        tab_extrato,
-        tab_contas,
-        tab_pagamentos,
-        tab_projecoes,
-        tab_metas,
-        tab_analise,
-        tab_irpf,
-        tab_catalogacao,
-        tab_busca,
-        tab_grafo_obsidian,
-        tab_completude,
-    ) = st.tabs(
-        [
-            "Visão Geral",
-            "Categorias",
-            "Extrato",
-            "Contas",
-            "Pagamentos",
-            "Projeções",
-            "Metas",
-            "Análise",
-            "IRPF",
-            "Catalogação",
-            "Busca Global",
-            "Grafo + Obsidian",
-            "Completude",
-        ]
-    )
-
     ctx = {"granularidade": granularidade, "periodo": periodo}
 
-    with tab_visao:
+    # Sprint 92b (ADR-22): renderização por cluster. Cada cluster expõe apenas
+    # suas abas via st.tabs, e radio na sidebar escolhe o cluster ativo. URL
+    # antiga (?tab=X) continua funcional via MAPA_ABA_PARA_CLUSTER em
+    # ler_filtros_da_url. A ordem de abas dentro de cada cluster segue o hero
+    # numbering (01-13) definido na Sprint 92a.
+    if cluster == "Hoje":
+        (tab_visao,) = st.tabs(["Visão Geral"])
+        with tab_visao:
+            visao_geral.renderizar(dados, periodo, pessoa, ctx)
+
+    elif cluster == "Dinheiro":
+        (
+            tab_extrato,
+            tab_contas,
+            tab_pagamentos,
+            tab_projecoes,
+        ) = st.tabs(["Extrato", "Contas", "Pagamentos", "Projeções"])
+        with tab_extrato:
+            extrato.renderizar(dados, periodo, pessoa, ctx)
+        with tab_contas:
+            contas.renderizar(dados, periodo, pessoa)
+        with tab_pagamentos:
+            pagamentos.renderizar(dados, periodo, pessoa, ctx)
+        with tab_projecoes:
+            projecoes.renderizar(dados, periodo, pessoa)
+
+    elif cluster == "Documentos":
+        (
+            tab_catalogacao,
+            tab_completude,
+            tab_busca,
+            tab_grafo_obsidian,
+        ) = st.tabs(["Catalogação", "Completude", "Busca Global", "Grafo + Obsidian"])
+        with tab_catalogacao:
+            catalogacao.renderizar(dados, periodo, pessoa, ctx)
+        with tab_completude:
+            completude.renderizar(dados, periodo, pessoa, ctx)
+        with tab_busca:
+            busca.renderizar(dados, periodo, pessoa, ctx)
+        with tab_grafo_obsidian:
+            grafo_obsidian.renderizar(dados, periodo, pessoa, ctx)
+
+    elif cluster == "Análise":
+        (
+            tab_categorias,
+            tab_analise,
+            tab_irpf,
+        ) = st.tabs(["Categorias", "Análise", "IRPF"])
+        with tab_categorias:
+            categorias.renderizar(dados, periodo, pessoa, ctx)
+        with tab_analise:
+            analise_avancada.renderizar(dados, periodo, pessoa, ctx)
+        with tab_irpf:
+            irpf.renderizar(dados, periodo, pessoa, ctx)
+
+    elif cluster == "Metas":
+        (tab_metas,) = st.tabs(["Metas"])
+        with tab_metas:
+            metas.renderizar(dados, periodo, pessoa)
+
+    else:
+        # Defensivo: cluster inválido em session_state (não deveria ocorrer
+        # dado que o radio é fechado em CLUSTERS_VALIDOS). Fallback para Hoje.
+        st.warning(f"Cluster desconhecido '{cluster}'. Exibindo Visão Geral.")
         visao_geral.renderizar(dados, periodo, pessoa, ctx)
-
-    with tab_categorias:
-        categorias.renderizar(dados, periodo, pessoa, ctx)
-
-    with tab_extrato:
-        extrato.renderizar(dados, periodo, pessoa, ctx)
-
-    with tab_contas:
-        contas.renderizar(dados, periodo, pessoa)
-
-    with tab_pagamentos:
-        pagamentos.renderizar(dados, periodo, pessoa, ctx)
-
-    with tab_projecoes:
-        projecoes.renderizar(dados, periodo, pessoa)
-
-    with tab_metas:
-        metas.renderizar(dados, periodo, pessoa)
-
-    with tab_analise:
-        analise_avancada.renderizar(dados, periodo, pessoa, ctx)
-
-    with tab_irpf:
-        irpf.renderizar(dados, periodo, pessoa, ctx)
-
-    with tab_catalogacao:
-        catalogacao.renderizar(dados, periodo, pessoa, ctx)
-
-    with tab_busca:
-        busca.renderizar(dados, periodo, pessoa, ctx)
-
-    with tab_grafo_obsidian:
-        grafo_obsidian.renderizar(dados, periodo, pessoa, ctx)
-
-    with tab_completude:
-        completude.renderizar(dados, periodo, pessoa, ctx)
 
 
 if __name__ == "__main__":
