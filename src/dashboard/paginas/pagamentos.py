@@ -114,20 +114,51 @@ def _renderizar_boletos(extrato: pd.DataFrame, prazos: pd.DataFrame) -> None:
 
     # P2.2 2026-04-23: vencimento formatado como date-only (YYYY-MM-DD)
     # em vez de "2019-11-04 00:00:00" default do pandas Timestamp.
-    boletos_fmt = boletos.copy()
-    if "vencimento" in boletos_fmt.columns and pd.api.types.is_datetime64_any_dtype(
-        boletos_fmt["vencimento"]
-    ):
-        boletos_fmt["vencimento"] = boletos_fmt["vencimento"].dt.strftime("%Y-%m-%d")
+    # Sprint 92a item 4: coluna `data` recebe o mesmo tratamento e o
+    # DataFrame inteiro e renomeado para cabecalhos humanos PT-BR antes
+    # de ir para st.dataframe.
+    boletos_fmt = _formatar_boletos_para_exibicao(boletos)
 
     st.dataframe(
         boletos_fmt,
         use_container_width=True,
         hide_index=True,
         column_config={
-            "valor": st.column_config.NumberColumn("Valor", format="R$ %.2f"),
+            "Valor": st.column_config.NumberColumn("Valor", format="R$ %.2f"),
         },
     )
+
+
+def _formatar_boletos_para_exibicao(boletos: pd.DataFrame) -> pd.DataFrame:
+    """Sprint 92a item 4: prepara DataFrame de boletos para exibição no dashboard.
+
+    Pura e testável (sem streamlit). Duas operações:
+    1. Converte colunas datetime (`data`, `vencimento`) para strings
+       `YYYY-MM-DD` -- evita o lixo "00:00:00" default do Timestamp.
+    2. Renomeia as colunas técnicas do grafo/XLSX para rótulos humanos
+       PT-BR: data->Data, fornecedor->Fornecedor, valor->Valor,
+       vencimento->Vencimento, status->Status, banco_origem->Banco.
+    """
+    boletos_fmt = boletos.copy()
+
+    for coluna_datetime in ("data", "vencimento"):
+        if coluna_datetime in boletos_fmt.columns and pd.api.types.is_datetime64_any_dtype(
+            boletos_fmt[coluna_datetime]
+        ):
+            boletos_fmt[coluna_datetime] = boletos_fmt[coluna_datetime].dt.strftime("%Y-%m-%d")
+
+    rename_map = {
+        "data": "Data",
+        "fornecedor": "Fornecedor",
+        "valor": "Valor",
+        "vencimento": "Vencimento",
+        "status": "Status",
+        "banco_origem": "Banco",
+    }
+    # Renomeia apenas colunas presentes -- defensive para contratos futuros
+    # que variam o shape do DataFrame.
+    colunas_renomear = {k: v for k, v in rename_map.items() if k in boletos_fmt.columns}
+    return boletos_fmt.rename(columns=colunas_renomear)
 
 
 def _renderizar_pix(extrato: pd.DataFrame) -> None:
