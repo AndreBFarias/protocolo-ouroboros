@@ -290,7 +290,7 @@ Pytest: 1215 → **1220 passed** (+5). Smoke 8/8 OK. Lint OK.
 **C2 — Sprint 92 UX audit Nielsen (branch worktree-agent-a2227f70, 1 commit):**
 - Documento `docs/ux/audit_2026-04-23.md` (matriz Nielsen × 13 abas) + 4 wireframes + `design_tokens.md` + **13 screenshots reais via Playwright** em `docs/screenshots/sprint_92_2026-04-23/`.
 - 3 sprints-filhas: 92a (11 fixes cirúrgicos, 4 P0), 92b (reorganização em 5 clusters), 92c (design system unificado).
-- Top 3 achados P0: nodes transacao com hash SHA no pyvis, contraste 2.8:1 no treemap Categorias (viola WCAG AA), 13 abas estourando viewport.
+- Top 3 achados P0: nodes transação com hash SHA no pyvis, contraste 2.8:1 no treemap Categorias (viola WCAG AA), 13 abas estourando viewport.
 - Zero linha de código de produção tocada (auditoria pura).
 - Baseline: 1220 passed (sem regressão).
 
@@ -305,6 +305,25 @@ Total de 18 sprints executadas em 18 commits pushed em main:
 - Fase C backlog formal: C1, C2, C3 (3)
 
 7 sprints-filhas formalizadas em backlog: 82b, 92a, 92b, 92c, 93a, 93b, 93c (descobertas durante execução, seguindo protocolo anti-débito).
+
+### Fase E concluída — auditoria técnica + atualização documental
+
+Relatório mestre: `docs/auditoria_tecnica_2026-04-23.md` com:
+- 0 bugs P0 (bloqueadores).
+- 5 bugs P1 (todos mapeados em sprints-filhas: 87e, F nova, 92a, 93a/b/c).
+- 8 minúcias P2.
+- 2 YAMLs órfãos confirmados (`layouts_danfe.yaml`, `layouts_nfce.yaml`).
+- 8 extratores bancários sem teste dedicado (Sprint F a criar).
+
+Documentos mestres atualizados:
+- `CLAUDE.md` 5.2 → 5.3 (contagens novas, fase Lambda).
+- `VALIDATOR_BRIEF.md` rodapé com 19 sprints + 9 padrões canônicos novos + 5 bugs conhecidos.
+- `docs/ROADMAP.md` 7.8 → 7.9 (Fase Lambda detalhada; Fase MU sprints-filhas; Fase Omega 94).
+- `docs/ARMADILHAS.md` +7 armadilhas novas (uuid.uuid4 fallback, pessoa_detector CPF-only, roteador sem hash, aba renda sem whitelist, contrato mascarado, NFCe sem OCR, .upper() em hash).
+- `docs/AUDITORIA_SPRINTS.md` +19 sprints auditadas honestamente com veredicto por sprint.
+- `docs/MODELOS.md` schemas dos 3 YAMLs novos (fontes_renda, pessoas, irpf_regras) + aba renda restritiva + novos tipo_documento no grafo.
+- `README.md` atualizado (21 extratores, 13 abas, 1.261 tests, 41 docs no grafo).
+- `docs/ARCHITECTURE.md` atualizado.
 
 ### Resta apenas Fase D
 

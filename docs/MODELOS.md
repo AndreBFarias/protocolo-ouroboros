@@ -171,4 +171,82 @@ Não há foreign keys formais (XLSX não suporta). A consistência é mantida pe
 
 ---
 
+## Schemas adicionados na sessão 2026-04-23
+
+### `mappings/fontes_renda.yaml` (Sprint P0.1)
+
+```yaml
+fontes:
+  salario_clt: ["(?i)^PAGTO\\s+SALARIO", "..."]
+  mei_andre: ["(?i)\\bPAIM\\b", "(?i)SUNOPAIM", "..."]
+  bolsa_vitoria: ["(?i)\\bNEES\\b", "..."]
+  rendimento_aplicacao: ["(?i)REND PAGO APLIC", "..."]
+blacklist:
+  - "(?i)REEMBOLSO"
+  - "(?i)ESTORNO"
+  # ...
+```
+
+Usado por `src/utils/fontes_renda.py::eh_fonte_real_de_renda` e pelo contrato smoke #1. Whitelist tem prioridade sobre blacklist.
+
+### `mappings/pessoas.yaml` (Sprint P0.2 -- NO GITIGNORE)
+
+```yaml
+pessoas:
+  andre:
+    cpfs: ["051.273.731-22"]
+    cnpjs: ["45.850.636/0001-60"]
+    razao_social: ["ANDRE DA SILVA BATISTA DE FARIAS"]
+    aliases: ["ANDRE FARIAS"]
+  vitoria:
+    cpfs: ["070.475.321-96"]
+    cnpjs: ["52.488.753"]
+    razao_social: ["VITORIA MARIA SILVA DOS SANTOS"]
+    aliases: ["VITORIA"]
+fallback_pessoa: casal
+```
+
+Consumido por `src/intake/pessoa_detector.py::_casar_via_pessoas_yaml`. Ordem: CPF > CNPJ > razão > alias > pasta > fallback.
+
+### `mappings/irpf_regras.yaml` (Sprint B3)
+
+```yaml
+regras:
+  - regex: "G4F"
+    tag: "rendimento_tributavel"
+    descricao: "Salario G4F"
+  # ... 21 regras cobrindo 5 tags canônicas
+```
+
+Tags canônicas: `rendimento_tributavel`, `rendimento_isento`, `dedutivel_medico`, `imposto_pago`, `inss_retido`. Loader em `src/transform/irpf_tagger.py::_carregar_regras_yaml` com fallback hardcoded.
+
+### Aba `renda` restritiva (Sprint P0.1)
+
+Antes: 459 linhas (qualquer crédito em conta). Depois: 99 linhas (24 holerites + 75 MEI legítimo). Filtro aplicado por `eh_fonte_real_de_renda(descricao)` em `src/load/xlsx_writer.py::_criar_aba_renda`. Holerites extraídos pelo `contracheque_pdf.py` vão direto (autoritários, sem passar pelo filtro).
+
+### Novos `tipo_documento` no grafo
+
+Catalogados nesta sessão:
+
+| Tipo | Quantidade atual | Origem |
+|---|---:|---|
+| `holerite` | 24 | Sprint P3.2 (`contracheque_pdf::_ingerir_holerite_no_grafo`) |
+| `das_parcsn_andre` | 10 | Sprint P1.1 (`das_parcsn_pdf`) |
+| `nfce_modelo_65` | 4 | Sprint 44b (+2 via OCR fallback A2) |
+| `boleto_servico` | 2 | Sprint 87.3 |
+| `dirpf_retif` | 1 | Sprint P3.1 (`dirpf_dec`) |
+
+Esquema de chave canônica varia por tipo:
+- `holerite`: `HOLERITE|<fonte>|<mes_ref>`
+- `das_parcsn_andre`: dígitos do número SENDA (ex: `07182510572313828`)
+- `nfce_modelo_65`: chave de acesso SEFAZ (44 dígitos)
+- `boleto_servico`: linha digitável 47 dígitos
+- `dirpf_retif`: `DIRPF|<cpf>|<ano_base>_RETIF`
+
+### Schema das edges de categoria (Sprint 50b / A3)
+
+`categoria_de` agora é **idempotente por regra ativa**: cada item tem exatamente 1 aresta `categoria_de` apontando para a categoria da regra que casou na rodada mais recente. Mutação de `mappings/categorias_item.yaml` entre rodadas resulta em substituição, não acumulação (`DELETE FROM edge WHERE src_id=? AND tipo=categoria_de` antes de `adicionar_edge`).
+
+---
+
 *"Medir o que é mensurável e tornar mensurável o que não é." -- Galileu Galilei*
