@@ -1,8 +1,14 @@
-# Design Tokens — Protocolo Ouroboros (proposta Sprint 92)
+# Design Tokens — Protocolo Ouroboros
 
-Consolidação e expansão dos tokens já definidos em `src/dashboard/tema.py`.
-Este documento é o **contrato de design** para Sprints 92a/b/c.
-Não substitui `tema.py`; declara semântica e regras de uso.
+Consolidação dos tokens publicados em `src/dashboard/tema.py`. Este documento
+é o **contrato de design** para Sprints 92a/b/c (ambas concluídas em 2026-04-24).
+Não substitui `tema.py`; declara semântica, regras de uso e o mapa CSS ↔ Python.
+
+**Atualizado em 2026-04-24** pela Sprint 92c para refletir:
+- CSS custom properties (`:root { --color-*; --spacing-*; --font-*; }`) publicadas.
+- 6 helpers canônicos novos em `tema.py` + módulo `icons.py` (11 ícones Feather inline).
+- 10 classes utilitárias em `css_global()` (`.ouroboros-row-between`, etc.)
+  que consolidam padrões antes espalhados como `<div style=>` inline nas páginas.
 
 ---
 
@@ -128,9 +134,9 @@ Helpers em `tema.py`:
 Helper em `src/dashboard/componentes/`:
 - `kpi_grid_html(lista)` — grid fluido responsivo
 
-### 5.2 Proposta (Sprint 92c)
+### 5.2 Helpers novos (Sprint 92c — entregues)
 
-Novos helpers ausentes hoje:
+Seis helpers publicados em `src/dashboard/tema.py`:
 
 | Helper | Assinatura | Substitui |
 |---|---|---|
@@ -141,9 +147,124 @@ Novos helpers ausentes hoje:
 | `breadcrumb_drilldown_html(filtros)` | dict campo->valor | `_renderizar_breadcrumb` de extrato.py (centralizar) |
 | `chip_html(texto, cor=None, clicavel=True)` | — | `st.button` quando visual de chip é preferido |
 
-**Critério de aceitação para 92c:** essas 6 funções substituem 100% das
-chamadas hoje "custom ad-hoc" em páginas. Grep `<div style=` em `src/dashboard/paginas/`
-deve cair de ~50 ocorrências para <= 10 (apenas onde componente custom não faz sentido).
+**Entrega da Sprint 92c:** 51 chamadas `st.warning/info/success/error` eliminadas
+de 13 páginas (0 remanescentes). Grep `<div style=` em `src/dashboard/paginas/`
+caiu de 27 para 10 matches (8 reais + 2 menções em comentários).
+
+### 5.3 CSS custom properties publicadas (Sprint 92c)
+
+O bloco `:root` em `tema.css_global()` expõe 25 tokens acessíveis via
+`var(--...)` em qualquer HTML renderizado pelo Streamlit:
+
+```css
+:root {
+    /* cores (13) */
+    --color-fundo: #282A36;
+    --color-card-fundo: #44475A;
+    --color-texto: #F8F8F2;
+    --color-texto-sec: #6272A4;
+    --color-positivo: #50FA7B;
+    --color-negativo: #FF5555;
+    --color-alerta: #FFB86C;
+    --color-destaque: #BD93F9;
+    --color-neutro: #8BE9FD;
+    --color-info: #F1FA8C;
+    --color-superfluo: #FF79C6;
+    --color-obrigatorio: #50FA7B;
+    --color-questionavel: #FFB86C;
+    /* spacing (6, 8pt grid) */
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 16px;
+    --spacing-lg: 24px;
+    --spacing-xl: 32px;
+    --spacing-xxl: 48px;
+    /* fontes (6) */
+    --font-min: 13px;
+    --font-label: 13px;
+    --font-corpo: 15px;
+    --font-subtitulo: 18px;
+    --font-titulo: 22px;
+    --font-hero: 28px;
+}
+```
+
+**Regra N-para-N:** CSS vars são para HTML puro. Dentro do Plotly (`LAYOUT_PLOTLY`
+e `figura.update_layout(...)`), continue usando hex direto porque JSON inline
+não resolve `var()`.
+
+### 5.4 Classes utilitárias publicadas (Sprint 92c)
+
+10 classes em `css_global()` para substituir `<div style="...">` repetido
+em páginas:
+
+| Classe | Propósito |
+|---|---|
+| `.ouroboros-row-between` | flex + justify-content space-between + gap-sm |
+| `.ouroboros-row-flex` | flex + wrap + gap-sm + align-items center |
+| `.ouroboros-row-flex-xs` | flex + wrap + gap-xs |
+| `.ouroboros-label-icon` | cabeçalho com ícone inline (usado em Busca Global) |
+| `.ouroboros-card-hero-busca` | card de fornecedor com borda destaque |
+| `.ouroboros-aliases-line` | linha de badges de aliases |
+| `.ouroboros-ritmo-card` | cartão compacto de ritmo em Projeções |
+| `.ouroboros-timeline-container` | fundo card-fundo + padding-lg |
+| `.ouroboros-timeline-tronco` | linha vertical da timeline (Metas) |
+| `.ouroboros-timeline-evento` | evento individual na timeline |
+| `.ouroboros-chips-tipos` | flex wrap + margin-top para chips de tipo |
+| `.ouroboros-moc-preview` | preview do MOC Obsidian com JetBrains Mono |
+
+### 5.5 Como usar
+
+Em qualquer página (`src/dashboard/paginas/*.py`):
+
+```python
+from src.dashboard.tema import callout_html, icon_html, chip_html
+
+# Substitui st.warning("...") / st.info("...") / st.success("...") / st.error("...").
+st.markdown(callout_html("warning", "Mensagem"), unsafe_allow_html=True)
+st.markdown(callout_html("info", "Texto", titulo="Título opcional"), unsafe_allow_html=True)
+
+# Ícone inline (SVG Feather) dentro de qualquer outro HTML.
+svg = icon_html("search", tamanho=18, cor=CORES["destaque"])
+st.markdown(f"<div>{svg} Pesquisar</div>", unsafe_allow_html=True)
+
+# Chip visual (tag, filtro ativo).
+st.markdown(chip_html("PJ", cor=CORES["neutro"], clicavel=False), unsafe_allow_html=True)
+
+# Progress inline dentro de card.
+st.markdown(progress_inline_html(0.78, cor=CORES["positivo"]), unsafe_allow_html=True)
+
+# Metric colorido por sinal do delta.
+st.markdown(
+    metric_semantic_html("Saldo", "R$ 1.234,56", delta=5.2),
+    unsafe_allow_html=True,
+)
+
+# Breadcrumb de filtros ativos.
+st.markdown(
+    breadcrumb_drilldown_html({"categoria": "Farmácia", "mes": "2026-03"}),
+    unsafe_allow_html=True,
+)
+```
+
+Para `<div style="display: flex; ...">` antigos, use as classes utilitárias:
+
+```python
+# Antes (pre-92c):
+st.markdown(
+    f'<div style="display: flex; justify-content: space-between; '
+    f'gap: {SPACING["sm"]}px;">'
+    f'<span>{esq}</span><span>{dir}</span></div>',
+    unsafe_allow_html=True,
+)
+
+# Depois (92c):
+st.markdown(
+    f'<div class="ouroboros-row-between">'
+    f'<span>{esq}</span><span>{dir}</span></div>',
+    unsafe_allow_html=True,
+)
+```
 
 ---
 
