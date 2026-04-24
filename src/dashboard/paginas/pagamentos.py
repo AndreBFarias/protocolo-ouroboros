@@ -20,7 +20,12 @@ from src.dashboard.dados import (
     filtrar_por_pessoa,
     filtro_forma_ativo,
 )
-from src.dashboard.tema import CORES, FONTE_CORPO, FONTE_SUBTITULO, LAYOUT_PLOTLY
+from src.dashboard.tema import (
+    CORES,
+    FONTE_CORPO,
+    LAYOUT_PLOTLY,
+    hero_titulo_html,
+)
 
 
 def renderizar(
@@ -32,8 +37,12 @@ def renderizar(
     del mes_selecionado, ctx
 
     st.markdown(
-        f'<p style="color: {CORES["destaque"]}; font-size: {FONTE_SUBTITULO}px; '
-        f'font-weight: bold;">Pagamentos</p>',
+        hero_titulo_html(
+            "05",
+            "Pagamentos",
+            "Boletos, Pix e faturas de crédito com alertas de vencimento "
+            "e reconciliação via grafo.",
+        ),
         unsafe_allow_html=True,
     )
 

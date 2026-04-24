@@ -13,6 +13,7 @@ from src.dashboard.tema import (
     FONTE_TITULO,
     LAYOUT_PLOTLY,
     card_html,
+    hero_titulo_html,
     rgba_cor,
 )
 from src.irpf.checklist import gerar_checklist
@@ -26,6 +27,16 @@ def renderizar(
     ctx: dict | None = None,
 ) -> None:
     """Renderiza a página de análise IRPF."""
+    st.markdown(
+        hero_titulo_html(
+            "09",
+            "IRPF",
+            "Tags de dedução, simulação de regimes, gráficos mensais e "
+            "checklist de documentos.",
+        ),
+        unsafe_allow_html=True,
+    )
+
     if "extrato" not in dados:
         st.warning("Nenhum dado de extrato encontrado para análise IRPF.")
         return

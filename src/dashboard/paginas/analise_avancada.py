@@ -16,6 +16,7 @@ from src.dashboard.tema import (
     FONTE_MINIMA,
     FONTE_SUBTITULO,
     LAYOUT_PLOTLY,
+    hero_titulo_html,
     rgba_cor,
 )
 
@@ -303,6 +304,16 @@ def renderizar(
     ctx: dict | None = None,
 ) -> None:
     """Renderiza página de análise avançada com Sankey, heatmap e tendências."""
+    st.markdown(
+        hero_titulo_html(
+            "08",
+            "Análise",
+            "Sankey de fluxo de despesas, heatmap por dia da semana e "
+            "tendências históricas por classificação.",
+        ),
+        unsafe_allow_html=True,
+    )
+
     if "extrato" not in dados:
         st.warning("Nenhum dado encontrado para análise avançada.")
         return
