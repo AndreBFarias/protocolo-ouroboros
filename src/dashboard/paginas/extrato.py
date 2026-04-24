@@ -239,15 +239,32 @@ def renderizar(
     _inspecionar_transacao(resultado)
 
 
+TAMANHO_PAGINA_EXTRATO: int = 25
+"""Sprint 92a.8: número de linhas por página na tabela do Extrato."""
+
+
+def _calcular_slice_pagina(
+    total_linhas: int, tamanho_pagina: int, pagina_1_based: int
+) -> tuple[int, int]:
+    """Sprint 92a.8: devolve ``(start, stop)`` 0-indexado para ``iloc``.
+
+    Quando ``total_linhas == 0`` ou ``tamanho_pagina <= 0`` retorna
+    ``(0, 0)`` (slice vazio). ``pagina_1_based`` é clampada ao intervalo
+    ``[1, n_paginas]`` para evitar paginação inválida quando o filtro muda
+    e reduz o total.
+    """
+    if total_linhas <= 0 or tamanho_pagina <= 0:
+        return (0, 0)
+    n_paginas = max(1, (total_linhas + tamanho_pagina - 1) // tamanho_pagina)
+    pagina = max(1, min(pagina_1_based, n_paginas))
+    inicio = (pagina - 1) * tamanho_pagina
+    fim = min(inicio + tamanho_pagina, total_linhas)
+    return (inicio, fim)
+
+
 def _exibir_tabela(df: pd.DataFrame) -> None:
     """Exibe tabela interativa de transações e botão de export."""
-    st.markdown(
-        f'<p style="color: {CORES["destaque"]};'
-        f" font-size: {FONTE_CORPO}px;"
-        f' font-weight: bold; margin: 10px 0;">'
-        f"{len(df)} transações encontradas</p>",
-        unsafe_allow_html=True,
-    )
+    total = len(df)
 
     colunas_exibicao: list[str] = [
         "data",
@@ -295,8 +312,45 @@ def _exibir_tabela(df: pd.DataFrame) -> None:
 
     df_exibir = df_exibir.rename(columns=nomes_colunas)
 
+    # Sprint 92a.8: pagina\u00e7\u00e3o manual (25 linhas/p\u00e1gina). Streamlit ainda n\u00e3o
+    # oferece pagina\u00e7\u00e3o nativa em st.dataframe; slice por iloc + selectbox.
+    tamanho = TAMANHO_PAGINA_EXTRATO
+    n_paginas = max(1, (total + tamanho - 1) // tamanho)
+
+    col_info, col_pag = st.columns([3, 1])
+    with col_pag:
+        pagina = st.selectbox(
+            "P\u00e1gina",
+            options=list(range(1, n_paginas + 1)),
+            index=0,
+            key="extrato_pagina",
+            label_visibility="collapsed",
+        )
+
+    inicio, fim = _calcular_slice_pagina(total, tamanho, int(pagina))
+
+    with col_info:
+        if total == 0:
+            st.markdown(
+                f'<p style="color: {CORES["destaque"]};'
+                f" font-size: {FONTE_CORPO}px;"
+                f' font-weight: bold; margin: 10px 0;">'
+                f"0 transa\u00e7\u00f5es encontradas</p>",
+                unsafe_allow_html=True,
+            )
+        else:
+            st.markdown(
+                f'<p style="color: {CORES["destaque"]};'
+                f" font-size: {FONTE_CORPO}px;"
+                f' font-weight: bold; margin: 10px 0;">'
+                f"Mostrando {inicio + 1}-{fim} de {total} transa\u00e7\u00f5es</p>",
+                unsafe_allow_html=True,
+            )
+
+    df_pagina = df_exibir.iloc[inicio:fim]
+
     st.dataframe(
-        df_exibir,
+        df_pagina,
         use_container_width=True,
         hide_index=True,
         column_config={
@@ -304,6 +358,7 @@ def _exibir_tabela(df: pd.DataFrame) -> None:
         },
     )
 
+    # CSV exporta SEMPRE o conjunto completo, n\u00e3o s\u00f3 a p\u00e1gina corrente.
     csv = "\ufeff" + df_exibir.to_csv(index=False, sep=";", decimal=",")
     st.download_button(
         label="Exportar CSV",
