@@ -65,6 +65,35 @@ class TestParseBasico:
             assert tx.banco_origem == "Nubank"
             assert tx.forma_pagamento == "Crédito"
 
+    def test_cartao_pj_detecta_subtipo_via_path(self, tmp_path: Path) -> None:
+        """Sprint 93c: cartão PJ da Vitória produz banco_origem=Nubank (PJ).
+
+        Regressão para a família C da auditoria 2026-04-23: sem este rótulo,
+        transações do cartão MEI ficam invisíveis no XLSX consolidado (as
+        agregações por banco não diferenciam PJ do PF do André).
+        """
+        pasta_pj = tmp_path / "vitoria" / "nubank_pj_cartao"
+        pasta_pj.mkdir(parents=True)
+        alvo = pasta_pj / "nubank_pj_sintetico.csv"
+        alvo.write_text(FIXTURE_SAMPLE.read_text(encoding="utf-8"), encoding="utf-8")
+
+        transacoes = ExtratorNubankCartao(alvo).extrair()
+
+        assert len(transacoes) >= 1
+        assert all(tx.banco_origem == "Nubank (PJ)" for tx in transacoes)
+
+    def test_cartao_sem_pj_no_path_mantem_rotulo_nubank(self, tmp_path: Path) -> None:
+        """Cartão do André (path sem nubank_pj) continua como ``Nubank``."""
+        pasta_pf = tmp_path / "andre" / "nubank_cartao"
+        pasta_pf.mkdir(parents=True)
+        alvo = pasta_pf / "nubank_pf_sintetico.csv"
+        alvo.write_text(FIXTURE_SAMPLE.read_text(encoding="utf-8"), encoding="utf-8")
+
+        transacoes = ExtratorNubankCartao(alvo).extrair()
+
+        assert len(transacoes) >= 1
+        assert all(tx.banco_origem == "Nubank" for tx in transacoes)
+
 
 class TestCornerCases:
     def test_estorno_vira_receita(self, tmp_path: Path) -> None:
