@@ -427,17 +427,19 @@ Maratona disparada após auditoria artesanal de 760 arquivos em `data/raw/` + in
 - Última sprint antes de produção estável. Spec em `docs/sprints/backlog/sprint_AUDITORIA_ARTESANAL_FINAL.md`.
 - Rota: `scripts/reset_para_inbox.py` + `./run.sh --tudo` + revisão 1-a-1 com humano.
 
-### Fase MU -- sprints-filhas descobertas na sessão (BACKLOG)
+### Fase MU -- sprints-filhas formalizadas em backlog (9 sprints)
 
-- **82b** -- conta-espelho de cartão.
-- **87e** -- registrar boleto_pdf no pipeline principal.
-- **92a** -- 11 fixes UX cirúrgicos (4 P0, 4 P1, 3 P2).
-- **92b** -- reorganização em 5 clusters.
-- **92c** -- design system unificado.
-- **93a** -- dedup agressiva em 5 extratores bancários.
-- **93b** -- origem histórica cruzada (c6_cartao, nubank_pf_cc).
-- **93c** -- rotulagem Nubank PJ perdida no pipeline.
-- **F** (a criar) -- testes dedicados para 8 extratores bancários sem cobertura.
+Todas têm spec completa com acceptance criteria, touches, forbidden e proof-of-work.
+
+- **82b** -- conta-espelho cartão (`docs/sprints/backlog/sprint_82b_conta_espelho_cartao.md`).
+- **87e** -- registrar boleto_pdf no pipeline principal (`sprint_87e_*.md`, ~30min P1).
+- **92a** -- 11 fixes UX cirúrgicos 4 P0 + 4 P1 + 3 P2 (`sprint_92a_fixes_cirurgicos.md`, ~13h).
+- **92b** -- reorganização em 5 clusters de navegação (`sprint_92b_clusters.md`, ~4h; ADR-22).
+- **92c** -- design system unificado CSS vars + Feather icons (`sprint_92c_design_system.md`, ~8h).
+- **93a** -- investigar dedup agressiva em 5 extratores bancários (`sprint_93a_*.md`, ~5h).
+- **93b** -- origem histórica cruzada c6_cartao + nubank_pf_cc (`sprint_93b_*.md`, ~3h).
+- **93c** -- rotulagem Nubank PJ perdida no pipeline (`sprint_93c_*.md`, ~2h).
+- **F** -- testes dedicados para 8 extratores bancários sem cobertura (`sprint_F_*.md`, ~3h).
 
 ### Fase OMEGA -- Fusão total (Sprint 94) ESTRATÉGICA 12-18 MESES
 
