@@ -247,7 +247,18 @@ Runtime real: relatório `data/output/2026-04_relatorio.md` agora tem seção "#
 
 Pytest: 1201 → **1209 passed** (+8). Smoke 8/8 OK. Lint OK.
 
-### _Próximo: B2 (Sprint 33 Resumo mensal narrativo)_
+### 2026-04-23 — B2 concluída: Sprint 33 Resumo mensal narrativo
+
+Criados:
+- `src/load/relatorio.py::gerar_resumo_narrativo(transacoes, mes_ref, janela=3)`: 3-5 parágrafos em PT-BR explicando o mês (volume, comparação mês-1 + média, top 3 categorias, alerta supérfluo >25%, saldo positivo/negativo). Template heurístico, sem LLM.
+- `tests/test_resumo_narrativo.py` (6 testes).
+
+Modificado:
+- `gerar_relatorio_mes` chama `gerar_resumo_narrativo` entre seção diagnóstica e Resumo em tabela.
+
+Pytest: 1209 → **1215 passed** (+6). Smoke 8/8 OK. Lint OK.
+
+### _Próximo: B3 (Sprint 35 IRPF YAML)_
 
 ---
 
