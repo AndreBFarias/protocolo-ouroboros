@@ -366,6 +366,60 @@ def test_idempotente_nao_duplica_aresta(db: GrafoDB, caminho_propostas: Path):
     )
 
 
+def test_mutacao_regra_yaml_substitui_aresta_antiga(db: GrafoDB, tmp_path: Path):
+    """Sprint 50b (A3 2026-04-23): quando item que foi categorizado em X
+    passa a casar regra Y após mutação do YAML, deve haver exatamente 1
+    aresta final, apontando para Y (não 2 arestas acumuladas)."""
+    import yaml as _yaml
+
+    def _dump_regras(categoria: str, classif: str) -> str:
+        return _yaml.safe_dump(
+            {
+                "regras": {
+                    "produto_teste": {
+                        "regex": r"\bPRODUTO\b",
+                        "categoria": categoria,
+                        # chave "classificacao" (sem acento) é schema N-para-N
+                        # com mappings/categorias_item.yaml -- BRIEF §89.
+                        "classificacao": classif,  # noqa: accent
+                    }
+                }
+            },
+            allow_unicode=True,
+        )
+
+    yaml_inicial = tmp_path / "regras_v1.yaml"
+    yaml_inicial.write_text(_dump_regras("Categoria A", "Obrigatório"), encoding="utf-8")
+    yaml_mutado = tmp_path / "regras_v2.yaml"
+    yaml_mutado.write_text(_dump_regras("Categoria B", "Supérfluo"), encoding="utf-8")
+    propostas = tmp_path / "propostas"
+
+    item_id = upsert_item(db, "12345678000190", "2026-04-20", "001", "PRODUTO TESTE")
+
+    # Rodada 1: categoria A
+    categorizar_todos_items_no_grafo(
+        db, caminho_regras=yaml_inicial, caminho_propostas=propostas
+    )
+    arestas = db.listar_edges(src_id=item_id, tipo=EDGE_TIPO_CATEGORIA_DE)
+    assert len(arestas) == 1
+    categoria_a = db.buscar_node_por_id(arestas[0].dst_id)
+    assert categoria_a is not None
+    assert "CATEGORIA A" in categoria_a.nome_canonico.upper()
+
+    # Rodada 2: YAML mutado -> item agora deve ter 1 aresta para Categoria B
+    categorizar_todos_items_no_grafo(
+        db, caminho_regras=yaml_mutado, caminho_propostas=propostas
+    )
+    arestas = db.listar_edges(src_id=item_id, tipo=EDGE_TIPO_CATEGORIA_DE)
+    assert len(arestas) == 1, (
+        f"item deve ter exatamente 1 aresta categoria_de após mutação de YAML, "
+        f"achei {len(arestas)}"
+    )
+    categoria_b = db.buscar_node_por_id(arestas[0].dst_id)
+    assert categoria_b is not None
+    assert "CATEGORIA B" in categoria_b.nome_canonico.upper()
+
+
 def test_fallback_tambem_cria_aresta(db: GrafoDB, caminho_propostas: Path):
     """Item sem regra também recebe aresta para categoria 'Outros'."""
     item_id = upsert_item(
