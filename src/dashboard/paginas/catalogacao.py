@@ -45,6 +45,9 @@ ROTULOS_TIPO_DOCUMENTO: dict[str, str] = {
     "garantia_fabricante": "Termo de garantia",
     "apolice_seguro": "Apólice de seguro",
     "documento_fiscal": "Documento fiscal",
+    "irpf_parcela": "Parcela IRPF",
+    "das_mei": "DAS MEI",
+    "comprovante_cpf": "Comprovante CPF",
     "desconhecido": "Não identificado",
 }
 
