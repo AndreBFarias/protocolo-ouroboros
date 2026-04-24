@@ -157,15 +157,13 @@ def gerar_secao_diagnostica(
             v_mes_fmt = formatar_valor(valor_mes)
             media_fmt = formatar_valor(media)
             alertas.append(
-                f"Categoria **{cat}** está {var:+.0f}% acima da média "
-                f"({v_mes_fmt} vs {media_fmt})"
+                f"Categoria **{cat}** está {var:+.0f}% acima da média ({v_mes_fmt} vs {media_fmt})"
             )
         elif media > 100 and valor_mes < media * 0.3:
             v_mes_fmt = formatar_valor(valor_mes)
             media_fmt = formatar_valor(media)
             alertas.append(
-                f"Categoria **{cat}** caiu para {v_mes_fmt} "
-                f"(média era {media_fmt} -- queda brusca)"
+                f"Categoria **{cat}** caiu para {v_mes_fmt} (média era {media_fmt} -- queda brusca)"
             )
     if alertas:
         linhas.append("")
@@ -173,6 +171,153 @@ def gerar_secao_diagnostica(
         linhas.append("")
         for a in alertas[:10]:
             linhas.append(f"- {a}")
+
+    linhas.append(separador_secao())
+    return linhas
+
+
+def gerar_resumo_narrativo(
+    transacoes: list[dict],
+    mes_ref: str,
+    janela_meses: int = 3,
+) -> list[str]:
+    """Sprint 33 / B2 2026-04-23: narrativa interpretativa do mês.
+
+    Gera 3-5 parágrafos em PT-BR explicando: volume total + comparação,
+    top gastos, movimentos anômalos, classificação (obrigatório/supérfluo).
+    Template heurístico (sem LLM). Complementa a seção diagnóstica
+    (números) com interpretação textual.
+    """
+    linhas: list[str] = []
+    mes_anterior = _mes_anterior_str(mes_ref)
+
+    tx_mes = [t for t in transacoes if t.get("mes_ref") == mes_ref]
+    tx_anterior = [t for t in transacoes if t.get("mes_ref") == mes_anterior]
+    meses_janela = _meses_anteriores(mes_ref, janela_meses)
+    tx_janela = [t for t in transacoes if t.get("mes_ref") in meses_janela]
+
+    if not tx_mes:
+        return []
+
+    def _total_despesa(txs: list[dict]) -> float:
+        return sum(
+            float(t.get("valor") or 0.0) for t in txs if t.get("tipo") in ("Despesa", "Imposto")
+        )
+
+    def _total_receita(txs: list[dict]) -> float:
+        return sum(float(t.get("valor") or 0.0) for t in txs if t.get("tipo") == "Receita")
+
+    despesa_mes = _total_despesa(tx_mes)
+    despesa_anterior = _total_despesa(tx_anterior)
+    receita_mes = _total_receita(tx_mes)
+    media_janela = _total_despesa(tx_janela) / janela_meses if janela_meses > 0 else 0.0
+
+    saldo = receita_mes - despesa_mes
+    cat_mes = _despesa_por_categoria(tx_mes)
+    top_cat = sorted(cat_mes.items(), key=lambda x: x[1], reverse=True)[:3]
+
+    linhas.append("## Resumo narrativo")
+    linhas.append("")
+
+    p1_partes: list[str] = []
+    p1_partes.append(f"Em {mes_ref}, foram registradas {len(tx_mes)} transações,")
+    p1_partes.append(f"totalizando {formatar_valor(despesa_mes)} em despesas")
+    if receita_mes > 0:
+        p1_partes.append(f"e {formatar_valor(receita_mes)} em receitas.")
+    else:
+        p1_partes.append("sem receitas identificadas.")
+    p1 = " ".join(p1_partes)
+    linhas.append(p1)
+    linhas.append("")
+
+    p2_partes: list[str] = []
+    if despesa_anterior > 0:
+        var = (despesa_mes - despesa_anterior) / despesa_anterior * 100
+        anterior_fmt = formatar_valor(despesa_anterior)
+        if abs(var) < 10:
+            p2_partes.append(
+                f"O volume ficou praticamente estável em relação a {mes_anterior} ({var:+.1f}%)."
+            )
+        elif var > 0:
+            p2_partes.append(
+                f"Houve aumento de {var:+.1f}% nas despesas em relação a "
+                f"{mes_anterior} ({anterior_fmt})."
+            )
+        else:
+            p2_partes.append(
+                f"Houve redução de {abs(var):.1f}% nas despesas em relação a "
+                f"{mes_anterior} ({anterior_fmt})."
+            )
+    if media_janela > 0:
+        var_media = (despesa_mes - media_janela) / media_janela * 100
+        media_fmt = formatar_valor(media_janela)
+        if abs(var_media) < 15:
+            p2_partes.append(
+                f"Frente à média dos últimos {janela_meses} meses "
+                f"({media_fmt}), o mês seguiu o padrão."
+            )
+        elif var_media > 0:
+            p2_partes.append(
+                f"Mês acima da média dos últimos {janela_meses} meses "
+                f"({media_fmt}, {var_media:+.0f}%)."
+            )
+        else:
+            p2_partes.append(
+                f"Mês abaixo da média dos últimos {janela_meses} meses "
+                f"({media_fmt}, {var_media:+.0f}%)."
+            )
+    if p2_partes:
+        linhas.append(" ".join(p2_partes))
+        linhas.append("")
+
+    if top_cat:
+        partes_top: list[str] = []
+        if len(top_cat) >= 1:
+            partes_top.append(
+                f"O principal gasto foi **{top_cat[0][0]}** ({formatar_valor(top_cat[0][1])})"
+            )
+        if len(top_cat) >= 2:
+            partes_top.append(f"seguido por **{top_cat[1][0]}** ({formatar_valor(top_cat[1][1])})")
+        if len(top_cat) >= 3:
+            partes_top.append(f"e **{top_cat[2][0]}** ({formatar_valor(top_cat[2][1])})")
+        linhas.append(", ".join(partes_top) + ".")
+        linhas.append("")
+
+    obrigatorio = sum(
+        float(t.get("valor") or 0.0)
+        for t in tx_mes
+        if t.get("classificacao") == "Obrigatório" and t.get("tipo") in ("Despesa", "Imposto")
+    )
+    superfluo = sum(
+        float(t.get("valor") or 0.0)
+        for t in tx_mes
+        if t.get("classificacao") == "Supérfluo" and t.get("tipo") in ("Despesa", "Imposto")
+    )
+    if despesa_mes > 0:
+        pct_obr = obrigatorio / despesa_mes * 100
+        pct_sup = superfluo / despesa_mes * 100
+        if pct_sup > 25:
+            linhas.append(
+                f"**Atenção ao supérfluo**: {formatar_valor(superfluo)} "
+                f"({pct_sup:.0f}% das despesas) em categorias classificadas como não-essenciais. "
+                f"Obrigatório ficou em {pct_obr:.0f}% ({formatar_valor(obrigatorio)})."
+            )
+        else:
+            linhas.append(
+                f"Gasto essencial dominou o mês: {pct_obr:.0f}% do total em obrigatório "
+                f"({formatar_valor(obrigatorio)}), com {pct_sup:.0f}% em supérfluo."
+            )
+        linhas.append("")
+
+    if receita_mes > 0:
+        if saldo > 0:
+            linhas.append(f"**Saldo positivo** de {formatar_valor(saldo)} ao final do mês.")
+        else:
+            saldo_fmt = formatar_valor(abs(saldo))
+            linhas.append(
+                f"**Saldo negativo** de {saldo_fmt} -- despesas superaram receitas."
+            )
+        linhas.append("")
 
     linhas.append(separador_secao())
     return linhas
@@ -411,6 +556,10 @@ def gerar_relatorio_mes(
     # Sprint 21 / B1 2026-04-23: seção diagnóstica (variações vs mês-1 e média).
     secao_diag = gerar_secao_diagnostica(transacoes, mes_ref)
     linhas.extend(secao_diag)
+
+    # Sprint 33 / B2 2026-04-23: resumo narrativo interpretativo.
+    secao_narr = gerar_resumo_narrativo(transacoes, mes_ref)
+    linhas.extend(secao_narr)
 
     # Resumo em tabela
     linhas.append("## Resumo")
