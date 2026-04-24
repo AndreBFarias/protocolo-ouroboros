@@ -23,14 +23,21 @@ _LIMITE_LABEL_FALLBACK = 40
 def label_humano(node: dict[str, Any]) -> str:
     """Devolve o rótulo mais legível possível para um node do grafo.
 
-    Ordem de preferência (Sprint 60):
+    Ordem de preferência (Sprint 60 + Sprint 92a):
     1. Primeiro elemento de `aliases` (JSON string ou lista já decodificada).
-    2. `metadata.razao_social` quando presente.
-    3. `nome_canonico` truncado em 40 caracteres com reticências se maior.
+    2. Label especializado por tipo:
+       - `transacao`: `<YYYY-MM-DD> R$ <valor> <local_curto>` lido da  # noqa: accent
+         metadata (Sprint 92a item 1: evita mostrar hash sha256 ao usuário).
+    3. `metadata.razao_social` quando presente.
+    4. `nome_canonico` truncado em 40 caracteres com reticências se maior.
 
     Aceita `aliases` e `metadata` como string JSON (formato de `GrafoDB`) ou
     como estruturas Python já deserializadas (formato usado pelo dashboard
     após `json.loads`). Assim pode ser chamado em qualquer camada.
+
+    Observação de schema (ADR-14, N-para-N): a chave `tipo` no dict do node
+    permanece sem acento (`"transacao"`, `"periodo"`). A acentuação só aparece
+    no rótulo exibido ao humano — nunca em chave que participa de contrato.
     """
     aliases_raw = node.get("aliases")
     aliases: list[Any] = []
@@ -61,6 +68,14 @@ def label_humano(node: dict[str, Any]) -> str:
         except (json.JSONDecodeError, TypeError):
             metadata = {}
 
+    # Sprint 92a item 1: transações sem alias vêm com nome_canonico = hash
+    # sha256 (ver `src/graph/hash_transacao.py`). Montar label humano a partir
+    # da metadata melhora drasticamente a leitura do grafo full-page.
+    if str(node.get("tipo") or "") == "transacao":
+        rotulo_tx = _label_transacao(metadata)
+        if rotulo_tx:
+            return rotulo_tx
+
     razao_social = metadata.get("razao_social")
     if razao_social and str(razao_social).strip():
         return str(razao_social)
@@ -69,6 +84,34 @@ def label_humano(node: dict[str, Any]) -> str:
     if len(canonico) > _LIMITE_LABEL_FALLBACK:
         return canonico[:_LIMITE_LABEL_FALLBACK] + "..."
     return canonico
+
+
+def _label_transacao(metadata: dict[str, Any]) -> str:
+    """Monta `<data> R$ <valor> <local>` a partir da metadata de uma transação.
+
+    Retorna string vazia se faltar dado essencial (data e valor juntos) --
+    assim `label_humano` segue para o próximo fallback (razao_social / nc).
+    """
+    data_raw = str(metadata.get("data") or "")[:10]
+    valor_raw = metadata.get("valor")
+    local_raw = str(metadata.get("local") or "").strip()
+
+    try:
+        valor_num = float(valor_raw) if valor_raw is not None else None
+    except (TypeError, ValueError):
+        valor_num = None
+
+    if not data_raw or valor_num is None:
+        return ""
+
+    # Formato monetário PT-BR (vírgula decimal, ponto milhar).
+    valor_abs = abs(valor_num)
+    valor_br = f"{valor_abs:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
+    if local_raw:
+        local_curto = local_raw if len(local_raw) <= 20 else local_raw[:17] + "..."
+        return f"{data_raw} R$ {valor_br} {local_curto}"
+    return f"{data_raw} R$ {valor_br}"
 
 
 def estatisticas(db: GrafoDB | None = None) -> dict[str, Any]:
