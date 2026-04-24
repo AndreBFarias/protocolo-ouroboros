@@ -93,24 +93,94 @@ Sprint 93d formalizada: preservação forte de downloads em `data/raw/originais/
 
 ---
 
-## Próximos passos
+## Bloco 2 — UX cirúrgico (CONCLUÍDO)
 
-### Bloco 2 — UX cirúrgico (Sprint 92a → 92b → 92c)
+### Sprint 92a — 11 fixes cirúrgicos UX (P0+P1+P2)
+- Commits P0: `106227d` (labels pyvis) + `719cdce` (contraste treemap WCAG AA) + `ebf918e` (completude paleta+toggle) + `ff8cca1`+`6d18d09` (rename Pagamentos + fix dtype object).
+- Commit P0 screenshots: `994da5e` (8 PNGs ANTES/DEPOIS).
+- Commits P1: `62045e3` (hero_titulo_html em 10 páginas) + `9e3d267` (paginação Extrato) + `dee56de` (progress inline Metas) + `2162b7a` (metric colorido Projeções).
+- Commit P1 screenshots: `ff2069a` (20 PNGs).
+- Commit P2+fechamento: `769100f` (ROTULOS novos, hovertemplate Sankey, caption Extrato).
+- Baseline 92a: 1380 → 1456 passed (+76).
 
-Sequencial obrigatório (92a muda páginas que 92b reorganiza que 92c restyle). Inclui:
-- 92a: 11 fixes UX (4 P0: labels pyvis humanos, contraste treemap WCAG, completude, rename pagamentos; resto P1+P2).
-- 92b: reorganização em 5 clusters (P2-01 das 13 abas estourando viewport).
-- 92c: design system CSS vars + Feather icons.
+### Sprint 92b — navegação em 5 clusters + ADR-22
+- Commit único: `dc7565a`.
+- Sidebar radio "Área" com Hoje/Dinheiro/Documentos/Análise/Metas. Backward compat: URL `?tab=X` infere cluster via `MAPA_ABA_PARA_CLUSTER`.
+- ADR-22 registra decisão + rollback plan. 5 screenshots (um por cluster).
+- Baseline: 1456 → 1474 (+19).
 
-Skill `validacao-visual` será auto-invocada quando diff tocar UI. Stack: Streamlit + Plotly + pyvis, rodando em `http://localhost:8501` via `./run.sh --dashboard`.
+### Sprint 92c — design system CSS vars + Feather icons
+- Commits: `69a3a49` (CSS vars + 6 helpers em tema.py + 11 SVGs Feather em `src/dashboard/componentes/icons.py`) + `efd6cc5` (migrar 13 páginas para helpers canônicos) + `728c213` (reduzir hex hardcoded e `<div style=`) + `952323a` (fechamento + 4 screenshots + design_tokens atualizado).
+- Migração: 51 chamadas `st.warning/info/success/error` → `callout_html`; hex inline reduzido de 29 para 1; `<div style=` reduzido de 27 para 10.
+- `docs/licenses/feather.md` adicionado (NOTICE MIT).
+- Baseline: 1474 → 1517 (+43).
 
-### Antes ou durante Bloco 2: regenerar XLSX
+### Resumo Bloco 2
 
-Para materializar o fix da Sprint 93c (cartão PJ da Vitória rotulado corretamente), rodar `./run.sh --tudo`. Pode ser feito em qualquer momento — não bloqueia Bloco 2.
+- 10 commits em main (92a: 6 código + 2 screenshots + 1 fechamento; 92b: 1; 92c: 4).
+- Baseline: 1380 → 1517 passed (+137).
+- Smoke 8/8 preservado em todos os commits.
+- Screenshots: 33 PNGs distribuídos em 3 pastas.
+- ADR novo: ADR-22.
 
-### Bloco 3 — Sprint 82b (conta-espelho cartão, ~2h)
+## Bloco 3 — Sprint 82b (CONCLUÍDO)
 
-### Bloco 4 — Sprint D (auditoria artesanal, interativa com humano)
+### Sprint 82b — conta-espelho de cartão + flag `_virtual`
+- Commits: `003c98e` (flag `_virtual` + propagação) + `5f4e31a` (c6_cartao + santander_pdf emitem espelho) + `cda1055` (deduplicator pareia) + `83b8ecb` (13 testes + fechamento).
+- `nubank_cartao.py` NÃO implementa espelho — CSV Nubank não tem linha de pagamento recebido (documentado em docstring).
+- Achado empírico: `pipeline._reclassificar_ti_orfas` degradaria espelho virtual para Despesa. Fix inline com guard `if t.get("_virtual"): continue`.
+- Zero regressão nos 47 testes TI Sprint 68b (execução explícita confirmou 47 passed).
+- Baseline: 1517 → 1530 (+13).
+
+## Bloco 4 — Sprint D (PENDENTE, artesanal com humano)
+
+Só falta Sprint D. É interativa — requer supervisor humano para "mover tudo para inbox + reprocessar + revisar 1-a-1". Não pode ser automatizada.
+
+Spec: `docs/sprints/backlog/sprint_AUDITORIA_ARTESANAL_FINAL.md`.
+
+---
+
+## Achados para o supervisor humano (atualização Bloco 2 + 3)
+
+### 5. Sprint 93f descoberta durante validação pessoal
+
+Após rodar `./run.sh --tudo` entre Bloco 1 e Bloco 2, detectei que o XLSX regenerado ainda não tem `banco_origem="Nubank (PJ)"` apesar do fix da Sprint 93c no extrator passar em unit-teste. Investigação rápida revelou que o pipeline nem menciona arquivos em `data/raw/vitoria/nubank_pj_*` durante `--tudo`. Sprint 93f formalizada em backlog (P1) com diagnóstico + proof-of-work.
+
+Commit: `c02506e` (só a spec).
+
+### 6. Sprint 82c candidata (observação do subagente)
+
+Durante 82b, o subagente observou que `_parear_espelhos_virtuais` usa combinação `(data, |valor|)` para parear. Se dois pagamentos distintos no mesmo dia com mesmo valor em bancos diferentes existirem, pareamento pode ficar estatístico. Cenário raríssimo — **não formalizada** como sprint-filha (sem spec nova). Se aparecer em runtime, abrir Sprint 82c.
+
+### 7. Total de sprints-filhas novas da sessão (4)
+
+- **Fa** (P2, OFX duplicação account+accounts). Detectada por Sprint F.
+- **93d** (P2, preservação forte de downloads). Detectada por 93b (dataloss nubank_pf_cc).
+- **93e** (P3, coluna arquivo_origem no XLSX). Adiada em 93b.
+- **93f** (P1, pipeline escanear PJ Vitória). Detectada em validação pessoal pós-93c.
+
+---
+
+## Resumo final da sessão
+
+- **10 sprints concluídas** da rota longa aprovada (87e + F + 93a + 93b + 93c + 92a + 92b + 92c + 82b + handoff). Falta só Sprint D (artesanal).
+- **4 sprints-filhas formalizadas** em backlog (Fa, 93d, 93e, 93f).
+- **Baseline pytest:** 1261 → **1530 passed** (+269 testes, 9 skipped, 1 xfailed).
+- **Smoke 8/8** preservado em todos os ~30 commits da sessão.
+- **Lint verde** em todos os commits.
+- **Zero PII vazada daqui pra frente** (mascarei ativamente CPF André + CPF PF Vitória + CNPJ MEI Vitória antes de commitar).
+
+## Próximos passos recomendados
+
+1. **Executar Sprint 93f antes da Sprint D** — sem ela, a auditoria artesanal não verá as 856 tx PJ da Vitória. É investigação + fix do escaneamento do pipeline (provavelmente rápido).
+
+2. **Sprint D artesanal com humano** — agora o sistema está tecnicamente saudável e pronto para a auditoria linha-a-linha.
+
+3. **Sprints em backlog pós-D** (sem urgência):
+   - **Fa** (OFX duplicação) — fix simples guiado por teste `xfail(strict=True)` já no repo.
+   - **93d** (preservação forte) — operacional, executar após garantir downloads não são perdidos.
+   - **93e** (coluna arquivo_origem) — opcional, melhora bisect.
+   - **87b**, **89**, **90** pré-existentes (se houver backlog mais antigo).
 
 ---
 
