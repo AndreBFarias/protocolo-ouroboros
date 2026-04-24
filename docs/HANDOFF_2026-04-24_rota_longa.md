@@ -69,7 +69,7 @@ Atualizado incrementalmente a cada bloco concluído.
 
 ### 1. Vazamento histórico de PII (pré-sessão)
 
-O commit da Sprint 93c original (pré-2026-04-24) incluiu o CNPJ real do MEI da Vitória (52.488.753) em `docs/sprints/backlog/sprint_93c_rotulagem_nubank_pj.md` linha 72. Na sessão atual, mascarei o CNPJ na spec **antes de movê-la para concluidos**, então o vazamento não se perpetua daqui pra frente.
+O commit da Sprint 93c original (pré-2026-04-24) incluiu o CNPJ real do MEI da Vitória (52.488.753) em `docs/sprints/backlog/sprint_93c_rotulagem_nubank_pj.md` linha 72. Na sessão atual, mascarei o CNPJ na spec **antes de movê-la para `concluidos/`**, então o vazamento não se perpetua daqui pra frente. <!-- noqa: accent -->   
 
 Porém, **o CNPJ ainda está no histórico git** (1 ocorrência em commit anterior). Isso é um vazamento de PII que só pode ser apagado via history rewrite destrutivo (git filter-repo + force push) — ação que exige autorização explícita e não foi feita.
 

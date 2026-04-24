@@ -27,6 +27,9 @@ except ImportError:  # pragma: no cover — dep opcional
 
 
 # Paleta Dracula por tipo de nó (ADR-14 lista os 12 tipos canônicos).
+# IMPORTANTE: as chaves permanecem SEM acento para respeitar o contrato
+# N-para-N com o schema do grafo (`node.tipo` em SQLite). A acentuação ao
+# usuário é aplicada apenas em `ROTULO_HUMANO_POR_TIPO`.
 COR_POR_TIPO: dict[str, str] = {
     "transacao": "#8be9fd",
     "documento": "#bd93f9",
@@ -42,6 +45,34 @@ COR_POR_TIPO: dict[str, str] = {
     "seguradora": "#8be9fd",
     "produto_canonico": "#50fa7b",
 }
+
+# Sprint 92a item 1: rótulos humanos em PT-BR para a legenda. Usado pela
+# camada de apresentação (legenda do grafo full-page). NÃO use este dict em
+# comparações contra `node.tipo` -- sempre compare com a chave SEM acento.
+ROTULO_HUMANO_POR_TIPO: dict[str, str] = {
+    "transacao": "transação",
+    "documento": "documento",
+    "fornecedor": "fornecedor",
+    "categoria": "categoria",
+    "item": "item",
+    "periodo": "período",
+    "conta": "conta",
+    "tag_irpf": "tag IRPF",
+    "prescricao": "prescrição",
+    "garantia": "garantia",
+    "apolice": "apólice",
+    "seguradora": "seguradora",
+    "produto_canonico": "produto canônico",
+}
+
+
+def rotulo_humano_tipo(tipo: str) -> str:
+    """Devolve rótulo acentuado para legenda; fallback é o próprio tipo.
+
+    Sprint 92a item 1 -- conveniência para páginas que querem exibir o tipo
+    ao humano sem duplicar o mapa. Nunca use para chavear o dict COR_POR_TIPO.
+    """
+    return ROTULO_HUMANO_POR_TIPO.get(tipo, tipo)
 
 # Mapeia tipo do nó para o campo de query_param que a aba Extrato consome.
 _CAMPO_QUERY_POR_TIPO: dict[str, str] = {
@@ -127,28 +158,36 @@ def _parse_metadata(metadata: Any) -> dict[str, Any]:
 
 
 def _label_humano(node: dict[str, Any]) -> str:
-    """Fallback: aliases[0] → razao_social → descrição → tipo#id curto.
+    """Fallback: aliases[0] → label especializado por tipo → razao_social → tipo#id.
 
     P2.2 2026-04-23: quando nome_canonico é hash SHA-256 (caso transações e
     documentos), mostra `<tipo>#<id>` em vez do hash truncado.
+
+    Sprint 92a item 1: delega para `src.graph.queries.label_humano`, que
+    trata `transacao` com label `<data> R$ <valor> <local>` lido da metadata.  # noqa: accent
+    O fallback hash-like permanece como rede de segurança quando a metadata
+    do node não carrega data/valor.
     """
-    aliases = _parse_aliases(node.get("aliases"))
-    if aliases:
-        return str(aliases[0])
-    metadata = _parse_metadata(node.get("metadata"))
-    for chave in ("razao_social", "nome_fantasia", "descricao"):
-        if metadata.get(chave):
-            return str(metadata[chave])
+    # Delegação para o canônico. O canônico já cobre aliases + transação +
+    # razao_social + nome_canonico. Só refinamos quando o resultado ainda é
+    # hash bruto (metadata insuficiente) para trocar por `<tipo>#<id>`.
+    from src.graph.queries import label_humano as label_canonico
+
+    rotulo = label_canonico(node)
     nc = str(node.get("nome_canonico") or "")
-    tipo = node.get("tipo")
-    node_id = node.get("id", "?")
-    # Hash SHA-256 tem 64 hex chars; se o nome canônico é hash-like, mostra
-    # <tipo>#<id> que é mais legível ("transacao#4575" vs "5C277BC27E632...").
-    if nc and len(nc) >= 32 and all(c in "0123456789abcdefABCDEF" for c in nc) and tipo:
-        return f"{tipo}#{node_id}"
-    if not nc:
-        return f"node-{node_id}"
-    return nc if len(nc) <= 40 else nc[:37] + "..."
+
+    # Se o rótulo final é apenas o hash (cru OU truncado em 40) e o
+    # nome_canonico parece sha256, troca por "<tipo>#<id>" (mais útil para
+    # nodes transacao/documento sem metadata legível).
+    if nc and len(nc) >= 32 and all(c in "0123456789abcdefABCDEF" for c in nc):
+        if rotulo == nc or (rotulo.endswith("...") and rotulo[:-3] == nc[: len(rotulo) - 3]):
+            tipo = node.get("tipo")
+            node_id = node.get("id", "?")
+            if tipo:
+                return f"{tipo}#{node_id}"
+    if not rotulo:
+        return f"node-{node.get('id', '?')}"
+    return rotulo if len(rotulo) <= 40 else rotulo[:37] + "..."
 
 
 def construir_grafo_html(

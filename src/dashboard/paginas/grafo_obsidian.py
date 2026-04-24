@@ -112,6 +112,7 @@ def _renderizar_fullpage() -> None:
     from src.dashboard.componentes.grafo_pyvis import (
         COR_POR_TIPO,
         construir_grafo_html,
+        rotulo_humano_tipo,
     )
     from src.graph.db import GrafoDB
     from src.graph.queries import grafo_filtrado
@@ -136,9 +137,13 @@ def _renderizar_fullpage() -> None:
         st.divider()
         st.caption("Legenda por tipo")
         for tipo, cor in COR_POR_TIPO.items():
+            # Sprint 92a item 1: exibe rótulo acentuado PT-BR na legenda
+            # ("transação", "período") mesmo que a chave do schema seja
+            # sem acento (contrato N-para-N com `node.tipo` no SQLite).
+            rotulo = rotulo_humano_tipo(tipo)
             st.markdown(
                 f'<span style="color:{cor}; font-weight:bold;">●</span> '
-                f'<span>{tipo}</span>',
+                f'<span>{rotulo}</span>',
                 unsafe_allow_html=True,
             )
 
