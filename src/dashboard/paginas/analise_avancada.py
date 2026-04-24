@@ -163,6 +163,10 @@ def _renderizar_sankey(df: pd.DataFrame) -> None:
                     target=dados_sankey["target"],
                     value=dados_sankey["value"],
                     color=dados_sankey["link_colors"],
+                    hovertemplate=(
+                        "%{source.label} → %{target.label}"
+                        "<br>R$ %{value:,.2f}<extra></extra>"
+                    ),
                 ),
             )
         ]

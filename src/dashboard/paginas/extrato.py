@@ -358,6 +358,11 @@ def _exibir_tabela(df: pd.DataFrame) -> None:
         },
     )
 
+    st.caption(
+        "Legenda coluna 'Doc?': 'OK' = documento vinculado no grafo; "
+        "'!' = categoria obrigat\u00f3ria sem comprovante; vazio = sem tracking."
+    )
+
     # CSV exporta SEMPRE o conjunto completo, n\u00e3o s\u00f3 a p\u00e1gina corrente.
     csv = "\ufeff" + df_exibir.to_csv(index=False, sep=";", decimal=",")
     st.download_button(
