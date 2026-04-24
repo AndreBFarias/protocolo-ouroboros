@@ -223,7 +223,17 @@ Runtime real:
 - Grafo: 39 → **41 documentos**.
 - Pytest: 1200 passed (zero regressão). Smoke 8/8 OK.
 
-### _Próximo: A3 (Sprint 50b categorizer delete-before-insert)_
+### 2026-04-23 — A3 concluída: Sprint 50b categorizer delete-before-insert
+
+Modificado:
+- `src/transform/item_categorizer.py::categorizar_todos_items_no_grafo`: antes de `adicionar_edge`, executa `DELETE FROM edge WHERE src_id=? AND tipo=categoria_de`. Garante que item tem exatamente 1 aresta categoria mesmo após mutação de regra YAML entre rodadas.
+
+Criado:
+- `tests/test_item_categorizer.py::test_mutacao_regra_yaml_substitui_aresta_antiga`: 1 teste novo que valida o cenário do BRIEF §M50-1 (YAML muda, aresta antiga é substituída, não acumulada).
+
+Runtime: 1200 → **1201 passed** (+1). Smoke 8/8 OK. Lint OK. Fecha ressalva M50-1 do BRIEF (Sprint 50 APROVADO_COM_RESSALVAS).
+
+### _Próximo: B1 (Sprint 21 Relatórios diagnósticos)_
 
 ---
 

@@ -386,6 +386,15 @@ def categorizar_todos_items_no_grafo(
             )
             categoria_ids[categoria_nome] = cat_id
 
+        # Sprint 50b (A3 2026-04-23): delete-before-insert garante que mutação
+        # de regra YAML entre rodadas não acumule arestas. Item sempre tem
+        # exatamente 1 aresta `categoria_de`, apontando para a categoria
+        # determinada pela regra ativa nesta rodada.
+        db._conn.execute(
+            "DELETE FROM edge WHERE src_id=? AND tipo=?",
+            (node.id, EDGE_TIPO_CATEGORIA_DE),
+        )
+
         db.adicionar_edge(
             src_id=node.id,
             dst_id=categoria_ids[categoria_nome],
