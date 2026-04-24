@@ -154,6 +154,14 @@ def _descobrir_extratores() -> list:
     except ImportError as e:
         logger.warning("Extrator das_parcsn_pdf indisponível: %s", e)
 
+    # DIRPF .DEC (P3.1 2026-04-23). Extensão única .DEC, não colide com outros.
+    try:
+        from src.extractors.dirpf_dec import ExtratorDIRPFDec
+
+        extratores.append(ExtratorDIRPFDec)
+    except ImportError as e:
+        logger.warning("Extrator dirpf_dec indisponível: %s", e)
+
     # Recibo não-fiscal é catch-all de baixa prioridade (Sprint 47):
     # registrado depois dos extratores fiscais para não capturar arquivo
     # que pertence a cupom térmico, NFC-e ou DANFE.
@@ -181,6 +189,7 @@ def _escanear_arquivos(diretorio: Path) -> list[Path]:
         ".png",
         ".heic",
         ".heif",
+        ".dec",  # P3.1 2026-04-23: DIRPF .DEC (Receita Federal)
     }
     arquivos = []
 
