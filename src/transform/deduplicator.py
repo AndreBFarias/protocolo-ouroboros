@@ -61,6 +61,12 @@ def deduplicar_por_hash_fuzzy(transacoes: list[dict]) -> list[dict]:
     for ids in grupos.values():
         if len(ids) <= 1:
             continue
+        # Sprint 82b: espelho virtual de cartão tem razão de existir como
+        # contraparte; se colide com saída real, PRESERVA AMBOS (dedup
+        # clássico não se aplica a pares conta-espelho).
+        tem_virtual = any(transacoes[i].get("_virtual") for i in ids)
+        if tem_virtual:
+            continue
         nao_historicos = [i for i in ids if transacoes[i].get("banco_origem") != "Histórico"]
         preservar = nao_historicos[0] if nao_historicos else ids[0]
         for i in ids:
@@ -91,6 +97,50 @@ def _descricao_para_match(transacao: dict) -> str:
     return str(transacao.get("_descricao_original") or transacao.get("local") or "")
 
 
+def _parear_espelhos_virtuais(transacoes: list[dict]) -> int:
+    """Sprint 82b: pareia espelho virtual (cartão) com saída real (CC).
+
+    Extratores de cartão (c6_cartao, santander_pdf) emitem linha virtual
+    com `_virtual=True` quando detectam pagamento de fatura recebido. A
+    contraparte real é a saída no CC (mesma data, mesmo valor, outra
+    conta) que já chega ao deduplicator com tipo="Transferência Interna"
+    via regex operacional do extrator ou do pipeline. O pareamento clássico
+    de `marcar_transferencias_internas` não cobre esse caso porque ambos
+    os lados já são TI (nenhum é Despesa/None) e ambos têm pessoa="André".
+
+    Esta função apenas GARANTE que ambos os lados permanecem como TI e
+    conta os pares encontrados (pelo menos um dos dois com `_virtual=True`
+    + mesma data + mesmo valor absoluto, ignorando a identidade). Idempotente:
+    não remove nem duplica linhas; só acumula estatística para log.
+    """
+    virtuais_por_chave: dict[str, list[int]] = {}
+    reais_por_chave: dict[str, list[int]] = {}
+
+    for idx, t in enumerate(transacoes):
+        if t.get("tipo") != "Transferência Interna":
+            continue
+        data_str = t["data"].isoformat() if hasattr(t["data"], "isoformat") else str(t["data"])
+        chave = f"{data_str}|{abs(t.get('valor', 0)):.2f}"
+        if t.get("_virtual"):
+            virtuais_por_chave.setdefault(chave, []).append(idx)
+        else:
+            reais_por_chave.setdefault(chave, []).append(idx)
+
+    pares = 0
+    for chave, idx_virtuais in virtuais_por_chave.items():
+        idx_reais = reais_por_chave.get(chave)
+        if not idx_reais:
+            continue
+        # Confirma que ambos os lados continuam TI -- ja deveriam estar.
+        for i in idx_virtuais:
+            transacoes[i]["tipo"] = "Transferência Interna"
+        for i in idx_reais:
+            transacoes[i]["tipo"] = "Transferência Interna"
+        pares += min(len(idx_virtuais), len(idx_reais))
+
+    return pares
+
+
 def marcar_transferencias_internas(transacoes: list[dict]) -> list[dict]:
     """Nível 3: Identifica pares de transferência interna.
 
@@ -105,6 +155,9 @@ def marcar_transferencias_internas(transacoes: list[dict]) -> list[dict]:
     lados bate com a whitelist, o par é ignorado (não vira TI).
 
     Marca ambos como Transferência Interna sem remover.
+
+    Sprint 82b: pareia também espelhos virtuais de cartão (_virtual=True)
+    com saídas reais no CC do mesmo valor/data -- via `_parear_espelhos_virtuais`.
     """
     pares_encontrados = 0
 
@@ -149,6 +202,13 @@ def marcar_transferencias_internas(transacoes: list[dict]) -> list[dict]:
         logger.info(
             "Dedup nível 3: %d pares de transferência interna identificados",
             pares_encontrados,
+        )
+
+    pares_virtuais = _parear_espelhos_virtuais(transacoes)
+    if pares_virtuais > 0:
+        logger.info(
+            "Dedup nível 3 (Sprint 82b): %d pares espelho-virtual + saída-real confirmados",
+            pares_virtuais,
         )
 
     return transacoes
