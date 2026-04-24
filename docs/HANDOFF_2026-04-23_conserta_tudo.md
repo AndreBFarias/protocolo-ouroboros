@@ -202,6 +202,21 @@ Todas as 9 tarefas P0/P1/P2/P3 concluídas. 9 commits pushed em main.
 
 ---
 
+## Fase A — Ressalvas pós-rota
+
+### 2026-04-23 — A1 concluída: migração física casal → andre
+
+Criado:
+- `scripts/migrar_casal_para_andre.py`: usa `pessoa_detector` (Sprint 90) para decidir. Dry-run default; `--executar` aplica. Idempotente (se destino existe, remove origem duplicada).
+
+Runtime real: 30 candidatos em `data/raw/casal/`, 26 migrados para `andre/` (19 DAS + 3 certidões + 3 outros + 1 comprovante CPF). 4 ficam em `casal/` legitimamente (2 boletos SESC sem CPF, 2 cupons fotos).
+
+Pós-migração: casal 31→6 arquivos; andre 404→431. Pipeline `--tudo` verde. Smoke 8/8 OK. Pytest 1200 passed. Lint OK.
+
+### _Próximo: A2 (ExtratorNfcePDF com OCR fallback)_
+
+---
+
 ## Artefatos criados nesta sessão
 
 - `docs/sprints/backlog/sprint_87d_fallback_supervisor_idempotente_cupom.md`
