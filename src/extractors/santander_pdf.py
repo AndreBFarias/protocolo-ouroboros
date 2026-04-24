@@ -38,7 +38,7 @@ REGEX_TRANSACAO_BRL: re.Pattern[str] = re.compile(
 )
 
 REGEX_PAGAMENTO: re.Pattern[str] = re.compile(
-    r"PAGAMENTO\s+DE\s+FATURA",
+    r"PAGAMENTO\s+DE\s+FATURA|PAGAMENTO\s+RECEBIDO",
     re.IGNORECASE,
 )
 
@@ -316,6 +316,12 @@ class ExtratorSantanderPDF(ExtratorBase):
 
             identificador: str = self._gerar_hash(str(data_transacao), descricao_limpa, str(valor))
 
+            # Sprint 82b: linha de PAGAMENTO DE FATURA / PAGAMENTO RECEBIDO
+            # e contraparte espelho da saida em conta-corrente. Marcamos
+            # _virtual=True para que somatorios e smoke aritmetico saibam
+            # distinguir da TI real pareada pelo deduplicator.
+            virtual: bool = e_pagamento
+
             return Transacao(
                 data=data_transacao,
                 valor=valor,
@@ -326,6 +332,7 @@ class ExtratorSantanderPDF(ExtratorBase):
                 tipo=tipo,
                 identificador=identificador,
                 arquivo_origem=str(arquivo.name),
+                _virtual=virtual,
             )
         except (ValueError, IndexError) as erro:
             self.logger.warning("Transação ignorada: %s - %s", descricao, erro)
