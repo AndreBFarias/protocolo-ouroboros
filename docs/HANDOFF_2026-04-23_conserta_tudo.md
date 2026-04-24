@@ -270,7 +270,45 @@ Runtime: 22 regras carregadas do YAML (vs 21 hardcoded -- +1 de FGTS agrupado). 
 
 Pytest: 1215 → **1220 passed** (+5). Smoke 8/8 OK. Lint OK.
 
-### _Próximo: C1 (Sprint 82 Canonicalizer TI)_
+### 2026-04-23 — Fase C concluída (3 sprints em paralelo via worktrees isolados)
+
+3 subagentes `executor-sprint` rodaram em paralelo em worktrees isolados, retornaram com commits próprios, e foram mergiados sequencialmente em main. Zero conflito (escopos disjuntos).
+
+**C1 — Sprint 82 Canonicalizer TI (branch worktree-agent-a27502ff, 2 commits):**
+- Ampliou `canonicalizer_casal.py::variantes_curtas(desc, banco)`; novo schema `nomes_variantes` em `mappings/contas_casal.yaml`; etapa 6c `_promover_variantes_para_ti` em pipeline.
+- Runtime: 46 tx/mês Receita/Despesa serão promovidas a TI. Receita abril projetada R$ 15.622 -> R$ 11.622 (meta <R$ 13.000 OK).
+- Sprint 82b (conta-espelho) formalizada como sprint-filha, adiada com justificativa técnica.
+- Baseline: 1213 -> 1238 passed (+25 testes novos em `tests/test_canonicalizer_variantes.py`).
+
+**C3 — Sprint 93 Auditoria extratores (branch worktree-agent-a847ced5, 1 commit):**
+- `scripts/auditar_extratores.py` (634L) + 16 testes + relatório `docs/auditoria_extratores_2026-04-23.md`.
+- Rodou em 9 bancos. Apenas **Itaú CC** confirmado com fidelidade 100% (delta R$ 0,00).
+- 8 bancos divergem; 3 famílias de divergência mapeadas: Sprint 93a (dedup agressiva), 93b (extrator < XLSX, origem histórica), 93c (rotulagem Nubank PJ perdida).
+- Escopo proibido respeitado: zero alteração em extratores -- tudo vira sprint-filha.
+- Baseline: 1220 -> 1236 passed (+16).
+
+**C2 — Sprint 92 UX audit Nielsen (branch worktree-agent-a2227f70, 1 commit):**
+- Documento `docs/ux/audit_2026-04-23.md` (matriz Nielsen × 13 abas) + 4 wireframes + `design_tokens.md` + **13 screenshots reais via Playwright** em `docs/screenshots/sprint_92_2026-04-23/`.
+- 3 sprints-filhas: 92a (11 fixes cirúrgicos, 4 P0), 92b (reorganização em 5 clusters), 92c (design system unificado).
+- Top 3 achados P0: nodes transacao com hash SHA no pyvis, contraste 2.8:1 no treemap Categorias (viola WCAG AA), 13 abas estourando viewport.
+- Zero linha de código de produção tocada (auditoria pura).
+- Baseline: 1220 passed (sem regressão).
+
+**Baseline pós-merge (main):** **1261 passed / 9 skipped** (+41 vs 1220 antes da Fase C). Smoke 8/8 OK. Lint OK. Pipeline `--tudo` verde com novo canonicalizer promovendo tx.
+
+### ROTA "CONSERTA TUDO" + FASES A/B/C COMPLETAS
+
+Total de 18 sprints executadas em 18 commits pushed em main:
+- Rota conserta tudo: P0.1, P0.2, P1.1, P1.2, P2.1, P2.2, P2.3, P3.2, P3.1 (9)
+- Fase A ressalvas: A1, A2, A3 (3)
+- Fase B ZETA: B1, B2, B3 (3)
+- Fase C backlog formal: C1, C2, C3 (3)
+
+7 sprints-filhas formalizadas em backlog: 82b, 92a, 92b, 92c, 93a, 93b, 93c (descobertas durante execução, seguindo protocolo anti-débito).
+
+### Resta apenas Fase D
+
+- [ ] **Fase D — SPRINT AUDITORIA ARTESANAL FINAL**: mover tudo para inbox + reprocessar + revisar 1-a-1 com o usuário. Spec em `docs/sprints/backlog/sprint_AUDITORIA_ARTESANAL_FINAL.md`.
 
 ---
 
