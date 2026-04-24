@@ -33,6 +33,37 @@ MAPA_CLASSIFICACAO_VALOR: dict[str, int] = {
 }
 
 
+def _cor_texto_por_fundo(fundo_hex: str) -> str:
+    """Sprint 92a item 2: escolhe cor de texto legível sobre o fundo informado.
+
+    Usa luminância relativa WCAG 2.1 (https://www.w3.org/TR/WCAG21/#dfn-relative-luminance)
+    para decidir entre preto e branco. Quando a luminância do fundo é
+    > 0.6, retorna preto ("#000"); caso contrário, branco ("#fff").
+
+    Aceita cor em formato `#RRGGBB` ou `#RGB`. Fallback seguro: retorna
+    branco para cores inválidas (comportamento antigo, preserva contraste
+    mínimo no Dracula dark default).
+    """
+    texto = str(fundo_hex or "").lstrip("#").strip()
+    if len(texto) == 3:
+        texto = "".join(c * 2 for c in texto)
+    if len(texto) != 6:
+        return "#fff"
+    try:
+        r = int(texto[0:2], 16) / 255.0
+        g = int(texto[2:4], 16) / 255.0
+        b = int(texto[4:6], 16) / 255.0
+    except ValueError:
+        return "#fff"
+
+    def _linearizar(canal: float) -> float:
+        # Formula WCAG (gamma sRGB).
+        return canal / 12.92 if canal <= 0.03928 else ((canal + 0.055) / 1.055) ** 2.4
+
+    luminância = 0.2126 * _linearizar(r) + 0.7152 * _linearizar(g) + 0.0722 * _linearizar(b)
+    return "#000" if luminância > 0.6 else "#fff"
+
+
 def renderizar(
     dados: dict[str, pd.DataFrame],
     mes_selecionado: str,
@@ -100,10 +131,20 @@ def _treemap_categorias(df: pd.DataFrame) -> None:
         uniformtext=dict(minsize=12, mode="hide"),
     )
 
+    # Sprint 92a item 2 (P1-05 WCAG AA): o treemap antes usava textfont global
+    # branco sobre cores claras (ex.: green #50FA7B, yellow/orange) dando
+    # contraste ~2.8:1. Agora calculamos a cor do texto por leaf via
+    # luminância WCAG: preto em fundos claros (> 0.6), branco em escuros.
+    # A cor de fundo de cada leaf é herdada do mapa classificacao->cor.  # noqa: accent
+    cores_texto_leaf = [
+        _cor_texto_por_fundo(MAPA_CLASSIFICACAO_COR.get(c, CORES["fundo"]))
+        for c in agrupado["classificacao"]
+    ]
+
     fig.update_traces(
         textinfo="label+value",
         texttemplate="<b>%{label}</b><br>R$ %{value:,.2f}",
-        textfont=dict(size=13, family="monospace"),
+        textfont=dict(size=13, family="monospace", color=cores_texto_leaf),
         marker=dict(line=dict(color=CORES["fundo"], width=2)),
         textposition="middle center",
         tiling=dict(pad=4),
