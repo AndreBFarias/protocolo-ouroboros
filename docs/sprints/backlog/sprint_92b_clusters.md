@@ -14,7 +14,7 @@ sprint:
       reason: "ler_filtros_da_url aceita param 'cluster'; navegação entre clusters"
     - path: tests/test_dashboard_app.py
       reason: "teste de renderização por cluster"
-    - path: docs/adr/ADR-21-navegacao-clusters.md
+    - path: docs/adr/ADR-22-navegacao-clusters.md
       reason: "ADR registrando decisão"
   forbidden:
     - "Misturar mudança estrutural (clusters) com fixes visuais (92a)"
@@ -30,7 +30,7 @@ sprint:
     - "URL antiga ?tab=Extrato continua funcionando (backward compat — mapeamento implícito)"
     - "Streamlit sidebar.radio do cluster persistido em session_state"
     - "Zero regressão em pytest (>=1220 passed)"
-    - "ADR-21 registra decisão + rollback plan"
+    - "ADR-22 registra decisão + rollback plan"
     - "Screenshots das 5 telas iniciais (uma por cluster) em docs/screenshots/sprint_92b_*"
 ```
 
