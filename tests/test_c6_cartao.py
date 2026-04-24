@@ -73,7 +73,8 @@ def _criar_arquivo_dummy_c6_cartao(tmp_path: Path) -> Path:
 
 
 class TestParseBasico:
-    def test_3_transacoes_validas_apos_filtrar_pagamento(self, tmp_path: Path) -> None:
+    def test_4_transacoes_incluindo_espelho_virtual(self, tmp_path: Path) -> None:
+        """Sprint 82b: pagamento de fatura vira linha virtual TI em vez de ser ignorado."""
         arquivo = _criar_arquivo_dummy_c6_cartao(tmp_path)
         extrator = ExtratorC6Cartao(arquivo)
 
@@ -82,7 +83,10 @@ class TestParseBasico:
         ):
             transacoes = extrator.extrair()
 
-        assert len(transacoes) == 3, "Pag Fatura deve ser ignorado"
+        assert len(transacoes) == 4, "Pag Fatura vira espelho virtual (Sprint 82b)"
+        virtuais = [t for t in transacoes if getattr(t, "_virtual", False)]
+        assert len(virtuais) == 1
+        assert virtuais[0].tipo == "Transferência Interna"
 
     def test_datas_convertidas_para_date_objeto(self, tmp_path: Path) -> None:
         arquivo = _criar_arquivo_dummy_c6_cartao(tmp_path)
@@ -109,7 +113,11 @@ class TestParseBasico:
         for tx in transacoes:
             assert tx.banco_origem == "C6"
             assert tx.forma_pagamento == "Crédito"
-            assert tx.tipo == "Despesa"
+        # Compras são Despesa; pagamento de fatura vira espelho virtual TI (Sprint 82b)
+        compras = [t for t in transacoes if not getattr(t, "_virtual", False)]
+        espelhos = [t for t in transacoes if getattr(t, "_virtual", False)]
+        assert all(t.tipo == "Despesa" for t in compras)
+        assert all(t.tipo == "Transferência Interna" for t in espelhos)
 
 
 class TestCornerCases:
@@ -140,7 +148,12 @@ class TestCornerCases:
         # 25.00 USD * 5.20 = 130.00 BRL
         assert internacional[0].valor == pytest.approx(130.00, abs=0.01)
 
-    def test_pagamento_de_fatura_e_ignorado(self, tmp_path: Path) -> None:
+    def test_pagamento_de_fatura_vira_espelho_virtual(self, tmp_path: Path) -> None:
+        """Sprint 82b: linha 'Pag Fatura Anterior' deixa de ser descartada.
+
+        Emitida como Transação com _virtual=True, tipo=Transferência Interna,
+        valor absoluto preservado. Contraparte do débito em conta-corrente.
+        """
         arquivo = _criar_arquivo_dummy_c6_cartao(tmp_path)
         extrator = ExtratorC6Cartao(arquivo)
 
@@ -149,7 +162,12 @@ class TestCornerCases:
         ):
             transacoes = extrator.extrair()
 
-        assert not any("Pag Fatura" in t.descricao for t in transacoes)
+        espelhos = [t for t in transacoes if "Pag Fatura" in t.descricao]
+        assert len(espelhos) == 1
+        assert espelhos[0]._virtual is True
+        assert espelhos[0].tipo == "Transferência Interna"
+        assert espelhos[0].valor == 500.00
+        assert espelhos[0].data == date(2026, 2, 20)
 
 
 class TestEntradaInvalida:
