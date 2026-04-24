@@ -1,0 +1,18 @@
+Faturas e Consumo Neoenergia
+Mês
+01/2026
+Consumo
+320 Kwh
+Valor R$ 289,45
+
+Mês
+02/2026
+Consumo
+285 Kwh
+Valor R$ 256,30
+
+Mês
+03/2026
+Consumo
+198 Kwh
+Valor R$ 178,90
