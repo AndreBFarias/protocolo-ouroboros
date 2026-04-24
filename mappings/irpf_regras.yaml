@@ -1,0 +1,125 @@
+# mappings/irpf_regras.yaml -- regras de tagging IRPF (Sprint 35 / B3 2026-04-23)
+#
+# Fonte da verdade para tags IRPF aplicadas em transações. Antes ficava
+# hardcoded em src/transform/irpf_tagger.py::REGRAS_IRPF. Agora declarativo.
+#
+# Estrutura: lista de regras com regex + tag + descricao (sem acento; schema
+# N-para-N com o grafo). Cada regra é testada via re.search (IGNORECASE)
+# contra o campo `_descricao_original` da transação.
+#
+# Tags canônicas:
+#   - rendimento_tributavel  -- entra na declaração como tributável
+#   - rendimento_isento       -- isento (bolsa, FGTS, poupança)
+#   - dedutivel_medico        -- despesa médica dedutível (Lei 9.250/95)
+#   - imposto_pago            -- DARF, DAS, recolhimento anual
+#   - inss_retido             -- INSS descontado em folha/MEI
+
+regras:
+  # --------------------------------------------------------------------------
+  # Rendimentos tributáveis
+  # --------------------------------------------------------------------------
+  - regex: "G4F"
+    tag: "rendimento_tributavel"
+    descricao: "Salario G4F"
+
+  - regex: "INFOBASE"
+    tag: "rendimento_tributavel"
+    descricao: "Salario Infobase"
+
+  - regex: "PAGTO.*SALARIO|CREDITO.*SALARIO"
+    tag: "rendimento_tributavel"
+    descricao: "Salario generico"
+
+  # --------------------------------------------------------------------------
+  # Rendimentos isentos
+  # --------------------------------------------------------------------------
+  - regex: "NEES|UFAL"
+    tag: "rendimento_isento"
+    descricao: "Bolsa NEES/UFAL"
+
+  - regex: "FGTS|FUNDO DE GARANTIA"
+    tag: "rendimento_isento"
+    descricao: "FGTS"
+
+  - regex: "REND PAGO APLIC|RENDIMENTO|JUROS.*POUPANCA|JUROS.*POUPANÇA"
+    tag: "rendimento_isento"
+    descricao: "Rendimento de aplicacao/poupanca"
+
+  # --------------------------------------------------------------------------
+  # Dedutíveis médicos (Lei 9.250/95)
+  # --------------------------------------------------------------------------
+  - regex: "CLINICA|CL[IÍ]NICA"
+    tag: "dedutivel_medico"
+    descricao: "Clinica medica"
+
+  - regex: "HOSPITAL"
+    tag: "dedutivel_medico"
+    descricao: "Hospital"
+
+  - regex: "CONSULT"
+    tag: "dedutivel_medico"
+    descricao: "Consulta medica"
+
+  - regex: "PSIQ"
+    tag: "dedutivel_medico"
+    descricao: "Psiquiatra"
+
+  - regex: "PSICOL"
+    tag: "dedutivel_medico"
+    descricao: "Psicologo"
+
+  - regex: "LUDENS"
+    tag: "dedutivel_medico"
+    descricao: "Ludens (saude)"
+
+  - regex: "AG.SERVICOS.NEUROLOGIC"
+    tag: "dedutivel_medico"
+    descricao: "Servicos neurologicos"
+
+  - regex: "ASSUNCAO.*CORREIA.*SERVICOS EM SAUD"
+    tag: "dedutivel_medico"
+    descricao: "Servicos de saude"
+
+  - regex: "DENTIST|ODONT|ORTODON"
+    tag: "dedutivel_medico"
+    descricao: "Dentista/Ortodontia"
+
+  - regex: "FISIOTER|FONOAUDI"
+    tag: "dedutivel_medico"
+    descricao: "Fisioterapia/Fonoaudiologia"
+
+  - regex: "LABORAT|EXAME|DIAGNOS"
+    tag: "dedutivel_medico"
+    descricao: "Exames/Laboratorio"
+
+  - regex: "PLANO.*SAUDE|UNIMED|AMIL|BRADESCO.*SAUDE|SULAMERICA"
+    tag: "dedutivel_medico"
+    descricao: "Plano de saude"
+
+  # --------------------------------------------------------------------------
+  # Impostos pagos
+  # --------------------------------------------------------------------------
+  - regex: "DARF"
+    tag: "imposto_pago"
+    descricao: "DARF"
+
+  - regex: "DAS.MEI|DAS.*Simples"
+    tag: "imposto_pago"
+    descricao: "DAS MEI/Simples"
+
+  - regex: "RECEITA.FED"
+    tag: "imposto_pago"
+    descricao: "Receita Federal"
+
+  # --------------------------------------------------------------------------
+  # INSS retido
+  # --------------------------------------------------------------------------
+  - regex: "INSS"
+    tag: "inss_retido"
+    descricao: "INSS retido"
+
+# Ao editar este arquivo:
+# 1. Regex sao aplicadas com IGNORECASE. Ordem nao importa (match por regra,
+#    primeira tag vence na tagger atual).
+# 2. Campo descricao fica na coluna `obs_irpf` da aba IRPF do XLSX.
+# 3. YAML ausente -> tagger cai em REGRAS_IRPF hardcoded (retrocompat).

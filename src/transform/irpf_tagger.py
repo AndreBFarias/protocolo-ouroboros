@@ -1,11 +1,48 @@
 """Aplicação automática de tags IRPF em transações financeiras."""
 
 import re
+from pathlib import Path
 from typing import Optional
+
+import yaml
 
 from src.utils.logger import configurar_logger
 
 logger = configurar_logger("irpf_tagger")
+
+# Sprint 35 / B3 2026-04-23: regras carregadas de mappings/irpf_regras.yaml
+# quando disponível. Hardcoded abaixo serve como fallback de retrocompat.
+_CAMINHO_YAML_IRPF: Path = (
+    Path(__file__).resolve().parents[2] / "mappings" / "irpf_regras.yaml"
+)
+
+
+def _carregar_regras_yaml() -> Optional[list[dict[str, str]]]:
+    """Lê mappings/irpf_regras.yaml. None se ausente ou inválido."""
+    if not _CAMINHO_YAML_IRPF.exists():
+        return None
+    try:
+        with _CAMINHO_YAML_IRPF.open("r", encoding="utf-8") as f:
+            dados = yaml.safe_load(f) or {}
+    except yaml.YAMLError as exc:
+        logger.warning("falha ao ler irpf_regras.yaml (%s); usando hardcoded", exc)
+        return None
+    regras = dados.get("regras")
+    if not isinstance(regras, list) or not regras:
+        return None
+    validadas: list[dict[str, str]] = []
+    for r in regras:
+        if not isinstance(r, dict):
+            continue
+        if {"regex", "tag", "descricao"}.issubset(r.keys()):
+            validadas.append(
+                {
+                    "regex": str(r["regex"]),
+                    "tag": str(r["tag"]),
+                    "descricao": str(r["descricao"]),
+                }
+            )
+    return validadas if validadas else None
 
 REGRAS_IRPF: list[dict[str, str]] = [
     # --- Rendimentos tributáveis ---
@@ -129,12 +166,24 @@ _REGRAS_COMPILADAS: list[dict] = []
 
 
 def _compilar_regras() -> list[dict]:
-    """Compila as regras regex uma única vez (cache)."""
+    """Compila as regras regex uma única vez (cache).
+
+    Fonte: mappings/irpf_regras.yaml quando disponível; caso contrário cai
+    em REGRAS_IRPF hardcoded (retrocompat Sprint 35 / B3 2026-04-23).
+    """
     global _REGRAS_COMPILADAS  # noqa: PLW0603
     if _REGRAS_COMPILADAS:
         return _REGRAS_COMPILADAS
 
-    for regra in REGRAS_IRPF:
+    regras_yaml = _carregar_regras_yaml()
+    regras_origem = regras_yaml if regras_yaml is not None else REGRAS_IRPF
+    if regras_yaml is not None:
+        logger.info(
+            "irpf_tagger: %d regras carregadas de mappings/irpf_regras.yaml",
+            len(regras_yaml),
+        )
+
+    for regra in regras_origem:
         try:
             regex_compilado = re.compile(regra["regex"], re.IGNORECASE)
             _REGRAS_COMPILADAS.append(

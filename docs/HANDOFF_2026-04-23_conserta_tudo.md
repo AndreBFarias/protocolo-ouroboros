@@ -258,7 +258,19 @@ Modificado:
 
 Pytest: 1209 → **1215 passed** (+6). Smoke 8/8 OK. Lint OK.
 
-### _Próximo: B3 (Sprint 35 IRPF YAML)_
+### 2026-04-23 — B3 concluída: Sprint 35 IRPF regras em YAML
+
+Criados:
+- `mappings/irpf_regras.yaml`: 22 regras IRPF declarativas (5 tags: rendimento_tributavel, rendimento_isento, dedutivel_medico, imposto_pago, inss_retido).
+- `src/transform/irpf_tagger.py::_carregar_regras_yaml`: lê YAML com validação e cache.
+- `_compilar_regras` prefere YAML; cai em REGRAS_IRPF hardcoded se YAML ausente ou inválido.
+- `tests/test_irpf_regras_yaml.py` (5 testes): carga real, ausente, malformado, customizado substitui, sem chave raiz.
+
+Runtime: 22 regras carregadas do YAML (vs 21 hardcoded -- +1 de FGTS agrupado). Edição de regras sem tocar código Python.
+
+Pytest: 1215 → **1220 passed** (+5). Smoke 8/8 OK. Lint OK.
+
+### _Próximo: C1 (Sprint 82 Canonicalizer TI)_
 
 ---
 
