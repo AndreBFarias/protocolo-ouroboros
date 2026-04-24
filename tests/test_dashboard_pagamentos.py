@@ -116,6 +116,34 @@ def test_formatar_boletos_nao_quebra_com_dataframe_parcial() -> None:
     assert "Banco" in resultado.columns
 
 
+def test_formatar_boletos_coluna_data_object_com_timestamps() -> None:
+    """Regressão: carregar_boletos produz coluna `data` com dtype=object mas
+    valores Timestamp (caso real do XLSX 2026 -- 268 boletos, dtype misto).
+
+    is_datetime64_any_dtype retorna False para object, mas os valores ainda
+    são Timestamps. Formatar via pd.to_datetime+strftime normaliza.
+    """
+    df = pd.DataFrame(
+        {
+            "data": pd.Series(
+                [pd.Timestamp("2019-11-04"), pd.Timestamp("2020-01-28")],
+                dtype=object,
+            ),
+            "fornecedor": ["STONE", "TG BRASIL"],
+            "valor": [34.90, 31.99],
+            "vencimento": pd.to_datetime(["2019-11-04", "2020-01-28"]),
+            "status": ["pago", "pago"],
+            "banco_origem": ["Nubank", "Nubank"],
+        }
+    )
+    assert df["data"].dtype == object
+    resultado = _formatar_boletos_para_exibicao(df)
+    assert resultado.iloc[0]["Data"] == "2019-11-04"
+    assert resultado.iloc[1]["Data"] == "2020-01-28"
+    # Vencimento datetime64 original -- preservado com strftime.
+    assert resultado.iloc[0]["Vencimento"] == "2019-11-04"
+
+
 def test_formatar_boletos_nao_muta_original() -> None:
     """Função não deve alterar o DataFrame recebido (side-effect free)."""
     df = _df_sintetico_com_datetime()
