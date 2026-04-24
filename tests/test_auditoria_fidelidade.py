@@ -21,7 +21,10 @@ from scripts.auditar_extratores import (
     DefinicaoBanco,
     FiltroXLSX,
     ResultadoAuditoria,
+    _aplicar_dedup_pipeline,
     _selecionar_arquivo_para_mes,
+    _sha256_arquivo,
+    _unicos_por_sha,
     auditar_banco,
     gerar_relatorio,
     main,
@@ -34,9 +37,16 @@ from src.extractors.base import ExtratorBase, Transacao
 
 
 class _ExtratorFake(ExtratorBase):
-    """Extrator fake: retorna a lista pré-definida de transações."""
+    """Extrator fake: retorna a lista pré-definida de transações.
+
+    Se `caminho` é um diretório, simula o padrão dos extratores reais
+    (processa cada arquivo internamente): retorna a lista de transações
+    replicada pelo número de arquivos com extensão `.pdf`. Se é
+    arquivo, retorna a lista uma vez.
+    """
 
     TRANSACOES: list[Transacao] = []
+    EXTENSOES: tuple[str, ...] = (".pdf",)
 
     def __init__(self, caminho: Path) -> None:  # noqa: D401 - concreto
         super().__init__(caminho)
@@ -45,6 +55,13 @@ class _ExtratorFake(ExtratorBase):
         return True
 
     def extrair(self) -> list[Transacao]:
+        if self.caminho.is_dir():
+            arquivos = [
+                f
+                for f in self.caminho.iterdir()
+                if f.is_file() and f.suffix.lower() in self.EXTENSOES
+            ]
+            return list(self.TRANSACOES) * len(arquivos)
         return list(self.TRANSACOES)
 
 
@@ -386,6 +403,164 @@ def test_auditar_banco_real_nubank_cartao_mes_dominante() -> None:
     # Vereditos aceitaveis: OK ou DIVERGE. Nunca SEM_DADOS nesse cenario.
     assert resultado.veredito in {"OK", "DIVERGE"}, resultado.observacao
     assert resultado.n_extrator > 0
+
+
+# --------------------------------------------------------------------------- #
+# Sprint 93a -- flag --deduplicado                                             #
+# --------------------------------------------------------------------------- #
+
+
+def test_sha256_arquivo_deterministico(tmp_path: Path) -> None:
+    a = tmp_path / "a.bin"
+    b = tmp_path / "b.bin"
+    conteudo = b"dedup\n" * 10
+    a.write_bytes(conteudo)
+    b.write_bytes(conteudo)
+    assert _sha256_arquivo(a) == _sha256_arquivo(b)
+
+
+def test_unicos_por_sha_remove_copias_identicas(tmp_path: Path) -> None:
+    """Duplicatas físicas idênticas devem ser removidas, uma sobrevive."""
+    conteudo = b"cabecalho\nlinha1\nlinha2\n"
+    arquivos: list[Path] = []
+    for nome in ["extrato.pdf", "extrato_1.pdf", "extrato_2.pdf"]:
+        p = tmp_path / nome
+        p.write_bytes(conteudo)
+        arquivos.append(p)
+    # Um arquivo distinto também:
+    p_outro = tmp_path / "outro.pdf"
+    p_outro.write_bytes(b"conteudo_diferente")
+    arquivos.append(p_outro)
+
+    unicos = _unicos_por_sha(arquivos)
+    assert len(unicos) == 2
+    # Preserva a primeira ocorrencia na ordem de entrada.
+    assert unicos[0].name == "extrato.pdf"
+    assert unicos[1].name == "outro.pdf"
+
+
+def test_aplicar_dedup_pipeline_respeita_identificador() -> None:
+    """Duas tx com mesmo `_identificador` colapsam (nivel 1)."""
+    d = date(2026, 3, 10)
+    t1 = Transacao(
+        data=d, valor=100.0, descricao="AAAA", banco_origem="Itaú",
+        pessoa="André", forma_pagamento="Débito", tipo="Despesa",
+        identificador="hash_abc",
+    )
+    t2 = Transacao(
+        data=d, valor=100.0, descricao="AAAA", banco_origem="Itaú",
+        pessoa="André", forma_pagamento="Débito", tipo="Despesa",
+        identificador="hash_abc",
+    )
+    t3 = Transacao(
+        data=d, valor=50.0, descricao="BBBB", banco_origem="Itaú",
+        pessoa="André", forma_pagamento="Débito", tipo="Despesa",
+        identificador="hash_xyz",
+    )
+    resultado = _aplicar_dedup_pipeline([t1, t2, t3])
+    assert len(resultado) == 2
+    ids = {t.identificador for t in resultado}
+    assert ids == {"hash_abc", "hash_xyz"}
+
+
+def test_aplicar_dedup_pipeline_fuzzy_hash_colapsa() -> None:
+    """Mesmo data+valor+descrição sem identificador cai no nível 2."""
+    d = date(2026, 3, 10)
+    t1 = Transacao(
+        data=d, valor=100.0, descricao="Ki-Sabor", banco_origem="C6",
+        pessoa="André", forma_pagamento="Débito", tipo="Despesa",
+    )
+    t2 = Transacao(
+        data=d, valor=100.0, descricao="Ki-Sabor", banco_origem="C6",
+        pessoa="André", forma_pagamento="Débito", tipo="Despesa",
+    )
+    resultado = _aplicar_dedup_pipeline([t1, t2])
+    assert len(resultado) == 1
+
+
+def test_auditar_banco_com_deduplicado_dir_completo(tmp_path: Path) -> None:
+    """Flag --deduplicado reduz contagem quando diretório tem cópias SHA iguais."""
+    # O extrator fake retorna a lista com identificador único por fatura.
+    # Simulamos 3 arquivos, 2 duplicatas SHA:
+    diretorio = tmp_path / "data" / "raw" / "andre" / "itau_cc"
+    diretorio.mkdir(parents=True)
+    conteudo_igual = b"fatura_duplicada\n"
+    (diretorio / "fatura_2026-03_abc.pdf").write_bytes(conteudo_igual)
+    (diretorio / "fatura_2026-03_abc_1.pdf").write_bytes(conteudo_igual)
+    (diretorio / "fatura_2026-03_abc_2.pdf").write_bytes(conteudo_igual)
+
+    # Cada instancia do fake retorna a mesma lista (simulando mesmo PDF).
+    _ExtratorFake.TRANSACOES = [
+        Transacao(
+            data=date(2026, 3, 10), valor=100.0, descricao="AAAA",
+            banco_origem="Itaú", pessoa="André",
+            forma_pagamento="Débito", tipo="Despesa",
+            identificador="hash_abc",
+        ),
+    ]
+
+    definicao = DefinicaoBanco(
+        chave="itau_cc",
+        titulo="Itaú CC (fake)",
+        extrator_cls=_ExtratorFake,
+        diretorio_relativo=Path("data/raw/andre/itau_cc"),
+        filtro_xlsx=FiltroXLSX.simples(banco_origem="Itaú"),
+        extensoes=(".pdf",),
+    )
+
+    df = pd.DataFrame(
+        [
+            {
+                "banco_origem": "Itaú",
+                "forma_pagamento": "Débito",
+                "quem": "André",
+                "mes_ref": "2026-03",
+                "valor": 100.0,
+            }
+        ]
+    )
+    (tmp_path / "xlsx.xlsx").write_bytes(b"")
+
+    # SEM --deduplicado: soma replicada 3x, diverge.
+    resultado_sem = auditar_banco(
+        definicao=definicao,
+        raiz=tmp_path,
+        mes_ref=None,
+        xlsx=tmp_path / "xlsx.xlsx",
+        carregador_xlsx=lambda _: df,
+        modo_abrangente=True,
+        deduplicado=False,
+    )
+    assert resultado_sem.n_extrator == 3
+    assert resultado_sem.total_extrator == pytest.approx(300.0)
+    assert resultado_sem.veredito == "DIVERGE"
+
+    # COM --deduplicado: SHA dedup + identificador colapsa tudo em 1.
+    resultado_com = auditar_banco(
+        definicao=definicao,
+        raiz=tmp_path,
+        mes_ref=None,
+        xlsx=tmp_path / "xlsx.xlsx",
+        carregador_xlsx=lambda _: df,
+        modo_abrangente=True,
+        deduplicado=True,
+    )
+    assert resultado_com.modo_dedup is True
+    assert resultado_com.arquivos_fisicos == 3
+    assert resultado_com.arquivos_unicos_sha == 1
+    assert resultado_com.n_extrator == 1
+    assert resultado_com.total_extrator == pytest.approx(100.0)
+    assert resultado_com.veredito == "OK"
+    assert resultado_com.delta <= 0.02
+    assert "duplicatas removidas: 2" in resultado_com.observacao
+
+
+def test_cli_flag_deduplicado_aceita(capsys) -> None:
+    """A flag --deduplicado aparece no parser (não levanta erro no --help)."""
+    rc = main(["--banco", "itau_cc", "--deduplicado"])
+    # Pode retornar 0 ou 1 dependendo dos dados reais; o importante é que o
+    # arg foi parseado sem explodir.
+    assert rc in {0, 1}
 
 
 # "Evidência é o único juiz.
