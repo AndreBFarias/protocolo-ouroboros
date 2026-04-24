@@ -144,8 +144,32 @@ class ExtratorC6Cartao(ExtratorBase):
                 return None
 
             if REGEX_PAGAMENTO.search(descricao_str):
-                self.logger.debug("Pagamento de fatura ignorado: %s (%s)", descricao_str, valor)
-                return None
+                # Sprint 82b: em vez de descartar, emitimos linha virtual
+                # (contraparte espelho). O pagamento corresponde a uma
+                # saida real em outra conta (Itau, Nubank CC, etc.); o
+                # espelho permite que deduplicator paree os dois lados
+                # como Transferencia Interna. Flag _virtual impede que
+                # a linha contamine somatorios -- e o tipo ja nasce TI.
+                self.logger.debug(
+                    "Pagamento de fatura detectado -- emitindo espelho virtual: %s (%s)",
+                    descricao_str,
+                    valor,
+                )
+                identificador_virtual: str = self._gerar_hash(
+                    str(data_transacao), descricao_str, str(valor)
+                )
+                return Transacao(
+                    data=data_transacao,
+                    valor=abs(valor),
+                    descricao=descricao_str,
+                    banco_origem="C6",
+                    pessoa="André",
+                    forma_pagamento="Crédito",
+                    tipo="Transferência Interna",
+                    identificador=identificador_virtual,
+                    arquivo_origem=str(arquivo.name),
+                    _virtual=True,
+                )
 
             descricao_completa: str = descricao_str
             if parcela_info and parcela_info != "Única":

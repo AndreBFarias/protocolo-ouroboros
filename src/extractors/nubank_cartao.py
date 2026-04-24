@@ -19,6 +19,14 @@ class ExtratorNubankCartao(ExtratorBase):
     Usado por:
         - André: data/raw/andre/nubank_cartao/
         - Vitória PJ: data/raw/vitoria/nubank_pj_cartao/
+
+    Nota Sprint 82b -- conta-espelho não aplicável:
+        O CSV Nubank cartão não lista linhas de "Pagamento recebido"
+        (fonte limitada). Não emitimos contraparte virtual neste extrator.
+        Para pareamento de Transferência Interna entre cartão Nubank e CC
+        do mesmo banco, o pareamento depende apenas da saída real no CC
+        (ver src/extractors/nubank_cc.py e deduplicator.marcar_transferencias_internas).
+        Ver docs/sprints/concluidos/sprint_82b_conta_espelho_cartao.md.
     """
 
     def __init__(self, caminho: Path) -> None:
