@@ -16,6 +16,7 @@ from src.dashboard.tema import (
     FONTE_MINIMA,
     FONTE_SUBTITULO,
     LAYOUT_PLOTLY,
+    callout_html,
     hero_titulo_html,
     rgba_cor,
 )
@@ -145,7 +146,10 @@ def _renderizar_sankey(df: pd.DataFrame) -> None:
     dados_sankey = _preparar_dados_sankey(df)
 
     if not dados_sankey:
-        st.info("Dados insuficientes para o diagrama Sankey.")
+        st.markdown(
+            callout_html("info", "Dados insuficientes para o diagrama Sankey."),
+            unsafe_allow_html=True,
+        )
         return
 
     fig = go.Figure(
@@ -192,7 +196,10 @@ def _renderizar_heatmap(df: pd.DataFrame) -> None:
     dados_heatmap = _preparar_dados_heatmap(df)
 
     if not dados_heatmap:
-        st.info("Dados insuficientes para o heatmap de gastos.")
+        st.markdown(
+            callout_html("info", "Dados insuficientes para o heatmap de gastos."),
+            unsafe_allow_html=True,
+        )
         return
 
     escala_cores = [
@@ -241,7 +248,10 @@ def _renderizar_tendencias(df_total: pd.DataFrame) -> None:
     df_gastos = df_total[df_total["tipo"].isin(["Despesa", "Imposto"])].copy()
 
     if df_gastos.empty:
-        st.info("Dados insuficientes para análise de tendências.")
+        st.markdown(
+            callout_html("info", "Dados insuficientes para análise de tendências."),
+            unsafe_allow_html=True,
+        )
         return
 
     por_mes_cat = df_gastos.groupby(["mes_ref", "categoria"])["valor"].sum().reset_index()
@@ -249,7 +259,10 @@ def _renderizar_tendencias(df_total: pd.DataFrame) -> None:
     top5 = df_gastos.groupby("categoria")["valor"].sum().nlargest(5).index.tolist()
 
     if not top5:
-        st.info("Dados insuficientes para análise de tendências.")
+        st.markdown(
+            callout_html("info", "Dados insuficientes para análise de tendências."),
+            unsafe_allow_html=True,
+        )
         return
 
     fig = go.Figure()
@@ -319,7 +332,10 @@ def renderizar(
     )
 
     if "extrato" not in dados:
-        st.warning("Nenhum dado encontrado para análise avançada.")
+        st.markdown(
+            callout_html("warning", "Nenhum dado encontrado para análise avançada."),
+            unsafe_allow_html=True,
+        )
         return
 
     gran = ctx.get("granularidade", "Mês") if ctx else "Mês"

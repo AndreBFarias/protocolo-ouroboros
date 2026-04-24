@@ -78,21 +78,23 @@ class TestTransacoesComDocumento:
 
 
 class TestMarcarTracking:
-    def test_marca_ok_quando_identificador_em_ids_com_doc(self) -> None:
+    """Sprint 92c: rótulos trocados para "Doc ok" / "Faltando" (PT-BR legível)."""
+
+    def test_marca_doc_ok_quando_identificador_em_ids_com_doc(self) -> None:
         row = pd.Series(
             {"identificador": "tx-123", "categoria": "Farmácia"}
         )
         obrigatorias = frozenset({"Farmácia", "Aluguel"})
         ids_com_doc = {"tx-123"}
-        assert _marcar_tracking(row, obrigatorias, ids_com_doc) == "OK"
+        assert _marcar_tracking(row, obrigatorias, ids_com_doc) == "Doc ok"
 
-    def test_marca_exclamacao_quando_categoria_obrigatoria_sem_doc(self) -> None:
+    def test_marca_faltando_quando_categoria_obrigatoria_sem_doc(self) -> None:
         row = pd.Series(
             {"identificador": "tx-456", "categoria": "Aluguel"}
         )
         obrigatorias = frozenset({"Farmácia", "Aluguel"})
         ids_com_doc: set[str] = set()
-        assert _marcar_tracking(row, obrigatorias, ids_com_doc) == "!"
+        assert _marcar_tracking(row, obrigatorias, ids_com_doc) == "Faltando"
 
     def test_marca_vazio_quando_nao_obrigatoria_e_sem_doc(self) -> None:
         row = pd.Series(
@@ -109,7 +111,7 @@ class TestMarcarTracking:
         obrigatorias = frozenset({"Farmácia"})
         ids_com_doc = {"qualquer-id"}
         # Sem identificador na row, nunca bate em ids_com_doc -> fallback
-        assert _marcar_tracking(row, obrigatorias, ids_com_doc) == "!"
+        assert _marcar_tracking(row, obrigatorias, ids_com_doc) == "Faltando"
 
 
 # "Verificar antes de afirmar — o grafo é fonte de verdade." -- Sprint 87.2

@@ -18,7 +18,14 @@ from src.dashboard.dados import (
     filtrar_por_pessoa,
     filtro_forma_ativo,
 )
-from src.dashboard.tema import CORES, FONTE_CORPO, hero_titulo_html
+from src.dashboard.tema import (
+    CORES,
+    FONTE_CORPO,
+    breadcrumb_drilldown_html,
+    callout_html,
+    hero_titulo_html,
+    icon_html,
+)
 
 # Sprint 73: mapeamento dos filtros vindos de drill-down para colunas do DF.
 _MAPA_FILTRO_COLUNA: dict[str, str] = {
@@ -56,21 +63,29 @@ def _aplicar_drilldown(df: pd.DataFrame) -> tuple[pd.DataFrame, dict[str, str]]:
 
 
 def _renderizar_breadcrumb(filtros: dict[str, str]) -> None:
-    """Exibe breadcrumb com X para remover cada filtro ativo (Sprint 73)."""
+    """Exibe breadcrumb com X para remover cada filtro ativo (Sprint 73).
+
+    Sprint 92c: o bloco visual de chips passou a ser gerado pelo helper
+    canônico ``breadcrumb_drilldown_html`` (single-source em ``tema.py``);
+    o botão ``×`` continua aqui como widget Streamlit para poder disparar
+    ``limpar_filtro(campo)`` + rerun quando clicado.
+    """
     if not filtros:
         return
     import streamlit as st
 
     st.markdown(
-        f'<p style="color: {CORES["destaque"]}; font-size: {FONTE_CORPO}px;">'
-        "Filtros ativos (clique no X para remover):</p>",
+        breadcrumb_drilldown_html(filtros),
         unsafe_allow_html=True,
     )
     cols = st.columns(len(filtros))
-    for i, (campo, valor) in enumerate(filtros.items()):
+    for i, (campo, _valor) in enumerate(filtros.items()):
         with cols[i]:
-            rotulo = f"{campo}: {valor}   ×"
-            if st.button(rotulo, key=f"limpar_filtro_{campo}"):
+            if st.button(
+                f"× remover {campo}",
+                key=f"limpar_filtro_{campo}",
+                use_container_width=True,
+            ):
                 limpar_filtro(campo)
                 st.rerun()
 
@@ -100,10 +115,15 @@ def _marcar_tracking(
 ) -> str:
     """Sprint 87.2 (ADR-20): devolve o marcador da coluna "Doc?" do Extrato.
 
+    Sprint 92c: rótulos curtos em PT-BR substituem "OK"/"!" (pouco comunicativo).
+    ``st.dataframe`` não renderiza HTML, então os ícones Feather viram banner
+    visual no painel "Inspecionar transação" abaixo da tabela; a coluna em si
+    fica com texto legível.
+
     Prioridade:
       1. Transação com `identificador` em `ids_com_doc` (aresta `documento_de`
-         no grafo) -> "OK".
-      2. Transação em categoria obrigatória sem vínculo -> "!".
+         no grafo) -> "Doc ok".
+      2. Transação em categoria obrigatória sem vínculo -> "Faltando".
       3. Caso contrário -> "".
 
     Função pura para permitir teste sem mockar streamlit. `row` é uma `pd.Series`
@@ -113,9 +133,9 @@ def _marcar_tracking(
     if ident is not None and not pd.isna(ident):
         ident_str = str(ident)
         if ident_str and ident_str in ids_com_doc:
-            return "OK"
+            return "Doc ok"
     categoria = row.get("categoria", "") if hasattr(row, "get") else ""
-    return "!" if categoria in obrigatorias else ""
+    return "Faltando" if categoria in obrigatorias else ""
 
 
 @st.cache_data(ttl=30)
@@ -163,7 +183,10 @@ def renderizar(
     )
 
     if "extrato" not in dados:
-        st.warning("Nenhum dado encontrado para o extrato.")
+        st.markdown(
+            callout_html("warning", "Nenhum dado encontrado para o extrato."),
+            unsafe_allow_html=True,
+        )
         return
 
     gran = ctx.get("granularidade", "Mês") if ctx else "Mês"
@@ -178,7 +201,10 @@ def renderizar(
     _renderizar_breadcrumb(filtros_drilldown)
 
     if df.empty:
-        st.info("Sem transações para o período selecionado.")
+        st.markdown(
+            callout_html("info", "Sem transações para o período selecionado."),
+            unsafe_allow_html=True,
+        )
         return
 
     busca = st.text_input(
@@ -358,9 +384,23 @@ def _exibir_tabela(df: pd.DataFrame) -> None:
         },
     )
 
-    st.caption(
-        "Legenda coluna 'Doc?': 'OK' = documento vinculado no grafo; "
-        "'!' = categoria obrigat\u00f3ria sem comprovante; vazio = sem tracking."
+    # Sprint 92c: legenda da coluna Doc? ganha \u00edcones Feather inline (check-circle
+    # verde para "Doc ok", alert-triangle laranja para "Faltando"), refor\u00e7ando
+    # visualmente os r\u00f3tulos textuais da tabela (st.dataframe n\u00e3o renderiza HTML
+    # dentro das c\u00e9lulas).
+    icone_ok = icon_html("check-circle", tamanho=14, cor=CORES["positivo"])
+    icone_falt = icon_html("alert-triangle", tamanho=14, cor=CORES["alerta"])
+    st.markdown(
+        f'<p style="color: {CORES["texto_sec"]};'
+        f" font-size: {FONTE_CORPO}px;"
+        ' margin: 4px 0 0 0;">'
+        f"Coluna 'Doc?': "
+        f'<span style="color: {CORES["positivo"]};">{icone_ok} Doc ok</span>'
+        " = documento vinculado no grafo; "
+        f'<span style="color: {CORES["alerta"]};">{icone_falt} Faltando</span>'
+        " = categoria obrigat\u00f3ria sem comprovante; vazio = sem tracking."
+        "</p>",
+        unsafe_allow_html=True,
     )
 
     # CSV exporta SEMPRE o conjunto completo, n\u00e3o s\u00f3 a p\u00e1gina corrente.

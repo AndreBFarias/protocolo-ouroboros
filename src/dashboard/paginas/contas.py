@@ -17,6 +17,7 @@ from src.dashboard.tema import (
     CORES,
     FONTE_CORPO,
     FONTE_MINIMA,
+    callout_html,
     card_html,
     hero_titulo_html,
     rgba_cor,
@@ -47,7 +48,10 @@ def renderizar(dados: dict[str, pd.DataFrame], mes_selecionado: str, pessoa: str
     tem_prazos = "prazos" in dados
 
     if not tem_dividas and not tem_inventario and not tem_prazos:
-        st.warning("Nenhum dado encontrado para contas e dívidas.")
+        st.markdown(
+            callout_html("warning", "Nenhum dado encontrado para contas e dívidas."),
+            unsafe_allow_html=True,
+        )
         return
 
     if tem_dividas:
@@ -63,7 +67,10 @@ def renderizar(dados: dict[str, pd.DataFrame], mes_selecionado: str, pessoa: str
 def _secao_dividas(df: pd.DataFrame, mes: str, pessoa: str) -> None:
     """Exibe tabela de dívidas ativas com indicadores visuais."""
     st.subheader("Dívidas Ativas")
-    st.warning(AVISO_SNAPSHOT)
+    st.markdown(
+        callout_html("warning", AVISO_SNAPSHOT),
+        unsafe_allow_html=True,
+    )
 
     df_mes = filtrar_por_mes(df, mes)
     if "recorrente" in df.columns:
@@ -76,7 +83,10 @@ def _secao_dividas(df: pd.DataFrame, mes: str, pessoa: str) -> None:
     )
 
     if df_mes.empty:
-        st.info("Sem dívidas registradas para este período.")
+        st.markdown(
+            callout_html("info", "Sem dívidas registradas para este período."),
+            unsafe_allow_html=True,
+        )
         return
 
     _resumo_pagamentos(df_mes)
@@ -157,10 +167,16 @@ def _resumo_pagamentos(df: pd.DataFrame) -> None:
 def _secao_inventario(df: pd.DataFrame) -> None:
     """Exibe inventário de bens com depreciação."""
     st.subheader("Inventário")
-    st.warning(AVISO_SNAPSHOT)
+    st.markdown(
+        callout_html("warning", AVISO_SNAPSHOT),
+        unsafe_allow_html=True,
+    )
 
     if df.empty:
-        st.info("Sem bens cadastrados no inventário.")
+        st.markdown(
+            callout_html("info", "Sem bens cadastrados no inventário."),
+            unsafe_allow_html=True,
+        )
         return
 
     df = renderizar_dataframe(df)
@@ -170,10 +186,16 @@ def _secao_inventario(df: pd.DataFrame) -> None:
 def _secao_prazos(df: pd.DataFrame) -> None:
     """Exibe prazos de vencimento com indicador de urgência."""
     st.subheader("Prazos de Vencimento")
-    st.warning(AVISO_SNAPSHOT)
+    st.markdown(
+        callout_html("warning", AVISO_SNAPSHOT),
+        unsafe_allow_html=True,
+    )
 
     if df.empty:
-        st.info("Sem prazos cadastrados.")
+        st.markdown(
+            callout_html("info", "Sem prazos cadastrados."),
+            unsafe_allow_html=True,
+        )
         return
 
     hoje = date.today()

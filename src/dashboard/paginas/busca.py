@@ -31,8 +31,10 @@ from src.dashboard.tema import (
     FONTE_LABEL,
     LAYOUT_PLOTLY,
     SPACING,
+    callout_html,
     card_html,
     hero_titulo_html,
+    icon_html,
     rgba_cor_inline,
     subtitulo_secao_html,
 )
@@ -74,17 +76,25 @@ def renderizar(
     termo = _renderizar_input_permanente()
 
     if not _dados.CAMINHO_GRAFO.exists():
-        st.warning(
-            "Grafo SQLite não encontrado. Popule o catálogo rodando "
-            "`./run.sh --tudo` (ou `make process`) para gerar "
-            "`data/output/grafo.sqlite`."
+        st.markdown(
+            callout_html(
+                "warning",
+                "Grafo SQLite não encontrado. Popule o catálogo rodando "
+                "`./run.sh --tudo` (ou `make process`) para gerar "
+                "`data/output/grafo.sqlite`.",
+            ),
+            unsafe_allow_html=True,
         )
         return
 
     if not termo:
-        st.info(
-            "Digite um termo acima ou use uma das sugestões para iniciar "
-            "a busca. Os resultados aparecem aqui agrupados por tipo."
+        st.markdown(
+            callout_html(
+                "info",
+                "Digite um termo acima ou use uma das sugestões para iniciar "
+                "a busca. Os resultados aparecem aqui agrupados por tipo.",
+            ),
+            unsafe_allow_html=True,
         )
         return
 
@@ -93,7 +103,10 @@ def renderizar(
 
     total = sum(len(v) for v in resultados.values())
     if total == 0:
-        st.info(f"Nenhum resultado encontrado para '{termo}'.")
+        st.markdown(
+            callout_html("info", f"Nenhum resultado encontrado para '{termo}'."),
+            unsafe_allow_html=True,
+        )
         return
 
     _renderizar_fornecedores(resultados["fornecedores"])
@@ -117,7 +130,26 @@ def _aplicar_chip_sugestao(valor: str) -> None:
 
 
 def _renderizar_input_permanente() -> str:
-    """Input único permanente no topo + chips de sugestão clicáveis."""
+    """Input único permanente no topo + chips de sugestão clicáveis.
+
+    Sprint 92c: o ícone Feather ``search`` precede o label do input, dando
+    affordance visual à caixa de busca. Streamlit não expõe ``prefix`` em
+    ``st.text_input``, então renderizamos o par ícone+label como HTML acima
+    do input, com label nativo colapsado (``label_visibility="collapsed"``).
+    """
+    svg_busca = icon_html("search", tamanho=18, cor=CORES["destaque"])
+    st.markdown(
+        f'<div style="display: flex; align-items: center; '
+        f"gap: {SPACING['xs']}px; "
+        f"color: {CORES['destaque']}; "
+        f"font-size: {FONTE_CORPO}px; "
+        f"font-weight: 600; "
+        f'margin-bottom: {SPACING["xs"]}px;">'
+        f"{svg_busca}"
+        f"<span>Busca global</span>"
+        f"</div>",
+        unsafe_allow_html=True,
+    )
     termo = st.text_input(
         "Busca global",
         placeholder="fornecedor, CNPJ, item, data (YYYY-MM), valor...",
@@ -366,7 +398,10 @@ def _renderizar_documentos(docs: list[dict]) -> None:
     )
 
     if not docs:
-        st.info("Nenhum documento casou com a busca.")
+        st.markdown(
+            callout_html("info", "Nenhum documento casou com a busca."),
+            unsafe_allow_html=True,
+        )
         return
 
     df = pd.DataFrame(
@@ -395,7 +430,10 @@ def _renderizar_transacoes(txs: list[dict]) -> None:
     )
 
     if not txs:
-        st.info("Nenhuma transação casou com a busca.")
+        st.markdown(
+            callout_html("info", "Nenhuma transação casou com a busca."),
+            unsafe_allow_html=True,
+        )
         return
 
     df = pd.DataFrame(
@@ -421,7 +459,10 @@ def _renderizar_itens(itens: list[dict]) -> None:
     )
 
     if not itens:
-        st.info("Nenhum item casou com a busca.")
+        st.markdown(
+            callout_html("info", "Nenhum item casou com a busca."),
+            unsafe_allow_html=True,
+        )
         return
 
     agrupados: dict[str, dict] = {}

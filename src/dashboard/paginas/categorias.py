@@ -22,6 +22,7 @@ from src.dashboard.tema import (
     LAYOUT_PLOTLY,
     MAPA_CLASSIFICACAO,
     aplicar_locale_ptbr,
+    callout_html,
     hero_titulo_html,
 )
 
@@ -83,7 +84,10 @@ def renderizar(
     )
 
     if "extrato" not in dados:
-        st.warning("Nenhum dado encontrado para análise de categorias.")
+        st.markdown(
+            callout_html("warning", "Nenhum dado encontrado para análise de categorias."),
+            unsafe_allow_html=True,
+        )
         return
 
     gran = ctx.get("granularidade", "Mês") if ctx else "Mês"
@@ -97,7 +101,10 @@ def renderizar(
     df = df[df["tipo"].isin(["Despesa", "Imposto"])].copy()
 
     if df.empty:
-        st.info("Sem despesas para o período selecionado.")
+        st.markdown(
+            callout_html("info", "Sem despesas para o período selecionado."),
+            unsafe_allow_html=True,
+        )
         return
 
     _treemap_categorias(df)
@@ -193,7 +200,10 @@ def _ranking_com_variacao(extrato_filtrado: pd.DataFrame, mes_atual: str) -> Non
 
     meses = sorted(df_desp["mes_ref"].dropna().unique().tolist())
     if mes_atual not in meses:
-        st.info("Sem dados para o mês selecionado.")
+        st.markdown(
+            callout_html("info", "Sem dados para o mês selecionado."),
+            unsafe_allow_html=True,
+        )
         return
 
     idx = meses.index(mes_atual)
@@ -306,7 +316,10 @@ def _evolucao_categorias(
     )
 
     if not top5_do_mes:
-        st.info("Sem dados suficientes para evolução.")
+        st.markdown(
+            callout_html("info", "Sem dados suficientes para evolução."),
+            unsafe_allow_html=True,
+        )
         return
 
     df_periodo = df_despesas[

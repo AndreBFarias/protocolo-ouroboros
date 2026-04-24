@@ -13,8 +13,9 @@ from src.dashboard.tema import (
     FONTE_CORPO,
     FONTE_MINIMA,
     FONTE_SUBTITULO,
+    callout_html,
     hero_titulo_html,
-    rgba_cor,
+    progress_inline_html,
 )
 
 CAMINHO_METAS: Path = Path(__file__).resolve().parents[3] / "mappings" / "metas.yaml"
@@ -66,22 +67,14 @@ def _cor_prioridade(prioridade: int) -> str:
 
 
 def _progress_inline_html(pct: float, cor: str) -> str:
-    """Sprint 92a.9: barra de progresso horizontal inline para embutir no card.
+    """Sprint 92a.9 / 92c: delega ao helper canônico ``progress_inline_html``.
 
-    Aceita ``pct`` em ``[0.0, 1.0]`` (clampado) e uma cor hex para o trilho
-    preenchido. Trilho de fundo usa ``CORES["texto_sec"]`` a 25 % de opacidade
-    para não concorrer com o conteúdo textual.
+    Mantido como alias local para retrocompatibilidade dos testes já escritos
+    e como ponto de extensão futuro específico do contexto de Metas. Sprint
+    92c promoveu a versão para ``src/dashboard/tema.py`` consolidando o
+    padrão em um único lugar.
     """
-    pct_clamped = max(0.0, min(float(pct), 1.0))
-    largura_pct = pct_clamped * 100
-    cor_trilho = rgba_cor(CORES["texto_sec"], 0.25)
-    return (
-        f'<div style="height: 4px; background: {cor_trilho};'
-        f' border-radius: 2px; margin: 8px 0 0 0;">'
-        f'<div style="width: {largura_pct:.1f}%; height: 100%;'
-        f' background: {cor}; border-radius: 2px;"></div>'
-        f"</div>"
-    )
+    return progress_inline_html(pct, cor=cor)
 
 
 def _card_meta(meta: dict[str, Any]) -> str:
@@ -224,7 +217,13 @@ def renderizar(dados: dict, mes_selecionado: str, pessoa: str) -> None:
     metas = _atualizar_valor_atual(metas, dados, mes_selecionado, pessoa)
 
     if not metas:
-        st.warning("Nenhuma meta encontrada. Verifique mappings/metas.yaml.")
+        st.markdown(
+            callout_html(
+                "warning",
+                "Nenhuma meta encontrada. Verifique mappings/metas.yaml.",
+            ),
+            unsafe_allow_html=True,
+        )
         return
 
     metas_valor = [m for m in metas if m.get("tipo") != "binario"]
