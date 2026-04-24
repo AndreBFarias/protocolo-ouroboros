@@ -516,6 +516,13 @@ def _anchor_inicio_bloco(texto: str, pos: int) -> int:
 
 
 def _ler_paginas_pdf(caminho: Path) -> list[str]:
+    """Lê páginas do PDF via pdfplumber com fallback OCR (A2 2026-04-23).
+
+    Quando pdfplumber devolve texto insuficiente (PDF-imagem sem layer de
+    texto, ex: "notas de garantia e compras.pdf" da auditoria), cai em
+    pypdfium2 + tesseract página a página. Custo: ~1-3s por página; só é
+    invocado quando o texto nativo é insuficiente.
+    """
     try:
         import pdfplumber
     except ImportError as erro:
@@ -529,7 +536,42 @@ def _ler_paginas_pdf(caminho: Path) -> list[str]:
     except Exception as erro:
         logger.warning("falha ao ler %s via pdfplumber: %s", caminho, erro)
         return []
+
+    # Fallback OCR: PDF-imagem tem todas as páginas vazias ou com muito
+    # pouco texto. Threshold conservador (soma de chars > 50) para
+    # preservar performance em PDFs nativos legítimos.
+    total_chars = sum(len(p.strip()) for p in paginas)
+    if total_chars < 50 and paginas:
+        paginas_ocr = _ler_paginas_pdf_via_ocr(caminho)
+        if paginas_ocr:
+            logger.info(
+                "PDF-imagem detectado em %s; %d páginas via OCR fallback",
+                caminho.name,
+                len(paginas_ocr),
+            )
+            return paginas_ocr
     return paginas
+
+
+def _ler_paginas_pdf_via_ocr(caminho: Path) -> list[str]:
+    """Renderiza páginas do PDF com pypdfium2 e aplica tesseract (A2)."""
+    try:
+        import pypdfium2 as pdfium
+        import pytesseract
+    except ImportError:
+        return []
+    try:
+        pdf = pdfium.PdfDocument(str(caminho))
+        paginas: list[str] = []
+        for i in range(len(pdf)):
+            pagina = pdf[i]
+            pil_img = pagina.render(scale=2).to_pil()
+            texto = pytesseract.image_to_string(pil_img, lang="por+eng")
+            paginas.append(texto or "")
+        return paginas
+    except Exception as erro:  # noqa: BLE001
+        logger.warning("OCR falhou em %s: %s", caminho.name, erro)
+        return []
 
 
 # ============================================================================
