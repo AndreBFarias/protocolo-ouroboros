@@ -1,19 +1,20 @@
 # CLAUDE.md -- Protocolo Ouroboros
 
 ```
-VERSÃO: 5.5 | STATUS: PRODUÇÃO + AUDITORIA 2026-04-26 (P0 mapeados, backlog 26 sprints) | LANG: PT-BR
+VERSÃO: 5.6 | STATUS: PRODUÇÃO + FASE NU FECHADA (6 P0 entregues + 4 sub-sprints abertas) | LANG: PT-BR
 TRANSAÇÕES: 6.094 | MESES: 82 (out/2019 a out/2026) | BANCOS: 6 | EXTRATORES: 22 (9 bancários + 13 documentais)
-GRAFO: 7.480 nodes + 24.700 edges (data/output/grafo.sqlite, ~5MB). 41 documentos catalogados, 0% vinculados a tx (P0 Sprint 95).
-SPRINTS: 130 (87 concluídas, 26 backlog, 13 arquivadas; 4 sprints-filhas em 2026-04-24 + 9 novas em 2026-04-26 + ADR-21)
+GRAFO: 7.494 nodes + 24.732 edges. 50 documentos catalogados, 25 vinculados a tx (50%, era 0% antes da Sprint 95).
+SPRINTS: 137 (93 concluídas, 30 backlog, 14 arquivadas; rodada NU 2026-04-26: 6 P0 + 4 sub-sprints novas)
 CATEGORIZAÇÃO: 100% | IRPF TAGS: 164 (75 com CNPJ) | HOLERITES: 24 (todos node documento no grafo)
-TESTES: 1.530 passed / 9 skipped / 1 xfailed (baseline 2026-04-24, sem regressão)
+DAS PARCSN: 19 nodes (drift -47% → 0% após Sprint 90b)
+TESTES: 1.607 passed / 9 skipped / 1 xfailed (+77 desde início da sessão NU, zero regressão)
 ABA RENDA: 99 linhas (24 holerites + 75 MEI legítimos via mappings/fontes_renda.yaml)
 RESERVA EMERGÊNCIA: 100% atingida (R$ 44.019,78 / R$ 27.000,00) -- meta cumprida
 ROTA: Catalogador universal artesanal via supervisor interativo (ADR-13)
 SUPERVISOR: Claude Code sessão interativa — nenhuma API programática
 INTEGRAÇÕES: OFX (pronto), Controle de Bordo vault (sync rico em produção), Belvo (em teste), Gmail (setup pendente)
-ROTA ATUAL: Sprint 95 + 96 (P0 paralelo) -> Sprint D2 (revisor visual substitui artesanal) -> Sprint 90a + 90b (P0 limpeza). Sprint 93f está EM RUNTIME (não BACKLOG) -- 828 tx PJ Vitória já no XLSX.
-RETOMADA: docs/AUDITORIA_2026-04-26.md (mais recente, substitui HANDOFF 2026-04-24).
+ROTA ATUAL: Fase NU encerrada. Sprint 98 + 101 (P1) em execução. P1 restantes: 99 (redactor PII), 100 (deep-link tab).
+RETOMADA: docs/AUDITORIA_2026-04-26.md + rodapé deste CLAUDE.md (sessão 2026-04-26 fase NU).
 ```
 
 ### Próxima sessão — retomada canônica
@@ -26,25 +27,43 @@ Antes de tocar código, leia nesta ordem:
 5. `docs/HANDOFF_2026-04-24_rota_longa.md` — sessão anterior.
 6. `VALIDATOR_BRIEF.md` rodapé — padrões canônicos.
 
-**Rota recomendada (atualizada 2026-04-26):**
+**Rota status (atualizada 2026-04-26 fim de sessão NU):**
 
-1. **Sprint 95 + Sprint 96 (P0 paralelo)** — fechar coração do produto:
-   - Sprint 95: linking documento↔transação em runtime (hoje 0% docs vinculados).
-   - Sprint 96: classifier robusto para NF imagem-only com OCR curto.
-2. **Sprint D2 (P0)** — revisor visual semi-automatizado em Streamlit (substitui Sprint AUDITORIA-ARTESANAL-FINAL CLI 1-a-1).
-3. **Sprint 90a + 90b (P0 limpeza)** — holerites mal classificados em pastas bancárias + DAS PARCSN drift -47%.
-4. **Sprint 97 (P0)** — page-split por classificação heterogênea (fecha bucket `_classificar/`).
-5. **Sprint 98-101 (P1)** — renomeação retroativa, redactor PII, deep-link tab, full-cycle.
-6. **Sprint 102 (P2)** — pagador vs beneficiário (cenário IRPF cross-casal).
-7. **Sprint 93h (P2)** — limpeza simétrica clones SHA pastas do André.
-8. **Sprint OMEGA 94a-f** — fusão por domínios (saúde, identidade, profissional, acadêmico, busca cross, mobile). 12-18 meses, P3 estratégica. **Desbloqueada por ADR-21.**
+**Fase NU CONCLUÍDA** (6 P0, 1 dia):
+1. ✓ **Sprint 95** (linking runtime) -- commit `2df40ae`. 0 → 23 arestas `documento_de`.
+2. ✓ **Sprint 96** (classifier robusto cupons curtos) -- commit `9befcb5`. `inbox/1.jpeg` agora classifica `cupom_fiscal_foto/ocr_curto`.
+3. ✓ **Sprint D2** (revisor visual Streamlit) -- commit `b3026a7`. Página live na cluster Documentos. Substitui Sprint AUDITORIA-ARTESANAL-FINAL.
+4. ✓ **Sprint 97** (page-split heterogêneo) -- commit `22c9e5e`. Predicado por classificação + branch reversível, zero regressão para extratos homogêneos.
+5. ✓ **Sprint 90a** (inbox detecta holerite) -- commit `b8ab3fe`. Defesa em duas camadas (YAML especifico + pre-check registry).
+6. ✓ **Sprint 90b** (DAS PARCSN drift) -- commit `c136ea6`. 10 → 19 nodes. Diagnóstico rejeitou hipótese OCR; causa real era regex sem suporte a `ç` + período "Diversos".
 
-**Achados P0 da auditoria 2026-04-26 (todos com sprint formalizada):**
-- 0% documentos vinculados a transações em runtime (motor Sprint 48 plumbing-OK mas runtime-quebrado).
-- 13 holerites G4F mal classificados em `andre/itau_cc/` (75% dos SHAs únicos) e `santander_cartao/` (66%).
-- DAS PARCSN drift -47% (10 nodes vs 19 PDFs únicos físicos).
-- Classifier silencioso ignora NF imagem-only com OCR curto.
-- PDF heterogêneo (NFC-e + cupom seguro juntos) acumula em `_classificar/`.
+**Em execução (P1 paralelo):**
+- Sprint 98 (renomeação retroativa de holerites) e Sprint 101 (`./run.sh --full-cycle`).
+
+**P1 restantes:**
+- Sprint 99 (redactor PII em logs).
+- Sprint 100 (deep-link tab funcional dentro de cluster).
+
+**P2/P3 (sub-sprints abertas + backlog histórico):**
+- Sprint 95a/95b/95c (sub-sprints da 95: holerite líquido, âncora vencimento, noqa accent).
+- Sprint INFRA-D2a (extrair `dados_revisor.py` de `dados.py` 976L → 836L).
+- Sprint 90a-1 (endurecer `file_detector._detectar_pdf` na causa raiz).
+- Sprint 102 (pagador vs beneficiário IRPF cross-casal).
+- Sprint 93h (limpeza simétrica clones André).
+
+**Sprint OMEGA 94a-f** -- desbloqueada por ADR-21. 12-18 meses, estratégica. Pré-requisito: Fase NU + P1 fechadas.
+
+**Métricas pós-NU (delta sessão 2026-04-26):**
+| | Antes | Depois |
+|---|---|---|
+| pytest | 1.530 | 1.607 (+77) |
+| Documentos no grafo | 41 | 50 |
+| Arestas `documento_de` | 0 | 25 |
+| % docs vinculados | 0% | 50% |
+| DAS PARCSN nodes | 10 | 19 |
+| Aba Revisor | inexistente | live |
+| `inbox/1.jpeg` | None | `cupom_fiscal_foto` |
+| PDFs heterogêneos `_classificar/` | acumulam | fatiam + revertem se homogêneo |
 
 **Sprint substituída:** AUDITORIA-ARTESANAL-FINAL → Sprint D2 (revisor visual semi-automatizado).
 
@@ -60,7 +79,37 @@ Antes de tocar código, leia nesta ordem:
 - **93d** (P2) — preservação forte de downloads + reprocessamento cronológico (dataloss nubank_pf_cc).
 - **93e** (P3) — propagar `_arquivo_origem` como coluna do XLSX.
 
-### Sessão 2026-04-26 — auditoria geral (P0 mapeados, ADR-21 + 9 sprints + Sprint D2)
+### Sessão 2026-04-26 (segunda parte) — Fase NU executada (6 P0 + 4 sub-sprints abertas)
+
+Sessão maratona de execução pós-auditoria, supervisionada pelo Opus principal. 14 commits em main + 7 propostas de linking output do motor. pytest 1.530 → 1.607 (+77, zero regressão). Lint verde, smoke 8/8 em cada passo.
+
+| # | Sprint | Commit | Entregas-chave |
+|---|--------|--------|----------------|
+| 1 | 95 (P0 linking runtime) | `2df40ae` | `peso_temporal_diario` configurável por tipo em `mappings/linking_config.yaml`; janela ampla por tipo (holerite=35d/0.010, DAS=60d/0.005, boleto=75d/0.005, dirpf=365d/0.001); 5 testes; **0 → 23 arestas `documento_de`** em runtime real, **56% docs vinculados**; 14 propostas de conflito geradas pelo motor |
+| 2 | 96 (P0 classifier OCR-curto) | `9befcb5` | schema `regras: [{tipo, requer_todos, requer_qualquer, ocr_minimo, ocr_maximo}]` em `src/intake/classifier.py` retrocompatível com `regex_conteudo` plano; subregra `ocr_curto` em `cupom_fiscal_foto`; 9 testes; **`inbox/1.jpeg` (NF shopping comercial sul) deixa de classificar `None` e passa a casar `cupom_fiscal_foto/ocr_curto`** |
+| 3 | D2 (P0 revisor visual) | `b3026a7` | `src/dashboard/paginas/revisor.py` (616L) + `listar_pendencias_revisao` em `dados.py` + 24 testes + 3 screenshots WCAG-AA; aba registrada na cluster Documentos via `MAPA_ABA_PARA_CLUSTER`; schema SQLite `revisao(item_id, dimensao, ok, observacao, ts)` em `data/output/revisao_humana.sqlite` (gitignored); PII mascarada em UI e relatório `.md` final; **substitui Sprint AUDITORIA-ARTESANAL-FINAL** (revisão 1-a-1 inviável) |
+| 4 | 97 (P0 page-split heterogêneo) | `22c9e5e` | `e_heterogeneo_por_classificacao` em `heterogeneidade.py` (predicado puro O(N)); branch heterogêneo com **reversão segura** em `orchestrator.py` (zero regressão para extratos bancários scaneados homogêneos); 14 testes (6 do predicado + 5 via orchestrator + preservação + idempotência + defensivo) |
+| 5 | 90a (P0 inbox detecta holerite) | `b8ab3fe` | hipótese da spec rejeitada empiricamente -- `_detectar_legado_silencioso` rodava antes do classifier YAML; fix em duas camadas: `holerite` promovido `normal → especifico` no YAML + `_ASSINATURAS_HOLERITE` (7 marcadores) em `registry.py` curto-circuita o legado; 8 testes (G4F, Infobase, regression Itaú/Santander, defesa banco-no-rodapé) |
+| 6 | 90b (P0 DAS PARCSN drift) | `c136ea6` | hipótese OCR rejeitada por evidência (PDFs faltantes têm 1.197-1.547 chars); causa real: regex `[A-Za-z]+` não casava `ç` + período "Diversos" caía em early-return; fix: classe `[A-Za-zÀ-ÿ]+` + `_RE_PERIODO_DIVERSOS` + `_RE_VENCIMENTO_DIVERSOS` + `_RE_PAGAR_ATE` priorizado em literal voucher PIX; 8 testes; **10 → 19 nodes em runtime real** (drift -47% → 0%) |
+
+**Sub-sprints abertas como achados colaterais (anti-débito):**
+- **95a** (P2): persistir `liquido` separado de `total` em metadata holerite (permite apertar `diff_valor` de 0.30 para 0.05 no linker).
+- **95b** (P3): linker aceitar âncora temporal alternativa (`vencimento` para DAS PARCSN) reduzindo as 7+14 propostas de conflito de parcelas adjacentes.
+- **95c** (P3): corrigir 8 sítios `# noqa: accent` inválidos (warning ruff, não bloqueia).
+- **INFRA-D2a** (P3): extrair `listar_pendencias_revisao` para `src/dashboard/dados_revisor.py` (`dados.py` cresceu 836L → 976L, viola limite 800L).
+- **90a-1** (P3): endurecer `file_detector._detectar_pdf` (causa raiz da Sprint 90a hoje blindada por defesa em profundidade).
+
+**Padrões canônicos novos descobertos nesta sessão (formalizados em VALIDATOR_BRIEF rodapé):**
+1. **Disciplina de worktree:** prefixar `cd "$WORKTREE_PATH" &&` em todo Bash; verificar `git rev-parse --show-toplevel` + `git branch --show-current` antes de cada commit. 3 sprints (95, 97, 90b) caíram no main por engano de cwd; 90b reverteu antes de commitar.
+2. **Hipótese da spec não é dogma:** Sprints 90a e 90b descobriram empiricamente que a hipótese principal estava errada. Subagent rodou diagnóstico SQL/python/grep antes de codar e mudou a abordagem. Padrão a replicar: spec é ponto de partida, diagnóstico é obrigatório.
+3. **Subregra composta retrocompatível:** Sprint 96 estendeu schema do classifier YAML sem quebrar 20 outros tipos. Padrão `{tipo, requer_todos, requer_qualquer, ocr_minimo, ocr_maximo}` aplicável a outros classificadores.
+4. **Branch reversível:** Sprint 97 fez page-split tentativo com reversão se `e_heterogeneo_por_classificacao` retornar False. Garante zero regressão em casos homogêneos.
+5. **Defesa em duas camadas:** Sprint 90a fez fix YAML + pre-check Python (cinto-e-suspensórios). Sprint-filha 90a-1 endurece causa raiz, mas defesa redundante já protege.
+6. **PII em revisor visual (Sprint D2):** mascarar em UI, JSON exibido, observação humana E relatório final — não só num único ponto.
+
+**Decisão recorrente do supervisor formalizada:** Opus principal valida pessoalmente cada sprint (não despacha `validador-sprint`). Subagent executor escreve código; supervisor lê diff, roda proof-of-work, captura DEPOIS, julga APROVADO/RESSALVAS. Memória `feedback_supervisor_valida.md` registra.
+
+### Sessão 2026-04-26 (primeira parte) — auditoria geral (P0 mapeados, ADR-21 + 9 sprints + Sprint D2)
 
 Auditoria de fim-de-rota executada com plan mode aprovado. Sem mexer em código de extractor/pipeline; só docs e specs. 2 agentes Opus em background (vault + ETL) cujas entregas foram validadas linha-a-linha por mim.
 
