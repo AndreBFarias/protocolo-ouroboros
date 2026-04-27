@@ -450,4 +450,48 @@ class TestIconsModulo:
         assert icons.renderizar_svg("nao-existe") == ""
 
 
+class TestSprintUX112TokensSpacingBorda:
+    """Sprint UX-112: tokens universais de padding/borda + regras em css_global."""
+
+    def test_padding_interno_definido_e_24px(self):
+        assert tema.PADDING_INTERNO == 24
+
+    def test_padding_chip_definido_e_16px(self):
+        assert tema.PADDING_CHIP == 16
+
+    def test_borda_raio_definido_e_8px(self):
+        assert tema.BORDA_RAIO == 8
+
+    def test_borda_ativa_definida_e_2px(self):
+        assert tema.BORDA_ATIVA_PX == 2
+
+    def test_css_global_publica_tokens_em_root(self):
+        css = tema.css_global()
+        assert f"--padding-interno: {tema.PADDING_INTERNO}px" in css
+        assert f"--padding-chip: {tema.PADDING_CHIP}px" in css
+        assert f"--borda-raio: {tema.BORDA_RAIO}px" in css
+        assert f"--borda-ativa-px: {tema.BORDA_ATIVA_PX}px" in css
+
+    def test_css_global_aplica_borda_em_inputs(self):
+        css = tema.css_global()
+        assert '[data-testid="stTextInput"]' in css
+        assert '[data-testid="stSelectbox"]' in css
+        assert '[data-testid="stMultiSelect"]' in css
+        assert "border-radius: var(--borda-raio)" in css
+
+    def test_css_global_aplica_borda_destacada_em_focus(self):
+        css = tema.css_global()
+        assert '[data-testid="stTextInput"]:focus-within' in css
+        assert "border: var(--borda-ativa-px) solid" in css
+
+    def test_css_global_aplica_padding_no_painel_de_tabs(self):
+        css = tema.css_global()
+        assert '.stTabs [data-baseweb="tab-panel"]' in css
+        assert "padding-top: var(--padding-chip)" in css
+
+    def test_css_global_aplica_borda_em_expander(self):
+        css = tema.css_global()
+        assert '[data-testid="stExpander"]' in css
+
+
 # "Simplicidade é a maior sofisticação." -- Leonardo da Vinci
