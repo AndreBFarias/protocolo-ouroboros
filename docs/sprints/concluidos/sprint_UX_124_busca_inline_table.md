@@ -50,7 +50,7 @@ sprint:
 
 # Sprint UX-124 -- Busca inline
 
-**Status:** BACKLOG (P1, criada 2026-04-27)
+**Status:** CONCLUÍDA (commit `7abda7a`, 2026-04-27 — 16 testes novos, busca renderiza tabela inline)
 
 UX-114 entregou roteador funcional, mas resultado de fornecedor exibe botao 'Ir para Catalogacao filtrada' que NAVEGA para outra aba. Dono quer tabela INLINE na propria Busca Global. Sprint refactora apenas a UI de exibicao (roteador, indice e logica de busca permanecem intocados).
 
