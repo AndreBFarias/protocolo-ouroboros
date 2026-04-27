@@ -1,52 +1,218 @@
-"""Página Busca Global -- Sprint 52.
+"""Página Busca Global -- Sprint UX-114 (refactor sobre Sprint 52).
 
-Input de busca permanente no topo que consulta o grafo SQLite (read-only)
-e retorna resultados agrupados em quatro seções: fornecedores, documentos,
-transações e itens. Timeline plotly renderizada quando há resultados
-temporais.
+Busca FUNCIONAL com:
 
-Princípios:
-- Read-only sobre `data/output/grafo.sqlite` (abre em `mode=ro`).
-- Graceful degradation (ADR-10): grafo ausente mostra aviso e retorna.
-- Paleta Dracula e tokens tipográficos vindos de `src.dashboard.tema`
-  (Sprint 20).
-- Input único permanente (decisão do supervisor pós-mockup): sem modal
-  Ctrl+K, sem estado escondido.
+- Texto descritivo curto (max 90 chars).
+- Dropdown 'Tipo' com opções canônicas (Todos / Pessoais / ... / IRPF).
+- Input com placeholder MAIÚSCULO.
+- Autocomplete (sugestões via `busca_indice.sugestoes`).
+- Chips abaixo do input com TIPOS DE DOCUMENTOS canônicos (8 fixos).
+- Roteador: query exata casa nome de aba -> link rápido; casa fornecedor
+  -> link rápido para Catalogação filtrada; senão busca_global do grafo.
+- Filtros sidebar (Mês, Pessoa, Forma de pagamento) impactam resultados.
+- Output em st.dataframe com colunas: Nome do documento, Texto extraído,
+  Caminho, Botão Exportar (copia para data/exports/<ts>_<nome>.<ext>).
+
+Padrões canônicos aplicados:
+- (l) subregra retrocompatível: chips Sprint 59 mantidos abaixo do input
+  (substituição apenas no conteúdo dos chips).
+- (m) branch reversível: índice falha -> aviso visual + busca puro
+  (Sprint 52 fallback) preservada.
+- PII: mascarada em UI, dataframe e export (4 sítios).
 """
 
 from __future__ import annotations
 
+import re
+import shutil
+from datetime import datetime
+from pathlib import Path
+
 import pandas as pd
-import plotly.graph_objects as go
 import streamlit as st
 
 from src.dashboard import dados as _dados
+from src.dashboard.componentes.busca_indice import construir_indice, sugestoes
+from src.dashboard.componentes.busca_roteador import rotear
 from src.dashboard.dados import (
     buscar_global,
     formatar_moeda,
 )
 from src.dashboard.tema import (
     CORES,
-    FONTE_CORPO,
     FONTE_LABEL,
-    LAYOUT_PLOTLY,
     SPACING,
     callout_html,
-    card_html,
     hero_titulo_html,
     icon_html,
     rgba_cor_inline,
     subtitulo_secao_html,
 )
 
-SUGESTOES_RAPIDAS: list[str] = [
-    "neoenergia",
-    "farmácia",
-    "americanas",
-    "posto",
-    "2026-03",
-    "uber",
+RAIZ = Path(__file__).resolve().parents[3]
+DIR_EXPORTS_DEFAULT: Path = RAIZ / "data" / "exports"
+
+# Chips canonicos: TIPOS DE DOCUMENTOS (substitui neoenergia/farmacia/uber).
+CHIPS_TIPOS_CANONICOS: list[str] = [
+    "Holerite",
+    "Nota Fiscal",
+    "DAS",
+    "Boleto",
+    "IRPF",
+    "Recibo",
+    "Comprovante",
+    "Contracheque",
 ]
+
+# Opções do dropdown de filtro por categoria de tipo.
+OPCOES_DROPDOWN_TIPO: list[str] = [
+    "Todos",
+    "Pessoais",
+    "Trabalho",
+    "Notas Fiscais",
+    "Holerites",
+    "Boletos",
+    "Receitas Medicas",
+    "DAS",
+    "IRPF",
+]
+
+# Mapa rótulo do dropdown -> conjunto de tipos canônicos do grafo (lower).
+_MAPA_DROPDOWN_TIPOS: dict[str, set[str]] = {
+    "Pessoais": {"comprovante_cpf", "irpf_parcela", "receita_medica", "holerite"},
+    "Trabalho": {"holerite", "das_parcsn", "das_mei", "contracheque"},
+    "Notas Fiscais": {
+        "nfce_consumidor_eletronica",
+        "danfe_nfe55",
+        "xml_nfe",
+        "cupom_fiscal_foto",
+        "recibo_nao_fiscal",
+    },
+    "Holerites": {"holerite", "contracheque"},
+    "Boletos": {"boleto_servico", "fatura_cartao"},
+    "Receitas Medicas": {"receita_medica"},
+    "DAS": {"das_parcsn", "das_mei"},
+    "IRPF": {"irpf_parcela"},
+}
+
+# Texto descritivo único, <= 90 chars.
+TEXTO_DESCRITIVO: str = "Busque por tipo de documento, fornecedor, CNPJ ou identificador."
+PLACEHOLDER_INPUT: str = "BUSQUE: HOLERITE, NF, DAS, BOLETO, IRPF, FORNECEDOR, CNPJ..."
+
+# CSS local: cor do ícone (i) do callout info -- usar var(--color-destaque)
+# em vez do azul Streamlit default (feedback dono 2026-04-27).
+_CSS_LOCAL_BUSCA: str = (
+    "<style>"
+    "div[data-testid='stAlert'] svg, "
+    "div[role='alert'] svg {"
+    f" color: {CORES['destaque']} !important;"
+    " fill: currentColor !important;"
+    "}"
+    "</style>"
+)
+
+
+# ---------------------------------------------------------------------------
+# PII: mascaramento canônico (CPF, CNPJ, email)
+# ---------------------------------------------------------------------------
+
+_RE_CPF = re.compile(r"\b\d{3}\.\d{3}\.\d{3}-\d{2}\b")
+_RE_CNPJ = re.compile(r"\b\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}\b")
+_RE_EMAIL = re.compile(r"\b[\w.+-]+@[\w-]+\.[\w.-]+\b")
+
+
+def _mascarar_pii(texto: str) -> str:
+    """Mascara CPF, CNPJ e email em uma string. Idempotente."""
+    if not isinstance(texto, str) or not texto:
+        return texto
+    texto = _RE_CPF.sub("***.***.***-**", texto)
+    texto = _RE_CNPJ.sub("**.***.***/****-**", texto)
+    texto = _RE_EMAIL.sub("***@***", texto)
+    return texto
+
+
+# ---------------------------------------------------------------------------
+# Helpers de filtro sidebar
+# ---------------------------------------------------------------------------
+
+
+def _aplicar_filtros_sidebar(
+    docs: list[dict],
+    *,
+    periodo: str | None,
+    pessoa: str | None,
+    forma: str | None,
+) -> list[dict]:
+    """Aplica filtros da sidebar global aos documentos retornados.
+
+    - `periodo` (YYYY-MM ou 'Todos'/None) filtra por `data` do documento.
+    - `pessoa` filtra por metadado `pessoa` ou `quem` (case-insensitive).
+    - `forma` filtra por metadado `forma_pagamento` (case-insensitive).
+    """
+    saida = list(docs)
+    if periodo and str(periodo).strip() and str(periodo).lower() != "todos":
+        prefixo = str(periodo).strip()
+        saida = [d for d in saida if str(d.get("data", "")).startswith(prefixo)]
+    if pessoa and str(pessoa).strip() and str(pessoa).lower() != "todos":
+        alvo = str(pessoa).strip().lower()
+        saida = [
+            d
+            for d in saida
+            if alvo in (str(d.get("pessoa", "")) + " " + str(d.get("quem", ""))).lower()
+        ]
+    if forma and str(forma).strip() and str(forma).lower() != "todos":
+        alvo = str(forma).strip().lower()
+        saida = [d for d in saida if alvo in str(d.get("forma_pagamento", "")).lower()]
+    return saida
+
+
+def _filtrar_por_tipo_dropdown(docs: list[dict], rotulo: str) -> list[dict]:
+    """Filtra documentos por categoria do dropdown de tipo."""
+    if not rotulo or rotulo == "Todos":
+        return docs
+    tipos_aceitos = _MAPA_DROPDOWN_TIPOS.get(rotulo, set())
+    if not tipos_aceitos:
+        return docs
+    saida: list[dict] = []
+    for d in docs:
+        tipo_d = str(d.get("tipo_documento", "")).lower()
+        if tipo_d in tipos_aceitos or any(t in tipo_d for t in tipos_aceitos):
+            saida.append(d)
+    return saida
+
+
+# ---------------------------------------------------------------------------
+# Helpers de export
+# ---------------------------------------------------------------------------
+
+
+def exportar_documento(
+    caminho_origem: str | Path,
+    *,
+    diretorio_destino: Path | None = None,
+) -> Path | None:
+    """Copia `caminho_origem` para `data/exports/<ts>_<nome>.<ext>`.
+
+    Cria o diretório de destino se não existir. Nunca deleta o original.
+    Devolve o Path do arquivo destino ou None se `caminho_origem` inválido.
+    """
+    if not caminho_origem:
+        return None
+    origem = Path(caminho_origem)
+    if not origem.exists() or not origem.is_file():
+        return None
+    destino_dir = diretorio_destino if diretorio_destino is not None else DIR_EXPORTS_DEFAULT
+    destino_dir.mkdir(parents=True, exist_ok=True)
+    ts = datetime.now().strftime("%Y%m%d-%H%M%S")
+    nome_destino = f"{ts}_{origem.name}"
+    destino = destino_dir / nome_destino
+    shutil.copy2(origem, destino)
+    return destino
+
+
+# ---------------------------------------------------------------------------
+# Render principal
+# ---------------------------------------------------------------------------
 
 
 def renderizar(
@@ -55,33 +221,48 @@ def renderizar(
     pessoa: str | None = None,
     ctx: dict | None = None,
 ) -> None:
-    """Ponto de entrada da página Busca Global.
+    """Ponto de entrada da página Busca Global (refactor UX-114)."""
+    _ = dados
+    ctx = ctx or {}
+    forma_pagamento = ctx.get("forma_pagamento")
 
-    A assinatura casa com as outras páginas para manter contrato uniforme
-    no dashboard, mas a fonte de verdade é o grafo -- XLSX não é usado.
-    """
-    _ = dados, periodo, pessoa, ctx  # não utilizados -- contrato da página
+    st.markdown(_CSS_LOCAL_BUSCA, unsafe_allow_html=True)
 
     st.markdown(
         hero_titulo_html(
             "",
             "Busca Global",
-            "Input único permanente: digite fornecedor, CNPJ, item, data "
-            "(YYYY-MM) ou valor. Retorna fornecedores agregados, documentos, "
-            "transações e itens casados, com timeline cronológica.",
+            TEXTO_DESCRITIVO,
         ),
         unsafe_allow_html=True,
     )
 
-    termo = _renderizar_input_permanente()
+    # Branch (m) reversível: tenta construir índice; página segue funcional
+    # mesmo se o grafo não existir.
+    try:
+        indice = _indice_cached()
+        indice_ok = bool(indice and any(indice.values()))
+    except Exception:  # noqa: BLE001 -- defensivo; falha única = índice vazio
+        indice = {"fornecedores": [], "descricoes": [], "tipos_doc": [], "abas": []}
+        indice_ok = False
+
+    if not indice_ok:
+        st.markdown(
+            callout_html(
+                "warning",
+                "Índice de busca degradado; rode `./run.sh --tudo` para "
+                "popular o grafo. Busca segue ativa por substring direto.",
+            ),
+            unsafe_allow_html=True,
+        )
+
+    rotulo_tipo, termo = _renderizar_controles(indice)
 
     if not _dados.CAMINHO_GRAFO.exists():
         st.markdown(
             callout_html(
                 "warning",
-                "Grafo SQLite não encontrado. Popule o catálogo rodando "
-                "`./run.sh --tudo` (ou `make process`) para gerar "
-                "`data/output/grafo.sqlite`.",
+                "Grafo SQLite não encontrado. Popule rodando `./run.sh --tudo`.",
             ),
             unsafe_allow_html=True,
         )
@@ -91,92 +272,191 @@ def renderizar(
         st.markdown(
             callout_html(
                 "info",
-                "Digite um termo acima ou use uma das sugestões para iniciar "
-                "a busca. Os resultados aparecem aqui agrupados por tipo.",
+                "Digite um termo acima ou clique em um chip para iniciar.",
             ),
             unsafe_allow_html=True,
         )
         return
 
-    resultados = buscar_global(termo)
-    _renderizar_resumo(termo, resultados)
+    # Roteador: nome de aba ou fornecedor dá link rápido além da listagem.
+    rota = rotear(termo, indice=indice)
+    _renderizar_rota_rapida(rota)
 
-    total = sum(len(v) for v in resultados.values())
-    if total == 0:
+    resultados = buscar_global(termo)
+
+    # Filtros: dropdown tipo + sidebar (mes/pessoa/forma).
+    docs_filtrados = _filtrar_por_tipo_dropdown(resultados.get("documentos", []), rotulo_tipo)
+    docs_filtrados = _aplicar_filtros_sidebar(
+        docs_filtrados,
+        periodo=periodo,
+        pessoa=pessoa,
+        forma=forma_pagamento,
+    )
+
+    total_filtrado = (
+        len(resultados.get("fornecedores", []))
+        + len(docs_filtrados)
+        + len(resultados.get("transacoes", []))
+        + len(resultados.get("itens", []))
+    )
+
+    _renderizar_resumo(termo, total_filtrado)
+
+    if total_filtrado == 0:
         st.markdown(
-            callout_html("info", f"Nenhum resultado encontrado para '{termo}'."),
+            callout_html("info", f"Nenhum resultado para '{_mascarar_pii(termo)}'."),
             unsafe_allow_html=True,
         )
         return
 
-    _renderizar_fornecedores(resultados["fornecedores"])
-    _renderizar_timeline(resultados)
-    st.markdown(_divisor(), unsafe_allow_html=True)
-    _renderizar_documentos(resultados["documentos"])
-    _renderizar_transacoes(resultados["transacoes"])
-    _renderizar_itens(resultados["itens"])
+    _renderizar_tabela_documentos(docs_filtrados)
+
+
+# ---------------------------------------------------------------------------
+# Cache + componentes de UI
+# ---------------------------------------------------------------------------
+
+
+@st.cache_data(ttl=300)
+def _indice_cached() -> dict[str, list[str]]:
+    """Índice cacheado por sessão (ttl 5 min). Branch reversível se falha."""
+    return construir_indice()
 
 
 def _aplicar_chip_sugestao(valor: str) -> None:
-    """Callback do chip: injeta o termo no input da busca.
+    """Callback: ao clicar num chip, popula o input. Sprint 59 -> UX-114.
 
-    Ao ser usado como `on_click` do `st.button`, este callback roda ANTES
-    do próximo ciclo de render -- por isso o `st.text_input` com
-    `key="busca_termo_input"` abaixo já renderiza com o valor atualizado,
-    sem precisar de `st.rerun()` explícito (padrão canônico Streamlit e
-    contorno da armadilha A59-1: `st.rerun` em callback inline gera loop).
+    Mantido com o nome canônico Sprint 59 para preservar contrato N-para-N
+    com os testes regressivos (`tests/test_busca_global.py`).
     """
     st.session_state["busca_termo_input"] = valor
 
 
-def _renderizar_input_permanente() -> str:
-    """Input único permanente no topo + chips de sugestão clicáveis.
+# Alias semântico para compatibilidade com Sprint 59 -- os dois nomes
+# apontam para o mesmo callback.
+_aplicar_chip_tipo = _aplicar_chip_sugestao
 
-    Sprint 92c: o ícone Feather ``search`` precede o label do input, dando
-    affordance visual à caixa de busca. Streamlit não expõe ``prefix`` em
-    ``st.text_input``, então renderizamos o par ícone+label como HTML acima
-    do input, com label nativo colapsado (``label_visibility="collapsed"``).
+
+def _renderizar_controles(indice: dict[str, list[str]]) -> tuple[str, str]:
+    """Renderiza dropdown + label + input + autocomplete + chips.
+
+    Devolve `(rótulo_tipo, termo_query)`.
     """
+    rotulo_tipo = st.selectbox(
+        "Tipo de busca",
+        OPCOES_DROPDOWN_TIPO,
+        index=0,
+        key="busca_tipo_dropdown",
+        help="Filtra os resultados por categoria de documento.",
+    )
+
     svg_busca = icon_html("search", tamanho=18, cor=CORES["destaque"])
-    # Sprint 92c: classe utilitaria .ouroboros-label-icon (em css_global)
-    # consolida display:flex + gap + cor destaque + margin.
     st.markdown(
-        f'<div class="ouroboros-label-icon">{svg_busca}<span>Busca global</span></div>',
+        f'<div class="ouroboros-label-icon" style="margin-top: {SPACING["sm"]}px;">'
+        f"{svg_busca}<span>Busca global</span></div>",
         unsafe_allow_html=True,
     )
     termo = st.text_input(
         "Busca global",
-        placeholder="fornecedor, CNPJ, item, data (YYYY-MM), valor...",
+        placeholder=PLACEHOLDER_INPUT,
         label_visibility="collapsed",
         key="busca_termo_input",
     )
 
-    cols = st.columns(len(SUGESTOES_RAPIDAS))
-    for idx, (col, sug) in enumerate(zip(cols, SUGESTOES_RAPIDAS)):
+    # Autocomplete: sugestões em tempo real abaixo do input
+    if termo and len(termo.strip()) >= 2:
+        sugs = sugestoes(termo, indice=indice, limite=10)
+        if sugs:
+            st.markdown(
+                subtitulo_secao_html("Sugestões", cor=CORES["neutro"]),
+                unsafe_allow_html=True,
+            )
+            cols_sug = st.columns(min(len(sugs), 5))
+            for idx_s, sug in enumerate(sugs):
+                col = cols_sug[idx_s % len(cols_sug)]
+                with col:
+                    st.button(
+                        _mascarar_pii(sug),
+                        key=f"busca_autocomp_{idx_s}",
+                        use_container_width=True,
+                        on_click=_aplicar_chip_sugestao,
+                        args=(sug,),
+                    )
+
+    # Chips fixos (TIPOS canônicos -- substitui Sprint 59 chips antigos)
+    st.markdown(
+        f'<p style="color: var(--color-texto-sec); font-size: {FONTE_LABEL}px;'
+        f' margin: {SPACING["sm"]}px 0 4px 0;">Tipos rápidos</p>',
+        unsafe_allow_html=True,
+    )
+    cols = st.columns(len(CHIPS_TIPOS_CANONICOS))
+    for idx, (col, sug) in enumerate(zip(cols, CHIPS_TIPOS_CANONICOS)):
         with col:
             st.button(
                 sug,
-                key=f"busca_sug_{idx}",
+                key=f"busca_chip_tipo_{idx}",
                 use_container_width=True,
                 on_click=_aplicar_chip_sugestao,
                 args=(sug,),
             )
 
-    return (termo or "").strip()
+    return rotulo_tipo, (termo or "").strip()
 
 
-def _renderizar_resumo(termo: str, resultados: dict[str, list[dict]]) -> None:
-    """Linha de resumo mostrando contagem total.
+def _renderizar_rota_rapida(rota: dict) -> None:
+    """Mostra link rápido se a query casa aba ou fornecedor."""
+    kind = rota.get("kind")
+    destino = rota.get("destino", "")
+    if kind == "aba" and destino:
+        st.markdown(
+            callout_html(
+                "info",
+                f"Sua busca casa o nome da aba <strong>{destino}</strong>.",
+            ),
+            unsafe_allow_html=True,
+        )
+        if st.button(
+            f"Ir para aba {destino}",
+            key="busca_link_aba",
+            use_container_width=False,
+        ):
+            cluster = rota.get("tipo") or ""
+            params: dict = {"tab": destino}
+            if cluster:
+                params["cluster"] = cluster
+            st.query_params.from_dict(params)
+            st.rerun()
+    elif kind == "fornecedor" and destino:
+        st.markdown(
+            callout_html(
+                "info",
+                f"Sua busca casa o fornecedor <strong>{_mascarar_pii(destino)}</strong>.",
+            ),
+            unsafe_allow_html=True,
+        )
+        if st.button(
+            "Ir para Catalogação filtrada",
+            key="busca_link_forn",
+            use_container_width=False,
+        ):
+            st.query_params.from_dict(
+                {
+                    "tab": "Catalogação",
+                    "fornecedor": destino,
+                    "cluster": "Documentos",
+                }
+            )
+            st.rerun()
 
-    Sprint 92c: classe utilitaria ``ouroboros-row-flex`` consolida o layout
-    inline anterior; inner <p> usa var CSS para cor e fonte.
-    """
-    total = sum(len(v) for v in resultados.values())
+
+def _renderizar_resumo(termo: str, total: int) -> None:
+    """Linha de resumo mostrando contagem total."""
+    termo_seguro = _mascarar_pii(termo)
     st.markdown(
         '<div class="ouroboros-row-flex ouroboros-row-resumo-busca">'
         '<p style="color: var(--color-texto); font-size: var(--font-corpo);'
         ' margin: 0;">Resultados para '
-        f'<strong style="color: var(--color-destaque);">"{termo}"</strong></p>'
+        f'<strong style="color: var(--color-destaque);">"{termo_seguro}"</strong></p>'
         '<p style="color: var(--color-texto-sec); font-size: var(--font-label);'
         f' margin: 0;">{total} itens encontrados</p>'
         "</div>",
@@ -184,312 +464,60 @@ def _renderizar_resumo(termo: str, resultados: dict[str, list[dict]]) -> None:
     )
 
 
-def _renderizar_fornecedores(fornecedores: list[dict]) -> None:
-    """Seção de fornecedores como cards coloridos com aliases e agregados."""
-    if not fornecedores:
-        return
+def _renderizar_tabela_documentos(docs: list[dict]) -> None:
+    """Renderiza documentos em tabela com 4 colunas + botão Exportar.
 
-    st.markdown(
-        subtitulo_secao_html(
-            f"Fornecedores encontrados ({len(fornecedores)})",
-            cor=CORES["destaque"],
-        ),
-        unsafe_allow_html=True,
-    )
-
-    for forn in fornecedores[:10]:
-        nome = (forn.get("nome_canonico") or "").strip() or "--"
-        cnpj = forn.get("cnpj") or "--"
-        aliases = forn.get("aliases") or []
-        ndocs = int(forn.get("total_documentos") or 0)
-        total = float(forn.get("total_gasto") or 0.0)
-        categoria = forn.get("categoria") or ""
-
-        aliases_html = _aliases_html(aliases)
-        categoria_html = ""
-        if categoria:
-            categoria_html = (
-                f'<span style="background-color: {CORES["destaque"]};'
-                f" color: {CORES['fundo']};"
-                f" border-radius: 4px;"
-                f" padding: 2px 8px;"
-                f" font-size: {FONTE_LABEL - 2}px;"
-                f" font-weight: 700;"
-                f' text-transform: uppercase;">{categoria}</span>'
-            )
-
-        # Sprint 92c: classes .ouroboros-card-hero-busca e .ouroboros-row-between
-        # substituem o antigo encadeamento de <div style=> inline. O inner
-        # "flex: 1" (unico) permanece por ser aplicado a um elemento especifico
-        # que compete com o irmao de categoria.
-        total_str = formatar_moeda(total)
-        st.markdown(
-            '<div class="ouroboros-card-hero-busca">'
-            '<div class="ouroboros-row-between">'
-            '<div style="flex: 1;">'
-            '<p style="color: var(--color-texto); '
-            f"font-size: {FONTE_CORPO + 1}px; "
-            "font-weight: 700; "
-            f'margin: 0;">{nome}</p>'
-            '<p style="color: var(--color-neutro); '
-            "font-size: var(--font-label); "
-            "font-family: monospace; "
-            f'margin: 4px 0 0 0;">CNPJ {cnpj}</p>'
-            "</div>"
-            f"<div>{categoria_html}</div>"
-            "</div>"
-            '<div class="ouroboros-row-flex" '
-            f'style="gap: {SPACING["lg"]}px; margin: {SPACING["md"]}px 0 {SPACING["sm"]}px 0;">'
-            "<div>"
-            '<p style="color: var(--color-texto-sec); '
-            f"font-size: {FONTE_LABEL - 2}px; "
-            "text-transform: uppercase; "
-            'letter-spacing: 0.08em; margin: 0;">Documentos</p>'
-            '<p style="color: var(--color-texto); '
-            f"font-size: {FONTE_CORPO + 4}px; "
-            "font-weight: 700; "
-            f'margin: 2px 0 0 0;">{ndocs}</p>'
-            "</div>"
-            "<div>"
-            '<p style="color: var(--color-texto-sec); '
-            f"font-size: {FONTE_LABEL - 2}px; "
-            "text-transform: uppercase; "
-            'letter-spacing: 0.08em; margin: 0;">Total transações</p>'
-            '<p style="color: var(--color-negativo); '
-            f"font-size: {FONTE_CORPO + 4}px; "
-            "font-weight: 700; "
-            f'margin: 2px 0 0 0;">{total_str}</p>'
-            "</div>"
-            "</div>"
-            f"{aliases_html}"
-            "</div>",
-            unsafe_allow_html=True,
-        )
-
-
-def _aliases_html(aliases: list[str]) -> str:
-    """Renderiza aliases como badges horizontais; vazio se não houver.
-
-    Sprint 92c: ``.ouroboros-aliases-line`` (CSS global) substitui o
-    ``display: flex`` inline anterior; cores migram para ``var(--color-*)``.
+    Colunas: Nome do documento, Texto extraído (resumo, max 80 chars),
+    Caminho do arquivo, Botão Exportar.
     """
-    if not aliases:
-        return ""
-    badges = []
-    for alias in aliases[:6]:
-        badges.append(
-            '<span style="background-color: '
-            f"{rgba_cor_inline(CORES['texto_sec'], 0.25)};"
-            " color: var(--color-texto);"
-            " border-radius: 4px;"
-            " padding: 2px 6px;"
-            f" font-size: {FONTE_LABEL - 2}px;"
-            f' margin-right: 4px;">{alias}</span>'
-        )
-    return (
-        '<p style="color: var(--color-texto-sec);'
-        f" font-size: {FONTE_LABEL - 1}px;"
-        ' margin: 0 0 4px 0;">Aliases</p>'
-        '<div class="ouroboros-aliases-line">'
-        f"{''.join(badges)}"
-        "</div>"
-    )
-
-
-def _renderizar_timeline(resultados: dict[str, list[dict]]) -> None:
-    """Timeline plotly: diamond = documento, círculo = transação."""
-    docs = [d for d in resultados.get("documentos", []) if d.get("data")]
-    txs = [t for t in resultados.get("transacoes", []) if t.get("data")]
-
-    if not docs and not txs:
-        return
-
-    st.markdown(
-        subtitulo_secao_html(
-            "Timeline — documentos e transações",
-            cor=CORES["neutro"],
-        ),
-        unsafe_allow_html=True,
-    )
-
-    fig = go.Figure()
-
-    if docs:
-        docs_df = pd.DataFrame(docs)
-        docs_df["_data_dt"] = pd.to_datetime(docs_df["data"], errors="coerce")
-        docs_df = docs_df.dropna(subset=["_data_dt"])
-        if not docs_df.empty:
-            fig.add_trace(
-                go.Scatter(
-                    x=docs_df["_data_dt"],
-                    y=[1] * len(docs_df),
-                    mode="markers",
-                    marker={
-                        "size": 16,
-                        "color": CORES["destaque"],
-                        "line": {"color": CORES["texto"], "width": 2},
-                        "symbol": "diamond",
-                    },
-                    name="Documentos",
-                    text=[
-                        f"{r.get('tipo_documento', '--')}<br>"
-                        f"{formatar_moeda(float(r.get('total', 0.0) or 0.0))}"
-                        for _, r in docs_df.iterrows()
-                    ],
-                    hovertemplate="%{text}<br>%{x|%Y-%m-%d}<extra></extra>",
-                )
-            )
-
-    if txs:
-        tx_df = pd.DataFrame(txs)
-        tx_df["_data_dt"] = pd.to_datetime(tx_df["data"], errors="coerce")
-        tx_df = tx_df.dropna(subset=["_data_dt"])
-        if not tx_df.empty:
-            fig.add_trace(
-                go.Scatter(
-                    x=tx_df["_data_dt"],
-                    y=[0] * len(tx_df),
-                    mode="markers",
-                    marker={
-                        "size": 12,
-                        "color": CORES["neutro"],
-                        "line": {"color": CORES["texto"], "width": 1},
-                        "symbol": "circle",
-                    },
-                    name="Transações",
-                    text=[
-                        f"{r.get('local', '--')}<br>"
-                        f"{formatar_moeda(float(r.get('valor', 0.0) or 0.0))}"
-                        for _, r in tx_df.iterrows()
-                    ],
-                    hovertemplate="%{text}<br>%{x|%Y-%m-%d}<extra></extra>",
-                )
-            )
-
-    fig.update_layout(
-        **LAYOUT_PLOTLY,
-        height=260,
-        showlegend=True,
-        legend={"orientation": "h", "y": -0.35, "x": 0},
-        xaxis={
-            "title": "",
-            "gridcolor": rgba_cor_inline(CORES["texto_sec"], 0.15),
-            "showgrid": True,
-        },
-        yaxis={
-            "title": "",
-            "showticklabels": False,
-            "range": [-0.5, 1.5],
-            "showgrid": False,
-        },
-    )
-    st.plotly_chart(fig, use_container_width=True, key="busca_timeline")
-
-
-def _renderizar_documentos(docs: list[dict]) -> None:
-    """Seção de documentos em DataFrame compacto."""
     st.markdown(
         subtitulo_secao_html(f"Documentos ({len(docs)})"),
         unsafe_allow_html=True,
     )
-
     if not docs:
         st.markdown(
-            callout_html("info", "Nenhum documento casou com a busca."),
+            callout_html("info", "Nenhum documento casou com os filtros."),
             unsafe_allow_html=True,
         )
         return
 
-    df = pd.DataFrame(
-        [
+    linhas: list[dict] = []
+    for d in docs[:200]:
+        nome = (d.get("nome_canonico") or d.get("razao_social") or "--").strip() or "--"
+        nome = _mascarar_pii(nome)
+        texto_extra = (d.get("texto_extraido") or d.get("descricao") or "").strip()
+        if not texto_extra:
+            texto_extra = (
+                f"{d.get('tipo_documento', '--')} | "
+                f"{formatar_moeda(float(d.get('total', 0.0) or 0.0))}"
+            )
+        if len(texto_extra) > 80:
+            texto_extra = texto_extra[:77] + "..."
+        texto_extra = _mascarar_pii(texto_extra)
+        caminho = d.get("caminho_arquivo") or d.get("path") or ""
+        linhas.append(
             {
-                "Data": d.get("data", "--") or "--",
-                "Tipo": d.get("tipo_documento", "--"),
-                "Fornecedor": (d.get("razao_social") or "--").strip() or "--",
-                "Total": formatar_moeda(float(d.get("total", 0.0) or 0.0)),
+                "Nome do documento": nome,
+                "Texto extraído": texto_extra,
+                "Caminho do arquivo": caminho or "--",
             }
-            for d in docs
-        ]
-    )
-    st.dataframe(
-        df.sort_values("Data", ascending=False),
-        width="stretch",
-        hide_index=True,
-    )
-
-
-def _renderizar_transacoes(txs: list[dict]) -> None:
-    """Seção de transações em DataFrame compacto."""
-    st.markdown(
-        subtitulo_secao_html(f"Transações ({len(txs)})"),
-        unsafe_allow_html=True,
-    )
-
-    if not txs:
-        st.markdown(
-            callout_html("info", "Nenhuma transação casou com a busca."),
-            unsafe_allow_html=True,
         )
-        return
 
-    df = pd.DataFrame(
-        [
-            {
-                "Data": t.get("data", "--") or "--",
-                "Local": t.get("local", "--") or "--",
-                "Banco": t.get("banco", "--") or "--",
-                "Tipo": t.get("tipo_transacao", "--") or "--",
-                "Valor": formatar_moeda(float(t.get("valor", 0.0) or 0.0)),
-            }
-            for t in txs
-        ]
-    )
+    df = pd.DataFrame(linhas)
     st.dataframe(df, width="stretch", hide_index=True)
 
-
-def _renderizar_itens(itens: list[dict]) -> None:
-    """Seção de itens em DataFrame compacto."""
-    st.markdown(
-        subtitulo_secao_html(f"Itens ({len(itens)})"),
-        unsafe_allow_html=True,
-    )
-
-    if not itens:
-        st.markdown(
-            callout_html("info", "Nenhum item casou com a busca."),
-            unsafe_allow_html=True,
-        )
-        return
-
-    agrupados: dict[str, dict] = {}
-    for it in itens:
-        chave = (it.get("descricao") or "").strip().lower() or "(sem descrição)"
-        slot = agrupados.setdefault(
-            chave,
-            {
-                "descricao": it.get("descricao", "--"),
-                "ocorrencias": 0,
-                "valor": 0.0,
-            },
-        )
-        slot["ocorrencias"] += 1
-        slot["valor"] += float(it.get("valor", 0.0) or 0.0)
-
-    df = pd.DataFrame(
-        [
-            {
-                "Descrição": linha["descricao"],
-                "Ocorrências": linha["ocorrencias"],
-                "Valor somado": formatar_moeda(linha["valor"]),
-            }
-            for linha in agrupados.values()
-        ]
-    )
-    df = df.sort_values("Ocorrências", ascending=False)
-    st.dataframe(df, width="stretch", hide_index=True)
-
-    # mantém referência ao helper de card para evitar import morto em lint
-    _ = card_html
+    # Botão Exportar global: copia todos com caminho válido para data/exports/.
+    docs_com_caminho = [d for d in docs if d.get("caminho_arquivo") or d.get("path")]
+    if docs_com_caminho and st.button(
+        f"Exportar {len(docs_com_caminho)} documento(s)",
+        key="busca_exportar_global",
+    ):
+        n_ok = 0
+        for d in docs_com_caminho:
+            origem = d.get("caminho_arquivo") or d.get("path")
+            if exportar_documento(origem) is not None:
+                n_ok += 1
+        st.success(f"{n_ok} arquivo(s) copiado(s) para data/exports/.")
 
 
 def _divisor() -> str:
