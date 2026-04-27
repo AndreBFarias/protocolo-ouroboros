@@ -298,19 +298,16 @@ class TestRenderizacaoStreamlit:
     def test_input_permanente_no_topo(self, grafo_busca):
         """Invariante: text_input aparece ANTES de qualquer resultado.
 
-        Lê o código-fonte da página para garantir que `st.text_input` é
-        invocado antes de qualquer `subtitulo_secao_html` que renderize
-        seção de resultados. Decisão explícita do supervisor: input é
-        permanente no topo, não modal.
+        Sprint UX-114: o refactor substituiu as seções "Fornecedores
+        encontrados" e "Timeline" por uma tabela única de Documentos
+        (st.dataframe). A invariante "input antes de resultados" segue
+        valida via `f"Documentos (`.
         """
         fonte = (RAIZ / "src" / "dashboard" / "paginas" / "busca.py").read_text(encoding="utf-8")
         idx_input = fonte.find("st.text_input")
-        idx_fornecedores = fonte.find('"Fornecedores encontrados')
-        idx_timeline = fonte.find('"Timeline')
         idx_documentos = fonte.find('f"Documentos (')
         assert idx_input > 0, "text_input não encontrado no código"
-        assert idx_input < idx_fornecedores
-        assert idx_input < idx_timeline
+        assert idx_documentos > 0, "seção Documentos não encontrada"
         assert idx_input < idx_documentos
 
 
