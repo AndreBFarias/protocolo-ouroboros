@@ -38,8 +38,12 @@ class TestContratosCanonicos:
         """Acceptance: campo cluster lido da URL via ler_filtros_da_url."""
         assert "cluster" in drilldown.CAMPOS_FILTRO_RECONHECIDOS
 
-    def test_mapa_aba_para_cluster_cobre_13_abas(self) -> None:
-        """Acceptance: todas as 13 abas mapeadas para um dos 5 clusters."""
+    def test_mapa_aba_para_cluster_cobre_14_abas(self) -> None:
+        """Acceptance: todas as 14 abas mapeadas para um dos 5 clusters.
+
+        Sprint D2 adicionou ``Revisor`` ao cluster Documentos (de 13 para 14
+        abas totais).
+        """
         esperadas = {
             "Visão Geral",
             "Extrato",
@@ -48,6 +52,7 @@ class TestContratosCanonicos:
             "Projeções",
             "Catalogação",
             "Completude",
+            "Revisor",
             "Busca Global",
             "Grafo + Obsidian",
             "Categorias",
