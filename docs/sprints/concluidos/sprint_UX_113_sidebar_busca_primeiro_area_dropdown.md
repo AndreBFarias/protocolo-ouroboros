@@ -55,7 +55,7 @@ sprint:
 
 # Sprint UX-113 -- Sidebar refactor
 
-**Status:** BACKLOG (P1, criada 2026-04-27, pré-requisito da Sprint 100)
+**Status:** CONCLUÍDA (commit `5a57c4b`, 2026-04-27 — aguarda validação visual humana)
 
 Sidebar hoje começa com radio "Área" — força o usuário a navegar antes de poder buscar. Sprint inverte: campo Buscar primeiro (ponto de entrada cognitivo), Área como dropdown abaixo (mantém função de cluster ativo, mas economiza espaço).
 
