@@ -142,15 +142,19 @@ def _sidebar(dados: dict) -> tuple[str, str, str, str]:
         # mergeia: salva em session_state apenas).
         renderizar_input_busca()
 
-        st.markdown("---")
+        # Sprint UX-119 AC4: separadores `st.markdown("---")` que existiam
+        # entre Buscar / Área / Granularidade / Mês / Pessoa / Forma foram
+        # removidos. Os 6 controles formam agora um bloco visual contínuo;
+        # o respiro entre eles vem do margin-bottom uniforme dos elementos
+        # do Streamlit. Os separadores ANTES (logo+caption) e DEPOIS (cards
+        # Receita/Despesa/Saldo) permanecem porque marcam fronteiras
+        # semânticas distintas (cabeçalho da sidebar / resumo financeiro).
 
         # Sprint 92b (ADR-22) + UX-113: seletor de cluster como dropdown.
         # Fica acima dos filtros de período/pessoa para reforçar a hierarquia
         # (área > filtros), mas abaixo do campo Buscar -- mental model
         # "buscar primeiro, navegar depois".
         cluster_ativo = _selecionar_cluster()
-
-        st.markdown("---")
 
         meses = obter_meses_disponiveis(dados)
 
