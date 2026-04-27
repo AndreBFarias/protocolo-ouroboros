@@ -116,7 +116,7 @@ SPACING: dict[str, int] = {
 _CAMINHO_LOGO: Path = Path(__file__).resolve().parents[2] / "assets" / "icon.png"
 
 
-def logo_sidebar_html(largura_px: int = 96) -> str:
+def logo_sidebar_html(largura_px: int = 120) -> str:
     """HTML da logo centralizada para inserir no topo da sidebar.
 
     Cacheia o base64 em `st.session_state["_logo_b64"]` (leitura única
@@ -124,6 +124,13 @@ def logo_sidebar_html(largura_px: int = 96) -> str:
     devolve string vazia — caller deve tolerar. A checagem de existência
     acontece antes do cache (testes que removem o arquivo no meio do fluxo
     ainda recebem string vazia mesmo com cache quente).
+
+    Sprint UX-118: largura padrão sobe de 96px para 120px e o ``<img>``
+    ganha class ``ouroboros-logo-img``. CSS global (``css_global()``)
+    declara ``max-width: 120px; height: auto; aspect-ratio: 724 / 733``
+    para que a imagem não seja apertada para 64x65 pelo layout da sidebar
+    (largura útil ~248px) e mantenha proporção próxima do quadrado da
+    arte original (724x733px).
     """
     if not _CAMINHO_LOGO.exists():
         return ""
@@ -145,6 +152,7 @@ def logo_sidebar_html(largura_px: int = 96) -> str:
     return (
         f'<div style="text-align:center; margin-bottom:{SPACING["md"]}px;">'
         f'<img src="data:image/png;base64,{b64}" '
+        f'class="ouroboros-logo-img" '
         f'width="{largura_px}" '
         f'style="display:block; margin:0 auto;" '
         f'alt="Protocolo Ouroboros"/>'
@@ -184,7 +192,15 @@ def card_html(titulo: str, valor: str, cor: str) -> str:
 
 
 def card_sidebar_html(titulo: str, valor: str, cor: str) -> str:
-    """Gera HTML de card compacto para sidebar."""
+    """Gera HTML de card compacto para sidebar.
+
+    Sprint UX-118: ``margin-left: 0`` e ``box-sizing: border-box`` impedem
+    que a borda esquerda 3px colorida transborde o ``padding-left`` de
+    16px (PADDING_CHIP) aplicado pelo seletor
+    ``[data-testid="stSidebar"] > div:first-child`` da Sprint UX-116. Sem
+    estes dois ajustes, o card aparenta "vazar" o retângulo interno da
+    sidebar.
+    """
     return (
         f'<div style="'
         f"background-color: {CORES['card_fundo']};"
@@ -192,7 +208,9 @@ def card_sidebar_html(titulo: str, valor: str, cor: str) -> str:
         f" border-left: 3px solid {cor};"
         f" border-radius: 6px;"
         f" padding: {SPACING['sm'] + 2}px {SPACING['md'] - 2}px;"
+        f" margin-left: 0;"
         f" margin-bottom: {SPACING['sm']}px;"
+        f" box-sizing: border-box;"
         f" box-shadow: 0 2px 6px rgba(0,0,0,0.25);"
         f'">'
         f'<p style="color: {CORES["texto_sec"]};'
@@ -350,6 +368,24 @@ def css_global() -> str:
     [data-testid="stMain"] {{
         background-color: #444659;
     }}
+    /* Sprint UX-118: faixas escuras residuais (#282A36 padrão Dracula) que
+       apareciam no contorno do app são cobertas trocando o fundo do
+       container raiz [data-testid="stApp"] por --color-card-fundo
+       (#44475A). Tokens CORES['fundo'] e DRACULA['background'] permanecem
+       intocados; apenas o seletor stApp passa a usar o tom card. */
+    [data-testid="stApp"] {{
+        background-color: var(--color-card-fundo) !important;
+    }}
+    /* Sprint UX-118: logo da sidebar sai de 64x65 renderizado (apertado
+       pela largura útil da sidebar) para ~120px com proporção da arte
+       original (724x733px). max-width fixa o teto, height: auto +
+       aspect-ratio garantem altura proporcional mesmo se o caller passar
+       largura_px diferente. */
+    .ouroboros-logo-img {{
+        max-width: 120px;
+        height: auto;
+        aspect-ratio: 724 / 733;
+    }}
     [data-testid="stSidebar"] {{ background-color: {CORES["card_fundo"]}; }}
     /* Sprint UX-116: sidebar interna ganha padding 4 direções com PADDING_CHIP
        (16px). O retângulo interno [data-testid="stSidebar"] > div:first-child
@@ -390,6 +426,18 @@ def css_global() -> str:
         overflow: visible !important;
         overflow-y: visible !important;
         overflow-x: auto !important;
+    }}
+    /* Sprint UX-118: barra de tabs fica fixa no topo durante scroll com
+       linha 2px na cor destaque (#BD93F9) abaixo, marcando o limite entre
+       navegação e conteúdo. position: sticky + top: 0 + z-index alto
+       garantem que tabs não sejam cobertas pelo conteúdo ao rolar. Aplicado
+       só ao seletor pai (tab-list) — não estendemos para os filhos > div
+       para evitar duplicar a borda. */
+    .stTabs [data-baseweb="tab-list"] {{
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        border-bottom: 2px solid var(--color-destaque);
     }}
     .stTabs [data-baseweb="tab"] {{
         color: {CORES["texto_sec"]} !important;
