@@ -71,7 +71,7 @@ sprint:
 
 # Sprint UX-118 -- Polish combo 2026-04-27
 
-**Status:** EM PRODUÇÃO (P1, criada e despachada 2026-04-27)
+**Status:** CONCLUÍDA (commit `c99936f`, 2026-04-27 — 4/4 ACs entregues; aguarda validação visual humana)
 
 Quatro micro-ajustes identificados pelo dono apos validar UX-115/116/117 mergeados. Agrupados em uma sprint para evitar overhead de merge (todos tocam apenas `tema.py`):
 
