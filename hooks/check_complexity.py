@@ -80,7 +80,9 @@ def get_changed_files() -> list[str]:
             check=False,
         )
         files = result.stdout.strip().split("\n")
-        return [f for f in files if f.endswith(".py") and f.startswith("src/") and "/tests/" not in f]
+        return [
+            f for f in files if f.endswith(".py") and f.startswith("src/") and "/tests/" not in f
+        ]
     except (subprocess.SubprocessError, FileNotFoundError):
         return []
 

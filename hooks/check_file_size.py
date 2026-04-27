@@ -91,8 +91,7 @@ def main() -> int:
         if is_new_file(filepath):
             if current_lines > MAX_LINES:
                 print(
-                    f"ERRO: Novo arquivo {filepath} tem {current_lines} linhas "
-                    f"(máx: {MAX_LINES})"
+                    f"ERRO: Novo arquivo {filepath} tem {current_lines} linhas (máx: {MAX_LINES})"
                 )
                 print("  -> Divida em módulos menores antes de commitar")
                 errors += 1

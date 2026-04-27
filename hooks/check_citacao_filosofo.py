@@ -45,9 +45,7 @@ def _is_init_vazio(path: Path) -> bool:
     except OSError:
         return True
     linhas_significativas = [
-        ln.strip()
-        for ln in texto.splitlines()
-        if ln.strip() and not ln.strip().startswith("#")
+        ln.strip() for ln in texto.splitlines() if ln.strip() and not ln.strip().startswith("#")
     ]
     # Se só tem imports/exports/docstring/__all__, considerar ok sem citação
     if len(linhas_significativas) <= 10:

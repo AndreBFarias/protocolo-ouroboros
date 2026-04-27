@@ -63,11 +63,7 @@ def _get_new_prints() -> list[tuple[str, int, str]]:
             cwd=str(PROJECT_ROOT),
             check=False,
         )
-        files = [
-            f.strip()
-            for f in result.stdout.strip().splitlines()
-            if f.strip().endswith(".py")
-        ]
+        files = [f.strip() for f in result.stdout.strip().splitlines() if f.strip().endswith(".py")]
     except (subprocess.SubprocessError, FileNotFoundError):
         return []
 
