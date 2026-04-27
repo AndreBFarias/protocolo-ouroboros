@@ -166,6 +166,7 @@ exibir_banner() {
 # ─────────────────────────────────────────────────────────
 exibir_menu() {
     separador "PROCESSAMENTO" "$GREEN"
+    echo -e "    ${GREEN}${BOLD}R${NC}   Rota completa: inbox + tudo ${DIM}(padrão)${NC}"
     echo -e "    ${GREEN}${BOLD}1${NC}   Processar inbox"
     echo -e "    ${GREEN}${BOLD}2${NC}   Processar mês específico"
     echo -e "    ${GREEN}${BOLD}3${NC}   Processar todos os dados"
@@ -190,6 +191,36 @@ exibir_menu() {
 # ─────────────────────────────────────────────────────────
 # Ações do menu
 # ─────────────────────────────────────────────────────────
+acao_rota_completa() {
+    echo ""
+    if confirmar "Rodar rota completa (inbox + tudo)?"; then
+        echo ""
+        msg_info "Rota completa: inbox + tudo (Sprint 101)..."
+        echo ""
+        backup_xlsx
+        python -m src.integrations.controle_bordo --executar || msg_aviso "Adapter do vault reportou erro(s); seguindo."
+        if python -m src.inbox_processor; then
+            msg_ok "Inbox processada; iniciando pipeline completo..."
+            echo ""
+            if python -m src.pipeline --tudo; then
+                echo ""
+                msg_ok "Rota completa concluída."
+            else
+                echo ""
+                msg_erro "Falha no pipeline."
+            fi
+        else
+            echo ""
+            msg_erro "Inbox falhou; abortando ciclo completo."
+        fi
+        invalidar_cache
+    else
+        echo ""
+        msg_info "Cancelado."
+    fi
+    aguardar_retorno
+}
+
 acao_processar_inbox() {
     echo ""
     msg_info "Processando inbox unificada (vault + legado)..."
@@ -358,10 +389,13 @@ executar_menu() {
         exibir_banner
         exibir_menu
 
-        echo -ne "    ${BOLD}>${NC} "
+        echo -ne "    ${BOLD}>${NC} ${DIM}[R]${NC} "
         read -r escolha
+        # Default R: entrada vazia roda a rota completa (Sprint 101).
+        escolha="${escolha:-R}"
 
         case "$escolha" in
+            r|R) acao_rota_completa ;;
             1) acao_processar_inbox ;;
             2) acao_processar_mes ;;
             3) acao_processar_tudo ;;
@@ -378,7 +412,7 @@ executar_menu() {
                 exit 0
                 ;;
             *)
-                msg_aviso "Opção inválida. Escolha de 0 a 9."
+                msg_aviso "Opção inválida. Escolha R, 0 a 9."
                 sleep 0.8
                 ;;
         esac
@@ -397,6 +431,7 @@ exibir_help() {
     echo -e "  Sem argumentos abre o menu interativo."
     echo ""
     echo -e "  ${WHITE}Processamento${NC}"
+    echo -e "    ${GREEN}--full-cycle${NC}        Rota completa: inbox + tudo (recomendado)"
     echo -e "    ${GREEN}--inbox${NC}             Processa inbox unificada (vault + legado)"
     echo -e "    ${GREEN}--inbox-dry${NC}         Inspeciona inbox unificada sem mover nada"
     echo -e "    ${GREEN}--mes${NC} ${DIM}YYYY-MM${NC}       Processa um mês específico"
@@ -416,6 +451,7 @@ exibir_help() {
     echo -e "    ${YELLOW}--supervisor${NC}        Snapshot do estado do projeto (contexto para sessão)"
     echo ""
     echo -e "  ${WHITE}Exemplos${NC}"
+    echo -e "    ${DIM}\$${NC} ./run.sh --full-cycle"
     echo -e "    ${DIM}\$${NC} ./run.sh --mes 2026-03"
     echo -e "    ${DIM}\$${NC} ./run.sh --relatorio 2026-04"
     echo -e "    ${DIM}\$${NC} ./run.sh --irpf 2026"
@@ -458,6 +494,20 @@ case "${1:-}" in
         backup_xlsx
         python -m src.pipeline --tudo
         msg_ok "Pipeline completo."
+        ;;
+    --full-cycle)
+        # Sprint 101: rota completa em um comando (--inbox + --tudo).
+        # Aborta se a etapa de inbox falhar; se tudo passar, segue para o pipeline.
+        msg_info "Rota completa: inbox + tudo (Sprint 101)..."
+        backup_xlsx
+        python -m src.integrations.controle_bordo --executar || msg_aviso "Adapter do vault reportou erro(s); seguindo."
+        if ! python -m src.inbox_processor; then
+            msg_erro "Inbox falhou; abortando ciclo completo."
+            exit 1
+        fi
+        msg_ok "Inbox processada; iniciando pipeline completo..."
+        python -m src.pipeline --tudo
+        msg_ok "Rota completa concluída."
         ;;
     --dashboard)
         msg_info "Abrindo dashboard Streamlit..."
