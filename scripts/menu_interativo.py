@@ -52,6 +52,7 @@ _RUN_SH: Path = _RAIZ_REPO / "run.sh"
 
 
 OPCOES_MENU: dict[str, str] = {
+    "R": "Rota completa: inbox + tudo (padrão)",
     "1": "Processar Inbox (vault + legado)",
     "2": "Abrir Dashboard (Streamlit)",
     "3": "Gerar Relatório do mês",
@@ -151,7 +152,19 @@ def _acao_tudo() -> bool:
     return True
 
 
+def _acao_rota_completa() -> bool:
+    """Sprint 101: rota completa via `./run.sh --full-cycle`.
+
+    Delega para o bash que já trata aborto se inbox falhar. Não roda
+    o `sync_rico` (esse fica reservado para a opção 5/Tudo).
+    """
+    _console().print("[magenta]Rota completa: inbox + tudo (Sprint 101)...[/]")
+    rc = _rodar_run_sh("--full-cycle")
+    return rc == 0
+
+
 _DISPATCHER: dict[str, callable] = {  # type: ignore[type-arg]
+    "R": _acao_rota_completa,
     "1": _acao_inbox,
     "2": _acao_dashboard,
     "3": _acao_relatorio,
@@ -200,7 +213,9 @@ def executar_menu() -> int:
     """Loop principal do menu. Retorna o exit code do processo."""
     cons = _console()
     _render_menu(cons)
-    escolha = _prompt("Opção", choices=list(OPCOES_MENU.keys()), default="0")
+    # Sprint 101: default vira "R" (rota completa) — usuário aperta Enter e o
+    # ciclo inbox + pipeline roda inteiro. "0" continua sendo saída explícita.
+    escolha = _prompt("Opção", choices=list(OPCOES_MENU.keys()), default="R")
     if escolha == "0":
         cons.print("[dim]Encerrando.[/]")
         return 0
