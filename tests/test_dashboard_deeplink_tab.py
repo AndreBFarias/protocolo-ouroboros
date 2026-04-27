@@ -74,11 +74,13 @@ class TestUmaTabNaoDefaultPorCluster:
         assert "const indiceAlvo = 2;" in html
         assert '"IRPF": 2' in html
 
-    def test_cluster_hoje_tab_visao_geral_unica(self) -> None:
+    def test_cluster_home_tab_visao_geral_unica(self) -> None:
         """Cluster com 1 tab: ainda assim gera JS válido (no-op no click,
         mas write-back é instalado).
+
+        Sprint UX-121: cluster renomeado de 'Hoje' para 'Home'.
         """
-        abas = app.ABAS_POR_CLUSTER["Hoje"]
+        abas = app.ABAS_POR_CLUSTER["Home"]
         html = drilldown.gerar_html_ativar_aba("Visão Geral", abas)
         assert "const indiceAlvo = 0;" in html
         assert '"Visão Geral": 0' in html

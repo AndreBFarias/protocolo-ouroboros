@@ -57,7 +57,7 @@ from src.dashboard.tema import (  # noqa: E402
 # dois sincronizados é responsabilidade desta constante; mudar a ordem em um
 # lado sem o outro quebra deep-link silenciosamente.
 ABAS_POR_CLUSTER: dict[str, list[str]] = {
-    "Hoje": ["Visão Geral"],
+    "Home": ["Visão Geral"],
     "Dinheiro": ["Extrato", "Contas", "Pagamentos", "Projeções"],
     "Documentos": [
         "Busca Global",
@@ -85,10 +85,14 @@ def _configurar_pagina() -> None:
 def _selecionar_cluster() -> str:
     """Renderiza o seletor de clusters na sidebar e devolve o cluster ativo.
 
-    Sprint 92b (ADR-22): 5 áreas canônicas (Hoje / Dinheiro / Documentos /
+    Sprint 92b (ADR-22): 5 áreas canônicas (Home / Dinheiro / Documentos /
     Análise / Metas). `CHAVE_SESSION_CLUSTER_ATIVO` é populado pela URL via
     `ler_filtros_da_url` quando aplicável (backward compatibility); caso
-    contrário, default é o primeiro cluster ("Hoje").
+    contrário, default é o primeiro cluster ("Home").
+
+    Sprint UX-121: cluster "Hoje" renomeado para "Home". URLs antigas
+    (?cluster=Hoje) continuam funcionando via CLUSTER_ALIASES no leitor
+    de query_params.
 
     Sprint UX-113: widget mudou de ``st.radio`` para ``st.selectbox``
     (dropdown). Economiza ~120px de altura vertical na sidebar (5 linhas
@@ -300,7 +304,7 @@ def main() -> None:
     # antiga (?tab=X) continua funcional via MAPA_ABA_PARA_CLUSTER em
     # ler_filtros_da_url. A ordem de abas dentro de cada cluster segue o hero
     # numbering (01-13) definido na Sprint 92a.
-    if cluster == "Hoje":
+    if cluster == "Home":
         (tab_visao,) = st.tabs(["Visão Geral"])
         with tab_visao:
             visao_geral.renderizar(dados, periodo, pessoa, ctx)
