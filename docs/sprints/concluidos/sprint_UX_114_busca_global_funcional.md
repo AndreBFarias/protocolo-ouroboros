@@ -85,7 +85,7 @@ sprint:
 
 # Sprint UX-114 -- Busca Global funcional
 
-**Status:** BACKLOG (P0, criada 2026-04-27, pré-requisito da Sprint 100)
+**Status:** CONCLUÍDA (commit `4be89cf`, 2026-04-27 — 24/25 ACs entregues; AC parcial "borda em foco" coberta implicitamente pela UX-112; aguarda validação visual humana)
 
 Hoje a página `paginas/busca.py` (506L) é mockup: chips estáticos + text_input plano + caption sugerindo "digite ou clique nas sugestões". Nada filtra de fato — apenas redireciona com query_param.
 
