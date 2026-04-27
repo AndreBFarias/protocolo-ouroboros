@@ -42,10 +42,16 @@ class TestNovoNomeCanonico:
         assert "Hoje" not in drilldown.CLUSTERS_VALIDOS
 
     def test_abas_por_cluster_tem_chave_home(self) -> None:
-        """AC #1: ABAS_POR_CLUSTER usa 'Home' como chave para Visão Geral."""
+        """AC #1: ABAS_POR_CLUSTER usa 'Home' como chave.
+
+        Sprint UX-121 introduziu a chave 'Home' (antes 'Hoje').
+        Sprint UX-123 expandiu para 5 abas (Visão Geral + 4 mini-views
+        cross-area). Visão Geral permanece em índice 0 (default da URL antiga).
+        """
         assert "Home" in app_mod.ABAS_POR_CLUSTER
         assert "Hoje" not in app_mod.ABAS_POR_CLUSTER
-        assert app_mod.ABAS_POR_CLUSTER["Home"] == ["Visão Geral"]
+        assert app_mod.ABAS_POR_CLUSTER["Home"][0] == "Visão Geral"
+        assert "Dinheiro hoje" in app_mod.ABAS_POR_CLUSTER["Home"]
 
     def test_mapa_aba_para_cluster_visao_geral_aponta_home(self) -> None:
         """AC #3: Visão Geral continua mapeada para cluster correto, com nome 'Home'."""
