@@ -1,29 +1,52 @@
 # CLAUDE.md -- Protocolo Ouroboros
 
 ```
-VERSÃO: 5.4 | STATUS: PRODUÇÃO (rota longa 2026-04-24 concluiu 9/10 sprints; resta só Sprint D artesanal) | LANG: PT-BR
-TRANSAÇÕES: 6.088 | MESES: 82 (out/2019 a out/2026) | BANCOS: 6 | EXTRATORES: 11 (9 bancários + DAS PARCSN + DIRPF) + 10 documentais
-GRAFO: 7.480 nodes + 24.700 edges (data/output/grafo.sqlite, ~5MB). 41 documentos catalogados.
-SPRINTS: 120 (87 concluídas, 20 backlog, 13 arquivadas; 5 sprints-filhas novas em 2026-04-24: Fa, 93d, 93e, 93f, 93g)
+VERSÃO: 5.5 | STATUS: PRODUÇÃO + AUDITORIA 2026-04-26 (P0 mapeados, backlog 26 sprints) | LANG: PT-BR
+TRANSAÇÕES: 6.094 | MESES: 82 (out/2019 a out/2026) | BANCOS: 6 | EXTRATORES: 22 (9 bancários + 13 documentais)
+GRAFO: 7.480 nodes + 24.700 edges (data/output/grafo.sqlite, ~5MB). 41 documentos catalogados, 0% vinculados a tx (P0 Sprint 95).
+SPRINTS: 130 (87 concluídas, 26 backlog, 13 arquivadas; 4 sprints-filhas em 2026-04-24 + 9 novas em 2026-04-26 + ADR-21)
 CATEGORIZAÇÃO: 100% | IRPF TAGS: 164 (75 com CNPJ) | HOLERITES: 24 (todos node documento no grafo)
-TESTES: 1.537 passed / 9 skipped / 1 xfailed (+276 vs baseline pré-sessão 2026-04-24 de 1.261; +7 da Sprint 93f; 93g foi limpeza operacional sem testes novos)
+TESTES: 1.530 passed / 9 skipped / 1 xfailed (baseline 2026-04-24, sem regressão)
 ABA RENDA: 99 linhas (24 holerites + 75 MEI legítimos via mappings/fontes_renda.yaml)
+RESERVA EMERGÊNCIA: 100% atingida (R$ 44.019,78 / R$ 27.000,00) -- meta cumprida
 ROTA: Catalogador universal artesanal via supervisor interativo (ADR-13)
 SUPERVISOR: Claude Code sessão interativa — nenhuma API programática
 INTEGRAÇÕES: OFX (pronto), Controle de Bordo vault (sync rico em produção), Belvo (em teste), Gmail (setup pendente)
-ROTA ATUAL: Sprint D (auditoria artesanal com humano) pendente. Recomendado: Sprint 93f antes (pipeline escanear PJ Vitória) -- 856 tx invisíveis hoje.
-RETOMADA: docs/HANDOFF_2026-04-24_rota_longa.md (HANDOFF mais recente, substitui o de 2026-04-23).
+ROTA ATUAL: Sprint 95 + 96 (P0 paralelo) -> Sprint D2 (revisor visual substitui artesanal) -> Sprint 90a + 90b (P0 limpeza). Sprint 93f está EM RUNTIME (não BACKLOG) -- 828 tx PJ Vitória já no XLSX.
+RETOMADA: docs/AUDITORIA_2026-04-26.md (mais recente, substitui HANDOFF 2026-04-24).
 ```
 
 ### Próxima sessão — retomada canônica
 
 Antes de tocar código, leia nesta ordem:
-1. `docs/HANDOFF_2026-04-24_rota_longa.md` — estado final com blocos 1/2/3 e achados por bloco.
-2. `docs/auditoria_tecnica_2026-04-23.md` — relatório honesto de bugs/órfãos/dívida (continua válido).
-3. `VALIDATOR_BRIEF.md` rodapé — padrões canônicos.
+1. `docs/AUDITORIA_2026-04-26.md` — relatório principal (estado real + gaps cruzados com sonho declarado).
+2. `docs/auditoria_etl_2026-04-26.md` — fidelidade ETL 2x2 (validada).
+3. `docs/auditoria_vault_2026-04-26.md` — estrutura do vault Obsidian (validada).
+4. `docs/adr/ADR-21-fusao-ouroboros-controle-bordo.md` — decisão estratégica de fusão.
+5. `docs/HANDOFF_2026-04-24_rota_longa.md` — sessão anterior.
+6. `VALIDATOR_BRIEF.md` rodapé — padrões canônicos.
 
-**Rota recomendada:**
-1. **Sprint D** (artesanal, interativa com humano) — auditoria linha-a-linha agora que PJ da Vitória aparece no XLSX (828 tx, R$ 169k). Spec em `docs/sprints/backlog/sprint_AUDITORIA_ARTESANAL_FINAL.md`.
+**Rota recomendada (atualizada 2026-04-26):**
+
+1. **Sprint 95 + Sprint 96 (P0 paralelo)** — fechar coração do produto:
+   - Sprint 95: linking documento↔transação em runtime (hoje 0% docs vinculados).
+   - Sprint 96: classifier robusto para NF imagem-only com OCR curto.
+2. **Sprint D2 (P0)** — revisor visual semi-automatizado em Streamlit (substitui Sprint AUDITORIA-ARTESANAL-FINAL CLI 1-a-1).
+3. **Sprint 90a + 90b (P0 limpeza)** — holerites mal classificados em pastas bancárias + DAS PARCSN drift -47%.
+4. **Sprint 97 (P0)** — page-split por classificação heterogênea (fecha bucket `_classificar/`).
+5. **Sprint 98-101 (P1)** — renomeação retroativa, redactor PII, deep-link tab, full-cycle.
+6. **Sprint 102 (P2)** — pagador vs beneficiário (cenário IRPF cross-casal).
+7. **Sprint 93h (P2)** — limpeza simétrica clones SHA pastas do André.
+8. **Sprint OMEGA 94a-f** — fusão por domínios (saúde, identidade, profissional, acadêmico, busca cross, mobile). 12-18 meses, P3 estratégica. **Desbloqueada por ADR-21.**
+
+**Achados P0 da auditoria 2026-04-26 (todos com sprint formalizada):**
+- 0% documentos vinculados a transações em runtime (motor Sprint 48 plumbing-OK mas runtime-quebrado).
+- 13 holerites G4F mal classificados em `andre/itau_cc/` (75% dos SHAs únicos) e `santander_cartao/` (66%).
+- DAS PARCSN drift -47% (10 nodes vs 19 PDFs únicos físicos).
+- Classifier silencioso ignora NF imagem-only com OCR curto.
+- PDF heterogêneo (NFC-e + cupom seguro juntos) acumula em `_classificar/`.
+
+**Sprint substituída:** AUDITORIA-ARTESANAL-FINAL → Sprint D2 (revisor visual semi-automatizado).
 
 **Sprints 93f + 93g concluídas em 2026-04-24** — visibilidade PJ da Vitória restaurada no XLSX:
 - **93f** (2 fixes de código): (a) `src/transform/normalizer.py:158-159` alinhado ao contrato canônico `Nubank (PF)/(PJ)` com parênteses — resolveu 2310 tx PF Vitória que iam para Casal; (b) `src/extractors/nubank_cartao.py::_gerar_hash` inclui `banco_origem` na chave para evitar colisão entre cartão PF do André e PJ da Vitória.
@@ -36,6 +59,32 @@ Antes de tocar código, leia nesta ordem:
 - **Fa** (P2) — OFX duplicação account+accounts. Teste `xfail(strict=True)` já no repo.
 - **93d** (P2) — preservação forte de downloads + reprocessamento cronológico (dataloss nubank_pf_cc).
 - **93e** (P3) — propagar `_arquivo_origem` como coluna do XLSX.
+
+### Sessão 2026-04-26 — auditoria geral (P0 mapeados, ADR-21 + 9 sprints + Sprint D2)
+
+Auditoria de fim-de-rota executada com plan mode aprovado. Sem mexer em código de extractor/pipeline; só docs e specs. 2 agentes Opus em background (vault + ETL) cujas entregas foram validadas linha-a-linha por mim.
+
+**Artefatos criados:**
+- `docs/AUDITORIA_2026-04-26.md` -- relatório principal (estado real + gaps cruzados com sonho declarado).
+- `docs/auditoria_etl_2026-04-26.md` -- fidelidade ETL 2x2 (validada).
+- `docs/auditoria_vault_2026-04-26.md` -- estrutura do vault Obsidian (validada).
+- `docs/adr/ADR-21-fusao-ouroboros-controle-bordo.md` -- decisão de fusão.
+- 10 specs novas em `docs/sprints/backlog/`: 90a, 90b, 95, 96, 97, 98, 99, 100, 101, 102, 93h, D2.
+- 7 screenshots em `docs/screenshots/audit_2026-04-26/`.
+- Deletados 2 YAMLs órfãos (`mappings/layouts_danfe.yaml`, `mappings/layouts_nfce.yaml`).
+
+**Achados P0 inéditos (não estavam nas auditorias 2026-04-23/24):**
+1. 0% documentos vinculados a transações em runtime (motor Sprint 48 plumbing-OK mas runtime-quebrado) -- **Sprint 95**.
+2. Classifier silencioso ignora NF imagem-only mesmo com OCR claro -- **Sprint 96**.
+3. PDF heterogêneo (NFC-e + cupom seguro juntos) acumula em `_classificar/` -- **Sprint 97**.
+4. 13 holerites G4F mal classificados em pastas bancárias (`itau_cc/` 75% + `santander_cartao/` 66%) -- **Sprint 90a + 98**.
+5. DAS PARCSN drift -47% (10 nodes vs 19 PDFs únicos) -- **Sprint 90b**.
+
+**Achado de produto:** Reserva de emergência atingida 100% (R$ 44.019,78 / R$ 27.000,00). Aba Metas funcional. Treemap WCAG-AA (Sprint 92a) entregue. Pipeline financeiro maduro. **Sistema de catalogação documental tem peças mas não fechou circuito.**
+
+**Sprint substituída:** AUDITORIA-ARTESANAL-FINAL (1-a-1 inviável em 760 arquivos) → **Sprint D2 -- Revisor Visual Semi-Automatizado** em Streamlit. Marcação visual lado-a-lado (foto/PDF + JSON extraído + checkboxes). 30s/item vs 2 min CLI. 760 arquivos: 6.5h vs 25h+.
+
+**Sprint correção doc:** Sprint 93f está EM RUNTIME (não BACKLOG) -- 828 tx Vitória PJ confirmadas no XLSX (R$ 169.131,13). Header de versão atualizado.
 
 ### Sessão 2026-04-24 — rota longa (9 sprints + handoff)
 

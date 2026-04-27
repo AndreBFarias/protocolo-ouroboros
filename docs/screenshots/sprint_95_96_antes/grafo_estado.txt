@@ -1,0 +1,38 @@
+                      
+----------------------
+=== EDGES POR TIPO ===
+tipo               n   
+-----------------  ----
+ocorre_em          6129
+categoria_de       6127
+origem             6086
+contraparte        6084
+irpf               164 
+contem_item        49  
+fornecido_por      41  
+mesmo_produto_que  14  
+assegura           2   
+emitida_por        2   
+vendida_em         2   
+                          
+--------------------------
+=== DOCUMENTO_DE COUNT ===
+edges_documento_de
+------------------
+0                 
+                           
+---------------------------
+=== DOCUMENTOS POR TIPO ===
+tipo_documento    n 
+----------------  --
+holerite          24
+das_parcsn_andre  10
+nfce_modelo_65    4 
+boleto_servico    2 
+dirpf_retif       1 
+                               
+-------------------------------
+=== TOTAL DOCS / TX / NODES ===
+docs  txs   total_nodes  total_edges
+----  ----  -----------  -----------
+41    6086  7480         24700      

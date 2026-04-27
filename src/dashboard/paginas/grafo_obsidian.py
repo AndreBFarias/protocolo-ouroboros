@@ -148,7 +148,7 @@ def _renderizar_fullpage() -> None:
             # sem acento (contrato N-para-N com `node.tipo` no SQLite).
             rotulo = rotulo_humano_tipo(tipo)
             st.markdown(
-                f'<span style="color:{cor}; font-weight:bold;">●</span> '
+                f'<span style="color:{cor}; font-weight:bold;"></span> '
                 f'<span>{rotulo}</span>',
                 unsafe_allow_html=True,
             )

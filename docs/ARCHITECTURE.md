@@ -20,7 +20,7 @@ inbox_processor                  Detecta banco/pessoa pelo conteúdo,
 data/raw/{pessoa}/{banco}/       Arquivos organizados por pessoa e banco
   |
   v
-src/extractors/ (21 extratores: 9 bancários + 12 documentais)
+src/extractors/ (22 extratores: 9 bancários + 13 documentais; auditoria 2026-04-26)
   |  Bancários: nubank_cartao (CSV), nubank_cc (CSV), c6_cc (XLS encriptado),
   |             c6_cartao (CSV), itau_pdf (PDF senha), santander_pdf (PDF),
   |             ofx_parser (OFX genérico), contracheque_pdf (PDF G4F/Infobase),

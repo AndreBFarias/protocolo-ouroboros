@@ -113,9 +113,9 @@ def recarregar_mapeamento(path: Path | None = None) -> dict[str, str]:
     arquivo = path or _PATH_MAPPING
 
     if not arquivo.exists():
-        logger.info(
-            "mappings/cpfs_pessoas.yaml ausente -- detector usará só path/fallback. "
-            "Copie mappings/cpfs_pessoas.yaml.example e preencha para ativar camada 1."
+        logger.debug(
+            "mappings/cpfs_pessoas.yaml ausente -- camada 1 inativa, pessoas.yaml (Sprint 90) "
+            "cobre CPF/CNPJ/razão/alias via _casar_via_pessoas_yaml."
         )
         _CACHE_CPFS = {}
         return _CACHE_CPFS
