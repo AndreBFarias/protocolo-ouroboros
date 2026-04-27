@@ -130,7 +130,7 @@ RE_RAZAO_SEGURADORA = compilar_regex_tolerante(
 )
 
 # Cabeçalho do varejo: linha com CNPJ onde NÃO aparece "SUSEP".
-# Linhas da seguradora (ex.: `CNP): 61.074.175/0001-38 Cod SUSEP: 06238`) também
+# Linhas da seguradora (ex.: `CNPJ: XX.XXX.XXX/XXXX-XX Cod SUSEP: NNNNN`) também
 # têm CNPJ mas contém SUSEP -- negative lookahead `(?!.*SUSEP)` as exclui.
 # Separadores tolerantes (`[.,\s]?`) porque OCR às vezes troca `.` por `,`.
 RE_VAREJO_LINHA = compilar_regex_tolerante(

@@ -4,34 +4,23 @@ repos:
     hooks:
       - id: ruff
         args: [--fix]
+        exclude: ^hooks/
       - id: ruff-format
+        exclude: ^hooks/
 
   - repo: local
     hooks:
       - id: bloquear-dados-financeiros
         name: Bloquear dados financeiros no commit
-        entry: python -c "
-import sys, re;
-padroes = [
-  r'\\d{3}\\.\\d{3}\\.\\d{3}-\\d{2}',
-  r'\\d{2}\\.\\d{3}\\.\\d{3}/\\d{4}-\\d{2}',
-  r'agencia.*\\d{4}.*conta.*\\d+',
-];
-erros = [];
-for f in sys.argv[1:]:
-  try:
-    with open(f, encoding='utf-8', errors='ignore') as fh:
-      for i, linha in enumerate(fh, 1):
-        for p in padroes:
-          if re.search(p, linha, re.IGNORECASE):
-            erros.append(f'{f}:{i}: possivel dado financeiro');
-            break
-  except: pass
-if erros:
-  print('[BLOQUEADO] Dados financeiros detectados:');
-  for e in erros[:10]: print(f'  {e}');
-  sys.exit(1)
-"
+        entry: python hooks/check_dados_financeiros.py
         language: python
         types: [python]
-        exclude: (mappings/|tests/fixtures/)
+        exclude: |
+          (?x)^(
+              mappings/
+            | mockups/
+            | docs/
+            | scripts/
+            | tests/
+            | hooks/check_dados_financeiros\.py
+          )
