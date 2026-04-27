@@ -37,6 +37,10 @@ from src.dashboard.paginas import (  # noqa: E402
     contas,
     extrato,
     grafo_obsidian,
+    home_analise,
+    home_dinheiro,
+    home_docs,
+    home_metas,
     irpf,
     metas,
     pagamentos,
@@ -57,7 +61,17 @@ from src.dashboard.tema import (  # noqa: E402
 # dois sincronizados é responsabilidade desta constante; mudar a ordem em um
 # lado sem o outro quebra deep-link silenciosamente.
 ABAS_POR_CLUSTER: dict[str, list[str]] = {
-    "Home": ["Visão Geral"],
+    # Sprint UX-123: cluster Home ganhou 4 mini-views cross-area filtradas
+    # por dia mais recente disponível. Ordem canônica: Visão Geral fica em
+    # índice 0 (default), seguido pelas mini-views em ordem alfabética
+    # do cluster-irmão (Dinheiro/Documentos/Análise/Metas).
+    "Home": [
+        "Visão Geral",
+        "Dinheiro hoje",
+        "Docs hoje",
+        "Análise hoje",
+        "Metas hoje",
+    ],
     "Dinheiro": ["Extrato", "Contas", "Pagamentos", "Projeções"],
     "Documentos": [
         "Busca Global",
@@ -305,9 +319,34 @@ def main() -> None:
     # ler_filtros_da_url. A ordem de abas dentro de cada cluster segue o hero
     # numbering (01-13) definido na Sprint 92a.
     if cluster == "Home":
-        (tab_visao,) = st.tabs(["Visão Geral"])
+        # Sprint UX-123: 5 abas no Home -- Visao Geral (existente) + 4
+        # mini-views cross-area filtradas pelo dia mais recente do dataset.
+        # Ordem casa 1:1 com ABAS_POR_CLUSTER["Home"] (deep-link da Sprint 100).
+        (
+            tab_visao,
+            tab_dinheiro_hoje,
+            tab_docs_hoje,
+            tab_analise_hoje,
+            tab_metas_hoje,
+        ) = st.tabs(
+            [
+                "Visão Geral",
+                "Dinheiro hoje",
+                "Docs hoje",
+                "Análise hoje",
+                "Metas hoje",
+            ]
+        )
         with tab_visao:
             visao_geral.renderizar(dados, periodo, pessoa, ctx)
+        with tab_dinheiro_hoje:
+            home_dinheiro.renderizar(dados, periodo, pessoa, ctx)
+        with tab_docs_hoje:
+            home_docs.renderizar(dados, periodo, pessoa, ctx)
+        with tab_analise_hoje:
+            home_analise.renderizar(dados, periodo, pessoa, ctx)
+        with tab_metas_hoje:
+            home_metas.renderizar(dados, periodo, pessoa, ctx)
 
     elif cluster == "Dinheiro":
         (

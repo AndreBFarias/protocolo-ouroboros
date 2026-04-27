@@ -38,14 +38,19 @@ class TestContratosCanonicos:
         """Acceptance: campo cluster lido da URL via ler_filtros_da_url."""
         assert "cluster" in drilldown.CAMPOS_FILTRO_RECONHECIDOS
 
-    def test_mapa_aba_para_cluster_cobre_14_abas(self) -> None:
-        """Acceptance: todas as 14 abas mapeadas para um dos 5 clusters.
+    def test_mapa_aba_para_cluster_cobre_18_abas(self) -> None:
+        """Acceptance: todas as 18 abas mapeadas para um dos 5 clusters.
 
-        Sprint D2 adicionou ``Revisor`` ao cluster Documentos (de 13 para 14
-        abas totais).
+        Sprint D2 adicionou ``Revisor`` ao cluster Documentos (de 13 para 14).
+        Sprint UX-123 adicionou 4 mini-views ao cluster Home (de 14 para 18):
+        ``Dinheiro hoje``, ``Docs hoje``, ``Análise hoje``, ``Metas hoje``.
         """
         esperadas = {
             "Visão Geral",
+            "Dinheiro hoje",
+            "Docs hoje",
+            "Análise hoje",
+            "Metas hoje",
             "Extrato",
             "Contas",
             "Pagamentos",
