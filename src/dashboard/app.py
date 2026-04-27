@@ -10,8 +10,10 @@ if str(RAIZ_PROJETO) not in sys.path:
     sys.path.insert(0, str(RAIZ_PROJETO))
 
 from src.dashboard.componentes.drilldown import (  # noqa: E402
+    CHAVE_SESSION_ABA_ATIVA,
     CHAVE_SESSION_CLUSTER_ATIVO,
     CLUSTERS_VALIDOS,
+    gerar_html_ativar_aba,
     ler_filtros_da_url,
 )
 from src.dashboard.dados import (  # noqa: E402
@@ -45,6 +47,25 @@ from src.dashboard.tema import (  # noqa: E402
     css_global,
     logo_sidebar_html,
 )
+
+# Sprint 100: ordem canônica das abas dentro de cada cluster. Replica a ordem
+# usada nas chamadas `st.tabs(...)` em `main()` -- precisa bater 1:1 porque o
+# JS injetado por `gerar_html_ativar_aba` navega o DOM por índice. Manter os
+# dois sincronizados é responsabilidade desta constante; mudar a ordem em um
+# lado sem o outro quebra deep-link silenciosamente.
+ABAS_POR_CLUSTER: dict[str, list[str]] = {
+    "Hoje": ["Visão Geral"],
+    "Dinheiro": ["Extrato", "Contas", "Pagamentos", "Projeções"],
+    "Documentos": [
+        "Catalogação",
+        "Completude",
+        "Revisor",
+        "Busca Global",
+        "Grafo + Obsidian",
+    ],
+    "Análise": ["Categorias", "Análise", "IRPF"],
+    "Metas": ["Metas"],
+}
 
 
 def _configurar_pagina() -> None:
@@ -328,6 +349,21 @@ def main() -> None:
         # dado que o radio é fechado em CLUSTERS_VALIDOS). Fallback para Hoje.
         st.warning(f"Cluster desconhecido '{cluster}'. Exibindo Visão Geral.")
         visao_geral.renderizar(dados, periodo, pessoa, ctx)
+
+    # Sprint 100: deep-link `?tab=<X>` ativo. Lê a aba requerida (populada por
+    # `ler_filtros_da_url` quando ?tab=X estava na URL) e injeta o JS que
+    # clica na tab correspondente após o Streamlit montar o DOM. Também
+    # instala write-back: clicar em outra tab atualiza ?tab=<NomeClicado> via
+    # `history.replaceState`, mantendo URL compartilhável e browser back
+    # operando entre cliques semânticos.
+    aba_requerida: str = str(st.session_state.get(CHAVE_SESSION_ABA_ATIVA, ""))
+    abas_do_cluster: list[str] = ABAS_POR_CLUSTER.get(cluster, [])
+    if abas_do_cluster:
+        html_js = gerar_html_ativar_aba(aba_requerida, abas_do_cluster)
+        if html_js:
+            from streamlit.components import v1 as components
+
+            components.html(html_js, height=0)
 
 
 if __name__ == "__main__":
