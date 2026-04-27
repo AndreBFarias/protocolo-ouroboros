@@ -12,9 +12,7 @@ logger = configurar_logger("irpf_tagger")
 
 # Sprint 35 / B3 2026-04-23: regras carregadas de mappings/irpf_regras.yaml
 # quando disponível. Hardcoded abaixo serve como fallback de retrocompat.
-_CAMINHO_YAML_IRPF: Path = (
-    Path(__file__).resolve().parents[2] / "mappings" / "irpf_regras.yaml"
-)
+_CAMINHO_YAML_IRPF: Path = Path(__file__).resolve().parents[2] / "mappings" / "irpf_regras.yaml"
 
 
 def _carregar_regras_yaml() -> Optional[list[dict[str, str]]]:
@@ -43,6 +41,7 @@ def _carregar_regras_yaml() -> Optional[list[dict[str, str]]]:
                 }
             )
     return validadas if validadas else None
+
 
 REGRAS_IRPF: list[dict[str, str]] = [
     # --- Rendimentos tributáveis ---

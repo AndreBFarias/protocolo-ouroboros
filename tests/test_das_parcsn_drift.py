@@ -240,7 +240,8 @@ class TestDASParcsnDriftRegressaoNaoDAS:
         # então testamos _montar_documento direto com texto suficiente
         # mas sem CNPJ válido.
         texto_sem_cnpj = (
-            "Documento de Arrecadação do Simples Nacional " * 5
+            "Documento de Arrecadação do Simples Nacional "
+            * 5
             + "\nDiversos 07.18.25052.0333142-0\n28/02/2025\nValor Total do "
             "Documento\n100,00\n"
         )

@@ -137,7 +137,11 @@ def _renderizar_fullpage() -> None:
         )
         orfaos = st.toggle("Mostrar órfãos", value=False, key="grafo_orfaos")
         limite = st.slider(
-            "Limite de nós", min_value=100, max_value=2000, value=500, step=100,
+            "Limite de nós",
+            min_value=100,
+            max_value=2000,
+            value=500,
+            step=100,
             key="grafo_limite",
         )
         st.divider()
@@ -148,8 +152,7 @@ def _renderizar_fullpage() -> None:
             # sem acento (contrato N-para-N com `node.tipo` no SQLite).
             rotulo = rotulo_humano_tipo(tipo)
             st.markdown(
-                f'<span style="color:{cor}; font-weight:bold;"></span> '
-                f'<span>{rotulo}</span>',
+                f'<span style="color:{cor}; font-weight:bold;"></span> <span>{rotulo}</span>',
                 unsafe_allow_html=True,
             )
 
@@ -177,16 +180,12 @@ def _renderizar_fullpage() -> None:
             components.html(html, height=820, scrolling=False)
 
 
-def _extrair_mes_ref(
-    dados: dict[str, pd.DataFrame] | None, periodo: str | None
-) -> str:
+def _extrair_mes_ref(dados: dict[str, pd.DataFrame] | None, periodo: str | None) -> str:
     """Determina mes_ref a usar. Fallback: mês mais recente do extrato."""
     if periodo and len(periodo) == 7 and periodo[4] == "-":
         return periodo
     if dados and "extrato" in dados and not dados["extrato"].empty:
-        meses = (
-            dados["extrato"]["mes_ref"].dropna().astype(str).unique().tolist()
-        )
+        meses = dados["extrato"]["mes_ref"].dropna().astype(str).unique().tolist()
         if meses:
             return sorted(meses, reverse=True)[0]
     from datetime import date as _d
@@ -197,9 +196,7 @@ def _extrair_mes_ref(
 def _renderizar_subgrafo() -> None:
     """Selectbox de fornecedor + plotly scatter do subgrafo 1-hop."""
     st.markdown(
-        subtitulo_secao_html(
-            "Subgrafo interativo (1-hop)", cor=CORES["destaque"]
-        ),
+        subtitulo_secao_html("Subgrafo interativo (1-hop)", cor=CORES["destaque"]),
         unsafe_allow_html=True,
     )
 
@@ -241,9 +238,7 @@ def _renderizar_subgrafo() -> None:
     _renderizar_legenda_tipos(nodes)
 
 
-def _construir_figura_grafo(
-    nodes: list[dict], edges: list[dict], center_id: int
-) -> go.Figure:
+def _construir_figura_grafo(nodes: list[dict], edges: list[dict], center_id: int) -> go.Figure:
     """Posiciona nó central no meio; vizinhos em círculo ao redor."""
     import math
 
@@ -297,9 +292,7 @@ def _construir_figura_grafo(
         cores_marker.append(CORES_TIPO.get(tipo, CORES["texto_sec"]))
         nome_canonico = node.get("nome_canonico", "")
         rotulo_humano = label_humano(node)
-        label_curto = (
-            rotulo_humano if len(rotulo_humano) <= 22 else rotulo_humano[:19] + "..."
-        )
+        label_curto = rotulo_humano if len(rotulo_humano) <= 22 else rotulo_humano[:19] + "..."
         labels.append(label_curto)
         meta = node.get("metadata", {}) or {}
         partes = [f"<b>{tipo}</b>", rotulo_humano]
@@ -380,9 +373,7 @@ def _renderizar_obsidian(mes_ref: str) -> None:
     from src.obsidian.sync import gerar_moc_mensal
 
     st.markdown(
-        subtitulo_secao_html(
-            f"Obsidian Sync -- MOC {mes_ref}", cor=CORES["neutro"]
-        ),
+        subtitulo_secao_html(f"Obsidian Sync -- MOC {mes_ref}", cor=CORES["neutro"]),
         unsafe_allow_html=True,
     )
 
@@ -416,9 +407,7 @@ def _renderizar_fluxo(mes_ref: str) -> None:
     empilhados (mais legíveis, sem dependência nova).
     """
     st.markdown(
-        subtitulo_secao_html(
-            f"Fluxo -- {mes_ref}", cor=CORES["positivo"]
-        ),
+        subtitulo_secao_html(f"Fluxo -- {mes_ref}", cor=CORES["positivo"]),
         unsafe_allow_html=True,
     )
 
@@ -488,9 +477,7 @@ def _bar_chart(
         return
 
     rotulos_completos = [str(it["rotulo"]) for it in itens]
-    rotulos_truncados = [
-        r if len(r) <= 30 else r[:30] + "..." for r in rotulos_completos
-    ]
+    rotulos_truncados = [r if len(r) <= 30 else r[:30] + "..." for r in rotulos_completos]
     valores = [it["valor"] for it in itens]
     textos = [formatar_moeda(v) for v in valores]
 

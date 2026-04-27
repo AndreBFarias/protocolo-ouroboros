@@ -92,9 +92,7 @@ _RAIZ_REPO: Path = Path(__file__).resolve().parents[2]
 _PATH_MAPPING_PADRAO: Path = _RAIZ_REPO / "mappings" / "layouts_recibo.yaml"
 _DIR_CACHE_OCR_PADRAO: Path = _RAIZ_REPO / "data" / "cache" / "ocr"
 _DIR_CONFERIR_PADRAO: Path = _RAIZ_REPO / "data" / "raw" / "_conferir"
-_DIR_PROPOSTAS_PADRAO: Path = (
-    _RAIZ_REPO / "docs" / "propostas" / "extracao_recibo"
-)
+_DIR_PROPOSTAS_PADRAO: Path = _RAIZ_REPO / "docs" / "propostas" / "extracao_recibo"
 
 
 # ============================================================================
@@ -135,13 +133,9 @@ def _carregar_layouts(
         regex_valor = _compilar_regex(cfg.get("regex_valor"))
         regex_data = _compilar_regex(cfg.get("regex_data"))
         if regex_valor is None or regex_data is None:
-            logger.warning(
-                "layout %s sem regex_valor/regex_data; ignorado", identificador
-            )
+            logger.warning("layout %s sem regex_valor/regex_data; ignorado", identificador)
             continue
-        identificadores = [
-            _compilar_regex(pista) for pista in (cfg.get("identificadores") or [])
-        ]
+        identificadores = [_compilar_regex(pista) for pista in (cfg.get("identificadores") or [])]
         identificadores = [r for r in identificadores if r is not None]
         resultado.append(
             {
@@ -162,9 +156,7 @@ def _carregar_layouts(
 # ============================================================================
 
 
-def _detectar_layout(
-    texto: str, layouts: list[dict[str, Any]]
-) -> dict[str, Any] | None:
+def _detectar_layout(texto: str, layouts: list[dict[str, Any]]) -> dict[str, Any] | None:
     """Escolhe o primeiro layout cujo identificador bate com o texto.
 
     Devolve None quando nenhum layout conhecido casa -- o chamador
@@ -188,9 +180,19 @@ def _detectar_layout(
 
 _RE_DATA_NUMERICA = re.compile(r"(\d{2})/(\d{2})/(\d{4})")
 _MESES_PT: dict[str, int] = {
-    "janeiro": 1, "fevereiro": 2, "marco": 3, "março": 3, "abril": 4,
-    "maio": 5, "junho": 6, "julho": 7, "agosto": 8, "setembro": 9,
-    "outubro": 10, "novembro": 11, "dezembro": 12,
+    "janeiro": 1,
+    "fevereiro": 2,
+    "marco": 3,
+    "março": 3,
+    "abril": 4,
+    "maio": 5,
+    "junho": 6,
+    "julho": 7,
+    "agosto": 8,
+    "setembro": 9,
+    "outubro": 10,
+    "novembro": 11,
+    "dezembro": 12,
 }
 _RE_DATA_EXTENSO = re.compile(
     r"(\d{1,2})\s+de\s+([a-zçãé]+)\s+de\s+(\d{4})",
@@ -306,9 +308,7 @@ def _cnpj_placeholder(chave_hash: str) -> str:
     return f"_NAO_FISCAL_{chave_hash[:12]}"
 
 
-def _chave_documento(
-    layout_id: str, chave_hash: str, data_iso: str | None
-) -> str:
+def _chave_documento(layout_id: str, chave_hash: str, data_iso: str | None) -> str:
     """Chave sintética para o nó `documento` do recibo.
 
     Formato: `RECIBO|<layout>|<data>|<hash12>`. `data_iso` pode ser None
@@ -383,16 +383,11 @@ def _registrar_fallback_supervisor(
     dir_alvo = diretorio_conferir / identificador
     dir_alvo.mkdir(parents=True, exist_ok=True)
     destino = dir_alvo / caminho.name
-    if (
-        caminho.exists()
-        and caminho.resolve() != destino.resolve()
-    ):
+    if caminho.exists() and caminho.resolve() != destino.resolve():
         try:
             destino.write_bytes(caminho.read_bytes())
         except OSError as erro:
-            logger.warning(
-                "falha ao copiar recibo para conferência: %s", erro
-            )
+            logger.warning("falha ao copiar recibo para conferência: %s", erro)
 
     diretorio_propostas.mkdir(parents=True, exist_ok=True)
     proposta = diretorio_propostas / f"{identificador}.md"
@@ -534,9 +529,7 @@ class ExtratorReciboNaoFiscal(ExtratorBase):
         try:
             resultado = self.extrair_recibo(self.caminho)
         except Exception as erro:
-            self.logger.error(
-                "falha ao extrair recibo %s: %s", self.caminho.name, erro
-            )
+            self.logger.error("falha ao extrair recibo %s: %s", self.caminho.name, erro)
             return []
 
         layout_id = resultado["layout"]
@@ -568,13 +561,9 @@ class ExtratorReciboNaoFiscal(ExtratorBase):
         criou_grafo_localmente = self._grafo is None
         try:
             grafo.criar_schema()
-            ingerir_documento_fiscal(
-                grafo, documento, itens=[], caminho_arquivo=self.caminho
-            )
+            ingerir_documento_fiscal(grafo, documento, itens=[], caminho_arquivo=self.caminho)
         except ValueError as erro:
-            self.logger.warning(
-                "recibo inválido em %s: %s", self.caminho.name, erro
-            )
+            self.logger.warning("recibo inválido em %s: %s", self.caminho.name, erro)
         finally:
             if criou_grafo_localmente:
                 grafo.fechar()
@@ -611,9 +600,7 @@ class ExtratorReciboNaoFiscal(ExtratorBase):
             # Hash derivado do texto (estável entre chamadas de teste).
             import hashlib
 
-            chave_hash = hashlib.sha256(
-                texto.encode("utf-8")
-            ).hexdigest()[:16]
+            chave_hash = hashlib.sha256(texto.encode("utf-8")).hexdigest()[:16]
         else:
             texto, confidence_ocr = self._obter_texto(caminho)
             chave_hash = cache_key(caminho) if caminho.exists() else "semarquivo"
@@ -633,9 +620,7 @@ class ExtratorReciboNaoFiscal(ExtratorBase):
             }
 
         dados = _aplicar_layout(layout, texto_normalizado)
-        documento = _montar_documento_grafo(
-            dados, layout["id"], chave_hash, caminho
-        )
+        documento = _montar_documento_grafo(dados, layout["id"], chave_hash, caminho)
 
         return {
             "documento": documento,
@@ -662,13 +647,9 @@ class ExtratorReciboNaoFiscal(ExtratorBase):
             try:
                 import pdfplumber
             except ImportError as erro:
-                raise RuntimeError(
-                    "pdfplumber não disponível para ler recibo em PDF."
-                ) from erro
+                raise RuntimeError("pdfplumber não disponível para ler recibo em PDF.") from erro
             with pdfplumber.open(caminho) as pdf:
-                partes = [
-                    (pagina.extract_text() or "") for pagina in pdf.pages
-                ]
+                partes = [(pagina.extract_text() or "") for pagina in pdf.pages]
             return "\n".join(partes), 100.0
 
         return self._rodar_ocr_com_cache(caminho)
@@ -681,9 +662,7 @@ class ExtratorReciboNaoFiscal(ExtratorBase):
             texto, confidence = ocr_com_confidence(img, lang="por")
             if confidence < LIMIAR_CONFIDENCE_OK or len(texto.strip()) < 40:
                 img_invertida = rotacionar_180(img)
-                texto_inv, confidence_inv = ocr_com_confidence(
-                    img_invertida, lang="por"
-                )
+                texto_inv, confidence_inv = ocr_com_confidence(img_invertida, lang="por")
                 if confidence_inv > confidence:
                     return texto_inv, confidence_inv
             return texto, confidence

@@ -19,9 +19,7 @@ CAMINHO_PROPOSTAS_LINKING: Path = (
 CAMINHO_RAW_CLASSIFICAR: Path = (
     Path(__file__).resolve().parents[2] / "data" / "raw" / "_classificar"
 )
-CAMINHO_RAW_CONFERIR: Path = (
-    Path(__file__).resolve().parents[2] / "data" / "raw" / "_conferir"
-)
+CAMINHO_RAW_CONFERIR: Path = Path(__file__).resolve().parents[2] / "data" / "raw" / "_conferir"
 CAMINHO_REVISAO_HUMANA: Path = (
     Path(__file__).resolve().parents[2] / "data" / "output" / "revisao_humana.sqlite"
 )
@@ -153,9 +151,7 @@ def filtro_forma_ativo() -> str | None:
     return str(valor)
 
 
-def filtrar_por_forma_pagamento(
-    df: pd.DataFrame, forma: str | None
-) -> pd.DataFrame:
+def filtrar_por_forma_pagamento(df: pd.DataFrame, forma: str | None) -> pd.DataFrame:
     """Filtra DataFrame por `forma_pagamento` (Sprint 72).
 
     - `forma=None` ou ``"Todas"``: devolve o df sem filtrar.
@@ -165,9 +161,7 @@ def filtrar_por_forma_pagamento(
     """
     if not forma or forma == "Todas" or "forma_pagamento" not in df.columns:
         return df
-    coluna_canonica = df["forma_pagamento"].fillna("").map(
-        lambda v: _FORMAS_CANONICAS.get(v, v)
-    )
+    coluna_canonica = df["forma_pagamento"].fillna("").map(lambda v: _FORMAS_CANONICAS.get(v, v))
     mascara = coluna_canonica == forma
     return df[mascara].copy()
 
@@ -353,9 +347,7 @@ def carregar_documentos_grafo() -> pd.DataFrame:
             )
 
         ids_vinculados: set[int] = set()
-        for row in conn.execute(
-            "SELECT DISTINCT src_id FROM edge WHERE tipo = 'documento_de'"
-        ):
+        for row in conn.execute("SELECT DISTINCT src_id FROM edge WHERE tipo = 'documento_de'"):
             ids_vinculados.add(int(row["src_id"]))
     finally:
         conn.close()
@@ -491,19 +483,15 @@ def _agregados_fornecedor(conn, fornecedor_id: int) -> tuple[int, float]:
     ndocs = 0
     total = 0.0
     for row in conn.execute(
-        "SELECT src_id FROM edge "
-        "WHERE dst_id = ? AND tipo = 'fornecido_por'",
+        "SELECT src_id FROM edge WHERE dst_id = ? AND tipo = 'fornecido_por'",
         (fornecedor_id,),
     ):
-        doc_row = conn.execute(
-            "SELECT tipo FROM node WHERE id = ?", (row["src_id"],)
-        ).fetchone()
+        doc_row = conn.execute("SELECT tipo FROM node WHERE id = ?", (row["src_id"],)).fetchone()
         if doc_row and doc_row["tipo"] == "documento":
             ndocs += 1
 
     for row in conn.execute(
-        "SELECT src_id FROM edge "
-        "WHERE dst_id = ? AND tipo = 'fornecido_por'",
+        "SELECT src_id FROM edge WHERE dst_id = ? AND tipo = 'fornecido_por'",
         (fornecedor_id,),
     ):
         tx_row = conn.execute(
@@ -639,14 +627,8 @@ def carregar_subgrafo(node_id: int, radius: int = 1) -> dict:
                 break
             placeholders = ",".join("?" * len(fronteira))
             lista_ids = list(fronteira)
-            sql_out = (
-                f"SELECT src_id, dst_id, tipo FROM edge "
-                f"WHERE src_id IN ({placeholders})"
-            )
-            sql_in = (
-                f"SELECT src_id, dst_id, tipo FROM edge "
-                f"WHERE dst_id IN ({placeholders})"
-            )
+            sql_out = f"SELECT src_id, dst_id, tipo FROM edge WHERE src_id IN ({placeholders})"
+            sql_in = f"SELECT src_id, dst_id, tipo FROM edge WHERE dst_id IN ({placeholders})"
             nova_fronteira: set[int] = set()
             for row in conn.execute(sql_out, lista_ids):
                 arestas_coletadas.append(
@@ -750,15 +732,10 @@ def obter_fluxo_receita_categoria_fornecedor(mes_ref: str) -> dict:
     receita_list: list[dict] = []
     if not receita_df.empty:
         agrup = (
-            receita_df.groupby("local")["valor"]
-            .sum()
-            .abs()
-            .sort_values(ascending=False)
-            .head(10)
+            receita_df.groupby("local")["valor"].sum().abs().sort_values(ascending=False).head(10)
         )
         receita_list = [
-            {"rotulo": str(rotulo), "valor": float(valor)}
-            for rotulo, valor in agrup.items()
+            {"rotulo": str(rotulo), "valor": float(valor)} for rotulo, valor in agrup.items()
         ]
 
     # --- despesa por categoria ---
@@ -773,23 +750,17 @@ def obter_fluxo_receita_categoria_fornecedor(mes_ref: str) -> dict:
             .head(10)
         )
         despesa_list = [
-            {"rotulo": str(rotulo), "valor": float(valor)}
-            for rotulo, valor in agrup.items()
+            {"rotulo": str(rotulo), "valor": float(valor)} for rotulo, valor in agrup.items()
         ]
 
     # --- fornecedor: top 10 locais de despesa ---
     fornecedor_list: list[dict] = []
     if not despesa_df.empty and "local" in despesa_df.columns:
         agrup = (
-            despesa_df.groupby("local")["valor"]
-            .sum()
-            .abs()
-            .sort_values(ascending=False)
-            .head(10)
+            despesa_df.groupby("local")["valor"].sum().abs().sort_values(ascending=False).head(10)
         )
         fornecedor_list = [
-            {"rotulo": str(rotulo), "valor": float(valor)}
-            for rotulo, valor in agrup.items()
+            {"rotulo": str(rotulo), "valor": float(valor)} for rotulo, valor in agrup.items()
         ]
 
     return {
@@ -914,9 +885,7 @@ def listar_pendencias_revisao(
         conn.row_factory = sqlite3.Row
         try:
             ids_vinculados: set[int] = set()
-            for row in conn.execute(
-                "SELECT DISTINCT src_id FROM edge WHERE tipo = 'documento_de'"
-            ):
+            for row in conn.execute("SELECT DISTINCT src_id FROM edge WHERE tipo = 'documento_de'"):
                 ids_vinculados.add(int(row["src_id"]))
 
             for row in conn.execute(

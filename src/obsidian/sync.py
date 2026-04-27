@@ -411,6 +411,7 @@ def gerar_moc_mensal(mes_ref: str, caminho_grafo: Optional[Path] = None) -> str:
 
     if caminho_grafo is None:
         from src.dashboard.dados import CAMINHO_GRAFO as _CAMINHO
+
         caminho_grafo = _CAMINHO
 
     nome_mes = _nome_mes_pt(mes_ref)
@@ -492,13 +493,9 @@ def gerar_moc_mensal(mes_ref: str, caminho_grafo: Optional[Path] = None) -> str:
     finally:
         conn.close()
 
-    receita_total = sum(
-        abs(t["valor"]) for t in transacoes if t["tipo_tx"] == "Receita"
-    )
+    receita_total = sum(abs(t["valor"]) for t in transacoes if t["tipo_tx"] == "Receita")
     despesa_total = sum(
-        abs(t["valor"])
-        for t in transacoes
-        if t["tipo_tx"] in ("Despesa", "Imposto")
+        abs(t["valor"]) for t in transacoes if t["tipo_tx"] in ("Despesa", "Imposto")
     )
     saldo = receita_total - despesa_total
 
@@ -539,9 +536,9 @@ def gerar_moc_mensal(mes_ref: str, caminho_grafo: Optional[Path] = None) -> str:
         linhas.append("_(nenhum documento registrado neste mês)_")
     linhas.append("")
 
-    top_fornecedores = sorted(
-        fornecedores_agg.values(), key=lambda x: x["total"], reverse=True
-    )[:10]
+    top_fornecedores = sorted(fornecedores_agg.values(), key=lambda x: x["total"], reverse=True)[
+        :10
+    ]
     linhas.append("## Top fornecedores")
     linhas.append("")
     for forn in top_fornecedores:
@@ -557,10 +554,7 @@ def gerar_moc_mensal(mes_ref: str, caminho_grafo: Optional[Path] = None) -> str:
     linhas.append("")
     for tx in transacoes[:30]:
         rotulo = tx["local"] or tx["nome"]
-        linhas.append(
-            f"- [[transacao_{tx['id']}|{rotulo}]] -- "
-            f"{_formatar_moeda(abs(tx['valor']))}"
-        )
+        linhas.append(f"- [[transacao_{tx['id']}|{rotulo}]] -- {_formatar_moeda(abs(tx['valor']))}")
     if not transacoes:
         linhas.append("_(nenhuma transação registrada)_")
     linhas.append("")

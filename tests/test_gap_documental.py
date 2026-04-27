@@ -85,9 +85,7 @@ class TestCalcularCompletude:
         # Total de Natação em abril deve ser 0 (só tinha receita, não conta)
         assert "Natação" not in resumo.get("2026-04", {})
 
-    def test_tudo_sem_doc_quando_ids_vazios(
-        self, df_extrato: pd.DataFrame
-    ) -> None:
+    def test_tudo_sem_doc_quando_ids_vazios(self, df_extrato: pd.DataFrame) -> None:
         categorias = frozenset({"Natação", "Aluguel", "Farmácia"})
         resumo = gd.calcular_completude(df_extrato, categorias_obrigatorias=categorias)
         info_nat_mar = resumo["2026-03"]["Natação"]
@@ -96,9 +94,7 @@ class TestCalcularCompletude:
         assert info_nat_mar["sem_doc"] == 1
         assert len(info_nat_mar["orfas"]) == 1
 
-    def test_ids_com_doc_marcam_como_coberto(
-        self, df_extrato: pd.DataFrame
-    ) -> None:
+    def test_ids_com_doc_marcam_como_coberto(self, df_extrato: pd.DataFrame) -> None:
         categorias = frozenset({"Natação"})
         resumo = gd.calcular_completude(
             df_extrato,
@@ -113,20 +109,14 @@ class TestCalcularCompletude:
         resumo = gd.calcular_completude(pd.DataFrame(), frozenset({"X"}))
         assert resumo == {}
 
-    def test_sem_categorias_retorna_dict_vazio(
-        self, df_extrato: pd.DataFrame
-    ) -> None:
+    def test_sem_categorias_retorna_dict_vazio(self, df_extrato: pd.DataFrame) -> None:
         resumo = gd.calcular_completude(df_extrato, categorias_obrigatorias=frozenset())
         assert resumo == {}
 
 
 class TestAlertas:
-    def test_valor_alto_sem_doc_gera_alerta(
-        self, df_extrato: pd.DataFrame
-    ) -> None:
-        resumo = gd.calcular_completude(
-            df_extrato, categorias_obrigatorias=frozenset({"Aluguel"})
-        )
+    def test_valor_alto_sem_doc_gera_alerta(self, df_extrato: pd.DataFrame) -> None:
+        resumo = gd.calcular_completude(df_extrato, categorias_obrigatorias=frozenset({"Aluguel"}))
         alertas_list = gd.alertas(resumo, valor_alto=500)
         assert any("Ki-Sabor" in a or "Aluguel" in a for a in alertas_list)
 
@@ -135,9 +125,16 @@ class TestAlertas:
     ) -> None:
         df = pd.DataFrame(
             [
-                {"mes_ref": "2026-04", "categoria": "Farmácia", "tipo": "Despesa",
-                 "valor": -50.0, "local": "A", "data": "2026-04-01",
-                 "banco_origem": "x", "identificador": f"id{i}"}
+                {
+                    "mes_ref": "2026-04",
+                    "categoria": "Farmácia",
+                    "tipo": "Despesa",
+                    "valor": -50.0,
+                    "local": "A",
+                    "data": "2026-04-01",
+                    "banco_origem": "x",
+                    "identificador": f"id{i}",
+                }
                 for i in range(3)
             ]
         )

@@ -71,16 +71,14 @@ _SEP_MILHAR = r"[.\s,]?"
 # (letra J seguida de ] extra) -- observado na Sprint 47c.
 RE_CNPJ_TOLERANTE: Pattern[str] = re.compile(
     r"CNP" + GLYPH_J + r"+\s*:?\s*"
-    r"(\d{2}" + _SEP_MILHAR + r"\d{3}" + _SEP_MILHAR
-    + r"\d{3}\s*[/\\]\s*\d{4}\s*[-\s]\s*\d{2})",
+    r"(\d{2}" + _SEP_MILHAR + r"\d{3}" + _SEP_MILHAR + r"\d{3}\s*[/\\]\s*\d{4}\s*[-\s]\s*\d{2})",
     re.IGNORECASE,
 )
 
 # CNPJ "solto" (sem rótulo CNPJ:) -- 14 dígitos com pontuação opcional.
 # Útil quando o detector de fornecedor quer só o número, não o rótulo.
 RE_CNPJ_SOLTO: Pattern[str] = re.compile(
-    r"\b(\d{2}" + _SEP_MILHAR + r"\d{3}" + _SEP_MILHAR
-    + r"\d{3}\s*[/\\]\s*\d{4}\s*[-\s]\s*\d{2})\b"
+    r"\b(\d{2}" + _SEP_MILHAR + r"\d{3}" + _SEP_MILHAR + r"\d{3}\s*[/\\]\s*\d{4}\s*[-\s]\s*\d{2})\b"
 )
 
 RE_CPF_TOLERANTE: Pattern[str] = re.compile(

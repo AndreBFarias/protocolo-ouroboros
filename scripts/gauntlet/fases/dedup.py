@@ -89,16 +89,25 @@ def _testar_nivel3_transferencia() -> ResultadoTeste:
 
     transacoes = [
         _base_transacao(
-            data=date(2026, 4, 15), valor=-1200.0,
-            quem="André", tipo="Despesa", local="TED VITORIA",
+            data=date(2026, 4, 15),
+            valor=-1200.0,
+            quem="André",
+            tipo="Despesa",
+            local="TED VITORIA",
         ),
         _base_transacao(
-            data=date(2026, 4, 15), valor=1200.0,
-            quem="Vitória", tipo="Receita", local="TED RECEBIDA",
+            data=date(2026, 4, 15),
+            valor=1200.0,
+            quem="Vitória",
+            tipo="Receita",
+            local="TED RECEBIDA",
         ),
         _base_transacao(
-            data=date(2026, 4, 20), valor=-50.0,
-            quem="André", tipo="Despesa", local="IFOOD",
+            data=date(2026, 4, 20),
+            valor=-50.0,
+            quem="André",
+            tipo="Despesa",
+            local="IFOOD",
         ),
     ]
 
@@ -150,7 +159,9 @@ def executar() -> ResultadoFase:
     fase.tempo_total = time.time() - inicio
     logger.info(
         "Fase dedup: %d/%d testes OK em %.2fs",
-        fase.ok, fase.total, fase.tempo_total,
+        fase.ok,
+        fase.total,
+        fase.tempo_total,
     )
     return fase
 

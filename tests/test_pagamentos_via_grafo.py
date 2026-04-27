@@ -77,9 +77,7 @@ class TestCarregarBoletosViaGrafo:
         )
         db.adicionar_edge(id_boleto, id_tx, "documento_de", peso=0.9)
 
-        df = pg.carregar_boletos_via_grafo(
-            db, prazos=None, hoje=date(2026, 4, 22), limiar=10
-        )
+        df = pg.carregar_boletos_via_grafo(db, prazos=None, hoje=date(2026, 4, 22), limiar=10)
         assert df is not None
         # Filtra o boleto sob teste (ignora dummies, que não têm tipo_documento)
         linha_sesc = df[df["fornecedor"] == "SESC"]
@@ -87,9 +85,7 @@ class TestCarregarBoletosViaGrafo:
         assert linha_sesc.iloc[0]["status"] == pg.STATUS_PAGO
         assert linha_sesc.iloc[0]["valor"] == pytest.approx(103.93)
 
-    def test_marca_pendente_quando_sem_aresta_e_futuro(
-        self, grafo_vazio: GrafoDB
-    ) -> None:
+    def test_marca_pendente_quando_sem_aresta_e_futuro(self, grafo_vazio: GrafoDB) -> None:
         """Node boleto sem aresta, vencimento no futuro -> status=pendente."""
         db = grafo_vazio
         _popular_arestas_dummy(db, 10)
@@ -106,17 +102,13 @@ class TestCarregarBoletosViaGrafo:
             },
         )
 
-        df = pg.carregar_boletos_via_grafo(
-            db, prazos=None, hoje=date(2026, 4, 22), limiar=10
-        )
+        df = pg.carregar_boletos_via_grafo(db, prazos=None, hoje=date(2026, 4, 22), limiar=10)
         assert df is not None
         linha = df[df["fornecedor"] == "ENEL"]
         assert len(linha) == 1
         assert linha.iloc[0]["status"] == pg.STATUS_PENDENTE
 
-    def test_marca_atrasado_quando_sem_aresta_e_passado(
-        self, grafo_vazio: GrafoDB
-    ) -> None:
+    def test_marca_atrasado_quando_sem_aresta_e_passado(self, grafo_vazio: GrafoDB) -> None:
         """Node boleto sem aresta, vencimento no passado -> status=atrasado."""
         db = grafo_vazio
         _popular_arestas_dummy(db, 10)
@@ -133,9 +125,7 @@ class TestCarregarBoletosViaGrafo:
             },
         )
 
-        df = pg.carregar_boletos_via_grafo(
-            db, prazos=None, hoje=date(2026, 4, 22), limiar=10
-        )
+        df = pg.carregar_boletos_via_grafo(db, prazos=None, hoje=date(2026, 4, 22), limiar=10)
         assert df is not None
         linha = df[df["fornecedor"] == "CAESB"]
         assert len(linha) == 1
@@ -156,9 +146,7 @@ class TestCarregarBoletosViaGrafo:
             },
         )
 
-        df = pg.carregar_boletos_via_grafo(
-            db, prazos=None, hoje=date(2026, 4, 22), limiar=10
-        )
+        df = pg.carregar_boletos_via_grafo(db, prazos=None, hoje=date(2026, 4, 22), limiar=10)
         assert df is not None
         linha = df[df["fornecedor"] == "DESCONHECIDO"]
         assert len(linha) == 1
@@ -186,9 +174,7 @@ class TestCarregarBoletosInteligente:
         assert len(resultado) == 1
         assert resultado.iloc[0]["status"] == pg.STATUS_PAGO
 
-    def test_fallback_quando_abaixo_do_limiar(
-        self, grafo_vazio: GrafoDB
-    ) -> None:
+    def test_fallback_quando_abaixo_do_limiar(self, grafo_vazio: GrafoDB) -> None:
         """Grafo com 3 arestas `documento_de` < limiar 10 -> heurística textual."""
         db = grafo_vazio
         _popular_arestas_dummy(db, 3)
@@ -213,9 +199,7 @@ class TestCarregarBoletosInteligente:
         # O fornecedor do textual é `local`, não `razao_social`
         assert resultado.iloc[0]["fornecedor"] == "SESC"
 
-    def test_usa_grafo_quando_cobertura_suficiente(
-        self, grafo_vazio: GrafoDB
-    ) -> None:
+    def test_usa_grafo_quando_cobertura_suficiente(self, grafo_vazio: GrafoDB) -> None:
         """Grafo com >= 10 arestas `documento_de` e boleto_servico -> usa grafo."""
         db = grafo_vazio
         _popular_arestas_dummy(db, 10)

@@ -20,34 +20,42 @@ def _gerar_transacoes_teste() -> list[dict]:
     transacoes: list[dict] = []
 
     for mes in ["2026-02", "2026-03", "2026-04"]:
-        transacoes.append({
-            "data": date(2026, int(mes[-2:]), 1),
-            "valor": 15000.0,
-            "tipo": "Receita",
-            "categoria": "Salário",
-            "mes_ref": mes,
-        })
-        transacoes.append({
-            "data": date(2026, int(mes[-2:]), 5),
-            "valor": 3700.0,
-            "tipo": "Receita",
-            "categoria": "Renda PJ",
-            "mes_ref": mes,
-        })
-        transacoes.append({
-            "data": date(2026, int(mes[-2:]), 10),
-            "valor": 8000.0,
-            "tipo": "Despesa",
-            "categoria": "Diversos",
-            "mes_ref": mes,
-        })
-        transacoes.append({
-            "data": date(2026, int(mes[-2:]), 15),
-            "valor": 1200.0,
-            "tipo": "Transferência Interna",
-            "categoria": "Transferência",
-            "mes_ref": mes,
-        })
+        transacoes.append(
+            {
+                "data": date(2026, int(mes[-2:]), 1),
+                "valor": 15000.0,
+                "tipo": "Receita",
+                "categoria": "Salário",
+                "mes_ref": mes,
+            }
+        )
+        transacoes.append(
+            {
+                "data": date(2026, int(mes[-2:]), 5),
+                "valor": 3700.0,
+                "tipo": "Receita",
+                "categoria": "Renda PJ",
+                "mes_ref": mes,
+            }
+        )
+        transacoes.append(
+            {
+                "data": date(2026, int(mes[-2:]), 10),
+                "valor": 8000.0,
+                "tipo": "Despesa",
+                "categoria": "Diversos",
+                "mes_ref": mes,
+            }
+        )
+        transacoes.append(
+            {
+                "data": date(2026, int(mes[-2:]), 15),
+                "valor": 1200.0,
+                "tipo": "Transferência Interna",
+                "categoria": "Transferência",
+                "mes_ref": mes,
+            }
+        )
 
     return transacoes
 
@@ -184,7 +192,9 @@ def executar() -> ResultadoFase:
     fase.tempo_total = time.time() - inicio
     logger.info(
         "Fase projeções: %d/%d testes OK em %.2fs",
-        fase.ok, fase.total, fase.tempo_total,
+        fase.ok,
+        fase.total,
+        fase.tempo_total,
     )
     return fase
 

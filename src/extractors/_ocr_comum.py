@@ -143,9 +143,7 @@ def ocr_com_confidence(
             "pytesseract não disponível. Instalar pytesseract + tesseract-ocr."
         ) from erro
 
-    dados = pytesseract.image_to_data(
-        img, lang=lang, output_type=pytesseract.Output.DICT
-    )
+    dados = pytesseract.image_to_data(img, lang=lang, output_type=pytesseract.Output.DICT)
     confidences: list[int] = []
     # Agrupa palavras válidas preservando a ordem do tesseract via chave
     # composta (block, par, line) -- o próprio PyTesseract garante ordem
@@ -174,9 +172,7 @@ def ocr_com_confidence(
         texto_linhas[chave].append(texto_palavra)
 
     media: float = sum(confidences) / len(confidences) if confidences else 0.0
-    texto_final = "\n".join(
-        " ".join(texto_linhas[chave]) for chave in chaves_na_ordem
-    )
+    texto_final = "\n".join(" ".join(texto_linhas[chave]) for chave in chaves_na_ordem)
     return texto_final, media
 
 

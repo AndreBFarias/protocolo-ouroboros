@@ -145,9 +145,7 @@ def test_stats_precisas(db_tmp: GrafoDB, tmp_path: Path) -> None:
     """Cenário misto: 1 ja_preenchido + 1 origem + 1 nome + 1 sha + 1 órfão."""
     raw = tmp_path / "data_raw"
     # candidato por nome (stem casa substring)
-    arq_nome = _criar_arquivo(
-        raw, "andre/documentos/RELATORIO_CONSULTA_MEDICA_2026_03.pdf"
-    )
+    arq_nome = _criar_arquivo(raw, "andre/documentos/RELATORIO_CONSULTA_MEDICA_2026_03.pdf")
     # candidato por sha
     conteudo_sha = "payload único para sha lookup".encode("utf-8")
     arq_sha = _criar_arquivo(raw, "vitoria/xml/nfe.xml", conteudo=conteudo_sha)

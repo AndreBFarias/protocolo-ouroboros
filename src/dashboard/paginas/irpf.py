@@ -32,8 +32,7 @@ def renderizar(
         hero_titulo_html(
             "09",
             "IRPF",
-            "Tags de dedução, simulação de regimes, gráficos mensais e "
-            "checklist de documentos.",
+            "Tags de dedução, simulação de regimes, gráficos mensais e checklist de documentos.",
         ),
         unsafe_allow_html=True,
     )

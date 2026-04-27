@@ -198,9 +198,7 @@ class TestCabecalho:
         assert cab == {}
 
     def test_cabecalho_sem_data_devolve_vazio(self):
-        cab = _parse_cabecalho_cupom(
-            "LOJA X CNPJ: 11.222.333/0001-44 TOTAL R$ 50,00"
-        )
+        cab = _parse_cabecalho_cupom("LOJA X CNPJ: 11.222.333/0001-44 TOTAL R$ 50,00")
         assert cab == {}
 
 
@@ -372,9 +370,7 @@ class TestCacheOCR:
         cache_dir = tmp_path / "cache"
         ler_ou_gerar_cache(foto, lambda: ("linha1\nlinha2", 73.5), cache_dir)
         # Segunda leitura: precisa devolver 73.5
-        _, conf = ler_ou_gerar_cache(
-            foto, lambda: ("não deve ser chamado", 0.0), cache_dir
-        )
+        _, conf = ler_ou_gerar_cache(foto, lambda: ("não deve ser chamado", 0.0), cache_dir)
         assert conf == pytest.approx(73.5)
 
 
@@ -442,12 +438,8 @@ class TestNormalizacaoDigitos:
 
 
 class TestExtratorCupomFluxo:
-    def test_extrair_cupom_americanas_via_override(
-        self, extrator: ExtratorCupomTermicoFoto
-    ):
-        resultado = extrator.extrair_cupom(
-            extrator.caminho, texto_override=_ler(AMERICANAS)
-        )
+    def test_extrair_cupom_americanas_via_override(self, extrator: ExtratorCupomTermicoFoto):
+        resultado = extrator.extrair_cupom(extrator.caminho, texto_override=_ler(AMERICANAS))
         assert resultado["documento"]
         assert len(resultado["itens"]) == 5
         assert resultado["recall"] >= 0.99
@@ -461,9 +453,7 @@ class TestExtratorCupomFluxo:
         # Com texto_override o extrator considera confidence=100, mas o
         # conteúdo ilegível não passa no _parece_cupom_fiscal e não gera
         # documento; recall = 0, então o extrair() cairia no fallback.
-        resultado = extrator.extrair_cupom(
-            extrator.caminho, texto_override=_ler(ILEGIVEL)
-        )
+        resultado = extrator.extrair_cupom(extrator.caminho, texto_override=_ler(ILEGIVEL))
         # Texto ilegível não parece cupom fiscal (sem marca clara)
         assert resultado["documento"] == {}
         assert resultado["recall"] == 0.0
@@ -529,19 +519,13 @@ class TestGrafoIngestao:
         ):
             extrator.extrair()
 
-        cursor = grafo_temp._conn.execute(
-            "SELECT COUNT(*) FROM node WHERE tipo = 'documento'"
-        )
+        cursor = grafo_temp._conn.execute("SELECT COUNT(*) FROM node WHERE tipo = 'documento'")
         assert cursor.fetchone()[0] == 1
 
-        cursor = grafo_temp._conn.execute(
-            "SELECT COUNT(*) FROM node WHERE tipo = 'item'"
-        )
+        cursor = grafo_temp._conn.execute("SELECT COUNT(*) FROM node WHERE tipo = 'item'")
         assert cursor.fetchone()[0] == 5  # 5 itens do cupom Americanas
 
-        cursor = grafo_temp._conn.execute(
-            "SELECT COUNT(*) FROM node WHERE tipo = 'fornecedor'"
-        )
+        cursor = grafo_temp._conn.execute("SELECT COUNT(*) FROM node WHERE tipo = 'fornecedor'")
         assert cursor.fetchone()[0] == 1
 
     def test_grafo_ingestao_idempotente(
@@ -559,9 +543,7 @@ class TestGrafoIngestao:
             extrator.extrair()
             extrator.extrair()  # segunda execução
 
-        cursor = grafo_temp._conn.execute(
-            "SELECT COUNT(*) FROM node WHERE tipo = 'documento'"
-        )
+        cursor = grafo_temp._conn.execute("SELECT COUNT(*) FROM node WHERE tipo = 'documento'")
         assert cursor.fetchone()[0] == 1  # ainda 1, não duplicou
 
 
@@ -571,9 +553,7 @@ class TestGrafoIngestao:
 
 
 class TestFallbackSupervisor:
-    def test_fallback_quando_confidence_baixa(
-        self, tmp_path: Path
-    ):
+    def test_fallback_quando_confidence_baixa(self, tmp_path: Path):
         """Acceptance: confidence < 70% -> move para _conferir/ + proposta MD."""
         foto = tmp_path / "cupom.jpg"
         foto.write_bytes(b"\xff\xd8\xff stub jpeg fake")
@@ -636,9 +616,7 @@ class TestFallbackSupervisor:
         propostas = list((tmp_path / "propostas").glob("*.md"))
         assert len(propostas) == 1
 
-    def test_fluxo_completo_aprovado_nao_cria_proposta(
-        self, tmp_path: Path, grafo_temp: GrafoDB
-    ):
+    def test_fluxo_completo_aprovado_nao_cria_proposta(self, tmp_path: Path, grafo_temp: GrafoDB):
         """Recall=100 + confidence alta: ingere no grafo, sem proposta."""
         foto = tmp_path / "cupom.jpg"
         foto.write_bytes(b"\xff\xd8\xff")
@@ -678,9 +656,7 @@ class TestRoundTripOCRReal:
     Rodar com `.venv/bin/pytest -m slow` quando quiser validar toolchain.
     """
 
-    def test_fixture_real_americanas_passa_pelo_ocr(
-        self, tmp_path: Path
-    ):
+    def test_fixture_real_americanas_passa_pelo_ocr(self, tmp_path: Path):
         if not FIXTURE_REAL_JPG.exists():
             pytest.skip("fixture JPG real ausente")
 
@@ -721,9 +697,7 @@ class TestFallbackSupervisorIdempotente:
     (SHA-256 por conteúdo), mesmo cupom -> mesmo identificador -> sobrescrita.
     """
 
-    def test_mesmo_cupom_invocado_duas_vezes_gera_uma_proposta(
-        self, tmp_path: Path
-    ) -> None:
+    def test_mesmo_cupom_invocado_duas_vezes_gera_uma_proposta(self, tmp_path: Path) -> None:
         foto = tmp_path / "cupom.jpg"
         foto.write_bytes(b"\xff\xd8\xff" + b"CONTEUDO_UNICO" * 100)
 
@@ -758,18 +732,14 @@ class TestFallbackSupervisorIdempotente:
             f"esperado 1 dir _conferir idempotente, achei {len(dirs_conferir)}"
         )
 
-    def test_cupons_diferentes_geram_propostas_distintas(
-        self, tmp_path: Path
-    ) -> None:
+    def test_cupons_diferentes_geram_propostas_distintas(self, tmp_path: Path) -> None:
         foto_a = tmp_path / "cupom_a.jpg"
         foto_a.write_bytes(b"\xff\xd8\xff" + b"CONTEUDO_A" * 100)
         foto_b = tmp_path / "cupom_b.jpg"
         foto_b.write_bytes(b"\xff\xd8\xff" + b"CONTEUDO_B" * 100)
 
         texto_baixo_recall = (
-            "CNPJ: 99.888.777/0001-55 LOJA X\n"
-            "TOTAL R$ 500,00\n"
-            "20/04/2026 10:00:00\n"
+            "CNPJ: 99.888.777/0001-55 LOJA X\nTOTAL R$ 500,00\n20/04/2026 10:00:00\n"
         )
 
         for foto in (foto_a, foto_b):

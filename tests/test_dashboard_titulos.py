@@ -34,11 +34,7 @@ PADRAO_PREFIXO_DIGITO = re.compile(r"^\s*\d")
 
 def _listar_paginas() -> list[Path]:
     """Retorna todas as páginas Python do dashboard (exclui ``__init__``)."""
-    return sorted(
-        arquivo
-        for arquivo in RAIZ_PAGINAS.glob("*.py")
-        if arquivo.name != "__init__.py"
-    )
+    return sorted(arquivo for arquivo in RAIZ_PAGINAS.glob("*.py") if arquivo.name != "__init__.py")
 
 
 def _primeiro_arg_literal(chamada: ast.Call) -> str | None:
@@ -105,14 +101,8 @@ def test_titulos_streamlit_nao_comecam_com_digito(caminho: Path) -> None:
     """Nenhum ``st.header/title/subheader`` começa com dígito."""
     arvore = ast.parse(caminho.read_text(encoding="utf-8"))
     titulos = _coletar_titulos_streamlit(arvore)
-    violacoes = [
-        (linha, texto)
-        for linha, texto in titulos
-        if PADRAO_PREFIXO_DIGITO.match(texto)
-    ]
-    assert not violacoes, (
-        f"{caminho.name} tem título(s) começando com dígito: {violacoes}"
-    )
+    violacoes = [(linha, texto) for linha, texto in titulos if PADRAO_PREFIXO_DIGITO.match(texto)]
+    assert not violacoes, f"{caminho.name} tem título(s) começando com dígito: {violacoes}"
 
 
 @pytest.mark.parametrize("caminho", _listar_paginas(), ids=lambda p: p.name)
@@ -146,9 +136,7 @@ def test_hero_titulo_numero_nao_vaza_sprint_id(caminho: Path) -> None:
             continue
         if not (1 <= valor <= 13):
             violacoes.append((linha, numero))
-    assert not violacoes, (
-        f"{caminho.name} passa prefixo numérico ao hero_titulo_html: {violacoes}"
-    )
+    assert not violacoes, f"{caminho.name} passa prefixo numérico ao hero_titulo_html: {violacoes}"
 
 
 def test_listagem_de_paginas_nao_vazia() -> None:
@@ -174,9 +162,7 @@ PAGINAS_COM_HERO_NUMERADO: frozenset[str] = frozenset(
 )
 
 
-@pytest.mark.parametrize(
-    "nome_pagina", sorted(PAGINAS_COM_HERO_NUMERADO), ids=lambda s: s
-)
+@pytest.mark.parametrize("nome_pagina", sorted(PAGINAS_COM_HERO_NUMERADO), ids=lambda s: s)
 def test_pagina_tem_hero_titulo_numerado(nome_pagina: str) -> None:
     """Sprint 92a.6: cada página numerada chama ``hero_titulo_html`` com badge.
 
@@ -187,9 +173,7 @@ def test_pagina_tem_hero_titulo_numerado(nome_pagina: str) -> None:
     caminho = RAIZ_PAGINAS / nome_pagina
     arvore = ast.parse(caminho.read_text(encoding="utf-8"))
     numeros = _coletar_numeros_hero(arvore)
-    numeros_validos = [
-        numero for _, numero in numeros if numero.strip().isdigit()
-    ]
+    numeros_validos = [numero for _, numero in numeros if numero.strip().isdigit()]
     assert numeros_validos, (
         f"{nome_pagina} não chama hero_titulo_html com badge numérico "
         f"(Sprint 92a.6). Chamadas encontradas: {numeros}"

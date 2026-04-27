@@ -52,8 +52,11 @@ def _aplicar_drilldown(df: pd.DataFrame) -> tuple[pd.DataFrame, dict[str, str]]:
         if not coluna or coluna not in df.columns:
             continue
         if campo in ("fornecedor", "local"):
-            mascara = df[coluna].fillna("").astype(str).str.contains(
-                valor, case=False, na=False, regex=False
+            mascara = (
+                df[coluna]
+                .fillna("")
+                .astype(str)
+                .str.contains(valor, case=False, na=False, regex=False)
             )
             df = df[mascara]
         else:
@@ -457,9 +460,7 @@ def _inspecionar_transacao(df: pd.DataFrame) -> None:
     if clicou and idx is not None and idx < len(df):
         row = df.iloc[idx]
         tx = {
-            "data": pd.to_datetime(row.get("data"))
-            if row.get("data") is not None
-            else None,
+            "data": pd.to_datetime(row.get("data")) if row.get("data") is not None else None,
             "valor": float(row.get("valor") or 0.0),
             "categoria": row.get("categoria", "-"),
             "banco_origem": row.get("banco_origem", "-"),

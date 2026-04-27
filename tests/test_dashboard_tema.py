@@ -328,9 +328,7 @@ class TestMetricSemanticHtml:
         assert "var(--color-texto-sec)" in html
 
     def test_metric_cor_custom_sobrescreve_auto(self):
-        html = tema.metric_semantic_html(
-            "Saldo", "R$ 100,00", delta=10.0, cor=tema.CORES["alerta"]
-        )
+        html = tema.metric_semantic_html("Saldo", "R$ 100,00", delta=10.0, cor=tema.CORES["alerta"])
         assert tema.CORES["alerta"] in html
 
     def test_metric_label_e_valor_sao_renderizados(self):
@@ -402,9 +400,7 @@ class TestBreadcrumbDrilldownHtml:
         assert tema.breadcrumb_drilldown_html({}) == ""
 
     def test_breadcrumb_renderiza_cada_filtro(self):
-        html = tema.breadcrumb_drilldown_html(
-            {"categoria": "Aluguel", "banco": "Itaú"}
-        )
+        html = tema.breadcrumb_drilldown_html({"categoria": "Aluguel", "banco": "Itaú"})
         assert "categoria: Aluguel" in html
         assert "banco: Itaú" in html
 

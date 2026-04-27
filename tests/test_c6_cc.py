@@ -17,9 +17,7 @@ import openpyxl
 
 from src.extractors.c6_cc import ExtratorC6CC
 
-FIXTURE_SAMPLE = (
-    Path(__file__).parent / "fixtures" / "bancos" / "c6_cc" / "sample_c6_cc.xlsx"
-)
+FIXTURE_SAMPLE = Path(__file__).parent / "fixtures" / "bancos" / "c6_cc" / "sample_c6_cc.xlsx"
 
 
 def _preparar_em_pasta_c6_cc(tmp_path: Path) -> Path:

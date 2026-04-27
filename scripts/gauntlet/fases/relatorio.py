@@ -13,37 +13,41 @@ def _gerar_transacoes_sinteticas() -> list[dict]:
     """Gera transações para teste de relatório."""
     transacoes: list[dict] = []
     for i in range(5):
-        transacoes.append({
-            "data": date(2026, 4, i + 1),
-            "valor": 1000.0 * (i + 1),
-            "forma_pagamento": "Pix",
-            "local": f"LOJA {i + 1}",
+        transacoes.append(
+            {
+                "data": date(2026, 4, i + 1),
+                "valor": 1000.0 * (i + 1),
+                "forma_pagamento": "Pix",
+                "local": f"LOJA {i + 1}",
+                "quem": "André",
+                "categoria": "Delivery" if i == 0 else "Mercado",
+                "classificacao": "Questionável" if i == 0 else "Obrigatório",
+                "banco_origem": "Nubank",
+                "tipo": "Despesa",
+                "mes_ref": "2026-04",
+                "tag_irpf": None,
+                "obs": "",
+                "_descricao_original": f"LOJA {i + 1}",
+            }
+        )
+
+    transacoes.append(
+        {
+            "data": date(2026, 4, 1),
+            "valor": 15000.0,
+            "forma_pagamento": "Transferência",
+            "local": "SALARIO G4F",
             "quem": "André",
-            "categoria": "Delivery" if i == 0 else "Mercado",
-            "classificacao": "Questionável" if i == 0 else "Obrigatório",
-            "banco_origem": "Nubank",
-            "tipo": "Despesa",
+            "categoria": "Salário",
+            "classificacao": "N/A",
+            "banco_origem": "Itaú",
+            "tipo": "Receita",
             "mes_ref": "2026-04",
             "tag_irpf": None,
             "obs": "",
-            "_descricao_original": f"LOJA {i + 1}",
-        })
-
-    transacoes.append({
-        "data": date(2026, 4, 1),
-        "valor": 15000.0,
-        "forma_pagamento": "Transferência",
-        "local": "SALARIO G4F",
-        "quem": "André",
-        "categoria": "Salário",
-        "classificacao": "N/A",
-        "banco_origem": "Itaú",
-        "tipo": "Receita",
-        "mes_ref": "2026-04",
-        "tag_irpf": None,
-        "obs": "",
-        "_descricao_original": "PAGTO SALARIO G4F",
-    })
+            "_descricao_original": "PAGTO SALARIO G4F",
+        }
+    )
 
     return transacoes
 
@@ -126,7 +130,9 @@ def executar() -> ResultadoFase:
     fase.tempo_total = time.time() - inicio
     logger.info(
         "Fase relatório: %d/%d testes OK em %.2fs",
-        fase.ok, fase.total, fase.tempo_total,
+        fase.ok,
+        fase.total,
+        fase.tempo_total,
     )
     return fase
 

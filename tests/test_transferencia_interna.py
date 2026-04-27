@@ -53,9 +53,7 @@ class TestCanonicalizerCasal:
         )
 
     def test_nome_completo_vitoria_bate(self) -> None:
-        assert e_transferencia_do_casal(
-            "Vitória Maria Silva dos Santos - CPF - NU PAGAMENTOS"
-        )
+        assert e_transferencia_do_casal("Vitória Maria Silva dos Santos - CPF - NU PAGAMENTOS")
 
     def test_pix_externo_deivid_nao_bate(self) -> None:
         assert not e_transferencia_do_casal(
@@ -75,9 +73,7 @@ class TestCanonicalizerCasal:
     def test_andre_barata_nao_bate_com_whitelist_especifica(self) -> None:
         """Nome curto genérico 'ANDRE BARATA' não deve casar quando a whitelist
         contém apenas 'ANDRE DA SILVA BATISTA' (nome composto)."""
-        assert not e_transferencia_do_casal(
-            "Transferência enviada - ANDRE BARATA DA COSTA - 123"
-        )
+        assert not e_transferencia_do_casal("Transferência enviada - ANDRE BARATA DA COSTA - 123")
 
     def test_descricao_vazia_nao_bate(self) -> None:
         assert not e_transferencia_do_casal("")
@@ -120,10 +116,7 @@ class TestInferirTipoNormalizer:
 
     def test_resgate_cdb_ainda_e_ti(self) -> None:
         """Exceção operacional: resgate de investimento continua TI."""
-        assert (
-            inferir_tipo_transacao(1000.0, "RESGATE CDB C6")
-            == "Transferência Interna"
-        )
+        assert inferir_tipo_transacao(1000.0, "RESGATE CDB C6") == "Transferência Interna"
 
 
 class TestDeduplicatorMarcarTI:
@@ -328,9 +321,7 @@ class TestC6ExtratorComCanonicalizer:
 
     def test_pix_terceiro_nao_vira_ti(self) -> None:
         """Regressão: PIX para Jefferson (terceiro) não é TI."""
-        tipo = ExtratorC6CC._classificar_tipo(
-            "PIX ENVIADO", "JEFFERSON CASTRO GARCIA", -100.0
-        )
+        tipo = ExtratorC6CC._classificar_tipo("PIX ENVIADO", "JEFFERSON CASTRO GARCIA", -100.0)
         assert tipo == "Despesa"
 
 

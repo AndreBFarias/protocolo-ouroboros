@@ -58,9 +58,7 @@ def test_css_global_declara_padding_bloco() -> None:
     css = tema.css_global()
     assert ".main .block-container" in css
     # Tem que declarar padding numérico, não apenas padding-top.
-    match = re.search(
-        r"\.main\s+\.block-container\s*\{[^}]*padding:\s*(\d+)px", css
-    )
+    match = re.search(r"\.main\s+\.block-container\s*\{[^}]*padding:\s*(\d+)px", css)
     assert match is not None, "regra de padding para .main .block-container ausente"
     valor_px = int(match.group(1))
     assert valor_px >= tema.PADDING_PAGINA_MIN_PX
@@ -79,16 +77,14 @@ def test_logo_sidebar_html_retorna_string() -> None:
     # Quando assets/icon.png existe (CI do projeto), devolve HTML.
     if tema._CAMINHO_LOGO.exists():
         assert html.startswith("<div") and html.endswith("</div>")
-        assert 'data:image/png;base64,' in html
+        assert "data:image/png;base64," in html
         assert "Protocolo Ouroboros" in html
         assert "text-align:center" in html
     else:
         assert html == ""
 
 
-def test_logo_sidebar_graceful_quando_arquivo_sumir(
-    monkeypatch, tmp_path: Path
-) -> None:
+def test_logo_sidebar_graceful_quando_arquivo_sumir(monkeypatch, tmp_path: Path) -> None:
     """Se `_CAMINHO_LOGO` não existir, devolve string vazia sem exceção."""
     monkeypatch.setattr(tema, "_CAMINHO_LOGO", tmp_path / "nao_existe.png")
     html = tema.logo_sidebar_html()

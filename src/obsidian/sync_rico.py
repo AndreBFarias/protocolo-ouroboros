@@ -189,12 +189,12 @@ def _render_documento(doc_meta: dict[str, Any], doc_nome: str) -> str:
     frontmatter = (
         "---\n"
         "tipo: documento\n"
-        f"nome_canonico: \"{doc_nome}\"\n"
+        f'nome_canonico: "{doc_nome}"\n'
         f"tipo_documento: {tipo_doc}\n"
         f"data: {data}\n"
-        f"fornecedor: \"[[Fornecedores/{slugify(fornecedor)}]]\"\n"
+        f'fornecedor: "[[Fornecedores/{slugify(fornecedor)}]]"\n'
         f"valor: {valor:.2f}\n"
-        f"arquivo_original: \"[[{arquivo_attach}]]\"\n"
+        f'arquivo_original: "[[{arquivo_attach}]]"\n'
         "tags: [sincronizado-automaticamente, documento, "
         f"{tipo_doc}]\n"
         "sincronizado: true\n"
@@ -226,7 +226,7 @@ def _render_fornecedor(nome: str, meta: dict[str, Any], qtd_docs: int) -> str:
     frontmatter = (
         "---\n"
         "tipo: fornecedor\n"
-        f"nome_canonico: \"{nome}\"\n"
+        f'nome_canonico: "{nome}"\n'
         f"categoria: {categoria}\n"
         + (f'cnpj: "{cnpj}"\n' if cnpj else "")
         + f"qtd_documentos: {qtd_docs}\n"
@@ -364,17 +364,14 @@ def _render_moc_mensal(mes_ref: str, agregado: dict[str, Any]) -> str:
         valor = _formatar_valor_br(meta.get("total"))
         slug = slugify(doc.nome_canonico)
         link = f"[[Documentos/{mes_ref}/{slug}]]"
-        linhas_tabela.append(
-            f"| {data} | {tipo_doc} | {fornecedor} | R$ {valor} | {link} |"
-        )
+        linhas_tabela.append(f"| {data} | {tipo_doc} | {fornecedor} | R$ {valor} | {link} |")
 
     tabela_docs = "\n".join(linhas_tabela)
 
     # Lista de fornecedores únicos
     if fornecedores:
         linhas_forn = [
-            f"- [[Fornecedores/{slugify(nome)}|{nome}]]"
-            for nome in sorted(fornecedores)
+            f"- [[Fornecedores/{slugify(nome)}|{nome}]]" for nome in sorted(fornecedores)
         ]
         lista_fornecedores = "\n".join(linhas_forn)
     else:
@@ -486,9 +483,7 @@ def sincronizar_rico(
             if doc.nome_canonico is None:
                 continue
             yyyymm = _yyyymm(doc.metadata.get("data_emissao"))
-            destino = (
-                fin / "Documentos" / yyyymm / f"{slugify(doc.nome_canonico)}.md"
-            )
+            destino = fin / "Documentos" / yyyymm / f"{slugify(doc.nome_canonico)}.md"
             conteudo = _render_documento(doc.metadata, doc.nome_canonico)
             try:
                 _escrever_nota(destino, conteudo, dry_run, report, "documento")
@@ -590,14 +585,10 @@ def main(argv: list[str] | None = None) -> int:
         description="Sync rico: gera notas por documento/fornecedor no vault",
     )
     parser.add_argument("--executar", action="store_true", help="Efetua escritas")
-    parser.add_argument(
-        "--vault", type=Path, default=None, help="Sobrescreve BORDO_DIR"
-    )
+    parser.add_argument("--vault", type=Path, default=None, help="Sobrescreve BORDO_DIR")
     args = parser.parse_args(argv)
 
-    vault = args.vault or Path(
-        os.environ.get("BORDO_DIR", Path.home() / "Controle de Bordo")
-    )
+    vault = args.vault or Path(os.environ.get("BORDO_DIR", Path.home() / "Controle de Bordo"))
     report = sincronizar_rico(vault, dry_run=not args.executar)
     logger.info(
         "sync rico: %d docs, %d fornecedores, %d MOCs, %d preservadas, %d inalteradas, %d erros",

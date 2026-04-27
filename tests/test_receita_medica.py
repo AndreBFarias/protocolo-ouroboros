@@ -156,9 +156,7 @@ class TestMedicamentos:
         parsed = _parse_receita(_ler(RECEITA_USO_CONTINUO))
         assert parsed is not None
         # Losartana, Sinvastatina e Metformina estão no YAML -- todos elegíveis.
-        elegiveis = [
-            m for m in parsed["medicamentos"] if m.get("elegivel_dedutivel_irpf")
-        ]
+        elegiveis = [m for m in parsed["medicamentos"] if m.get("elegivel_dedutivel_irpf")]
         assert len(elegiveis) == 3
 
     def test_antibiotico_sem_uso_continuo_nao_e_dedutivel(self):
@@ -251,9 +249,7 @@ class TestParseDefensivo:
 class TestIngestaoGrafo:
     def test_prescricao_simples_cria_nodes_e_arestas(self, grafo_temp):
         extrator = ExtratorReceitaMedica(RECEITA_SIMPLES, grafo=grafo_temp)
-        resultado = extrator.extrair_receitas(
-            RECEITA_SIMPLES, texto_override=_ler(RECEITA_SIMPLES)
-        )
+        resultado = extrator.extrair_receitas(RECEITA_SIMPLES, texto_override=_ler(RECEITA_SIMPLES))
         assert len(resultado) == 1
 
         stats = grafo_temp.estatisticas()
@@ -269,9 +265,7 @@ class TestIngestaoGrafo:
 
     def test_uso_continuo_cria_3_arestas_prescreve(self, grafo_temp):
         extrator = ExtratorReceitaMedica(RECEITA_USO_CONTINUO, grafo=grafo_temp)
-        extrator.extrair_receitas(
-            RECEITA_USO_CONTINUO, texto_override=_ler(RECEITA_USO_CONTINUO)
-        )
+        extrator.extrair_receitas(RECEITA_USO_CONTINUO, texto_override=_ler(RECEITA_USO_CONTINUO))
         stats = grafo_temp.estatisticas()
         assert stats["edges_por_tipo"].get("prescreve", 0) == 3
 
@@ -287,21 +281,15 @@ class TestIngestaoGrafo:
 
     def test_medico_tem_categoria_e_crm(self, grafo_temp):
         extrator = ExtratorReceitaMedica(RECEITA_SIMPLES, grafo=grafo_temp)
-        extrator.extrair_receitas(
-            RECEITA_SIMPLES, texto_override=_ler(RECEITA_SIMPLES)
-        )
+        extrator.extrair_receitas(RECEITA_SIMPLES, texto_override=_ler(RECEITA_SIMPLES))
         medico = grafo_temp.buscar_node("fornecedor", "CRM|DF|12345")
         assert medico is not None
         assert medico.metadata.get("categoria") == "medico"
         assert medico.metadata.get("crm") == "DF|12345"
 
     def test_medicamento_conhecido_tem_principio_ativo(self, grafo_temp):
-        extrator = ExtratorReceitaMedica(
-            RECEITA_USO_CONTINUO, grafo=grafo_temp
-        )
-        extrator.extrair_receitas(
-            RECEITA_USO_CONTINUO, texto_override=_ler(RECEITA_USO_CONTINUO)
-        )
+        extrator = ExtratorReceitaMedica(RECEITA_USO_CONTINUO, grafo=grafo_temp)
+        extrator.extrair_receitas(RECEITA_USO_CONTINUO, texto_override=_ler(RECEITA_USO_CONTINUO))
         losartana_node = grafo_temp.buscar_node("item", "MED|LOSARTANA")
         assert losartana_node is not None
         assert losartana_node.metadata.get("principio_ativo") == "losartana"
@@ -339,18 +327,14 @@ class TestLinkingFarmacia:
 
         # Ingere a receita de uso contínuo (mesma época).
         extrator = ExtratorReceitaMedica(RECEITA_USO_CONTINUO, grafo=grafo_temp)
-        extrator.extrair_receitas(
-            RECEITA_USO_CONTINUO, texto_override=_ler(RECEITA_USO_CONTINUO)
-        )
+        extrator.extrair_receitas(RECEITA_USO_CONTINUO, texto_override=_ler(RECEITA_USO_CONTINUO))
 
         stats = grafo_temp.estatisticas()
         assert stats["edges_por_tipo"].get("prescreve_cobre", 0) >= 1
 
     def test_sem_item_farmacia_nao_cria_prescreve_cobre(self, grafo_temp):
         extrator = ExtratorReceitaMedica(RECEITA_USO_CONTINUO, grafo=grafo_temp)
-        extrator.extrair_receitas(
-            RECEITA_USO_CONTINUO, texto_override=_ler(RECEITA_USO_CONTINUO)
-        )
+        extrator.extrair_receitas(RECEITA_USO_CONTINUO, texto_override=_ler(RECEITA_USO_CONTINUO))
         stats = grafo_temp.estatisticas()
         assert stats["edges_por_tipo"].get("prescreve_cobre", 0) == 0
 
@@ -367,9 +351,7 @@ class TestAvisoExpiracao:
         caplog.set_level(logging.WARNING, logger="receita_medica")
         caplog.set_level(logging.WARNING, logger="graph.ingestor_documento")
         extrator = ExtratorReceitaMedica(RECEITA_EXPIRADA, grafo=grafo_temp)
-        extrator.extrair_receitas(
-            RECEITA_EXPIRADA, texto_override=_ler(RECEITA_EXPIRADA)
-        )
+        extrator.extrair_receitas(RECEITA_EXPIRADA, texto_override=_ler(RECEITA_EXPIRADA))
         # Ao menos uma mensagem com "expirada" ou "validade".
         mensagens = " ".join(rec.getMessage().lower() for rec in caplog.records)
         assert "expirada" in mensagens or "validade" in mensagens
@@ -383,13 +365,9 @@ class TestAvisoExpiracao:
         data_emissao = date.fromisoformat("2026-03-15")
         meses = (hoje - data_emissao).days / 30
         if meses >= 6:
-            pytest.skip(
-                "Fixture receita_simples ficou antiga -- teste perde sentido"
-            )
+            pytest.skip("Fixture receita_simples ficou antiga -- teste perde sentido")
         extrator = ExtratorReceitaMedica(RECEITA_SIMPLES, grafo=grafo_temp)
-        extrator.extrair_receitas(
-            RECEITA_SIMPLES, texto_override=_ler(RECEITA_SIMPLES)
-        )
+        extrator.extrair_receitas(RECEITA_SIMPLES, texto_override=_ler(RECEITA_SIMPLES))
         mensagens = " ".join(rec.getMessage().lower() for rec in caplog.records)
         assert "expirada" not in mensagens
 
@@ -465,9 +443,7 @@ class TestRegistroPipeline:
 
 
 class TestExtrairNaoGeraTransacao:
-    def test_extrair_devolve_lista_vazia_de_transacao(
-        self, grafo_temp, tmp_path
-    ):
+    def test_extrair_devolve_lista_vazia_de_transacao(self, grafo_temp, tmp_path):
         placeholder = tmp_path / "receita.jpg"
         placeholder.write_bytes(b"\xff\xd8\xff")
         extrator = ExtratorReceitaMedica(placeholder, grafo=grafo_temp)

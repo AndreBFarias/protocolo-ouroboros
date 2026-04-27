@@ -188,9 +188,7 @@ def _sidebar(dados: dict) -> tuple[str, str, str, str]:
             index=0,
             key="seletor_forma_pagamento",
         )
-        st.session_state["filtro_forma"] = (
-            None if forma_sel == "Todas" else forma_sel
-        )
+        st.session_state["filtro_forma"] = None if forma_sel == "Todas" else forma_sel
 
         st.markdown("---")
 

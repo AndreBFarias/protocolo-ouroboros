@@ -68,9 +68,7 @@ def carregar_boletos(
     # TypeError ao comparar tipos diferentes. Inválidos viram NaT e caem no
     # fim via `na_position="last"`.
     df["vencimento"] = pd.to_datetime(df["vencimento"], errors="coerce")
-    return df[colunas].sort_values(by="vencimento", na_position="last").reset_index(
-        drop=True
-    )
+    return df[colunas].sort_values(by="vencimento", na_position="last").reset_index(drop=True)
 
 
 def _extrair_boletos_pagos(extrato: pd.DataFrame) -> pd.DataFrame:
@@ -134,9 +132,7 @@ def _projetar_boletos_esperados(
     return pd.DataFrame(linhas)
 
 
-def _existe_boleto_pago(
-    extrato: pd.DataFrame, conta: str, mes_atual: date
-) -> bool:
+def _existe_boleto_pago(extrato: pd.DataFrame, conta: str, mes_atual: date) -> bool:
     if "mes_ref" not in extrato.columns or "local" not in extrato.columns:
         return False
     mes_ref = mes_atual.strftime("%Y-%m")
@@ -144,8 +140,12 @@ def _existe_boleto_pago(
     if sub.empty:
         return False
     conta_lower = conta.lower()
-    mascara = sub["local"].fillna("").astype(str).str.lower().str.contains(
-        conta_lower[:10], na=False, regex=False
+    mascara = (
+        sub["local"]
+        .fillna("")
+        .astype(str)
+        .str.lower()
+        .str.contains(conta_lower[:10], na=False, regex=False)
     )
     return bool(mascara.any())
 
@@ -176,9 +176,7 @@ def alertas_vencimento(
     return avisos
 
 
-def top_beneficiarios_pix(
-    extrato: pd.DataFrame, top_n: int = 20
-) -> pd.DataFrame:
+def top_beneficiarios_pix(extrato: pd.DataFrame, top_n: int = 20) -> pd.DataFrame:
     """DataFrame com top N beneficiários de Pix por valor absoluto."""
     if "forma_pagamento" not in extrato.columns:
         return pd.DataFrame(columns=["local", "total", "quantidade"])
@@ -201,34 +199,22 @@ def faturas_credito(extrato: pd.DataFrame) -> dict[str, pd.DataFrame]:
     """Agrupa despesas de cartão de crédito por banco e mês."""
     if "forma_pagamento" not in extrato.columns or "banco_origem" not in extrato.columns:
         return {}
-    credito = extrato[
-        extrato["forma_pagamento"].astype(str).str.lower() == "crédito"
-    ]
+    credito = extrato[extrato["forma_pagamento"].astype(str).str.lower() == "crédito"]
     if credito.empty:
         return {}
-    credito = (
-        credito[credito["tipo"].isin(("Despesa",))]
-        if "tipo" in credito.columns
-        else credito
-    )
+    credito = credito[credito["tipo"].isin(("Despesa",))] if "tipo" in credito.columns else credito
     resultado: dict[str, pd.DataFrame] = {}
     for banco, df_banco in credito.groupby("banco_origem"):
         if "mes_ref" not in df_banco.columns:
             continue
         agrupado = (
-            df_banco.groupby("mes_ref")["valor"]
-            .sum()
-            .abs()
-            .reset_index()
-            .sort_values("mes_ref")
+            df_banco.groupby("mes_ref")["valor"].sum().abs().reset_index().sort_values("mes_ref")
         )
         resultado[str(banco)] = agrupado.rename(columns={"valor": "valor_total"})
     return resultado
 
 
-def _reconciliar_via_grafo(
-    db: "GrafoDB", boleto_node: Any, hoje: date
-) -> str:
+def _reconciliar_via_grafo(db: "GrafoDB", boleto_node: Any, hoje: date) -> str:
     """Sprint 87.7: decide status de um node `documento` de tipo `boleto_servico`.
 
     Critério:
@@ -317,9 +303,7 @@ def carregar_boletos_via_grafo(
     for col in colunas:
         if col not in df.columns:
             df[col] = None
-    return df[colunas].sort_values(by="vencimento", na_position="last").reset_index(
-        drop=True
-    )
+    return df[colunas].sort_values(by="vencimento", na_position="last").reset_index(drop=True)
 
 
 def carregar_boletos_inteligente(

@@ -65,10 +65,10 @@ def test_extrato_exibe_caption_com_legenda_da_coluna_doc() -> None:
     assert "documento vinculado no grafo" in source, (
         "Texto explicativo do marcador 'Doc ok' ausente; legenda não educa o usuário."
     )
-    assert "icon_html(\"check-circle\"" in source or 'icon_html("check-circle"' in source, (
+    assert 'icon_html("check-circle"' in source or 'icon_html("check-circle"' in source, (
         "Legenda da coluna Doc? precisa usar icon_html('check-circle', ...) (Sprint 92c)."
     )
-    assert "icon_html(\"alert-triangle\"" in source or 'icon_html("alert-triangle"' in source, (
+    assert 'icon_html("alert-triangle"' in source or 'icon_html("alert-triangle"' in source, (
         "Legenda da coluna Doc? precisa usar icon_html('alert-triangle', ...) (Sprint 92c)."
     )
 

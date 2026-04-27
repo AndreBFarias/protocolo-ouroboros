@@ -81,7 +81,7 @@ def grafo_sprint53(tmp_path, monkeypatch):
     # período
     conn.execute(
         "INSERT INTO node (id, tipo, nome_canonico, metadata) VALUES (?, ?, ?, ?)",
-        (4, "periodo", "2026-04", '{}'),
+        (4, "periodo", "2026-04", "{}"),
     )
     # categoria
     conn.execute(
@@ -186,9 +186,7 @@ class TestFluxoAgregado:
 
     def test_fluxo_grafo_ausente_retorna_vazio(self, tmp_path, monkeypatch):
         """Sem XLSX, agregações voltam vazias sem crash."""
-        monkeypatch.setattr(
-            dashboard_dados, "CAMINHO_XLSX", tmp_path / "inexistente.xlsx"
-        )
+        monkeypatch.setattr(dashboard_dados, "CAMINHO_XLSX", tmp_path / "inexistente.xlsx")
         dashboard_dados.carregar_dados.clear()
         dashboard_dados.obter_fluxo_receita_categoria_fornecedor.clear()
         fluxo = dashboard_dados.obter_fluxo_receita_categoria_fornecedor("2026-04")
@@ -271,9 +269,9 @@ class TestIntegracaoDashboard:
         A página de produção NÃO pode conter go.Sankey. Decisão explícita
         do supervisor no prompt da Sprint 53.
         """
-        fonte = (
-            RAIZ / "src" / "dashboard" / "paginas" / "grafo_obsidian.py"
-        ).read_text(encoding="utf-8")
+        fonte = (RAIZ / "src" / "dashboard" / "paginas" / "grafo_obsidian.py").read_text(
+            encoding="utf-8"
+        )
         assert "go.Sankey" not in fonte, "Sankey proibido -- usar bar charts"
         # bar chart é o padrão: go.Bar deve aparecer
         assert "go.Bar" in fonte

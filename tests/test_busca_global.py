@@ -54,7 +54,7 @@ def grafo_minimo(tmp_path, monkeypatch):
     conn.execute(
         "INSERT INTO node (id, tipo, nome_canonico, metadata) "
         "VALUES (1, 'fornecedor', 'NEOENERGIA DISTRIBUICAO BRASILIA', "
-        "'{\"cnpj\": \"00.394.460/0058-87\", \"categoria\": \"Energia\"}')"
+        '\'{"cnpj": "00.394.460/0058-87", "categoria": "Energia"}\')'
     )
     conn.commit()
     conn.close()
@@ -103,22 +103,16 @@ class TestChipsNaoDisabled:
 
     def test_codigo_nao_passa_disabled_true_aos_chips(self):
         """Lê o fonte e garante que `disabled=True` foi removido dos chips."""
-        fonte = (
-            RAIZ / "src" / "dashboard" / "paginas" / "busca.py"
-        ).read_text(encoding="utf-8")
+        fonte = (RAIZ / "src" / "dashboard" / "paginas" / "busca.py").read_text(encoding="utf-8")
         # a função canônica de chips não pode ter disabled=True ativo
         idx_loop = fonte.find("for idx, (col, sug) in enumerate")
         assert idx_loop > 0, "laço dos chips não encontrado"
         trecho = fonte[idx_loop : idx_loop + 600]
-        assert "disabled=True" not in trecho, (
-            "chips não podem estar desabilitados -- Sprint 59"
-        )
+        assert "disabled=True" not in trecho, "chips não podem estar desabilitados -- Sprint 59"
 
     def test_chips_declaram_on_click_com_callback(self):
         """Fonte deve referenciar `_aplicar_chip_sugestao` como `on_click`."""
-        fonte = (
-            RAIZ / "src" / "dashboard" / "paginas" / "busca.py"
-        ).read_text(encoding="utf-8")
+        fonte = (RAIZ / "src" / "dashboard" / "paginas" / "busca.py").read_text(encoding="utf-8")
         assert "on_click=_aplicar_chip_sugestao" in fonte
 
 
@@ -126,9 +120,7 @@ class TestKeyCasaComSessionState:
     """Sprint 59 acceptance #2: key do text_input = chave do session_state."""
 
     def test_text_input_usa_key_busca_termo_input(self):
-        fonte = (
-            RAIZ / "src" / "dashboard" / "paginas" / "busca.py"
-        ).read_text(encoding="utf-8")
+        fonte = (RAIZ / "src" / "dashboard" / "paginas" / "busca.py").read_text(encoding="utf-8")
         assert 'key="busca_termo_input"' in fonte
 
     def test_callback_grava_na_mesma_key(self):
@@ -143,9 +135,7 @@ class TestTituloSemPrefixoSprint:
     """Sprint 59 acceptance #3: remover '52' do título."""
 
     def test_hero_nao_recebe_52(self):
-        fonte = (
-            RAIZ / "src" / "dashboard" / "paginas" / "busca.py"
-        ).read_text(encoding="utf-8")
+        fonte = (RAIZ / "src" / "dashboard" / "paginas" / "busca.py").read_text(encoding="utf-8")
         # hero_titulo_html recebe "" como primeiro argumento
         assert 'hero_titulo_html(\n            "",\n            "Busca Global"' in fonte
         # e NÃO deve estar chamando com "52" literal

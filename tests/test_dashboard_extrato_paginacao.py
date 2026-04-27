@@ -22,15 +22,15 @@ def test_tamanho_pagina_canonico_e_25() -> None:
 @pytest.mark.parametrize(
     "total, pagina, esperado",
     [
-        (0, 1, (0, 0)),        # conjunto vazio -> slice vazio
-        (10, 1, (0, 10)),      # total < tamanho_pagina, cabe tudo
-        (25, 1, (0, 25)),      # exatamente 1 página cheia
-        (26, 1, (0, 25)),      # primeira de 2 páginas
-        (26, 2, (25, 26)),     # segunda tem 1 linha
-        (100, 1, (0, 25)),     # múltiplas páginas: página 1
-        (100, 4, (75, 100)),   # página 4 (última)
+        (0, 1, (0, 0)),  # conjunto vazio -> slice vazio
+        (10, 1, (0, 10)),  # total < tamanho_pagina, cabe tudo
+        (25, 1, (0, 25)),  # exatamente 1 página cheia
+        (26, 1, (0, 25)),  # primeira de 2 páginas
+        (26, 2, (25, 26)),  # segunda tem 1 linha
+        (100, 1, (0, 25)),  # múltiplas páginas: página 1
+        (100, 4, (75, 100)),  # página 4 (última)
         (100, 99, (75, 100)),  # clampa para última quando pagina > n_paginas
-        (100, 0, (0, 25)),     # clampa para 1 quando pagina < 1
+        (100, 0, (0, 25)),  # clampa para 1 quando pagina < 1
     ],
 )
 def test_calcular_slice_pagina_cobre_casos_canonicos(

@@ -180,6 +180,7 @@ class TestParserCabecalho:
 
     def test_cnpj_texto_vs_chave_divergente_loga_warning(self, caplog):
         import logging
+
         texto_divergente = (
             "DANFE\nDOCUMENTO AUXILIAR DA NOTA FISCAL ELETRÔNICA\n"
             "DESTINATÁRIO / REMETENTE\n"
@@ -271,9 +272,7 @@ class TestParserItens:
 
 
 class TestFallbackLayoutDesconhecido:
-    def test_layout_desconhecido_retorna_fallback(
-        self, extrator: ExtratorDanfePDF
-    ):
+    def test_layout_desconhecido_retorna_fallback(self, extrator: ExtratorDanfePDF):
         """Test nomeado no spec: layout desconhecido devolve doc com itens=[],
         NÃO crasha -- vai pra fallback supervisor."""
         texto_estranho = (
@@ -289,9 +288,7 @@ class TestFallbackLayoutDesconhecido:
             "PRODUTO_ESOTERICO_1 R$ 100,00\n"
             "PRODUTO_ESOTERICO_2 R$ 400,00\n"
         )
-        resultado = extrator.extrair_danfes(
-            extrator.caminho, texto_override=texto_estranho
-        )
+        resultado = extrator.extrair_danfes(extrator.caminho, texto_override=texto_estranho)
         assert len(resultado) == 1
         doc, itens = resultado[0]
         assert doc["chave_44"] is not None
@@ -321,9 +318,7 @@ class TestGrafoDanfe:
 
         from src.graph.ingestor_documento import ingerir_documento_fiscal
 
-        doc_id = ingerir_documento_fiscal(
-            grafo_temp, doc, itens, caminho_arquivo=extrator.caminho
-        )
+        doc_id = ingerir_documento_fiscal(grafo_temp, doc, itens, caminho_arquivo=extrator.caminho)
         assert doc_id > 0
 
         stats = grafo_temp.estatisticas()
@@ -336,9 +331,7 @@ class TestGrafoDanfe:
         assert stats["edges_por_tipo"].get("ocorre_em") == 1
         assert stats["edges_por_tipo"].get("contem_item") == 5
 
-    def test_ingestao_idempotente(
-        self, extrator: ExtratorDanfePDF, grafo_temp: GrafoDB
-    ):
+    def test_ingestao_idempotente(self, extrator: ExtratorDanfePDF, grafo_temp: GrafoDB):
         """Rodar a mesma DANFE 2x não duplica nós nem arestas."""
         from src.graph.ingestor_documento import ingerir_documento_fiscal
 
@@ -369,9 +362,9 @@ class TestGrafoDanfe:
         ]
         total_itens_grafo = 0
         for nome in nomes:
-            doc, itens = extrator.extrair_danfes(
-                extrator.caminho, texto_override=_carregar(nome)
-            )[0]
+            doc, itens = extrator.extrair_danfes(extrator.caminho, texto_override=_carregar(nome))[
+                0
+            ]
             ingerir_documento_fiscal(grafo_temp, doc, itens)
             total_itens_grafo += len(itens)
 
@@ -397,9 +390,7 @@ class TestDanfeCancelada:
         monkeypatch: pytest.MonkeyPatch,
     ):
         texto_cancelado = _carregar("danfe_varejo_5itens.txt") + "\nNFe CANCELADA\n"
-        monkeypatch.setattr(
-            extrator, "_ler_paginas", lambda caminho: [texto_cancelado]
-        )
+        monkeypatch.setattr(extrator, "_ler_paginas", lambda caminho: [texto_cancelado])
         monkeypatch.setattr(extrator, "_grafo", grafo_temp)
         resultado = extrator.extrair()
         assert resultado == []
@@ -414,9 +405,7 @@ class TestDanfeCancelada:
 
 
 class TestPodeProcessar:
-    def test_pode_processar_por_path_nfs_fiscais(
-        self, extrator: ExtratorDanfePDF, tmp_path: Path
-    ):
+    def test_pode_processar_por_path_nfs_fiscais(self, extrator: ExtratorDanfePDF, tmp_path: Path):
         arq = tmp_path / "andre" / "nfs_fiscais" / "DANFE_123.pdf"
         arq.parent.mkdir(parents=True)
         arq.write_bytes(b"%PDF-1.4\n")
@@ -429,9 +418,7 @@ class TestPodeProcessar:
         arq.write_bytes(b"%PDF-1.4\n")
         assert extrator.pode_processar(arq) is False
 
-    def test_rejeita_extensao_incompativel(
-        self, extrator: ExtratorDanfePDF, tmp_path: Path
-    ):
+    def test_rejeita_extensao_incompativel(self, extrator: ExtratorDanfePDF, tmp_path: Path):
         arq = tmp_path / "nfs_fiscais" / "DANFE_1.png"
         arq.parent.mkdir(parents=True)
         arq.write_bytes(b"\x89PNG")

@@ -21,9 +21,7 @@ import pytest
 
 from src.extractors.itau_pdf import ExtratorItauPDF
 
-FIXTURE_TEXTO = (
-    Path(__file__).parent / "fixtures" / "bancos" / "itau_pdf" / "sample_texto.txt"
-)
+FIXTURE_TEXTO = Path(__file__).parent / "fixtures" / "bancos" / "itau_pdf" / "sample_texto.txt"
 
 
 def _criar_arquivo_dummy(tmp_path: Path) -> Path:

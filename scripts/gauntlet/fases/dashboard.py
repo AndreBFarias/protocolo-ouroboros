@@ -107,7 +107,9 @@ def executar() -> ResultadoFase:
     fase.tempo_total = time.time() - inicio
     logger.info(
         "Fase dashboard: %d/%d testes OK em %.2fs",
-        fase.ok, fase.total, fase.tempo_total,
+        fase.ok,
+        fase.total,
+        fase.tempo_total,
     )
     return fase
 

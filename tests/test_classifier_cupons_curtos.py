@@ -208,12 +208,7 @@ def test_cnpj_com_virgula_no_lugar_de_ponto_aceito(arquivo_temp):
 
 def test_ocr_acima_do_limite_nao_casa_subregra(arquivo_temp):
     """OCR > 900 chars: subregra ocr_curto não dispara. Sem outras âncoras, rejeita."""
-    texto_base = (
-        "ty 66.825.498/0004-70\n"
-        "Nota Fiscal\n"
-        "Valor 254,51\n"
-        "Cartao Debito 254,51\n"
-    )
+    texto_base = "ty 66.825.498/0004-70\nNota Fiscal\nValor 254,51\nCartao Debito 254,51\n"
     # Inflar texto para passar de 900 chars sem inserir marcadores fortes.
     texto = texto_base + ("\nlinha de ruido textual extra " * 40)
     assert len(texto) > 900
@@ -226,12 +221,7 @@ def test_ocr_acima_do_limite_nao_casa_subregra(arquivo_temp):
 
 def test_ocr_abaixo_do_minimo_nao_casa_subregra(arquivo_temp):
     """OCR < 200 chars: subregra ocr_curto não dispara mesmo com CNPJ + valor."""
-    texto = (
-        "66.825.498/0004-70\n"
-        "Nota Fiscal\n"
-        "Valor 254,51\n"
-        "Cartao\n"
-    )
+    texto = "66.825.498/0004-70\nNota Fiscal\nValor 254,51\nCartao\n"
     assert len(texto) < 200
     caminho = arquivo_temp("ocr_pequeno.jpeg")
     decisao = clf.classificar(caminho, "image/jpeg", texto)
@@ -241,9 +231,7 @@ def test_ocr_abaixo_do_minimo_nao_casa_subregra(arquivo_temp):
 def test_subregra_preserva_pasta_destino_e_nome(arquivo_temp):
     """Quando OCR-curto casa, pasta_destino e nome_canonico saem do YAML normal."""
     caminho = arquivo_temp("verificacao.jpeg")
-    decisao = clf.classificar(
-        caminho, "image/jpeg", PREVIEW_CUPOM_CURTO_OK, pessoa="andre"
-    )
+    decisao = clf.classificar(caminho, "image/jpeg", PREVIEW_CUPOM_CURTO_OK, pessoa="andre")
     assert "nfs_fiscais/cupom_foto" in str(decisao.pasta_destino).replace("\\", "/")
     assert "andre" in str(decisao.pasta_destino)
     assert decisao.nome_canonico.startswith("CUPOM_")

@@ -191,8 +191,7 @@ def variantes_curtas(
             marcadores = regra.get("marcadores", []) or []
             if marcadores:
                 marcador_ok = any(
-                    _remover_acentos(str(m).upper()) in desc_upper_sem_acento
-                    for m in marcadores
+                    _remover_acentos(str(m).upper()) in desc_upper_sem_acento for m in marcadores
                 )
                 if not marcador_ok:
                     continue

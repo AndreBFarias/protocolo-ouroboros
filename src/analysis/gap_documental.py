@@ -99,9 +99,7 @@ def calcular_completude(
         return {}
 
     resumo: dict[str, dict[str, dict[str, Any]]] = defaultdict(
-        lambda: defaultdict(
-            lambda: {"total": 0, "com_doc": 0, "sem_doc": 0, "orfas": []}
-        )
+        lambda: defaultdict(lambda: {"total": 0, "com_doc": 0, "sem_doc": 0, "orfas": []})
     )
     for _, tx in subset.iterrows():
         mes_ref = str(tx.get("mes_ref", "sem-mes"))

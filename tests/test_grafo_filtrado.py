@@ -167,24 +167,16 @@ def grafo_sintetico(tmp_path: Path) -> GrafoDB:
         )
     categorias = []
     for i in range(3):
-        categorias.append(
-            db.upsert_node(tipo="categoria", nome_canonico=f"CAT-{i}", metadata={})
-        )
+        categorias.append(db.upsert_node(tipo="categoria", nome_canonico=f"CAT-{i}", metadata={}))
     transacoes = []
     for i in range(2):
         transacoes.append(
-            db.upsert_node(
-                tipo="transacao", nome_canonico=f"TX-{i}", metadata={"valor": -100}
-            )
+            db.upsert_node(tipo="transacao", nome_canonico=f"TX-{i}", metadata={"valor": -100})
         )
     # Liga tx0 -> fornecedor0 (grau 1 para fornecedor0)
-    db.adicionar_edge(
-        src_id=transacoes[0], dst_id=fornecedores[0], tipo="paga_para", peso=1.0
-    )
+    db.adicionar_edge(src_id=transacoes[0], dst_id=fornecedores[0], tipo="paga_para", peso=1.0)
     # Liga tx1 -> fornecedor1
-    db.adicionar_edge(
-        src_id=transacoes[1], dst_id=fornecedores[1], tipo="paga_para", peso=1.0
-    )
+    db.adicionar_edge(src_id=transacoes[1], dst_id=fornecedores[1], tipo="paga_para", peso=1.0)
     return db
 
 
@@ -199,18 +191,12 @@ class TestGrafoFiltrado:
         assert len(nodes) == 3
 
     def test_respeita_tipos(self, grafo_sintetico: GrafoDB) -> None:
-        nodes, _ = grafo_filtrado(
-            grafo_sintetico, tipos=["categoria"], incluir_orfaos=True
-        )
+        nodes, _ = grafo_filtrado(grafo_sintetico, tipos=["categoria"], incluir_orfaos=True)
         assert all(n["tipo"] == "categoria" for n in nodes)
         assert len(nodes) == 3
 
-    def test_orfaos_desligados_remove_grau_zero(
-        self, grafo_sintetico: GrafoDB
-    ) -> None:
-        nodes, _ = grafo_filtrado(
-            grafo_sintetico, tipos=["fornecedor"], incluir_orfaos=False
-        )
+    def test_orfaos_desligados_remove_grau_zero(self, grafo_sintetico: GrafoDB) -> None:
+        nodes, _ = grafo_filtrado(grafo_sintetico, tipos=["fornecedor"], incluir_orfaos=False)
         # Só fornecedores 0 e 1 têm grau > 0
         assert len(nodes) == 2
         assert all(n["grau"] >= 1 for n in nodes)

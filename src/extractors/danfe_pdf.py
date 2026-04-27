@@ -96,23 +96,15 @@ RE_MARCA_CANCELADA = re.compile(
 
 
 # Chave 44 formatada: 11 grupos de 4 dígitos com espaços opcionais
-RE_CHAVE_44_DIGITOS = re.compile(
-    r"((?:\d{4}\s*){10}\d{4})", re.MULTILINE
-)
-RE_NUMERO_NOTA = re.compile(
-    r"N[ºo°]\s*0*(\d{1,9})", re.IGNORECASE | re.UNICODE
-)
-RE_SERIE_NOTA = re.compile(
-    r"S[ÉE]RIE\s*0*(\d{1,3})", re.IGNORECASE | re.UNICODE
-)
+RE_CHAVE_44_DIGITOS = re.compile(r"((?:\d{4}\s*){10}\d{4})", re.MULTILINE)
+RE_NUMERO_NOTA = re.compile(r"N[ºo°]\s*0*(\d{1,9})", re.IGNORECASE | re.UNICODE)
+RE_SERIE_NOTA = re.compile(r"S[ÉE]RIE\s*0*(\d{1,3})", re.IGNORECASE | re.UNICODE)
 RE_DATA_EMISSAO = re.compile(
     r"DATA\s+DE\s+EMISS[ÃA]O\s*:?\s*(\d{2}/\d{2}/\d{4})",
     re.IGNORECASE | re.UNICODE,
 )
 RE_DATA_DDMMYYYY_GENERICA = re.compile(r"(\d{2}/\d{2}/\d{4})")
-RE_CFOP_CABECALHO = re.compile(
-    r"CFOP\s*:?\s*(\d{4})", re.IGNORECASE | re.UNICODE
-)
+RE_CFOP_CABECALHO = re.compile(r"CFOP\s*:?\s*(\d{4})", re.IGNORECASE | re.UNICODE)
 RE_TOTAL_NOTA = re.compile(
     r"VALOR\s+TOTAL\s+DA\s+NOTA\s*:?\s*R?\$?\s*([\d.,]+)",
     re.IGNORECASE | re.UNICODE,
@@ -120,12 +112,8 @@ RE_TOTAL_NOTA = re.compile(
 
 # Emitente: primeira linha que começa com "Emitente:" ou a primeira linha com
 # CNPJ na faixa superior do documento (acima do bloco destinatário).
-RE_EMITENTE_ROTULO = re.compile(
-    r"Emitente\s*:?\s*([^\n]+)", re.IGNORECASE | re.UNICODE
-)
-RE_ENDERECO_ROTULO = re.compile(
-    r"Endere[çc]o\s*:?\s*([^\n]+)", re.IGNORECASE | re.UNICODE
-)
+RE_EMITENTE_ROTULO = re.compile(r"Emitente\s*:?\s*([^\n]+)", re.IGNORECASE | re.UNICODE)
+RE_ENDERECO_ROTULO = re.compile(r"Endere[çc]o\s*:?\s*([^\n]+)", re.IGNORECASE | re.UNICODE)
 
 
 # ============================================================================
@@ -230,19 +218,13 @@ class ExtratorDanfePDF(ExtratorBase):
                     )
                     continue
                 try:
-                    ingerir_documento_fiscal(
-                        grafo, doc, itens, caminho_arquivo=self.caminho
-                    )
+                    ingerir_documento_fiscal(grafo, doc, itens, caminho_arquivo=self.caminho)
                 except ValueError as erro:
-                    self.logger.warning(
-                        "DANFE inválida em %s: %s", self.caminho.name, erro
-                    )
+                    self.logger.warning("DANFE inválida em %s: %s", self.caminho.name, erro)
         finally:
             if criou_grafo_localmente:
                 grafo.fechar()
-        self.logger.info(
-            "%d DANFE(s) ingerida(s) a partir de %s", len(danfes), self.caminho.name
-        )
+        self.logger.info("%d DANFE(s) ingerida(s) a partir de %s", len(danfes), self.caminho.name)
         return []
 
     # --------------------------------------------------------------------
@@ -350,7 +332,9 @@ def _parse_cabecalho_danfe(texto: str) -> dict[str, Any] | None:
     if cnpj_chave and cnpj_chave != cnpj_emitente:
         logger.warning(
             "CNPJ divergente em DANFE %s: texto=%s, chave=%s -- usando texto",
-            chave, cnpj_emitente, cnpj_chave,
+            chave,
+            cnpj_emitente,
+            cnpj_chave,
         )
 
     numero = _match_grupo(RE_NUMERO_NOTA, texto)
@@ -404,9 +388,7 @@ def _parse_itens_danfe(texto: str) -> list[dict[str, Any]]:
         # Linha que não casou como item: tenta anexar como continuação de
         # descrição do item anterior, desde que não seja cabeçalho/ruído.
         if itens and not _e_cabecalho_ou_ruido(linha_stripada):
-            itens[-1]["descricao"] = _limpar_espacos(
-                f"{itens[-1]['descricao']} {linha_stripada}"
-            )
+            itens[-1]["descricao"] = _limpar_espacos(f"{itens[-1]['descricao']} {linha_stripada}")
     return itens
 
 

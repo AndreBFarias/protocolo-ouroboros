@@ -649,9 +649,7 @@ def executar(mes: str | None = None, processar_tudo: bool = False) -> None:
     if caminho_grafo_hol.exists():
         with GrafoDB(caminho_grafo_hol) as grafo_hol:
             grafo_hol.criar_schema()
-            contracheques = processar_holerites(
-                DIR_RAW / "andre" / "holerites", grafo=grafo_hol
-            )
+            contracheques = processar_holerites(DIR_RAW / "andre" / "holerites", grafo=grafo_hol)
     else:
         contracheques = processar_holerites(DIR_RAW / "andre" / "holerites")
 

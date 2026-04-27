@@ -179,7 +179,7 @@ def _renderizar_resumo(termo: str, resultados: dict[str, list[dict]]) -> None:
         f'<strong style="color: var(--color-destaque);">"{termo}"</strong></p>'
         '<p style="color: var(--color-texto-sec); font-size: var(--font-label);'
         f' margin: 0;">{total} itens encontrados</p>'
-        '</div>',
+        "</div>",
         unsafe_allow_html=True,
     )
 

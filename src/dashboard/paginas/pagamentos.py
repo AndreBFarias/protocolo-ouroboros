@@ -215,9 +215,7 @@ def _renderizar_pix(extrato: pd.DataFrame) -> None:
     total = float(top["total"].sum())
     qtd_beneficiarios = int(top.shape[0])
     col1, col2 = st.columns(2)
-    total_br = (
-        f"R$ {total:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-    )
+    total_br = f"R$ {total:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
     # Sprint 92c: metric_semantic_html substitui st.metric (texto_sec neutro,
     # cor por sinal quando aplicavel). Aqui, sem delta, fica neutro.
     col1.markdown(
@@ -247,8 +245,7 @@ def _renderizar_pix(extrato: pd.DataFrame) -> None:
     st.plotly_chart(fig, use_container_width=True)
 
     st.markdown(
-        f'<p style="font-size: {FONTE_CORPO}px; color: {CORES["texto_sec"]};">'
-        "Tabela completa:</p>",
+        f'<p style="font-size: {FONTE_CORPO}px; color: {CORES["texto_sec"]};">Tabela completa:</p>',
         unsafe_allow_html=True,
     )
     st.dataframe(top, use_container_width=True, hide_index=True)
@@ -271,8 +268,9 @@ def _renderizar_credito(extrato: pd.DataFrame) -> None:
         )
         total = float(df_banco["valor_total"].sum())
         st.caption(
-            f"{len(df_banco)} meses — total R$ "
-            f"{total:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+            f"{len(df_banco)} meses — total R$ {total:,.2f}".replace(",", "X")
+            .replace(".", ",")
+            .replace("X", ".")
         )
         fig = px.line(
             df_banco,

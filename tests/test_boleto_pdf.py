@@ -146,9 +146,7 @@ def test_extrai_vencimento_iso(tmp_path: Path):
     caminho.write_bytes(b"%PDF-")
 
     extrator = ExtratorBoletoPDF(caminho)
-    resultado = extrator.extrair_boleto(
-        caminho, texto_override=TEXTO_BOLETO_SEM_CNPJ
-    )
+    resultado = extrator.extrair_boleto(caminho, texto_override=TEXTO_BOLETO_SEM_CNPJ)
     documento = resultado["documento"]
     assert documento["vencimento"] == "2026-03-19"
     # data_emissao vem de "Data de emissão" e tem prioridade sobre "Data do documento"
@@ -160,9 +158,7 @@ def test_extrai_beneficiario_e_cnpj_real(tmp_path: Path):
     caminho.write_bytes(b"%PDF-")
 
     extrator = ExtratorBoletoPDF(caminho)
-    resultado = extrator.extrair_boleto(
-        caminho, texto_override=TEXTO_BOLETO_FORMATO_CONTINUO
-    )
+    resultado = extrator.extrair_boleto(caminho, texto_override=TEXTO_BOLETO_FORMATO_CONTINUO)
     documento = resultado["documento"]
     # CNPJ formatado vira só dígitos
     assert documento["cnpj_emitente"] == "12345678000190"

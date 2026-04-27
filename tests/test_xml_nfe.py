@@ -263,31 +263,23 @@ class TestCancelamento:
 
 
 class TestPodeProcessar:
-    def test_pode_processar_aceita_extensao_xml(
-        self, extrator: ExtratorXmlNFe, tmp_path: Path
-    ):
+    def test_pode_processar_aceita_extensao_xml(self, extrator: ExtratorXmlNFe, tmp_path: Path):
         arq = tmp_path / "andre" / "nfs_fiscais" / "xml" / "NFe.xml"
         arq.parent.mkdir(parents=True)
         arq.write_bytes(_carregar_bytes("nfe_varejo_3itens.xml"))
         assert extrator.pode_processar(arq) is True
 
-    def test_rejeita_extensao_nao_xml(
-        self, extrator: ExtratorXmlNFe, tmp_path: Path
-    ):
+    def test_rejeita_extensao_nao_xml(self, extrator: ExtratorXmlNFe, tmp_path: Path):
         arq = tmp_path / "nfe.pdf"
         arq.write_bytes(b"%PDF-1.4\n")
         assert extrator.pode_processar(arq) is False
 
-    def test_rejeita_xml_sem_namespace_sefaz(
-        self, extrator: ExtratorXmlNFe, tmp_path: Path
-    ):
+    def test_rejeita_xml_sem_namespace_sefaz(self, extrator: ExtratorXmlNFe, tmp_path: Path):
         arq = tmp_path / "outro.xml"
         arq.write_bytes(_carregar_bytes("nao_e_nfe.xml"))
         assert extrator.pode_processar(arq) is False
 
-    def test_rejeita_xml_malformado(
-        self, extrator: ExtratorXmlNFe, tmp_path: Path
-    ):
+    def test_rejeita_xml_malformado(self, extrator: ExtratorXmlNFe, tmp_path: Path):
         arq = tmp_path / "quebrado.xml"
         arq.write_bytes(b"<?xml version='1.0'?><nfe><infNFe")
         # ET.ParseError eh capturado em pode_processar -> False.
@@ -314,9 +306,7 @@ class TestGrafoXmlNFe:
         assert len(xmls) == 1
         doc, itens = xmls[0]
         assert len(itens) == 3
-        doc_id = ingerir_documento_fiscal(
-            grafo_temp, doc, itens, caminho_arquivo=extrator.caminho
-        )
+        doc_id = ingerir_documento_fiscal(grafo_temp, doc, itens, caminho_arquivo=extrator.caminho)
         assert doc_id > 0
 
         stats = grafo_temp.estatisticas()
@@ -328,9 +318,7 @@ class TestGrafoXmlNFe:
         assert stats["edges_por_tipo"].get("ocorre_em") == 1
         assert stats["edges_por_tipo"].get("contem_item") == 3
 
-    def test_ingestao_idempotente(
-        self, extrator: ExtratorXmlNFe, grafo_temp: GrafoDB
-    ):
+    def test_ingestao_idempotente(self, extrator: ExtratorXmlNFe, grafo_temp: GrafoDB):
         xmls = extrator.extrair_xmls(
             extrator.caminho,
             conteudo_override=_carregar_bytes("nfe_varejo_3itens.xml"),
@@ -424,9 +412,7 @@ class TestGrafoXmlNFe:
         # persistidos em meta do nó `item` via propagação opcional do
         # `ingerir_documento_fiscal`).
         for item in itens:
-            chave_item = (
-                f"{doc['cnpj_emitente']}|{doc['data_emissao'][:10]}|{item['codigo']}"
-            )
+            chave_item = f"{doc['cnpj_emitente']}|{doc['data_emissao'][:10]}|{item['codigo']}"
             node = grafo_temp.buscar_node("item", chave_item)
             assert node is not None
             assert node.metadata.get("icms_valor") == item["icms_valor"]
@@ -478,9 +464,7 @@ class TestContratoExtrair:
         assert stats["nodes_por_tipo"].get("documento") == 1
         assert stats["nodes_por_tipo"].get("item") == 3
 
-    def test_extrair_cancelada_nao_ingere(
-        self, tmp_path: Path, grafo_temp: GrafoDB
-    ):
+    def test_extrair_cancelada_nao_ingere(self, tmp_path: Path, grafo_temp: GrafoDB):
         arq = tmp_path / "nfe_cancelada.xml"
         arq.write_bytes(_carregar_bytes("nfe_cancelada.xml"))
         extrator = ExtratorXmlNFe(arq, grafo=grafo_temp)

@@ -108,9 +108,7 @@ class ExtratorNubankCartao(ExtratorBase):
             # (`Nubank (PJ)`) quando uma compra recorrente (ex: assinatura
             # mensal) aparece em ambos com mesmo `(date, title, amount)`.
             # Sem o sufixo, dedup nível 1 por identificador descartava a PJ.
-            identificador: str = self._gerar_hash(
-                data_str, titulo, valor_str, banco_origem
-            )
+            identificador: str = self._gerar_hash(data_str, titulo, valor_str, banco_origem)
 
             return Transacao(
                 data=data_transacao,

@@ -43,8 +43,10 @@ def _testar_sync_relatorios(vault_tmp: Path, output_tmp: Path) -> ResultadoTeste
         passou = False
         detalhe = ""
         return ResultadoTeste(
-            nome="sync_relatorios", passou=False,
-            tempo=time.time() - inicio, erro=str(e),
+            nome="sync_relatorios",
+            passou=False,
+            tempo=time.time() - inicio,
+            erro=str(e),
         )
 
     return ResultadoTeste(
@@ -122,8 +124,10 @@ def _testar_notas_metas(vault_tmp: Path) -> ResultadoTeste:
         passou = False
         detalhe = ""
         return ResultadoTeste(
-            nome="notas_metas", passou=False,
-            tempo=time.time() - inicio, erro=str(e),
+            nome="notas_metas",
+            passou=False,
+            tempo=time.time() - inicio,
+            erro=str(e),
         )
 
     return ResultadoTeste(
@@ -151,27 +155,21 @@ def _testar_idempotencia(vault_tmp: Path, output_tmp: Path) -> ResultadoTeste:
             sincronizar_relatorios(output_tmp)
             conteudo_2 = destino.read_text(encoding="utf-8")
 
-        linhas_1 = [
-            linha for linha in conteudo_1.split("\n")
-            if not linha.startswith("created:")
-        ]
-        linhas_2 = [
-            linha for linha in conteudo_2.split("\n")
-            if not linha.startswith("created:")
-        ]
+        linhas_1 = [linha for linha in conteudo_1.split("\n") if not linha.startswith("created:")]
+        linhas_2 = [linha for linha in conteudo_2.split("\n") if not linha.startswith("created:")]
 
         passou = linhas_1 == linhas_2
         detalhe = (
-            "Idempotente (ignorando created)"
-            if passou
-            else "Conteúdo diverge entre execuções"
+            "Idempotente (ignorando created)" if passou else "Conteúdo diverge entre execuções"
         )
     except Exception as e:
         passou = False
         detalhe = ""
         return ResultadoTeste(
-            nome="idempotencia", passou=False,
-            tempo=time.time() - inicio, erro=str(e),
+            nome="idempotencia",
+            passou=False,
+            tempo=time.time() - inicio,
+            erro=str(e),
         )
 
     return ResultadoTeste(
@@ -201,7 +199,9 @@ def executar() -> ResultadoFase:
     fase.tempo_total = time.time() - inicio
     logger.info(
         "Fase obsidian: %d/%d testes OK em %.2fs",
-        fase.ok, fase.total, fase.tempo_total,
+        fase.ok,
+        fase.total,
+        fase.tempo_total,
     )
     return fase
 

@@ -83,9 +83,7 @@ def test_round_trip_xlsx_contem_identificador(tmp_path: Path):
         valor_gravado = ws.cell(row=row_idx, column=idx_ident).value
         assert valor_gravado == tx["identificador"]
         # Simetria bit-a-bit com recomputação direta:
-        esperado = hash_transacao_canonico(
-            tx["data"], tx["valor"], tx["local"], tx["banco_origem"]
-        )
+        esperado = hash_transacao_canonico(tx["data"], tx["valor"], tx["local"], tx["banco_origem"])
         assert valor_gravado == esperado
     wb.close()
 
@@ -119,9 +117,7 @@ def test_ciclo_87_2_funciona_em_runtime_com_grafo(tmp_path: Path):
         assert hash_t in ids
 
         # Tx sem documento (outro hash) NÃO aparece
-        outro = hash_transacao_canonico(
-            date(2026, 3, 16), 50.0, "Padaria X", "nubank_cc"
-        )
+        outro = hash_transacao_canonico(date(2026, 3, 16), 50.0, "Padaria X", "nubank_cc")
         assert outro not in ids
     finally:
         db.fechar()

@@ -54,8 +54,7 @@ def grafo_busca(tmp_path, monkeypatch):
     )
     # fornecedor -- razão social tem "NEOENERGIA"
     conn.execute(
-        "INSERT INTO node (id, tipo, nome_canonico, aliases, metadata) "
-        "VALUES (?, ?, ?, ?, ?)",
+        "INSERT INTO node (id, tipo, nome_canonico, aliases, metadata) VALUES (?, ?, ?, ?, ?)",
         (
             1,
             "fornecedor",
@@ -66,8 +65,7 @@ def grafo_busca(tmp_path, monkeypatch):
     )
     # documento ligado ao fornecedor
     conn.execute(
-        "INSERT INTO node (id, tipo, nome_canonico, metadata) "
-        "VALUES (?, ?, ?, ?)",
+        "INSERT INTO node (id, tipo, nome_canonico, metadata) VALUES (?, ?, ?, ?)",
         (
             2,
             "documento",
@@ -79,8 +77,7 @@ def grafo_busca(tmp_path, monkeypatch):
     )
     # transação ligada ao fornecedor
     conn.execute(
-        "INSERT INTO node (id, tipo, nome_canonico, metadata) "
-        "VALUES (?, ?, ?, ?)",
+        "INSERT INTO node (id, tipo, nome_canonico, metadata) VALUES (?, ?, ?, ?)",
         (
             3,
             "transacao",
@@ -91,8 +88,7 @@ def grafo_busca(tmp_path, monkeypatch):
     )
     # item que menciona energia
     conn.execute(
-        "INSERT INTO node (id, tipo, nome_canonico, metadata) "
-        "VALUES (?, ?, ?, ?)",
+        "INSERT INTO node (id, tipo, nome_canonico, metadata) VALUES (?, ?, ?, ?)",
         (
             4,
             "item",
@@ -103,8 +99,7 @@ def grafo_busca(tmp_path, monkeypatch):
     )
     # fornecedor que NÃO casa com termo "neoenergia"
     conn.execute(
-        "INSERT INTO node (id, tipo, nome_canonico, metadata) "
-        "VALUES (?, ?, ?, ?)",
+        "INSERT INTO node (id, tipo, nome_canonico, metadata) VALUES (?, ?, ?, ?)",
         (
             5,
             "fornecedor",
@@ -130,9 +125,7 @@ def grafo_busca(tmp_path, monkeypatch):
 
 
 class TestBuscarGlobal:
-    def test_retorna_quatro_secoes_vazias_quando_grafo_ausente(
-        self, tmp_path, monkeypatch
-    ):
+    def test_retorna_quatro_secoes_vazias_quando_grafo_ausente(self, tmp_path, monkeypatch):
         inexistente = tmp_path / "nao_existe.sqlite"
         monkeypatch.setattr(dashboard_dados, "CAMINHO_GRAFO", inexistente)
         dashboard_dados.buscar_global.clear()
@@ -189,9 +182,7 @@ class TestBuscarGlobal:
         r2 = dashboard_dados.buscar_global("NEOENERGIA")
         assert len(r1["fornecedores"]) == len(r2["fornecedores"])
 
-    def test_agregados_fornecedor_contam_documentos_e_transacoes(
-        self, grafo_busca
-    ):
+    def test_agregados_fornecedor_contam_documentos_e_transacoes(self, grafo_busca):
         """Fornecedor retornado deve carregar agregados (docs + total)."""
         resultado = dashboard_dados.buscar_global("neoenergia")
         forn = resultado["fornecedores"][0]
@@ -312,9 +303,7 @@ class TestRenderizacaoStreamlit:
         seção de resultados. Decisão explícita do supervisor: input é
         permanente no topo, não modal.
         """
-        fonte = (
-            RAIZ / "src" / "dashboard" / "paginas" / "busca.py"
-        ).read_text(encoding="utf-8")
+        fonte = (RAIZ / "src" / "dashboard" / "paginas" / "busca.py").read_text(encoding="utf-8")
         idx_input = fonte.find("st.text_input")
         idx_fornecedores = fonte.find('"Fornecedores encontrados')
         idx_timeline = fonte.find('"Timeline')

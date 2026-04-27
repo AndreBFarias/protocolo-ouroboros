@@ -276,9 +276,7 @@ class TestConfiancaParcial:
         layouts = _carregar_layouts()
         layout = _detectar_layout("Nubank\nValor R$ 50,00\nData: 15/03/2026", layouts)
         assert layout is not None
-        dados = _aplicar_layout(
-            layout, "Nubank\nValor R$ 50,00\nData: 15/03/2026"
-        )
+        dados = _aplicar_layout(layout, "Nubank\nValor R$ 50,00\nData: 15/03/2026")
         assert dados["valor"] == pytest.approx(50.0)
         assert dados["data"] == "2026-03-15"
         assert dados["confianca"] == pytest.approx(0.67, abs=0.01)
@@ -318,12 +316,8 @@ class TestCnpjPlaceholder:
 
 
 class TestFluxoCompleto:
-    def test_pix_nubank_via_override(
-        self, extrator: ExtratorReciboNaoFiscal
-    ):
-        resultado = extrator.extrair_recibo(
-            extrator.caminho, texto_override=_ler(PIX_NUBANK)
-        )
+    def test_pix_nubank_via_override(self, extrator: ExtratorReciboNaoFiscal):
+        resultado = extrator.extrair_recibo(extrator.caminho, texto_override=_ler(PIX_NUBANK))
         assert resultado["layout"] == "pix_nubank"
         assert resultado["confianca"] == pytest.approx(1.0)
         assert resultado["dados"]["valor"] == pytest.approx(120.50)
@@ -331,45 +325,27 @@ class TestFluxoCompleto:
         assert resultado["documento"]["chave_44"].startswith("RECIBO|pix_nubank|")
         assert resultado["documento"]["cnpj_emitente"].startswith("_NAO_FISCAL_")
 
-    def test_voucher_ifood_via_override(
-        self, extrator: ExtratorReciboNaoFiscal
-    ):
-        resultado = extrator.extrair_recibo(
-            extrator.caminho, texto_override=_ler(VOUCHER_IFOOD)
-        )
+    def test_voucher_ifood_via_override(self, extrator: ExtratorReciboNaoFiscal):
+        resultado = extrator.extrair_recibo(extrator.caminho, texto_override=_ler(VOUCHER_IFOOD))
         assert resultado["layout"] == "voucher_ifood"
         assert resultado["dados"]["valor"] == pytest.approx(43.90)
         assert resultado["dados"]["descricao"] == "4578293"
 
-    def test_texto_ambiguo_retorna_layout_none(
-        self, extrator: ExtratorReciboNaoFiscal
-    ):
+    def test_texto_ambiguo_retorna_layout_none(self, extrator: ExtratorReciboNaoFiscal):
         """Acceptance: texto sem pista de layout -> layout None, confiança 0."""
-        resultado = extrator.extrair_recibo(
-            extrator.caminho, texto_override=_ler(TEXTO_AMBIGUO)
-        )
+        resultado = extrator.extrair_recibo(extrator.caminho, texto_override=_ler(TEXTO_AMBIGUO))
         assert resultado["layout"] is None
         assert resultado["confianca"] == 0.0
         assert resultado["documento"] == {}
 
-    def test_documento_tem_tipo_recibo_nao_fiscal(
-        self, extrator: ExtratorReciboNaoFiscal
-    ):
-        resultado = extrator.extrair_recibo(
-            extrator.caminho, texto_override=_ler(PIX_ITAU)
-        )
+    def test_documento_tem_tipo_recibo_nao_fiscal(self, extrator: ExtratorReciboNaoFiscal):
+        resultado = extrator.extrair_recibo(extrator.caminho, texto_override=_ler(PIX_ITAU))
         assert resultado["documento"]["tipo_documento"] == "recibo_nao_fiscal"
 
-    def test_chave_44_sintetica_determinista(
-        self, extrator: ExtratorReciboNaoFiscal
-    ):
+    def test_chave_44_sintetica_determinista(self, extrator: ExtratorReciboNaoFiscal):
         """Mesmo texto -> mesma chave (idempotente para grafo)."""
-        r1 = extrator.extrair_recibo(
-            extrator.caminho, texto_override=_ler(PIX_NUBANK)
-        )
-        r2 = extrator.extrair_recibo(
-            extrator.caminho, texto_override=_ler(PIX_NUBANK)
-        )
+        r1 = extrator.extrair_recibo(extrator.caminho, texto_override=_ler(PIX_NUBANK))
+        r2 = extrator.extrair_recibo(extrator.caminho, texto_override=_ler(PIX_NUBANK))
         assert r1["documento"]["chave_44"] == r2["documento"]["chave_44"]
 
 
@@ -493,14 +469,10 @@ class TestGrafoIngestao:
         ):
             extrator.extrair()
 
-        cursor = grafo_temp._conn.execute(
-            "SELECT COUNT(*) FROM node WHERE tipo = 'documento'"
-        )
+        cursor = grafo_temp._conn.execute("SELECT COUNT(*) FROM node WHERE tipo = 'documento'")
         assert cursor.fetchone()[0] == 1
 
-        cursor = grafo_temp._conn.execute(
-            "SELECT COUNT(*) FROM node WHERE tipo = 'fornecedor'"
-        )
+        cursor = grafo_temp._conn.execute("SELECT COUNT(*) FROM node WHERE tipo = 'fornecedor'")
         assert cursor.fetchone()[0] == 1  # CNPJ placeholder entra como fornecedor
 
     def test_recibo_sem_itens_individuais(
@@ -517,9 +489,7 @@ class TestGrafoIngestao:
         ):
             extrator.extrair()
 
-        cursor = grafo_temp._conn.execute(
-            "SELECT COUNT(*) FROM node WHERE tipo = 'item'"
-        )
+        cursor = grafo_temp._conn.execute("SELECT COUNT(*) FROM node WHERE tipo = 'item'")
         assert cursor.fetchone()[0] == 0
 
     def test_grafo_ingestao_idempotente(
@@ -537,9 +507,7 @@ class TestGrafoIngestao:
             extrator.extrair()
             extrator.extrair()
 
-        cursor = grafo_temp._conn.execute(
-            "SELECT COUNT(*) FROM node WHERE tipo = 'documento'"
-        )
+        cursor = grafo_temp._conn.execute("SELECT COUNT(*) FROM node WHERE tipo = 'documento'")
         assert cursor.fetchone()[0] == 1
 
 
@@ -570,9 +538,7 @@ class TestIntegracaoPipeline:
             "ExtratorDanfePDF",
         ):
             if nome_fiscal in nomes:
-                assert nomes.index("ExtratorReciboNaoFiscal") > nomes.index(
-                    nome_fiscal
-                )
+                assert nomes.index("ExtratorReciboNaoFiscal") > nomes.index(nome_fiscal)
 
 
 class TestPodeProcessar:
@@ -651,9 +617,7 @@ class TestLeituraPdfNativo:
         pdf_stub = extrator.caminho.with_suffix(".pdf")
         pdf_stub.write_bytes(b"%PDF-1.4 stub")
 
-        with patch(
-            "pdfplumber.open"
-        ) as mock_open:
+        with patch("pdfplumber.open") as mock_open:
             ctx = mock_open.return_value.__enter__.return_value
             ctx.pages = [_PaginaFake(_ler(PIX_ITAU))]
             texto, confidence = extrator._obter_texto(pdf_stub)

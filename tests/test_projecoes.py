@@ -25,12 +25,8 @@ def _fabricar_transacoes(
     transacoes: list[dict] = []
     for i in range(1, num_meses + 1):
         mes_ref = _mes(i)
-        transacoes.append(
-            {"mes_ref": mes_ref, "tipo": "Receita", "valor": receita_por_mes}
-        )
-        transacoes.append(
-            {"mes_ref": mes_ref, "tipo": "Despesa", "valor": despesa_por_mes}
-        )
+        transacoes.append({"mes_ref": mes_ref, "tipo": "Receita", "valor": receita_por_mes})
+        transacoes.append({"mes_ref": mes_ref, "tipo": "Despesa", "valor": despesa_por_mes})
     return transacoes
 
 
@@ -103,9 +99,7 @@ def test_transferencia_interna_nao_conta_no_saldo() -> None:
         transacoes.append({"mes_ref": mes_ref, "tipo": "Receita", "valor": 5000.0})
         transacoes.append({"mes_ref": mes_ref, "tipo": "Despesa", "valor": 3000.0})
         # Ruído: transferências internas de valor alto não devem afetar o ritmo
-        transacoes.append(
-            {"mes_ref": mes_ref, "tipo": "Transferência Interna", "valor": 50000.0}
-        )
+        transacoes.append({"mes_ref": mes_ref, "tipo": "Transferência Interna", "valor": 50000.0})
 
     ritmos = calcular_ritmos(transacoes)
 

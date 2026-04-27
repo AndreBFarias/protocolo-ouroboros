@@ -250,9 +250,7 @@ class TestSeveridadeProposta:
 class TestRenderizacaoStreamlit:
     """Testes de renderização usando streamlit.testing.v1.AppTest."""
 
-    def test_pagina_renderiza_sem_crash_com_grafo_ausente(
-        self, tmp_path, monkeypatch
-    ):
+    def test_pagina_renderiza_sem_crash_com_grafo_ausente(self, tmp_path, monkeypatch):
         """Graceful degradation: grafo ausente mostra warning, não crasha."""
         from streamlit.testing.v1 import AppTest
 

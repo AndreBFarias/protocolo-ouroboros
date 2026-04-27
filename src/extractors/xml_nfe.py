@@ -156,19 +156,13 @@ class ExtratorXmlNFe(ExtratorBase):
                     )
                     continue
                 try:
-                    ingerir_documento_fiscal(
-                        grafo, doc, itens, caminho_arquivo=self.caminho
-                    )
+                    ingerir_documento_fiscal(grafo, doc, itens, caminho_arquivo=self.caminho)
                 except ValueError as erro:
-                    self.logger.warning(
-                        "XML NFe inválido em %s: %s", self.caminho.name, erro
-                    )
+                    self.logger.warning("XML NFe inválido em %s: %s", self.caminho.name, erro)
         finally:
             if criou_grafo_localmente:
                 grafo.fechar()
-        self.logger.info(
-            "%d XML NFe ingerido(s) a partir de %s", len(xmls), self.caminho.name
-        )
+        self.logger.info("%d XML NFe ingerido(s) a partir de %s", len(xmls), self.caminho.name)
         return []
 
     # ------------------------------------------------------------------
@@ -296,7 +290,9 @@ def _parse_cabecalho(root: ET.Element) -> dict[str, Any] | None:
     if cnpj_chave and cnpj_chave != cnpj_emitente:
         logger.warning(
             "CNPJ divergente em XML NFe %s: emit=%s, chave=%s -- usando emit",
-            chave, cnpj_emitente, cnpj_chave,
+            chave,
+            cnpj_emitente,
+            cnpj_chave,
         )
 
     numero = _texto(ide, "nfe:nNF") if ide is not None else None
@@ -454,9 +450,7 @@ def _item_de_det(det: ET.Element) -> dict[str, Any] | None:
     }
 
 
-def _tributo_valor(
-    imposto: ET.Element | None, grupo: str, tag_valor: str
-) -> float | None:
+def _tributo_valor(imposto: ET.Element | None, grupo: str, tag_valor: str) -> float | None:
     """Busca o valor de um tributo dentro de `<imposto>`.
 
     Cada grupo (ICMS/IPI/PIS/COFINS) pode ter várias tags-filho para

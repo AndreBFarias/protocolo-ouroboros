@@ -88,9 +88,7 @@ class TestVisaoGeralDrillDown:
         extrato = _extrato_sintetico_3_meses()
         visao_geral._grafico_barras_historico(extrato, "2026-03")
 
-        assert len(fake.plot_calls) == 1, (
-            "aplicar_drilldown chama plotly_chart exatamente uma vez"
-        )
+        assert len(fake.plot_calls) == 1, "aplicar_drilldown chama plotly_chart exatamente uma vez"
         chamada = fake.plot_calls[0]
         fig = chamada["fig"]
 
@@ -170,16 +168,17 @@ class TestBarChartGrafoObsidianDrillDown:
         assert kwargs.get("on_select") == "rerun"
         assert kwargs.get("key") == "bar_fornecedor"
 
-    def test_bar_chart_vazio_nao_chama_plotly_chart(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_bar_chart_vazio_nao_chama_plotly_chart(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Lista vazia: aviso em markdown, sem plotly_chart."""
         fake = _FakeSt()
         monkeypatch.setitem(sys.modules, "streamlit", fake)
         monkeypatch.setattr(grafo_obsidian, "st", fake)
 
         grafo_obsidian._bar_chart(
-            [], titulo="Top 10 fornecedores", cor="#ff79c6", key="bar_fornecedor",
+            [],
+            titulo="Top 10 fornecedores",
+            cor="#ff79c6",
+            key="bar_fornecedor",
             drilldown_campo="fornecedor",
         )
         assert fake.plot_calls == []
@@ -212,13 +211,9 @@ class TestAcceptanceCritico871:
         from pathlib import Path
 
         paginas = Path(__file__).resolve().parents[1] / "src/dashboard/paginas"
-        com_drill = [
-            p for p in paginas.glob("*.py") if "aplicar_drilldown" in p.read_text()
-        ]
+        com_drill = [p for p in paginas.glob("*.py") if "aplicar_drilldown" in p.read_text()]
         nomes = sorted(p.name for p in com_drill)
-        assert len(com_drill) >= 4, (
-            f"Sprint 87.1 exige >=4 páginas com drill-down. Hoje: {nomes}"
-        )
+        assert len(com_drill) >= 4, f"Sprint 87.1 exige >=4 páginas com drill-down. Hoje: {nomes}"
         # Garantia explícita dos 4 arquivos-alvo do spec
         assert "extrato.py" in nomes
         assert "categorias.py" in nomes

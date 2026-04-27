@@ -129,9 +129,7 @@ class TestPlanejarRoteamento:
         arquivo.write_bytes(conteudo)
         return arquivo
 
-    def test_nota_md_ficam_na_origem(
-        self, yaml_sintetico: Path, tmp_path: Path
-    ) -> None:
+    def test_nota_md_ficam_na_origem(self, yaml_sintetico: Path, tmp_path: Path) -> None:
         inbox = tmp_path / "vault" / "Inbox"
         self._criar_arquivo(inbox, "minha-nota.md", b"# texto livre")
         cfg = cb.carregar_config(yaml_sintetico)
@@ -140,9 +138,7 @@ class TestPlanejarRoteamento:
         assert plano[0].acao == "skip_nota"
         assert plano[0].origem.name == "minha-nota.md"
 
-    def test_extensao_nao_suportada_skip(
-        self, yaml_sintetico: Path, tmp_path: Path
-    ) -> None:
+    def test_extensao_nao_suportada_skip(self, yaml_sintetico: Path, tmp_path: Path) -> None:
         inbox = tmp_path / "vault" / "Inbox"
         self._criar_arquivo(inbox, "app.bin", b"\x00")
         cfg = cb.carregar_config(yaml_sintetico)
@@ -185,9 +181,7 @@ class TestPlanejarRoteamento:
         assert plano[0].tipo == "boleto_servico"
         assert plano[0].destino == destino_sim
 
-    def test_varredura_nao_recursiva(
-        self, yaml_sintetico: Path, tmp_path: Path
-    ) -> None:
+    def test_varredura_nao_recursiva(self, yaml_sintetico: Path, tmp_path: Path) -> None:
         """Adapter não desce em Inbox/Pendentes/ — é domínio do motor do vault."""
         inbox = tmp_path / "vault" / "Inbox"
         pendentes = inbox / "Pendentes"
@@ -198,9 +192,7 @@ class TestPlanejarRoteamento:
         # Nada deve aparecer: varredura é rasa
         assert len(plano) == 0
 
-    def test_source_inexistente_nao_quebra(
-        self, tmp_path: Path
-    ) -> None:
+    def test_source_inexistente_nao_quebra(self, tmp_path: Path) -> None:
         yaml_path = tmp_path / "cfg.yaml"
         yaml_path.write_text(
             textwrap.dedent(
@@ -228,9 +220,7 @@ class TestPlanejarRoteamento:
 
 
 class TestPreservarOriginal:
-    def test_copia_criada_com_sha256_prefixo(
-        self, yaml_sintetico: Path, tmp_path: Path
-    ) -> None:
+    def test_copia_criada_com_sha256_prefixo(self, yaml_sintetico: Path, tmp_path: Path) -> None:
         inbox = tmp_path / "vault" / "Inbox"
         arquivo = inbox / "fatura.pdf"
         conteudo = b"%PDF-1.4\n%EOF"
@@ -244,9 +234,7 @@ class TestPreservarOriginal:
         sha = hashlib.sha256(conteudo).hexdigest()[:16]
         assert destino.name == f"{sha}.pdf"
 
-    def test_idempotente_nao_sobrescreve(
-        self, yaml_sintetico: Path, tmp_path: Path
-    ) -> None:
+    def test_idempotente_nao_sobrescreve(self, yaml_sintetico: Path, tmp_path: Path) -> None:
         inbox = tmp_path / "vault" / "Inbox"
         arquivo = inbox / "a.pdf"
         arquivo.write_bytes(b"conteudo")
@@ -287,9 +275,7 @@ class TestPreservarOriginal:
 
 
 class TestForbiddenZones:
-    def test_arquivo_em_trabalho_e_ignorado(
-        self, tmp_path: Path
-    ) -> None:
+    def test_arquivo_em_trabalho_e_ignorado(self, tmp_path: Path) -> None:
         yaml_path = tmp_path / "cfg.yaml"
         inbox = tmp_path / "vault" / "Inbox"
         trabalho = inbox / "Trabalho"

@@ -60,8 +60,10 @@ def _testar_abas_existem(xlsx_path: Path) -> ResultadoTeste:
         passou = False
         detalhe = ""
         return ResultadoTeste(
-            nome="abas_existem", passou=False,
-            tempo=time.time() - inicio, erro=str(e),
+            nome="abas_existem",
+            passou=False,
+            tempo=time.time() - inicio,
+            erro=str(e),
         )
 
     return ResultadoTeste(
@@ -85,17 +87,15 @@ def _testar_colunas_extrato(xlsx_path: Path) -> ResultadoTeste:
         faltando = [c for c in COLUNAS_EXTRATO if c not in cabecalho]
         passou = len(faltando) == 0
 
-        detalhe = (
-            f"Colunas OK: {len(cabecalho)}"
-            if passou
-            else f"Faltando: {', '.join(faltando)}"
-        )
+        detalhe = f"Colunas OK: {len(cabecalho)}" if passou else f"Faltando: {', '.join(faltando)}"
     except Exception as e:
         passou = False
         detalhe = ""
         return ResultadoTeste(
-            nome="colunas_extrato", passou=False,
-            tempo=time.time() - inicio, erro=str(e),
+            nome="colunas_extrato",
+            passou=False,
+            tempo=time.time() - inicio,
+            erro=str(e),
         )
 
     return ResultadoTeste(
@@ -122,8 +122,10 @@ def _testar_contagem_linhas(xlsx_path: Path, esperado: int) -> ResultadoTeste:
         passou = False
         detalhe = ""
         return ResultadoTeste(
-            nome="contagem_linhas", passou=False,
-            tempo=time.time() - inicio, erro=str(e),
+            nome="contagem_linhas",
+            passou=False,
+            tempo=time.time() - inicio,
+            erro=str(e),
         )
 
     return ResultadoTeste(
@@ -149,21 +151,25 @@ def executar() -> ResultadoFase:
         try:
             gerar_xlsx(transacoes, xlsx_path)
         except Exception as e:
-            fase.testes.append(ResultadoTeste(
-                nome="gerar_xlsx",
-                passou=False,
-                tempo=time.time() - inicio,
-                erro=f"Falha ao gerar XLSX: {e}",
-            ))
+            fase.testes.append(
+                ResultadoTeste(
+                    nome="gerar_xlsx",
+                    passou=False,
+                    tempo=time.time() - inicio,
+                    erro=f"Falha ao gerar XLSX: {e}",
+                )
+            )
             fase.tempo_total = time.time() - inicio
             return fase
 
-        fase.testes.append(ResultadoTeste(
-            nome="gerar_xlsx",
-            passou=True,
-            tempo=0.0,
-            detalhe="XLSX gerado sem erros",
-        ))
+        fase.testes.append(
+            ResultadoTeste(
+                nome="gerar_xlsx",
+                passou=True,
+                tempo=0.0,
+                detalhe="XLSX gerado sem erros",
+            )
+        )
 
         fase.testes.append(_testar_abas_existem(xlsx_path))
         fase.testes.append(_testar_colunas_extrato(xlsx_path))
@@ -172,7 +178,9 @@ def executar() -> ResultadoFase:
     fase.tempo_total = time.time() - inicio
     logger.info(
         "Fase xlsx: %d/%d testes OK em %.2fs",
-        fase.ok, fase.total, fase.tempo_total,
+        fase.ok,
+        fase.total,
+        fase.tempo_total,
     )
     return fase
 

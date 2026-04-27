@@ -97,21 +97,15 @@ RE_PREMIO_LIQUIDO = compilar_regex_tolerante(
     r"PR" + GLYPH_E_ACENTO + r"MIO\s+L[ÍI]QUIDO\s*:?\s*([\d.,]+)"
 )
 RE_IOF = compilar_regex_tolerante(r"IOF\s*:?\s*([\d.,]+)")
-RE_PREMIO_TOTAL = compilar_regex_tolerante(
-    r"PR" + GLYPH_E_ACENTO + r"MIO\s+TOTAL\s*:?\s*([\d.,]+)"
-)
-RE_FORMA_PAGAMENTO = compilar_regex_tolerante(
-    r"Forma\s+de\s+Pagamento\s*:?\s*\n+([^\n]+)"
-)
+RE_PREMIO_TOTAL = compilar_regex_tolerante(r"PR" + GLYPH_E_ACENTO + r"MIO\s+TOTAL\s*:?\s*([\d.,]+)")
+RE_FORMA_PAGAMENTO = compilar_regex_tolerante(r"Forma\s+de\s+Pagamento\s*:?\s*\n+([^\n]+)")
 RE_DATA_EMISSAO = compilar_regex_tolerante(
     r"DATA\s+DA\s+EMISS" + GLYPH_A_ACENTO + r"O\s*:?\s*(\d{2}/\d{2}/\d{4})"
 )
 RE_VIGENCIA_INICIO = compilar_regex_tolerante(
     r"In[íi]cio\s+de\s+Vig[êe]ncia[^:\n]*:?\s*(\d{2}/\d{2}/\d{4})"
 )
-RE_VIGENCIA_FIM = compilar_regex_tolerante(
-    r"Fim\s+de\s+Vig[êe]ncia[^:\n]*:?\s*(\d{2}/\d{2}/\d{4})"
-)
+RE_VIGENCIA_FIM = compilar_regex_tolerante(r"Fim\s+de\s+Vig[êe]ncia[^:\n]*:?\s*(\d{2}/\d{2}/\d{4})")
 # `.{0,60}?` permite dígitos intermediários ("às 24h do dia") -- `[^\d]` cortaria
 # em "24" e quebraria o match. Limite 60 chars evita devorar até próximo bilhete.
 # `.{0,60}?` permite dígitos intermediários ("às 24h do dia") -- `[^\d]` cortaria
@@ -217,9 +211,7 @@ class ExtratorCupomGarantiaEstendida(ExtratorBase):
                 try:
                     ingerir_apolice(grafo, bilhete, caminho_arquivo=self.caminho)
                 except ValueError as erro:
-                    self.logger.warning(
-                        "bilhete inválido em %s: %s", self.caminho.name, erro
-                    )
+                    self.logger.warning("bilhete inválido em %s: %s", self.caminho.name, erro)
         finally:
             if criou_grafo_localmente:
                 grafo.fechar()

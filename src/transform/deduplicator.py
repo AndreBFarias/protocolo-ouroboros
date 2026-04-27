@@ -187,10 +187,7 @@ def marcar_transferencias_internas(transacoes: list[dict]) -> list[dict]:
 
             desc_saida = _descricao_para_match(t)
             desc_entrada = _descricao_para_match(entrada)
-            if not (
-                e_transferencia_do_casal(desc_saida)
-                or e_transferencia_do_casal(desc_entrada)
-            ):
+            if not (e_transferencia_do_casal(desc_saida) or e_transferencia_do_casal(desc_entrada)):
                 continue
 
             t["tipo"] = "Transferência Interna"

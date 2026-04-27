@@ -132,9 +132,7 @@ def test_filtro_xlsx_banco_somente() -> None:
 
 
 def test_filtro_xlsx_com_forma_pagamento() -> None:
-    filtro = FiltroXLSX.simples(
-        banco_origem="Itaú", formas_pagamento=("Débito",)
-    )
+    filtro = FiltroXLSX.simples(banco_origem="Itaú", formas_pagamento=("Débito",))
     df = filtro.aplicar(_df_fake())
     assert len(df) == 1
     assert df.iloc[0]["valor"] == 100.0
@@ -185,10 +183,7 @@ def test_selecionar_arquivo_sem_match(tmp_path: Path) -> None:
     diretorio.mkdir(parents=True)
     (diretorio / "ITAU_2026-02_abc.pdf").write_bytes(b"")
     definicao = BANCOS["itau_cc"]
-    assert (
-        _selecionar_arquivo_para_mes(definicao, tmp_path, "2026-12")
-        is None
-    )
+    assert _selecionar_arquivo_para_mes(definicao, tmp_path, "2026-12") is None
 
 
 def test_selecionar_arquivo_sem_mes_retorna_primeiro(tmp_path: Path) -> None:
@@ -397,9 +392,7 @@ def test_auditar_banco_real_nubank_cartao_mes_dominante() -> None:
     if not xlsx.exists() or not diretorio.exists():
         pytest.skip("dados reais ausentes; auditoria real não executada")
     definicao = BANCOS["nubank_cartao"]
-    resultado = auditar_banco(
-        definicao=definicao, raiz=raiz, mes_ref=None, xlsx=xlsx
-    )
+    resultado = auditar_banco(definicao=definicao, raiz=raiz, mes_ref=None, xlsx=xlsx)
     # Vereditos aceitaveis: OK ou DIVERGE. Nunca SEM_DADOS nesse cenario.
     assert resultado.veredito in {"OK", "DIVERGE"}, resultado.observacao
     assert resultado.n_extrator > 0
@@ -443,18 +436,33 @@ def test_aplicar_dedup_pipeline_respeita_identificador() -> None:
     """Duas tx com mesmo `_identificador` colapsam (nivel 1)."""
     d = date(2026, 3, 10)
     t1 = Transacao(
-        data=d, valor=100.0, descricao="AAAA", banco_origem="Itaú",
-        pessoa="André", forma_pagamento="Débito", tipo="Despesa",
+        data=d,
+        valor=100.0,
+        descricao="AAAA",
+        banco_origem="Itaú",
+        pessoa="André",
+        forma_pagamento="Débito",
+        tipo="Despesa",
         identificador="hash_abc",
     )
     t2 = Transacao(
-        data=d, valor=100.0, descricao="AAAA", banco_origem="Itaú",
-        pessoa="André", forma_pagamento="Débito", tipo="Despesa",
+        data=d,
+        valor=100.0,
+        descricao="AAAA",
+        banco_origem="Itaú",
+        pessoa="André",
+        forma_pagamento="Débito",
+        tipo="Despesa",
         identificador="hash_abc",
     )
     t3 = Transacao(
-        data=d, valor=50.0, descricao="BBBB", banco_origem="Itaú",
-        pessoa="André", forma_pagamento="Débito", tipo="Despesa",
+        data=d,
+        valor=50.0,
+        descricao="BBBB",
+        banco_origem="Itaú",
+        pessoa="André",
+        forma_pagamento="Débito",
+        tipo="Despesa",
         identificador="hash_xyz",
     )
     resultado = _aplicar_dedup_pipeline([t1, t2, t3])
@@ -467,12 +475,22 @@ def test_aplicar_dedup_pipeline_fuzzy_hash_colapsa() -> None:
     """Mesmo data+valor+descrição sem identificador cai no nível 2."""
     d = date(2026, 3, 10)
     t1 = Transacao(
-        data=d, valor=100.0, descricao="Ki-Sabor", banco_origem="C6",
-        pessoa="André", forma_pagamento="Débito", tipo="Despesa",
+        data=d,
+        valor=100.0,
+        descricao="Ki-Sabor",
+        banco_origem="C6",
+        pessoa="André",
+        forma_pagamento="Débito",
+        tipo="Despesa",
     )
     t2 = Transacao(
-        data=d, valor=100.0, descricao="Ki-Sabor", banco_origem="C6",
-        pessoa="André", forma_pagamento="Débito", tipo="Despesa",
+        data=d,
+        valor=100.0,
+        descricao="Ki-Sabor",
+        banco_origem="C6",
+        pessoa="André",
+        forma_pagamento="Débito",
+        tipo="Despesa",
     )
     resultado = _aplicar_dedup_pipeline([t1, t2])
     assert len(resultado) == 1
@@ -492,9 +510,13 @@ def test_auditar_banco_com_deduplicado_dir_completo(tmp_path: Path) -> None:
     # Cada instancia do fake retorna a mesma lista (simulando mesmo PDF).
     _ExtratorFake.TRANSACOES = [
         Transacao(
-            data=date(2026, 3, 10), valor=100.0, descricao="AAAA",
-            banco_origem="Itaú", pessoa="André",
-            forma_pagamento="Débito", tipo="Despesa",
+            data=date(2026, 3, 10),
+            valor=100.0,
+            descricao="AAAA",
+            banco_origem="Itaú",
+            pessoa="André",
+            forma_pagamento="Débito",
+            tipo="Despesa",
             identificador="hash_abc",
         ),
     ]
@@ -581,9 +603,13 @@ def test_ignorar_ti_remove_linhas_transferencia_interna_do_xlsx(tmp_path: Path) 
 
     _ExtratorFake.TRANSACOES = [
         Transacao(
-            data=date(2026, 3, 10), valor=100.0, descricao="compra",
-            banco_origem="C6", pessoa="André",
-            forma_pagamento="Crédito", tipo="Despesa",
+            data=date(2026, 3, 10),
+            valor=100.0,
+            descricao="compra",
+            banco_origem="C6",
+            pessoa="André",
+            forma_pagamento="Crédito",
+            tipo="Despesa",
             identificador="compra-1",
         ),
     ]
@@ -594,7 +620,8 @@ def test_ignorar_ti_remove_linhas_transferencia_interna_do_xlsx(tmp_path: Path) 
         extrator_cls=_ExtratorFake,
         diretorio_relativo=Path("data/raw/andre/c6_cartao"),
         filtro_xlsx=FiltroXLSX.simples(
-            banco_origem="C6", formas_pagamento=("Crédito",),
+            banco_origem="C6",
+            formas_pagamento=("Crédito",),
         ),
         extensoes=(".pdf",),
         aceita_ignorar_ti=True,
@@ -602,20 +629,34 @@ def test_ignorar_ti_remove_linhas_transferencia_interna_do_xlsx(tmp_path: Path) 
 
     df = pd.DataFrame(
         [
-            {"banco_origem": "C6", "forma_pagamento": "Crédito", "tipo": "Despesa",
-             "mes_ref": "2026-03", "valor": 100.0, "quem": "André"},
-            {"banco_origem": "C6", "forma_pagamento": "Crédito",
-             "tipo": "Transferência Interna",
-             "mes_ref": "2026-03", "valor": 6400.0, "quem": "André"},
+            {
+                "banco_origem": "C6",
+                "forma_pagamento": "Crédito",
+                "tipo": "Despesa",
+                "mes_ref": "2026-03",
+                "valor": 100.0,
+                "quem": "André",
+            },
+            {
+                "banco_origem": "C6",
+                "forma_pagamento": "Crédito",
+                "tipo": "Transferência Interna",
+                "mes_ref": "2026-03",
+                "valor": 6400.0,
+                "quem": "André",
+            },
         ]
     )
     (tmp_path / "xlsx.xlsx").write_bytes(b"")
 
     # SEM ignorar_ti: delta enorme por causa da TI (R$ 6.400,00).
     sem = auditar_banco(
-        definicao=definicao, raiz=tmp_path, mes_ref=None,
+        definicao=definicao,
+        raiz=tmp_path,
+        mes_ref=None,
         xlsx=tmp_path / "xlsx.xlsx",
-        carregador_xlsx=lambda _: df, modo_abrangente=True,
+        carregador_xlsx=lambda _: df,
+        modo_abrangente=True,
         ignorar_ti=False,
     )
     assert sem.veredito == "DIVERGE"
@@ -623,9 +664,12 @@ def test_ignorar_ti_remove_linhas_transferencia_interna_do_xlsx(tmp_path: Path) 
 
     # COM ignorar_ti: TI removida, delta zera.
     com = auditar_banco(
-        definicao=definicao, raiz=tmp_path, mes_ref=None,
+        definicao=definicao,
+        raiz=tmp_path,
+        mes_ref=None,
         xlsx=tmp_path / "xlsx.xlsx",
-        carregador_xlsx=lambda _: df, modo_abrangente=True,
+        carregador_xlsx=lambda _: df,
+        modo_abrangente=True,
         ignorar_ti=True,
     )
     assert com.veredito == "OK"
@@ -647,14 +691,19 @@ def test_ignorar_ti_nao_se_aplica_a_bancos_que_nao_aceitam(tmp_path: Path) -> No
 
     _ExtratorFake.TRANSACOES = [
         Transacao(
-            data=date(2026, 3, 10), valor=100.0, descricao="compra",
-            banco_origem="Itaú", pessoa="André",
-            forma_pagamento="Débito", tipo="Despesa",
+            data=date(2026, 3, 10),
+            valor=100.0,
+            descricao="compra",
+            banco_origem="Itaú",
+            pessoa="André",
+            forma_pagamento="Débito",
+            tipo="Despesa",
             identificador="c-1",
         ),
     ]
     definicao = DefinicaoBanco(
-        chave="itau_fake", titulo="Itaú fake",
+        chave="itau_fake",
+        titulo="Itaú fake",
         extrator_cls=_ExtratorFake,
         diretorio_relativo=Path("data/raw/andre/itau_cc"),
         filtro_xlsx=FiltroXLSX.simples(banco_origem="Itaú"),
@@ -663,18 +712,32 @@ def test_ignorar_ti_nao_se_aplica_a_bancos_que_nao_aceitam(tmp_path: Path) -> No
     )
     df = pd.DataFrame(
         [
-            {"banco_origem": "Itaú", "forma_pagamento": "Débito", "tipo": "Despesa",
-             "mes_ref": "2026-03", "valor": 100.0, "quem": "André"},
-            {"banco_origem": "Itaú", "forma_pagamento": "Débito",
-             "tipo": "Transferência Interna",
-             "mes_ref": "2026-03", "valor": 500.0, "quem": "André"},
+            {
+                "banco_origem": "Itaú",
+                "forma_pagamento": "Débito",
+                "tipo": "Despesa",
+                "mes_ref": "2026-03",
+                "valor": 100.0,
+                "quem": "André",
+            },
+            {
+                "banco_origem": "Itaú",
+                "forma_pagamento": "Débito",
+                "tipo": "Transferência Interna",
+                "mes_ref": "2026-03",
+                "valor": 500.0,
+                "quem": "André",
+            },
         ]
     )
     (tmp_path / "xlsx.xlsx").write_bytes(b"")
     resultado = auditar_banco(
-        definicao=definicao, raiz=tmp_path, mes_ref=None,
+        definicao=definicao,
+        raiz=tmp_path,
+        mes_ref=None,
         xlsx=tmp_path / "xlsx.xlsx",
-        carregador_xlsx=lambda _: df, modo_abrangente=True,
+        carregador_xlsx=lambda _: df,
+        modo_abrangente=True,
         ignorar_ti=True,  # flag acesa mas banco não aceita
     )
     assert resultado.n_xlsx == 2
@@ -714,36 +777,50 @@ def test_com_ofx_opt_in_por_banco(tmp_path: Path) -> None:
 
     _ExtratorFake.TRANSACOES = [
         Transacao(
-            data=date(2026, 3, 10), valor=100.0, descricao="compra",
-            banco_origem="Nubank", pessoa="André",
-            forma_pagamento="Crédito", tipo="Despesa",
+            data=date(2026, 3, 10),
+            valor=100.0,
+            descricao="compra",
+            banco_origem="Nubank",
+            pessoa="André",
+            forma_pagamento="Crédito",
+            tipo="Despesa",
             identificador="n-1",
         ),
     ]
     _ExtratorFake.EXTENSOES = (".csv",)
     definicao = DefinicaoBanco(
-        chave="nubank_fake", titulo="Nubank fake",
+        chave="nubank_fake",
+        titulo="Nubank fake",
         extrator_cls=_ExtratorFake,
         diretorio_relativo=Path("data/raw/andre/nubank_cartao"),
         filtro_xlsx=FiltroXLSX.simples(
-            banco_origem="Nubank", formas_pagamento=("Crédito",),
+            banco_origem="Nubank",
+            formas_pagamento=("Crédito",),
         ),
         extensoes=(".csv",),
         aceita_ofx_complementar=False,  # gate explícito
     )
     df = pd.DataFrame(
         [
-            {"banco_origem": "Nubank", "forma_pagamento": "Crédito",
-             "tipo": "Despesa", "mes_ref": "2026-03",
-             "valor": 100.0, "quem": "André"},
+            {
+                "banco_origem": "Nubank",
+                "forma_pagamento": "Crédito",
+                "tipo": "Despesa",
+                "mes_ref": "2026-03",
+                "valor": 100.0,
+                "quem": "André",
+            },
         ]
     )
     (tmp_path / "xlsx.xlsx").write_bytes(b"")
 
     resultado = auditar_banco(
-        definicao=definicao, raiz=tmp_path, mes_ref=None,
+        definicao=definicao,
+        raiz=tmp_path,
+        mes_ref=None,
         xlsx=tmp_path / "xlsx.xlsx",
-        carregador_xlsx=lambda _: df, modo_abrangente=True,
+        carregador_xlsx=lambda _: df,
+        modo_abrangente=True,
         com_ofx=True,  # flag acesa, banco recusa
     )
     # OFX foi ignorado: contagem do extrator é a do fake (1 tx).
@@ -762,9 +839,14 @@ def test_campos_novos_em_resultado_auditoria_sao_retrocompat(tmp_path: Path) -> 
     """Campos novos (`n_ofx_complementar`, `n_xlsx_ti_ignoradas` etc.) têm default
     que preserva retrocompat. Teste simples de contrato do dataclass."""
     r = ResultadoAuditoria(
-        banco="x", mes_ref=None, arquivo=None,
-        total_extrator=0.0, total_xlsx=0.0,
-        n_extrator=0, n_xlsx=0, veredito="SEM_DADOS",
+        banco="x",
+        mes_ref=None,
+        arquivo=None,
+        total_extrator=0.0,
+        total_xlsx=0.0,
+        n_extrator=0,
+        n_xlsx=0,
+        veredito="SEM_DADOS",
     )
     assert r.n_ofx_complementar == 0
     assert r.total_ofx_complementar == 0.0

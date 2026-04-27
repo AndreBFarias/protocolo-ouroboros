@@ -193,17 +193,11 @@ class TestPersistenciaSQLite:
         conn = sqlite3.connect(destino)
         try:
             tabelas = {
-                row[0]
-                for row in conn.execute(
-                    "SELECT name FROM sqlite_master WHERE type='table'"
-                )
+                row[0] for row in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")
             }
             assert "revisao" in tabelas
             indices = {
-                row[0]
-                for row in conn.execute(
-                    "SELECT name FROM sqlite_master WHERE type='index'"
-                )
+                row[0] for row in conn.execute("SELECT name FROM sqlite_master WHERE type='index'")
             }
             assert "idx_revisao_ts" in indices
             assert "idx_revisao_dimensao" in indices

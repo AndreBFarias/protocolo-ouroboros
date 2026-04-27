@@ -66,18 +66,19 @@ class TestVariantesCurtas:
         ],
     )
     def test_casos_da_spec(self, desc: str, banco: str, esperado: bool) -> None:
-        assert variantes_curtas(desc, banco) is esperado, (
-            f"desc={desc!r} banco={banco!r}"
-        )
+        assert variantes_curtas(desc, banco) is esperado, f"desc={desc!r} banco={banco!r}"
 
     def test_yaml_ausente_fail_closed(self, tmp_path) -> None:
         """Sem YAML, função retorna False (nunca marca como TI por default)."""
         resetar_cache()
-        assert variantes_curtas(
-            "ANDRE SILVA BATISTA FARIAS",
-            "Nubank",
-            caminho_yaml=str(tmp_path / "inexistente.yaml"),
-        ) is False
+        assert (
+            variantes_curtas(
+                "ANDRE SILVA BATISTA FARIAS",
+                "Nubank",
+                caminho_yaml=str(tmp_path / "inexistente.yaml"),
+            )
+            is False
+        )
 
     def test_rigoroso_nao_regressou(self) -> None:
         """Nível 1 do matcher continua rigoroso (Sprint 68b core)."""
@@ -106,9 +107,7 @@ class TestPromoverVariantesParaTI:
         assert resultado[0]["tipo"] == "Transferência Interna"
 
     def test_promove_receita_andre_curto_nubank_para_ti(self) -> None:
-        desc_original = (
-            "Transferência recebida pelo Pix - ANDRE SILVA BATISTA FARIAS"
-        )
+        desc_original = "Transferência recebida pelo Pix - ANDRE SILVA BATISTA FARIAS"
         transacoes = [
             {
                 "tipo": "Receita",

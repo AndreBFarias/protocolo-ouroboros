@@ -117,9 +117,7 @@ def grafo_com_boleto_e_transacao(tmp_path: Path):
 
 
 class TestEvidenciaTemTipoEdgeSemantico:
-    def test_candidatas_injetam_tipo_edge_semantico(
-        self, grafo_com_boleto_e_transacao
-    ) -> None:
+    def test_candidatas_injetam_tipo_edge_semantico(self, grafo_com_boleto_e_transacao) -> None:
         db, _tx_id, doc_id = grafo_com_boleto_e_transacao
         doc_node = db.buscar_node_por_id(doc_id)
         assert doc_node is not None
@@ -137,9 +135,7 @@ class TestEvidenciaTemTipoEdgeSemantico:
 
 
 class TestGTC01NatacaoSesc:
-    def test_confidence_alta_mesmo_sem_cnpj(
-        self, grafo_com_boleto_e_transacao
-    ) -> None:
+    def test_confidence_alta_mesmo_sem_cnpj(self, grafo_com_boleto_e_transacao) -> None:
         """Sem CNPJ que bate, o motor Sprint 48 deve dar pelo menos 0.80:
 
         score = 1.0 - |2 dias| * 0.10 - 0 * 0.50 = 0.80.

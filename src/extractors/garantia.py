@@ -281,17 +281,13 @@ def _identificar_fornecedor_conhecido(
     texto_norm = texto.upper()
 
     for fabricante in padroes.get("fabricantes", []) or []:
-        candidatos = [fabricante.get("nome", "")] + list(
-            fabricante.get("aliases", []) or []
-        )
+        candidatos = [fabricante.get("nome", "")] + list(fabricante.get("aliases", []) or [])
         for cand in candidatos:
             if cand and cand.upper() in texto_norm:
                 return {**fabricante, "_kind": "fabricante"}
 
     for varejista in padroes.get("varejistas", []) or []:
-        candidatos = [varejista.get("nome", "")] + list(
-            varejista.get("aliases", []) or []
-        )
+        candidatos = [varejista.get("nome", "")] + list(varejista.get("aliases", []) or [])
         for cand in candidatos:
             if cand and cand.upper() in texto_norm:
                 return {**varejista, "_kind": "varejista"}
@@ -340,9 +336,10 @@ def _parse_garantia(
 
     if not cnpj or not data_iso or not prazo_meses:
         logger.debug(
-            "garantia sem CNPJ/data/prazo extraíveis "
-            "(cnpj=%s, data=%s, prazo=%s)",
-            cnpj, data_iso, prazo_meses,
+            "garantia sem CNPJ/data/prazo extraíveis (cnpj=%s, data=%s, prazo=%s)",
+            cnpj,
+            data_iso,
+            prazo_meses,
         )
         return None
 
@@ -355,9 +352,7 @@ def _parse_garantia(
     if serial:
         chave_serial = serial
     else:
-        chave_serial = "NOSERIAL-" + hashlib.sha256(
-            texto[:80].encode("utf-8")
-        ).hexdigest()[:8]
+        chave_serial = "NOSERIAL-" + hashlib.sha256(texto[:80].encode("utf-8")).hexdigest()[:8]
     chave_garantia = f"GAR|{cnpj}|{chave_serial}|{data_iso}"
 
     data_inicio_dt = date.fromisoformat(data_iso)
@@ -368,9 +363,7 @@ def _parse_garantia(
     expirada = dias_restantes < 0
 
     fornecedor_nome = match_conhecido.get("nome") if match_conhecido else None
-    categoria_produto = (
-        match_conhecido.get("categoria_produto") if match_conhecido else None
-    )
+    categoria_produto = match_conhecido.get("categoria_produto") if match_conhecido else None
     tipo_garantia = (
         "fabricante"
         if match_conhecido and match_conhecido.get("_kind") == "fabricante"
@@ -380,9 +373,7 @@ def _parse_garantia(
     )
     # Garantia legal de 90 dias (CDC art. 26) quando prazo curto e categoria
     # é servico ou quando texto menciona "garantia legal" explicitamente.
-    if prazo_meses <= 3 or re.search(
-        r"garantia\s+legal", texto, re.IGNORECASE | re.UNICODE
-    ):
+    if prazo_meses <= 3 or re.search(r"garantia\s+legal", texto, re.IGNORECASE | re.UNICODE):
         tipo_garantia = "legal_cdc"
 
     return {
@@ -540,9 +531,7 @@ class ExtratorGarantiaFabricante(ExtratorBase):
         try:
             self.extrair_garantias(self.caminho)
         except Exception as erro:
-            self.logger.error(
-                "falha ao extrair garantia %s: %s", self.caminho.name, erro
-            )
+            self.logger.error("falha ao extrair garantia %s: %s", self.caminho.name, erro)
         return []
 
     # ------------------------------------------------------------------
@@ -568,9 +557,7 @@ class ExtratorGarantiaFabricante(ExtratorBase):
             return []
 
         if not RE_MARCA_GARANTIA.search(texto):
-            self.logger.debug(
-                "texto sem marcador de garantia em %s -- ignorado", caminho.name
-            )
+            self.logger.debug("texto sem marcador de garantia em %s -- ignorado", caminho.name)
             return []
 
         parsed = _parse_garantia(texto, padroes=self._padroes)
@@ -605,9 +592,7 @@ class ExtratorGarantiaFabricante(ExtratorBase):
             grafo.criar_schema()
             ingerir_garantia(grafo, parsed, caminho_arquivo=caminho)
         except ValueError as erro:
-            self.logger.warning(
-                "garantia inválida em %s: %s", caminho.name, erro
-            )
+            self.logger.warning("garantia inválida em %s: %s", caminho.name, erro)
         finally:
             if criou_grafo_localmente:
                 grafo.fechar()

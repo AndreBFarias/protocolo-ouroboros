@@ -44,9 +44,7 @@ def test_contrato_global_receita_razoavel(extrato_df: pd.DataFrame) -> None:
 
 def test_contrato_abril_2026_sem_juros_como_receita(extrato_df: pd.DataFrame) -> None:
     """Juros/IOF/Multa nunca podem ser Receita em abril/2026."""
-    abril = extrato_df[
-        (extrato_df["data"] >= "2026-04-01") & (extrato_df["data"] < "2026-05-01")
-    ]
+    abril = extrato_df[(extrato_df["data"] >= "2026-04-01") & (extrato_df["data"] < "2026-05-01")]
     juros_como_receita = abril[
         (abril["tipo"] == "Receita")
         & (abril["local"].str.contains("Juros|IOF|Multa", na=False, regex=True))
@@ -69,9 +67,7 @@ def test_contrato_abril_2026_receita_total_plausivel(extrato_df: pd.DataFrame) -
           refinar canonicalizer para reduzir esse componente.
         - Rendimentos e reembolsos (~R$ 500)
     """
-    abril = extrato_df[
-        (extrato_df["data"] >= "2026-04-01") & (extrato_df["data"] < "2026-05-01")
-    ]
+    abril = extrato_df[(extrato_df["data"] >= "2026-04-01") & (extrato_df["data"] < "2026-05-01")]
     receita_abril = abril[abril["tipo"] == "Receita"]["valor"].sum()
     assert receita_abril <= 20000, (
         f"Receita abril/2026 soma R$ {receita_abril:,.2f} (> 20000, valor provável de bug)"

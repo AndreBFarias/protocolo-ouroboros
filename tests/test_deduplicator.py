@@ -110,15 +110,9 @@ def test_nivel3_nao_confunde_mesma_pessoa(transacao):
 
 def test_deduplicar_orquestra_tres_niveis(transacao):
     """Smoke test: pipeline completo de dedup consolida todas as fases."""
-    t_hist = transacao(
-        valor=200.0, local="Loja Z", banco="Histórico", identificador=None
-    )
-    t_nova = transacao(
-        valor=200.0, local="Loja Z", banco="Nubank (PF)", identificador="uuid1"
-    )
-    t_dup = transacao(
-        valor=200.0, local="Loja Z", banco="Nubank (PF)", identificador="uuid1"
-    )
+    t_hist = transacao(valor=200.0, local="Loja Z", banco="Histórico", identificador=None)
+    t_nova = transacao(valor=200.0, local="Loja Z", banco="Nubank (PF)", identificador="uuid1")
+    t_dup = transacao(valor=200.0, local="Loja Z", banco="Nubank (PF)", identificador="uuid1")
     resultado = deduplicar([t_hist, t_nova, t_dup])
     assert len(resultado) == 1
 
