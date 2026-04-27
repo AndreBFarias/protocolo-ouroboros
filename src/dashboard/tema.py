@@ -20,7 +20,8 @@ DRACULA: dict[str, str] = {
     "background": "#282A36",
     "current_line": "#44475A",
     "foreground": "#F8F8F2",
-    "comment": "#6272A4",
+    # Sprint UX-111: customizado de #6272A4 para contraste maior contra fundo escuro.
+    "comment": "#c9c9cc",
     "cyan": "#8BE9FD",
     "green": "#50FA7B",
     "orange": "#FFB86C",
