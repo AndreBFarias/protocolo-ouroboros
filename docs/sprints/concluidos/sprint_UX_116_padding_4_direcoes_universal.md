@@ -49,7 +49,7 @@ sprint:
 
 # Sprint UX-116 -- Padding 4 direcoes universal
 
-**Status:** BACKLOG (P1, criada 2026-04-27, complementa UX-112)
+**Status:** CONCLUÍDA (commit `96a9e49`, 2026-04-27 — aguarda validação visual humana)
 
 UX-112 estabeleceu tokens `PADDING_INTERNO=24px` e `PADDING_CHIP=16px` mas aplicou apenas em inputs e expanders. Ainda existem viewports (especialmente apos navegacao) onde texto e controles ficam colados nas bordas do `.main .block-container` ou da sidebar. Sprint emite regras universais explicitas para 4 direcoes em ambos os retangulos.
 
