@@ -145,8 +145,12 @@ def test_listagem_de_paginas_nao_vazia() -> None:
     assert paginas, f"Nenhuma página encontrada em {RAIZ_PAGINAS}"
 
 
-# Sprint 92a.6: hero_titulo_html obrigatório nas 10 páginas numeradas.
-PAGINAS_COM_HERO_NUMERADO: frozenset[str] = frozenset(
+# Sprint 92a.6 instituiu badge numérico ('01' a '13') em 10 páginas.
+# Sprint UX-122 (2026-04-27) removeu os prefixos numéricos por serem
+# ruído visual arbitrário; o helper continua obrigatório, mas com badge
+# vazio. Lista mantida para garantir que todas as páginas seguem chamando
+# o helper canônico.
+PAGINAS_COM_HERO: frozenset[str] = frozenset(
     {
         "visao_geral.py",
         "categorias.py",
@@ -162,21 +166,22 @@ PAGINAS_COM_HERO_NUMERADO: frozenset[str] = frozenset(
 )
 
 
-@pytest.mark.parametrize("nome_pagina", sorted(PAGINAS_COM_HERO_NUMERADO), ids=lambda s: s)
-def test_pagina_tem_hero_titulo_numerado(nome_pagina: str) -> None:
-    """Sprint 92a.6: cada página numerada chama ``hero_titulo_html`` com badge.
+@pytest.mark.parametrize("nome_pagina", sorted(PAGINAS_COM_HERO), ids=lambda s: s)
+def test_pagina_chama_hero_titulo_sem_numero(nome_pagina: str) -> None:
+    """Sprint UX-122: cada página chama ``hero_titulo_html`` com badge vazio.
 
-    Garante que todas as 10 páginas do escopo P1 item 6 (exclui Catalogação,
-    Busca Global e Grafo + Obsidian) renderizam o cabeçalho canônico com
-    numeração ``"01"`` a ``"13"`` como primeiro argumento do helper.
+    Garante que todas as páginas do escopo histórico da Sprint 92a.6 seguem
+    invocando o helper, porém com primeiro arg ``""`` (sem prefixo numérico).
+    Substitui ``test_pagina_tem_hero_titulo_numerado`` antigo.
     """
     caminho = RAIZ_PAGINAS / nome_pagina
     arvore = ast.parse(caminho.read_text(encoding="utf-8"))
     numeros = _coletar_numeros_hero(arvore)
-    numeros_validos = [numero for _, numero in numeros if numero.strip().isdigit()]
-    assert numeros_validos, (
-        f"{nome_pagina} não chama hero_titulo_html com badge numérico "
-        f"(Sprint 92a.6). Chamadas encontradas: {numeros}"
+    assert numeros, f"{nome_pagina} não chama hero_titulo_html"
+    badges_vazios = [numero for _, numero in numeros if numero == ""]
+    assert badges_vazios, (
+        f"{nome_pagina} não chama hero_titulo_html com badge vazio "
+        f"(Sprint UX-122). Chamadas encontradas: {numeros}"
     )
 
 

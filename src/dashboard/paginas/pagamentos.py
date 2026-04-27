@@ -40,7 +40,7 @@ def renderizar(
 
     st.markdown(
         hero_titulo_html(
-            "05",
+            "",
             "Pagamentos",
             "Boletos, Pix e faturas de crédito com alertas de vencimento "
             "e reconciliação via grafo.",

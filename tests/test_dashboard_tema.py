@@ -71,6 +71,61 @@ class TestHelpersRender:
         assert "descrição" not in html.lower()
         assert "max-width: 780px" not in html
 
+
+class TestSprintUX122HeroSemNumero:
+    """Sprint UX-122: ``hero_titulo_html`` aceita ``numero=''`` por default.
+
+    Quando numero == '', o ``<span>`` do badge não é renderizado (HTML
+    enxuto, header mostra apenas o título). Retrocompat: chamadas antigas
+    com primeiro arg numérico seguem renderizando o badge.
+    """
+
+    def test_hero_sem_numero_omite_span_de_badge(self):
+        # Default: numero=''. <span> de 48px (badge) não aparece.
+        html = tema.hero_titulo_html("", "Visão Geral")
+        assert "Visão Geral" in html
+        assert "font-size: 48px" not in html  # badge font-size
+
+    def test_hero_sem_numero_via_keyword(self):
+        # Chamada nova canônica: hero_titulo_html(texto='X')
+        html = tema.hero_titulo_html(texto="Pagamentos")
+        assert "Pagamentos" in html
+        assert "font-size: 48px" not in html
+
+    def test_hero_com_numero_retrocompat_preserva_badge(self):
+        # Retrocompat: chamada antiga 2-args posicional renderiza badge.
+        html = tema.hero_titulo_html("07", "Metas")
+        assert "Metas" in html
+        assert "font-size: 48px" in html
+        assert ">07</span>" in html
+
+    def test_hero_sem_numero_com_descricao_renderiza_descricao(self):
+        html = tema.hero_titulo_html("", "Categorias", "Treemap de despesas")
+        assert "Treemap de despesas" in html
+        assert "font-size: 48px" not in html
+        assert f"font-size: {tema.FONTE_CORPO}px" in html
+
+    def test_paginas_nao_passam_prefixo_numerico_ao_hero(self):
+        # Sweep agregado: nenhum arquivo em paginas/ passa "DD" como
+        # primeiro arg de hero_titulo_html. Sprint UX-122.
+        import re
+        from pathlib import Path
+
+        raiz = Path(__file__).resolve().parents[1] / "src" / "dashboard" / "paginas"
+        padrao = re.compile(r"hero_titulo_html\(\s*[\"']\d")
+        violacoes: list[str] = []
+        for arquivo in raiz.glob("*.py"):
+            texto = arquivo.read_text(encoding="utf-8")
+            for linha_idx, _linha in enumerate(texto.splitlines(), start=1):
+                # Olha 2 linhas seguintes também (chamada multilinha).
+                janela = "\n".join(texto.splitlines()[linha_idx - 1 : linha_idx + 2])
+                if padrao.search(janela):
+                    violacoes.append(f"{arquivo.name}:{linha_idx}")
+                    break
+        assert not violacoes, (
+            f"Sprint UX-122 violada: arquivos passam prefixo numérico ao hero: {violacoes}"
+        )
+
     def test_subtitulo_secao_usa_fonte_label(self):
         html = tema.subtitulo_secao_html("DOCUMENTOS POR TIPO")
         assert f"font-size: {tema.FONTE_LABEL}px" in html

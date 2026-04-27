@@ -202,7 +202,7 @@ def renderizar(
     """Renderiza a página de projeções financeiras."""
     st.markdown(
         hero_titulo_html(
-            "06",
+            "",
             "Projeções",
             "Ritmos de receita, despesa e saldo médio, com cenários atuais "
             "e projeções de economia.",
