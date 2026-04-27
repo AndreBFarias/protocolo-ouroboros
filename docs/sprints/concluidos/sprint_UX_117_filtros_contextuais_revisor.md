@@ -53,13 +53,13 @@ sprint:
 
 # Sprint UX-117 -- Filtros contextuais por aba
 
-**Status:** BACKLOG (P1, criada 2026-04-27)
+**Status:** CONCLUÍDA (commit `46d8620`, 2026-04-27)
 
-Hoje a sidebar global mostra 'Tipo de pendencia' e 'Pagina' mesmo quando o usuario esta em Hoje/Dinheiro/Analise/Metas. Esses filtros sao especificos do **Revisor** e poluem o mental model das outras areas. Sprint move esses controles para dentro da pagina Revisor, mantendo logica funcional intacta.
+Hoje a sidebar global mostra 'Tipo de pendência' e 'Página' mesmo quando o usuário está em Hoje/Dinheiro/Análise/Metas. Esses filtros são específicos do **Revisor** e poluem o mental model das outras áreas. Sprint move esses controles para dentro da página Revisor, mantendo lógica funcional intacta.
 
-Padrao (m) branch reversivel: se migracao quebra session_state existente, manter alias por uma sprint (escrever em ambas keys). Validar via testes regressivos com fixture conhecida antes/depois.
+Padrão (m) branch reversível: se migração quebra session_state existente, manter alias por uma sprint (escrever em ambas keys). Validar via testes regressivos com fixture conhecida antes/depois.
 
-Mes / Pessoa / Forma de pagamento permanecem na sidebar global -- filtros transversais validos para todas as areas.
+Mês / Pessoa / Forma de pagamento permanecem na sidebar global — filtros transversais válidos para todas as áreas.
 
 ---
 

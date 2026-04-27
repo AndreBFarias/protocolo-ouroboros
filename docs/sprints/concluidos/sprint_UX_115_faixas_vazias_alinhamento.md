@@ -46,11 +46,11 @@ sprint:
 
 # Sprint UX-115 -- Faixas vazias preenchidas + label alinhado
 
-**Status:** BACKLOG (P2, criada 2026-04-27, gambiarra ate UX-114 reescrever a pagina)
+**Status:** CONCLUÍDA (commit `d187972`, 2026-04-27 — aguarda validação visual humana)
 
-Hoje a pagina Busca Global mostra um bloco interno (card_fundo) cercado por faixas em `#282A36` (fundo da app), criando uma quebra visual. O dono pediu pintar essas faixas com `#444659` para virar um bloco continuo. O label "Busca global" tambem esta desalinhado do input -- sprint corrige.
+Hoje a página Busca Global mostra um bloco interno (card_fundo) cercado por faixas em `#282A36` (fundo da app), criando uma quebra visual. O dono pediu pintar essas faixas com `#444659` para virar um bloco contínuo. O label "Busca global" também está desalinhado do input — sprint corrige.
 
-Escopo deliberadamente cirurgico: solucao gambiarra que sera substituida quando UX-114 reescrever a pagina inteira. Nao introduzir tokens novos -- aplicar regra inline no `css_global()` justificada como gambiarra.
+Escopo deliberadamente cirúrgico: solução gambiarra que será substituída quando UX-114 reescrever a página inteira. Não introduzir tokens novos — aplicar regra inline no `css_global()` justificada como gambiarra.
 
 ---
 
