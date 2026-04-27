@@ -31,7 +31,7 @@
 tipos:
 
   # ============================================================
-  # === ESPECÍFICO (4) -- assinaturas únicas, match_mode: all ===
+  # === ESPECÍFICO -- assinaturas únicas (Sprint 90a inclui holerite) ===
   # ============================================================
 
   - id: cupom_garantia_estendida
@@ -198,25 +198,36 @@ tipos:
       com_data: "EXTRATO_C6_{data:%Y-%m-%d}_{sha8}.pdf"
       sem_data: "EXTRATO_C6_{sha8}.pdf"
 
-  # ===================================================
-  # === NORMAL (9) -- documentos pessoais e bancários ===
-  # ===================================================
-
+  # Sprint 90a: holerite promovido para `especifico` para vencer detector
+  # legado quando PDF de contracheque menciona "ITAÚ UNIBANCO" ou "SANTANDER"
+  # no rodapé de dados bancários (nome de banco do funcionário). O regex
+  # é endurecido com âncoras de holerite (Demonstrativo de Pagamento, G4F,
+  # INFOBASE, Vencimentos/Descontos típicos) para evitar falso-positivo
+  # em PDFs bancários reais. CNPJ G4F é público corporativo (07.094.346);
+  # Infobase fica como assinatura textual sem CNPJ literal.
   - id: holerite
-    descricao: "Contracheque G4F ou Infobase (PDF nativo ou escaneado)"
-    prioridade: normal
+    descricao: "Contracheque G4F ou Infobase (PDF nativo ou escaneado) -- prioridade especifico para vencer detector bancário legado em PDFs com menção a banco no corpo"
+    prioridade: especifico
     match_mode: any
     mimes: ["application/pdf"]
     regex_conteudo:
       - "Demonstrativo\\s+de\\s+Pagamento\\s+de\\s+Sal[áa]rio"
+      - "G4F\\s+SOLU[ÇC][ÕO]ES\\s+CORPORATIVAS"
+      - "07[.,\\s]*094[.,\\s]*346[/\\\\]?0002[-\\s]?26"
       - "Folha\\s+Mensal"
       - "Holerite"
+      - "Recibo\\s+de\\s+Pagamento\\s+de\\s+Sal[áa]rio"
+      - "INFOBASE\\s+TECNOLOGIA"
     extrator_modulo: src.extractors.contracheque_pdf
-    origem_sprint: 41
+    origem_sprint: 90a
     pasta_destino_template: "data/raw/{pessoa}/holerites/"
     renomear_template:
       com_data: "HOLERITE_{data:%Y-%m-%d}_{sha8}.pdf"
       sem_data: "HOLERITE_{sha8}.pdf"
+
+  # ===================================================
+  # === NORMAL (9) -- documentos pessoais e bancários ===
+  # ===================================================
 
   - id: receita_medica
     descricao: "Receita médica ou prescrição (PDF nativo ou foto)"

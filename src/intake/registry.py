@@ -68,6 +68,21 @@ _BANCOS_OFX_NOME: tuple[tuple[str, str], ...] = (
     ("nu_", "nubank"),
 )
 
+# Sprint 90a: assinaturas fortes de holerite/contracheque. PDFs com qualquer uma
+# destas pulam o detector bancário legado e vão direto para o classifier YAML,
+# evitando falso-positivo em holerites G4F que mencionam o banco do funcionário
+# (ex.: "Conta para crédito: SANTANDER ag X cc Y") e cairiam em bancario_*
+# pelo file_detector que casa "SANTANDER" / "ITAÚ UNIBANCO" no texto bruto.
+_ASSINATURAS_HOLERITE: tuple[str, ...] = (
+    "Demonstrativo de Pagamento de Salário",
+    "Demonstrativo de Pagamento de Salario",
+    "G4F SOLUCOES CORPORATIVAS",
+    "G4F SOLUÇÕES CORPORATIVAS",
+    "INFOBASE TECNOLOGIA",
+    "Recibo de Pagamento de Salário",
+    "Recibo de Pagamento de Salario",
+)
+
 
 # ============================================================================
 # API pública
@@ -99,6 +114,19 @@ def detectar_tipo(
         return classificar(caminho, mime, preview or "", pessoa=pessoa)
 
     if mime == "application/pdf":
+        # Sprint 90a: pre-check de holerite antes do legado. Se o preview tem
+        # assinatura forte de contracheque (Demonstrativo de Pagamento, G4F,
+        # INFOBASE), pula o detector bancário legado -- ele casaria por
+        # menção a "ITAÚ UNIBANCO"/"SANTANDER" no rodapé de dados bancários
+        # do funcionário e roteria errado. YAML decide com regra `holerite`
+        # de prioridade `especifico`.
+        if preview and _tem_assinatura_holerite(preview):
+            logger.info(
+                "PDF com assinatura de holerite detectada em preview: %s -- "
+                "delegando para classifier YAML",
+                caminho.name,
+            )
+            return classificar(caminho, mime, preview, pessoa=pessoa)
         # Tenta legado primeiro (Itaú/Santander), depois YAML
         deteccao = _detectar_legado_silencioso(caminho)
         if deteccao:
@@ -230,6 +258,23 @@ def _detectar_legado_silencioso(caminho: Path) -> DeteccaoArquivo | None:
     except Exception as exc:  # noqa: BLE001 -- defensivo
         logger.warning("file_detector falhou em %s: %s -- delegando para YAML", caminho, exc)
         return None
+
+
+def _tem_assinatura_holerite(preview: str) -> bool:
+    """Sprint 90a: detecta assinatura forte de holerite no preview do PDF.
+
+    Comparação case-insensitive sobre `_ASSINATURAS_HOLERITE`. Quando casa,
+    o registry pula o detector bancário legado e delega para o classifier
+    YAML, que tem a regra `holerite` em prioridade `especifico`.
+
+    Sem regex aqui de propósito -- assinaturas são literais curtas que
+    não exigem flexibilidade. Para tolerância a glyph quebrado em PDF
+    nativo, o classifier YAML usa `glyph_tolerant.casa_padroes`.
+    """
+    if not preview:
+        return False
+    preview_upper = preview.upper()
+    return any(assinatura.upper() in preview_upper for assinatura in _ASSINATURAS_HOLERITE)
 
 
 # "Dois caminhos para o mesmo destino é um caminho perdido." -- princípio da unificação
