@@ -44,7 +44,7 @@ sprint:
 
 # Sprint 99 -- Redactor de PII em logs
 
-**Status:** BACKLOG (P1, criada 2026-04-26)
+**Status:** CONCLUÍDA (commit `92860af`, 2026-04-27)
 
 Auditoria 2026-04-26 detectou em runtime real: `INFO: razão social 'NOME_REAL_VITORIA'`. Sprint cria filter de logging que mascara CPF/CNPJ/razao social antes de emit em nivel INFO. DEBUG continua exibindo (uso dev). Filter aplicado globalmente via `configurar_logger`.
 
