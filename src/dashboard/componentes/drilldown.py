@@ -52,6 +52,12 @@ CHAVE_SESSION_ABA_ATIVA: str = "aba_ativa_requerida"
 # explicita o cluster e pula a inferência.
 MAPA_ABA_PARA_CLUSTER: dict[str, str] = {
     "Visão Geral": "Home",
+    # Sprint UX-123: 4 mini-views cross-area do cluster Home (filtradas
+    # pelo dia mais recente do dataset). Mantem N-para-N com app.py.
+    "Dinheiro hoje": "Home",
+    "Docs hoje": "Home",
+    "Análise hoje": "Home",
+    "Metas hoje": "Home",
     "Extrato": "Dinheiro",
     "Contas": "Dinheiro",
     "Pagamentos": "Dinheiro",
