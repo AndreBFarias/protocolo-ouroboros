@@ -110,6 +110,15 @@ def expandir_pdf_multipage(pdf_path: Path) -> ResultadoEnvelope:
 
     Em caso de erro irrecuperável (PDF corrompido), devolve
     `artefatos=[]`, `paginas=()`, `erros=[motivo]` -- não levanta.
+
+    Sprint 98-1 (regressão coberta em tests/test_envelope_nao_clona_paginas.py):
+    cada página é gravada via `_gravar_pagina` que cria um `pikepdf.Pdf.new()`
+    isolado e injeta APENAS a página de índice correspondente. Não há caminho
+    pelo qual o PDF original possa ser copiado N vezes -- garantia validada
+    por fixture sintética de 3 páginas com texto exclusivo: SHAs sempre
+    distintos. O sintoma de "91 cópias bit-a-bit" reportado pela Sprint 98
+    é resíduo histórico (pré-Sprint 90a + pré-Sprint 41 P2.3), não bug
+    da engine atual.
     """
     sha8 = sha8_arquivo(pdf_path)
     diretorio = _ENVELOPES_BASE / "pdf_split" / sha8
