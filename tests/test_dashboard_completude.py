@@ -104,12 +104,8 @@ def test_heatmap_usa_colorscale_laranja_amarelo_verde() -> None:
     from src.dashboard.tema import CORES
 
     resumo = {
-        "2026-01": {
-            "Aluguel": {"total": 2, "com_doc": 1, "sem_doc": 1, "orfas": []}
-        },
-        "2026-02": {
-            "Aluguel": {"total": 2, "com_doc": 2, "sem_doc": 0, "orfas": []}
-        },
+        "2026-01": {"Aluguel": {"total": 2, "com_doc": 1, "sem_doc": 1, "orfas": []}},
+        "2026-02": {"Aluguel": {"total": 2, "com_doc": 2, "sem_doc": 0, "orfas": []}},
     }
 
     fig = _heatmap(resumo)

@@ -112,9 +112,7 @@ def _aplicar_filtros_avancados(
     """Replica exatamente a lógica de extrato.py::renderizar para teste isolado."""
     resultado = df.copy()
     if busca.strip():
-        mascara = resultado["local"].fillna("").str.contains(
-            busca.strip(), case=False, na=False
-        )
+        mascara = resultado["local"].fillna("").str.contains(busca.strip(), case=False, na=False)
         resultado = resultado[mascara]
     if categoria != "Todas":
         resultado = resultado[resultado["categoria"] == categoria]
@@ -149,34 +147,22 @@ class TestFiltrosAvancados:
         assert len(r) == 1
         assert r.iloc[0]["valor"] == 5000.0
 
-    def test_filtros_combinados_reduzem_contagem(
-        self, df_extrato: pd.DataFrame
-    ) -> None:
+    def test_filtros_combinados_reduzem_contagem(self, df_extrato: pd.DataFrame) -> None:
         total = len(df_extrato)
-        r = _aplicar_filtros_avancados(
-            df_extrato, classificacao="Obrigatório", banco="nubank"
-        )
+        r = _aplicar_filtros_avancados(df_extrato, classificacao="Obrigatório", banco="nubank")
         assert len(r) <= total
         assert len(r) == 1  # só Farmácia Nubank
 
-    def test_busca_local_case_insensitive(
-        self, df_extrato: pd.DataFrame
-    ) -> None:
+    def test_busca_local_case_insensitive(self, df_extrato: pd.DataFrame) -> None:
         r = _aplicar_filtros_avancados(df_extrato, busca="DROGA")
         assert len(r) == 1
 
-    def test_contador_transacoes_reflete_filtro(
-        self, df_extrato: pd.DataFrame
-    ) -> None:
+    def test_contador_transacoes_reflete_filtro(self, df_extrato: pd.DataFrame) -> None:
         """Acceptance #5: contador muda ao aplicar filtro."""
         sem = len(_aplicar_filtros_avancados(df_extrato))
         com = len(_aplicar_filtros_avancados(df_extrato, categoria="Farmácia"))
         assert com < sem
 
-    def test_filtro_vazio_nao_quebra(
-        self, df_extrato: pd.DataFrame
-    ) -> None:
-        r = _aplicar_filtros_avancados(
-            df_extrato, categoria="Categoria Inexistente"
-        )
+    def test_filtro_vazio_nao_quebra(self, df_extrato: pd.DataFrame) -> None:
+        r = _aplicar_filtros_avancados(df_extrato, categoria="Categoria Inexistente")
         assert len(r) == 0

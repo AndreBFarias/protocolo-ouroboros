@@ -58,10 +58,10 @@ EDGE_TIPO_CONTRAPARTE: str = "contraparte"
 # documento e a transação que ele comprova. Armazenado em `evidencia.tipo_edge_semantico`
 # da aresta `documento_de` para preservar idempotência e retrocompatibilidade com
 # o motor da Sprint 48.
-TIPO_EDGE_SEMANTICO_PAGO_COM: str = "pago_com"    # fatura/extrato que origina a transação
-TIPO_EDGE_SEMANTICO_CONFIRMA: str = "confirma"    # boleto que instrui a transação
+TIPO_EDGE_SEMANTICO_PAGO_COM: str = "pago_com"  # fatura/extrato que origina a transação
+TIPO_EDGE_SEMANTICO_CONFIRMA: str = "confirma"  # boleto que instrui a transação
 TIPO_EDGE_SEMANTICO_COMPROVANTE: str = "comprovante"  # cupom/recibo/NFC-e recebido
-TIPO_EDGE_SEMANTICO_ORIGEM: str = "origem"        # contrato/apólice que origina a obrigação
+TIPO_EDGE_SEMANTICO_ORIGEM: str = "origem"  # contrato/apólice que origina a obrigação
 
 # Mapeamento canônico tipo_documento -> tipo_edge_semantico. Usado por
 # `classificar_tipo_edge` e pela UI do dashboard (modal) para colorir o vínculo.

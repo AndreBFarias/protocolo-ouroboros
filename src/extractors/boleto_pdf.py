@@ -294,9 +294,7 @@ def _extrair_beneficiario(texto: str) -> str | None:
 
     for bruto in candidatos:
         limpo = re.sub(r"\s+", " ", bruto.strip(" .-:,\t"))
-        limpo = re.sub(
-            r"\s*(?:CNPJ|CPF|Ag[êe]ncia).*$", "", limpo, flags=re.IGNORECASE
-        )
+        limpo = re.sub(r"\s*(?:CNPJ|CPF|Ag[êe]ncia).*$", "", limpo, flags=re.IGNORECASE)
         limpo = limpo.strip(" .-:,\t")
         if len(limpo) < 3:
             continue
@@ -484,9 +482,7 @@ class ExtratorBoletoPDF(ExtratorBase):
         try:
             resultado = self.extrair_boleto(self.caminho)
         except Exception as erro:  # noqa: BLE001 -- best-effort lote
-            self.logger.error(
-                "falha ao extrair boleto %s: %s", self.caminho.name, erro
-            )
+            self.logger.error("falha ao extrair boleto %s: %s", self.caminho.name, erro)
             return []
 
         documento = resultado["documento"]
@@ -503,13 +499,9 @@ class ExtratorBoletoPDF(ExtratorBase):
         criou_grafo_localmente = self._grafo is None
         try:
             grafo.criar_schema()
-            ingerir_documento_fiscal(
-                grafo, documento, itens=[], caminho_arquivo=self.caminho
-            )
+            ingerir_documento_fiscal(grafo, documento, itens=[], caminho_arquivo=self.caminho)
         except ValueError as erro_ing:
-            self.logger.warning(
-                "boleto inválido em %s: %s", self.caminho.name, erro_ing
-            )
+            self.logger.warning("boleto inválido em %s: %s", self.caminho.name, erro_ing)
         finally:
             if criou_grafo_localmente:
                 grafo.fechar()
@@ -570,9 +562,7 @@ class ExtratorBoletoPDF(ExtratorBase):
         try:
             import pdfplumber
         except ImportError as erro:
-            raise RuntimeError(
-                "pdfplumber não disponível para ler boleto em PDF."
-            ) from erro
+            raise RuntimeError("pdfplumber não disponível para ler boleto em PDF.") from erro
         with pdfplumber.open(caminho) as pdf:
             partes = [(pagina.extract_text() or "") for pagina in pdf.pages]
         return "\n".join(partes)

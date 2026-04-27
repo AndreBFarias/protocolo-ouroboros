@@ -13,9 +13,7 @@ from pathlib import Path
 
 from src.extractors.nubank_cc import ExtratorNubankCC
 
-FIXTURE_SAMPLE = (
-    Path(__file__).parent / "fixtures" / "bancos" / "nubank_cc" / "sample.csv"
-)
+FIXTURE_SAMPLE = Path(__file__).parent / "fixtures" / "bancos" / "nubank_cc" / "sample.csv"
 
 
 def _copiar_fixture_como(destino_dir: Path, nome: str = "nubank_cc_sintetico.csv") -> Path:
@@ -126,9 +124,7 @@ class TestCornerCases:
 class TestEntradaInvalida:
     def test_arquivo_vazio_retorna_lista_vazia(self, tmp_path: Path) -> None:
         vazio = tmp_path / "nubank_cc_vazio.csv"
-        vazio.write_text(
-            "Data,Valor,Identificador,Descrição\n", encoding="utf-8"
-        )
+        vazio.write_text("Data,Valor,Identificador,Descrição\n", encoding="utf-8")
 
         extrator = ExtratorNubankCC(vazio)
         transacoes = extrator.extrair()
@@ -138,9 +134,7 @@ class TestEntradaInvalida:
     def test_cabecalho_de_cartao_e_rejeitado(self, tmp_path: Path) -> None:
         """Layout do cartão (date,title,amount) não deve casar com CC."""
         arquivo_cartao = tmp_path / "misturado.csv"
-        arquivo_cartao.write_text(
-            "date,title,amount\n2026-02-10,Compra,50.00\n", encoding="utf-8"
-        )
+        arquivo_cartao.write_text("date,title,amount\n2026-02-10,Compra,50.00\n", encoding="utf-8")
 
         extrator = ExtratorNubankCC(arquivo_cartao)
 
@@ -166,9 +160,7 @@ class TestEntradaInvalida:
 def test_pode_processar_reconhece_cabecalho_com_acento(tmp_path: Path) -> None:
     """Cabeçalho oficial usa 'Descrição' com acento -- caracter UTF-8."""
     arquivo = tmp_path / "nubank_cc_check.csv"
-    arquivo.write_text(
-        "Data,Valor,Identificador,Descrição\n", encoding="utf-8"
-    )
+    arquivo.write_text("Data,Valor,Identificador,Descrição\n", encoding="utf-8")
 
     extrator = ExtratorNubankCC(arquivo)
 

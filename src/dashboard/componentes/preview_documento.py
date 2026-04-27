@@ -77,10 +77,7 @@ def preview_documento(caminho_original: Path, altura: int = 600) -> None:
 
     if tipo == "pdf":
         if tamanho > LIMITE_BYTES_EMBED:
-            st.warning(
-                f"PDF grande ({tamanho / 1024 / 1024:.1f} MB). "
-                "Baixe para visualizar."
-            )
+            st.warning(f"PDF grande ({tamanho / 1024 / 1024:.1f} MB). Baixe para visualizar.")
             st.download_button(
                 "Baixar PDF",
                 data=caminho_original.read_bytes(),

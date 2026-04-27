@@ -25,8 +25,7 @@ def gerar_relatorio(
     linhas.append("# Relatório Gauntlet -- Protocolo Ouroboros")
     linhas.append("")
     linhas.append(
-        f"Data: {agora} | Duração: {duracao_total:.1f}s | "
-        f"Python {python_ver} | {platform.system()}"
+        f"Data: {agora} | Duração: {duracao_total:.1f}s | Python {python_ver} | {platform.system()}"
     )
     linhas.append("")
 
@@ -40,8 +39,7 @@ def gerar_relatorio(
     linhas.append("|------|--------|----|-------|-------|")
     for fase in fases:
         linhas.append(
-            f"| {fase.nome} | {fase.total} | {fase.ok} | "
-            f"{fase.falhas} | {fase.tempo_total:.1f}s |"
+            f"| {fase.nome} | {fase.total} | {fase.ok} | {fase.falhas} | {fase.tempo_total:.1f}s |"
         )
     linhas.append("")
 
@@ -78,9 +76,7 @@ def gerar_relatorio(
 
     linhas.append("---")
     linhas.append("")
-    linhas.append(
-        '*"Medir é saber. Não medir é adivinhar." -- Lord Kelvin*'
-    )
+    linhas.append('*"Medir é saber. Não medir é adivinhar." -- Lord Kelvin*')
     linhas.append("")
 
     return "\n".join(linhas)

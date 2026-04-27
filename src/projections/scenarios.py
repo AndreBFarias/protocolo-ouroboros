@@ -107,9 +107,7 @@ def calcular_ritmos(transacoes: list[dict]) -> dict[str, float | None]:
     if not transacoes:
         return {"historico": None, "12_meses": None, "3_meses": None}
 
-    meses_disponiveis: set[str] = {
-        t.get("mes_ref", "") for t in transacoes if t.get("mes_ref")
-    }
+    meses_disponiveis: set[str] = {t.get("mes_ref", "") for t in transacoes if t.get("mes_ref")}
     total_meses = len(meses_disponiveis)
 
     def _ritmo(janela: int | None) -> float | None:

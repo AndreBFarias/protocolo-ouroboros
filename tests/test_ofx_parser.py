@@ -21,9 +21,7 @@ import pytest
 
 from src.extractors.ofx_parser import ExtratorOFX
 
-FIXTURE_SAMPLE = (
-    Path(__file__).parent / "fixtures" / "bancos" / "ofx_parser" / "sample.ofx"
-)
+FIXTURE_SAMPLE = Path(__file__).parent / "fixtures" / "bancos" / "ofx_parser" / "sample.ofx"
 
 
 class TestParseBasico:

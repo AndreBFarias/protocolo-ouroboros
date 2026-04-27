@@ -27,6 +27,7 @@ from src.transform.normalizer import inferir_pessoa, normalizar_transacao
 # Unidade: inferir_pessoa alinhado ao contrato BANCOS_VALIDOS
 # ----------------------------------------------------------------------
 
+
 def test_inferir_pessoa_nubank_pf_com_parenteses_retorna_vitoria():
     """Rótulo canônico `Nubank (PF)` (emitido por nubank_cc.py:160) deve
     mapear para Vitória. Antes da 93f caía em `Casal`."""
@@ -48,6 +49,7 @@ def test_inferir_pessoa_nubank_sem_sufixo_retorna_andre():
 # ----------------------------------------------------------------------
 # Integração leve: extrator PJ + normalizar_transacao -> XLSX row
 # ----------------------------------------------------------------------
+
 
 def _escrever_csv_cartao_pj(tmp_path: Path) -> Path:
     subdir = tmp_path / "vitoria" / "nubank_pj_cartao"
@@ -183,6 +185,7 @@ def test_cc_vitoria_default_sem_subtipo_resolve_para_vitoria(tmp_path):
 # Regressão runtime: identificador PF e PJ não colidem na dedup nível 1
 # ----------------------------------------------------------------------
 
+
 def test_identificador_pf_pj_nao_colide_no_dedup(tmp_path):
     """Sprint 93f -- garantia anti-regressão. Mesma compra `(date, title,
     amount)` aparecendo em CSV PF do André E em CSV PJ da Vitória deve
@@ -223,8 +226,7 @@ def test_identificador_pf_pj_nao_colide_no_dedup(tmp_path):
     transacoes = [como_dict(tx_pf[0]), como_dict(tx_pj[0])]
     resultado = deduplicar_por_identificador(transacoes)
     assert len(resultado) == 2, (
-        "Dedup nível 1 deve preservar ambas as tx (PF e PJ) quando "
-        "identificadores diferem."
+        "Dedup nível 1 deve preservar ambas as tx (PF e PJ) quando identificadores diferem."
     )
     bancos_resultado = {t["banco_origem"] for t in resultado}
     assert bancos_resultado == {"Nubank", "Nubank (PJ)"}

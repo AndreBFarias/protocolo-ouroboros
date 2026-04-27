@@ -294,9 +294,7 @@ def _agrupar_por_heuristica(
         elif melhor_idx is not None and melhor_score >= threshold_proposta:
             # Borderline: proposta. O item NÃO entra no cluster automaticamente;
             # só registra no slot de propostas para o escritor gerar MD.
-            clusters[melhor_idx]["propostas"].append(
-                (item_id, descricao_bruta, melhor_score)
-            )
+            clusters[melhor_idx]["propostas"].append((item_id, descricao_bruta, melhor_score))
         else:
             clusters.append(
                 {
@@ -473,9 +471,7 @@ def _escrever_proposta_er(
     linhas.append("")
     linhas.append("---")
     linhas.append("")
-    linhas.append(
-        '*"Nomear com precisão é o começo da sabedoria." -- Confúcio (parafraseado)*'
-    )
+    linhas.append('*"Nomear com precisão é o começo da sabedoria." -- Confúcio (parafraseado)*')
     linhas.append("")
 
     destino.write_text("\n".join(linhas), encoding="utf-8")

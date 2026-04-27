@@ -42,9 +42,19 @@ EXTENSOES_ACEITAS: tuple[str, ...] = (".pdf",)
 LIMIAR_TEXTO_MINIMO: int = 100
 
 _MESES_PT: dict[str, int] = {
-    "janeiro": 1, "fevereiro": 2, "março": 3, "marco": 3, "abril": 4,
-    "maio": 5, "junho": 6, "julho": 7, "agosto": 8,
-    "setembro": 9, "outubro": 10, "novembro": 11, "dezembro": 12,
+    "janeiro": 1,
+    "fevereiro": 2,
+    "março": 3,
+    "marco": 3,
+    "abril": 4,
+    "maio": 5,
+    "junho": 6,
+    "julho": 7,
+    "agosto": 8,
+    "setembro": 9,
+    "outubro": 10,
+    "novembro": 11,
+    "dezembro": 12,
 }
 
 # Regex canônicas
@@ -148,7 +158,7 @@ def _montar_documento(texto: str, caminho: Path) -> dict[str, Any]:
 
     cnpj = cnpj_match.group(1)
     numero = numero_match.group(1)
-    razao = (razao_match.group(1).strip() if razao_match else "CONTRIBUINTE DESCONHECIDO")
+    razao = razao_match.group(1).strip() if razao_match else "CONTRIBUINTE DESCONHECIDO"
 
     # Vencimento (data-limite de pagamento). Fallback: vencimento original
     # da linha do header (formato "Mês/YYYY DD/MM/YYYY" ou variante "Diversos").
@@ -158,9 +168,9 @@ def _montar_documento(texto: str, caminho: Path) -> dict[str, Any]:
     elif venc_diversos_match:
         venc_original_br = venc_diversos_match.group(1)
 
-    vencimento = _parse_data_iso(
-        pagar_match.group(1) if pagar_match else None
-    ) or _parse_data_iso(venc_original_br)
+    vencimento = _parse_data_iso(pagar_match.group(1) if pagar_match else None) or _parse_data_iso(
+        venc_original_br
+    )
     data_emissao = _parse_data_iso(venc_original_br)
 
     # tipo_documento discriminado por CNPJ canônico do André (auditoria 2026-04-23).

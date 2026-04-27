@@ -117,9 +117,7 @@ def _renderizar_kpis(docs: pd.DataFrame, propostas: int) -> None:
 
     mes_atual = _mes_atual_str()
     if not docs.empty and "data_emissao" in docs.columns:
-        docs_mes = int(
-            docs["data_emissao"].fillna("").str.startswith(mes_atual).sum()
-        )
+        docs_mes = int(docs["data_emissao"].fillna("").str.startswith(mes_atual).sum())
     else:
         docs_mes = 0
 
@@ -212,10 +210,7 @@ def _renderizar_tabela_documentos(docs: pd.DataFrame) -> None:
     tabela = pd.DataFrame(
         {
             "Data": docs_ordenados["data_emissao"].fillna("--"),
-            "Fornecedor": docs_ordenados["razao_social"]
-            .fillna("")
-            .replace("", "--")
-            .str.title(),
+            "Fornecedor": docs_ordenados["razao_social"].fillna("").replace("", "--").str.title(),
             "Total": docs_ordenados["total"].apply(
                 lambda v: formatar_moeda(v) if v and v > 0 else "--"
             ),
@@ -225,9 +220,7 @@ def _renderizar_tabela_documentos(docs: pd.DataFrame) -> None:
 
     colunas_efetivas = list(tabela.columns)
     if colunas_efetivas != COLUNAS_TABELA:
-        raise RuntimeError(
-            f"Colunas da tabela divergem do contrato: {colunas_efetivas}"
-        )
+        raise RuntimeError(f"Colunas da tabela divergem do contrato: {colunas_efetivas}")
 
     st.dataframe(
         tabela,
@@ -436,7 +429,7 @@ def _card_gap_html(mes: str, contagem: int) -> str:
         '<p style="color: var(--color-texto-sec);'
         f" font-size: {FONTE_LABEL - 1}px;"
         ' margin: 2px 0 0 0;">esperado: 5+</p></div>'
-        "<div style=\"text-align: right;\">"
+        '<div style="text-align: right;">'
         '<p style="color: var(--color-negativo);'
         f" font-size: {FONTE_SUBTITULO + 4}px;"
         " font-weight: 700;"

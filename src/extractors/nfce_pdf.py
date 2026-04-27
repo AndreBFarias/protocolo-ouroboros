@@ -76,24 +76,14 @@ RE_MARCA_QR_SEFAZ = compilar_regex_tolerante(r"fazenda[\s.]+\w+[\s.]+gov[\s.]+br
 # ============================================================================
 
 
-RE_CHAVE_44_DIGITOS = re.compile(
-    r"((?:\d{4}\s*){10}\d{4})", re.MULTILINE
-)
+RE_CHAVE_44_DIGITOS = re.compile(r"((?:\d{4}\s*){10}\d{4})", re.MULTILINE)
 RE_NUMERO_SERIE = compilar_regex_tolerante(
     r"NFC-?e\s*N?[ºo°&]?\s*(\d{1,9})\s+[Ss][eé]rie\s+(\d{1,3})"
 )
-RE_DATA_HORA_EMISSAO = re.compile(
-    r"(\d{2}/\d{2}/\d{4})\s+(\d{1,2}:\d{2}(?::\d{2})?)"
-)
-RE_TOTAL = compilar_regex_tolerante(
-    r"VALOR\s+(?:TOTAL|[ÀA]\s+PAGAR)\s*R\$?\s*([\d.,]+)"
-)
-RE_CPF_CONSUMIDOR = compilar_regex_tolerante(
-    r"CONSUMIDOR\s+CPF\s*:?\s*([\d.\s\-]{11,16})"
-)
-RE_FORMA_PAGAMENTO_BLOCO = compilar_regex_tolerante(
-    r"FORMA\s+DE\s+PAGAMENTO[^\n]*\n+([^\n]+)"
-)
+RE_DATA_HORA_EMISSAO = re.compile(r"(\d{2}/\d{2}/\d{4})\s+(\d{1,2}:\d{2}(?::\d{2})?)")
+RE_TOTAL = compilar_regex_tolerante(r"VALOR\s+(?:TOTAL|[ÀA]\s+PAGAR)\s*R\$?\s*([\d.,]+)")
+RE_CPF_CONSUMIDOR = compilar_regex_tolerante(r"CONSUMIDOR\s+CPF\s*:?\s*([\d.\s\-]{11,16})")
+RE_FORMA_PAGAMENTO_BLOCO = compilar_regex_tolerante(r"FORMA\s+DE\s+PAGAMENTO[^\n]*\n+([^\n]+)")
 
 # Cabeçalho do emitente: primeira linha com CNPJ (mesma abordagem da 47c)
 # Exclui SUSEP (linha de seguradora, se por acaso aparecer) por consistência.
@@ -134,9 +124,7 @@ RE_LINHA_ITEM = re.compile(
     re.MULTILINE | re.UNICODE,
 )
 
-RE_FIM_TABELA_ITENS = compilar_regex_tolerante(
-    r"QTD\.?\s+TOTAL\s+DE\s+ITENS|VALOR\s+TOTAL\s+R\$"
-)
+RE_FIM_TABELA_ITENS = compilar_regex_tolerante(r"QTD\.?\s+TOTAL\s+DE\s+ITENS|VALOR\s+TOTAL\s+R\$")
 
 
 # ============================================================================
@@ -220,19 +208,13 @@ class ExtratorNfcePDF(ExtratorBase):
             grafo.criar_schema()
             for doc, itens in nfces:
                 try:
-                    ingerir_documento_fiscal(
-                        grafo, doc, itens, caminho_arquivo=self.caminho
-                    )
+                    ingerir_documento_fiscal(grafo, doc, itens, caminho_arquivo=self.caminho)
                 except ValueError as erro:
-                    self.logger.warning(
-                        "NFC-e inválida em %s: %s", self.caminho.name, erro
-                    )
+                    self.logger.warning("NFC-e inválida em %s: %s", self.caminho.name, erro)
         finally:
             if criou_grafo_localmente:
                 grafo.fechar()
-        self.logger.info(
-            "%d NFC-e ingerida(s) a partir de %s", len(nfces), self.caminho.name
-        )
+        self.logger.info("%d NFC-e ingerida(s) a partir de %s", len(nfces), self.caminho.name)
         return []
 
     # --------------------------------------------------------------------
@@ -322,9 +304,7 @@ def _parse_cabecalho_nfce(texto: str) -> dict[str, Any] | None:
     data_emissao = _extrair_data_emissao(texto)
     total = parse_valor_br(_match_grupo(RE_TOTAL, texto))
     cpf_consumidor = extrair_cpf(texto) or _extrair_cpf_consumidor(texto)
-    forma_pagamento = normalizar_forma_pagamento(
-        _match_grupo(RE_FORMA_PAGAMENTO_BLOCO, texto)
-    )
+    forma_pagamento = normalizar_forma_pagamento(_match_grupo(RE_FORMA_PAGAMENTO_BLOCO, texto))
 
     return {
         "chave_44": chave,
@@ -362,17 +342,13 @@ def _parse_itens_nfce(texto: str) -> list[dict[str, Any]]:
             itens.append(_item_de_match(match))
             continue
         if itens and not _e_cabecalho_ou_ruido(linha_stripada):
-            itens[-1]["descricao"] = _limpar_espacos(
-                f"{itens[-1]['descricao']} {linha_stripada}"
-            )
+            itens[-1]["descricao"] = _limpar_espacos(f"{itens[-1]['descricao']} {linha_stripada}")
     return itens
 
 
 def _delimitar_regiao_itens(texto: str) -> str:
     """Devolve o trecho do texto que vai do cabeçalho de itens até o total."""
-    inicio_match = re.search(
-        r"C[ÓO]DIGO\s+DESCRI[ÇC][ÃA]O", texto, re.IGNORECASE | re.UNICODE
-    )
+    inicio_match = re.search(r"C[ÓO]DIGO\s+DESCRI[ÇC][ÃA]O", texto, re.IGNORECASE | re.UNICODE)
     if not inicio_match:
         return ""
     inicio = inicio_match.end()

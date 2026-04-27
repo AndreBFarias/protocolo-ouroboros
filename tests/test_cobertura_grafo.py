@@ -119,9 +119,7 @@ def test_grafo_tem_volume_minimo_apos_reprocessamento(
     )
     assert n_doc >= META_DOCUMENTOS, f"documentos abaixo do alvo ({mensagem})"
     assert n_item >= META_ITEMS, f"items abaixo do alvo ({mensagem})"
-    assert n_pagocom >= META_EDGES_DOCUMENTO_DE, (
-        f"arestas documento_de abaixo do alvo ({mensagem})"
-    )
+    assert n_pagocom >= META_EDGES_DOCUMENTO_DE, f"arestas documento_de abaixo do alvo ({mensagem})"
     assert n_mesmo_produto >= META_EDGES_MESMO_PRODUTO_QUE, (
         f"arestas mesmo_produto_que abaixo do alvo ({mensagem})"
     )

@@ -314,9 +314,7 @@ def gerar_resumo_narrativo(
             linhas.append(f"**Saldo positivo** de {formatar_valor(saldo)} ao final do mês.")
         else:
             saldo_fmt = formatar_valor(abs(saldo))
-            linhas.append(
-                f"**Saldo negativo** de {saldo_fmt} -- despesas superaram receitas."
-            )
+            linhas.append(f"**Saldo negativo** de {saldo_fmt} -- despesas superaram receitas.")
         linhas.append("")
 
     linhas.append(separador_secao())

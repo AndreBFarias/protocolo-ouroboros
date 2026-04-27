@@ -47,12 +47,14 @@ def executar() -> ResultadoFase:
         if not passou:
             logger.warning("Categorização errada: %s", detalhe)
 
-        fase.testes.append(ResultadoTeste(
-            nome=f"cat.{descricao.lower().replace(' ', '_')[:30]}",
-            passou=passou,
-            tempo=t_fim - t_inicio,
-            detalhe=detalhe,
-        ))
+        fase.testes.append(
+            ResultadoTeste(
+                nome=f"cat.{descricao.lower().replace(' ', '_')[:30]}",
+                passou=passou,
+                tempo=t_fim - t_inicio,
+                detalhe=detalhe,
+            )
+        )
 
     for descricao, classificacao_esperada in CLASSIFICACOES_ESPERADAS.items():
         t_inicio = time.time()
@@ -76,12 +78,14 @@ def executar() -> ResultadoFase:
             f"(esperado: {classificacao_esperada})"
         )
 
-        fase.testes.append(ResultadoTeste(
-            nome=f"cls.{descricao.lower().replace(' ', '_')[:30]}",
-            passou=passou,
-            tempo=t_fim - t_inicio,
-            detalhe=detalhe,
-        ))
+        fase.testes.append(
+            ResultadoTeste(
+                nome=f"cls.{descricao.lower().replace(' ', '_')[:30]}",
+                passou=passou,
+                tempo=t_fim - t_inicio,
+                detalhe=detalhe,
+            )
+        )
 
     t_inicio = time.time()
     transacao_desconhecida = {
@@ -97,17 +101,21 @@ def executar() -> ResultadoFase:
     t_fim = time.time()
 
     passou_fallback = resultado.get("categoria") == "Outros"
-    fase.testes.append(ResultadoTeste(
-        nome="fallback_outros",
-        passou=passou_fallback,
-        tempo=t_fim - t_inicio,
-        detalhe=f"Desconhecido -> {resultado.get('categoria')} (esperado: Outros)",
-    ))
+    fase.testes.append(
+        ResultadoTeste(
+            nome="fallback_outros",
+            passou=passou_fallback,
+            tempo=t_fim - t_inicio,
+            detalhe=f"Desconhecido -> {resultado.get('categoria')} (esperado: Outros)",
+        )
+    )
 
     fase.tempo_total = time.time() - inicio
     logger.info(
         "Fase categorias: %d/%d testes OK em %.2fs",
-        fase.ok, fase.total, fase.tempo_total,
+        fase.ok,
+        fase.total,
+        fase.tempo_total,
     )
     return fase
 

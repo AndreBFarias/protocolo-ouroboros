@@ -173,9 +173,7 @@ def carregar_marcacoes(caminho: Path, item_id: str | None = None) -> list[dict]:
                 (item_id,),
             )
         else:
-            cursor = conn.execute(
-                "SELECT item_id, dimensao, ok, observacao, ts FROM revisao"
-            )
+            cursor = conn.execute("SELECT item_id, dimensao, ok, observacao, ts FROM revisao")
         resultado = [dict(row) for row in cursor]
     finally:
         conn.close()
@@ -262,13 +260,7 @@ def gerar_relatorio_markdown(
         linhas.append(f"\n### {mascarar_pii(item_id)}\n")
         linhas.append(f"- Tipo: `{tipo_doc}`")
         for marca in sorted(lista, key=lambda m: m["dimensao"]):
-            estado = (
-                "OK"
-                if marca["ok"] == 1
-                else "ERRO"
-                if marca["ok"] == 0
-                else "Não-aplicável"
-            )
+            estado = "OK" if marca["ok"] == 1 else "ERRO" if marca["ok"] == 0 else "Não-aplicável"
             obs = mascarar_pii(marca.get("observacao") or "")
             obs_render = f" -- {obs}" if obs else ""
             linhas.append(f"- {marca['dimensao']}: **{estado}**{obs_render}")
@@ -358,8 +350,7 @@ def _renderizar_painel_item(pendencia: dict, marcacoes_item: list[dict]) -> dict
                 st.markdown(
                     callout_html(
                         "info",
-                        f"Pendência é um diretório com fallback de supervisor: "
-                        f"`{caminho.name}`",
+                        f"Pendência é um diretório com fallback de supervisor: `{caminho.name}`",
                     ),
                     unsafe_allow_html=True,
                 )
@@ -574,9 +565,7 @@ def renderizar(
     col_rel, col_patch = st.columns(2)
     with col_rel:
         if st.button("Gerar relatório da sessão", key="revisor_gerar_relatorio"):
-            destino_dir = (
-                Path(__file__).resolve().parents[3] / "docs" / "revisoes"
-            )
+            destino_dir = Path(__file__).resolve().parents[3] / "docs" / "revisoes"
             destino = gravar_relatorio(
                 marcacoes,
                 destino_dir,

@@ -54,9 +54,7 @@ def _limiar_receita(mes_ref: str) -> float:
     return LIMIAR_RECEITA_DEZEMBRO if mes_ref.endswith("-12") else LIMIAR_RECEITA_PADRAO
 
 
-def contrato_receita_nao_exagera_salario(
-    df: pd.DataFrame, renda: pd.DataFrame
-) -> str | None:
+def contrato_receita_nao_exagera_salario(df: pd.DataFrame, renda: pd.DataFrame) -> str | None:
     """Receita de cada mês não pode exceder salário bruto × limiar calibrado.
 
     Detecta o tipo de regressão que a Sprint 55 corrigiu: classificador marcando
@@ -86,9 +84,7 @@ def contrato_receita_nao_exagera_salario(
             continue
         limiar = _limiar_receita(mes)
         if r > s * limiar:
-            violacoes.append(
-                f"{mes}: receita R$ {r:,.2f} > salário R$ {s:,.2f} × {limiar}"
-            )
+            violacoes.append(f"{mes}: receita R$ {r:,.2f} > salário R$ {s:,.2f} × {limiar}")
     if violacoes:
         return "receita excede salário: " + "; ".join(violacoes[:5])
     return None
@@ -105,12 +101,10 @@ def contrato_despesa_nao_negativa(df: pd.DataFrame, renda: pd.DataFrame) -> str 
     return None
 
 
-def contrato_juros_iof_multa_nunca_receita(
-    df: pd.DataFrame, renda: pd.DataFrame
-) -> str | None:
+def contrato_juros_iof_multa_nunca_receita(df: pd.DataFrame, renda: pd.DataFrame) -> str | None:
     """Zero linhas com local casando /Juros|IOF|Multa/ classificadas como Receita."""
-    mask_texto = df["local"].astype(str).str.contains(
-        r"Juros|IOF|Multa", case=False, regex=True, na=False
+    mask_texto = (
+        df["local"].astype(str).str.contains(r"Juros|IOF|Multa", case=False, regex=True, na=False)
     )
     violacoes = df[mask_texto & (df["tipo"] == "Receita")]
     if len(violacoes) > 0:
@@ -119,9 +113,7 @@ def contrato_juros_iof_multa_nunca_receita(
     return None
 
 
-def contrato_transferencias_internas_batem(
-    df: pd.DataFrame, renda: pd.DataFrame
-) -> str | None:
+def contrato_transferencias_internas_batem(df: pd.DataFrame, renda: pd.DataFrame) -> str | None:
     """Para cada par de Transferência Interna deve existir saída e entrada.
 
     Como valores são sempre positivos no schema, o pareamento é feito por
@@ -153,22 +145,14 @@ def contrato_transferencias_internas_batem(
     return None
 
 
-def contrato_classificacao_soma_despesa(
-    df: pd.DataFrame, renda: pd.DataFrame
-) -> str | None:
+def contrato_classificacao_soma_despesa(df: pd.DataFrame, renda: pd.DataFrame) -> str | None:
     """Soma(Obrigatório+Questionável+Supérfluo) == Soma(Despesa+Imposto) por mês.
 
     Tolerância de R$ 0,01 por arredondamento float.
     """
-    despesa_imposto = (
-        df[df["tipo"].isin(["Despesa", "Imposto"])]
-        .groupby("mes_ref")["valor"]
-        .sum()
-    )
+    despesa_imposto = df[df["tipo"].isin(["Despesa", "Imposto"])].groupby("mes_ref")["valor"].sum()
     classificadas = (
-        df[df["classificacao"].isin(CLASSIFICACOES_DESPESA)]
-        .groupby("mes_ref")["valor"]
-        .sum()
+        df[df["classificacao"].isin(CLASSIFICACOES_DESPESA)].groupby("mes_ref")["valor"].sum()
     )
     comum = sorted(set(despesa_imposto.index) & set(classificadas.index))
     violacoes = []
@@ -182,9 +166,7 @@ def contrato_classificacao_soma_despesa(
     return None
 
 
-def contrato_categoria_nunca_nula_em_despesa(
-    df: pd.DataFrame, renda: pd.DataFrame
-) -> str | None:
+def contrato_categoria_nunca_nula_em_despesa(df: pd.DataFrame, renda: pd.DataFrame) -> str | None:
     """Nenhuma linha com tipo=Despesa pode ter categoria NaN."""
     nulas = df[(df["tipo"] == "Despesa") & df["categoria"].isna()]
     if len(nulas) > 0:
@@ -192,9 +174,7 @@ def contrato_categoria_nunca_nula_em_despesa(
     return None
 
 
-def contrato_tipo_em_conjunto_valido(
-    df: pd.DataFrame, renda: pd.DataFrame
-) -> str | None:
+def contrato_tipo_em_conjunto_valido(df: pd.DataFrame, renda: pd.DataFrame) -> str | None:
     """Coluna `tipo` só aceita {Receita, Despesa, Imposto, Transferência Interna}."""
     invalidos = df[~df["tipo"].isin(TIPOS_VALIDOS)]
     if len(invalidos) > 0:
@@ -203,9 +183,7 @@ def contrato_tipo_em_conjunto_valido(
     return None
 
 
-def contrato_banco_origem_valido(
-    df: pd.DataFrame, renda: pd.DataFrame
-) -> str | None:
+def contrato_banco_origem_valido(df: pd.DataFrame, renda: pd.DataFrame) -> str | None:
     """Coluna `banco_origem` só aceita bancos canônicos documentados."""
     invalidos = df[~df["banco_origem"].isin(BANCOS_VALIDOS)]
     if len(invalidos) > 0:

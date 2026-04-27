@@ -91,26 +91,20 @@ class TestCatalogoPadroes:
 
     def test_identifica_electrolux_por_alias(self):
         padroes = _carregar_padroes()
-        match = _identificar_fornecedor_conhecido(
-            "Comprado na Electrolux do Brasil", padroes
-        )
+        match = _identificar_fornecedor_conhecido("Comprado na Electrolux do Brasil", padroes)
         assert match is not None
         assert match["nome"] == "Electrolux"
         assert match["_kind"] == "fabricante"
 
     def test_identifica_amazon_como_varejista(self):
         padroes = _carregar_padroes()
-        match = _identificar_fornecedor_conhecido(
-            "Pedido via Amazon Serviços de Varejo", padroes
-        )
+        match = _identificar_fornecedor_conhecido("Pedido via Amazon Serviços de Varejo", padroes)
         assert match is not None
         assert match["_kind"] == "varejista"
 
     def test_fornecedor_desconhecido_retorna_none(self):
         padroes = _carregar_padroes()
-        match = _identificar_fornecedor_conhecido(
-            "Loja de esquina sem nome reconhecido", padroes
-        )
+        match = _identificar_fornecedor_conhecido("Loja de esquina sem nome reconhecido", padroes)
         assert match is None
 
 
@@ -198,9 +192,7 @@ class TestParseSamsung:
     def test_produto_contem_galaxy(self):
         parsed = _parse_garantia(_ler(SAMSUNG_PHONE))
         assert parsed is not None
-        assert "Galaxy" in (parsed["produto"] or "") or "S24" in (
-            parsed["produto"] or ""
-        )
+        assert "Galaxy" in (parsed["produto"] or "") or "S24" in (parsed["produto"] or "")
 
 
 class TestParseAmazon:
@@ -296,9 +288,7 @@ class TestParseDefensivo:
 class TestIngestaoGrafo:
     def test_garantia_cria_nodes_e_arestas_basicas(self, grafo_temp):
         extrator = ExtratorGarantiaFabricante(ELECTROLUX_12M, grafo=grafo_temp)
-        resultado = extrator.extrair_garantias(
-            ELECTROLUX_12M, texto_override=_ler(ELECTROLUX_12M)
-        )
+        resultado = extrator.extrair_garantias(ELECTROLUX_12M, texto_override=_ler(ELECTROLUX_12M))
         assert len(resultado) == 1
 
         stats = grafo_temp.estatisticas()
@@ -320,9 +310,7 @@ class TestIngestaoGrafo:
 
     def test_fornecedor_tem_cnpj_e_razao_social(self, grafo_temp):
         extrator = ExtratorGarantiaFabricante(ELECTROLUX_12M, grafo=grafo_temp)
-        extrator.extrair_garantias(
-            ELECTROLUX_12M, texto_override=_ler(ELECTROLUX_12M)
-        )
+        extrator.extrair_garantias(ELECTROLUX_12M, texto_override=_ler(ELECTROLUX_12M))
         fornecedor = grafo_temp.buscar_node("fornecedor", "17.474.294/0001-40")
         assert fornecedor is not None
         assert fornecedor.metadata.get("cnpj") == "17.474.294/0001-40"
@@ -330,21 +318,15 @@ class TestIngestaoGrafo:
 
     def test_garantia_node_guarda_produto_e_serial(self, grafo_temp):
         extrator = ExtratorGarantiaFabricante(SAMSUNG_PHONE, grafo=grafo_temp)
-        extrator.extrair_garantias(
-            SAMSUNG_PHONE, texto_override=_ler(SAMSUNG_PHONE)
-        )
+        extrator.extrair_garantias(SAMSUNG_PHONE, texto_override=_ler(SAMSUNG_PHONE))
         nodes_garantia = grafo_temp.listar_nodes("garantia")
         assert len(nodes_garantia) == 1
         meta = nodes_garantia[0].metadata
         assert meta.get("numero_serie") == "358765432109876"
-        assert "Galaxy" in (meta.get("produto") or "") or "S24" in (
-            meta.get("produto") or ""
-        )
+        assert "Galaxy" in (meta.get("produto") or "") or "S24" in (meta.get("produto") or "")
         assert meta.get("prazo_meses") == 12
 
-    def test_ingerir_garantia_rejeita_campos_obrigatorios_ausentes(
-        self, grafo_temp
-    ):
+    def test_ingerir_garantia_rejeita_campos_obrigatorios_ausentes(self, grafo_temp):
         with pytest.raises(ValueError, match="chave_garantia"):
             ingerir_garantia(grafo_temp, {})
 
@@ -389,9 +371,7 @@ class TestLinkingComItem:
 
         # Agora ingere garantia do mesmo fornecedor no mesmo dia.
         extrator = ExtratorGarantiaFabricante(ELECTROLUX_12M, grafo=grafo_temp)
-        extrator.extrair_garantias(
-            ELECTROLUX_12M, texto_override=_ler(ELECTROLUX_12M)
-        )
+        extrator.extrair_garantias(ELECTROLUX_12M, texto_override=_ler(ELECTROLUX_12M))
 
         stats = grafo_temp.estatisticas()
         # Aresta cobre deve ter sido criada pela heurística localizar_item.
@@ -400,9 +380,7 @@ class TestLinkingComItem:
     def test_aresta_cobre_nao_criada_sem_item_existente(self, grafo_temp):
         """Sem item prévio no grafo, aresta cobre NÃO é criada."""
         extrator = ExtratorGarantiaFabricante(ELECTROLUX_12M, grafo=grafo_temp)
-        extrator.extrair_garantias(
-            ELECTROLUX_12M, texto_override=_ler(ELECTROLUX_12M)
-        )
+        extrator.extrair_garantias(ELECTROLUX_12M, texto_override=_ler(ELECTROLUX_12M))
         stats = grafo_temp.estatisticas()
         assert stats["edges_por_tipo"].get("cobre", 0) == 0
 
@@ -419,13 +397,10 @@ class TestAlertaIngestor:
 
         caplog.set_level(logging.WARNING, logger="graph.ingestor_documento")
         extrator = ExtratorGarantiaFabricante(EXPIRANDO, grafo=grafo_temp)
-        extrator.extrair_garantias(
-            EXPIRANDO, texto_override=_ler(EXPIRANDO)
-        )
+        extrator.extrair_garantias(EXPIRANDO, texto_override=_ler(EXPIRANDO))
         mensagens = [r.message for r in caplog.records]
         assert any("expira em" in m and "<=30 dias" in m for m in mensagens), (
-            "esperava warning de 'expira em ... <=30 dias', "
-            f"mas só tenho: {mensagens}"
+            f"esperava warning de 'expira em ... <=30 dias', mas só tenho: {mensagens}"
         )
 
 

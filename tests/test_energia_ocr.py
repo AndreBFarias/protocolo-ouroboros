@@ -22,11 +22,7 @@ from src.extractors.energia_ocr import (
 )
 
 FIXTURE_MOCK = (
-    Path(__file__).parent
-    / "fixtures"
-    / "bancos"
-    / "energia_ocr"
-    / "sample_mock_output.txt"
+    Path(__file__).parent / "fixtures" / "bancos" / "energia_ocr" / "sample_mock_output.txt"
 )
 
 
@@ -161,8 +157,7 @@ def test_tentar_ocr_retorna_none_em_arquivo_inexistente(tmp_path: Path) -> None:
     [
         ("Mês\n01/2026\nConsumo\n100 Kwh\nR$ 50,00", 1),
         (
-            "Mês\n01/2026\nConsumo\n100 Kwh\nR$ 50,00\n\n"
-            "Mês\n02/2026\nConsumo\n200 Kwh\nR$ 100,00",
+            "Mês\n01/2026\nConsumo\n100 Kwh\nR$ 50,00\n\nMês\n02/2026\nConsumo\n200 Kwh\nR$ 100,00",
             2,
         ),
         ("Sem padrão nenhum", 0),

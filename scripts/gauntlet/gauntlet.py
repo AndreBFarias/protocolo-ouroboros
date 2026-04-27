@@ -51,11 +51,13 @@ def _carregar_fase(nome: str) -> ResultadoFase:
         fase = ResultadoFase(nome=nome)
         from scripts.gauntlet.config import ResultadoTeste
 
-        fase.testes.append(ResultadoTeste(
-            nome=f"carregar_{nome}",
-            passou=False,
-            erro=str(e),
-        ))
+        fase.testes.append(
+            ResultadoTeste(
+                nome=f"carregar_{nome}",
+                passou=False,
+                erro=str(e),
+            )
+        )
         return fase
 
 

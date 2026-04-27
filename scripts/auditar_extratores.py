@@ -344,18 +344,14 @@ def _transacao_para_dict(t: Transacao) -> dict:
     }
 
 
-def _extrair_com_dedup_fisica(
-    definicao: "DefinicaoBanco", diretorio: Path
-) -> list[Transacao]:
+def _extrair_com_dedup_fisica(definicao: "DefinicaoBanco", diretorio: Path) -> list[Transacao]:
     """Executa o extrator sobre cópias únicas por SHA-256 do diretório.
 
     Aplica dedup físico ANTES de instanciar o extrator para evitar
     reprocessar o mesmo arquivo 7x (padrão mais comum no diretório real).
     """
     arquivos = sorted(
-        f
-        for f in diretorio.iterdir()
-        if f.is_file() and f.suffix.lower() in definicao.extensoes
+        f for f in diretorio.iterdir() if f.is_file() and f.suffix.lower() in definicao.extensoes
     )
     unicos = _unicos_por_sha(arquivos)
     transacoes: list[Transacao] = []
@@ -375,11 +371,7 @@ def _extrair_ofx_complementar(diretorio: Path) -> list[Transacao]:
 
     Retorna lista vazia quando o diretório não tem arquivos `.ofx` únicos.
     """
-    arquivos = sorted(
-        f
-        for f in diretorio.iterdir()
-        if f.is_file() and f.suffix.lower() == ".ofx"
-    )
+    arquivos = sorted(f for f in diretorio.iterdir() if f.is_file() and f.suffix.lower() == ".ofx")
     unicos = _unicos_por_sha(arquivos)
     transacoes: list[Transacao] = []
     for arquivo in unicos:
@@ -404,8 +396,7 @@ def _aplicar_dedup_pipeline(transacoes: list[Transacao]) -> list[Transacao]:
     dicts = deduplicar_por_identificador(dicts)
     dicts = deduplicar_por_hash_fuzzy(dicts)
     ids_preservados = {
-        (d.get("_identificador"), d["data"], float(d["valor"]), d["local"])
-        for d in dicts
+        (d.get("_identificador"), d["data"], float(d["valor"]), d["local"]) for d in dicts
     }
 
     resultado: list[Transacao] = []
@@ -540,9 +531,7 @@ def auditar_banco(
             transacoes = extrator.extrair()
         arquivo_escolhido = diretorio_alvo
     else:
-        arquivo_escolhido = arquivo or _selecionar_arquivo_para_mes(
-            definicao, raiz, mes_ref
-        )
+        arquivo_escolhido = arquivo or _selecionar_arquivo_para_mes(definicao, raiz, mes_ref)
         if arquivo_escolhido is None or not arquivo_escolhido.exists():
             return ResultadoAuditoria(
                 banco=definicao.chave,
@@ -566,11 +555,7 @@ def auditar_banco(
     # não queremos injetar OFX silenciosamente.
     n_ofx_complementar = 0
     total_ofx_complementar = 0.0
-    if (
-        com_ofx
-        and usar_diretorio_completo
-        and definicao.aceita_ofx_complementar
-    ):
+    if com_ofx and usar_diretorio_completo and definicao.aceita_ofx_complementar:
         tx_ofx = _extrair_ofx_complementar(diretorio_alvo)
         n_ofx_complementar = len(tx_ofx)
         total_ofx_complementar = _soma_absoluta(tx_ofx)
@@ -629,11 +614,7 @@ def auditar_banco(
     # Aplicado APÓS o filtro de meses para instrumentar o que foi removido.
     n_xlsx_ti_ignoradas = 0
     total_xlsx_ti_ignoradas = 0.0
-    if (
-        ignorar_ti
-        and definicao.aceita_ignorar_ti
-        and "tipo" in df_filtro.columns
-    ):
+    if ignorar_ti and definicao.aceita_ignorar_ti and "tipo" in df_filtro.columns:
         df_ti = df_filtro[df_filtro["tipo"] == "Transferência Interna"]
         n_xlsx_ti_ignoradas = len(df_ti)
         total_xlsx_ti_ignoradas = float(df_ti["valor"].abs().sum())
@@ -677,16 +658,12 @@ def auditar_banco(
         observacao = f"{observacao}; {obs_dedup}" if observacao else obs_dedup
 
     if com_ofx and n_ofx_complementar:
-        obs_ofx = (
-            f"OFX complementar: +{n_ofx_complementar} tx "
-            f"(R$ {total_ofx_complementar:,.2f})"
-        )
+        obs_ofx = f"OFX complementar: +{n_ofx_complementar} tx (R$ {total_ofx_complementar:,.2f})"
         observacao = f"{observacao}; {obs_ofx}" if observacao else obs_ofx
 
     if ignorar_ti and n_xlsx_ti_ignoradas:
         obs_ti = (
-            f"TI ignoradas no XLSX: -{n_xlsx_ti_ignoradas} tx "
-            f"(R$ {total_xlsx_ti_ignoradas:,.2f})"
+            f"TI ignoradas no XLSX: -{n_xlsx_ti_ignoradas} tx (R$ {total_xlsx_ti_ignoradas:,.2f})"
         )
         observacao = f"{observacao}; {obs_ti}" if observacao else obs_ti
 
@@ -751,15 +728,9 @@ def gerar_relatorio(
     if diverges:
         linhas.extend(["", "## Divergências detectadas", ""])
         for r in diverges:
-            linhas.append(
-                f"### {r.banco} {r.mes_ref} -- delta R$ {r.delta:.2f}"
-            )
-            linhas.append(
-                f"- Total extrator: R$ {r.total_extrator:.2f} ({r.n_extrator} tx)"
-            )
-            linhas.append(
-                f"- Total XLSX: R$ {r.total_xlsx:.2f} ({r.n_xlsx} tx)"
-            )
+            linhas.append(f"### {r.banco} {r.mes_ref} -- delta R$ {r.delta:.2f}")
+            linhas.append(f"- Total extrator: R$ {r.total_extrator:.2f} ({r.n_extrator} tx)")
+            linhas.append(f"- Total XLSX: R$ {r.total_xlsx:.2f} ({r.n_xlsx} tx)")
             linhas.append(f"- Arquivo: `{r.arquivo}`")
             linhas.append("- Sprint-filha sugerida: `sprint_93a_<banco>.md`")
             linhas.append("")
@@ -767,17 +738,15 @@ def gerar_relatorio(
     if sem_dados:
         linhas.extend(["", "## Sem dados (auditoria pulada)", ""])
         for r in sem_dados:
-            linhas.append(
-                f"- {r.banco} {r.mes_ref or '-'}: {r.observacao}"
-            )
+            linhas.append(f"- {r.banco} {r.mes_ref or '-'}: {r.observacao}")
 
     linhas.extend(
         [
             "",
             "---",
             "",
-            "*\"Teste automatizado prova que o código não quebra; "
-            "auditoria prova que o código faz o que deveria.\" "
+            '*"Teste automatizado prova que o código não quebra; '
+            'auditoria prova que o código faz o que deveria." '
             "-- princípio de fidelidade*",
             "",
         ]

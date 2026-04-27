@@ -279,9 +279,7 @@ class TestGrafoNfce:
 
         from src.graph.ingestor_documento import ingerir_documento_fiscal
 
-        doc_id = ingerir_documento_fiscal(
-            grafo_temp, doc, itens, caminho_arquivo=extrator.caminho
-        )
+        doc_id = ingerir_documento_fiscal(grafo_temp, doc, itens, caminho_arquivo=extrator.caminho)
         assert doc_id > 0
 
         stats = grafo_temp.estatisticas()
@@ -294,9 +292,7 @@ class TestGrafoNfce:
         assert stats["edges_por_tipo"].get("ocorre_em") == 1
         assert stats["edges_por_tipo"].get("contem_item") == 2
 
-    def test_ingestao_idempotente(
-        self, extrator: ExtratorNfcePDF, grafo_temp: GrafoDB
-    ):
+    def test_ingestao_idempotente(self, extrator: ExtratorNfcePDF, grafo_temp: GrafoDB):
         """Rodar a mesma NFC-e 2x não duplica nós nem arestas."""
         from src.graph.ingestor_documento import ingerir_documento_fiscal
 
@@ -314,9 +310,7 @@ class TestGrafoNfce:
         assert stats["nodes_por_tipo"]["item"] == 2
         assert stats["edges_por_tipo"]["contem_item"] == 2
 
-    def test_supermercado_gera_31_itens(
-        self, extrator: ExtratorNfcePDF, grafo_temp: GrafoDB
-    ):
+    def test_supermercado_gera_31_itens(self, extrator: ExtratorNfcePDF, grafo_temp: GrafoDB):
         from src.graph.ingestor_documento import ingerir_documento_fiscal
 
         doc, itens = extrator.extrair_nfces(
@@ -335,17 +329,13 @@ class TestGrafoNfce:
 
 
 class TestPodeProcessar:
-    def test_pode_processar_por_path_nfce(
-        self, extrator: ExtratorNfcePDF, tmp_path: Path
-    ):
+    def test_pode_processar_por_path_nfce(self, extrator: ExtratorNfcePDF, tmp_path: Path):
         arq = tmp_path / "andre" / "nfs_fiscais" / "nfce" / "NFCE_123.pdf"
         arq.parent.mkdir(parents=True)
         arq.write_bytes(b"%PDF-1.4\n")
         assert extrator.pode_processar(arq) is True
 
-    def test_rejeita_extensao_incompativel(
-        self, extrator: ExtratorNfcePDF, tmp_path: Path
-    ):
+    def test_rejeita_extensao_incompativel(self, extrator: ExtratorNfcePDF, tmp_path: Path):
         arq = tmp_path / "nfce" / "NFCE_123.png"
         arq.parent.mkdir(parents=True)
         arq.write_bytes(b"\x89PNG")

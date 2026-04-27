@@ -124,18 +124,14 @@ class TestExtracaoCamposCanonicos:
         faltando = [campo for campo in criticos if not b.get(campo)]
         assert not faltando, f"campos críticos faltando: {faltando}"
 
-    def test_extrai_15_digitos_bilhete_individual(
-        self, extrator: ExtratorCupomGarantiaEstendida
-    ):
+    def test_extrai_15_digitos_bilhete_individual(self, extrator: ExtratorCupomGarantiaEstendida):
         texto = _carregar_fixture("bilhete_nativo_base_p55.txt")
         bilhete = extrator.extrair_bilhetes(extrator.caminho, texto_override=texto)[0]
         assert bilhete["numero_bilhete"] == "781000129322124"
         assert len(bilhete["numero_bilhete"]) == 15
         assert bilhete["numero_bilhete"].isdigit()
 
-    def test_extrai_processo_susep_formato_canonico(
-        self, extrator: ExtratorCupomGarantiaEstendida
-    ):
+    def test_extrai_processo_susep_formato_canonico(self, extrator: ExtratorCupomGarantiaEstendida):
         texto = _carregar_fixture("bilhete_nativo_base_p55.txt")
         bilhete = extrator.extrair_bilhetes(extrator.caminho, texto_override=texto)[0]
         # Nativo tem `15414 .900147/2014-11` (espaço extra); normalizador deve
@@ -152,9 +148,7 @@ class TestExtracaoCamposCanonicos:
         assert bilhete["cobertura_inicio"] == "2027-04-19"
         assert bilhete["cobertura_fim"] == "2029-04-19"
 
-    def test_valores_numericos_parseados_em_float(
-        self, extrator: ExtratorCupomGarantiaEstendida
-    ):
+    def test_valores_numericos_parseados_em_float(self, extrator: ExtratorCupomGarantiaEstendida):
         texto = _carregar_fixture("bilhete_nativo_base_p55.txt")
         bilhete = extrator.extrair_bilhetes(extrator.caminho, texto_override=texto)[0]
         assert bilhete["premio_liquido"] == pytest.approx(50.27)
@@ -162,10 +156,7 @@ class TestExtracaoCamposCanonicos:
         assert bilhete["premio_total"] == pytest.approx(53.98)
         assert bilhete["valor_bem"] == pytest.approx(179.99)
         # Invariante contábil: prêmio total = líquido + IOF (com tolerância de 1 cent).
-        assert (
-            abs(bilhete["premio_total"] - bilhete["premio_liquido"] - bilhete["iof"])
-            <= 0.01
-        )
+        assert abs(bilhete["premio_total"] - bilhete["premio_liquido"] - bilhete["iof"]) <= 0.01
 
 
 # ============================================================================
@@ -184,18 +175,14 @@ class TestGlyphTolerance:
         assert bilhete["varejo_cnpj"] == "00.776.574/0160-79"
         assert bilhete["seguradora_cnpj"] == "61.074.175/0001-38"
 
-    def test_glyph_tolerante_cnpj_scan_com_bracket(
-        self, extrator: ExtratorCupomGarantiaEstendida
-    ):
+    def test_glyph_tolerante_cnpj_scan_com_bracket(self, extrator: ExtratorCupomGarantiaEstendida):
         """Fixture 3 tem `CNPJ]:` (OCR de scan inseriu ]) -- regex CNP+GLYPH_J+ resolve."""
         texto = _carregar_fixture("bilhete_scan_controle_p55.txt")
         assert "CNPJ]" in texto
         bilhete = extrator.extrair_bilhetes(extrator.caminho, texto_override=texto)[0]
         assert bilhete["varejo_cnpj"] == "00.776.574/0160-79"
 
-    def test_glyph_tolerante_separador_virgula_ocr(
-        self, extrator: ExtratorCupomGarantiaEstendida
-    ):
+    def test_glyph_tolerante_separador_virgula_ocr(self, extrator: ExtratorCupomGarantiaEstendida):
         """Fixture 4 tem `00,776.574` (OCR trocou `.` por `,`) -- separador tolerante."""
         texto = _carregar_fixture("bilhete_scan_base_p55.txt")
         assert "00,776.574" in texto
@@ -212,9 +199,7 @@ class TestGlyphTolerance:
         # O YAML define SUSEP canônico 06238 para o CNPJ da MAPFRE; enrich sobrescreve.
         assert bilhete["seguradora_codigo_susep"] == "06238"
 
-    def test_ri_asz_co_cobre_todas_variantes_ocr(
-        self, extrator: ExtratorCupomGarantiaEstendida
-    ):
+    def test_ri_asz_co_cobre_todas_variantes_ocr(self, extrator: ExtratorCupomGarantiaEstendida):
         """Fixture 4 tem `Riaco`, fixture 1 tem `Rizco`, fixture 3 tem `Risco`."""
         for nome in [
             "bilhete_scan_base_p55.txt",
@@ -256,9 +241,7 @@ class TestSeguradoraYaml:
             "src.extractors.cupom_garantia_estendida_pdf.PATH_PROPOSTAS",
             tmp_path / "propostas",
         )
-        ext_vazio = ExtratorCupomGarantiaEstendida(
-            extrator.caminho, seguradoras_cfg={}
-        )
+        ext_vazio = ExtratorCupomGarantiaEstendida(extrator.caminho, seguradoras_cfg={})
         texto = _carregar_fixture("bilhete_nativo_base_p55.txt")
         ext_vazio.extrair_bilhetes(ext_vazio.caminho, texto_override=texto)
         propostas_criadas = list((tmp_path / "propostas").glob("*.md"))
@@ -280,9 +263,7 @@ class TestIngestaoGrafo:
         from src.graph.ingestor_documento import ingerir_apolice
 
         texto = _carregar_fixture("bilhete_nativo_base_p55.txt")
-        bilhete = extrator.extrair_bilhetes(
-            extrator.caminho, texto_override=texto
-        )[0]
+        bilhete = extrator.extrair_bilhetes(extrator.caminho, texto_override=texto)[0]
         ingerir_apolice(grafo_temp, bilhete, caminho_arquivo=extrator.caminho)
 
         stats = grafo_temp.estatisticas()
@@ -303,9 +284,7 @@ class TestIngestaoGrafo:
         from src.graph.ingestor_documento import ingerir_apolice
 
         texto = _carregar_fixture("bilhete_nativo_base_p55.txt")
-        bilhete = extrator.extrair_bilhetes(
-            extrator.caminho, texto_override=texto
-        )[0]
+        bilhete = extrator.extrair_bilhetes(extrator.caminho, texto_override=texto)[0]
         ingerir_apolice(grafo_temp, bilhete, caminho_arquivo=extrator.caminho)
         nodes_apolice = grafo_temp.listar_nodes("apolice")
         assert len(nodes_apolice) == 1
@@ -355,9 +334,7 @@ class TestIngestaoGrafo:
         )
 
         texto = _carregar_fixture("bilhete_nativo_base_p55.txt")
-        bilhete = extrator.extrair_bilhetes(
-            extrator.caminho, texto_override=texto
-        )[0]
+        bilhete = extrator.extrair_bilhetes(extrator.caminho, texto_override=texto)[0]
         ingerir_apolice(grafo_temp, bilhete, caminho_arquivo=extrator.caminho)
 
         edges = grafo_temp.listar_edges(tipo="assegura")

@@ -71,9 +71,7 @@ _RAIZ_REPO: Path = Path(__file__).resolve().parents[2]
 _PATH_MAPPING_PADRAO: Path = _RAIZ_REPO / "mappings" / "ocr_cupom_regex.yaml"
 _DIR_CACHE_OCR_PADRAO: Path = _RAIZ_REPO / "data" / "cache" / "ocr"
 _DIR_CONFERIR_PADRAO: Path = _RAIZ_REPO / "data" / "raw" / "_conferir"
-_DIR_PROPOSTAS_PADRAO: Path = (
-    _RAIZ_REPO / "docs" / "propostas" / "extracao_cupom"
-)
+_DIR_PROPOSTAS_PADRAO: Path = _RAIZ_REPO / "docs" / "propostas" / "extracao_cupom"
 
 
 def _carregar_regex_emissores(
@@ -99,9 +97,7 @@ def _carregar_regex_emissores(
             logger.warning("emissor %s sem regex_item; ignorado", nome)
             continue
         identificador = (
-            re.compile(identificador_str, re.IGNORECASE | re.UNICODE)
-            if identificador_str
-            else None
+            re.compile(identificador_str, re.IGNORECASE | re.UNICODE) if identificador_str else None
         )
         regex_item = re.compile(
             regex_item_str, re.MULTILINE | re.UNICODE | re.VERBOSE | re.IGNORECASE
@@ -266,9 +262,7 @@ def _parse_cabecalho_cupom(texto: str) -> dict[str, Any]:
     }
     # Números internos do cupom vão para metadata sem poluir contrato.
     if any(numeros.values()):
-        documento["numeros_internos"] = {
-            k: v for k, v in numeros.items() if v is not None
-        }
+        documento["numeros_internos"] = {k: v for k, v in numeros.items() if v is not None}
     return documento
 
 
@@ -277,9 +271,7 @@ def _parse_cabecalho_cupom(texto: str) -> dict[str, Any]:
 # ============================================================================
 
 
-def _detectar_emissor(
-    texto: str, emissores: list[dict[str, Any]]
-) -> dict[str, Any]:
+def _detectar_emissor(texto: str, emissores: list[dict[str, Any]]) -> dict[str, Any]:
     """Escolhe a regra de emissor. Cai para `generico` se nenhuma bate."""
     for emissor in emissores:
         identificador = emissor.get("identificador")
@@ -293,9 +285,7 @@ def _detectar_emissor(
     raise RuntimeError("nenhum emissor definido em ocr_cupom_regex.yaml")
 
 
-def _parse_itens_cupom(
-    texto: str, emissor: dict[str, Any]
-) -> list[dict[str, Any]]:
+def _parse_itens_cupom(texto: str, emissor: dict[str, Any]) -> list[dict[str, Any]]:
     """Aplica regex do emissor a cada linha do texto; devolve lista de itens.
 
     Cada item tem `codigo`, `descricao`, `qtde`, `unidade`, `valor_unit`,  # noqa: accent
@@ -352,10 +342,7 @@ def calcular_recall(total: float | None, itens: list[dict[str, Any]]) -> float:
     """Devolve soma(item.valor_total) / total. 0.0 se `total` inválido."""
     if not total or total <= 0:
         return 0.0
-    soma = sum(
-        item.get("valor_total", 0.0) or 0.0
-        for item in itens
-    )
+    soma = sum(item.get("valor_total", 0.0) or 0.0 for item in itens)
     return round(soma / total, 4)
 
 
@@ -393,9 +380,7 @@ def _registrar_fallback_supervisor(
         try:
             destino_foto.write_bytes(caminho_foto.read_bytes())
         except OSError as erro:
-            logger.warning(
-                "falha ao copiar foto para conferência: %s", erro
-            )
+            logger.warning("falha ao copiar foto para conferência: %s", erro)
 
     diretorio_propostas.mkdir(parents=True, exist_ok=True)
     proposta = diretorio_propostas / f"{identificador}.md"
@@ -543,9 +528,7 @@ class ExtratorCupomTermicoFoto(ExtratorBase):
         try:
             resultado = self.extrair_cupom(self.caminho)
         except Exception as erro:
-            self.logger.error(
-                "falha ao extrair cupom %s: %s", self.caminho.name, erro
-            )
+            self.logger.error("falha ao extrair cupom %s: %s", self.caminho.name, erro)
             return []
 
         documento = resultado["documento"]
@@ -553,9 +536,7 @@ class ExtratorCupomTermicoFoto(ExtratorBase):
         confidence = resultado["confidence"]
         recall = resultado["recall"]
 
-        precisa_conferencia = (
-            confidence < LIMIAR_CONFIDENCE_OK or recall < LIMIAR_RECALL_OK
-        )
+        precisa_conferencia = confidence < LIMIAR_CONFIDENCE_OK or recall < LIMIAR_RECALL_OK
         if not documento or precisa_conferencia:
             _registrar_fallback_supervisor(
                 caminho_foto=self.caminho,
@@ -573,13 +554,9 @@ class ExtratorCupomTermicoFoto(ExtratorBase):
         criou_grafo_localmente = self._grafo is None
         try:
             grafo.criar_schema()
-            ingerir_documento_fiscal(
-                grafo, documento, itens, caminho_arquivo=self.caminho
-            )
+            ingerir_documento_fiscal(grafo, documento, itens, caminho_arquivo=self.caminho)
         except ValueError as erro:
-            self.logger.warning(
-                "cupom inválido em %s: %s", self.caminho.name, erro
-            )
+            self.logger.warning("cupom inválido em %s: %s", self.caminho.name, erro)
         finally:
             if criou_grafo_localmente:
                 grafo.fechar()
@@ -651,9 +628,7 @@ class ExtratorCupomTermicoFoto(ExtratorBase):
             # tenta rotação 180°. Usa o melhor dos dois.
             if confidence < LIMIAR_CONFIDENCE_OK or len(texto.strip()) < 40:
                 img_invertida = rotacionar_180(img)
-                texto_inv, confidence_inv = ocr_com_confidence(
-                    img_invertida, lang="por"
-                )
+                texto_inv, confidence_inv = ocr_com_confidence(img_invertida, lang="por")
                 if confidence_inv > confidence:
                     return texto_inv, confidence_inv
             return texto, confidence

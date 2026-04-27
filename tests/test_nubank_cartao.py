@@ -171,9 +171,7 @@ class TestEntradaInvalida:
         ("foo,bar", False),
     ],
 )
-def test_pode_processar_detecta_cabecalho(
-    tmp_path: Path, cabecalho: str, esperado: bool
-) -> None:
+def test_pode_processar_detecta_cabecalho(tmp_path: Path, cabecalho: str, esperado: bool) -> None:
     arquivo = tmp_path / "nubank_check.csv"
     arquivo.write_text(f"{cabecalho}\n", encoding="utf-8")
     extrator = ExtratorNubankCartao(arquivo)

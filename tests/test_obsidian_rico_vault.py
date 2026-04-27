@@ -140,18 +140,14 @@ def grafo_rico(tmp_path: Path) -> Path:
 
 
 class TestSincronizarRico:
-    def test_dry_run_nao_cria_nada(
-        self, vault_sintetico: Path, grafo_rico: Path
-    ) -> None:
+    def test_dry_run_nao_cria_nada(self, vault_sintetico: Path, grafo_rico: Path) -> None:
         report = sr.sincronizar_rico(
             vault_sintetico, grafo_rico, dry_run=True, min_docs_por_fornecedor=2
         )
         assert report.documentos_escritos == 1
         assert not (vault_sintetico / "Pessoal" / "Casal").exists()
 
-    def test_executar_cria_estrutura(
-        self, vault_sintetico: Path, grafo_rico: Path
-    ) -> None:
+    def test_executar_cria_estrutura(self, vault_sintetico: Path, grafo_rico: Path) -> None:
         report = sr.sincronizar_rico(
             vault_sintetico, grafo_rico, dry_run=False, min_docs_por_fornecedor=2
         )
@@ -168,18 +164,14 @@ class TestSincronizarRico:
         assert "valor: 103.93" in conteudo
         assert report.documentos_escritos == 1
 
-    def test_idempotencia(
-        self, vault_sintetico: Path, grafo_rico: Path
-    ) -> None:
+    def test_idempotencia(self, vault_sintetico: Path, grafo_rico: Path) -> None:
         """2 execuções consecutivas devem deixar inalteradas >= 1."""
         _ = sr.sincronizar_rico(vault_sintetico, grafo_rico, dry_run=False)
         report2 = sr.sincronizar_rico(vault_sintetico, grafo_rico, dry_run=False)
         assert report2.inalteradas >= 1
         assert report2.documentos_escritos == 0
 
-    def test_edicao_manual_nao_sobrescreve(
-        self, vault_sintetico: Path, grafo_rico: Path
-    ) -> None:
+    def test_edicao_manual_nao_sobrescreve(self, vault_sintetico: Path, grafo_rico: Path) -> None:
         # Primeira rodada cria a nota
         sr.sincronizar_rico(vault_sintetico, grafo_rico, dry_run=False)
         nota = (
@@ -198,12 +190,8 @@ class TestSincronizarRico:
         assert report.notas_preservadas == 1
         assert nota.read_text(encoding="utf-8") == "# minha versao\nzero tag\n"
 
-    def test_grafo_ausente_nao_quebra(
-        self, vault_sintetico: Path, tmp_path: Path
-    ) -> None:
-        report = sr.sincronizar_rico(
-            vault_sintetico, tmp_path / "nao_existe.sqlite", dry_run=False
-        )
+    def test_grafo_ausente_nao_quebra(self, vault_sintetico: Path, tmp_path: Path) -> None:
+        report = sr.sincronizar_rico(vault_sintetico, tmp_path / "nao_existe.sqlite", dry_run=False)
         assert report.erros
         assert report.documentos_escritos == 0
 
@@ -382,9 +370,7 @@ class TestSincronizarRicoMoc:
     def test_executar_gera_arquivos_meses(
         self, vault_sintetico: Path, grafo_multi_mes: Path
     ) -> None:
-        report = sr.sincronizar_rico(
-            vault_sintetico, grafo_multi_mes, dry_run=False
-        )
+        report = sr.sincronizar_rico(vault_sintetico, grafo_multi_mes, dry_run=False)
         fin = vault_sintetico / "Pessoal" / "Casal" / "Financeiro"
         moc_mar = fin / "Meses" / "2026-03.md"
         moc_abr = fin / "Meses" / "2026-04.md"
@@ -402,26 +388,12 @@ class TestSincronizarRicoMoc:
     ) -> None:
         """MOC editada manualmente (sem tag/frontmatter) não deve ser reescrita."""
         sr.sincronizar_rico(vault_sintetico, grafo_multi_mes, dry_run=False)
-        moc_abr = (
-            vault_sintetico
-            / "Pessoal"
-            / "Casal"
-            / "Financeiro"
-            / "Meses"
-            / "2026-04.md"
-        )
+        moc_abr = vault_sintetico / "Pessoal" / "Casal" / "Financeiro" / "Meses" / "2026-04.md"
         # Usuário sobrescreve na mão, remove todos os marcadores
-        moc_abr.write_text(
-            "# Abril — edição manual\n\nConteúdo humano\n", encoding="utf-8"
-        )
-        report = sr.sincronizar_rico(
-            vault_sintetico, grafo_multi_mes, dry_run=False
-        )
+        moc_abr.write_text("# Abril — edição manual\n\nConteúdo humano\n", encoding="utf-8")
+        report = sr.sincronizar_rico(vault_sintetico, grafo_multi_mes, dry_run=False)
         assert report.notas_preservadas >= 1
-        assert (
-            moc_abr.read_text(encoding="utf-8")
-            == "# Abril — edição manual\n\nConteúdo humano\n"
-        )
+        assert moc_abr.read_text(encoding="utf-8") == "# Abril — edição manual\n\nConteúdo humano\n"
 
 
 # ============================================================================
@@ -436,20 +408,14 @@ class TestContarDocsDoFornecedor:
         assert sr._contar_docs_do_fornecedor(db, None) == 0
         db.fechar()
 
-    def test_retorna_zero_quando_fornecedor_sem_documentos(
-        self, tmp_path: Path
-    ) -> None:
+    def test_retorna_zero_quando_fornecedor_sem_documentos(self, tmp_path: Path) -> None:
         db = GrafoDB(tmp_path / "grafo.sqlite")
         db.criar_schema()
-        forn_id = db.upsert_node(
-            "fornecedor", "SESC", metadata={"cnpj": "03288908000130"}
-        )
+        forn_id = db.upsert_node("fornecedor", "SESC", metadata={"cnpj": "03288908000130"})
         assert sr._contar_docs_do_fornecedor(db, forn_id) == 0
         db.fechar()
 
-    def test_contar_docs_do_fornecedor_retorna_contagem_real(
-        self, tmp_path: Path
-    ) -> None:
+    def test_contar_docs_do_fornecedor_retorna_contagem_real(self, tmp_path: Path) -> None:
         """Sprint 87c: bug silencioso pré-fix retornava 0 sempre.
 
         Cenário: 3 documentos distintos com aresta `fornecido_por` apontando
@@ -457,9 +423,7 @@ class TestContarDocsDoFornecedor:
         """
         db = GrafoDB(tmp_path / "grafo.sqlite")
         db.criar_schema()
-        forn_id = db.upsert_node(
-            "fornecedor", "SESC", metadata={"cnpj": "03288908000130"}
-        )
+        forn_id = db.upsert_node("fornecedor", "SESC", metadata={"cnpj": "03288908000130"})
         for i in range(3):
             doc_id = db.upsert_node(
                 "documento",

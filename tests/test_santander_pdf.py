@@ -21,9 +21,7 @@ import pytest
 
 from src.extractors.santander_pdf import ExtratorSantanderPDF
 
-FIXTURE_TEXTO = (
-    Path(__file__).parent / "fixtures" / "bancos" / "santander_pdf" / "sample_texto.txt"
-)
+FIXTURE_TEXTO = Path(__file__).parent / "fixtures" / "bancos" / "santander_pdf" / "sample_texto.txt"
 
 
 def _criar_arquivo_dummy(tmp_path: Path) -> Path:

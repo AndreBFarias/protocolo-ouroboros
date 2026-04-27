@@ -25,9 +25,7 @@ class TestResolverDestinoComHash:
         destino_dir = tmp_path / "dest"
         destino_dir.mkdir()
 
-        r = _resolver_destino_sem_colisao(
-            destino_dir, "extrato.pdf", arquivo_origem=arquivo
-        )
+        r = _resolver_destino_sem_colisao(destino_dir, "extrato.pdf", arquivo_origem=arquivo)
         assert r == destino_dir / "extrato.pdf"
 
     def test_destino_existe_com_mesmo_hash_devolve_destino(self, tmp_path: Path) -> None:
@@ -39,9 +37,7 @@ class TestResolverDestinoComHash:
         destino_dir.mkdir()
         (destino_dir / "extrato.pdf").write_bytes(conteudo)
 
-        r = _resolver_destino_sem_colisao(
-            destino_dir, "extrato.pdf", arquivo_origem=arquivo
-        )
+        r = _resolver_destino_sem_colisao(destino_dir, "extrato.pdf", arquivo_origem=arquivo)
         # Idempotência: destino existente com mesmo hash é reaproveitado
         assert r == destino_dir / "extrato.pdf"
 
@@ -53,9 +49,7 @@ class TestResolverDestinoComHash:
         destino_dir.mkdir()
         (destino_dir / "extrato.pdf").write_bytes(b"conteudo_existente")
 
-        r = _resolver_destino_sem_colisao(
-            destino_dir, "extrato.pdf", arquivo_origem=arquivo
-        )
+        r = _resolver_destino_sem_colisao(destino_dir, "extrato.pdf", arquivo_origem=arquivo)
         # Conteúdos distintos -> desambiguação canônica
         assert r == destino_dir / "extrato_1.pdf"
 
@@ -81,7 +75,5 @@ class TestResolverDestinoComHash:
         arquivo.parent.mkdir()
         arquivo.write_bytes(b"C")
 
-        r = _resolver_destino_sem_colisao(
-            destino_dir, "extrato.pdf", arquivo_origem=arquivo
-        )
+        r = _resolver_destino_sem_colisao(destino_dir, "extrato.pdf", arquivo_origem=arquivo)
         assert r == destino_dir / "extrato_2.pdf"

@@ -80,9 +80,7 @@ VALIDADE_CONTROLADA_MESES: int = 1
 
 
 _RAIZ_REPO: Path = Path(__file__).resolve().parents[2]
-_PATH_MEDICAMENTOS_DEDUTIVEIS: Path = (
-    _RAIZ_REPO / "mappings" / "medicamentos_dedutiveis.yaml"
-)
+_PATH_MEDICAMENTOS_DEDUTIVEIS: Path = _RAIZ_REPO / "mappings" / "medicamentos_dedutiveis.yaml"
 
 
 # ============================================================================
@@ -108,9 +106,19 @@ RE_ESPECIALIDADE = re.compile(
 )
 RE_DATA_NUMERICA = re.compile(r"(\d{2})/(\d{2})/(\d{4})")
 _MESES_PT: dict[str, int] = {
-    "janeiro": 1, "fevereiro": 2, "marco": 3, "março": 3, "abril": 4,
-    "maio": 5, "junho": 6, "julho": 7, "agosto": 8, "setembro": 9,
-    "outubro": 10, "novembro": 11, "dezembro": 12,
+    "janeiro": 1,
+    "fevereiro": 2,
+    "marco": 3,
+    "março": 3,
+    "abril": 4,
+    "maio": 5,
+    "junho": 6,
+    "julho": 7,
+    "agosto": 8,
+    "setembro": 9,
+    "outubro": 10,
+    "novembro": 11,
+    "dezembro": 12,
 }
 RE_DATA_EXTENSA = re.compile(
     r"(\d{1,2})\s+de\s+([a-zçãéó]+)\s+de\s+(\d{4})",
@@ -255,9 +263,7 @@ def _carregar_medicamentos_dedutiveis() -> list[dict[str, Any]]:
         )
         return []
     try:
-        dados = yaml.safe_load(
-            _PATH_MEDICAMENTOS_DEDUTIVEIS.read_text(encoding="utf-8")
-        )
+        dados = yaml.safe_load(_PATH_MEDICAMENTOS_DEDUTIVEIS.read_text(encoding="utf-8"))
     except yaml.YAMLError as erro:
         logger.warning("medicamentos_dedutiveis.yaml inválido: %s", erro)
         return []
@@ -327,7 +333,7 @@ def _extrair_medicamentos(
         # Procura posologia e forma nas 2 linhas após a linha do match.
         fim_linha = texto.find("\n", match.end())
         if fim_linha == -1:
-            janela = texto[match.end():]
+            janela = texto[match.end() :]
         else:
             proxima2 = texto.find("\n", fim_linha + 1)
             janela_fim = proxima2 if proxima2 != -1 else len(texto)
@@ -427,9 +433,7 @@ def _parse_receita(
     crm = _extrair_crm(texto)
     data_iso = _parse_data_para_iso(texto)
     if not crm or not data_iso:
-        logger.debug(
-            "receita sem CRM ou data extraíveis (crm=%s, data=%s)", crm, data_iso
-        )
+        logger.debug("receita sem CRM ou data extraíveis (crm=%s, data=%s)", crm, data_iso)
         return None
 
     medicamentos = _extrair_medicamentos(texto, cat)
@@ -596,9 +600,7 @@ class ExtratorReceitaMedica(ExtratorBase):
         try:
             self.extrair_receitas(self.caminho)
         except Exception as erro:
-            self.logger.error(
-                "falha ao extrair receita %s: %s", self.caminho.name, erro
-            )
+            self.logger.error("falha ao extrair receita %s: %s", self.caminho.name, erro)
         return []
 
     # ------------------------------------------------------------------
@@ -625,9 +627,7 @@ class ExtratorReceitaMedica(ExtratorBase):
             return []
 
         if not RE_MARCA_RECEITUARIO.search(texto):
-            self.logger.debug(
-                "texto sem marcador de receituário em %s -- ignorado", caminho.name
-            )
+            self.logger.debug("texto sem marcador de receituário em %s -- ignorado", caminho.name)
             return []
 
         parsed = _parse_receita(texto, catalogo=self._catalogo)
@@ -662,9 +662,7 @@ class ExtratorReceitaMedica(ExtratorBase):
                 caminho_arquivo=caminho,
             )
         except ValueError as erro:
-            self.logger.warning(
-                "prescricao inválida em %s: %s", caminho.name, erro
-            )
+            self.logger.warning("prescricao inválida em %s: %s", caminho.name, erro)
         finally:
             if criou_grafo_localmente:
                 grafo.fechar()
@@ -681,8 +679,7 @@ class ExtratorReceitaMedica(ExtratorBase):
         for med in medicamentos:
             if med.get("elegivel_dedutivel_irpf"):
                 self.logger.info(
-                    "medicamento elegível dedutível IRPF na receita %s: %s "
-                    "(princípio: %s)",
+                    "medicamento elegível dedutível IRPF na receita %s: %s (princípio: %s)",
                     caminho.name,
                     med.get("nome"),
                     med.get("principio_ativo"),

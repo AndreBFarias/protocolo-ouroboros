@@ -54,10 +54,7 @@ def filtrar_categorias_por_volume(
     if extrato is None or extrato.empty or not categorias_obrigatorias:
         return list(categorias_obrigatorias)
     contagem = extrato["categoria"].value_counts()
-    return [
-        c for c in categorias_obrigatorias
-        if int(contagem.get(c, 0)) >= minimo_tx
-    ]
+    return [c for c in categorias_obrigatorias if int(contagem.get(c, 0)) >= minimo_tx]
 
 
 def _heatmap(resumo: dict) -> go.Figure | None:
@@ -231,15 +228,11 @@ def renderizar(
     )
     col1, col2 = st.columns(2)
     with col1:
-        mes_sel = st.selectbox(
-            "Mês", sorted(resumo.keys(), reverse=True), key="completude_mes"
-        )
+        mes_sel = st.selectbox("Mês", sorted(resumo.keys(), reverse=True), key="completude_mes")
     with col2:
         cats_do_mes = sorted(resumo[mes_sel].keys()) if mes_sel else []
         cat_sel = (
-            st.selectbox("Categoria", cats_do_mes, key="completude_cat")
-            if cats_do_mes
-            else None
+            st.selectbox("Categoria", cats_do_mes, key="completude_cat") if cats_do_mes else None
         )
     if mes_sel and cat_sel:
         info = resumo[mes_sel][cat_sel]

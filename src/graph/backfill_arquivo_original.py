@@ -96,9 +96,7 @@ def _listar_arquivos_raw(raiz: Path) -> list[Path]:
     return [p for p in raiz.rglob("*") if p.is_file()]
 
 
-def backfill_arquivo_original(
-    db: GrafoDB, raiz_raw: Path | None = None
-) -> dict[str, Any]:
+def backfill_arquivo_original(db: GrafoDB, raiz_raw: Path | None = None) -> dict[str, Any]:
     """Backfill de `metadata.arquivo_original` em nodes documento.
 
     Idempotente: segunda execução devolve `ja_preenchidos == total` e

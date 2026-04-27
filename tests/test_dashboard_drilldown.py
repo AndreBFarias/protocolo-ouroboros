@@ -22,9 +22,7 @@ class TestStreamlitVersaoMinima:
         partes = versao.split(".")
         major = int(partes[0])
         minor = int(partes[1]) if len(partes) > 1 else 0
-        assert (major, minor) >= (1, 31), (
-            f"Sprint 73 exige streamlit>=1.31, atual={versao}"
-        )
+        assert (major, minor) >= (1, 31), f"Sprint 73 exige streamlit>=1.31, atual={versao}"
 
 
 # ============================================================================
@@ -94,9 +92,7 @@ class TestAplicarDrilldown:
     ) -> None:
         fake = _FakeSt([{"customdata": "Farmácia"}])
         monkeypatch.setitem(sys.modules, "streamlit", fake)
-        drilldown.aplicar_drilldown(
-            _FakeFig(), "categoria", "Extrato", key_grafico="k1"
-        )
+        drilldown.aplicar_drilldown(_FakeFig(), "categoria", "Extrato", key_grafico="k1")
         assert fake.rerun_count == 1
         assert fake.query_params["categoria"] == "Farmácia"
         assert fake.query_params["tab"] == "Extrato"
@@ -107,42 +103,28 @@ class TestAplicarDrilldown:
         """Debounce (acceptance #7 do spec)."""
         fake = _FakeSt([{"customdata": "Farmácia"}])
         monkeypatch.setitem(sys.modules, "streamlit", fake)
-        drilldown.aplicar_drilldown(
-            _FakeFig(), "categoria", "Extrato", key_grafico="k2"
-        )
-        drilldown.aplicar_drilldown(
-            _FakeFig(), "categoria", "Extrato", key_grafico="k2"
-        )
+        drilldown.aplicar_drilldown(_FakeFig(), "categoria", "Extrato", key_grafico="k2")
+        drilldown.aplicar_drilldown(_FakeFig(), "categoria", "Extrato", key_grafico="k2")
         assert fake.rerun_count == 1
 
-    def test_sem_pontos_nao_faz_nada(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_sem_pontos_nao_faz_nada(self, monkeypatch: pytest.MonkeyPatch) -> None:
         fake = _FakeSt([])
         monkeypatch.setitem(sys.modules, "streamlit", fake)
-        drilldown.aplicar_drilldown(
-            _FakeFig(), "categoria", "Extrato", key_grafico="k3"
-        )
+        drilldown.aplicar_drilldown(_FakeFig(), "categoria", "Extrato", key_grafico="k3")
         assert fake.rerun_count == 0
         assert "categoria" not in fake.query_params
 
-    def test_clickmode_setado_no_fig(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_clickmode_setado_no_fig(self, monkeypatch: pytest.MonkeyPatch) -> None:
         fake = _FakeSt([])
         fig = _FakeFig()
         monkeypatch.setitem(sys.modules, "streamlit", fake)
         drilldown.aplicar_drilldown(fig, "categoria", "Extrato", key_grafico="k4")
         assert any(u.get("clickmode") == "event+select" for u in fig.layout_updates)
 
-    def test_plotly_chart_recebe_key(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_plotly_chart_recebe_key(self, monkeypatch: pytest.MonkeyPatch) -> None:
         fake = _FakeSt([])
         monkeypatch.setitem(sys.modules, "streamlit", fake)
-        drilldown.aplicar_drilldown(
-            _FakeFig(), "categoria", "Extrato", key_grafico="mykey"
-        )
+        drilldown.aplicar_drilldown(_FakeFig(), "categoria", "Extrato", key_grafico="mykey")
         kwargs = fake.plot_kwargs[0]
         assert kwargs.get("key") == "mykey"
         assert kwargs.get("on_select") == "rerun"
@@ -169,9 +151,7 @@ class TestLerFiltrosDaUrl:
         assert fake.session_state["filtro_categoria"] == "Saúde"
         assert fake.session_state[drilldown.CHAVE_SESSION_ABA_ATIVA] == "Extrato"
 
-    def test_ignora_campos_fora_da_whitelist(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_ignora_campos_fora_da_whitelist(self, monkeypatch: pytest.MonkeyPatch) -> None:
         fake = _FakeStUrlFiltros({"randomico": "x", "categoria": "A"})
         monkeypatch.setitem(sys.modules, "streamlit", fake)
         drilldown.ler_filtros_da_url()
@@ -199,9 +179,7 @@ class TestLerFiltrosDaUrl:
 
 
 class TestFiltrosAtivos:
-    def test_retorna_apenas_filtros_com_valor(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_retorna_apenas_filtros_com_valor(self, monkeypatch: pytest.MonkeyPatch) -> None:
         fake = _FakeStUrlFiltros({})
         fake.session_state = {
             "filtro_categoria": "Saúde",
@@ -214,9 +192,7 @@ class TestFiltrosAtivos:
 
 
 class TestLimparFiltro:
-    def test_remove_da_session_state_e_query_params(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_remove_da_session_state_e_query_params(self, monkeypatch: pytest.MonkeyPatch) -> None:
         fake = _FakeStUrlFiltros({"categoria": "X"})
         fake.session_state = {"filtro_categoria": "X"}
         monkeypatch.setitem(sys.modules, "streamlit", fake)

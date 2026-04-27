@@ -137,9 +137,7 @@ def _criar_tx(
 # ============================================================================
 
 
-def test_holerite_g4f_linka_com_pagto_salario_apos_5_dias(
-    db: GrafoDB, caminho_propostas: Path
-):
+def test_holerite_g4f_linka_com_pagto_salario_apos_5_dias(db: GrafoDB, caminho_propostas: Path):
     """Holerite G4F competência 2026-03 (emissão 2026-03-01, total bruto 8657.25)
     deve linkar com tx PAGTO SALARIO em 2026-03-06 valor 7442.38 (líquido).
 
@@ -165,9 +163,7 @@ def test_holerite_g4f_linka_com_pagto_salario_apos_5_dias(
     assert arestas[0].evidencia.get("tipo_edge_semantico") == "comprovante"
 
 
-def test_das_parcsn_linka_com_receita_federal_47_dias_depois(
-    db: GrafoDB, caminho_propostas: Path
-):
+def test_das_parcsn_linka_com_receita_federal_47_dias_depois(db: GrafoDB, caminho_propostas: Path):
     """DAS PARCSN emitido 2025-02-28 (R$ 324.31) deve linkar com tx
     RECEITA FEDERAL em 2025-04-16 (valor exato).
 
@@ -200,9 +196,7 @@ def test_das_parcsn_linka_com_receita_federal_47_dias_depois(
     assert len(arestas) == 1
 
 
-def test_idempotencia_holerite_nao_duplica_aresta(
-    db: GrafoDB, caminho_propostas: Path
-):
+def test_idempotencia_holerite_nao_duplica_aresta(db: GrafoDB, caminho_propostas: Path):
     """Rodar `linkar_documentos_a_transacoes` duas vezes deve manter exatamente
     1 aresta `documento_de` por par (UNIQUE(src,dst,tipo) no schema).
     """
@@ -247,15 +241,19 @@ def test_regressao_sprint_48_nfce_com_cnpj_bate_continua_linkando(
         "razao_social": "americanas sa - 0337",
         "numero": "43260",
     }
-    ingerir_documento_fiscal(db, doc, itens=[
-        {
-            "codigo": "001",
-            "descricao": "PRODUTO",
-            "qtde": 1,
-            "valor_unit": 100.0,
-            "valor_total": 100.0,
-        }
-    ])
+    ingerir_documento_fiscal(
+        db,
+        doc,
+        itens=[
+            {
+                "codigo": "001",
+                "descricao": "PRODUTO",
+                "qtde": 1,
+                "valor_unit": 100.0,
+                "valor_total": 100.0,
+            }
+        ],
+    )
 
     fid = db.upsert_node(
         "fornecedor",
@@ -279,9 +277,7 @@ def test_regressao_sprint_48_nfce_com_cnpj_bate_continua_linkando(
     assert len(arestas) == 1
 
 
-def test_holerite_sem_tx_proxima_nao_gera_falso_positivo(
-    db: GrafoDB, caminho_propostas: Path
-):
+def test_holerite_sem_tx_proxima_nao_gera_falso_positivo(db: GrafoDB, caminho_propostas: Path):
     """Holerite com total bruto 8657.25 não deve linkar com tx aleatória
     de valor distante. Garante que ampliar a janela não reduz o sinal a ruído.
 

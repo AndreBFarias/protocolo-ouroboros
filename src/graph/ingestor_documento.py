@@ -156,8 +156,7 @@ def ingerir_apolice(
     for campo in CAMPOS_OBRIGATORIOS_APOLICE:
         if not bilhete.get(campo):
             raise ValueError(
-                f"bilhete sem '{campo}' -- ingestão abortada "
-                "(nó apolice ou aresta ficaria órfã)"
+                f"bilhete sem '{campo}' -- ingestão abortada (nó apolice ou aresta ficaria órfã)"
             )
 
     metadata = {
@@ -209,9 +208,7 @@ def ingerir_apolice(
             "assegura",
             evidencia={"match": "descricao+cnpj_varejo+janela_data"},
         )
-        logger.info(
-            "apolice %s linkada a item %s via 'assegura'", apolice_id, item_id
-        )
+        logger.info("apolice %s linkada a item %s via 'assegura'", apolice_id, item_id)
     else:
         logger.debug(
             "apolice %s sem item pareado (Sprint 44/44b pode não ter processado NFC-e ainda)",
@@ -410,17 +407,13 @@ def ingerir_documento_fiscal(
     if caminho_arquivo is not None:
         metadata["arquivo_origem"] = str(caminho_arquivo)
 
-    documento_id = db.upsert_node(
-        "documento", documento["chave_44"], metadata=metadata
-    )
+    documento_id = db.upsert_node("documento", documento["chave_44"], metadata=metadata)
 
     fornecedor_id = upsert_fornecedor(
         db,
         documento["cnpj_emitente"],
         razao_social=documento.get("razao_social"),
-        metadata_extra=(
-            {"endereco": documento["endereco"]} if documento.get("endereco") else None
-        ),
+        metadata_extra=({"endereco": documento["endereco"]} if documento.get("endereco") else None),
     )
     db.adicionar_edge(documento_id, fornecedor_id, "fornecido_por")
 
@@ -612,9 +605,7 @@ def ingerir_prescricao(
             "posologia": medicamento.get("posologia"),
             "continuo": bool(medicamento.get("continuo", False)),
         }
-        db.adicionar_edge(
-            prescricao_id, item_id, "prescreve", evidencia=evidencia
-        )
+        db.adicionar_edge(prescricao_id, item_id, "prescreve", evidencia=evidencia)
 
         # Stub de linking com farmácia (Sprint 48 refina com threshold real).
         # Heurística mínima: se existe node `item` de farmácia (metadata
@@ -716,7 +707,10 @@ def _localizar_item_farmacia_por_principio(
 # ============================================================================
 
 CAMPOS_OBRIGATORIOS_GARANTIA: tuple[str, ...] = (
-    "chave_garantia", "fornecedor_cnpj", "data_inicio", "prazo_meses",
+    "chave_garantia",
+    "fornecedor_cnpj",
+    "data_inicio",
+    "prazo_meses",
 )
 
 
@@ -740,11 +734,11 @@ def ingerir_garantia(
     for campo in CAMPOS_OBRIGATORIOS_GARANTIA:
         if garantia.get(campo) in (None, ""):
             raise ValueError(
-                f"garantia sem '{campo}' -- ingestão abortada "
-                "(nó garantia ou aresta ficaria órfão)"
+                f"garantia sem '{campo}' -- ingestão abortada (nó garantia ou aresta ficaria órfão)"
             )
     metadata = {
-        chave: valor for chave, valor in garantia.items()
+        chave: valor
+        for chave, valor in garantia.items()
         if valor is not None and not chave.startswith("_")
     }
     metadata.setdefault("tipo_documento", "garantia_fabricante")
@@ -752,10 +746,13 @@ def ingerir_garantia(
         metadata["arquivo_origem"] = str(caminho_arquivo)
 
     garantia_id = db.upsert_node(
-        "garantia", garantia["chave_garantia"], metadata=metadata,
+        "garantia",
+        garantia["chave_garantia"],
+        metadata=metadata,
     )
     fornecedor_id = upsert_fornecedor(
-        db, garantia["fornecedor_cnpj"],
+        db,
+        garantia["fornecedor_cnpj"],
         razao_social=garantia.get("fornecedor_nome"),
     )
     db.adicionar_edge(garantia_id, fornecedor_id, "emitida_por")
@@ -776,21 +773,28 @@ def ingerir_garantia(
         )
         if item_id is not None:
             db.adicionar_edge(
-                garantia_id, item_id, "cobre",
+                garantia_id,
+                item_id,
+                "cobre",
                 evidencia={"match": "descricao+cnpj+janela_data"},
             )
-            logger.info("garantia %s linkada a item %s via 'cobre'",
-                        garantia["chave_garantia"], item_id)
+            logger.info(
+                "garantia %s linkada a item %s via 'cobre'", garantia["chave_garantia"], item_id
+            )
 
     if garantia.get("expirando"):
         logger.warning(
             "garantia %s (produto %s) expira em %s -- faltam <=30 dias",
-            garantia["chave_garantia"], produto_descricao or "?",
+            garantia["chave_garantia"],
+            produto_descricao or "?",
             garantia.get("data_fim"),
         )
-    logger.info("garantia %s ingerida: fornecedor %s, prazo %s meses",
-                garantia["chave_garantia"], garantia["fornecedor_cnpj"],
-                garantia["prazo_meses"])
+    logger.info(
+        "garantia %s ingerida: fornecedor %s, prazo %s meses",
+        garantia["chave_garantia"],
+        garantia["fornecedor_cnpj"],
+        garantia["prazo_meses"],
+    )
     return garantia_id
 
 

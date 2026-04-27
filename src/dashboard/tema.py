@@ -135,7 +135,7 @@ def logo_sidebar_html(largura_px: int = 96) -> str:
         f'alt="Protocolo Ouroboros"/>'
         f'<h1 style="margin-top:{SPACING["sm"]}px; '
         f"font-family:monospace; "
-        f'color:{CORES["destaque"]}; '
+        f"color:{CORES['destaque']}; "
         f'text-align:center;">Protocolo Ouroboros</h1>'
         f"</div>"
     )
@@ -734,9 +734,7 @@ def metric_semantic_html(
     delta_html = ""
     if delta is not None and delta != 0:
         sinal = "+" if delta > 0 else ""
-        delta_cor = (
-            "var(--color-positivo)" if delta > 0 else "var(--color-negativo)"
-        )
+        delta_cor = "var(--color-positivo)" if delta > 0 else "var(--color-negativo)"
         delta_html = (
             f'<p style="color: {delta_cor};'
             " font-size: var(--font-label);"

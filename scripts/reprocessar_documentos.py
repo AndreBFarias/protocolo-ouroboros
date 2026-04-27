@@ -92,15 +92,15 @@ EXTENSOES_DOCUMENTAIS: set[str] = {
 # (trecho documental).
 EXTRATORES_DOCUMENTAIS: tuple[type, ...] = (
     ExtratorCupomGarantiaEstendida,  # apolice SUSEP (Sprint 47c)
-    ExtratorNfcePDF,                 # NFC-e modelo 65 (Sprint 44b)
-    ExtratorDanfePDF,                # DANFE modelo 55 (Sprint 44)
-    ExtratorCupomTermicoFoto,        # cupom fotografado (Sprint 45)
-    ExtratorXmlNFe,                  # XML NFe (Sprint 46)
-    ExtratorReceitaMedica,           # receita medica (Sprint 47a)
-    ExtratorGarantiaFabricante,      # garantia de fabricante (Sprint 47b)
-    ExtratorBoletoPDF,               # boleto bancario PDF nativo (Sprint 87.3)
-    ExtratorDASPARCSNPDF,            # DAS PARCSN (P1.1 auditoria 2026-04-23)
-    ExtratorReciboNaoFiscal,         # catch-all (Sprint 47)
+    ExtratorNfcePDF,  # NFC-e modelo 65 (Sprint 44b)
+    ExtratorDanfePDF,  # DANFE modelo 55 (Sprint 44)
+    ExtratorCupomTermicoFoto,  # cupom fotografado (Sprint 45)
+    ExtratorXmlNFe,  # XML NFe (Sprint 46)
+    ExtratorReceitaMedica,  # receita medica (Sprint 47a)
+    ExtratorGarantiaFabricante,  # garantia de fabricante (Sprint 47b)
+    ExtratorBoletoPDF,  # boleto bancario PDF nativo (Sprint 87.3)
+    ExtratorDASPARCSNPDF,  # DAS PARCSN (P1.1 auditoria 2026-04-23)
+    ExtratorReciboNaoFiscal,  # catch-all (Sprint 47)
 )
 
 
@@ -205,17 +205,13 @@ def _ingerir_um(
         try:
             extrator = cls(caminho, grafo=grafo)
         except Exception as erro:  # noqa: BLE001
-            logger.error(
-                "falha instanciar %s com %s: %s", cls.__name__, caminho.name, erro
-            )
+            logger.error("falha instanciar %s com %s: %s", cls.__name__, caminho.name, erro)
             continue
 
         try:
             aceita = extrator.pode_processar(caminho)
         except Exception as erro:  # noqa: BLE001
-            logger.debug(
-                "%s.pode_processar levantou em %s: %s", cls.__name__, caminho.name, erro
-            )
+            logger.debug("%s.pode_processar levantou em %s: %s", cls.__name__, caminho.name, erro)
             continue
 
         if not aceita:
@@ -252,6 +248,7 @@ def _rodar_fases_pos_ingestao(grafo: GrafoDB) -> dict[str, dict[str, int]]:
 
     try:
         from src.graph.linking import linkar_documentos_a_transacoes
+
         stats["linking_48"] = linkar_documentos_a_transacoes(grafo)
     except Exception as erro:  # noqa: BLE001
         logger.warning("Sprint 48 (linking) falhou: %s", erro)
@@ -259,6 +256,7 @@ def _rodar_fases_pos_ingestao(grafo: GrafoDB) -> dict[str, dict[str, int]]:
 
     try:
         from src.graph.er_produtos import executar_er_produtos
+
         stats["er_produtos_49"] = executar_er_produtos(grafo)
     except Exception as erro:  # noqa: BLE001
         logger.warning("Sprint 49 (ER produtos) falhou: %s", erro)
@@ -266,6 +264,7 @@ def _rodar_fases_pos_ingestao(grafo: GrafoDB) -> dict[str, dict[str, int]]:
 
     try:
         from src.transform.item_categorizer import categorizar_todos_items_no_grafo
+
         stats["item_categorizer_50"] = categorizar_todos_items_no_grafo(grafo)
     except Exception as erro:  # noqa: BLE001
         logger.warning("Sprint 50 (categorizer itens) falhou: %s", erro)
@@ -385,12 +384,18 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description="Reprocessa todos os documentos de data/raw e popula o grafo.",
     )
-    parser.add_argument("--dry-run", action="store_true",
-                        help="Apenas lista o que seria ingerido; não abre grafo.")
-    parser.add_argument("--raiz", type=Path, default=_RAIZ_REPO / "data" / "raw",
-                        help="Raiz de data/raw (default: %(default)s).")
-    parser.add_argument("--grafo", type=Path, default=None,
-                        help="Caminho alternativo para grafo.sqlite.")
+    parser.add_argument(
+        "--dry-run", action="store_true", help="Apenas lista o que seria ingerido; não abre grafo."
+    )
+    parser.add_argument(
+        "--raiz",
+        type=Path,
+        default=_RAIZ_REPO / "data" / "raw",
+        help="Raiz de data/raw (default: %(default)s).",
+    )
+    parser.add_argument(
+        "--grafo", type=Path, default=None, help="Caminho alternativo para grafo.sqlite."
+    )
     args = parser.parse_args(argv)
 
     raiz: Path = args.raiz
@@ -463,8 +468,13 @@ def main(argv: list[str] | None = None) -> int:
         snap_depois = _contagem_grafo(grafo)
         duracao = time.monotonic() - inicio
         _imprimir_sumario_execucao(
-            arquivos, por_status, por_extrator_usado, duracao,
-            snap_antes, snap_depois, stats_pos,
+            arquivos,
+            por_status,
+            por_extrator_usado,
+            duracao,
+            snap_antes,
+            snap_depois,
+            stats_pos,
         )
     finally:
         grafo.fechar()

@@ -49,17 +49,43 @@ def _linhas_fixture_basica() -> list[list]:
             "Valor BRL",
         ],
         # Compra simples
-        ["05/02/2026", "ANDRE BATISTA", "1234", "Alimentacao", "MERCADO SINTETICO",
-         "Única", 0.0, 0.0, 85.90],
+        [
+            "05/02/2026",
+            "ANDRE BATISTA",
+            "1234",
+            "Alimentacao",
+            "MERCADO SINTETICO",
+            "Única",
+            0.0,
+            0.0,
+            85.90,
+        ],
         # Parcela 2/6 -- descrição deve concatenar
-        ["10/02/2026", "ANDRE BATISTA", "1234", "Lazer", "LOJA EXEMPLAR",
-         "2/6", 0.0, 0.0, 120.00],
+        ["10/02/2026", "ANDRE BATISTA", "1234", "Lazer", "LOJA EXEMPLAR", "2/6", 0.0, 0.0, 120.00],
         # Compra em USD (sem BRL direto) -- calcula
-        ["15/02/2026", "ANDRE BATISTA", "1234", "Servicos", "INTERNATIONAL STORE",
-         "Única", 25.00, 5.20, 0.0],
+        [
+            "15/02/2026",
+            "ANDRE BATISTA",
+            "1234",
+            "Servicos",
+            "INTERNATIONAL STORE",
+            "Única",
+            25.00,
+            5.20,
+            0.0,
+        ],
         # Pagamento de fatura -- deve ser IGNORADO
-        ["20/02/2026", "ANDRE BATISTA", "1234", "Outros", "Pag Fatura Anterior",
-         "Única", 0.0, 0.0, 500.00],
+        [
+            "20/02/2026",
+            "ANDRE BATISTA",
+            "1234",
+            "Outros",
+            "Pag Fatura Anterior",
+            "Única",
+            0.0,
+            0.0,
+            500.00,
+        ],
     ]
 
 

@@ -220,9 +220,7 @@ def _ingerir_holerite_no_grafo(
     fonte = registro.get("fonte") or "HOLERITE"
     mes_ref = registro["mes_ref"]
     empregador = fonte.split(" - ")[0] if " - " in fonte else fonte
-    cnpj_sintetico = (
-        f"HOLERITE|{hashlib.sha256(empregador.encode('utf-8')).hexdigest()[:12]}"
-    )
+    cnpj_sintetico = f"HOLERITE|{hashlib.sha256(empregador.encode('utf-8')).hexdigest()[:12]}"
     chave = f"HOLERITE|{fonte}|{mes_ref}".replace(" ", "_")
     documento = {
         "chave_44": chave,

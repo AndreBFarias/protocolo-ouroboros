@@ -74,6 +74,7 @@ def rotulo_humano_tipo(tipo: str) -> str:
     """
     return ROTULO_HUMANO_POR_TIPO.get(tipo, tipo)
 
+
 # Mapeia tipo do nó para o campo de query_param que a aba Extrato consome.
 _CAMPO_QUERY_POR_TIPO: dict[str, str] = {
     "fornecedor": "fornecedor",
@@ -122,9 +123,7 @@ _JS_CLICK_HANDLER_TEMPLATE = """
 
 
 def _montar_js(mapa_campos: dict[str, str]) -> str:
-    return _JS_CLICK_HANDLER_TEMPLATE.replace(
-        "__MAPA_CAMPOS__", json.dumps(mapa_campos)
-    )
+    return _JS_CLICK_HANDLER_TEMPLATE.replace("__MAPA_CAMPOS__", json.dumps(mapa_campos))
 
 
 def _parse_aliases(aliases: Any) -> list[str]:
@@ -202,9 +201,7 @@ def construir_grafo_html(
     - altura_px: altura do canvas (Streamlit não auto-expande iframe).
     """
     if not _PYVIS_DISPONIVEL:
-        return (
-            "<p>pyvis não instalado. Rode <code>pip install pyvis</code>.</p>"
-        )
+        return "<p>pyvis não instalado. Rode <code>pip install pyvis</code>.</p>"
 
     net = Network(
         height=f"{altura_px}px",
@@ -251,11 +248,7 @@ def construir_grafo_html(
         label = _label_humano(node)
         grau = int(node.get("grau") or 0)
         size = 10 + min(grau * 2, 40)
-        tooltip = (
-            f"<b>{tipo}</b><br>"
-            f"{node.get('nome_canonico', '')}<br>"
-            f"Conexões: {grau}"
-        )
+        tooltip = f"<b>{tipo}</b><br>{node.get('nome_canonico', '')}<br>Conexões: {grau}"
         net.add_node(
             node["id"],
             label=label[:30],

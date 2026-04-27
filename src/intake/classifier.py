@@ -332,9 +332,7 @@ def _montar_decisao(
     )
 
 
-def _avaliar_subregras(
-    regras: list[dict[str, Any]] | None, texto: str
-) -> str | None:
+def _avaliar_subregras(regras: list[dict[str, Any]] | None, texto: str) -> str | None:
     """Avalia subregras compostas (Sprint 96).
 
     Cada subregra casa quando TODAS as condições são verdadeiras:
