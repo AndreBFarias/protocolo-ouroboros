@@ -33,9 +33,15 @@ import streamlit as st
 
 from src.dashboard import dados as _dados
 from src.dashboard.componentes.busca_indice import construir_indice, sugestoes
+from src.dashboard.componentes.busca_resultado_inline import (
+    construir_dataframe_fornecedor,
+)
 from src.dashboard.componentes.busca_roteador import rotear
 from src.dashboard.dados import (
     buscar_global,
+    carregar_dados,
+    filtrar_por_forma_pagamento,
+    filtrar_por_pessoa,
     formatar_moeda,
 )
 from src.dashboard.tema import (
@@ -280,7 +286,12 @@ def renderizar(
 
     # Roteador: nome de aba ou fornecedor dá link rápido além da listagem.
     rota = rotear(termo, indice=indice)
-    _renderizar_rota_rapida(rota)
+    _renderizar_rota_rapida(
+        rota,
+        periodo=periodo,
+        pessoa=pessoa,
+        forma_pagamento=forma_pagamento,
+    )
 
     resultados = buscar_global(termo)
 
@@ -403,8 +414,20 @@ def _renderizar_controles(indice: dict[str, list[str]]) -> tuple[str, str]:
     return rotulo_tipo, (termo or "").strip()
 
 
-def _renderizar_rota_rapida(rota: dict) -> None:
-    """Mostra link rápido se a query casa aba ou fornecedor."""
+def _renderizar_rota_rapida(
+    rota: dict,
+    *,
+    periodo: str | None = None,
+    pessoa: str | None = None,
+    forma_pagamento: str | None = None,
+) -> None:
+    """Mostra link rápido (aba) ou tabela inline (fornecedor).
+
+    Sprint UX-124: para `kind='fornecedor'` substitui o antigo botão
+    "Ir para Catalogação filtrada" por uma `st.dataframe` inline com as
+    transações daquele fornecedor. Filtros sidebar (Mês, Pessoa, Forma)
+    impactam o DataFrame antes da tabela ser construída.
+    """
     kind = rota.get("kind")
     destino = rota.get("destino", "")
     if kind == "aba" and destino:
@@ -427,26 +450,91 @@ def _renderizar_rota_rapida(rota: dict) -> None:
             st.query_params.from_dict(params)
             st.rerun()
     elif kind == "fornecedor" and destino:
+        _renderizar_tabela_inline_fornecedor(
+            destino,
+            periodo=periodo,
+            pessoa=pessoa,
+            forma_pagamento=forma_pagamento,
+        )
+
+
+def _renderizar_tabela_inline_fornecedor(
+    nome_fornecedor: str,
+    *,
+    periodo: str | None,
+    pessoa: str | None,
+    forma_pagamento: str | None,
+) -> None:
+    """Renderiza tabela inline com transações do fornecedor (Sprint UX-124).
+
+    Substitui o botão "Ir para Catalogação filtrada" da Sprint UX-114 por
+    `st.dataframe` direto na Busca Global. Aplica filtros sidebar antes
+    de construir a tabela e oferece botão Exportar CSV abaixo.
+    """
+    dados = carregar_dados()
+    df_extrato = dados.get("extrato")
+
+    if df_extrato is None or df_extrato.empty:
+        # Sem XLSX disponível: renderiza callout do fornecedor + aviso de
+        # ausência de dados, mas preserva a mensagem com o nome canônico.
         st.markdown(
             callout_html(
                 "info",
-                f"Sua busca casa o fornecedor <strong>{_mascarar_pii(destino)}</strong>.",
+                f"Sua busca casa o fornecedor <strong>{_mascarar_pii(nome_fornecedor)}</strong>.",
             ),
             unsafe_allow_html=True,
         )
-        if st.button(
-            "Ir para Catalogação filtrada",
-            key="busca_link_forn",
-            use_container_width=False,
-        ):
-            st.query_params.from_dict(
-                {
-                    "tab": "Catalogação",
-                    "fornecedor": destino,
-                    "cluster": "Documentos",
-                }
-            )
-            st.rerun()
+        st.markdown(
+            callout_html(
+                "warning",
+                "Aba `extrato` indisponível -- rode `./run.sh --tudo`.",
+            ),
+            unsafe_allow_html=True,
+        )
+        return
+
+    # Aplica filtros sidebar antes de filtrar por fornecedor.
+    df_filtrado = df_extrato.copy()
+    if periodo and str(periodo).strip() and str(periodo).lower() != "todos":
+        if "mes_ref" in df_filtrado.columns:
+            df_filtrado = df_filtrado[df_filtrado["mes_ref"] == str(periodo).strip()]
+    if pessoa and str(pessoa).strip() and str(pessoa).lower() != "todos":
+        df_filtrado = filtrar_por_pessoa(df_filtrado, pessoa)
+    if forma_pagamento:
+        df_filtrado = filtrar_por_forma_pagamento(df_filtrado, forma_pagamento)
+
+    df_inline = construir_dataframe_fornecedor(
+        nome_fornecedor,
+        df_filtrado,
+        mascarar_pii=True,
+    )
+
+    n = len(df_inline)
+    st.markdown(
+        callout_html(
+            "info",
+            f"Sua busca casa o fornecedor "
+            f"<strong>{_mascarar_pii(nome_fornecedor)}</strong>. "
+            f"{n} transações encontradas.",
+        ),
+        unsafe_allow_html=True,
+    )
+
+    if n == 0:
+        return
+
+    st.dataframe(df_inline, use_container_width=True, hide_index=True)
+
+    # Exportar CSV inline (preservando padrão UX-114).
+    csv_bytes = df_inline.to_csv(index=False).encode("utf-8")
+    nome_arquivo = f"busca_{re.sub(r'[^a-zA-Z0-9_-]+', '_', nome_fornecedor)[:40]}.csv"
+    st.download_button(
+        label=f"Exportar {n} linha(s) (CSV)",
+        data=csv_bytes,
+        file_name=nome_arquivo,
+        mime="text/csv",
+        key="busca_exportar_inline",
+    )
 
 
 def _renderizar_resumo(termo: str, total: int) -> None:
