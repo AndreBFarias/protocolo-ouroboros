@@ -23,7 +23,7 @@ Uso típico:
     if casa_padroes(["CNP" + GLYPH_J, "PR[ÊE]MIO"], texto, modo="all"):
         ...
 
-    cnpj = extrair_cnpj(texto)            # devolve canônico "00.776.574/0160-79" ou None
+    cnpj = extrair_cnpj(texto)            # devolve canônico "XX.XXX.XXX/XXXX-XX" ou None
     iso  = extrair_data_br(texto)         # devolve "2026-04-19" ou None
 """
 

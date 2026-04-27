@@ -23,7 +23,7 @@ API:
     pessoa, fonte = detectar_pessoa(caminho_arquivo, preview_texto)
 
 Devolve uma tupla (pessoa, fonte_da_decisao). `fonte` é string humano-legível
-para auditoria (ex.: "CPF 051.273.731-22", "path 'andre/'", "fallback").
+para auditoria (ex.: "CPF XXX.XXX.XXX-XX", "path 'andre/'", "fallback").
 
 LGPD: `mappings/cpfs_pessoas.yaml` contém CPFs reais -- está no `.gitignore`.
 Repo carrega só `mappings/cpfs_pessoas.yaml.example` com placeholders.
