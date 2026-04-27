@@ -35,6 +35,15 @@ sprint:
     - "Botoes com link rapido na lista de resultados: cada documento mostra botao 'Abrir' que navega para Revisor com item_id"
     - "Borda visivel no input de busca, destacada em foco (depende UX-112 mas pode ser feita inline aqui se UX-112 ainda nao mergeada)"
     - "Pelo menos 12 testes regressivos cobrindo as funcionalidades acima"
+    # === Adicoes feedback dono 2026-04-27 ===
+    - "Chips abaixo do input substituem 'neoenergia/farmacia/uber/posto/2026-03/americanas' (exemplos aleatorios) por TIPOS DE DOCUMENTOS canonicos: Holerite, Nota Fiscal, DAS, Boleto, IRPF, Recibo, Comprovante, Contracheque (8 chips fixos OU resultados em tempo real apos digitar)"
+    - "Placeholder do input em MAIUSCULAS: 'BUSQUE: HOLERITE, NF, DAS, BOLETO, IRPF, FORNECEDOR, CNPJ...'"
+    - "Texto descritivo reescrito em uma linha so (max 90 chars): 'Busque por tipo de documento, fornecedor, CNPJ ou identificador.' (era 3 linhas confusas com 'Input unico permanente...')"
+    - "Output em tabela formatada via st.dataframe ou tabela HTML com colunas: Nome do documento, Texto extraido (resumo), Caminho do arquivo, Botao Exportar"
+    - "Botao Exportar de cada linha copia o arquivo para data/exports/<ts>_<nome>.<ext> (cria diretorio se nao existir; nunca deleta original)"
+    - "Cor do icone (i) do callout info nao destoa do tema -- usar var(--color-destaque) ou var(--color-neutro) em vez de azul Streamlit default"
+    - "Espacamento do bloco de texto descritivo respeita PADDING_INTERNO (UX-112) -- nao colado a borda"
+    - "Pelo menos 5 testes regressivos adicionais: chips renderizam tipos canonicos; placeholder maiusculo; tabela tem 4 colunas obrigatorias; export cria arquivo em data/exports/; PII mascarada no output da tabela"
   proof_of_work_esperado: |
     # Probe 1: indexar
     .venv/bin/python -c "
