@@ -1,17 +1,22 @@
-"""Motor heurístico de linking documento -> transação bancária (Sprint 48).
+"""Motor heurístico de linking documento -> transação bancária (Sprint 48 + Sprint 95).
 
 Cria arestas `documento_de` entre nodes `documento` e nodes `transacao` quando  # noqa: accent
 há correspondência forte entre data/valor/fornecedor. Quando há ambiguidade
 (top-1 e top-2 com scores próximos) gera proposta Markdown em
 `docs/propostas/linking/<chave>.md` em vez de linkar silenciosamente.
 
-Heurísticas de score aplicadas (soma linear, max=1.3, min=0.0):
+Heurísticas de score aplicadas (soma linear, max=1.4, min=0.0):
     base 1.0
-    - 0.10 por dia de diferença (módulo)
+    - peso_temporal_diario por dia de diferença (módulo); default 0.10
     - 0.50 * diff_valor_percentual (razão |v_t - total| / total)
     + 0.30 se CNPJ do documento bate com contraparte da transação
              (via aresta `contraparte` -> fornecedor que tem metadata.cnpj)
     + 0.10 adicional quando delta_dias == 0 e CNPJ bate (Pix instantâneo)
+
+Sprint 95: o `peso_temporal_diario` é configurável por tipo. Tipos que pagam
+dias depois da emissão do documento (holerite, DAS PARCSN, boleto de serviço,
+DIRPF) usam peso menor (0.005-0.01) para que delta natural de 30-60 dias não
+zere o score. Default mantém 0.10 (comportamento original).
 
 Confiança final = score clamp [0, 1]. Se < confidence_minimo do tipo, gera
 proposta. Se top-1 e top-2 diferem menos que `margem_empate`, gera proposta.
@@ -148,21 +153,28 @@ def _config_default() -> dict[str, Any]:
             "janela_dias": 3,
             "diff_valor_percentual": 0.02,
             "confidence_minimo": 0.75,
+            "peso_temporal_diario": 0.10,
         },
         "margem_empate": 0.05,
     }
 
 
 def _parametros_para_tipo(tipo_documento: str | None, config: dict[str, Any]) -> dict[str, Any]:
-    """Devolve parâmetros (janela_dias, diff_valor_percentual, confidence_minimo)
-    para um tipo de documento, com fallback no `default`.
+    """Devolve parâmetros (janela_dias, diff_valor_percentual, confidence_minimo,
+    peso_temporal_diario) para um tipo de documento, com fallback no `default`.
+
+    Sprint 95: garante que `peso_temporal_diario` esteja sempre presente no dict
+    devolvido, mesmo se o tipo do YAML omitir a chave -- caso contrário caem em
+    KeyError no chamador. Default canônico é 0.10 (comportamento Sprint 48).
     """
     tipos = config.get("tipos", {}) or {}
     if tipo_documento and tipo_documento in tipos:
         base = dict(config.get("default", {}))
         base.update(tipos[tipo_documento] or {})
-        return base
-    return dict(config.get("default", {}))
+    else:
+        base = dict(config.get("default", {}))
+    base.setdefault("peso_temporal_diario", 0.10)
+    return base
 
 
 # ============================================================================
@@ -198,16 +210,22 @@ def _calcular_score(
     diff_valor_absoluto: float,
     valor_doc: float,
     cnpj_bate: bool,
+    peso_temporal_diario: float = 0.10,
 ) -> tuple[float, float]:
     """Retorna (score, diff_valor_percentual).
 
     Score é clampado em [0, 1]; diff_valor_percentual em [0, 1+] (pode passar
     de 1 se |diff| > |total|, mas o filtro de janela já impede isso).
+
+    Sprint 95: `peso_temporal_diario` é configurável por tipo de documento
+    (default 0.10). Tipos que pagam tarde (holerite, DAS, boleto) usam pesos
+    reduzidos (0.005-0.01) para que delta natural de 30-60 dias não zere o
+    score. CNPJ bonus (+0.30 / +0.10 quando delta=0) é preservado.
     """
     valor_ref = max(abs(valor_doc), 1.0)
     diff_pct = min(abs(diff_valor_absoluto) / valor_ref, 1.0)
     score = 1.0
-    score -= abs(delta_dias) * 0.10
+    score -= abs(delta_dias) * peso_temporal_diario
     score -= diff_pct * 0.50
     if cnpj_bate:
         score += 0.30
@@ -263,6 +281,7 @@ def candidatas_para_documento(
         diff_valor_percentual=float(parametros["diff_valor_percentual"]),
     )
 
+    peso_temporal = float(parametros.get("peso_temporal_diario", 0.10))
     cnpj_doc = _cnpj_do_documento(meta)
     resultado: list[tuple[int, dict[str, Any]]] = []
     for cand in candidatas_raw:
@@ -279,6 +298,7 @@ def candidatas_para_documento(
             diff_valor_absoluto=diff_valor_abs,
             valor_doc=total_f,
             cnpj_bate=cnpj_bate,
+            peso_temporal_diario=peso_temporal,
         )
         heuristica = _nome_heuristica(delta_dias_assinado, diff_valor_abs, cnpj_bate)
         evidencia = {

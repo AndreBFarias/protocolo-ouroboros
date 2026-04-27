@@ -1,4 +1,4 @@
-# Thresholds de linking documento -> transacao (Sprint 48).
+# Thresholds de linking documento -> transacao (Sprint 48 + Sprint 95).
 #
 # Cada tipo de documento tem parametros distintos:
 #
@@ -8,12 +8,17 @@
 #                           e valor da transacao (ex.: 0.01 = ate 1%).
 #   confidence_minimo:      score minimo (0..1) para criar a aresta sem gerar
 #                           proposta. Abaixo disso o linking vira proposta.
+#   peso_temporal_diario:   penalidade no score por dia de diferenca (default
+#                           0.10 = comportamento Sprint 48). Sprint 95: tipos
+#                           que pagam tarde (holerite, DAS, boleto) usam peso
+#                           menor para que delta de 30-60 dias nao zere score.
 #
 # Heuristicas de score:
 #   1.0  base
-#   -0.10 por dia de diferenca (modulo)
+#   -peso_temporal_diario por dia de diferenca (modulo)
 #   -0.50 * diff_valor_percentual (soma linear)
 #   +0.30 se CNPJ do documento tambem aparece na contraparte da transacao
+#   +0.10 adicional quando delta_dias == 0 e CNPJ bate (Pix instantaneo)
 #
 # Regra de conflito (independente de confidence):
 #   Se top-1 e top-2 empatam (score dentro de MARGEM_EMPATE), nao cria
@@ -58,11 +63,42 @@ tipos:
     diff_valor_percentual: 0.10
     confidence_minimo: 0.60
 
+  # Sprint 95: tipos que pagam dias depois da data_emissao do documento.
+  # Janela ampla + peso_temporal_diario reduzido para que delta natural nao
+  # zere o score. Tolerancia de valor maior em holerite porque metadata.total
+  # carrega o BRUTO mas a transacao bancaria carrega o LIQUIDO (~ 14% menor).
+  holerite:
+    janela_dias: 35
+    diff_valor_percentual: 0.30
+    confidence_minimo: 0.55
+    peso_temporal_diario: 0.01
+
+  das_parcsn_andre:
+    janela_dias: 60
+    diff_valor_percentual: 0.05
+    confidence_minimo: 0.55
+    peso_temporal_diario: 0.005
+
+  boleto_servico:
+    janela_dias: 75
+    diff_valor_percentual: 0.05
+    confidence_minimo: 0.55
+    peso_temporal_diario: 0.005
+
+  dirpf_retif:
+    # DIRPF e administrativo: pagamento (DARF de ajuste) pode ocorrer em ate
+    # 365 dias. Score depende quase so de bater valor + CNPJ Receita Federal.
+    janela_dias: 365
+    diff_valor_percentual: 0.05
+    confidence_minimo: 0.55
+    peso_temporal_diario: 0.001
+
 # Fallback para tipos nao listados acima.
 default:
   janela_dias: 3
   diff_valor_percentual: 0.02
   confidence_minimo: 0.75
+  peso_temporal_diario: 0.10
 
 # Margem de empate: se |score_top1 - score_top2| < este valor, gera proposta
 # em vez de linkar. Evita ligar silenciosamente quando ha duas candidatas
