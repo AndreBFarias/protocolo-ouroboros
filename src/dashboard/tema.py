@@ -325,14 +325,29 @@ def css_global() -> str:
     .js-plotly-plot .plotly text {{
         font-size: {FONTE_MIN_ABSOLUTA}px !important;
     }}
-    /* Sprint 76: padding interno generoso nos retângulos das páginas,
-       evitando texto colado na borda em Grafo/IRPF/Metas/Extrato. */
+    /* Sprint 76 + Sprint UX-116: padding interno generoso nos retângulos
+       das páginas, evitando texto colado na borda em Grafo/IRPF/Metas/Extrato.
+       UX-116 substitui o shorthand da Sprint 76 por 4 declarações explícitas
+       padding-{{top,right,bottom,left}} para tornar o contrato testável
+       direção por direção e garantir respiro nos 4 lados em todas as abas. */
     .main .block-container {{
-        padding: {PADDING_PAGINA_PADRAO_PX}px !important;
-        padding-top: {SPACING["xl"]}px !important;
+        padding-top: {PADDING_INTERNO}px !important;
+        padding-right: {PADDING_INTERNO}px !important;
+        padding-bottom: {PADDING_INTERNO}px !important;
+        padding-left: {PADDING_INTERNO}px !important;
     }}
     .block-container {{ padding-top: {SPACING["xl"]}px; }}
     [data-testid="stSidebar"] {{ background-color: {CORES["card_fundo"]}; }}
+    /* Sprint UX-116: sidebar interna ganha padding 4 direções com PADDING_CHIP
+       (16px). O retângulo interno [data-testid="stSidebar"] > div:first-child
+       abriga logo + radio de cluster + filtros; sem padding explícito,
+       controles colam na borda esquerda da sidebar. */
+    [data-testid="stSidebar"] > div:first-child {{
+        padding-top: {PADDING_CHIP}px !important;
+        padding-right: {PADDING_CHIP}px !important;
+        padding-bottom: {PADDING_CHIP}px !important;
+        padding-left: {PADDING_CHIP}px !important;
+    }}
     [data-testid="stSidebar"] h1 {{ color: {CORES["destaque"]}; }}
     [data-testid="stSidebar"] p,
     [data-testid="stSidebar"] span,
