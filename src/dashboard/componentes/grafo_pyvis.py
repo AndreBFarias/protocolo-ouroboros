@@ -236,7 +236,7 @@ def construir_grafo_html(
                     }
                 },
                 "edges": {
-                    "color": {"color": "#6272a4", "highlight": "#bd93f9"},
+                    "color": {"color": "#c9c9cc", "highlight": "#bd93f9"},
                     "smooth": {"type": "dynamic"},
                 },
             }
@@ -252,7 +252,7 @@ def construir_grafo_html(
         net.add_node(
             node["id"],
             label=label[:30],
-            color=COR_POR_TIPO.get(tipo, "#6272a4"),
+            color=COR_POR_TIPO.get(tipo, "#c9c9cc"),
             size=size,
             title=tooltip,
             node_tipo=tipo,
