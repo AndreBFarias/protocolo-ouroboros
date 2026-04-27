@@ -74,6 +74,20 @@ FONTE_HERO: int = 28  # hero de página
 PADDING_PAGINA_MIN_PX: int = 16
 PADDING_PAGINA_PADRAO_PX: int = 24
 
+# --- Tokens de spacing/borda do design system (Sprint UX-112) ---------------
+# Tokens universais aplicados via css_global() a inputs, selects, multiselects,
+# expanders e área de tabs. Páginas não devem hardcodear px equivalentes; toda
+# regra deriva destes tokens.
+# PADDING_INTERNO: padding em retângulos de conteúdo (mesmo valor canônico do
+# .block-container, exposto como token para reúso explícito).
+# PADDING_CHIP: padding interno em chips/badges/inputs pequenos.
+# BORDA_RAIO: raio padrão de cantos arredondados.
+# BORDA_ATIVA_PX: espessura da borda em estado :focus-within (destaque).
+PADDING_INTERNO: int = 24
+PADDING_CHIP: int = 16
+BORDA_RAIO: int = 8
+BORDA_ATIVA_PX: int = 2
+
 # --- Tipografia fluida (Sprint 62) ------------------------------------------
 # Tokens `clamp(min, preferido, max)` para redimensionamento contínuo em
 # viewports estreitos. Evita truncamento de valores monetários grandes como
@@ -290,6 +304,10 @@ def css_global() -> str:
         --font-subtitulo: {FONTE_SUBTITULO}px;
         --font-titulo: {FONTE_TITULO}px;
         --font-hero: {FONTE_HERO}px;
+        --padding-interno: {PADDING_INTERNO}px;
+        --padding-chip: {PADDING_CHIP}px;
+        --borda-raio: {BORDA_RAIO}px;
+        --borda-ativa-px: {BORDA_ATIVA_PX}px;
     }}
     html, body, .stApp, [data-testid="stAppViewContainer"] {{
         font-size: {FONTE_CORPO}px;
@@ -394,6 +412,52 @@ def css_global() -> str:
     [data-testid="stAlert"] span,
     [data-testid="stAlert"] div {{
         color: {CORES["texto"]} !important;
+    }}
+
+    /* --- Sprint UX-112: bordas e padding universais em inputs/selects --- */
+    /* Borda padrão 1px texto_sec; foco eleva para borda-ativa-px destaque.
+       Padding-chip aplicado em controles compactos. */
+    [data-testid="stTextInput"] > div > div,
+    [data-testid="stSelectbox"] > div > div,
+    [data-testid="stMultiSelect"] > div > div,
+    [data-testid="stTextArea"] > div > div,
+    [data-testid="stNumberInput"] > div > div,
+    [data-testid="stDateInput"] > div > div {{
+        border: 1px solid {CORES["texto_sec"]} !important;
+        border-radius: var(--borda-raio) !important;
+        background-color: {CORES["card_fundo"]} !important;
+        padding: var(--spacing-xs) var(--padding-chip) !important;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }}
+    [data-testid="stTextInput"]:focus-within > div > div,
+    [data-testid="stSelectbox"]:focus-within > div > div,
+    [data-testid="stMultiSelect"]:focus-within > div > div,
+    [data-testid="stTextArea"]:focus-within > div > div,
+    [data-testid="stNumberInput"]:focus-within > div > div,
+    [data-testid="stDateInput"]:focus-within > div > div {{
+        border: var(--borda-ativa-px) solid {CORES["destaque"]} !important;
+        box-shadow: 0 0 0 1px {CORES["destaque"]}33 !important;
+    }}
+
+    /* Expanders ganham borda visível e padding interno coerente. */
+    [data-testid="stExpander"] {{
+        border: 1px solid {CORES["texto_sec"]} !important;
+        border-radius: var(--borda-raio) !important;
+        background-color: {CORES["card_fundo"]} !important;
+        margin: var(--spacing-sm) 0;
+    }}
+    [data-testid="stExpander"] details > summary {{
+        padding: var(--spacing-sm) var(--padding-chip) !important;
+    }}
+    [data-testid="stExpander"] details[open] > div:last-child,
+    [data-testid="stExpander"] [data-testid="stExpanderDetails"] {{
+        padding: var(--padding-chip) var(--padding-interno) !important;
+    }}
+
+    /* Corpo das tabs (painel abaixo da barra) ganha padding-top para evitar
+       conteúdo colado no separador. */
+    .stTabs [data-baseweb="tab-panel"] {{
+        padding-top: var(--padding-chip) !important;
     }}
 
     /* --- Grid responsivo de KPI cards (Sprint 62) ------------------------ */
