@@ -49,7 +49,7 @@ sprint:
 
 # Sprint UX-111 -- Token de cor texto_sec
 
-**Status:** BACKLOG (P1, criada 2026-04-27, pré-requisito da Sprint 100)
+**Status:** CONCLUÍDA (commit `bdaa2ac`, mergeada em main, 2026-04-27 — aguarda validação visual humana)
 
 Hoje `DRACULA['comment'] = "#6272A4"` propaga para `CORES['texto_sec']` e `CORES['na']` (`src/dashboard/tema.py:23,37,47`). Substituir por `#c9c9cc` melhora contraste em telas de baixo brilho.
 

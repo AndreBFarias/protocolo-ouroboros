@@ -46,7 +46,7 @@ sprint:
 
 # Sprint UX-110 -- Busca Global como primeira aba
 
-**Status:** BACKLOG (P1, criada 2026-04-27, pré-requisito da Sprint 100)
+**Status:** CONCLUÍDA (commit `61464e4`, mergeada em main como `2bf61dc`, 2026-04-27 — aguarda validação visual humana)
 
 Mudança cirúrgica de ordem. Hoje cluster Documentos abre em "Catalogação"; deve abrir em "Busca Global" porque a busca é o ponto de entrada cognitivo.
 
