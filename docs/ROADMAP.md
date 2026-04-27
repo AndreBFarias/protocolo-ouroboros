@@ -1,44 +1,54 @@
 # Roadmap -- Protocolo Ouroboros
 
 ```
-VERSÃO: 8.0 | SPRINTS: 130 (87 concluídas, 26 backlog, 13 arquivadas; 10 novas em 2026-04-26 + ADR-21)
-ROTA: Catalogador universal artesanal (Fases ALFA → KAPPA CONCLUÍDAS) + Fase LAMBDA (rota "conserta tudo" 2026-04-23 CONCLUÍDA) + Fase MU (sprints-filhas em backlog) + **Fase NU (P0 pós-auditoria 2026-04-26: linking runtime + classifier robusto + Sprint D2 revisor visual)** + Fase OMEGA (fusão total Sprint 94, estratégica 12-18 meses, desbloqueada por ADR-21)
-ÚLTIMA ATUALIZAÇÃO: 2026-04-26. Auditoria geral pós-rota-longa. ADR-21 (fusão Ouroboros + vault) criado. 10 sprints novas formalizadas (90a, 90b, 95, 96, 97, 98, 99, 100, 101, 102, 93h, D2). 2 YAMLs órfãos deletados (layouts_danfe + layouts_nfce). Sprint AUDITORIA-ARTESANAL-FINAL substituída por D2 (revisor visual semi-automatizado). Sprint 93f confirmada EM RUNTIME (não BACKLOG): 828 tx PJ Vitória já no XLSX. Achado P0: 0% documentos vinculados a transações em runtime (Sprint 95). Sistema técnico saudável (1.530 testes, smoke 8/8, lint verde). Reserva de emergência 100% atingida. Retomada: docs/AUDITORIA_2026-04-26.md.
+VERSÃO: 8.1 | SPRINTS: 137 (93 concluídas, 30 backlog, 14 arquivadas; rodada NU 2026-04-26: 6 P0 + 4 sub-sprints)
+ROTA: Fases ALFA -> MU CONCLUÍDAS + **Fase NU CONCLUÍDA (6 P0 entregues em 2026-04-26)** + Sprints P1 98+101 em execução paralela + Fase OMEGA (Sprint 94a-f, estratégica 12-18 meses, desbloqueada por ADR-21)
+ÚLTIMA ATUALIZAÇÃO: 2026-04-26 (segunda parte). Fase NU executada em sessão maratona pós-auditoria: 95 (linking runtime, 0->23 documento_de), 96 (classifier OCR-curto, inbox/1.jpeg classifica), D2 (revisor visual Streamlit live), 97 (page-split heterogêneo com reversão), 90a (inbox detecta holerite, defesa em duas camadas), 90b (DAS PARCSN drift -47%->0%, 10->19 nodes). 14 commits pushed. pytest 1.530 -> 1.607 (+77, zero regressão). 4 sub-sprints novas (95a/95b/95c, INFRA-D2a, 90a-1) formalizadas como achados colaterais.
 ```
 
 ---
 
 ## Próxima sessão — rotas candidatas (2026-04-27+)
 
-**Rota A (P0 paralelo, 4-6h cada):**
-```
-Sprint 95 (linking runtime) || Sprint 96 (classifier robusto)
-  ↓
-Sprint D2 (revisor visual semi-automatizado) -- destrava validação humana
-  ↓
-Sprint 90a (holerites no inbox) + Sprint 90b (DAS drift)
-  ↓
-Sprint 97 (page-split heterogêneo) -- fecha _classificar/
-```
+**Status Fase NU (P0):** [OK] todas as 6 sprints concluídas.
+- [OK] Sprint 95 (linking runtime) -- commit `2df40ae`.
+- [OK] Sprint 96 (classifier OCR-curto) -- commit `9befcb5`.
+- [OK] Sprint D2 (revisor visual) -- commit `b3026a7`.
+- [OK] Sprint 97 (page-split heterogêneo) -- commit `22c9e5e`.
+- [OK] Sprint 90a (inbox detecta holerite) -- commit `b8ab3fe`.
+- [OK] Sprint 90b (DAS PARCSN drift) -- commit `c136ea6`.
 
-**Rota B (P1, qualquer ordem):**
+**Rota B (P1, em execução):**
 ```
-Sprint 98 (renomeação retroativa holerites)
+Sprint 98 (renomeação retroativa holerites)  [em paralelo via worktree]
+Sprint 101 (--full-cycle)                    [em paralelo via worktree]
+
+Pendentes:
 Sprint 99 (redactor PII em logs)
-Sprint 100 (deep-link tab)
-Sprint 101 (--full-cycle)
+Sprint 100 (deep-link tab dentro do cluster)
 ```
 
 **Rota C (P2, espaços livres):**
 ```
 Sprint 93h (limpeza clones André)
-Sprint 102 (pagador vs beneficiário)
+Sprint 102 (pagador vs beneficiário IRPF cross-casal)
 Sprint Fa (OFX duplicação)
 Sprint 93d (preservação forte downloads)
 Sprint 93e (coluna arquivo_origem)
 ```
 
-**Rota OMEGA (estratégica, 12-18 meses):** Sprint 94a-f (saúde, identidade, profissional, acadêmico, busca cross, mobile).
+**Sub-sprints novas (achados colaterais Fase NU):**
+```
+Sprint 95a (P2, ~1h)   -- holerite persistir liquido separado de bruto
+Sprint 95b (P3, ~2h)   -- linker âncora temporal alternativa (vencimento)
+Sprint 95c (P3, ~30min) -- noqa accent inválido em src/graph/linking.py
+Sprint INFRA-D2a (P3, ~30min) -- extrair dados_revisor.py de dados.py 976L
+Sprint 90a-1 (P3, ~1h) -- endurecer file_detector._detectar_pdf na causa raiz
+```
+
+**Sessão dedicada (P0 humana):** Validação humano-máquina via Revisor (Sprint D2). Pré-requisito implícito antes de OMEGA. Volume: 760 arquivos pendentes, ~6.5h sessão Opus + supervisor par-a-par. Ver memória `project_validacao_humana_pendente.md`.
+
+**Rota OMEGA (estratégica, 12-18 meses):** Sprint 94a-f (saúde, identidade, profissional, acadêmico, busca cross, mobile). Pré-requisitos: (1) Fase NU + P1 fechadas; (2) Sessão dedicada de revisão humana via D2.
 
 ---
 
