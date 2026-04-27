@@ -57,10 +57,10 @@ ABAS_POR_CLUSTER: dict[str, list[str]] = {
     "Hoje": ["Visão Geral"],
     "Dinheiro": ["Extrato", "Contas", "Pagamentos", "Projeções"],
     "Documentos": [
+        "Busca Global",
         "Catalogação",
         "Completude",
         "Revisor",
-        "Busca Global",
         "Grafo + Obsidian",
     ],
     "Análise": ["Categorias", "Análise", "IRPF"],
@@ -301,28 +301,28 @@ def main() -> None:
 
     elif cluster == "Documentos":
         (
+            tab_busca,
             tab_catalogacao,
             tab_completude,
             tab_revisor,
-            tab_busca,
             tab_grafo_obsidian,
         ) = st.tabs(
             [
+                "Busca Global",
                 "Catalogação",
                 "Completude",
                 "Revisor",
-                "Busca Global",
                 "Grafo + Obsidian",
             ]
         )
+        with tab_busca:
+            busca.renderizar(dados, periodo, pessoa, ctx)
         with tab_catalogacao:
             catalogacao.renderizar(dados, periodo, pessoa, ctx)
         with tab_completude:
             completude.renderizar(dados, periodo, pessoa, ctx)
         with tab_revisor:
             revisor.renderizar(dados, periodo, pessoa, ctx)
-        with tab_busca:
-            busca.renderizar(dados, periodo, pessoa, ctx)
         with tab_grafo_obsidian:
             grafo_obsidian.renderizar(dados, periodo, pessoa, ctx)
 
