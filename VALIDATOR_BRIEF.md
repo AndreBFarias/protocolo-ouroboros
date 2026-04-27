@@ -215,7 +215,9 @@ Contém estrutura recomendada + padrões conhecidos. Leia para enriquecimento ma
 (o) **PII em revisor visual:** Sprint D2 mascara CPF/CNPJ em UI exibido (JSON), observação humana e relatório `.md` final -- não só num único ponto. Padrão: PII passa por todos os 4 sítios.
 (p) **supervisor valida pessoalmente, não despacha validador:** decisão recorrente do dono. Opus principal lê diff, roda proof-of-work, captura DEPOIS, julga APROVADO/RESSALVAS. Subagent `validador-sprint` só se pedido explícito. Memória: `feedback_supervisor_valida.md`.
 
-Zero follow-up acumulado: cada achado colateral virou sprint-ID nova OU Edit-pronto. Sprint 98 (renomeação retroativa de holerites) e Sprint 101 (`./run.sh --full-cycle`) em execução paralela em worktree (P1, escopos disjuntos: scripts/ vs run.sh+menu).*
+Zero follow-up acumulado: cada achado colateral virou sprint-ID nova OU Edit-pronto.
+
+**Continuacao em 2026-04-27**: rodada finalizada com Sprint 101 (`d615488`), Sprint 98 (`835f0a7`), Sprint 98-1 diagnostica (`84b071e`), e `--executar` da Sprint 98 (`a48b843`). Resultado runtime real: 121/121 acoes aplicadas, -97 PDFs fosseis bit-a-bit removidos, +24 holerites com nome canonico no destino correto. Engine de envelope confirmada integra (Sprint 98-1: 3 hipoteses do bug rejeitadas empiricamente; causa raiz dos 91 fosseis era residuo historico de pre-Sprint 90a + pre-Sprint 41 P2.3 commit `37479df`). pytest 1.607 -> 1.620 (+13). Padrao canonico adicional registrado: **(p2) achado colateral diagnostico que valida hipoteses por refutacao** -- não toca código, deixa testes regressivos como invariante; util quando bug não eh da engine atual mas de versao anterior (residual). Sub-sprint nova formalizada: INFRA-97a (P3, ~1h) -- teste flaky `test_processar_duas_vezes_nao_duplica_artefatos` passa isolado, falha aleatoriamente em suite full. Backlog atual P1: Sprint 99 (redactor PII) + Sprint 100 (deep-link tab). Pre-OMEGA: sessao humana de revisao via Revisor (760 arquivos, ~6.5h Opus + supervisor par-a-par; não despachar como executor).*
 
 ---
 

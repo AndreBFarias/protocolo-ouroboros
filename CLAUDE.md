@@ -1,20 +1,20 @@
 # CLAUDE.md -- Protocolo Ouroboros
 
 ```
-VERSÃO: 5.6 | STATUS: PRODUÇÃO + FASE NU FECHADA (6 P0 entregues + 4 sub-sprints abertas) | LANG: PT-BR
+VERSÃO: 5.7 | STATUS: PRODUÇÃO + FASE NU CONCLUÍDA + P1 98+101 + Sprint 98-1 + --executar 98 aplicado | LANG: PT-BR
 TRANSAÇÕES: 6.094 | MESES: 82 (out/2019 a out/2026) | BANCOS: 6 | EXTRATORES: 22 (9 bancários + 13 documentais)
-GRAFO: 7.494 nodes + 24.732 edges. 50 documentos catalogados, 25 vinculados a tx (50%, era 0% antes da Sprint 95).
-SPRINTS: 137 (93 concluídas, 30 backlog, 14 arquivadas; rodada NU 2026-04-26: 6 P0 + 4 sub-sprints novas)
-CATEGORIZAÇÃO: 100% | IRPF TAGS: 164 (75 com CNPJ) | HOLERITES: 24 (todos node documento no grafo)
+GRAFO: 7.494+ nodes + 24.732+ edges. 50 documentos catalogados, 25 vinculados a tx (50%, era 0% antes da Sprint 95).
+SPRINTS: 139 (96 concluídas, 28 backlog, 14 arquivadas; rodada NU 2026-04-26/27: 6 P0 + 2 P1 + 1 sub-sprint diagnóstica + 4 sub-sprints abertas)
+CATEGORIZAÇÃO: 100% | IRPF TAGS: 164 (75 com CNPJ) | HOLERITES: 24 nodes + 24 PDFs canônicos no destino correto (após Sprint 98 --executar removeu 97 fósseis bit-a-bit)
 DAS PARCSN: 19 nodes (drift -47% → 0% após Sprint 90b)
-TESTES: 1.607 passed / 9 skipped / 1 xfailed (+77 desde início da sessão NU, zero regressão)
+TESTES: 1.620 passed / 9 skipped / 1 xfailed (+90 desde início da sessão NU, zero regressão)
 ABA RENDA: 99 linhas (24 holerites + 75 MEI legítimos via mappings/fontes_renda.yaml)
 RESERVA EMERGÊNCIA: 100% atingida (R$ 44.019,78 / R$ 27.000,00) -- meta cumprida
 ROTA: Catalogador universal artesanal via supervisor interativo (ADR-13)
 SUPERVISOR: Claude Code sessão interativa — nenhuma API programática
 INTEGRAÇÕES: OFX (pronto), Controle de Bordo vault (sync rico em produção), Belvo (em teste), Gmail (setup pendente)
-ROTA ATUAL: Fase NU encerrada. Sprint 98 + 101 (P1) em execução. P1 restantes: 99 (redactor PII), 100 (deep-link tab).
-RETOMADA: docs/AUDITORIA_2026-04-26.md + rodapé deste CLAUDE.md (sessão 2026-04-26 fase NU).
+ROTA ATUAL: Fase NU completamente fechada. P1 restantes: 99 (redactor PII, ~1h), 100 (deep-link tab, ~2h). Pré-OMEGA: sessão humana de validação via Revisor (760 arquivos, ~6.5h Opus + supervisor par-a-par).
+RETOMADA: docs/HANDOFF_2026-04-27_fase_nu_completa.md (canônica) + contexto/ESTADO_ATUAL.md (snapshot 2026-04-27).
 ```
 
 ### Próxima sessão — retomada canônica
@@ -37,12 +37,14 @@ Antes de tocar código, leia nesta ordem:
 5. ✓ **Sprint 90a** (inbox detecta holerite) -- commit `b8ab3fe`. Defesa em duas camadas (YAML especifico + pre-check registry).
 6. ✓ **Sprint 90b** (DAS PARCSN drift) -- commit `c136ea6`. 10 → 19 nodes. Diagnóstico rejeitou hipótese OCR; causa real era regex sem suporte a `ç` + período "Diversos".
 
-**Em execução (P1 paralelo):**
-- Sprint 98 (renomeação retroativa de holerites) e Sprint 101 (`./run.sh --full-cycle`).
+**P1 também concluídas na rodada NU:**
+- Sprint 101 (`./run.sh --full-cycle`) -- commit `d615488`. Encadeia inbox+tudo, aborta se inbox falhar.
+- Sprint 98 (renomeação retroativa) -- commit `835f0a7` (script) + `a48b843` (`--executar`). 121/121 ações, -97 PDFs fósseis, +24 holerites canônicos.
+- Sprint 98-1 (P2 diagnóstica) -- commit `84b071e`. Engine de envelope confirmada íntegra; 91 fósseis eram resíduo histórico de pré-90a + pré-41 P2.3.
 
-**P1 restantes:**
-- Sprint 99 (redactor PII em logs).
-- Sprint 100 (deep-link tab funcional dentro de cluster).
+**P1 ainda pendentes (sessão futura):**
+- Sprint 99 (redactor PII em logs INFO, ~1h).
+- Sprint 100 (deep-link tab funcional dentro de cluster, ~2h).
 
 **P2/P3 (sub-sprints abertas + backlog histórico):**
 - Sprint 95a/95b/95c (sub-sprints da 95: holerite líquido, âncora vencimento, noqa accent).
@@ -53,16 +55,18 @@ Antes de tocar código, leia nesta ordem:
 
 **Sprint OMEGA 94a-f** -- desbloqueada por ADR-21. 12-18 meses, estratégica. Pré-requisito: Fase NU + P1 fechadas.
 
-**Métricas pós-NU (delta sessão 2026-04-26):**
-| | Antes | Depois |
+**Métricas pós-rodada NU (delta sessão 2026-04-26 + 2026-04-27):**
+| | Antes (`1fa50bc`) | Depois (`a48b843`) |
 |---|---|---|
-| pytest | 1.530 | 1.607 (+77) |
+| pytest | 1.530 | **1.620** (+90) |
 | Documentos no grafo | 41 | 50 |
 | Arestas `documento_de` | 0 | 25 |
-| % docs vinculados | 0% | 50% |
+| % docs vinculados | 0% | **50%** |
 | DAS PARCSN nodes | 10 | 19 |
+| Holerites com nome canônico | 0/30 | **24/24** |
+| Fósseis G4F em itau_cc + santander_cartao | 91 | **0** (-97 PDFs) |
 | Aba Revisor | inexistente | live |
-| `inbox/1.jpeg` | None | `cupom_fiscal_foto` |
+| `inbox/1.jpeg` | None | `cupom_fiscal_foto/ocr_curto` |
 | PDFs heterogêneos `_classificar/` | acumulam | fatiam + revertem se homogêneo |
 
 **Sprint substituída:** AUDITORIA-ARTESANAL-FINAL → Sprint D2 (revisor visual semi-automatizado).
@@ -79,9 +83,28 @@ Antes de tocar código, leia nesta ordem:
 - **93d** (P2) — preservação forte de downloads + reprocessamento cronológico (dataloss nubank_pf_cc).
 - **93e** (P3) — propagar `_arquivo_origem` como coluna do XLSX.
 
+### Sessão 2026-04-27 — Fase NU completa + P1 98+101 + Sprint 98-1 + --executar 98
+
+Continuação direta da sessão maratona iniciada em 2026-04-26 (segunda parte). Total 16+ commits, 1 worktree por sprint (todos cleanup ao final). pytest 1.530 → **1.620** (+90, zero regressão). Lint verde, smoke 8/8 em cada passo.
+
+**Eventos adicionais a esta sessão (após o bloco da Fase NU original abaixo):**
+
+| # | Evento | Commit | Resultado |
+|---|--------|--------|-----------|
+| 7 | Sprint 101 (P1 --full-cycle) | `d615488` | `./run.sh --full-cycle` encadeia inbox+tudo; opção R no menu como default; 8 testes |
+| 8 | Sprint 98 (P1 script migração) | `835f0a7` | `scripts/migrar_holerites_retroativo.py` 427L com `--dry-run`/`--executar`; idempotência SHA-256 |
+| 9 | Sprint 98-1 (P2 diagnóstica) | `84b071e` | 3 hipóteses do bug REJEITADAS empiricamente; engine atual íntegra; 91 fósseis eram resíduo de pré-Sprint 90a + pré-Sprint 41 P2.3 |
+| 10 | Sprint 98 `--executar` aplicado | `a48b843` | **121/121 ações, zero falhas. -97 PDFs físicos. +24 holerites canônicos no destino correto.** itau_cc 29→8, santander_cartao 102→32, holerites 30→24 (todos `HOLERITE_*` canônicos). Originais preservados (ADR-18). |
+
+**Padrão canônico adicional registrado:**
+(p2) **Achado colateral diagnóstico que valida hipóteses por refutação**: Sprint 98-1 não fez fix de código; rejeitou 3 hipóteses, diagnosticou causa raiz histórica, deixou 5 testes regressivos como invariante. Padrão útil quando bug não é da engine atual mas de versão anterior (residual).
+
+**Sub-sprint nova formalizada na sessão:**
+- INFRA-97a (P3, ~1h) -- teste flaky `test_processar_duas_vezes_nao_duplica_artefatos` em `test_pdf_heterogeneo_multitype.py`. Passa isolado, falha aleatoriamente em suite full. Provável race condition em fixture.
+
 ### Sessão 2026-04-26 (segunda parte) — Fase NU executada (6 P0 + 4 sub-sprints abertas)
 
-Sessão maratona de execução pós-auditoria, supervisionada pelo Opus principal. 14 commits em main + 7 propostas de linking output do motor. pytest 1.530 → 1.607 (+77, zero regressão). Lint verde, smoke 8/8 em cada passo.
+Sessão maratona de execução pós-auditoria, supervisionada pelo Opus principal. pytest 1.530 → 1.607 (+77, zero regressão). Lint verde, smoke 8/8 em cada passo.
 
 | # | Sprint | Commit | Entregas-chave |
 |---|--------|--------|----------------|
