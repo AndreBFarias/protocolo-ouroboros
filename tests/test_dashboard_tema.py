@@ -552,4 +552,60 @@ class TestSprintUX116Padding4Direcoes:
         assert ".main .block-container" in css
 
 
+class TestSprintUX115FaixasVaziasAlinhamento:
+    """Sprint UX-115: gambiarra para pintar faixas vazias do bloco principal.
+
+    O container externo do conteúdo (`[data-testid='stMain']`) ficava em
+    `#282A36` (color-fundo) por default, criando faixa vertical à esquerda
+    e faixa inferior em volta do bloco interno (`.main .block-container`).
+    Pintamos `stMain` com `#444659` (literal, sem token novo -- gambiarra
+    deliberada até UX-114 reescrever a página). Também garantimos contrato
+    explícito de alinhamento à esquerda para `.ouroboros-label-icon`,
+    usado pelo label "Busca global" da página de busca.
+    """
+
+    def test_st_main_tem_background_444659(self):
+        css = tema.css_global()
+        # Seletor presente
+        assert '[data-testid="stMain"]' in css
+        # Cor literal #444659 aplicada como background (gambiarra cirúrgica
+        # registrada no comentário acima da regra).
+        assert "#444659" in css
+
+    def test_st_main_background_associado_ao_seletor(self):
+        # Verifica que a regra `background-color: #444659` aparece logo
+        # depois do seletor stMain (a janela de 400 chars cobre o bloco
+        # de declarações da regra).
+        css = tema.css_global()
+        idx_seletor = css.find('[data-testid="stMain"] {')
+        assert idx_seletor >= 0, "seletor stMain ausente do css_global()"
+        bloco = css[idx_seletor : idx_seletor + 400]
+        assert "background-color: #444659" in bloco
+
+    def test_label_icon_alinhado_a_esquerda(self):
+        # Sprint UX-115: contrato explícito de alinhamento à esquerda no
+        # label "Busca global" -- precisa começar exatamente em x=0 do
+        # block-container, igual ao input principal.
+        css = tema.css_global()
+        idx = css.find(".ouroboros-label-icon {")
+        assert idx >= 0, "regra .ouroboros-label-icon ausente"
+        # Janela ampla -- a regra ganhou comentário multilinha + 3 declarações
+        # novas além das 7 originais.
+        bloco = css[idx : idx + 800]
+        assert "margin-left: 0" in bloco
+        assert "padding-left: 0" in bloco
+        assert "justify-content: flex-start" in bloco
+
+    def test_st_main_nao_sobrescreve_fundo_da_app(self):
+        # Defesa: o fix é específico ao seletor `[data-testid="stMain"]`
+        # e NÃO troca o fundo geral da app (html/body/.stApp/stAppViewContainer
+        # continuam regidos por --color-fundo). Isto garante que a gambiarra
+        # da UX-115 não vaza para outras páginas.
+        css = tema.css_global()
+        # A declaração `background-color: #444659` deve aparecer exatamente
+        # uma vez (na regra do stMain) -- contar a *declaração* em vez do
+        # hex isolado evita falsos positivos com o hex citado em comentário.
+        assert css.count("background-color: #444659") == 1
+
+
 # "Simplicidade é a maior sofisticação." -- Leonardo da Vinci

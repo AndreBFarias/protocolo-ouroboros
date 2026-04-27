@@ -337,6 +337,19 @@ def css_global() -> str:
         padding-left: {PADDING_INTERNO}px !important;
     }}
     .block-container {{ padding-top: {SPACING["xl"]}px; }}
+    /* Sprint UX-115 (gambiarra até UX-114 reescrever a página Busca Global):
+       o container externo do conteúdo principal ([data-testid="stMain"])
+       fica em #282A36 (color-fundo) por default, criando faixa vertical
+       à esquerda e faixa inferior em volta do bloco interno (.main
+       .block-container) que tem fundo card_fundo (#44475A) implícito.
+       Pintamos stMain com #444659 -- tom próximo de card_fundo, mas
+       deliberadamente literal (sem token novo) para sinalizar que é fix
+       cirúrgico e será removido quando UX-114 reorganizar a página.
+       Sobrescreve apenas este seletor; não afeta fundo da app inteira
+       (html/body/.stApp continuam regidos por --color-fundo). */
+    [data-testid="stMain"] {{
+        background-color: #444659;
+    }}
     [data-testid="stSidebar"] {{ background-color: {CORES["card_fundo"]}; }}
     /* Sprint UX-116: sidebar interna ganha padding 4 direções com PADDING_CHIP
        (16px). O retângulo interno [data-testid="stSidebar"] > div:first-child
@@ -567,6 +580,12 @@ def css_global() -> str:
         font-size: var(--font-corpo);
         font-weight: 600;
         margin-bottom: var(--spacing-xs);
+        /* Sprint UX-115: contrato explícito de alinhamento à esquerda --
+           label "Busca global" deve iniciar em x=0 do block-container,
+           coincidindo com a borda esquerda do input principal. */
+        margin-left: 0;
+        padding-left: 0;
+        justify-content: flex-start;
     }}
     .ouroboros-row-resumo-busca {{
         margin: var(--spacing-md) 0;
