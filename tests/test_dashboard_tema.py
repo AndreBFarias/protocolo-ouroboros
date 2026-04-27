@@ -494,4 +494,62 @@ class TestSprintUX112TokensSpacingBorda:
         assert '[data-testid="stExpander"]' in css
 
 
+class TestSprintUX116Padding4Direcoes:
+    """Sprint UX-116: padding 4 direcoes universal em .main e sidebar.
+
+    UX-112 estabeleceu PADDING_INTERNO=24 e PADDING_CHIP=16 mas aplicou
+    apenas em inputs/expanders. UX-116 publica regras explicitas
+    padding-{top,right,bottom,left} em dois retangulos universais
+    (.main .block-container e [data-testid='stSidebar'] > div:first-child)
+    para garantir respiro visual em todas as abas.
+    """
+
+    def test_main_block_container_tem_4_paddings_explicitos(self):
+        css = tema.css_global()
+        valor = f"{tema.PADDING_INTERNO}px"
+        assert f"padding-top: {valor}" in css
+        assert f"padding-right: {valor}" in css
+        assert f"padding-bottom: {valor}" in css
+        assert f"padding-left: {valor}" in css
+
+    def test_main_block_container_usa_token_padding_interno(self):
+        # Garante que valor deriva do token (não hardcoded). Se alguém mudar
+        # PADDING_INTERNO para 32, o CSS muda junto.
+        css = tema.css_global()
+        assert ".main .block-container" in css
+        assert css.count(f"padding-top: {tema.PADDING_INTERNO}px") >= 1
+        assert css.count(f"padding-right: {tema.PADDING_INTERNO}px") >= 1
+        assert css.count(f"padding-bottom: {tema.PADDING_INTERNO}px") >= 1
+        assert css.count(f"padding-left: {tema.PADDING_INTERNO}px") >= 1
+
+    def test_sidebar_interna_tem_4_paddings_explicitos(self):
+        css = tema.css_global()
+        valor = f"{tema.PADDING_CHIP}px"
+        assert '[data-testid="stSidebar"] > div:first-child' in css
+        assert f"padding-top: {valor}" in css
+        assert f"padding-right: {valor}" in css
+        assert f"padding-bottom: {valor}" in css
+        assert f"padding-left: {valor}" in css
+
+    def test_sidebar_interna_usa_token_padding_chip(self):
+        css = tema.css_global()
+        assert css.count(f"padding-top: {tema.PADDING_CHIP}px") >= 1
+        assert css.count(f"padding-right: {tema.PADDING_CHIP}px") >= 1
+        assert css.count(f"padding-bottom: {tema.PADDING_CHIP}px") >= 1
+        assert css.count(f"padding-left: {tema.PADDING_CHIP}px") >= 1
+
+    def test_regressao_sprint_76_padding_pagina_padrao_continua_definido(self):
+        # Sprint 76 estabeleceu PADDING_PAGINA_PADRAO_PX=24 como contrato.
+        # UX-116 substitui shorthand por 4 declaracoes explicitas, mas o token
+        # da Sprint 76 e o valor canonico (24px == PADDING_INTERNO) continuam.
+        assert tema.PADDING_PAGINA_PADRAO_PX == 24
+        assert tema.PADDING_INTERNO == tema.PADDING_PAGINA_PADRAO_PX
+
+    def test_regressao_main_block_container_continua_no_css(self):
+        # Garante que o seletor .main .block-container continua presente
+        # apos a refatoracao do shorthand para 4 direcoes (Sprint 76 + UX-116).
+        css = tema.css_global()
+        assert ".main .block-container" in css
+
+
 # "Simplicidade é a maior sofisticação." -- Leonardo da Vinci
