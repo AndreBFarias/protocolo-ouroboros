@@ -608,4 +608,115 @@ class TestSprintUX115FaixasVaziasAlinhamento:
         assert css.count("background-color: #444659") == 1
 
 
+class TestSprintUX118PolishCombo:
+    """Sprint UX-118: 4 micro-ajustes pós UX-115/116/117.
+
+    1. Tabs sticky (.stTabs [data-baseweb='tab-list']) com border-bottom
+       2px solid var(--color-destaque), position: sticky, top: 0, z-index: 10.
+    2. [data-testid='stApp'] background trocado de #282A36 (default Dracula)
+       para var(--color-card-fundo) (#44475A). Tokens permanecem intocados;
+       apenas o seletor stApp passa a usar o tom card.
+    3. Logo emitida com class='ouroboros-logo-img' e width=120; CSS global
+       declara max-width: 120px, height: auto, aspect-ratio: 724 / 733.
+    4. card_sidebar_html() injeta margin-left: 0 e box-sizing: border-box no
+       <div> wrapper para evitar transbordo da borda 3px sobre o
+       padding-left de 16px (PADDING_CHIP) da sidebar (UX-116).
+    """
+
+    # AC1 -- tabs sticky + linha 2px destaque
+    def test_ac1_tabs_tem_position_sticky_e_top_zero(self):
+        css = tema.css_global()
+        # Localiza o segundo bloco da regra .stTabs [data-baseweb="tab-list"]
+        # (introduzido pela UX-118; o primeiro define gap/background/min-height).
+        idx = css.find('.stTabs [data-baseweb="tab-list"] {')
+        assert idx >= 0, "regra UX-118 dedicada ao tab-list ausente"
+        bloco = css[idx : idx + 400]
+        assert "position: sticky" in bloco
+        assert "top: 0" in bloco
+        assert "z-index: 10" in bloco
+
+    def test_ac1_tabs_tem_border_bottom_2px_destaque(self):
+        css = tema.css_global()
+        idx = css.find('.stTabs [data-baseweb="tab-list"] {')
+        assert idx >= 0
+        bloco = css[idx : idx + 400]
+        assert "border-bottom: 2px solid var(--color-destaque)" in bloco
+
+    def test_ac1_regras_originais_do_tab_list_preservadas(self):
+        # Subregra retrocompatível (padrão l): regras antigas do bloco
+        # .stTabs [data-baseweb="tab-list"], > div, > div:first-child
+        # continuam presentes (gap, background-color, min-height,
+        # overflow). UX-118 apenas adiciona uma regra dedicada.
+        css = tema.css_global()
+        idx = css.find('.stTabs [data-baseweb="tab-list"],')
+        assert idx >= 0, "bloco original (3 seletores) ausente"
+        bloco = css[idx : idx + 600]
+        assert "gap:" in bloco
+        assert "background-color:" in bloco
+        assert "min-height: 60px" in bloco
+        assert "overflow: visible" in bloco
+
+    # AC2 -- stApp com card_fundo
+    def test_ac2_stapp_tem_background_card_fundo(self):
+        css = tema.css_global()
+        idx = css.find('[data-testid="stApp"] {')
+        assert idx >= 0, "seletor [data-testid='stApp'] ausente"
+        bloco = css[idx : idx + 200]
+        assert "background-color: var(--color-card-fundo)" in bloco
+
+    def test_ac2_token_cores_fundo_intocado_em_282a36(self):
+        # AC explicito do spec: token CORES['fundo'] permanece em #282A36
+        # (DRACULA default). UX-118 muda apenas o seletor stApp, não o token.
+        assert tema.CORES["fundo"].lower() == "#282a36"
+        assert tema.DRACULA["background"].lower() == "#282a36"
+
+    # AC3 -- logo dimensoes
+    def test_ac3_css_logo_class_definida(self):
+        css = tema.css_global()
+        assert ".ouroboros-logo-img" in css
+        idx = css.find(".ouroboros-logo-img {")
+        assert idx >= 0
+        bloco = css[idx : idx + 200]
+        assert "max-width: 120px" in bloco
+        assert "height: auto" in bloco
+        assert "aspect-ratio: 724 / 733" in bloco
+
+    def test_ac3_logo_sidebar_html_emite_class_e_width_120(self):
+        # Emissão do <img> com class e width novos. Só roda se assets/icon.png
+        # existir; pula caso ausente (mesmo padrão da Sprint 76).
+        from pathlib import Path
+
+        if not (Path(__file__).resolve().parents[1] / "assets" / "icon.png").exists():
+            import pytest as _pytest
+
+            _pytest.skip("assets/icon.png ausente -- skip emissão do <img>")
+        html = tema.logo_sidebar_html()
+        assert 'class="ouroboros-logo-img"' in html
+        assert 'width="120"' in html
+
+    def test_ac3_logo_sidebar_html_default_largura_e_120(self):
+        # Default da assinatura subiu de 96 para 120 px (UX-118).
+        import inspect
+
+        sig = inspect.signature(tema.logo_sidebar_html)
+        assert sig.parameters["largura_px"].default == 120
+
+    # AC4 -- card_sidebar_html overflow fix
+    def test_ac4_card_sidebar_tem_margin_left_zero(self):
+        html = tema.card_sidebar_html("Saldo", "R$ 100,00", tema.CORES["positivo"])
+        assert "margin-left: 0" in html
+
+    def test_ac4_card_sidebar_tem_box_sizing_border_box(self):
+        html = tema.card_sidebar_html("Saldo", "R$ 100,00", tema.CORES["positivo"])
+        assert "box-sizing: border-box" in html
+
+    def test_ac4_card_sidebar_preserva_border_left_3px(self):
+        # Defesa: o fix UX-118 não remove a borda colorida 3px que dá
+        # identidade visual aos cards (Receita verde / Despesa vermelha
+        # / Saldo dependente do sinal). margin-left:0 + box-sizing:border-box
+        # apenas evitam que a borda transborde a sidebar.
+        html = tema.card_sidebar_html("Saldo", "R$ 100,00", "#50FA7B")
+        assert "border-left: 3px solid #50FA7B" in html
+
+
 # "Simplicidade é a maior sofisticação." -- Leonardo da Vinci
