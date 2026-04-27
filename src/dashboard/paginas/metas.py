@@ -204,7 +204,7 @@ def renderizar(dados: dict, mes_selecionado: str, pessoa: str) -> None:
     """Renderiza a página de metas financeiras."""
     st.markdown(
         hero_titulo_html(
-            "07",
+            "",
             "Metas",
             "Objetivos financeiros monetários e binários com progresso "
             "calculado a partir do saldo acumulado.",

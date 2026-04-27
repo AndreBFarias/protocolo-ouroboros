@@ -124,7 +124,7 @@ def renderizar(
 
     st.markdown(
         hero_titulo_html(
-            "13",
+            "",
             "Completude",
             "Gap analysis documental: heatmap mês × categoria, alertas e "
             "transações órfãs de comprovante.",

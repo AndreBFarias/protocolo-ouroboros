@@ -224,8 +224,14 @@ def card_sidebar_html(titulo: str, valor: str, cor: str) -> str:
     )
 
 
-def hero_titulo_html(numero: str, texto: str, descricao: str | None = None) -> str:
-    """Cabeçalho grande de página (display / hero). Sprint 20."""
+def hero_titulo_html(numero: str = "", texto: str = "", descricao: str | None = None) -> str:
+    """Cabeçalho grande de página (display / hero). Sprint 20.
+
+    Sprint UX-122: ``numero`` virou opcional (default ``""``). Quando vazio, o
+    ``<span>`` do badge numérico é omitido completamente -- header mostra apenas
+    o título. Retrocompatível: chamadas antigas com primeiro arg numérico
+    seguem renderizando o badge como antes.
+    """
     bloco_desc = ""
     if descricao:
         bloco_desc = (
@@ -233,12 +239,17 @@ def hero_titulo_html(numero: str, texto: str, descricao: str | None = None) -> s
             f" margin: {SPACING['sm']}px 0 0 0; max-width: 780px;"
             f' line-height: 1.5;">{descricao}</p>'
         )
+    bloco_numero = ""
+    if numero:
+        bloco_numero = (
+            f'<span style="font-size: 48px; font-weight: 700;'
+            f" color: {CORES['destaque']};"
+            f' line-height: 1;">{numero}</span>'
+        )
     return (
         f'<div style="margin: 0 0 {SPACING["lg"]}px 0;">'
         f'<div style="display: flex; align-items: baseline; gap: {SPACING["md"]}px;">'
-        f'<span style="font-size: 48px; font-weight: 700;'
-        f" color: {CORES['destaque']};"
-        f' line-height: 1;">{numero}</span>'
+        f"{bloco_numero}"
         f'<span style="font-size: {FONTE_HERO}px; font-weight: 700;'
         f" color: {CORES['texto']};"
         f' line-height: 1.2;">{texto}</span>'

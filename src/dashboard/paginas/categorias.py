@@ -75,7 +75,7 @@ def renderizar(
     """Renderiza a página de categorias."""
     st.markdown(
         hero_titulo_html(
-            "02",
+            "",
             "Categorias",
             "Treemap de despesas por categoria, comparativos e destaques "
             "do período com drill-down clicável.",

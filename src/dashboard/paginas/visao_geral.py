@@ -37,7 +37,7 @@ def renderizar(
     """Renderiza a página de visão geral."""
     st.markdown(
         hero_titulo_html(
-            "01",
+            "",
             "Visão Geral",
             "Panorama do período: receitas, despesas, saldo, taxa de poupança "
             "e maior gasto por categoria.",
