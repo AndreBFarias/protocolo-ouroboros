@@ -9,6 +9,9 @@ RAIZ_PROJETO: Path = Path(__file__).resolve().parents[2]
 if str(RAIZ_PROJETO) not in sys.path:
     sys.path.insert(0, str(RAIZ_PROJETO))
 
+from src.dashboard.componentes.busca_global_sidebar import (  # noqa: E402
+    renderizar_input_busca,
+)
 from src.dashboard.componentes.drilldown import (  # noqa: E402
     CHAVE_SESSION_ABA_ATIVA,
     CHAVE_SESSION_CLUSTER_ATIVO,
@@ -80,12 +83,18 @@ def _configurar_pagina() -> None:
 
 
 def _selecionar_cluster() -> str:
-    """Renderiza o radio de clusters na sidebar e devolve o cluster ativo.
+    """Renderiza o seletor de clusters na sidebar e devolve o cluster ativo.
 
     Sprint 92b (ADR-22): 5 áreas canônicas (Hoje / Dinheiro / Documentos /
     Análise / Metas). `CHAVE_SESSION_CLUSTER_ATIVO` é populado pela URL via
     `ler_filtros_da_url` quando aplicável (backward compatibility); caso
     contrário, default é o primeiro cluster ("Hoje").
+
+    Sprint UX-113: widget mudou de ``st.radio`` para ``st.selectbox``
+    (dropdown). Economiza ~120px de altura vertical na sidebar (5 linhas
+    -> 1 linha colapsada), liberando espaço para o campo Buscar acima.
+    A lógica de cluster permanece N-para-N com ``ABAS_POR_CLUSTER`` e
+    ``MAPA_ABA_PARA_CLUSTER`` -- só a UI mudou.
     """
     cluster_na_url = st.session_state.get(CHAVE_SESSION_CLUSTER_ATIVO, "")
     if cluster_na_url in CLUSTERS_VALIDOS:
@@ -93,12 +102,11 @@ def _selecionar_cluster() -> str:
     else:
         indice_default = 0
 
-    cluster_escolhido: str = st.radio(
+    cluster_escolhido: str = st.selectbox(
         "Área",
         list(CLUSTERS_VALIDOS),
         index=indice_default,
         key=CHAVE_SESSION_CLUSTER_ATIVO,
-        horizontal=False,
     )
     return cluster_escolhido
 
@@ -128,8 +136,18 @@ def _sidebar(dados: dict) -> tuple[str, str, str, str]:
 
         st.markdown("---")
 
-        # Sprint 92b (ADR-22): seletor de cluster no topo. Fica acima dos
-        # filtros de período/pessoa para reforçar a hierarquia (área > filtros).
+        # Sprint UX-113: campo Buscar é o primeiro elemento abaixo do logo --
+        # ponto de entrada cognitivo da sidebar. Submeter delega para o
+        # roteador da Sprint UX-114 (fallback graceful enquanto UX-114 não
+        # mergeia: salva em session_state apenas).
+        renderizar_input_busca()
+
+        st.markdown("---")
+
+        # Sprint 92b (ADR-22) + UX-113: seletor de cluster como dropdown.
+        # Fica acima dos filtros de período/pessoa para reforçar a hierarquia
+        # (área > filtros), mas abaixo do campo Buscar -- mental model
+        # "buscar primeiro, navegar depois".
         cluster_ativo = _selecionar_cluster()
 
         st.markdown("---")
