@@ -67,7 +67,7 @@ sprint:
 
 # Sprint INFRA-CONSOLIDA-V2 -- Consolidar 3 ressalvas
 
-**Status:** EM PRODUÇÃO (P3, criada 2026-04-27 -- pos cluster UX v2)
+**Status:** CONCLUÍDA (commit `7f78887`, 2026-04-27 — 5 testes que falhavam agora passam; suite full 1817/1817)
 
 3 ressalvas detectadas pelos executores do cluster v2 que nao bloquearam merge das sprints respectivas mas deixaram main com falhas pequenas:
 
