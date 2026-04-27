@@ -168,7 +168,14 @@ def pendencias_fixture() -> list[dict]:
 
 
 def _script_revisor(pendencias: list[dict]) -> str:
-    """Gera script Streamlit isolado que substitui ``listar_pendencias_revisao``."""
+    """Gera script Streamlit isolado.
+
+    O stub de ``listar_pendencias_revisao`` é aplicado por fixture
+    pytest (``_stub_listar_pendencias``) com ``monkeypatch.setattr``,
+    garantindo teardown automático e isolamento entre testes. Este
+    script apenas configura o ``CAMINHO_REVISAO_HUMANA`` temporário e
+    invoca ``revisor.renderizar()``.
+    """
     return f"""
 import sys
 from pathlib import Path
@@ -178,13 +185,6 @@ if str(RAIZ) not in sys.path:
 
 import streamlit as st
 from src.dashboard import dados as d
-
-_PENDENCIAS = {pendencias!r}
-
-def _stub_listar(*args, **kwargs):
-    return list(_PENDENCIAS)
-
-d.listar_pendencias_revisao = _stub_listar
 
 # Schema mínimo do SQLite de revisão (vazio).
 import sqlite3
@@ -197,14 +197,33 @@ d.CAMINHO_REVISAO_HUMANA = caminho_tmp
 from src.dashboard.paginas import revisor as r
 r.CAMINHO_REVISAO_HUMANA = caminho_tmp
 r.garantir_schema(caminho_tmp)
-# também substitui a função importada estaticamente em revisor.py
-r.listar_pendencias_revisao = _stub_listar
 r.renderizar()
 """
 
 
 class TestSpriUx117Renderizacao:
     """Testes funcionais via streamlit.testing.v1.AppTest."""
+
+    @pytest.fixture(autouse=True)
+    def _stub_listar_pendencias(self, monkeypatch, pendencias_fixture):
+        """Substitui ``listar_pendencias_revisao`` via ``monkeypatch.setattr``.
+
+        Atribuição direta (``d.listar_pendencias_revisao = stub``) persistia
+        no cache de ``sys.modules`` e contaminava ``test_revisor.py::
+        TestListarPendencias`` quando rodado em suite full. ``monkeypatch``
+        registra teardown automático e restaura o atributo original ao fim
+        do teste.
+        """
+        from src.dashboard import dados as d
+        from src.dashboard.paginas import revisor as r
+
+        def _stub(*args, **kwargs):
+            return list(pendencias_fixture)
+
+        monkeypatch.setattr(d, "listar_pendencias_revisao", _stub)
+        # ``revisor.py`` importa a função estaticamente -- precisa do mesmo
+        # patch no namespace do módulo importador.
+        monkeypatch.setattr(r, "listar_pendencias_revisao", _stub)
 
     def test_pagina_renderiza_sem_excecao(self, pendencias_fixture):
         """Página Revisor executa com 25 pendências sem crashar."""
