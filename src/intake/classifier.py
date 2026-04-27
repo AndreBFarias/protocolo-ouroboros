@@ -62,7 +62,13 @@ _ORDEM_PRIORIDADE: dict[str, int] = {
 
 @dataclass(frozen=True)
 class Decisao:
-    """Resultado da classificação. tipo=None significa 'não classificado'."""
+    """Resultado da classificação. tipo=None significa 'não classificado'.
+
+    `match_submodo` é populado quando uma subregra composta (Sprint 96)
+    decide o match -- ex.: `cupom_fiscal_foto` casado pela subregra
+    `ocr_curto`. Para regras tradicionais (`regex_conteudo` plano),
+    permanece None e `match_mode` carrega `all`/`any`.
+    """
 
     tipo: str | None
     prioridade: Literal["especifico", "normal", "fallback"] | None
@@ -74,6 +80,7 @@ class Decisao:
     data_detectada_iso: str | None
     regras_avaliadas: int = 0
     motivo_fallback: str | None = field(default=None)
+    match_submodo: str | None = field(default=None)
 
 
 # ============================================================================
@@ -156,6 +163,42 @@ def _validar_tipos(tipos: list[Any], origem: Path) -> None:
             valor = tipo.get(campo)
             if not isinstance(valor, list) or not valor:
                 erros.append(f"{rotulo}: {campo} deve ser lista não vazia")
+        # Sprint 96: subregras compostas opcionais. Quando presentes, cada
+        # subregra precisa ter rótulo `tipo` + `requer_todos` lista não vazia
+        # + `requer_qualquer` lista não vazia (ou ausente). `ocr_minimo` e
+        # `ocr_maximo` são opcionais e devem ser inteiros não negativos.
+        regras_compostas = tipo.get("regras")
+        if regras_compostas is not None:
+            if not isinstance(regras_compostas, list) or not regras_compostas:
+                erros.append(
+                    f"{rotulo}: regras (opcional) deve ser lista não vazia quando declarada"
+                )
+            else:
+                for sub_idx, sub in enumerate(regras_compostas):
+                    sub_rotulo = f"{rotulo} regras[{sub_idx}]"
+                    if not isinstance(sub, dict):
+                        erros.append(f"{sub_rotulo}: esperado dict, veio {type(sub).__name__}")
+                        continue
+                    if not isinstance(sub.get("tipo"), str) or not sub["tipo"]:
+                        erros.append(f"{sub_rotulo}: campo 'tipo' (rótulo) obrigatório como string")
+                    requer_todos = sub.get("requer_todos")
+                    if not isinstance(requer_todos, list) or not requer_todos:
+                        erros.append(f"{sub_rotulo}: requer_todos deve ser lista não vazia")
+                    requer_qualquer = sub.get("requer_qualquer")
+                    if requer_qualquer is not None and (
+                        not isinstance(requer_qualquer, list) or not requer_qualquer
+                    ):
+                        erros.append(
+                            f"{sub_rotulo}: requer_qualquer (opcional) deve ser lista não vazia"
+                        )
+                    for chave_int in ("ocr_minimo", "ocr_maximo"):
+                        valor_int = sub.get(chave_int)
+                        if valor_int is not None and (
+                            not isinstance(valor_int, int) or valor_int < 0
+                        ):
+                            erros.append(
+                                f"{sub_rotulo}: {chave_int} deve ser inteiro >= 0 quando declarado"
+                            )
         renomear = tipo.get("renomear_template")
         if not isinstance(renomear, dict) or not all(
             k in renomear for k in _TEMPLATES_OBRIGATORIOS
@@ -227,10 +270,14 @@ def classificar(
         avaliadas += 1
         if not _mime_compativel(mime, tipo.get("mimes", [])):
             continue
-        if not casa_padroes(
+        casou_regex_plano = casa_padroes(
             tipo["regex_conteudo"], preview_texto, modo=tipo.get("match_mode", "any")
-        ):
-            continue
+        )
+        submodo: str | None = None
+        if not casou_regex_plano:
+            submodo = _avaliar_subregras(tipo.get("regras"), preview_texto)
+            if submodo is None:
+                continue
         return _montar_decisao(
             tipo=tipo,
             sha8=sha8,
@@ -238,6 +285,7 @@ def classificar(
             data_iso=data_iso,
             pessoa=pessoa,
             avaliadas=avaliadas,
+            match_submodo=submodo,
         )
 
     return _decisao_nao_classificado(sha8=sha8, extensao=extensao, avaliadas=avaliadas, mime=mime)
@@ -261,6 +309,7 @@ def _montar_decisao(
     data_iso: str | None,
     pessoa: str,
     avaliadas: int,
+    match_submodo: str | None = None,
 ) -> Decisao:
     pasta = _resolver_pasta(tipo["pasta_destino_template"], pessoa)
     nome = _resolver_nome(
@@ -279,7 +328,42 @@ def _montar_decisao(
         nome_canonico=nome,
         data_detectada_iso=data_iso,
         regras_avaliadas=avaliadas,
+        match_submodo=match_submodo,
     )
+
+
+def _avaliar_subregras(
+    regras: list[dict[str, Any]] | None, texto: str
+) -> str | None:
+    """Avalia subregras compostas (Sprint 96).
+
+    Cada subregra casa quando TODAS as condições são verdadeiras:
+      - len(texto) está em [ocr_minimo, ocr_maximo] (se declarados);
+      - todos os padrões de `requer_todos` casam no texto;
+      - pelo menos um padrão de `requer_qualquer` casa (se declarado).
+
+    Devolve o rótulo `tipo` da primeira subregra que casa, ou None
+    se nenhuma casa.
+    """
+    if not regras:
+        return None
+    tamanho = len(texto)
+    for sub in regras:
+        ocr_min = sub.get("ocr_minimo")
+        if ocr_min is not None and tamanho < ocr_min:
+            continue
+        ocr_max = sub.get("ocr_maximo")
+        if ocr_max is not None and tamanho > ocr_max:
+            continue
+        if not casa_padroes(sub["requer_todos"], texto, modo="all"):
+            continue
+        requer_qualquer = sub.get("requer_qualquer")
+        if requer_qualquer and not casa_padroes(requer_qualquer, texto, modo="any"):
+            continue
+        rotulo = sub.get("tipo")
+        if isinstance(rotulo, str):
+            return rotulo
+    return None
 
 
 def _decisao_nao_classificado(sha8: str, extensao: str, avaliadas: int, mime: str) -> Decisao:

@@ -368,6 +368,30 @@ tipos:
       - "SAT[-\\s]"
       - "(Tributos|Consumidor)"           # Sprint 88: OCR-tolerante -- palavras de NFC-e/cupom
       - "78\\d{11,12}"                    # Sprint 88: código EAN-13/14 em cupons de mercado
+    # Sprint 96: regras compostas para foto de NF curta (ex.: cartão de débito em
+    # estabelecimento genérico de shopping, R$ 254,51, OCR ~500 chars). A regra
+    # "ocr_curto" só dispara quando NENHUM dos regex acima casou e o texto tem
+    # tamanho compatível, CNPJ explícito (com pontuação) e marcador R$/valor.
+    # match_mode permanece "any" (qualquer regex_conteudo OU qualquer subregra).
+    regras:
+      - tipo: ocr_curto
+        ocr_minimo: 200
+        ocr_maximo: 900
+        requer_todos:
+          # CNPJ formatado (14 dígitos com pontos/vírgulas/barra/hífen), tolerante
+          # a OCR que insere espaços ou troca pontos por vírgulas no agrupamento
+          # de milhar. Ex.: "66,825. 498/0004-70" (1.jpeg shopping).
+          - "\\d{2}[.,\\s]+\\d{3}[.,\\s]+\\d{3}\\s*[/\\\\]\\s*\\d{4}\\s*[-\\s]\\s*\\d{2}"
+          # Marcador de valor monetário em real -- aceita "R$ 254,51", "R $ 254,51",
+          # "RS 254,51" ou simplesmente "254,51" precedido por palavra "Valor"/"Total"/
+          # "Pago"/cartão dentro de janela curta. Glyph-tolerant para OCR fraco.
+          - "(?:R[\\$SF]\\s*|Valor[^\\n]{0,30}|Total[^\\n]{0,30}|Pago[^\\n]{0,30}|Cart[ãa]o\\s+\\w+[^\\n]{0,30})\\d{1,3}(?:[.,\\s]\\d{3})*[.,]\\d{2}"
+        requer_qualquer:
+          - "Nota\\s+Fiscal"
+          - "CUPOM"
+          - "NFC[-\\s]?E"
+          - "(TEF|Cart[ãa]o|D[ée]bito|Cr[ée]dito|PIX|Dinheiro)"
+          - "Valor\\s+(Total|Pago|Recebido)"
     extrator_modulo: null   # Sprint 45
     origem_sprint: 45
     pasta_destino_template: "data/raw/{pessoa}/nfs_fiscais/cupom_foto/"
