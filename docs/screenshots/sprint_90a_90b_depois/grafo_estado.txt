@@ -1,0 +1,22 @@
+                                                
+------------------------------------------------
+=== DOCUMENTOS POR TIPO (rodada NU completa) ===
+tipo              n 
+----------------  --
+holerite          24
+das_parcsn_andre  19
+nfce_modelo_65    4 
+boleto_servico    2 
+dirpf_retif       1 
+               
+---------------
+=== LINKING ===
+docs_linkados  total_docs  pct 
+-------------  ----------  ----
+25             50          50.0
+                                   
+-----------------------------------
+=== DELTA RODADA NU (5 sprints) ===
+metrica          edges_documento_de  pct_vinculados  total_docs  das_parcsn
+---------------  ------------------  --------------  ----------  ----------
+antes -> depois  0 -> 25             0% -> 50%       41 -> 50    10 -> 19  
