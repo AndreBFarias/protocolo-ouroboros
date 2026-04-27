@@ -145,11 +145,21 @@ class TestTituloSemPrefixoSprint:
 class TestChipDisparaBuscaPontaAPonta:
     """Sprint 59 acceptance #1: fluxo completo chip → input → busca."""
 
-    def test_injecao_via_session_state_dispara_busca(self, grafo_minimo):
+    def test_injecao_via_session_state_dispara_busca(
+        self, grafo_minimo, monkeypatch, tmp_path
+    ):
         """Simula o chip: session_state['busca_termo_input'] = 'neoenergia'
         → renderiza página → resultados aparecem.
         """
         from streamlit.testing.v1 import AppTest
+
+        # UX-124: tabela inline chama `carregar_dados()`. Patch via fixture
+        # `monkeypatch` (com teardown automático) redireciona o XLSX para um
+        # path inexistente para que `carregar_dados()` retorne {} rapidamente
+        # (evita carregar o XLSX real ~5MB no AppTest e contaminar globais).
+        xlsx_falso = tmp_path / "_inexistente.xlsx"
+        monkeypatch.setattr(dashboard_dados, "CAMINHO_XLSX", xlsx_falso)
+        dashboard_dados.carregar_dados.clear()
 
         script = f"""
 import sys
@@ -161,7 +171,9 @@ if str(RAIZ) not in sys.path:
 import streamlit as st
 from src.dashboard import dados as d
 d.CAMINHO_GRAFO = Path({str(grafo_minimo)!r})
+d.CAMINHO_XLSX = Path({str(xlsx_falso)!r})
 d.buscar_global.clear()
+d.carregar_dados.clear()
 
 # Simula o efeito do clique no chip "neoenergia":
 # o callback `_aplicar_chip_sugestao` grava aqui antes do render.
