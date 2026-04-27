@@ -205,6 +205,97 @@ def ler_filtros_da_url() -> None:
             st.session_state[CHAVE_SESSION_CLUSTER_ATIVO] = cluster_inferido
 
 
+def gerar_html_ativar_aba(nome_aba: str, abas_do_cluster: list[str]) -> str:
+    """Gera HTML com JavaScript que ativa programaticamente a aba ``nome_aba``.
+
+    Sprint 100: Streamlit ``st.tabs(...)`` não expõe API para ativar tab por
+    nome -- precisa simular click no DOM (ARMADILHAS.md item 11). O HTML
+    retornado, quando injetado via ``st.components.v1.html(html, height=0)``,
+    faz duas coisas no browser:
+
+    1. **Click programático**: localiza a tab cujo índice no DOM
+       (``[role="tab"]``) corresponde à posição de ``nome_aba`` na lista
+       ``abas_do_cluster`` e dispara ``.click()``. Usa ``setTimeout`` curto
+       para esperar o Streamlit terminar de montar a tab bar; reagenda 1 vez
+       se o DOM ainda não tem tabs suficientes; desiste silenciosamente
+       depois disso (graceful degradation, sem crash visual).
+    2. **Write-back de URL**: instala listener em cada tab; quando usuário
+       clica manualmente, atualiza ``?tab=<NomeClicado>`` via
+       ``history.replaceState`` (não empilha histórico inútil; o browser
+       back continua semântico). Acceptance #3 da Sprint 100.
+
+    Args:
+        nome_aba: Nome textual da aba a ativar (ex: "Busca Global"). Se
+            vazia ou ausente em ``abas_do_cluster``, devolve string vazia
+            (no-op).
+        abas_do_cluster: Lista ordenada das abas no cluster atual, na MESMA
+            ordem passada para ``st.tabs(...)``. Ordem importa: JS navega
+            por índice no DOM.
+
+    Returns:
+        HTML pronto para ``st.components.v1.html``. String vazia se nada a
+        fazer.
+    """
+    if not nome_aba or nome_aba not in abas_do_cluster:
+        return ""
+    indice_alvo = abas_do_cluster.index(nome_aba)
+    # Mapa textual nome -> índice, sem dependência de json (escapamos aspas
+    # com cuidado; nomes de abas do projeto não têm aspas internas).
+    pares = ", ".join(f'"{aba}": {i}' for i, aba in enumerate(abas_do_cluster))
+    return f"""
+<script>
+(function() {{
+  const indiceAlvo = {indice_alvo};
+  const mapaAbas = {{{pares}}};
+
+  function tryAtivar(tentativa) {{
+    const docTopo = window.parent && window.parent.document
+      ? window.parent.document
+      : document;
+    const tabs = docTopo.querySelectorAll('[role="tab"]');
+    if (!tabs || tabs.length <= indiceAlvo) {{
+      // Streamlit pode demorar para hidratar (páginas pesadas como
+      // Catalogação carregam dados antes do tab bar montar). Tentamos até
+      // 30x com 300ms entre tentativas (~9s total) -- balanço entre
+      // velocidade percebida e robustez. Após isso, desistimos
+      // silenciosamente sem crash visual.
+      if (tentativa < 30) {{
+        setTimeout(() => tryAtivar(tentativa + 1), 300);
+      }}
+      return;
+    }}
+    const jaAtivo = tabs[indiceAlvo].getAttribute('aria-selected') === 'true';
+    if (!jaAtivo) {{
+      tabs[indiceAlvo].click();
+    }}
+    instalarWriteBack(docTopo, tabs);
+  }}
+
+  function instalarWriteBack(docTopo, tabs) {{
+    tabs.forEach((tab) => {{
+      if (tab.dataset.ouroborosListener === '1') return;
+      tab.dataset.ouroborosListener = '1';
+      tab.addEventListener('click', () => {{
+        const texto = (tab.innerText || '').trim();
+        if (texto in mapaAbas) {{
+          try {{
+            const url = new URL(window.parent.location.href);
+            url.searchParams.set('tab', texto);
+            window.parent.history.replaceState({{}}, '', url.toString());
+          }} catch (e) {{
+            /* graceful: cross-origin ou history bloqueado */
+          }}
+        }}
+      }});
+    }});
+  }}
+
+  setTimeout(() => tryAtivar(0), 100);
+}})();
+</script>
+"""
+
+
 def filtros_ativos_do_session_state() -> dict[str, str]:
     """Extrai filtros vindos de drill-down do session_state (Sprint 73).
 
