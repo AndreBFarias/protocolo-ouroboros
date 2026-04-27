@@ -47,7 +47,7 @@ sprint:
 
 # Sprint UX-112 -- Padding/borda global
 
-**Status:** BACKLOG (P1, criada 2026-04-27, pré-requisito da Sprint 100)
+**Status:** CONCLUÍDA (commit `a50608d`, 2026-04-27 — aguarda validação visual humana)
 
 Hoje texto fica "ultra colado" em bordas e elemento focado não comunica visualmente que está ativo. Sprint adiciona tokens de spacing + borda no `tema.py` e aplica via `css_global` para todas as páginas herdarem.
 
