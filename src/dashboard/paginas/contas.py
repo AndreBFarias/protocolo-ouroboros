@@ -35,7 +35,7 @@ def renderizar(dados: dict[str, pd.DataFrame], mes_selecionado: str, pessoa: str
     """Renderiza a página de contas e dívidas."""
     st.markdown(
         hero_titulo_html(
-            "04",
+            "",
             "Contas",
             "Dívidas ativas, inventário patrimonial e prazos recorrentes "
             "a partir do snapshot histórico.",

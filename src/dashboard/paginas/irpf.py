@@ -30,7 +30,7 @@ def renderizar(
     """Renderiza a página de análise IRPF."""
     st.markdown(
         hero_titulo_html(
-            "09",
+            "",
             "IRPF",
             "Tags de dedução, simulação de regimes, gráficos mensais e checklist de documentos.",
         ),
