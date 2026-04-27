@@ -322,7 +322,7 @@ def renderizar(
     """Renderiza página de análise avançada com Sankey, heatmap e tendências."""
     st.markdown(
         hero_titulo_html(
-            "08",
+            "",
             "Análise",
             "Sankey de fluxo de despesas, heatmap por dia da semana e "
             "tendências históricas por classificação.",

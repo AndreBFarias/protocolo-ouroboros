@@ -177,7 +177,7 @@ def renderizar(
     """Renderiza a página de extrato."""
     st.markdown(
         hero_titulo_html(
-            "03",
+            "",
             "Extrato",
             "Transações do período com filtros, busca, drill-down e "
             "inspeção de documentos vinculados.",
