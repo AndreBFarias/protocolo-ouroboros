@@ -553,34 +553,37 @@ class TestSprintUX116Padding4Direcoes:
 
 
 class TestSprintUX115FaixasVaziasAlinhamento:
-    """Sprint UX-115: gambiarra para pintar faixas vazias do bloco principal.
+    """Sprint UX-115 + Sprint UX-119 AC14: pinta faixas vazias do bloco
+    principal e unifica a cor com o sidebar.
 
-    O container externo do conteúdo (`[data-testid='stMain']`) ficava em
-    `#282A36` (color-fundo) por default, criando faixa vertical à esquerda
-    e faixa inferior em volta do bloco interno (`.main .block-container`).
-    Pintamos `stMain` com `#444659` (literal, sem token novo -- gambiarra
-    deliberada até UX-114 reescrever a página). Também garantimos contrato
-    explícito de alinhamento à esquerda para `.ouroboros-label-icon`,
-    usado pelo label "Busca global" da página de busca.
+    Antes de UX-115 o container externo do conteúdo (`[data-testid='stMain']`)
+    ficava em `#282A36` (color-fundo), criando faixas escuras em volta do
+    bloco interno. UX-115 pintou com literal `#444659` (gambiarra). UX-119
+    AC14 substituiu o literal por `var(--color-card-fundo)` (token
+    `CORES['card_fundo']` = `#44475A`), unificando exatamente com o tom da
+    sidebar e eliminando a diferença de 1 ponto no canal verde detectada
+    visualmente. Também garantimos contrato explícito de alinhamento à
+    esquerda para `.ouroboros-label-icon`, usado pelo label "Busca global"
+    da página de busca.
     """
 
-    def test_st_main_tem_background_444659(self):
+    def test_st_main_usa_token_card_fundo_apos_ux119(self):
+        # Sprint UX-119 AC14: literal `#444659` substituido por
+        # var(--color-card-fundo). Garantimos que o seletor stMain ainda
+        # existe e que o literal antigo desapareceu inteiramente do CSS.
         css = tema.css_global()
-        # Seletor presente
         assert '[data-testid="stMain"]' in css
-        # Cor literal #444659 aplicada como background (gambiarra cirúrgica
-        # registrada no comentário acima da regra).
-        assert "#444659" in css
+        assert "#444659" not in css
 
     def test_st_main_background_associado_ao_seletor(self):
-        # Verifica que a regra `background-color: #444659` aparece logo
-        # depois do seletor stMain (a janela de 400 chars cobre o bloco
-        # de declarações da regra).
+        # Verifica que a regra `background-color: var(--color-card-fundo)`
+        # aparece logo depois do seletor stMain (a janela de 400 chars
+        # cobre o bloco de declaracoes da regra).
         css = tema.css_global()
         idx_seletor = css.find('[data-testid="stMain"] {')
         assert idx_seletor >= 0, "seletor stMain ausente do css_global()"
         bloco = css[idx_seletor : idx_seletor + 400]
-        assert "background-color: #444659" in bloco
+        assert "background-color: var(--color-card-fundo)" in bloco
 
     def test_label_icon_alinhado_a_esquerda(self):
         # Sprint UX-115: contrato explícito de alinhamento à esquerda no
@@ -596,16 +599,20 @@ class TestSprintUX115FaixasVaziasAlinhamento:
         assert "padding-left: 0" in bloco
         assert "justify-content: flex-start" in bloco
 
-    def test_st_main_nao_sobrescreve_fundo_da_app(self):
-        # Defesa: o fix é específico ao seletor `[data-testid="stMain"]`
-        # e NÃO troca o fundo geral da app (html/body/.stApp/stAppViewContainer
-        # continuam regidos por --color-fundo). Isto garante que a gambiarra
-        # da UX-115 não vaza para outras páginas.
+    def test_st_main_e_stapp_compartilham_token_card_fundo(self):
+        # Sprint UX-119 AC14: stMain (UX-115) e stApp (UX-118) ambos usam
+        # var(--color-card-fundo). Antes de UX-119, stMain era literal
+        # `#444659` e stApp era `var(--color-card-fundo)`. Agora ambos
+        # apontam para o mesmo token, eliminando a divergencia de 1 ponto
+        # no canal verde (`#444659` vs `#44475A`) detectada visualmente.
         css = tema.css_global()
-        # A declaração `background-color: #444659` deve aparecer exatamente
-        # uma vez (na regra do stMain) -- contar a *declaração* em vez do
-        # hex isolado evita falsos positivos com o hex citado em comentário.
-        assert css.count("background-color: #444659") == 1
+        idx_main = css.find('[data-testid="stMain"] {')
+        idx_app = css.find('[data-testid="stApp"] {')
+        assert idx_main >= 0 and idx_app >= 0
+        bloco_main = css[idx_main : idx_main + 200]
+        bloco_app = css[idx_app : idx_app + 200]
+        assert "var(--color-card-fundo)" in bloco_main
+        assert "var(--color-card-fundo)" in bloco_app
 
 
 class TestSprintUX118PolishCombo:
@@ -717,6 +724,169 @@ class TestSprintUX118PolishCombo:
         # apenas evitam que a borda transborde a sidebar.
         html = tema.card_sidebar_html("Saldo", "R$ 100,00", "#50FA7B")
         assert "border-left: 3px solid #50FA7B" in html
+
+
+class TestSprintUX119PolishV2:
+    """Sprint UX-119: 11 micro-ajustes de polish pos cluster v1.
+
+    AC1 -- label_visibility='collapsed' em busca_global_sidebar.py.
+    AC2 -- stStatusWidget/stToast/stAlertContainer/stHeader em card_fundo.
+    AC3 -- stSelectbox: min-height 44px + nowrap + overflow:hidden.
+    AC4 -- 5 separadores intermediarios removidos de _sidebar() em app.py.
+    AC6 -- stSidebar ganha border-right 2px solid var(--color-destaque).
+    AC7 -- h1 dentro de stMainBlockContainer ganha margin-bottom: spacing-xl.
+    AC10/11 -- chips e sugestoes uniformes via classes
+              .ouroboros-chips-container e .ouroboros-sugestoes-container.
+    AC13 -- [data-testid='stButton'] > button: min-height 44px + min-width
+           140px + nowrap (cobre cards Catalogacao + chips + botoes em geral).
+    AC14 -- literal #444659 trocado por var(--color-card-fundo) em tema.py
+           (testado em TestSprintUX115FaixasVaziasAlinhamento).
+    AC15 -- residuais #282A36 cobertos via stHeader/stStatusWidget/stToast/
+           stAlertContainer (AC2 ja cobre).
+    """
+
+    # AC2 -- status widget e toast em card_fundo
+    def test_ac2_status_widget_e_toast_em_card_fundo(self):
+        css = tema.css_global()
+        idx = css.find('[data-testid="stStatusWidget"]')
+        assert idx >= 0, "regra UX-119 AC2 (stStatusWidget) ausente"
+        bloco = css[idx : idx + 400]
+        assert '[data-testid="stToast"]' in bloco
+        assert '[data-testid="stAlertContainer"]' in bloco
+        assert '[data-testid="stHeader"]' in bloco
+        assert "background-color: var(--color-card-fundo)" in bloco
+
+    # AC3 -- selectboxes com altura minima e nowrap
+    def test_ac3_selectbox_min_height_44px(self):
+        css = tema.css_global()
+        # AC3: regra dedicada (a UX-119 adiciona um bloco para
+        # `[data-testid="stSelectbox"] > div > div`) com min-height 44px.
+        # Detectamos pelo "marcador" min-height: 44px proximo do seletor.
+        idx = css.find('[data-testid="stSelectbox"] > div > div,')
+        assert idx >= 0, "regra UX-119 AC3 (stSelectbox altura) ausente"
+        bloco = css[idx : idx + 400]
+        assert "min-height: 44px" in bloco
+        assert "white-space: nowrap" in bloco
+
+    def test_ac3_selectbox_combobox_overflow_hidden(self):
+        css = tema.css_global()
+        # Valor selecionado: overflow:hidden + text-overflow:ellipsis.
+        idx = css.find('[data-testid="stSelectbox"] div[role="combobox"] > div')
+        assert idx >= 0, "regra UX-119 AC3 (combobox interior) ausente"
+        bloco = css[idx : idx + 200]
+        assert "overflow: hidden" in bloco
+        assert "text-overflow: ellipsis" in bloco
+
+    # AC6 -- separador vertical roxo entre sidebar e body
+    def test_ac6_sidebar_border_right_destaque(self):
+        css = tema.css_global()
+        # AC6: regra dedicada (segundo bloco) para stSidebar com
+        # border-right 2px solid destaque.
+        # Procuramos a substring exata que so existe no bloco UX-119.
+        assert "border-right: 2px solid var(--color-destaque)" in css
+
+    def test_ac6_sidebar_background_preservado(self):
+        # Subregra retrocompatível (padrão l): a regra antiga UX-116
+        # `[data-testid="stSidebar"] { background-color: ... }`
+        # continua presente. UX-119 adiciona uma SEGUNDA regra com
+        # border-right; não reescreve a primeira. Como UX-119 é inserida
+        # ANTES (cosmeticamente) da regra original UX-116, ambas regras
+        # com seletor `[data-testid="stSidebar"] {` coexistem; basta
+        # detectar background-color em algum bloco do CSS após algum
+        # `[data-testid="stSidebar"] {`.
+        css = tema.css_global()
+        # Conta quantas regras `[data-testid="stSidebar"] {` (com chave
+        # aberta) existem no CSS -- esperamos pelo menos 2 (UX-119 nova
+        # com border-right + UX-116 original com background).
+        ocorrencias = css.count('[data-testid="stSidebar"] {')
+        assert ocorrencias >= 2, (
+            f'Esperado pelo menos 2 regras `[data-testid="stSidebar"] {{`'
+            f" (UX-119 + UX-116); encontrei {ocorrencias}"
+        )
+        # Background da regra original (UX-116) sobrevive: pega a SEGUNDA
+        # ocorrencia (rfind apos a primeira).
+        idx_primeira = css.find('[data-testid="stSidebar"] {')
+        idx_segunda = css.find('[data-testid="stSidebar"] {', idx_primeira + 1)
+        assert idx_segunda >= 0
+        bloco_segunda = css[idx_segunda : idx_segunda + 200]
+        assert "background-color:" in bloco_segunda
+
+    # AC7 -- padding-top header (h1 com margin-bottom)
+    def test_ac7_h1_em_main_block_container_tem_margin_bottom(self):
+        css = tema.css_global()
+        idx = css.find('[data-testid="stMainBlockContainer"] h1')
+        assert idx >= 0, "regra UX-119 AC7 (h1 main block container) ausente"
+        bloco = css[idx : idx + 200]
+        assert "margin-bottom:" in bloco
+
+    # AC10/11 -- chips e sugestoes uniformes
+    def test_ac10_chips_container_flex_wrap(self):
+        css = tema.css_global()
+        idx = css.find(".ouroboros-chips-container")
+        assert idx >= 0, "classe UX-119 AC10 (chips-container) ausente"
+        # Janela ampla cobre o bloco de chips + sugestoes (mesma regra).
+        bloco = css[idx : idx + 600]
+        assert "flex-wrap: wrap" in bloco
+        assert "display: flex" in bloco
+
+    def test_ac11_sugestoes_container_flex_wrap(self):
+        css = tema.css_global()
+        # AC11 espelha AC10: classe .ouroboros-sugestoes-container
+        # registrada no CSS para uso futuro pela pagina busca.
+        assert ".ouroboros-sugestoes-container" in css
+
+    def test_ac10_11_buttons_internos_min_width_140(self):
+        css = tema.css_global()
+        # Regra especifica para botoes dentro dos containers de chips/
+        # sugestoes: min-width 140px + nowrap + overflow ellipsis.
+        idx = css.find('.ouroboros-chips-container [data-testid="stButton"]')
+        assert idx >= 0, "regra UX-119 AC10/11 (button dentro de chips) ausente"
+        bloco = css[idx : idx + 400]
+        assert "min-width: 140px" in bloco
+        assert "white-space: nowrap" in bloco
+
+    # AC13 -- padronização global de stButton
+    def test_ac13_stbutton_global_min_height_44_min_width_140(self):
+        css = tema.css_global()
+        # Regra global aplicada a TODOS os stButton do dashboard.
+        # Encontra o bloco UX-119 dedicado (o último `[data-testid="stButton"] > button {`
+        # do CSS). Reusamos rfind para pegar a regra UX-119, distinguindo
+        # de regras parecidas em UX-112/UX-118 que mexem em downloadButton.
+        idx = css.rfind('[data-testid="stButton"] > button {')
+        assert idx >= 0, "regra UX-119 AC13 (stButton global) ausente"
+        bloco = css[idx : idx + 300]
+        assert "min-height: 44px" in bloco
+        assert "min-width: 140px" in bloco
+        assert "white-space: nowrap" in bloco
+
+    # AC15 -- residuais #282A36 cobertos
+    def test_ac15_stheader_em_card_fundo(self):
+        # Coberto via mesma regra do AC2 (stHeader é um dos seletores).
+        css = tema.css_global()
+        idx = css.find('[data-testid="stHeader"]')
+        assert idx >= 0, "AC15 (stHeader) não encontrado"
+        # Confere que está dentro do bloco UX-119 (background card_fundo)
+        # buscando a declaração em janela após o seletor agrupado.
+        idx_bloco = css.find('[data-testid="stStatusWidget"]')
+        bloco = css[idx_bloco : idx_bloco + 400]
+        assert '[data-testid="stHeader"]' in bloco
+        assert "background-color: var(--color-card-fundo)" in bloco
+
+    # AC1 -- label_visibility collapsed (testado via fonte do componente)
+    def test_ac1_busca_global_sidebar_label_collapsed(self):
+        # Lê o código-fonte do componente para confirmar que o
+        # label_visibility foi alterado de 'visible' para 'collapsed'.
+        # Isso preserva a leitura do contrato sem precisar montar mocks
+        # complexos do streamlit.text_input.
+        from pathlib import Path
+
+        path = (
+            Path(__file__).resolve().parents[1]
+            / "src/dashboard/componentes/busca_global_sidebar.py"
+        )
+        fonte = path.read_text(encoding="utf-8")
+        assert 'label_visibility="collapsed"' in fonte
+        assert 'label_visibility="visible"' not in fonte
 
 
 # "Simplicidade é a maior sofisticação." -- Leonardo da Vinci
