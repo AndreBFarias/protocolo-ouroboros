@@ -181,6 +181,15 @@ class TestPaletaDracula:
         }
         assert esperadas.issubset(set(tema.DRACULA.keys()))
 
+    def test_sprint_ux111_comment_customizado_para_contraste_alto(self):
+        """Sprint UX-111: DRACULA['comment'] foi customizado de #6272A4 (Dracula
+        original) para #c9c9cc para aumentar contraste contra fundo escuro
+        em telas de baixo brilho. CORES['texto_sec'] e CORES['na'] herdam.
+        """
+        assert tema.DRACULA["comment"].lower() == "#c9c9cc"
+        assert tema.CORES["texto_sec"].lower() == "#c9c9cc"
+        assert tema.CORES["na"].lower() == "#c9c9cc"
+
     def test_cores_semanticas_mapeadas(self):
         chaves = {
             "fundo",

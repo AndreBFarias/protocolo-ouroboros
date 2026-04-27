@@ -12,7 +12,7 @@ DRACULA = {
     "alerta": "FFB86C",
     "rosa": "FF79C6",
     "texto": "F8F8F2",
-    "comentario": "6272A4",
+    "comentario": "c9c9cc",  # Sprint UX-111: ver tema.py
 }
 
 
