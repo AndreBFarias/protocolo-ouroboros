@@ -31,6 +31,13 @@ sprint:
     - "Demais filtros (Granularidade/Mes/Pessoa/Forma de pagamento) permanecem na ordem atual"
     - "Submeter busca: chama roteador (Sprint UX-114) que decide se navega para aba do dashboard ou abre Busca Global filtrada"
     - "Pelo menos 5 testes regressivos: ordem dos elementos, selectbox da Area, leitura de query_params, navegacao via roteador (mock), preserva drill-down Sprint 73"
+    # === Adicoes feedback dono 2026-04-27 (achados visuais sidebar quebrado) ===
+    - "Texto 'Mes' nao corrompe glyph (sem 'Mas' / 'Mâs') -- sidebar tem largura minima 260px ou white-space: nowrap em rotulos curtos"
+    - "Selectbox de 'Mes' renderiza valor completo '2026-04' (nao '2A26-04' truncado)"
+    - "Selectbox de 'Pessoa' mostra valor completo 'Todos' (sem corte horizontal)"
+    - "Icone Q da Busca global (lupa de search no header da sidebar) renderizado em >=18px (era ~12-14px)"
+    - "Sidebar nao quebra rotulos no meio de palavra; overflow-x oculto; word-break definido"
+    - "Pelo menos 3 testes regressivos adicionais: presenca de min-width na sidebar; size do icone search; renderizacao integra de '2026-04' como valor de selectbox"
   proof_of_work_esperado: |
     # Captura screenshot da sidebar nova vs antiga
     # Antiga: logo + Area (radio 5 opcoes) + Granularidade + Mes + Pessoa + Forma
