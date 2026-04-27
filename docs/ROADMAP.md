@@ -1,30 +1,54 @@
 # Roadmap -- Protocolo Ouroboros
 
 ```
-VERSÃO: 7.9 | SPRINTS: 115 (76 concluídas, 0 em produção, 26 backlog, 13 arquivadas)
-ROTA: Catalogador universal artesanal (Fases ALFA → KAPPA CONCLUÍDAS) + Fase LAMBDA (rota "conserta tudo" + A + B + C + E 2026-04-23 CONCLUÍDAS) + Fase MU (sprints-filhas em backlog) + Fase OMEGA (fusão total Sprint 94, estratégica 12-18 meses)
-ÚLTIMA ATUALIZAÇÃO: 2026-04-23. Maratona de 19 sprints + 1 auditoria técnica concluídas. Baseline 1.139 → 1.261 passed (+122 testes). Grafo 4 → 41 documentos catalogados (24 holerites + 10 DAS PARCSN + 4 NFCe + 2 boletos + 1 DIRPF). Aba renda 459 → 99 linhas (whitelist via mappings/fontes_renda.yaml). Pessoa_detector ampliado (CPF + CNPJ + razão social + alias). Fallback supervisor idempotente. Dedupe roteamento por hash. UX v3 (6 fixes visuais). Relatórios diagnósticos + narrativos. IRPF declarativo em YAML. Extrator DAS + extrator DIRPF. OCR fallback em NFCe. Canonicalizer variantes curtas. Script de auditoria fidelidade de extratores. UX audit Nielsen sistemático. 7 sprints-filhas novas formalizadas. 2 YAMLs órfãos detectados. Retomada: docs/HANDOFF_2026-04-23_conserta_tudo.md + docs/auditoria_tecnica_2026-04-23.md.
+VERSÃO: 8.0 | SPRINTS: 130 (87 concluídas, 26 backlog, 13 arquivadas; 10 novas em 2026-04-26 + ADR-21)
+ROTA: Catalogador universal artesanal (Fases ALFA → KAPPA CONCLUÍDAS) + Fase LAMBDA (rota "conserta tudo" 2026-04-23 CONCLUÍDA) + Fase MU (sprints-filhas em backlog) + **Fase NU (P0 pós-auditoria 2026-04-26: linking runtime + classifier robusto + Sprint D2 revisor visual)** + Fase OMEGA (fusão total Sprint 94, estratégica 12-18 meses, desbloqueada por ADR-21)
+ÚLTIMA ATUALIZAÇÃO: 2026-04-26. Auditoria geral pós-rota-longa. ADR-21 (fusão Ouroboros + vault) criado. 10 sprints novas formalizadas (90a, 90b, 95, 96, 97, 98, 99, 100, 101, 102, 93h, D2). 2 YAMLs órfãos deletados (layouts_danfe + layouts_nfce). Sprint AUDITORIA-ARTESANAL-FINAL substituída por D2 (revisor visual semi-automatizado). Sprint 93f confirmada EM RUNTIME (não BACKLOG): 828 tx PJ Vitória já no XLSX. Achado P0: 0% documentos vinculados a transações em runtime (Sprint 95). Sistema técnico saudável (1.530 testes, smoke 8/8, lint verde). Reserva de emergência 100% atingida. Retomada: docs/AUDITORIA_2026-04-26.md.
 ```
 
 ---
 
-## Próxima sessão — rotas candidatas (2026-04-25+)
+## Próxima sessão — rotas candidatas (2026-04-27+)
 
-**Rota C (higiene residual, baixo risco):**
+**Rota A (P0 paralelo, 4-6h cada):**
 ```
-50b  (item_categorizer remove edges categoria_de antigas ao mutar YAML, ~30min)
-82   (canonicalizer: variantes curtas + conta-espelho de cartão, ~1-2h, reduz órfãos TI 72% → meta 10%)
-85   (XLSX docs faltantes expandido, ~1h)
-```
-
-**Rota B (ambiciosa, pede humano primeiro):**
-```
-86.1 (humano: instalar libbz2-dev) + 86.12 (humano: popular inbox real)
+Sprint 95 (linking runtime) || Sprint 96 (classifier robusto)
   ↓
-Sprint 21 (relatórios diagnósticos, abre Fase ZETA)
+Sprint D2 (revisor visual semi-automatizado) -- destrava validação humana
+  ↓
+Sprint 90a (holerites no inbox) + Sprint 90b (DAS drift)
+  ↓
+Sprint 97 (page-split heterogêneo) -- fecha _classificar/
 ```
 
-Detalhe de retomada + sanidade de entrada: `docs/HANDOFF_2026-04-24.md`.
+**Rota B (P1, qualquer ordem):**
+```
+Sprint 98 (renomeação retroativa holerites)
+Sprint 99 (redactor PII em logs)
+Sprint 100 (deep-link tab)
+Sprint 101 (--full-cycle)
+```
+
+**Rota C (P2, espaços livres):**
+```
+Sprint 93h (limpeza clones André)
+Sprint 102 (pagador vs beneficiário)
+Sprint Fa (OFX duplicação)
+Sprint 93d (preservação forte downloads)
+Sprint 93e (coluna arquivo_origem)
+```
+
+**Rota OMEGA (estratégica, 12-18 meses):** Sprint 94a-f (saúde, identidade, profissional, acadêmico, busca cross, mobile).
+
+---
+
+## Rotas anteriores (histórico)
+
+**Rota C anterior (higiene residual):** 50b, 82, 85 -- todas concluídas em 2026-04-23/24.
+
+**Rota B anterior (ambiciosa):** 86.1, 86.12 (humano, ainda pendente -- sem urgência), Sprint 21 (CONCLUÍDA 2026-04-23 como B1).
+
+Detalhe de retomada + sanidade de entrada: `docs/AUDITORIA_2026-04-26.md` (mais recente).
 
 ---
 
@@ -441,9 +465,33 @@ Todas têm spec completa com acceptance criteria, touches, forbidden e proof-of-
 - **93c** -- rotulagem Nubank PJ perdida no pipeline (`sprint_93c_*.md`, ~2h).
 - **F** -- testes dedicados para 8 extratores bancários sem cobertura (`sprint_F_*.md`, ~3h).
 
+### Fase NU -- Auditoria 2026-04-26 (P0 pós-rota-longa) IMEDIATA
+
+Sessão 2026-04-26 mapeou 5 achados P0 inéditos não capturados nas auditorias 2026-04-23/24. Rota agressiva, paralelizável.
+
+| Sprint | Tema | Status | Prio | Estimativa |
+|--------|------|--------|------|------------|
+| 95 | Linking runtime: 0% docs vinculados (motor Sprint 48 plumbing-OK runtime-quebrado) | BACKLOG | P0 | 4-6h |
+| 96 | Classifier robusto para NF imagem-only com OCR curto | BACKLOG | P0 | 2-3h |
+| 97 | Page-split por classificação heterogênea (PDFs com NFC-e + cupom seguro juntos) | BACKLOG | P0 | 3-4h |
+| 90a | Inbox detecta holerite antes de aceitar pasta bancária | BACKLOG | P0 | 1-2h |
+| 90b | DAS PARCSN drift -47% (10 nodes vs 19 PDFs únicos) | BACKLOG | P0 | 2-3h |
+| D2 | Revisor visual semi-automatizado (substitui AUDITORIA-ARTESANAL-FINAL) | BACKLOG | P0 | 6-8h |
+| 98 | Renomeação retroativa de holerites brutos | BACKLOG | P1 | 1-2h |
+| 99 | Redactor de PII em logs INFO | BACKLOG | P1 | 1h |
+| 100 | Deep-link `?tab=X` funcional dentro de cluster | BACKLOG | P1 | 2h |
+| 101 | `./run.sh --full-cycle` (auto-cadeia inbox -> tudo) | BACKLOG | P1 | 1h |
+| 93h | Limpeza simétrica clones SHA pastas do André | BACKLOG | P2 | 30min |
+| 102 | Pagador vs beneficiário (cenário IRPF cross-casal) | BACKLOG | P2 | 3-4h |
+| ADR-21 | Fusão Ouroboros + vault (formaliza Modelo B Sprint 94) | CRIADO 2026-04-26 | -- | -- |
+
+**Ordem sugerida:** 95 + 96 (paralelo P0) -> D2 -> 90a + 90b -> 97 -> 98-101 (paralelo P1) -> 102 + 93h.
+
 ### Fase OMEGA -- Fusão total (Sprint 94) ESTRATÉGICA 12-18 MESES
 
-ADR-21 (a formalizar) -- Ouroboros vira Central de Controle de Vida. 6 sub-sprints: 94a saúde, 94b documentos identidade, 94c profissional, 94d acadêmico, 94e busca global cross-domínio, 94f Obsidian mobile.
+ADR-21 (criado em 2026-04-26 -- `docs/adr/ADR-21-fusao-ouroboros-controle-bordo.md`) -- Ouroboros vira Central de Controle de Vida. 6 sub-sprints: 94a saúde, 94b documentos identidade, 94c profissional, 94d acadêmico, 94e busca global cross-domínio, 94f Obsidian mobile.
+
+**Pré-requisitos da OMEGA:** Fase NU concluída (P0 + Sprint D2 fechando o circuito do controle de bordo financeiro). Sem isso, expandir para outros domínios é prematuro.
 
 ---
 
