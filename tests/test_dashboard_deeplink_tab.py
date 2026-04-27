@@ -57,14 +57,15 @@ class TestUmaTabNaoDefaultPorCluster:
         assert "const indiceAlvo = 2;" in html
         assert '"Pagamentos": 2' in html
 
-    def test_cluster_documentos_tab_busca_global_indice_3(self) -> None:
-        """Acceptance #1 da spec: ?cluster=Documentos&tab=Busca+Global ativa
-        a aba Busca Global, que é índice 3 no cluster Documentos."""
+    def test_cluster_documentos_tab_revisor_indice_3(self) -> None:
+        """Sprint UX-110: cluster Documentos foi reordenado e Busca Global virou
+        índice 0 (default). Para testar uma tab não-default, escolhemos Revisor
+        que ficou no índice 3 da nova ordem."""
         abas = app.ABAS_POR_CLUSTER["Documentos"]
-        html = drilldown.gerar_html_ativar_aba("Busca Global", abas)
+        html = drilldown.gerar_html_ativar_aba("Revisor", abas)
         assert "const indiceAlvo = 3;" in html
-        assert '"Busca Global": 3' in html
-        # Default seria Catalogação (índice 0) -- garante que não é ela.
+        assert '"Revisor": 3' in html
+        # Default agora é Busca Global (índice 0) -- garante que não é ela.
         assert "const indiceAlvo = 0;" not in html
 
     def test_cluster_analise_tab_irpf_indice_2(self) -> None:
@@ -96,9 +97,12 @@ class TestUmaTabNaoDefaultPorCluster:
 
 class TestEstruturaDoJavaScriptGerado:
     def test_html_contem_write_back_via_replacestate(self) -> None:
-        """Acceptance #3: trocar tab manualmente atualiza ?tab=X (browser back)."""
+        """Acceptance #3: trocar tab manualmente atualiza ?tab=X (browser back).
+
+        Sprint UX-110: usa Revisor (não-default) em vez de Busca Global (default).
+        """
         abas = app.ABAS_POR_CLUSTER["Documentos"]
-        html = drilldown.gerar_html_ativar_aba("Busca Global", abas)
+        html = drilldown.gerar_html_ativar_aba("Revisor", abas)
         assert "history.replaceState" in html
         assert "searchParams.set('tab'" in html
 
@@ -182,7 +186,10 @@ class TestIntegracaoComLerFiltrosDaUrl:
     """Garante que o pipeline completo URL -> session_state -> JS funciona."""
 
     def test_url_completa_documentos_busca_global(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        """Acceptance #1: ?cluster=Documentos&tab=Busca+Global popula tudo."""
+        """Acceptance #1: ?cluster=Documentos&tab=Busca+Global popula tudo.
+
+        Sprint UX-110: Busca Global virou índice 0 (primeira aba do cluster).
+        """
         import sys
 
         fake = _FakeStCluster({"cluster": "Documentos", "tab": "Busca Global"})
@@ -195,7 +202,7 @@ class TestIntegracaoComLerFiltrosDaUrl:
         cluster = fake.session_state[drilldown.CHAVE_SESSION_CLUSTER_ATIVO]
         aba = fake.session_state[drilldown.CHAVE_SESSION_ABA_ATIVA]
         html = drilldown.gerar_html_ativar_aba(aba, app.ABAS_POR_CLUSTER[cluster])
-        assert "const indiceAlvo = 3;" in html  # Busca Global é índice 3
+        assert "const indiceAlvo = 0;" in html  # Busca Global é índice 0 (Sprint UX-110)
 
     def test_url_so_com_tab_infere_cluster_e_gera_js(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Acceptance #2: ?tab=Categorias sem cluster infere Análise."""
