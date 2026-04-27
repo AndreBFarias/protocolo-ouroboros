@@ -484,14 +484,24 @@ def renderizar(
 
     st.markdown("---")
 
-    # Filtro lateral por tipo de pendência (usa namespace revisor_*).
+    # Sprint UX-117: filtros 'Tipo de pendência' e 'Página' renderizam no
+    # topo da página Revisor (st.columns([2,1])), NÃO mais na sidebar global.
+    # Antes poluíam Hoje/Dinheiro/Análise/Metas que não usam esses filtros.
+    # Mês / Pessoa / Forma de pagamento permanecem na sidebar global como
+    # filtros transversais. Session_state keys preservadas (revisor_filtro_tipo,
+    # revisor_pagina) para retrocompatibilidade.
     tipos_disponiveis = sorted({p["tipo"] for p in pendencias})
-    tipo_filtro = st.sidebar.multiselect(
-        "Tipo de pendência",
-        tipos_disponiveis,
-        default=tipos_disponiveis,
-        key="revisor_filtro_tipo",
-    )
+
+    # total_paginas depende do filtro de tipo. Calcula primeiro o filtro,
+    # depois total_paginas, depois renderiza number_input com max_value real.
+    col_tipo, col_pagina = st.columns([2, 1])
+    with col_tipo:
+        tipo_filtro = st.multiselect(
+            "Tipo de pendência",
+            tipos_disponiveis,
+            default=tipos_disponiveis,
+            key="revisor_filtro_tipo",
+        )
     pendencias_filtradas = [p for p in pendencias if p["tipo"] in tipo_filtro]
 
     if not pendencias_filtradas:
@@ -506,14 +516,15 @@ def renderizar(
 
     # Paginação 10 por página (volume real esgotaria browser).
     total_paginas = max(1, (len(pendencias_filtradas) + ITENS_POR_PAGINA - 1) // ITENS_POR_PAGINA)
-    pagina_atual = st.sidebar.number_input(
-        "Página",
-        min_value=1,
-        max_value=total_paginas,
-        value=1,
-        step=1,
-        key="revisor_pagina",
-    )
+    with col_pagina:
+        pagina_atual = st.number_input(
+            "Página",
+            min_value=1,
+            max_value=total_paginas,
+            value=1,
+            step=1,
+            key="revisor_pagina",
+        )
     inicio = (pagina_atual - 1) * ITENS_POR_PAGINA
     fim = inicio + ITENS_POR_PAGINA
     pagina = pendencias_filtradas[inicio:fim]
