@@ -52,7 +52,7 @@ sprint:
 
 # Sprint UX-122 -- Remover prefixos numericos
 
-**Status:** BACKLOG (P1, criada 2026-04-27)
+**Status:** CONCLUÍDA (commit `c1f9842`, 2026-04-27 — 10 páginas atualizadas)
 
 Numeros nos titulos ('01', '13', etc.) sao arbitrarios e poluem visualmente. Sprint remove em todas as 12+ paginas e atualiza helper `hero_titulo_html` para aceitar `numero=''` como default.
 
