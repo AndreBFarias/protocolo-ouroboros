@@ -1,0 +1,33 @@
+=== Sprint 98 --executar resultado (2026-04-27) ===
+
+ANTES:
+  itau_cc:           29 PDFs
+  santander_cartao:  102 PDFs
+  holerites:         30 PDFs (17 document(N).pdf + 13 holerite_NNN, 0 canônicos)
+  originais (preserv): 28 + 27
+
+DEPOIS:
+  itau_cc:           8 PDFs   (-21, removidos 3 únicos x 7 clones G4F)
+  santander_cartao:  32 PDFs  (-70, removidos 10 únicos x 7 clones G4F)
+  holerites:         24 PDFs  (todos canônicos HOLERITE_<fonte>_<mes>_<sha>.pdf)
+  originais (preserv): 28 + 27 (intactos, ADR-18)
+
+DELTA:
+  -97 PDFs físicos removidos (clones bit-a-bit redundantes).
+  +24 nomes canônicos no destino correto.
+  121 / 121 ações aplicadas (zero falhas).
+
+GRAFO (intacto, idempotência por chave canônica):
+  holerite          24
+  das_parcsn_andre  19
+  nfce_modelo_65     4
+  boleto_servico     2
+  dirpf_retif        1
+  TOTAL             50
+
+VALIDACOES:
+  make smoke: 8/8 contratos OK
+  make lint:  verde
+  pytest:     1620 passed, 9 skipped, 1 xfailed (zero regressao)
+
+LOG: scripts/migracao_holerites_2026-04-27.log (123 linhas, sem PII)
