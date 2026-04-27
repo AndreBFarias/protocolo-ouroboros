@@ -36,6 +36,7 @@ from src.dashboard.paginas import (  # noqa: E402
     metas,
     pagamentos,
     projecoes,
+    revisor,
     visao_geral,
 )
 from src.dashboard.tema import (  # noqa: E402
@@ -283,13 +284,24 @@ def main() -> None:
         (
             tab_catalogacao,
             tab_completude,
+            tab_revisor,
             tab_busca,
             tab_grafo_obsidian,
-        ) = st.tabs(["Catalogação", "Completude", "Busca Global", "Grafo + Obsidian"])
+        ) = st.tabs(
+            [
+                "Catalogação",
+                "Completude",
+                "Revisor",
+                "Busca Global",
+                "Grafo + Obsidian",
+            ]
+        )
         with tab_catalogacao:
             catalogacao.renderizar(dados, periodo, pessoa, ctx)
         with tab_completude:
             completude.renderizar(dados, periodo, pessoa, ctx)
+        with tab_revisor:
+            revisor.renderizar(dados, periodo, pessoa, ctx)
         with tab_busca:
             busca.renderizar(dados, periodo, pessoa, ctx)
         with tab_grafo_obsidian:
