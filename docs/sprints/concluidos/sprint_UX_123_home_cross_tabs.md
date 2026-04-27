@@ -54,8 +54,8 @@ sprint:
 
 **Status:** CONCLUÍDA (commit `70f24fa`, 2026-04-27 — 5 páginas novas, 18 testes, validação Playwright OK em runtime real)
 
-Cluster Home hoje so tem 1 aba ('Visao Geral'). Dono espera que Home seja o painel-resumo do dia, com tabs que dao um vislumbre rapido das demais 4 areas filtradas por hoje. Sprint cria 4 paginas novas (home_dinheiro/docs/analise/metas) reusando funcoes pequenas das paginas-irmas.
+Cluster Home hoje so tem 1 aba ('Visao Geral'). Dono espera que Home seja o painel-resumo do dia, com tabs que dao um vislumbre rapido das demais 4 areas filtradas por hoje. Sprint cria 4 paginas novas (home_dinheiro/docs/analise/metas) reusando funções pequenas das paginas-irmas.
 
 ---
 
-*"Home e o resumo do dia, nao apenas a primeira parada." -- principio da entrada cognitiva rica*
+*"Home e o resumo do dia, não apenas a primeira parada." -- principio da entrada cognitiva rica*

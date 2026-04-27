@@ -95,10 +95,10 @@ sprint:
 
 11 micro-ajustes de polish identificados pelo dono apos validar UX-115/116/117/118 mergeadas. Agrupados em 1 sprint para evitar overhead de merge -- todos tocam apenas `tema.py` e `app.py`.
 
-Achado mais relevante: cor inconsistente entre sidebar (`#44475A`) e body (`#444659` introduzido como literal pela UX-115). UX-119 unifica via `var(--color-card-fundo)` -- visualmente sidebar e body sao identicos.
+Achado mais relevante: cor inconsistente entre sidebar (`#44475A`) e body (`#444659` introduzido como literal pela UX-115). UX-119 unifica via `var(--color-card-fundo)` -- visualmente sidebar e body são idênticos.
 
-Padronizacao de chips/cards/botoes globalmente: nenhum botao pode quebrar palavra; se nao couber, joga linha inteira pra baixo.
+Padronizacao de chips/cards/botoes globalmente: nenhum botao pode quebrar palavra; se não couber, joga linha inteira pra baixo.
 
 ---
 
-*"Polish nao e detalhe -- e respeito ao olho do usuario." -- principio do detalhamento honesto*
+*"Polish não e detalhe -- e respeito ao olho do usuario." -- principio do detalhamento honesto*

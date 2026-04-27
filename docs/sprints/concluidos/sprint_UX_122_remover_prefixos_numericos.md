@@ -54,7 +54,7 @@ sprint:
 
 **Status:** CONCLUÍDA (commit `c1f9842`, 2026-04-27 — 10 páginas atualizadas)
 
-Numeros nos titulos ('01', '13', etc.) sao arbitrarios e poluem visualmente. Sprint remove em todas as 12+ paginas e atualiza helper `hero_titulo_html` para aceitar `numero=''` como default.
+Números nos titulos ('01', '13', etc.) são arbitrarios e poluem visualmente. Sprint remove em todas as 12+ paginas e atualiza helper `hero_titulo_html` para aceitar `numero=''` como default.
 
 ---
 

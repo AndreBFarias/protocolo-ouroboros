@@ -57,9 +57,17 @@ def test_css_global_menciona_floor_13px() -> None:
 def test_css_global_declara_padding_bloco() -> None:
     css = tema.css_global()
     assert ".main .block-container" in css
-    # Tem que declarar padding numérico, não apenas padding-top.
-    match = re.search(r"\.main\s+\.block-container\s*\{[^}]*padding:\s*(\d+)px", css)
-    assert match is not None, "regra de padding para .main .block-container ausente"
+    # UX-116/119 separou shorthand `padding:` em padding-top/right/
+    # bottom/left. Regex relaxada aceita qualquer das 4 propriedades
+    # (ou o shorthand) e valida pelo menos 1 declaração com valor px.
+    match = re.search(
+        r"\.main\s+\.block-container\s*\{[^}]*padding(?:-top|-right|-bottom|-left)?:\s*(\d+)px",
+        css,
+    )
+    assert match is not None, (
+        "regra de padding para .main .block-container ausente "
+        "(esperava padding/padding-top/right/bottom/left: Npx)"
+    )
     valor_px = int(match.group(1))
     assert valor_px >= tema.PADDING_PAGINA_MIN_PX
 
