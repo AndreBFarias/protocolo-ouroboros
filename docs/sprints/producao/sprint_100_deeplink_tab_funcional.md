@@ -40,11 +40,24 @@ sprint:
 
 # Sprint 100 -- Deep-link tab funcional
 
-**Status:** BACKLOG (P1, criada 2026-04-26)
+**Status:** REABERTA (P1, executada parcialmente em commit `c4397ea` mergeada em `24dd487`; fica em produção até UX-110/111/112/113/114 fecharem)
 
 Streamlit `st.tabs(...)` não expoe API para ativar tab por nome. Sprint usa truque: `st.session_state['_active_tab_<cluster>']` lido do query_params na inicializacao + `st.tabs(...)` retorna lista; injeta JavaScript via `st.components.v1.html()` que clica na tab correspondente apos render.
 
 Padrao ja documentado em `docs/ARMADILHAS.md #11`. Esta sprint formaliza solução reusavel.
+
+## Decisão 2026-04-27 -- Sprint REABERTA
+
+Implementação técnica do deep-link tab está **funcional** (validação visual confirmou tab Busca Global ativa via `?cluster=Documentos&tab=Busca+Global`). Mas o dono testou em browser real e identificou ressalvas substantivas no componente Busca Global e no design system que precisam ser tratadas antes de declarar "deep-link funcional" no espírito da spec.
+
+**Pré-requisitos para fechar Sprint 100:**
+- Sprint UX-110 (Busca Global como primeira aba do cluster Documentos)
+- Sprint UX-111 (token cor `#6272A4` → `#c9c9cc`)
+- Sprint UX-112 (padding/margin/borda foco-ativo globais)
+- Sprint UX-113 (sidebar refactor: campo Buscar primeiro + Área dropdown)
+- Sprint UX-114 (Busca Global refactor: autocomplete + dropdown tipos + filtros + roteador tab/doc)
+
+Quando essas 5 UX-* fecharem, Sprint 100 vira CONCLUÍDA num mesmo commit-bookkeeping.
 
 ---
 
