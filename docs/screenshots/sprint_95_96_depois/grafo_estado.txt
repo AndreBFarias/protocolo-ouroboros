@@ -1,0 +1,36 @@
+                               
+-------------------------------
+=== EDGES POR TIPO (DEPOIS) ===
+tipo               n   
+-----------------  ----
+ocorre_em          6129
+categoria_de       6127
+origem             6086
+contraparte        6084
+irpf               164 
+contem_item        49  
+fornecido_por      41  
+documento_de       23  
+mesmo_produto_que  14  
+assegura           2   
+emitida_por        2   
+vendida_em         2   
+                                   
+-----------------------------------
+=== DOCUMENTO_DE COUNT (DEPOIS) ===
+edges_documento_de
+------------------
+23                
+                                       
+---------------------------------------
+=== DOCUMENTO_DE POR TIPO_DOCUMENTO ===
+tipo              linkados
+----------------  --------
+holerite          20      
+das_parcsn_andre  3       
+                    
+--------------------
+=== % VINCULADOS ===
+docs_linkados  total_docs  pct 
+-------------  ----------  ----
+23             41          56.1
