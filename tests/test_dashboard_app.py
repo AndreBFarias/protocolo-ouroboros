@@ -25,9 +25,9 @@ from src.dashboard.componentes import drilldown
 
 class TestContratosCanonicos:
     def test_clusters_validos_sao_cinco(self) -> None:
-        """Acceptance A92b-1: 5 clusters Hoje/Dinheiro/Documentos/Análise/Metas."""
+        """Acceptance A92b-1 + Sprint UX-121: 5 clusters Home/Dinheiro/Documentos/Análise/Metas."""
         assert drilldown.CLUSTERS_VALIDOS == (
-            "Hoje",
+            "Home",
             "Dinheiro",
             "Documentos",
             "Análise",
@@ -103,11 +103,12 @@ class TestBackwardCompatibilityUrlAntiga:
         assert fake.session_state[drilldown.CHAVE_SESSION_CLUSTER_ATIVO] == "Dinheiro"
         assert fake.session_state[drilldown.CHAVE_SESSION_ABA_ATIVA] == "Extrato"
 
-    def test_tab_visao_geral_infere_cluster_hoje(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_tab_visao_geral_infere_cluster_home(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Sprint UX-121: cluster da Visão Geral renomeado de 'Hoje' para 'Home'."""
         fake = _FakeStCluster({"tab": "Visão Geral"})
         monkeypatch.setitem(sys.modules, "streamlit", fake)
         drilldown.ler_filtros_da_url()
-        assert fake.session_state[drilldown.CHAVE_SESSION_CLUSTER_ATIVO] == "Hoje"
+        assert fake.session_state[drilldown.CHAVE_SESSION_CLUSTER_ATIVO] == "Home"
 
     def test_tab_irpf_infere_cluster_analise(self, monkeypatch: pytest.MonkeyPatch) -> None:
         fake = _FakeStCluster({"tab": "IRPF"})

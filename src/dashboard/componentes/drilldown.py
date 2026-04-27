@@ -51,7 +51,7 @@ CHAVE_SESSION_ABA_ATIVA: str = "aba_ativa_requerida"
 # leitor inferindo o cluster implícito. URL nova ?cluster=Dinheiro&tab=Extrato
 # explicita o cluster e pula a inferência.
 MAPA_ABA_PARA_CLUSTER: dict[str, str] = {
-    "Visão Geral": "Hoje",
+    "Visão Geral": "Home",
     "Extrato": "Dinheiro",
     "Contas": "Dinheiro",
     "Pagamentos": "Dinheiro",
@@ -69,7 +69,16 @@ MAPA_ABA_PARA_CLUSTER: dict[str, str] = {
 
 # Clusters válidos (ordem canônica do radio). Usado por testes e por validação
 # defensiva em app.py (rejeita cluster fora do conjunto ao ler da URL).
-CLUSTERS_VALIDOS: tuple[str, ...] = ("Hoje", "Dinheiro", "Documentos", "Análise", "Metas")
+#
+# Sprint UX-121: cluster "Hoje" renomeado para "Home" (termo padrão web/apps;
+# "Hoje" sugeria período temporal, criando ambiguidade no ponto de entrada).
+CLUSTERS_VALIDOS: tuple[str, ...] = ("Home", "Dinheiro", "Documentos", "Análise", "Metas")
+
+# Sprint UX-121: aliases backward-compat para query_params. Permite que URLs
+# antigas no formato ?cluster=Hoje continuem resolvendo para o novo nome
+# canônico "Home" sem quebrar bookmarks ou links externos. Aplicado em
+# `ler_filtros_da_url` antes da validação contra CLUSTERS_VALIDOS.
+CLUSTER_ALIASES: dict[str, str] = {"Hoje": "Home"}
 
 # Chave canônica em session_state para o cluster ativo. Namespace próprio,
 # não colide com filtro_* (drill-down), avancado_* (filtros manuais Extrato)
@@ -165,7 +174,11 @@ def ler_filtros_da_url() -> None:
     1. `?cluster=<X>` na URL (explícito) e X em CLUSTERS_VALIDOS -> usa X.
     2. `?tab=<Y>` na URL e Y em MAPA_ABA_PARA_CLUSTER -> infere cluster.
     3. Nenhum dos dois -> session_state[cluster_ativo] fica intocado (default
-       é definido pelo radio em app.py, tipicamente "Hoje").
+       é definido pelo radio em app.py, tipicamente "Home").
+
+    Sprint UX-121: aplica `CLUSTER_ALIASES` antes da validação contra
+    CLUSTERS_VALIDOS. URLs antigas (?cluster=Hoje) resolvem para "Home"
+    transparentemente, preservando bookmarks e links externos.
     """
     try:
         import streamlit as st
@@ -195,6 +208,9 @@ def ler_filtros_da_url() -> None:
         if isinstance(valor_cluster, list):
             valor_cluster = valor_cluster[0] if valor_cluster else ""
         cluster_explicito = str(valor_cluster)
+
+    # Sprint UX-121: resolve aliases backward-compat antes de validar.
+    cluster_explicito = CLUSTER_ALIASES.get(cluster_explicito, cluster_explicito)
 
     if cluster_explicito and cluster_explicito in CLUSTERS_VALIDOS:
         st.session_state[CHAVE_SESSION_CLUSTER_ATIVO] = cluster_explicito

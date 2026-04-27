@@ -180,15 +180,15 @@ class TestAreaComoSelectbox:
         monkeypatch.setattr(app_mod, "st", fake)
 
         cluster = app_mod._selecionar_cluster()
-        assert cluster in {"Hoje", "Dinheiro", "Documentos", "Análise", "Metas"}
+        assert cluster in {"Home", "Dinheiro", "Documentos", "Análise", "Metas"}
         labels_selectbox = [c["label"] for c in fake.selectbox_calls]
         labels_radio = [c["label"] for c in fake.radio_calls]
         assert "Área" in labels_selectbox, "Área deveria ser selectbox após Sprint UX-113"
         assert "Área" not in labels_radio, "Área não deve ser radio mais"
 
     def test_selectbox_area_tem_5_opcoes_canonicas(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        """AC #2: opções do dropdown Área = ('Hoje', 'Dinheiro', 'Documentos',
-        'Análise', 'Metas')."""
+        """AC #2 + Sprint UX-121: opções do dropdown Área = ('Home', 'Dinheiro',
+        'Documentos', 'Análise', 'Metas') -- 'Hoje' renomeado para 'Home'."""
         from src.dashboard import app as app_mod
 
         fake = _FakeStSidebar()
@@ -197,7 +197,7 @@ class TestAreaComoSelectbox:
         app_mod._selecionar_cluster()
         chamada_area = next(c for c in fake.selectbox_calls if c["label"] == "Área")
         assert chamada_area["options"] == [
-            "Hoje",
+            "Home",
             "Dinheiro",
             "Documentos",
             "Análise",
