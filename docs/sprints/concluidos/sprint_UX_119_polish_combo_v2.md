@@ -91,7 +91,7 @@ sprint:
 
 # Sprint UX-119 -- Polish combo v2 (11 ACs)
 
-**Status:** EM PRODUÇÃO (P1, criada 2026-04-27 segunda parte)
+**Status:** CONCLUÍDA (commit `a69769a`, 2026-04-27 — 9/11 ACs sólidos + 2/11 parciais (AC10/AC11 cobertas funcionalmente via AC13 global; sub-sprint UX-119a sugerida para refactor st.html). Aguarda validação visual humana.)
 
 11 micro-ajustes de polish identificados pelo dono apos validar UX-115/116/117/118 mergeadas. Agrupados em 1 sprint para evitar overhead de merge -- todos tocam apenas `tema.py` e `app.py`.
 
