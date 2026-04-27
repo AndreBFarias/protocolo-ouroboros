@@ -52,18 +52,36 @@ _RE_CNPJ = re.compile(r"(\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2})")
 _RE_RAZAO_SOCIAL = re.compile(
     r"\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}\s+([A-ZÁÉÍÓÚÂÊÔÃÕÇ][A-ZÁÉÍÓÚÂÊÔÃÕÇ ]+[A-ZÁÉÍÓÚÂÊÔÃÕÇ])",
 )
+# Período aceita acentuação portuguesa (Março, São, etc.). DAS PARCSN também
+# emite período "Diversos" quando a parcela cobre múltiplos meses; nesse caso
+# a regex de mês não casa e o campo periodo_apuracao fica ausente -- isso é
+# intencional (Sprint 90b), o documento ainda é válido para o grafo.
 _RE_PERIODO = re.compile(
-    r"([A-Za-z]+)/(\d{4})\s+\d{2}/\d{2}/\d{4}",
+    r"([A-Za-zÀ-ÿ]+)/(\d{4})\s+\d{2}/\d{2}/\d{4}",
 )
+_RE_PERIODO_DIVERSOS = re.compile(r"\bDiversos\b", re.IGNORECASE)
 _RE_VENCIMENTO = re.compile(
-    r"[A-Za-z]+/\d{4}\s+(\d{2}/\d{2}/\d{4})",
+    r"[A-Za-zÀ-ÿ]+/\d{4}\s+(\d{2}/\d{2}/\d{4})",
+)
+# Variante "Diversos": linha do header tem só "Diversos NUMERO_DOC" e a data
+# de vencimento original cai na linha seguinte isolada.
+_RE_VENCIMENTO_DIVERSOS = re.compile(
+    r"Diversos\s+\d{2}\.\d{2}\.\d{5}\.\d{7}-\d\s*\n\s*(\d{2}/\d{2}/\d{4})",
+    re.IGNORECASE,
 )
 # Estrutura do DAS PARCSN: header de 4 colunas (Período, Data Venc., Num Doc,
 # Pagar até) seguido de valores em 2 linhas -- os 3 primeiros ficam na linha de
 # valores (Período + Vencimento original + Número), a data "Pagar até" cai na
-# linha seguinte isolada. A regex pula a primeira data (vencimento original)
-# e captura a segunda (data-limite de pagamento).
+# linha seguinte isolada. Em variante "Diversos" só o número e a data caem
+# em linhas separadas, sem data de vencimento original na linha do header.
+# Fonte primária do vencimento: rodapé do voucher PIX que repete "Pagar até:
+# DD/MM/YYYY" de forma estável em ambos os layouts. _RE_PAGAR_ATE_HEADER é
+# fallback para arquivos que eventualmente percam o rodapé.
 _RE_PAGAR_ATE = re.compile(
+    r"Pagar\s+at[ée]:\s*(\d{2}/\d{2}/\d{4})",
+    re.IGNORECASE,
+)
+_RE_PAGAR_ATE_HEADER = re.compile(
     r"Pagar\s+este\s+documento\s+at[ée]\b.*?\d{2}/\d{2}/\d{4}.*?(\d{2}/\d{2}/\d{4})",
     re.IGNORECASE | re.DOTALL,
 )
@@ -114,21 +132,36 @@ def _montar_documento(texto: str, caminho: Path) -> dict[str, Any]:
     razao_match = _RE_RAZAO_SOCIAL.search(texto)
     numero_match = _RE_NUMERO_DOC.search(texto)
     periodo = _parse_periodo(texto)
+    eh_diversos = bool(_RE_PERIODO_DIVERSOS.search(texto))
     valor = _parse_valor(texto)
-    pagar_match = _RE_PAGAR_ATE.search(texto)
+    pagar_match = _RE_PAGAR_ATE.search(texto) or _RE_PAGAR_ATE_HEADER.search(texto)
     venc_match = _RE_VENCIMENTO.search(texto)
+    venc_diversos_match = _RE_VENCIMENTO_DIVERSOS.search(texto)
     parcela_match = _RE_PARCELA.search(texto)
 
-    if not cnpj_match or not numero_match or valor is None or not periodo:
+    # Sprint 90b: campos canônicos para identificar o documento são
+    # cnpj/numero/valor. periodo_apuracao é opcional -- quando o DAS cobre
+    # parcela "Diversos" (múltiplos meses), o campo fica ausente sem
+    # invalidar a ingestão.
+    if not cnpj_match or not numero_match or valor is None:
         return {}
 
     cnpj = cnpj_match.group(1)
     numero = numero_match.group(1)
     razao = (razao_match.group(1).strip() if razao_match else "CONTRIBUINTE DESCONHECIDO")
-    vencimento = _parse_data_iso(pagar_match.group(1) if pagar_match else None) or _parse_data_iso(
-        venc_match.group(1) if venc_match else None
-    )
-    data_emissao = _parse_data_iso(venc_match.group(1)) if venc_match else None
+
+    # Vencimento (data-limite de pagamento). Fallback: vencimento original
+    # da linha do header (formato "Mês/YYYY DD/MM/YYYY" ou variante "Diversos").
+    venc_original_br: str | None = None
+    if venc_match:
+        venc_original_br = venc_match.group(1)
+    elif venc_diversos_match:
+        venc_original_br = venc_diversos_match.group(1)
+
+    vencimento = _parse_data_iso(
+        pagar_match.group(1) if pagar_match else None
+    ) or _parse_data_iso(venc_original_br)
+    data_emissao = _parse_data_iso(venc_original_br)
 
     # tipo_documento discriminado por CNPJ canônico do André (auditoria 2026-04-23).
     tipo_doc = "das_parcsn_andre" if cnpj.startswith("45.850.636") else "das_parcsn"
@@ -147,6 +180,9 @@ def _montar_documento(texto: str, caminho: Path) -> dict[str, Any]:
         documento["vencimento"] = vencimento
     if periodo:
         documento["periodo_apuracao"] = periodo
+    elif eh_diversos:
+        # Sinaliza explicitamente que o período cobre múltiplos meses.
+        documento["periodo_apuracao"] = "diversos"
     if parcela_match:
         documento["parcela_atual"] = int(parcela_match.group(1))
         documento["parcela_total"] = int(parcela_match.group(2))
