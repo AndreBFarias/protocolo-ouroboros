@@ -38,7 +38,7 @@ from typing import Literal
 import yaml
 
 from src.intake.glyph_tolerant import extrair_cpf
-from src.utils.logger import configurar_logger
+from src.utils.logger import configurar_logger, hash_curto_pii
 
 logger = configurar_logger("intake.pessoa")
 
@@ -225,7 +225,9 @@ def _casar_via_pessoas_yaml(texto: str) -> tuple[Pessoa | None, str]:
             continue
         for razao in ids.get("razao_social", []) or []:
             if str(razao).upper() in texto_upper:
-                return pessoa, f"razão social '{razao}'"  # type: ignore[return-value]
+                # Sprint 99: razão social NUNCA aparece literal no log/retorno.
+                # Substring "razão social" é preservada para compat de testes.
+                return pessoa, f"razão social hash={hash_curto_pii(str(razao))}"  # type: ignore[return-value]
 
     # 3. Alias curto
     for pessoa, ids in pessoas.items():
@@ -233,7 +235,8 @@ def _casar_via_pessoas_yaml(texto: str) -> tuple[Pessoa | None, str]:
             continue
         for alias in ids.get("aliases", []) or []:
             if str(alias).upper() in texto_upper:
-                return pessoa, f"alias '{alias}'"  # type: ignore[return-value]
+                # Sprint 99: alias pode ser apelido pessoal -- mascara também.
+                return pessoa, f"alias hash={hash_curto_pii(str(alias))}"  # type: ignore[return-value]
 
     return None, ""
 
