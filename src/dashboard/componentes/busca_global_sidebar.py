@@ -152,7 +152,12 @@ def renderizar_input_busca() -> str:
         value=st.session_state.get(CHAVE_SESSION_BUSCA, ""),
         placeholder="Buscar (documento, fornecedor, aba...)",
         key="input_busca_global_sidebar",
-        label_visibility="visible",
+        # Sprint UX-119 AC1: label "Buscar" e placeholder "Buscar (...)"
+        # criavam texto duplicado. Colapsando o label preservamos a
+        # propriedade de acessibilidade (Streamlit gera aria-label a partir
+        # de `label`) mas removemos o ruido visual; o placeholder vira o
+        # único rótulo visível ao usuário.
+        label_visibility="collapsed",
     )
 
     if query and query != st.session_state.get(CHAVE_SESSION_BUSCA, ""):

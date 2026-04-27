@@ -444,6 +444,39 @@ class TestImportSmokeApp:
         )
 
 
+class TestSprintUX119SidebarAgrupada:
+    """Sprint UX-119 AC4: separadores intermediarios removidos de _sidebar().
+
+    Antes de UX-119, _sidebar() emitia 4 chamadas de st.markdown("---"):
+        1. após logo+caption (preserva: marca fronteira cabeçalho/filtros)
+        2. após renderizar_input_busca (REMOVER: separa Buscar de Área)
+        3. após _selecionar_cluster (REMOVER: separa Área de Granularidade)
+        4. após forma_pagamento (preserva: marca fronteira filtros/cards)
+
+    UX-119 remove os 2 separadores intermediários (entre os 6 filtros). O
+    bloco de filtros vira um agrupamento visual contínuo. Os 2 separadores
+    de fronteira (cabeçalho/cards) permanecem.
+    """
+
+    def test_ac4_apenas_dois_separadores_intermediarios_removidos(self) -> None:
+        # Lê o código-fonte direto: o número total de st.markdown("---")
+        # em app.py deve ser 2 (cabeçalho/filtros + filtros/cards), não 4.
+        from pathlib import Path
+
+        path = Path(__file__).resolve().parents[1] / "src/dashboard/app.py"
+        fonte = path.read_text(encoding="utf-8")
+        # Conta apenas chamadas reais (não matches em comentários).
+        ocorrencias = [
+            linha
+            for linha in fonte.splitlines()
+            if 'st.markdown("---")' in linha and not linha.lstrip().startswith("#")
+        ]
+        assert len(ocorrencias) == 2, (
+            f"Esperado 2 separadores em app.py (cabecalho + cards); "
+            f"encontrei {len(ocorrencias)}: {ocorrencias}"
+        )
+
+
 # "Quem busca primeiro, navega depois." -- princípio do mental model honesto
 # (Don Norman, The Design of Everyday Things, capítulo 4 sobre constraints
 # cognitivos de navegação hierárquica).

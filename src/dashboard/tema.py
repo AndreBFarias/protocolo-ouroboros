@@ -355,18 +355,18 @@ def css_global() -> str:
         padding-left: {PADDING_INTERNO}px !important;
     }}
     .block-container {{ padding-top: {SPACING["xl"]}px; }}
-    /* Sprint UX-115 (gambiarra até UX-114 reescrever a página Busca Global):
-       o container externo do conteúdo principal ([data-testid="stMain"])
-       fica em #282A36 (color-fundo) por default, criando faixa vertical
-       à esquerda e faixa inferior em volta do bloco interno (.main
-       .block-container) que tem fundo card_fundo (#44475A) implícito.
-       Pintamos stMain com #444659 -- tom próximo de card_fundo, mas
-       deliberadamente literal (sem token novo) para sinalizar que é fix
-       cirúrgico e será removido quando UX-114 reorganizar a página.
+    /* Sprint UX-115 + Sprint UX-119 AC14 (unificação de cor): o container
+       externo do conteúdo principal ([data-testid="stMain"]) ficava em
+       cor de fundo Dracula (color-fundo) por default, criando faixa
+       vertical à esquerda e faixa inferior em volta do bloco interno.
+       UX-115 pintou com literal próximo (gambiarra); UX-119 troca por
+       var(--color-card-fundo) -- token CORES['card_fundo']. Resultado:
+       stMain e sidebar ficam exatamente no mesmo tom, eliminando a
+       diferença de 1 ponto no canal verde que o dono detectou.
        Sobrescreve apenas este seletor; não afeta fundo da app inteira
-       (html/body/.stApp continuam regidos por --color-fundo). */
+       (html/body continuam regidos por --color-fundo). */
     [data-testid="stMain"] {{
-        background-color: #444659;
+        background-color: var(--color-card-fundo);
     }}
     /* Sprint UX-118: faixas escuras residuais (#282A36 padrão Dracula) que
        apareciam no contorno do app são cobertas trocando o fundo do
@@ -375,6 +375,83 @@ def css_global() -> str:
        intocados; apenas o seletor stApp passa a usar o tom card. */
     [data-testid="stApp"] {{
         background-color: var(--color-card-fundo) !important;
+    }}
+    /* Sprint UX-119 AC2: status widget e toast da Streamlit (top warning bar
+       que mostra avisos como `--no-sandbox`, deprecation warnings, etc.)
+       herdam fundo escuro #282A36 e destoam da paleta unificada. Pintamos
+       com var(--color-card-fundo) para alinhar ao restante do app.
+       stStatusWidget cobre o status de execução (canto superior direito);
+       stToast cobre toasts efêmeros; stAlertContainer cobre alertas em
+       containers; stHeader cobre a top bar onde a deprecation aparece. */
+    [data-testid="stStatusWidget"],
+    [data-testid="stToast"],
+    [data-testid="stAlertContainer"],
+    [data-testid="stHeader"] {{
+        background-color: var(--color-card-fundo) !important;
+    }}
+    /* Sprint UX-119 AC3: selectboxes ganham altura mínima 44px e proteção
+       contra glyphs cortados (`Mâs`, `2A26-04`, `Todos` apareciam mutilados
+       pela altura justa). nowrap + overflow:hidden + text-overflow:ellipsis
+       no VALOR SELECIONADO impedem quebra de palavra; o dropdown aberto
+       usa overflow:visible herdado para não truncar opções. */
+    [data-testid="stSelectbox"] > div > div,
+    [data-testid="stSelectbox"] div[role="combobox"] {{
+        min-height: 44px;
+        white-space: nowrap;
+    }}
+    [data-testid="stSelectbox"] div[role="combobox"] > div {{
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }}
+    /* Sprint UX-119 AC6: separador vertical roxo 2px entre sidebar e body.
+       border-right adiciona linha visual sem mudar background (preservando
+       regra UX-116 que define background-color e padding). Usar
+       var(--color-destaque) (#BD93F9) garante coerência com a barra das
+       tabs (UX-118) e com o token global de destaque. */
+    [data-testid="stSidebar"] {{
+        border-right: 2px solid var(--color-destaque);
+    }}
+    /* Sprint UX-119 AC7: header das páginas ganha respiro adicional
+       (~48px) entre o título H1 e o conteúdo abaixo. Substitui o pedido
+       informal "/n /n /n" do dono por margin-bottom estável no h1 dentro
+       do main block container. Mantém PADDING_INTERNO (24px) original
+       como padding do container e adiciona margin-bottom no título. */
+    [data-testid="stMainBlockContainer"] h1 {{
+        margin-bottom: {SPACING["xl"]}px !important;
+    }}
+    /* Sprint UX-119 AC10/11: container de chips e sugestões da página
+       Busca Global (paginas/busca.py) usa flex-wrap + nowrap para garantir
+       que nenhuma palavra quebra ao meio. Quando não couber numa linha, o
+       botão inteiro vai para baixo. min-width 140px alinha visualmente os
+       8 chips de tipo (Holerite/NF/DAS/Boleto/IRPF/Recibo/Comprovante/
+       Contracheque) e as sugestões de autocomplete. As classes
+       .ouroboros-chips-container e .ouroboros-sugestoes-container são
+       adotadas em paginas/busca.py num passo posterior; por ora pintam
+       qualquer container que receba a class. */
+    .ouroboros-chips-container,
+    .ouroboros-sugestoes-container {{
+        display: flex;
+        flex-wrap: wrap;
+        gap: {SPACING["sm"]}px;
+    }}
+    .ouroboros-chips-container [data-testid="stButton"] > button,
+    .ouroboros-sugestoes-container [data-testid="stButton"] > button {{
+        flex: 0 0 auto;
+        min-width: 140px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }}
+    /* Sprint UX-119 AC13: padronização global de stButton. Cards
+       "DOCUMENTOS POR TIPO" da Catalogação e botões em geral ganham
+       altura/largura mínima e proteção contra quebra de palavra. Quando
+       o container não couber, o flex-wrap externo joga a linha inteira
+       para baixo (regra do AC10/11). Aplicamos no seletor universal de
+       stButton para cobrir todas as páginas de uma vez. */
+    [data-testid="stButton"] > button {{
+        min-height: 44px;
+        min-width: 140px;
+        white-space: nowrap;
     }}
     /* Sprint UX-118: logo da sidebar sai de 64x65 renderizado (apertado
        pela largura útil da sidebar) para ~120px com proporção da arte
