@@ -20,6 +20,14 @@ Casos canônicos:
   - extrato_itau_4_pgs (mesmo CNPJ + mesmo CPF em todas as 4 páginas)     -> homogêneo
   - holerite_1_pg                                                         -> homogêneo
   - PDF compilado onde mesmo bilhete aparece em pg1 e pg2 (duplicata)     -> homogêneo
+
+Sprint 97 (2026-04-26): segundo modo de detecção `e_heterogeneo_por_classificacao`
+opera APÓS o page-split, recebendo as páginas já classificadas pelo registry.
+Resolve casos onde identificadores únicos não aparecem (ex.: scan puro de
+4 páginas com NFC-e + cupom de seguro misturados, sem texto extraível por
+pdfplumber, mas após OCR cada página é classificável). O modo é complementar
+ao primeiro: orchestrator chama identificadores primeiro (rápido) e só
+recorre à classificação se o primeiro for inconclusivo.
 """
 
 from __future__ import annotations
@@ -103,6 +111,30 @@ def _coletar_identificadores(texto: str) -> set[str]:
     if cpf:
         ids.add(f"cpf:{cpf}")
     return ids
+
+
+def e_heterogeneo_por_classificacao(tipos_por_pagina: list[str | None]) -> bool:
+    """Sprint 97: heterogeneidade decidida pelas classificações já obtidas.
+
+    Recebe a lista de tipos canônicos (do `Decisao.tipo` retornado pelo
+    registry) na ordem das páginas do PDF expandido. Retorna True se ao
+    menos 2 tipos canônicos DISTINTOS aparecem (None é ignorado --
+    páginas inclassificáveis não bastam para forçar split).
+
+    Casos canônicos:
+      - [nfce, cupom_garantia, cupom_garantia, nfce]              -> True
+      - [nfce, nfce, nfce]                                        -> False (homogêneo)
+      - [nfce, None, None]                                        -> False (1 tipo só)
+      - [None, None, None, None]                                  -> False (nada classificou)
+      - [bancario_itau_cc, bancario_itau_cc, bancario_itau_cc]    -> False
+      - [nfce, boleto]                                            -> True
+
+    Crítica: este predicado SÓ deve ser invocado quando o page-split
+    já está feito E cada página passou pelo registry. Custo é O(N)
+    sobre tipos -- não envolve I/O nem reabertura de PDF.
+    """
+    distintos = {t for t in tipos_por_pagina if t}
+    return len(distintos) >= 2
 
 
 def _ha_distintos_em_paginas_distintas(ids_por_pagina: list[set[str]]) -> bool:

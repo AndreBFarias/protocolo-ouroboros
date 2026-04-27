@@ -40,7 +40,7 @@ from src.intake.extractors_envelope import (
     expandir_zip,
     extrair_anexos_eml,
 )
-from src.intake.heterogeneidade import e_heterogeneo
+from src.intake.heterogeneidade import e_heterogeneo, e_heterogeneo_por_classificacao
 from src.intake.pessoa_detector import detectar_pessoa
 from src.intake.preview import gerar_preview
 from src.intake.registry import detectar_tipo
@@ -187,6 +187,10 @@ def processar_arquivo_inbox(
     sha8 = sha8_arquivo(caminho_inbox)
 
     tipo_envelope = _decidir_tipo_envelope(mime)
+    # Sprint 97: lembramos se o split foi forçado (e_heterogeneo True) ou
+    # tentativo (PDF multipage sem identificadores únicos -- caller decide
+    # depois de classificar).
+    split_forcado = tipo_envelope == "pdf" and e_heterogeneo(caminho_inbox)
     resultado_envelope, paginas_meta = _expandir(caminho_inbox, tipo_envelope, sha8)
 
     # Sprint 41b: auto-detect de pessoa antes do loop de classificação.
@@ -217,6 +221,44 @@ def processar_arquivo_inbox(
         decisao = detectar_tipo(artefato, sub_mime, preview_texto, pessoa=pessoa_resolvida)
         pares.append((artefato, decisao))
 
+    # Sprint 97: reversão de split-tentativo. Se o split não foi forçado
+    # por identificadores únicos (Sprint 41d) e a classificação por página
+    # não detectou heterogeneidade (≤ 1 tipo canônico distinto entre as
+    # páginas), reverter para single envelope -- evita fragmentar extratos
+    # bancários scaneados que caem em pesquisa de identificadores vazia.
+    if tipo_envelope == "pdf" and not split_forcado and len(resultado_envelope.artefatos) >= 2:
+        tipos_paginas = [d.tipo for _, d in pares]
+        if not e_heterogeneo_por_classificacao(tipos_paginas):
+            logger.info(
+                "Sprint 97: reverter para single (split tentativo não confirmou "
+                "heterogeneidade) -- %s, tipos=%s",
+                caminho_inbox.name,
+                tipos_paginas,
+            )
+            from src.intake import extractors_envelope as env
+
+            # Limpa as páginas do split tentativo antes de criar o single envelope
+            _descartar_split_tentativo(resultado_envelope)
+            resultado_envelope = _envelope_single_file(caminho_inbox, sha8, env._ENVELOPES_BASE)
+            paginas_meta = ()
+            # Re-classifica o PDF inteiro como artefato único
+            pares = []
+            for indice, artefato in enumerate(resultado_envelope.artefatos):
+                sub_mime, preview_texto = _preview_para_artefato(
+                    artefato=artefato,
+                    indice_no_envelope=indice,
+                    tipo_envelope=tipo_envelope,
+                    paginas_meta=paginas_meta,
+                )
+                decisao = detectar_tipo(artefato, sub_mime, preview_texto, pessoa=pessoa_resolvida)
+                pares.append((artefato, decisao))
+        else:
+            logger.info(
+                "Sprint 97: heterogeneidade por classificação confirmada -- %s, tipos=%s",
+                caminho_inbox.name,
+                tipos_paginas,
+            )
+
     return rotear_lote(
         arquivo_inbox=caminho_inbox,
         sha8_envelope=resultado_envelope.sha8_envelope,
@@ -224,6 +266,30 @@ def processar_arquivo_inbox(
         pares_artefato_decisao=pares,
         erros_envelope=resultado_envelope.erros,
     )
+
+
+def _descartar_split_tentativo(resultado_envelope: ResultadoEnvelope) -> None:
+    """Remove páginas geradas por split tentativo quando vamos reverter para single.
+
+    Sprint 97: usado apenas quando classificação por página confirmou que
+    o PDF é homogêneo. Não levanta -- falha silenciosa, a auditoria fica
+    com o original em `_envelopes/originais/<sha8>.pdf`.
+    """
+    for pagina in resultado_envelope.artefatos:
+        try:
+            if pagina.exists():
+                pagina.unlink()
+        except OSError as exc:
+            logger.warning("falha ao descartar página tentativa %s: %s", pagina, exc)
+    try:
+        if resultado_envelope.diretorio_envelope.exists():
+            shutil.rmtree(resultado_envelope.diretorio_envelope)
+    except OSError as exc:
+        logger.warning(
+            "falha ao remover diretório de split tentativo %s: %s",
+            resultado_envelope.diretorio_envelope,
+            exc,
+        )
 
 
 # ============================================================================
@@ -234,16 +300,30 @@ def processar_arquivo_inbox(
 def _expandir(
     caminho_inbox: Path, tipo_envelope: TipoEnvelope, sha8: str
 ) -> tuple[ResultadoEnvelope, tuple[PaginaPdf, ...]]:
-    """Despacha para o envelope correto; devolve (resultado, paginas_meta)."""
+    """Despacha para o envelope correto; devolve (resultado, paginas_meta).
+
+    Sprint 97: a decisão final de page-split para PDFs pode acontecer em
+    DUAS etapas. A primeira (Sprint 41d) examina identificadores únicos
+    extraíveis de texto nativo. Quando ela retorna False, o orquestrador
+    NÃO decide aqui se vai dividir -- expande tentativamente e o caller
+    (`processar_arquivo_inbox`) reverte para single se a classificação
+    por página confirmar que o PDF é homogêneo.
+    """
     from src.intake import extractors_envelope as env
 
     if tipo_envelope == "pdf":
-        # Sprint 41d: page-split SÓ se >1 documento lógico distinto detectado.
-        # Sem isso, extratos bancários multipage fragmentam (cabeçalho só na pg1).
+        # Sprint 41d: page-split direto quando identificadores únicos divergem.
         if e_heterogeneo(caminho_inbox):
             resultado = expandir_pdf_multipage(caminho_inbox)
             return resultado, resultado.paginas
-        # PDF homogêneo: 1 artefato só, single envelope
+        # Sprint 97: PDF onde identificadores não bastam (scan puro, ou
+        # PDF compósito sem chave/bilhete legível por pdfplumber). O caller
+        # vai classificar página-a-página e decidir se mantém o split.
+        # Para PDFs claramente single-page, vai direto para single envelope.
+        if _e_pdf_multipage(caminho_inbox):
+            resultado = expandir_pdf_multipage(caminho_inbox)
+            return resultado, resultado.paginas
+        # PDF de 1 página: single envelope, comportamento original.
         return _envelope_single_file(caminho_inbox, sha8, env._ENVELOPES_BASE), ()
     if tipo_envelope == "zip":
         return expandir_zip(caminho_inbox), ()
@@ -252,6 +332,18 @@ def _expandir(
     # single (não-PDF)
     resultado = _envelope_single_file(caminho_inbox, sha8, env._ENVELOPES_BASE)
     return resultado, ()
+
+
+def _e_pdf_multipage(caminho: Path) -> bool:
+    """Devolve True se PDF tem >= 2 páginas. Falha silenciosa = False."""
+    try:
+        import pdfplumber
+
+        with pdfplumber.open(caminho) as pdf:
+            return len(pdf.pages) >= 2
+    except Exception as exc:  # noqa: BLE001 -- defensivo
+        logger.warning("_e_pdf_multipage(%s) falhou: %s", caminho, exc)
+        return False
 
 
 def _preview_para_artefato(
