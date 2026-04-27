@@ -49,7 +49,7 @@ sprint:
 
 # Sprint UX-121 -- Rename Hoje -> Home
 
-**Status:** BACKLOG (P1, criada 2026-04-27, dependencia da UX-123)
+**Status:** CONCLUÍDA (commit `4caff3d`, 2026-04-27 — alias backward-compat funcionando)
 
 "Hoje" como ponto de entrada e ambiguo (sugere periodo). "Home" e termo padrao em web/apps. Sprint troca string preservando query_params backward-compat por alias.
 
