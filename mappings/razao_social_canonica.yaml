@@ -1,0 +1,27 @@
+# Sprint AUDIT2-RAZAO-SOCIAL-HOLERITE -- mapping sigla -> razao social oficial.
+#
+# Extractors de holerite (e similares) extraem siglas curtas (G4F, INFOBASE)
+# do header do PDF. Para entity resolution e cruzamento com transacoes
+# bancarias (que carregam razao social completa em "PIX G4F SOLUCOES" etc.),
+# precisamos do nome oficial.
+#
+# Chave: sigla extraida pelo extractor (case-insensitive, normalizada para
+# UPPERCASE pelo consumidor antes do lookup).
+# Valor: razao_social_canonica + cnpj (opcional, para cruzar com Receita).
+#
+# Adicionar nova empresa: nome curto -> dict com razao_social e (se conhecido) cnpj.
+
+empresas:
+  G4F:
+    razao_social_canonica: "G4F SOLUCOES CORPORATIVAS LTDA"
+    cnpj: "06146852000118"  # CNPJ oficial G4F (publico)
+    aliases:
+      - "G4F SOLUCOES"
+      - "G4F LTDA"
+
+  INFOBASE:
+    razao_social_canonica: "INFOBASE CONSULTORIA E INFORMATICA LTDA"
+    cnpj: ""  # CNPJ oficial nao disponivel em PDF OCR (preencher quando confirmado)
+    aliases:
+      - "INFOBASE CONSULTORIA"
+      - "INFOBASE TECNOLOGIA"
