@@ -36,7 +36,39 @@ sprint:
 
 # Sprint 90a-1 -- Endurecer file_detector._detectar_pdf
 
-**Status:** BACKLOG (P3, criada 2026-04-26 como sprint-filha da Sprint 90a)
+**Status:** CONCLUÍDA (2026-04-27, baseline pytest 1.886 -> 1.892 +6 testes 90a-1)
+
+## Resultado
+
+`src/utils/file_detector.py:510-552`: regras de detecção Itaú e Santander agora exigem `>= 2 ancoras` (de uma tupla de 5-6 marcadores). Antes bastava 1 substring (`ITAÚ UNIBANCO` ou `SANTANDER`).
+
+### Itaú -- 5 âncoras
+- `ITAÚ UNIBANCO` em texto upper.
+- `agência: 6450` (literal) ou `AGÊNCIA: 6450`.
+- `SALDO ANTERIOR`.
+- `EXTRATO DE CONTA` ou `EXTRATO MENSAL`.
+- `ITAU.COM.BR` ou `ITAU.COM`.
+
+### Santander -- 6 âncoras
+- `SANTANDER`.
+- `4220 XXXX XXXX 7342` (cartão canônico).
+- `FATURA` ou `EXTRATO`.
+- `CARTÃO DE CRÉDITO` (com ou sem til).
+- `VENCIMENTO` + `PAGAMENTO MÍNIMO` (combinados).
+- `BANCO SANTANDER`.
+
+## Testes regressivos (`tests/test_file_detector.py` -- novo, 6 testes)
+
+- Extrato Itaú real (4 âncoras): casa.
+- Holerite G4F com "Conta credito: ITAU UNIBANCO agencia: 6450" (1 âncora real, sem `ITAÚ` com til): NÃO casa.
+- Recibo TED Itaú (1 âncora): NÃO casa.
+- Fatura Santander real (4 âncoras): casa.
+- Holerite G4F com "Conta credito: SANTANDER" (1 âncora): NÃO casa.
+- PDF arbitrário com só "SANTANDER" no texto: NÃO casa.
+
+Defesa em profundidade da Sprint 90a (`registry.py::_tem_assinatura_holerite`) mantida -- agora redundante mas inofensiva. Os 8 testes da Sprint 90a continuam verdes.
+
+Suite full: 1.886 -> **1.892 passed** (+6 da 90a-1). Lint exit 0. Smoke 8/8 + 23/23.
 **Origem:** Achado colateral. Sprint 90a fixou o sintoma (holerite cai em pasta bancária) com defesa em profundidade no `registry.py`, mas a causa raiz está em `src/utils/file_detector.py::_detectar_pdf` (linhas 510-532) que aceita qualquer PDF com substring `"ITAÚ UNIBANCO"` ou `"SANTANDER"` no texto bruto -- incluindo holerites que mencionam o banco no rodapé.
 
 ## Motivação
