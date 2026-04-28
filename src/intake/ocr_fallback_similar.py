@@ -337,13 +337,33 @@ def reanalisar_pasta_conferir(
     arquivos = [p for p in pasta.rglob("*") if p.is_file()]
     stats["arquivos"] = len(arquivos)
 
+    # Sprint 106 (P0-02 fix): mapeamento real por nome/extensão.
+    # Cada padrão lê em ordem de especificidade: prefixos mais específicos primeiro.
+    _MAPA_TIPO_POR_NOME = (
+        ("recibo_", "recibo_nao_fiscal"),
+        ("das_parcsn_", "das_parcsn_andre"),
+        ("das_", "das_parcsn_andre"),
+        ("holerite", "holerite"),
+        ("nfce_", "nfce_modelo_65"),
+        ("danfe_", "danfe_nfe"),
+        ("garantia_", "cupom_garantia_estendida"),
+        ("boleto_", "boleto_servico"),
+        ("cupom_", "cupom_fiscal_foto"),
+    )
+
     for arq in arquivos:
-        # Inferência simplificada de tipo via nome (cupom -> cupom_fiscal_foto)
         nome_lower = arq.name.lower()
-        if nome_lower.startswith("cupom_") or "cupom" in nome_lower:
-            tipo_inferido = "cupom_fiscal_foto"
-        else:
-            tipo_inferido = "cupom_fiscal_foto"  # default razoável
+        tipo_inferido: str | None = None
+        for prefixo, tipo_canon in _MAPA_TIPO_POR_NOME:
+            if prefixo in nome_lower:
+                tipo_inferido = tipo_canon
+                break
+        if tipo_inferido is None:
+            # Fallback: imagens (jpeg/png) sem prefixo conhecido viram cupom-foto.
+            if arq.suffix.lower() in (".jpg", ".jpeg", ".png", ".webp"):
+                tipo_inferido = "cupom_fiscal_foto"
+            else:
+                tipo_inferido = "recibo_nao_fiscal"  # PDF generico
 
         # OCR rápido para detectar legibilidade
         from scripts.migrar_pessoa_via_cpf import _extrair_preview as _ocr
@@ -369,7 +389,9 @@ def reanalisar_pasta_conferir(
         )
 
         if not dry_run:
-            # Move para pasta canônica do similar (se conhecida)
+            # Move para pasta canônica do similar (se conhecida) e atualiza grafo.
+            # (P0-03 fix Sprint 108): atualizar arquivo_origem no node correspondente
+            # para que backfill futuro não detecte como path quebrado.
             cand_origem = match["candidato_meta"].get("arquivo_origem")
             if cand_origem and Path(cand_origem).parent.exists():
                 destino_pasta = Path(cand_origem).parent
@@ -381,6 +403,24 @@ def reanalisar_pasta_conferir(
 
                 shutil.move(str(arq), str(destino))
                 stats["movidos"] += 1
+
+                # Atualiza node correspondente do match no grafo.
+                cur_upd = grafo._conn.execute(  # noqa: SLF001
+                    "SELECT id, tipo, nome_canonico, metadata, aliases FROM node WHERE id=?",
+                    (match["candidato_id"],),
+                )
+                row = cur_upd.fetchone()
+                if row is not None:
+                    meta_upd = json.loads(row[3] or "{}")
+                    meta_upd["fallback_origem"] = match["item_id_similar"]
+                    meta_upd["confidence_fallback"] = match["score"]
+                    meta_upd["arquivo_origem_aplicado"] = str(destino.resolve())
+                    grafo.upsert_node(
+                        tipo="documento",
+                        nome_canonico=row[2],
+                        metadata=meta_upd,
+                        aliases=json.loads(row[4] or "[]"),
+                    )
 
     return stats
 
@@ -440,4 +480,4 @@ if __name__ == "__main__":
     sys.exit(main())
 
 
-# "Quando a foto falha, peca o template ao gemeo." -- principio do fallback inteligente
+# "Quando a foto falha, peça o template ao gêmeo." -- princípio do fallback inteligente

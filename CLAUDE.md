@@ -1,21 +1,21 @@
 # CLAUDE.md -- Protocolo Ouroboros
 
 ```
-VERSÃO: 5.8 | STATUS: PRODUÇÃO + FASE NU + CLUSTER UX v1/v2/v3 + INFRA-CONSOLIDA-V2 (17 sprints UX em 1 dia) | LANG: PT-BR
+VERSÃO: 5.9 | STATUS: PRODUÇÃO + AUTOMAÇÕES OPUS (Sprint 103 fase Opus + 7 automações) | LANG: PT-BR
 TRANSAÇÕES: 6.094 | MESES: 82 (out/2019 a out/2026) | BANCOS: 6 | EXTRATORES: 22 (9 bancários + 13 documentais)
-GRAFO: 7.494+ nodes + 24.732+ edges. 50 documentos catalogados, 25 vinculados a tx (50%, era 0% antes da Sprint 95).
-SPRINTS: 156 (113 concluídas, 28 backlog, 15 arquivadas; rodada NU + cluster UX 2026-04-26/27: 6 P0 + 2 P1 + 1 sub-sprint diagnóstica + 17 sprints UX + 1 INFRA-CONSOLIDA-V2)
-CATEGORIZAÇÃO: 100% | IRPF TAGS: 164 (75 com CNPJ) | HOLERITES: 24 nodes + 24 PDFs canônicos no destino correto (após Sprint 98 --executar removeu 97 fósseis bit-a-bit)
-DAS PARCSN: 19 nodes (drift -47% → 0% após Sprint 90b)
-TESTES: 1.839 passed / 9 skipped / 1 xfailed (+309 desde início da sessão NU, zero regressão)
+GRAFO: 7.485 nodes + 24.732+ edges. 45 documentos catalogados pós-reextração 2026-04-28 (19 DAS PARCSN apontando para fornecedor RECEITA_FEDERAL CNPJ 00.394.460/0001-41 via Sprint 107).
+SPRINTS: 174 (144 concluídas, 16 backlog, 14 arquivadas; rodada NU + cluster UX 2026-04-26/27 + automações Opus 2026-04-28)
+CATEGORIZAÇÃO: 100% | IRPF TAGS: 164 (75 com CNPJ) | HOLERITES: 24 nodes + 24 PDFs canônicos
+DAS PARCSN: 19 nodes apontando para fornecedor RECEITA_FEDERAL (Sprint 107 + reextração 2026-04-28)
+TESTES: 1.971 passed / 9 skipped / 1 xfailed (+441 desde início da sessão NU, zero regressão)
 ABA RENDA: 99 linhas (24 holerites + 75 MEI legítimos via mappings/fontes_renda.yaml)
 RESERVA EMERGÊNCIA: 100% atingida (R$ 44.019,78 / R$ 27.000,00) -- meta cumprida
-DASHBOARD: cluster Home (renomeado de Hoje) com 5 tabs cross-area, cluster Finanças (renomeado de Dinheiro), Busca Global primeira aba do cluster Documentos com autocomplete + roteador + tabela inline + chips humanizados (37 tipos)
+DASHBOARD: cluster Home (renomeado de Hoje) com 5 tabs cross-area, cluster Finanças (renomeado de Dinheiro), Revisor com 3-colunas ETL/Opus/Humano + export ground-truth CSV (Sprint 103)
 ROTA: Catalogador universal artesanal via supervisor interativo (ADR-13)
 SUPERVISOR: Claude Code sessão interativa — nenhuma API programática
 INTEGRAÇÕES: OFX (pronto), Controle de Bordo vault (sync rico em produção), Belvo (em teste), Gmail (setup pendente)
-ROTA ATUAL: Cluster UX v3 fechado. UX-127 + INFRA-RENAME-HOLERITES em execução background. Próximas P1: Sprint 100 (fechar quando UX-127 mergear), Sprint 103 (revisor ground-truth), Sprint 104 (reextração lote). Pré-OMEGA: sessão humana de validação via Revisor (760 arquivos, ~6.5h).
-RETOMADA: docs/HANDOFF_2026-04-27_cluster_UX.md (canônica) + contexto/ESTADO_ATUAL.md (snapshot pós-cluster v3).
+ROTA ATUAL: Automações Opus integradas em --full-cycle e --reextrair-tudo (Sprint 108). Auditoria externa em andamento (2026-04-28).
+RETOMADA: docs/HANDOFF_2026-04-28_automacoes_opus.md + contexto/ESTADO_ATUAL.md (snapshot pós-automações).
 ```
 
 ### Próxima sessão — retomada canônica

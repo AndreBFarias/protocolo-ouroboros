@@ -599,9 +599,6 @@ print(f'Salvo em: {saida}')
     --supervisor)
         bash scripts/supervisor_contexto.sh
         ;;
-    --menu)
-        executar_menu
-        ;;
     --help|-h)
         exibir_help
         exit 0

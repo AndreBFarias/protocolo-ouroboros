@@ -101,15 +101,23 @@ def _resolver_das_parcsn(meta: dict[str, Any], raiz_raw: Path) -> Path | None:
 
 
 def _resolver_generico(meta: dict[str, Any], raiz_raw: Path) -> Path | None:
-    """Fallback: procura por nome similar contendo data_emissao + sha truncado."""
+    """Fallback: procura por nome exato em raiz_raw.
+
+    P1-04 fix Sprint 108: usa rglob com nome literal (sem prefixo glob `*`)
+    para evitar match em pastas erradas (ex: arquivo da Vitória casando
+    sufixo de outro arquivo do Andre). glob.escape protege caracteres
+    especiais no nome.
+    """
+    import glob as _glob
+
     arquivo_origem_antigo = meta.get("arquivo_origem")
     if not arquivo_origem_antigo:
         return None
     nome_antigo = Path(arquivo_origem_antigo).name
-    # Tenta procurar por sufixo sha8 do nome antigo (se houver) ou nome completo.
     if not nome_antigo:
         return None
-    for arq in raiz_raw.rglob(f"*{nome_antigo}"):
+    # rglob por nome exato (escapado) para evitar substring match cross-pasta.
+    for arq in raiz_raw.rglob(_glob.escape(nome_antigo)):
         if arq.is_file():
             return arq
     return None

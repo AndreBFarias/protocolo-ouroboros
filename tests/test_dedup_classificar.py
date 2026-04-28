@@ -108,12 +108,16 @@ def test_dedup_idempotente(tmp_path: Path):
 
 def test_dedup_pasta_vazia(tmp_path: Path):
     rel = deduplicar_classificar(tmp_path, dry_run=False)
-    assert rel == {"removidos": 0, "preservados": 0, "grupos": []}
+    assert rel["removidos"] == 0
+    assert rel["preservados"] == 0
+    assert rel["grupos"] == []
 
 
 def test_dedup_pasta_inexistente(tmp_path: Path):
     rel = deduplicar_classificar(tmp_path / "nao_existe", dry_run=False)
-    assert rel == {"removidos": 0, "preservados": 0, "grupos": []}
+    assert rel["removidos"] == 0
+    assert rel["preservados"] == 0
+    assert rel["grupos"] == []
 
 
 def test_dedup_grupos_no_relatorio(tmp_path: Path):

@@ -37,7 +37,7 @@ Consolida dados bancários de múltiplas fontes (CSVs, XLSX, XLS, PDFs protegido
 
 | Transações | Meses | Bancos | Regras | Overrides | Tags IRPF |
 |:----------:|:-----:|:------:|:------:|:---------:|:---------:|
-| 2.859 | 44 | 6 | 111 | 10 | 79 |
+| 6.094 | 82 | 6 | 111 | 10 | 164 |
 
 ---
 
@@ -73,7 +73,7 @@ flowchart LR
 
 | Categoria | Funcionalidade |
 |-----------|---------------|
-| Extração | 21 extratores: 9 bancários (Nubank cartão/CC, C6 CC/cartão, Itaú, Santander, OFX Nubank PF/PJ, energia OCR) + 12 documentais (NFCe, DANFE, XML NFe, boleto, cupom térmico foto, cupom garantia estendida, receita médica, garantia fabricante, recibo não-fiscal, DAS PARCSN, DIRPF, contracheque) |
+| Extração | 22 extratores: 9 bancários (Nubank cartão/CC, C6 CC/cartão, Itaú, Santander, OFX Nubank PF/PJ, energia OCR) + 13 documentais (NFCe, DANFE, XML NFe, boleto, cupom térmico foto, cupom garantia estendida, receita médica, garantia fabricante, recibo não-fiscal, DAS PARCSN, DIRPF, contracheque, garantia fabricante) |
 | Detecção | Identifica banco, tipo, pessoa (CPF+CNPJ+razão social+alias) e período pelo conteúdo do arquivo |
 | Categorização | 111 regras regex + 10 overrides manuais + categorias_item.yaml + categorizer.delete-before-insert idempotente (100% de cobertura) |
 | Deduplicação | 3 níveis: UUID, hash cross-source, pares de transferência + canonicalizer variantes curtas (Sprint 82) + dedupe de roteamento por SHA-256 (Sprint P2.3) |
@@ -81,7 +81,7 @@ flowchart LR
 | Dashboard | 13 páginas interativas com tema Dracula (Visão Geral, Categorias, Extrato, Contas, Pagamentos, Projeções, Metas, Análise, IRPF, Catalogação, Busca Global, Grafo + Obsidian, Completude) |
 | Relatórios | Mensais em Markdown com diagnóstico comparativo (variação vs mês-1 e média móvel) + resumo narrativo heurístico PT-BR + alertas de anomalia |
 | Grafo de conhecimento | SQLite 7.480 nodes / 24.700 edges. 41 documentos catalogados: 24 holerites + 10 DAS + 4 NFCe + 2 boletos + 1 DIRPF |
-| Validação | Gauntlet `make lint` + pytest (1.261 passed) + `make smoke` (23 checagens + 8 contratos aritméticos) + `scripts/auditar_extratores.py` |
+| Validação | Gauntlet `make lint` + pytest (1.971 passed) + `make smoke` (23 checagens + 8 contratos aritméticos) + `scripts/auditar_extratores.py` |
 | Obsidian | Sincronização bidirecional com vault `Controle de Bordo` (forbidden zones ADR-18; soberania humana via tag + frontmatter) |
 | OCR | Leitura de contas de energia via Tesseract (valores R$ 100% precisos) |
 
@@ -135,7 +135,7 @@ protocolo-ouroboros/
 ├── src/
 │   ├── pipeline.py               # Orquestrador principal (11 passos)
 │   ├── inbox_processor.py        # Detecção, renomeação e organização
-│   ├── extractors/               # 21 extratores (9 bancários + 12 documentais)
+│   ├── extractors/               # 22 extratores (9 bancários + 13 documentais)
 │   ├── transform/                # Categorização, deduplicação, IRPF
 │   ├── load/                     # XLSX writer + relatórios MD
 │   ├── projections/              # Cenários financeiros

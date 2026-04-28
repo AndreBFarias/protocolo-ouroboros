@@ -187,6 +187,7 @@ def migrar_pessoa_via_cpf(
         destino.parent.mkdir(parents=True, exist_ok=True)
         if destino.exists():
             logger.warning("destino ja existe, pulando: %s", destino)
+            stats["preservados"] += 1  # P1-01 fix: invariante total = migrados + preservados
             continue
         try:
             shutil.move(str(arquivo), str(destino))

@@ -1,6 +1,19 @@
 # ADR-14: Schema Extensível do Grafo SQLite (extensão do ADR-12)
 
-## Status: Aceita
+## Status: Aceita (atualizada 2026-04-28 com Sprint 107: fornecedor sintético)
+
+## Update 2026-04-28 (Sprint 107) -- Fornecedor sintético para entidades fiscais
+
+`mappings/fornecedores_sinteticos.yaml` declara entidades fiscais canônicas
+(RECEITA_FEDERAL com CNPJ 00.394.460/0001-41, INSS, etc.). Documentos cujo
+`tipo_documento` casa com `aplica_a_tipos` (ex: das_parcsn_andre, dirpf_retif)
+são ingeridos com `cnpj_emitente` e `razao_social` substituídos pelo sintético.
+
+O contribuinte original é preservado em `metadata.contribuinte` para auditoria.
+Padrão preserva semântica: o **fornecedor** semântico de imposto é a Receita
+Federal (recebedor do PIX), não o contribuinte (pagador).
+
+Implementação em `src/graph/ingestor_documento.py::_resolver_fornecedor_sintetico`.
 
 ## Contexto
 
