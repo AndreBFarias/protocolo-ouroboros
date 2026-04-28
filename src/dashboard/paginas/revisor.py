@@ -556,11 +556,26 @@ def _renderizar_painel_item(pendencia: dict, marcacoes_item: list[dict]) -> dict
     for idx, dimensao in enumerate(DIMENSOES_CANONICAS):
         with cols[idx]:
             st.markdown(f"**{dimensao}**")
-            # Sprint 103: mostra valor que o ETL extraiu para esta dimensão.
-            # Linha enxuta acima do radio. Se vazio, sinaliza " --- " para
-            # destacar visualmente que pipeline NÃO sabe.
+            # Sprint 103: 3 colunas (ETL/Opus/Humano) por dimensao.
             valor_etl = extrair_valor_etl_para_dimensao(pendencia, dimensao)
-            st.caption(f"ETL: {valor_etl or '---'}")
+            valor_opus = (
+                estados_existentes.get(dimensao, {}).get("valor_opus") or ""
+            )
+            # ETL: o que o pipeline extraiu (sempre exibido).
+            st.caption(f"**ETL:** {valor_etl or '---'}")
+            # Opus: o que o supervisor Opus marcou (vem do DB; pode estar vazio).
+            if valor_opus:
+                divergente = (
+                    valor_etl
+                    and valor_opus
+                    and valor_etl.strip().lower() != valor_opus.strip().lower()
+                )
+                marcador = " :red[(diverge)]" if divergente else ""
+                # Trunca longo para não explodir o card.
+                opus_render = valor_opus if len(valor_opus) <= 60 else valor_opus[:57] + "..."
+                st.caption(f"**Opus:** {opus_render}{marcador}")
+            else:
+                st.caption("**Opus:** _(sem proposta)_")
             valor_existente = estados_existentes.get(dimensao, {}).get("ok")
             obs_existente = estados_existentes.get(dimensao, {}).get("observacao") or ""
             indice_default = 2  # Não-aplicável
@@ -628,6 +643,40 @@ def renderizar(
     col_b.metric("Revisadas", revisados)
     col_c.metric("Aguardando", aguardando)
     col_d.metric("Fidelidade", f"{taxa * 100:.0f}%")
+
+    # Sprint 103: resumo de divergências ETL vs Opus em tabela.
+    com_opus = [m for m in marcacoes if m.get("valor_opus")]
+    if com_opus:
+        divergentes = [
+            m
+            for m in com_opus
+            if (m.get("valor_etl") or "").strip().lower()
+            != (m.get("valor_opus") or "").strip().lower()
+            and m.get("valor_etl")
+        ]
+        st.markdown(
+            subtitulo_secao_html(
+                f"Comparação ETL × Opus ({len(divergentes)} divergentes "
+                f"de {len(com_opus)} marcações com proposta Opus)"
+            ),
+            unsafe_allow_html=True,
+        )
+        if divergentes:
+            tabela_diff = [
+                {
+                    "item": d["item_id"][:50] + ("…" if len(d["item_id"]) > 50 else ""),
+                    "dimensão": d["dimensao"],
+                    "ETL": (d.get("valor_etl") or "")[:40],
+                    "Opus": (d.get("valor_opus") or "")[:40],
+                }
+                for d in divergentes[:30]
+            ]
+            st.dataframe(tabela_diff, use_container_width=True, hide_index=True)
+            if len(divergentes) > 30:
+                st.caption(
+                    f"... e mais {len(divergentes) - 30} divergências. Use export CSV "
+                    "para ver todas."
+                )
 
     if total == 0:
         st.markdown(
