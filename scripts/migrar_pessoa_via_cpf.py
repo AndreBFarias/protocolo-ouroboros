@@ -43,58 +43,7 @@ logger = configurar_logger("scripts.migrar_pessoa_via_cpf")
 _RAIZ_RAW_PADRAO: Path = _RAIZ / "data" / "raw"
 
 
-def _extrair_preview(arquivo: Path, max_chars: int = 4000) -> str:
-    """Extrai texto via pdfplumber/tesseract para alimentar pessoa_detector."""
-    sufixo = arquivo.suffix.lower()
-
-    if sufixo == ".pdf":
-        try:
-            import pdfplumber
-
-            with pdfplumber.open(arquivo) as pdf:
-                pedacos: list[str] = []
-                for pagina in pdf.pages[:3]:
-                    t = pagina.extract_text() or ""
-                    if t.strip():
-                        pedacos.append(t)
-                texto = "\n".join(pedacos)
-                if len(texto) > 50:
-                    return texto[:max_chars]
-        except Exception as exc:  # noqa: BLE001
-            logger.debug("pdfplumber falhou em %s: %s", arquivo.name, exc)
-
-        # Fallback OCR
-        try:
-            import pypdfium2 as pdfium
-            import pytesseract
-
-            pdf = pdfium.PdfDocument(str(arquivo))
-            pedacos = []
-            for i in range(min(2, len(pdf))):
-                pil = pdf[i].render(scale=2).to_pil()
-                t = pytesseract.image_to_string(pil, lang="por") or ""
-                if t.strip():
-                    pedacos.append(t)
-            return "\n".join(pedacos)[:max_chars]
-        except Exception as exc:  # noqa: BLE001
-            logger.debug("OCR falhou em %s: %s", arquivo.name, exc)
-            return ""
-
-    if sufixo in (".jpg", ".jpeg", ".png", ".webp"):
-        try:
-            import pytesseract
-            from PIL import Image
-
-            img = Image.open(arquivo)
-            return pytesseract.image_to_string(img, lang="por")[:max_chars]
-        except Exception as exc:  # noqa: BLE001
-            logger.debug("OCR imagem falhou em %s: %s", arquivo.name, exc)
-            return ""
-
-    try:
-        return arquivo.read_text(encoding="utf-8", errors="replace")[:max_chars]
-    except Exception:  # noqa: BLE001
-        return ""
+from src.intake.preview import extrair_preview_completo as _extrair_preview  # noqa: E402,F401
 
 
 def _calcular_destino(arquivo: Path, raiz_raw: Path, pessoa_nova: str) -> Path:

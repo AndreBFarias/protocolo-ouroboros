@@ -217,4 +217,64 @@ def _normalizar_dpi(imagem: Image.Image, dpi_alvo: int) -> Image.Image:
     return imagem.resize((largura_alvo_max, nova_altura), Image.LANCZOS)
 
 
+def extrair_preview_completo(arquivo: Path, max_chars: int = 4000) -> str:
+    """AUDIT-IMPORT-CAMADA: helper compartilhado para alimentar
+    pessoa_detector/ocr_fallback. Diferente de `gerar_preview` (que recebe
+    MIME e devolve None em falha), este aceita Path direto e devolve string
+    vazia em qualquer falha.
+
+    Estratégia em camadas para PDFs: pdfplumber primeiro (texto nativo),
+    fallback OCR via pypdfium2 + tesseract.
+
+    Para imagens (.jpg/.jpeg/.png/.webp): OCR direto.
+    Para outros: leitura crua truncada.
+
+    NUNCA levanta. Devolve string vazia em qualquer falha.
+    """
+    sufixo = arquivo.suffix.lower()
+
+    if sufixo == ".pdf":
+        try:
+            with pdfplumber.open(arquivo) as pdf:
+                pedacos: list[str] = []
+                for pagina in pdf.pages[:3]:
+                    t = pagina.extract_text() or ""
+                    if t.strip():
+                        pedacos.append(t)
+                texto = "\n".join(pedacos)
+                if len(texto) > 50:
+                    return texto[:max_chars]
+        except Exception as exc:  # noqa: BLE001
+            logger.debug("pdfplumber falhou em %s: %s", arquivo.name, exc)
+
+        # Fallback OCR
+        try:
+            import pypdfium2 as pdfium
+
+            pdf = pdfium.PdfDocument(str(arquivo))
+            pedacos = []
+            for i in range(min(2, len(pdf))):
+                pil = pdf[i].render(scale=2).to_pil()
+                t = pytesseract.image_to_string(pil, lang="por") or ""
+                if t.strip():
+                    pedacos.append(t)
+            return "\n".join(pedacos)[:max_chars]
+        except Exception as exc:  # noqa: BLE001
+            logger.debug("OCR falhou em %s: %s", arquivo.name, exc)
+            return ""
+
+    if sufixo in (".jpg", ".jpeg", ".png", ".webp"):
+        try:
+            img = Image.open(arquivo)
+            return pytesseract.image_to_string(img, lang="por")[:max_chars]
+        except Exception as exc:  # noqa: BLE001
+            logger.debug("OCR imagem falhou em %s: %s", arquivo.name, exc)
+            return ""
+
+    try:
+        return arquivo.read_text(encoding="utf-8", errors="replace")[:max_chars]
+    except Exception:  # noqa: BLE001
+        return ""
+
+
 # "O olhar lê o que o coração já decidiu enxergar." -- Montaigne
