@@ -4,6 +4,40 @@
 **Prioridade**: P1.
 **Estimado**: 1h.
 
+## CONCLUÍDA em 2026-04-29
+
+**Implementação**:
+- `scripts/normalizar_path_relativo.py` (NOVO): script idempotente que
+  detecta nodes documento com path absoluto em `metadata.arquivo_origem`
+  e re-aplica `to_relativo()` (modo `--dry-run` por default + `--executar`).
+- `tests/test_normalizar_path_relativo.py` (NOVO, 5 testes): cobre detecção,
+  atualização, idempotência, dry-run e invariante pós-execução.
+- `run.sh --reextrair-tudo`: encadeia `normalizar_path_relativo --executar`
+  como passo final da Sprint 108. Próximas reextrações normalizam paths
+  automaticamente.
+
+**Runtime real (antes vs depois)**:
+- Antes: 21 nodes DAS+boletos com path absoluto, 24 holerites com relativo.
+- Depois: 0 nodes com path absoluto. **Invariante**: 100% dos 45
+  documentos atuais usam path relativo (`data/raw/...`).
+
+Verificação:
+```sql
+SELECT COUNT(*) FROM node WHERE tipo='documento'
+  AND json_extract(metadata, '$.arquivo_origem') LIKE '/%';
+-- Resultado: 0
+```
+
+Os ingestores (em `src/graph/ingestor_documento.py` linhas 235, 483, 616, 825)
+ja chamam `to_relativo` desde a Sprint AUDIT-PATH-RELATIVO. O problema era
+que os nodes existentes haviam sido ingeridos antes daquela sprint, sem
+nunca passarem por re-ingestão. O script de normalização cobre justamente
+esse cenário.
+
+---
+
+## Spec original (preservada para histórico)
+
 ## Problema
 
 Sprint AUDIT-PATH-RELATIVO ligou `src/graph/path_canonico.py::to_relativo()`
