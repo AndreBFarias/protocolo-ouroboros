@@ -135,18 +135,21 @@ def _fornecedor_via_aresta(conn: sqlite3.Connection, doc_id: int) -> str:
 
 
 def _inferir_pessoa(metadata: dict[str, Any], item_id: str) -> str:
-    """Infere pessoa canonica (andre/vitoria/casal) a partir do contribuinte
-    ou do path. Mesma logica do extrair_valor_etl_para_dimensão mas fonte
-    diferente (contribuinte do sintetico vs banco_origem do extrato).
+    """Infere pessoa canonica (andre/vitoria/casal) a partir do metadata.
+
+    Sprint AUDIT2-METADATA-PESSOA-CANONICA: ingestor agora grava
+    `metadata.pessoa` direto. Quando presente e valida, usa direto.
+    Fallbacks preservados para nodes pre-AUDIT2 ou onde o backfill
+    ainda não rodou.
     """
+    pessoa_explicita = metadata.get("pessoa")
+    if pessoa_explicita in {"andre", "vitoria", "casal"}:
+        return str(pessoa_explicita)
     contribuinte = str(metadata.get("contribuinte", "") or "").upper()
     if "ANDRE" in contribuinte:
         return "andre"
     if "VITORIA" in contribuinte or "VITÓRIA" in contribuinte:
         return "vitoria"
-    pessoa_explicita = metadata.get("pessoa")
-    if pessoa_explicita:
-        return str(pessoa_explicita)
     item_id_lower = item_id.lower()
     if "/andre/" in item_id_lower:
         return "andre"

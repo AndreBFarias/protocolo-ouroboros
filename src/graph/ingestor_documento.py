@@ -46,6 +46,45 @@ JANELA_MATCH_ITEM_DIAS: int = 1
 THRESHOLD_DESCRICAO: int = 82
 MARGEM_DESEMPATE: int = 5
 
+
+# ============================================================================
+# Sprint AUDIT2-METADATA-PESSOA-CANONICA: inferir pessoa no metadata
+# ============================================================================
+
+
+def _inferir_pessoa_canonica(
+    documento: dict[str, Any],
+    caminho_arquivo: Path | None,
+) -> str:
+    """Infere a pessoa canonica (andre/vitoria/casal) para um documento.
+
+    Ordem (curto-circuito no primeiro hit):
+    1. `documento.contribuinte` ou `documento.__contribuinte_original`
+       contem ANDRE/VITORIA (case-insensitive).
+    2. `caminho_arquivo` esta em `data/raw/andre/` ou `data/raw/vitoria/`.
+    3. Fallback `casal` (ADR-conforme: nunca chuta sem evidencia).
+
+    Heuristica leve (sem invocar OCR ou pessoa_detector cheio) — o
+    documento ja foi parseado pelo extractor e tem campos relevantes.
+    """
+    contribuinte = (
+        str(documento.get("__contribuinte_original") or documento.get("contribuinte") or "")
+        .upper()
+    )
+    if "ANDRE" in contribuinte or "ANDRÉ" in contribuinte:
+        return "andre"
+    if "VITORIA" in contribuinte or "VITÓRIA" in contribuinte:
+        return "vitoria"
+    if caminho_arquivo is not None:
+        partes = {p.lower() for p in Path(caminho_arquivo).parts}
+        if "andre" in partes:
+            return "andre"
+        if "vitoria" in partes:
+            return "vitoria"
+        if "casal" in partes:
+            return "casal"
+    return "casal"
+
 # ============================================================================
 # Sprint 107: fornecedores sintéticos para impostos
 # ============================================================================
@@ -233,6 +272,7 @@ def ingerir_apolice(
     metadata["tipo_documento"] = "cupom_garantia_estendida"
     if caminho_arquivo is not None:
         metadata["arquivo_origem"] = to_relativo(caminho_arquivo)
+    metadata["pessoa"] = _inferir_pessoa_canonica(bilhete, caminho_arquivo)
 
     apolice_id = db.upsert_node("apolice", bilhete["numero_bilhete"], metadata=metadata)
 
@@ -485,6 +525,7 @@ def ingerir_documento_fiscal(
         # AUDIT-CONTRIBUINTE-METADATA: sempre grava (mesmo vazio) para sinalizar
         # que o sintético foi aplicado -- auditoria via SQL pode consultar.
         metadata["contribuinte"] = documento.get("__contribuinte_original", "")
+    metadata["pessoa"] = _inferir_pessoa_canonica(documento, caminho_arquivo)
 
     documento_id = db.upsert_node("documento", documento["chave_44"], metadata=metadata)
 
@@ -614,6 +655,7 @@ def ingerir_prescricao(
     metadata.setdefault("tipo_documento", "receita_medica")
     if caminho_arquivo is not None:
         metadata["arquivo_origem"] = to_relativo(caminho_arquivo)
+    metadata["pessoa"] = _inferir_pessoa_canonica(prescricao, caminho_arquivo)
 
     prescricao_id = db.upsert_node(
         "prescricao",
@@ -823,6 +865,7 @@ def ingerir_garantia(
     metadata.setdefault("tipo_documento", "garantia_fabricante")
     if caminho_arquivo is not None:
         metadata["arquivo_origem"] = to_relativo(caminho_arquivo)
+    metadata["pessoa"] = _inferir_pessoa_canonica(garantia, caminho_arquivo)
 
     garantia_id = db.upsert_node(
         "garantia",
