@@ -365,10 +365,10 @@ def reanalisar_pasta_conferir(
             else:
                 tipo_inferido = "recibo_nao_fiscal"  # PDF generico
 
-        # OCR rápido para detectar legibilidade
-        from scripts.migrar_pessoa_via_cpf import _extrair_preview as _ocr
+        # AUDIT-IMPORT-CAMADA: usa helper compartilhado em src/intake/preview.py
+        from src.intake.preview import extrair_preview_completo
 
-        texto = _ocr(arq, max_chars=2000)
+        texto = extrair_preview_completo(arq, max_chars=2000)
         if not _ocr_e_ilegivel(texto, tipo_inferido):
             stats["preservados"] += 1
             continue
