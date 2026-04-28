@@ -12,6 +12,12 @@
 #                           0.10 = comportamento Sprint 48). Sprint 95: tipos
 #                           que pagam tarde (holerite, DAS, boleto) usam peso
 #                           menor para que delta de 30-60 dias nao zere score.
+#   ancora_temporal:        nome do campo de metadata usado como CENTRO da
+#                           janela temporal. Default: 'data_emissao'. Sprint 95b:
+#                           DAS PARCSN usa 'vencimento' (mais proximo do PIX
+#                           Receita Federal real do que data_emissao da guia).
+#                           Fallback automatico para 'data_emissao' se o campo
+#                           declarado nao existir no metadata do documento.
 #
 # Heuristicas de score:
 #   1.0  base
@@ -78,6 +84,10 @@ tipos:
     diff_valor_percentual: 0.05
     confidence_minimo: 0.55
     peso_temporal_diario: 0.005
+    # Sprint 95b: pagamento PIX RECEITA FEDERAL ocorre proximo do vencimento,
+    # nao da data_emissao da guia. Centrar a janela em vencimento reduz
+    # sobreposicao entre parcelas adjacentes (mar/abr/mai vs janela 60d).
+    ancora_temporal: vencimento
 
   boleto_servico:
     janela_dias: 75

@@ -300,4 +300,107 @@ def test_holerite_sem_tx_proxima_nao_gera_falso_positivo(db: GrafoDB, caminho_pr
     assert stats["linkados"] == 0, f"falso positivo: {stats}"
 
 
+# ============================================================================
+# Sprint 95b: ancora temporal alternativa por tipo (vencimento vs data_emissao)
+# ============================================================================
+
+
+def test_sprint_95b_das_parcsn_usa_vencimento_como_ancora(
+    db: GrafoDB, caminho_propostas: Path
+):
+    """DAS PARCSN com data_emissao=2025-02-28 e vencimento=2025-04-30 e
+    tx PIX RECEITA FEDERAL em 2025-04-25.
+
+    Centrar a janela em data_emissao: delta=56d (cabe na janela 60d, score
+    = 1 - 56*0.005 = 0.72 -> linka mas sem precisao).
+
+    Centrar em vencimento (Sprint 95b): delta=-5d (score = 1 - 5*0.005 =
+    0.975 -> linka com alta confianca). Mais cirurgico para parcelas
+    consecutivas.
+    """
+    _ingerir_das_parcsn(
+        db,
+        chave_44="07182510572313828",
+        cnpj_emitente="45.850.636/0001-60",
+        data_emissao="2025-02-28",
+        total=324.31,
+        vencimento="2025-04-30",
+    )
+    tx_id = _criar_tx(
+        db,
+        nome="TX_RECEITA_FEDERAL_PROXIMA_VENCIMENTO",
+        data_iso="2025-04-25",
+        valor=324.31,
+        local="RECEITA FEDERAL",
+        tipo="Imposto",
+    )
+
+    stats = linkar_documentos_a_transacoes(db, caminho_propostas=caminho_propostas)
+
+    assert stats["linkados"] == 1, f"esperado 1 linkado via vencimento, got {stats}"
+    arestas = list(db.listar_edges(dst_id=tx_id, tipo=EDGE_TIPO_DOCUMENTO_DE))
+    assert len(arestas) == 1
+    # Confidence deve refletir delta=-5 (vencimento) e não delta=56 (emissao).
+    assert arestas[0].evidencia["diff_dias"] == -5, (
+        f"delta_dias deve ser -5 (centrado em vencimento), got {arestas[0].evidencia}"
+    )
+
+
+def test_sprint_95b_holerite_default_ainda_usa_data_emissao(
+    db: GrafoDB, caminho_propostas: Path
+):
+    """Holerite não declara ancora_temporal no config -- continua usando
+    data_emissao como centro da janela. Garante backward-compat.
+    """
+    _ingerir_holerite(db, fonte="G4F", mes_ref="2026-03", bruto=8657.25)
+    _criar_tx(
+        db,
+        nome="TX_PAGTO_SALARIO_DEFAULT_ANCORA",
+        data_iso="2026-03-06",
+        valor=7442.38,
+        local="PAGTO SALARIO",
+    )
+
+    stats = linkar_documentos_a_transacoes(db, caminho_propostas=caminho_propostas)
+    assert stats["linkados"] == 1
+
+
+def test_sprint_95b_ancora_inexistente_no_doc_cai_para_data_emissao(
+    db: GrafoDB, caminho_propostas: Path
+):
+    """Se config declara ancora_temporal=vencimento mas o doc não tem o
+    campo no metadata (cenario degradado), fallback para data_emissao
+    garante que o linker não retorne lista vazia silenciosamente.
+    """
+    # Ingere DAS PARCSN sem o campo 'vencimento' (cenario degradado).
+    doc = {
+        "chave_44": "07182510572313829",
+        "cnpj_emitente": "45.850.636/0001-60",
+        "data_emissao": "2025-02-28",
+        "tipo_documento": "das_parcsn_andre",
+        "total": 324.31,
+        "razao_social": "ANDRE DA SILVA BATISTA DE FARIAS",
+        "numero": "07182510572313829",
+        # 'vencimento' AUSENTE
+        "parcela_atual": 1,
+        "parcela_total": 25,
+        "periodo_apuracao": "2025-02",
+    }
+    from src.graph.ingestor_documento import ingerir_documento_fiscal
+
+    ingerir_documento_fiscal(db, doc, itens=[])
+    _criar_tx(
+        db,
+        nome="TX_RECEITA_FEDERAL_FALLBACK",
+        data_iso="2025-03-15",
+        valor=324.31,
+        local="RECEITA FEDERAL",
+        tipo="Imposto",
+    )
+
+    stats = linkar_documentos_a_transacoes(db, caminho_propostas=caminho_propostas)
+    # Com fallback para data_emissao, delta=15d ainda cabe na janela 60d.
+    assert stats["linkados"] >= 1, f"fallback para data_emissao deveria linkar, got {stats}"
+
+
 # "Ligar é responsabilidade -- ligar errado é confundir a memória." -- princípio do arquivista
