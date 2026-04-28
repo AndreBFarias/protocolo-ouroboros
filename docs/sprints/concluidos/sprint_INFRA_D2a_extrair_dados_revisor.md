@@ -41,7 +41,29 @@ sprint:
 
 # Sprint INFRA-D2a -- Extrair dados_revisor
 
-**Status:** BACKLOG (P3, criada 2026-04-26 como sprint-filha da Sprint D2)
+**Status:** CONCLUÍDA (2026-04-27, fechamento pós-INFRA-ACCENT-FIX)
+
+## Resultado
+
+| Métrica | Antes | Depois |
+|---|---|---|
+| `wc -l src/dashboard/dados.py` | 945L | **830L** (atende `<=836L` do estado pré-D2) |
+| `wc -l src/dashboard/dados_revisor.py` | inexistente | **147L** |
+| `pytest tests/test_revisor.py tests/test_dashboard_revisor.py tests/test_dashboard_app.py` | 57 passed | **57 passed** |
+| Suite full | 1.884 passed | **1.884 passed** (zero regressão) |
+| `make lint` | exit 0 (pós-INFRA-ACCENT-FIX) | **exit 0** |
+| `make smoke` | 8/8 + 23/23 | **8/8 + 23/23** |
+
+## Refactor aplicado
+
+- **Movido para `dados_revisor.py`**: função `listar_pendencias_revisao` (126L) + constantes `CAMINHO_RAW_CLASSIFICAR` e `CAMINHO_RAW_CONFERIR`.
+- **Mantido em `dados.py`**: `CAMINHO_REVISAO_HUMANA` (usado por `revisor.py` e patcheado em `tests/test_dashboard_revisor.py:195` via `d.CAMINHO_REVISAO_HUMANA = ...`).
+- **Re-export no fim de `dados.py`**: `from src.dashboard.dados_revisor import (CAMINHO_RAW_CLASSIFICAR, CAMINHO_RAW_CONFERIR, listar_pendencias_revisao)` + `__all__` explícito. Preserva o monkeypatch `setattr(d, "listar_pendencias_revisao", _stub)` em `test_dashboard_revisor.py:223`.
+
+## Armadilha resolvida
+
+`tests/test_dashboard_revisor.py:223` faz `monkeypatch.setattr(d, "listar_pendencias_revisao", _stub)` onde `d` é `dashboard.dados`. Sem o re-export, esse patch quebraria. O re-export torna o atributo presente em ambos os namespaces (`dados` e `dados_revisor`), e como `revisor.py` continua importando de `dados`, o patch externo continua funcionando idêntico ao pré-refactor.
+
 **Origem:** Ressalva conhecida da Sprint D2. `src/dashboard/dados.py` cresceu de 836L para 976L (+140L da nova função `listar_pendencias_revisao` e helpers privados). CLAUDE.md regra 6 limita a 800L por arquivo (exceção: config/, testes/). 836L ja era violacao herdada -- somar 140L piorou.
 
 ## Motivação
