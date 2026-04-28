@@ -4,6 +4,35 @@
 **Prioridade**: P1 (bug visivel em runtime).
 **Estimado**: 1h.
 
+## RESOLVIDA INDIRETAMENTE em 2026-04-29 -- via Sprint AUDIT2-B4
+
+**Status**: NÃO-APLICÁVEL. O achado A1 era artefato de marcacoes
+historicas em `data/output/revisao_humana.sqlite` apontando para nodes
+ja deletados do grafo (ids 7429-7489). A Sprint 107 + reextracao
+2026-04-28 ja removeu+recriou todos os nodes DAS PARCSN com fornecedor
+sintetico canonico ("Receita Federal do Brasil"). Os 14 nodes "antigos"
+mencionados na auditoria não existem mais no grafo.
+
+Verificação em runtime real (2026-04-29):
+```sql
+SELECT COUNT(*),
+       SUM(CASE WHEN json_extract(metadata,'$.razao_social')='Receita Federal do Brasil' THEN 1 ELSE 0 END)
+FROM node WHERE tipo='documento'
+  AND json_extract(metadata,'$.tipo_documento') LIKE 'das_parcsn%';
+-- Resultado: 19, 19 (todos canonicos)
+```
+
+A divergência que aparecia no Revisor era ETL gravado em `revisao.valor_etl`
+em sessao anterior (pre-reextracao). Sprint AUDIT2-B4 removeu as 23
+marcacoes orfas; restam 0 marcacoes com `valor_etl LIKE '%ANDRE%'`.
+
+**Não requer fix de código nem backfill adicional.** Spec arquivada com
+documentação da resolução.
+
+---
+
+## Spec original (preservada para historico)
+
 ## Problema
 
 Sprint 107 introduziu o fornecedor sintetico (`mappings/fornecedores_sinteticos.yaml`)

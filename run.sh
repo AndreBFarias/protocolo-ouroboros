@@ -547,6 +547,7 @@ case "${1:-}" in
             msg_info "Re-ingerindo documentos com extratores atualizados..."
             python -m scripts.reprocessar_documentos --forcar-reextracao
             run_passo "limpar_revisao_orfaos" python -m scripts.limpar_revisao_orfaos --executar
+            run_passo "normalizar_path_relativo" python -m scripts.normalizar_path_relativo --executar
             msg_ok "Reextracao concluida."
         else
             msg_aviso "Operação cancelada."
