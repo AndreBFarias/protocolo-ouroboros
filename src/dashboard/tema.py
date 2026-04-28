@@ -488,13 +488,28 @@ def css_global() -> str:
     }}
     /* Sprint UX-118: logo da sidebar sai de 64x65 renderizado (apertado
        pela largura útil da sidebar) para ~120px com proporção da arte
-       original (724x733px). max-width fixa o teto, height: auto +
-       aspect-ratio garantem altura proporcional mesmo se o caller passar
-       largura_px diferente. */
+       original (724x733px). Sprint UX-126 AC5: width/height/aspect-ratio
+       agora carregam !important para vencer o atributo HTML width="64"
+       que o caller (app.py) ainda passa por compatibilidade com versões
+       legadas; o tamanho efetivo deve ser 120px independente do width
+       atribuído ao <img>. */
     .ouroboros-logo-img {{
-        max-width: 120px;
-        height: auto;
-        aspect-ratio: 724 / 733;
+        width: 120px !important;
+        height: auto !important;
+        aspect-ratio: 724 / 733 !important;
+        max-width: 120px !important;
+        margin: 0 auto !important;
+        display: block !important;
+    }}
+    /* Sprint UX-126 AC2: padding simétrico ao redor dos cards de tipos
+       de documento. O container de st.columns ([data-testid=
+       "stHorizontalBlock"]) recebe margin-top e margin-bottom iguais
+       para que a distância entre o título "Documentos por tipo"
+       (subtitulo_secao_html) e os cards seja igual à distância entre
+       os cards e o divisor <hr> abaixo. */
+    [data-testid="stHorizontalBlock"] {{
+        margin-top: {SPACING["md"]}px;
+        margin-bottom: {SPACING["md"]}px;
     }}
     [data-testid="stSidebar"] {{ background-color: {CORES["card_fundo"]}; }}
     /* Sprint UX-116: sidebar interna ganha padding 4 direções com PADDING_CHIP

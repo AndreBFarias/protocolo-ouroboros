@@ -17,6 +17,7 @@ import pandas as pd
 import streamlit as st
 
 from src.dashboard import dados as _dados
+from src.dashboard.componentes.humanizar_tipos import humanizar
 from src.dashboard.dados import (
     carregar_documentos_grafo,
     contar_propostas_linking,
@@ -103,11 +104,15 @@ def renderizar(
     _renderizar_cards_por_tipo(docs)
     st.markdown(_divisor(), unsafe_allow_html=True)
 
-    col_principal, col_lateral = st.columns([2, 1])
-    with col_principal:
-        _renderizar_tabela_documentos(docs)
-    with col_lateral:
+    # Sprint UX-126 AC3: layout vertical -- "Documentos Recentes" ocupa
+    # 100% da largura; "Conflitos Pendentes" e "Gaps de Cobertura" ficam
+    # lado-a-lado em st.columns([1, 1]) ABAIXO da tabela.
+    _renderizar_tabela_documentos(docs)
+    st.markdown(_divisor(), unsafe_allow_html=True)
+    col_conflitos, col_gaps = st.columns([1, 1])
+    with col_conflitos:
         _renderizar_painel_conflitos(docs)
+    with col_gaps:
         _renderizar_gaps(docs)
 
 
@@ -183,7 +188,10 @@ def _renderizar_cards_por_tipo(docs: pd.DataFrame) -> None:
 
     for idx, (tipo_tec, qtd) in enumerate(tipos_ordenados):
         cor = paleta[idx % len(paleta)]
-        rotulo = ROTULOS_TIPO_DOCUMENTO.get(tipo_tec, tipo_tec)
+        # Sprint UX-126 AC1: humanizar slug do tipo. Override legado em
+        # ROTULOS_TIPO_DOCUMENTO ainda tem prioridade (nomes mais elaborados
+        # como "DANFE (NFe-55)"); fallback para mapping YAML + Title Case.
+        rotulo = ROTULOS_TIPO_DOCUMENTO.get(tipo_tec) or humanizar(tipo_tec)
         with cols[idx]:
             st.markdown(
                 _card_tipo_html(rotulo, int(qtd), cor),
