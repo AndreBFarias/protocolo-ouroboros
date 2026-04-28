@@ -4,6 +4,27 @@
 **Prioridade**: P2.
 **Estimado**: 2h.
 
+## RESOLVIDA INDIRETAMENTE em 2026-04-29 -- via Sprint AUDIT2-B4
+
+**Status**: NÃO-APLICÁVEL. O achado A2 (node_7432 com data divergente) era
+artefato de marcações em `revisao_humana.sqlite` apontando para nodes ja
+deletados pela reextração 2026-04-28 (mesmo padrão (y) da A1).
+
+Verificação em runtime real (2026-04-29):
+- `node_7432` não existe no grafo atual (todos os 19 DAS PARCSN atuais
+  estão entre ids 7490+, já com extractor pós-Sprint 90b aplicado).
+- DAS com `periodo_apuracao = 'diversos'` usam `data_emissao = vencimento`
+  como melhor proxy quando o PDF não traz data de emissão explícita —
+  comportamento correto da Sprint 90b.
+
+Após Sprint AUDIT2-B4 ter limpado as marcações órfãs, restam 0 marcações
+no Revisor com data divergente para nodes existentes. Não requer fix de
+código nem backfill adicional.
+
+---
+
+## Spec original (preservada para histórico)
+
 ## Problema
 
 Sprint 90b corrigiu o regex de periodo "Diversos" no extractor DAS PARCSN
