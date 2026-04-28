@@ -31,12 +31,12 @@ Antes de tocar código, leia nesta ordem:
 **Rota status (atualizada 2026-04-26 fim de sessão NU):**
 
 **Fase NU CONCLUÍDA** (6 P0, 1 dia):
-1. ✓ **Sprint 95** (linking runtime) -- commit `2df40ae`. 0 → 23 arestas `documento_de`.
-2. ✓ **Sprint 96** (classifier robusto cupons curtos) -- commit `9befcb5`. `inbox/1.jpeg` agora classifica `cupom_fiscal_foto/ocr_curto`.
-3. ✓ **Sprint D2** (revisor visual Streamlit) -- commit `b3026a7`. Página live na cluster Documentos. Substitui Sprint AUDITORIA-ARTESANAL-FINAL.
-4. ✓ **Sprint 97** (page-split heterogêneo) -- commit `22c9e5e`. Predicado por classificação + branch reversível, zero regressão para extratos homogêneos.
-5. ✓ **Sprint 90a** (inbox detecta holerite) -- commit `b8ab3fe`. Defesa em duas camadas (YAML especifico + pre-check registry).
-6. ✓ **Sprint 90b** (DAS PARCSN drift) -- commit `c136ea6`. 10 → 19 nodes. Diagnóstico rejeitou hipótese OCR; causa real era regex sem suporte a `ç` + período "Diversos".
+1.  **Sprint 95** (linking runtime) -- commit `2df40ae`. 0 → 23 arestas `documento_de`.
+2.  **Sprint 96** (classifier robusto cupons curtos) -- commit `9befcb5`. `inbox/1.jpeg` agora classifica `cupom_fiscal_foto/ocr_curto`.
+3.  **Sprint D2** (revisor visual Streamlit) -- commit `b3026a7`. Página live na cluster Documentos. Substitui Sprint AUDITORIA-ARTESANAL-FINAL.
+4.  **Sprint 97** (page-split heterogêneo) -- commit `22c9e5e`. Predicado por classificação + branch reversível, zero regressão para extratos homogêneos.
+5.  **Sprint 90a** (inbox detecta holerite) -- commit `b8ab3fe`. Defesa em duas camadas (YAML especifico + pre-check registry).
+6.  **Sprint 90b** (DAS PARCSN drift) -- commit `c136ea6`. 10 → 19 nodes. Diagnóstico rejeitou hipótese OCR; causa real era regex sem suporte a `ç` + período "Diversos".
 
 **P1 também concluídas na rodada NU:**
 - Sprint 101 (`./run.sh --full-cycle`) -- commit `d615488`. Encadeia inbox+tudo, aborta se inbox falhar.
