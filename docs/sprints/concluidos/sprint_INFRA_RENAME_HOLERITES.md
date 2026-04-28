@@ -61,7 +61,7 @@ sprint:
 
 # Sprint INFRA-RENAME-HOLERITES -- Rename holerites legivel
 
-**Status:** BACKLOG (P1, criada 2026-04-27 -- feedback dono image 20)
+**Status:** CONCLUÍDA em DRY-RUN (commit `9618ec6`, 2026-04-27 — 22 testes novos, 24/24 holerites cobertos, --executar aguarda autorização explícita do dono)
 
 A Sprint 98 (concluida 2026-04-27) renomeou 24 holerites usando template `HOLERITE|<sha8>` (hash truncado SHA-256[:8]). O dono detectou que os nomes ficam ilegiveis: `HOLERITE|70E3A6BDE1D8` nao ajuda a navegar o vault.
 
