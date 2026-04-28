@@ -33,7 +33,23 @@ sprint:
 
 # Sprint 95a -- Holerite persiste líquido separado de bruto
 
-**Status:** BACKLOG (P2, criada 2026-04-26 como sprint-filha da Sprint 95)
+**Status:** CONCLUÍDA (2026-04-27, baseline pytest 1.884 -> 1.886 +2 testes 95a)
+
+## Resultado
+
+`src/extractors/contracheque_pdf.py` linhas 225-241: documento dict ganhou `bruto` e `liquido` separados. `total` mantido como bruto por compat (Sprint 48 + Sprint 95). `ingerir_documento_fiscal` copia todos os campos para `metadata` automaticamente.
+
+| Campo metadata | Antes | Depois |
+|---|---|---|
+| `total` | bruto | bruto (preservado) |
+| `bruto` | ausente | bruto (novo) |
+| `liquido` | ausente | liquido (novo) |
+
+Testes regressivos em `tests/test_contracheque_pdf.py`:
+- `test_sprint_95a_metadata_grafo_persiste_liquido_e_bruto` -- valida G4F com bruto 8657.25 e liquido 6372.37.
+- `test_sprint_95a_liquido_zero_quando_registro_sem_liquido` -- graceful quando registro incompleto.
+
+Linker (Sprint 95) NÃO foi modificado nesta sprint. O ajuste para preferir `metadata.liquido` (apertando diff_valor de 0.30 para 0.05) fica como melhoria futura -- spec 95a-1 se for medida necessária após próxima reextração.
 **Origem:** Achado colateral ACH95-1 durante execução da Sprint 95. Linker precisou de tolerância de diff_valor=0.30 para casar holerite (que persiste só "bruto") com tx PAGTO SALARIO (que carrega o líquido). Persistir também o líquido permitiria match mais apertado (diff_valor=0.05).
 
 ## Motivação
