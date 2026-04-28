@@ -527,6 +527,23 @@ def ingerir_documento_fiscal(
         metadata["contribuinte"] = documento.get("__contribuinte_original", "")
     metadata["pessoa"] = _inferir_pessoa_canonica(documento, caminho_arquivo)
 
+    # Sprint AUDIT2-METADATA-ITENS-LISTA: espelha itens granulares no
+    # metadata para a auditoria 4-way no Revisor. Caller pode pre-preencher
+    # `documento["itens"]` (caso holerite, sem upsert_item por não ter código)
+    # ou deixar que o ingestor monte a lista a partir do argumento `itens`
+    # (caso NFC-e / DANFE que também cria nodes item via upsert_item).
+    if "itens" not in metadata or not isinstance(metadata.get("itens"), list):
+        metadata["itens"] = [
+            {
+                "descricao": str(it.get("descricao", "")),
+                "valor_total": float(it.get("valor_total") or 0.0),
+                "qtde": float(it.get("qtde") or 1.0),
+                "codigo": str(it.get("codigo", "") or ""),
+            }
+            for it in (itens or [])
+            if it.get("descricao")
+        ]
+
     documento_id = db.upsert_node("documento", documento["chave_44"], metadata=metadata)
 
     fornecedor_id = upsert_fornecedor(

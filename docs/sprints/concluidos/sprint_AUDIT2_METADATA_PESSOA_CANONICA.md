@@ -4,6 +4,43 @@
 **Prioridade**: P2.
 **Estimado**: 1.5h.
 
+## CONCLUÍDA em 2026-04-29
+
+**Implementação**:
+- `src/graph/ingestor_documento.py`: novo helper `_inferir_pessoa_canonica`
+  (heurística leve: contribuinte ANDRE/VITORIA → andre/vitoria; senão path
+  partes; fallback `casal`). Aplicado nos 4 pontos de gravação de
+  `metadata.arquivo_origem` (linhas 274, 522, 655, 864).
+- `scripts/backfill_metadata_pessoa.py` (NOVO): backfill idempotente em
+  nodes existentes (documento, apolice, prescricao, garantia). Modo
+  --dry-run honesto (open SQLite read-only) + --executar.
+- `scripts/popular_valor_grafo_real.py`: `_inferir_pessoa` agora prefere
+  `metadata.pessoa` direto quando válida (fallback preservado para nodes
+  sem o campo).
+- `run.sh --reextrair-tudo`: encadeia `backfill_metadata_pessoa --executar`
+  como passo final (Sprint 108).
+- `tests/test_backfill_metadata_pessoa.py` (NOVO, 10 testes): cobre
+  inferência por contribuinte, path, fallback, e backfill com idempotência
+  e modo sobrescrever.
+
+**Runtime real**:
+- Antes: 19/45 documentos com pessoa populada (22%).
+- Depois: 45/45 documentos (100%) — todos `andre` (todos os documentos
+  atuais são do supervisor; casal/vitória ainda sem ingestão).
+- 47 nodes atualizados no total (45 documento + 2 apolice).
+- pytest: 1.997 → 2.007 passed (+10).
+
+Verificação:
+```sql
+SELECT json_extract(metadata, '$.pessoa'), COUNT(*) FROM node
+  WHERE tipo='documento' GROUP BY 1;
+-- andre|45
+```
+
+---
+
+## Spec original (preservada para histórico)
+
 ## Problema
 
 Apenas 19/86 itens (22%) tem `pessoa` populada no Grafo. A inferencia

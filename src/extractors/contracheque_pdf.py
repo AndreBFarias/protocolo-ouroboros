@@ -140,10 +140,16 @@ def _parse_g4f(texto: str) -> Optional[dict]:
 
     bruto = 0.0
     tipo = "Folha Mensal"
+    # Sprint AUDIT2-METADATA-ITENS-LISTA: lista granular para metadata.itens.
+    itens_holerite: list[dict] = []
     for match in REGEX_G4F_PROVENTO.finditer(texto):
         descricao, valor = match.groups()
-        bruto += parse_valor_br_float(valor)
+        valor_num = parse_valor_br_float(valor)
+        bruto += valor_num
         descricao_norm = descricao.strip()
+        itens_holerite.append(
+            {"descricao": descricao_norm, "valor": valor_num, "tipo": "provento"}
+        )
         if "13" in descricao_norm and "Adiantado" in descricao_norm:
             tipo = "13º Adiantamento"
         elif "13" in descricao_norm and "Integral" in descricao_norm:
@@ -154,6 +160,9 @@ def _parse_g4f(texto: str) -> Optional[dict]:
         descricao, valor = match.groups()
         valor_num = parse_valor_br_float(valor)
         descricao_upper = descricao.upper()
+        itens_holerite.append(
+            {"descricao": descricao.strip(), "valor": valor_num, "tipo": "desconto"}
+        )
         if "IRRF" in descricao_upper:
             irrf += valor_num
         elif "INSS" in descricao_upper:
@@ -175,6 +184,7 @@ def _parse_g4f(texto: str) -> Optional[dict]:
         "vr_va": round(vr_va, 2),
         "liquido": round(liquido, 2),
         "banco": "",
+        "itens": itens_holerite,
     }
 
 
@@ -234,6 +244,28 @@ def _parse_infobase(texto: str) -> Optional[dict]:
     if liquido == 0.0 and bruto > 0:
         liquido = bruto - adiantamento - inss - irrf - vr_va
 
+    # Sprint AUDIT2-METADATA-ITENS-LISTA: itens granulares (estrutura
+    # mínima do que conseguimos extrair do INFOBASE; OCR não dá lista
+    # completa de proventos individuais, então gravamos os agregados
+    # principais como pseudo-itens).
+    itens_infobase: list[dict] = []
+    if bruto > 0:
+        itens_infobase.append(
+            {"descricao": "SALARIO BRUTO", "valor": bruto, "tipo": "provento"}
+        )
+    if adiantamento > 0:
+        itens_infobase.append(
+            {"descricao": "ADIANTAMENTO 13", "valor": adiantamento, "tipo": "provento"}
+        )
+    if inss > 0:
+        itens_infobase.append(
+            {"descricao": "INSS", "valor": inss, "tipo": "desconto"}
+        )
+    if irrf > 0:
+        itens_infobase.append(
+            {"descricao": "IRRF", "valor": irrf, "tipo": "desconto"}
+        )
+
     return {
         "mes_ref": mes_ref,
         "fonte": f"Infobase - {tipo}" if tipo != "Folha Mensal" else "Infobase",
@@ -243,6 +275,7 @@ def _parse_infobase(texto: str) -> Optional[dict]:
         "vr_va": round(vr_va, 2),
         "liquido": round(liquido, 2),
         "banco": "",
+        "itens": itens_infobase,
     }
 
 
@@ -286,6 +319,19 @@ def _ingerir_holerite_no_grafo(
         "numero": chave,
         "arquivo_original": str(arquivo.resolve()),
         "periodo_apuracao": mes_ref,
+        # Sprint AUDIT2-METADATA-ITENS-LISTA: lista granular de proventos+
+        # descontos. Vai pra metadata.itens via spread (sem upsert_item, pois
+        # holerite não tem código de produto).
+        "itens": [
+            {
+                "descricao": str(it.get("descricao", "")),
+                "valor_total": float(it.get("valor") or 0.0),
+                "qtde": 1.0,
+                "codigo": "",
+                "tipo": str(it.get("tipo", "")),
+            }
+            for it in (registro.get("itens") or [])
+        ],
     }
     try:
         ingerir_documento_fiscal(grafo, documento, itens=[], caminho_arquivo=arquivo)
