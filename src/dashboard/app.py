@@ -143,9 +143,13 @@ def _sidebar(dados: dict) -> tuple[str, str, str, str]:
         Tupla com (período selecionado, pessoa, granularidade, cluster).
     """
     with st.sidebar:
-        # P2.2 2026-04-23: logo compacto (64px) para liberar espaço vertical
-        # na sidebar -- antes 96px gastava ~150px totais só no cabeçalho.
-        logo_html = logo_sidebar_html(largura_px=64)
+        # Sprint UX-126 AC5: largura sobe de 64 para 120px (default da
+        # função). CSS `.ouroboros-logo-img` em `tema.py` força width:
+        # 120px !important, então o atributo HTML "width" deve casar
+        # para evitar reflow visual no carregamento. Sprint UX-118
+        # já havia subido o teto via max-width; UX-126 garante que o
+        # tamanho efetivo é 120px (não 64px sob max-width: 120px).
+        logo_html = logo_sidebar_html(largura_px=120)
         if logo_html:
             st.markdown(logo_html, unsafe_allow_html=True)
         else:
@@ -157,7 +161,23 @@ def _sidebar(dados: dict) -> tuple[str, str, str, str]:
 
             mtime = os.path.getmtime(CAMINHO_XLSX)
             ultima = datetime.fromtimestamp(mtime)
-            st.caption(f"Dados de {ultima.strftime('%d/%m/%Y às %H:%M')}")
+            # Sprint UX-126 AC6: caption reformatada em duas linhas
+            # centralizadas. Linha 1: "Dados de DD/MM/YYYY". Linha 2:
+            # "— HH:MM —" com travessões decorativos. Substitui o
+            # `st.caption` (que quebrava em duas linhas pela largura,
+            # mas sem alinhamento central nem travessões).
+            data_str = ultima.strftime("%d/%m/%Y")
+            hora_str = ultima.strftime("%H:%M")
+            st.markdown(
+                "<div class='ouroboros-sidebar-caption' "
+                "style='text-align:center; line-height:1.4;'>"
+                f"<p style='margin:0; font-size:13px; color:var(--color-texto-sec);'>"
+                f"Dados de {data_str}</p>"
+                f"<p style='margin:0; font-size:13px; color:var(--color-texto-sec);'>"
+                f"— {hora_str} —</p>"
+                "</div>",
+                unsafe_allow_html=True,
+            )
 
         st.markdown("---")
 
