@@ -1,21 +1,21 @@
 # CLAUDE.md -- Protocolo Ouroboros
 
 ```
-VERSÃO: 5.9 | STATUS: PRODUÇÃO + AUTOMAÇÕES OPUS (Sprint 103 fase Opus + 7 automações) | LANG: PT-BR
+VERSÃO: 5.10 | STATUS: PRODUÇÃO + AUDITORIA 4-WAY (Sprint 103 + 9 AUDIT-* + auditoria self-driven 2026-04-29) | LANG: PT-BR
 TRANSAÇÕES: 6.094 | MESES: 82 (out/2019 a out/2026) | BANCOS: 6 | EXTRATORES: 22 (9 bancários + 13 documentais)
 GRAFO: 7.485 nodes + 24.732+ edges. 45 documentos catalogados pós-reextração 2026-04-28 (19 DAS PARCSN apontando para fornecedor RECEITA_FEDERAL CNPJ 00.394.460/0001-41 via Sprint 107).
-SPRINTS: 174 (144 concluídas, 16 backlog, 14 arquivadas; rodada NU + cluster UX 2026-04-26/27 + automações Opus 2026-04-28)
+SPRINTS: 183 (144 concluídas + 9 AUDIT-* fechadas, 25 backlog incluindo 9 AUDIT2-* novas, 14 arquivadas; auditoria 4-way 2026-04-29)
 CATEGORIZAÇÃO: 100% | IRPF TAGS: 164 (75 com CNPJ) | HOLERITES: 24 nodes + 24 PDFs canônicos
-DAS PARCSN: 19 nodes apontando para fornecedor RECEITA_FEDERAL (Sprint 107 + reextração 2026-04-28)
-TESTES: 1.971 passed / 9 skipped / 1 xfailed (+441 desde início da sessão NU, zero regressão)
+DAS PARCSN: 19 nodes apontando para fornecedor RECEITA_FEDERAL (Sprint 107 + reextração 2026-04-28); 14 antigos pendem AUDIT2-SPRINT107-RETROATIVA
+TESTES: 1.987 passed / 9 skipped / 1 xfailed (+16 desta sessão 4-way; zero regressão histórica)
 ABA RENDA: 99 linhas (24 holerites + 75 MEI legítimos via mappings/fontes_renda.yaml)
 RESERVA EMERGÊNCIA: 100% atingida (R$ 44.019,78 / R$ 27.000,00) -- meta cumprida
-DASHBOARD: cluster Home (renomeado de Hoje) com 5 tabs cross-area, cluster Finanças (renomeado de Dinheiro), Revisor com 3-colunas ETL/Opus/Humano + export ground-truth CSV (Sprint 103)
+DASHBOARD: cluster Home com 5 tabs, cluster Finanças, Revisor com **4-colunas ETL/Opus/Grafo/Humano** + flags divergência Tipo A/B + export CSV 11 colunas (sessão 2026-04-29)
 ROTA: Catalogador universal artesanal via supervisor interativo (ADR-13)
 SUPERVISOR: Claude Code sessão interativa — nenhuma API programática
 INTEGRAÇÕES: OFX (pronto), Controle de Bordo vault (sync rico em produção), Belvo (em teste), Gmail (setup pendente)
-ROTA ATUAL: Automações Opus integradas em --full-cycle e --reextrair-tudo (Sprint 108). Auditoria externa em andamento (2026-04-28).
-RETOMADA: docs/HANDOFF_2026-04-28_automacoes_opus.md + contexto/ESTADO_ATUAL.md (snapshot pós-automações).
+ROTA ATUAL: Auditoria 4-way instrumentada; Tier 1 com 9 AUDIT2-* corretivas (path absoluto, fornecedor sintético retroativo, capitalização, razão social holerite, pessoa canônica, etc).
+RETOMADA: docs/AUDITORIA_2026-04-29_self.md + contexto/ESTADO_ATUAL.md (snapshot pós-4-way).
 ```
 
 ### Próxima sessão — retomada canônica

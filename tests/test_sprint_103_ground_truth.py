@@ -157,6 +157,9 @@ def test_gerar_ground_truth_csv_db_inexistente_gera_so_cabecalho(tmp_path: Path)
     with caminho_csv.open(encoding="utf-8") as f:
         linhas = list(csv.reader(f))
     assert len(linhas) == 1  # só header
+    # Auditoria 4-way (sessão 2026-04-29) anexou 3 colunas no fim:
+    # valor_grafo_real, divergencia_etl_grafo, divergencia_grafo_opus.
+    # As 8 colunas Sprint 103 originais permanecem na ordem.
     assert linhas[0] == [
         "item_id",
         "dimensao",
@@ -166,6 +169,9 @@ def test_gerar_ground_truth_csv_db_inexistente_gera_so_cabecalho(tmp_path: Path)
         "divergencia",
         "observacao",
         "ts",
+        "valor_grafo_real",
+        "divergencia_etl_grafo",
+        "divergencia_grafo_opus",
     ]
 
 

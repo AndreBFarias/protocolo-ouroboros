@@ -101,16 +101,18 @@ def garantir_schema(caminho: Path) -> None:
     """Cria o SQLite de revisão com schema canônico se não existir.
 
     Schema:
-      revisao(item_id, dimensao, ok, observacao, ts, valor_etl, valor_opus)
+      revisao(item_id, dimensao, ok, observacao, ts, valor_etl, valor_opus,
+              valor_grafo_real)
       PK (item_id, dimensao); índices em ts e dimensao.
 
     ``ok`` admite ``NULL`` (estado "não-aplicável"). Por isso a coluna não é
     NOT NULL aqui (decisão consciente: a spec diz NULL=N/A).
 
     Sprint 103: adicionadas colunas ``valor_etl`` e ``valor_opus`` (TEXT, NULL).
-    Permitem comparação 3-colunas (ETL extraiu / Opus propõe / Humano valida)
-    e export de ground-truth CSV. Migração graceful via ALTER TABLE: schema
-    antigo sem essas colunas é detectado e atualizado in-place.
+    Sessão 2026-04-29 (auditoria 4-way): adicionada ``valor_grafo_real``
+    (TEXT, NULL). Permite a 4ª comparação ETL × Opus × Grafo × Humano,
+    expondo divergências de normalização (Tipo B: ETL ≠ Grafo apos
+    sintético Sprint 107, etc.). Migração graceful via ALTER TABLE.
     """
     caminho.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(caminho)
@@ -125,19 +127,22 @@ def garantir_schema(caminho: Path) -> None:
                 ts TEXT DEFAULT (datetime('now')),
                 valor_etl TEXT,
                 valor_opus TEXT,
+                valor_grafo_real TEXT,
                 PRIMARY KEY (item_id, dimensao)
             );
             CREATE INDEX IF NOT EXISTS idx_revisao_ts ON revisao (ts);
             CREATE INDEX IF NOT EXISTS idx_revisao_dimensao ON revisao (dimensao);
             """
         )
-        # Sprint 103: migração graceful para DBs criados antes desta sprint.
+        # Migração graceful (DBs criados antes da Sprint 103 ou da auditoria 4-way).
         cur = conn.execute("PRAGMA table_info(revisao)")
         colunas = {row[1] for row in cur.fetchall()}
         if "valor_etl" not in colunas:
             conn.execute("ALTER TABLE revisao ADD COLUMN valor_etl TEXT")
         if "valor_opus" not in colunas:
             conn.execute("ALTER TABLE revisao ADD COLUMN valor_opus TEXT")
+        if "valor_grafo_real" not in colunas:
+            conn.execute("ALTER TABLE revisao ADD COLUMN valor_grafo_real TEXT")
         conn.commit()
     finally:
         conn.close()
@@ -151,6 +156,7 @@ def salvar_marcacao(
     observacao: str = "",
     valor_etl: str | None = None,
     valor_opus: str | None = None,
+    valor_grafo_real: str | None = None,
 ) -> None:
     """Persiste UPSERT de marcação por (item_id, dimensao).
 
@@ -159,6 +165,7 @@ def salvar_marcacao(
 
     Sprint 103: ``valor_etl`` e ``valor_opus`` (None = preserva valor anterior
     quando UPSERT). Para limpar explicitamente, passar string vazia.
+    Auditoria 4-way: ``valor_grafo_real`` segue mesma semantica (None preserva).
     """
     garantir_schema(caminho)
     conn = sqlite3.connect(caminho)
@@ -168,16 +175,18 @@ def salvar_marcacao(
         # essas colunas).
         conn.execute(
             """
-            INSERT INTO revisao (item_id, dimensao, ok, observacao, ts, valor_etl, valor_opus)
-            VALUES (?, ?, ?, ?, datetime('now'), ?, ?)
+            INSERT INTO revisao (item_id, dimensao, ok, observacao, ts,
+                                 valor_etl, valor_opus, valor_grafo_real)
+            VALUES (?, ?, ?, ?, datetime('now'), ?, ?, ?)
             ON CONFLICT(item_id, dimensao) DO UPDATE SET
               ok = excluded.ok,
               observacao = excluded.observacao,
               ts = excluded.ts,
               valor_etl = COALESCE(excluded.valor_etl, valor_etl),
-              valor_opus = COALESCE(excluded.valor_opus, valor_opus)
+              valor_opus = COALESCE(excluded.valor_opus, valor_opus),
+              valor_grafo_real = COALESCE(excluded.valor_grafo_real, valor_grafo_real)
             """,
-            (item_id, dimensao, ok, observacao, valor_etl, valor_opus),
+            (item_id, dimensao, ok, observacao, valor_etl, valor_opus, valor_grafo_real),
         )
         conn.commit()
     finally:
@@ -189,6 +198,7 @@ def carregar_marcacoes(caminho: Path, item_id: str | None = None) -> list[dict]:
 
     Sprint 103: campos `valor_etl` e `valor_opus` retornam None se não
     existirem (DBs antigos). garantir_schema() faz a migração graceful.
+    Auditoria 4-way: `valor_grafo_real` segue a mesma logica.
     """
     if not caminho.exists():
         return []
@@ -196,7 +206,10 @@ def carregar_marcacoes(caminho: Path, item_id: str | None = None) -> list[dict]:
     conn = sqlite3.connect(caminho)
     conn.row_factory = sqlite3.Row
     try:
-        colunas = "item_id, dimensao, ok, observacao, ts, valor_etl, valor_opus"
+        colunas = (
+            "item_id, dimensao, ok, observacao, ts, valor_etl, valor_opus, "
+            "valor_grafo_real"
+        )
         if item_id is not None:
             cursor = conn.execute(
                 f"SELECT {colunas} FROM revisao WHERE item_id = ?",
@@ -255,17 +268,48 @@ def extrair_valor_etl_para_dimensao(pendencia: dict, dimensao: str) -> str:
     return ""
 
 
+_HEADER_GROUND_TRUTH_CSV: list[str] = [
+    # Sprint 103 (3-way) — preserva ordem original para retro-compat de
+    # consumidores antigos.
+    "item_id",
+    "dimensao",
+    "valor_etl",
+    "valor_opus",
+    "valor_humano",
+    "divergencia",
+    "observacao",
+    "ts",
+    # Auditoria 4-way (sessão 2026-04-29) — colunas anexadas no fim.
+    "valor_grafo_real",
+    "divergencia_etl_grafo",
+    "divergencia_grafo_opus",
+]
+
+
+def _comparar_canonico(a: str, b: str) -> bool:
+    """True se ambos preenchidos e diferem (case-insensitive, sem espaços)."""
+    if not a or not b:
+        return False
+    return a.strip().lower() != b.strip().lower()
+
+
 def gerar_ground_truth_csv(caminho_db: Path, caminho_csv: Path) -> int:
-    """Sprint 103: exporta tabela `revisao` para CSV com 3 colunas (ETL/Opus/
-    Humano) por dimensao + flag `divergencia`.
+    """Exporta tabela `revisao` para CSV com 4 colunas de valor (ETL/Opus/
+    Grafo/Humano) por dimensao + flags de divergencia.
 
-    Cabecalho: item_id, dimensao, valor_etl, valor_opus, valor_humano,
-    divergencia, observacao, ts.
+    Header: item_id, dimensao, valor_etl, valor_opus, valor_humano,
+    divergencia, observacao, ts, valor_grafo_real, divergencia_etl_grafo,
+    divergencia_grafo_opus. Ordem mantem 8 colunas originais Sprint 103
+    para retro-compat e anexa 3 novas no fim (auditoria 4-way 2026-04-29).
+
     `valor_humano` mapeia ok={1: "OK", 0: "Erro", None: "Não-aplicável"}.
-    `divergencia` = "1" se valor_etl != valor_opus OR humano marcou Erro
-    (i.e. ETL não casou ground-truth). PII mascarada antes da escrita.
+    `divergencia` = "1" se ETL != Opus OR humano marcou Erro (Sprint 103).
+    `divergencia_etl_grafo` = "1" se ETL != Grafo (Tipo B — perda na
+    transformacao, ex: sintetico Sprint 107).
+    `divergencia_grafo_opus` = "1" se Grafo != Opus (Tipo A pos-norm).
+    PII mascarada antes da escrita.
 
-    Retorna número de linhas escritas (excluindo cabeçalho).
+    Retorna número de linhas escritas (excluindo cabecalho).
     """
     import csv
 
@@ -274,18 +318,7 @@ def gerar_ground_truth_csv(caminho_db: Path, caminho_csv: Path) -> int:
         caminho_csv.parent.mkdir(parents=True, exist_ok=True)
         with caminho_csv.open("w", newline="", encoding="utf-8") as f:
             writer = csv.writer(f)
-            writer.writerow(
-                [
-                    "item_id",
-                    "dimensao",
-                    "valor_etl",
-                    "valor_opus",
-                    "valor_humano",
-                    "divergencia",
-                    "observacao",
-                    "ts",
-                ]
-            )
+            writer.writerow(_HEADER_GROUND_TRUTH_CSV)
         return 0
 
     marcacoes = carregar_marcacoes(caminho_db)
@@ -294,28 +327,18 @@ def gerar_ground_truth_csv(caminho_db: Path, caminho_csv: Path) -> int:
     caminho_csv.parent.mkdir(parents=True, exist_ok=True)
     with caminho_csv.open("w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
-        writer.writerow(
-            [
-                "item_id",
-                "dimensao",
-                "valor_etl",
-                "valor_opus",
-                "valor_humano",
-                "divergencia",
-                "observacao",
-                "ts",
-            ]
-        )
+        writer.writerow(_HEADER_GROUND_TRUTH_CSV)
         n = 0
         for m in marcacoes:
             valor_etl = mascarar_pii(m.get("valor_etl") or "")
             valor_opus = mascarar_pii(m.get("valor_opus") or "")
+            valor_grafo = mascarar_pii(m.get("valor_grafo_real") or "")
             valor_humano = rotulo_humano.get(m.get("ok"), "Não-aplicável")
-            # divergencia: ETL diverge do Opus OU humano marcou Erro.
             divergencia = "1" if (
-                (valor_etl and valor_opus and valor_etl != valor_opus)
-                or m.get("ok") == 0
+                _comparar_canonico(valor_etl, valor_opus) or m.get("ok") == 0
             ) else "0"
+            div_etl_grafo = "1" if _comparar_canonico(valor_etl, valor_grafo) else "0"
+            div_grafo_opus = "1" if _comparar_canonico(valor_grafo, valor_opus) else "0"
             writer.writerow(
                 [
                     m["item_id"],
@@ -326,6 +349,9 @@ def gerar_ground_truth_csv(caminho_db: Path, caminho_csv: Path) -> int:
                     divergencia,
                     mascarar_pii(m.get("observacao") or ""),
                     m.get("ts") or "",
+                    valor_grafo,
+                    div_etl_grafo,
+                    div_grafo_opus,
                 ]
             )
             n += 1
@@ -556,26 +582,41 @@ def _renderizar_painel_item(pendencia: dict, marcacoes_item: list[dict]) -> dict
     for idx, dimensao in enumerate(DIMENSOES_CANONICAS):
         with cols[idx]:
             st.markdown(f"**{dimensao}**")
-            # Sprint 103: 3 colunas (ETL/Opus/Humano) por dimensao.
+            # Auditoria 4-way (sessão 2026-04-29): 4 fontes (ETL/Opus/Grafo/Humano).
             valor_etl = extrair_valor_etl_para_dimensao(pendencia, dimensao)
             valor_opus = (
                 estados_existentes.get(dimensao, {}).get("valor_opus") or ""
             )
+            valor_grafo = (
+                estados_existentes.get(dimensao, {}).get("valor_grafo_real") or ""
+            )
+
+            # Comparacao canonica (case-insensitive, sem espacos).
+            div_etl_grafo = _comparar_canonico(valor_etl, valor_grafo)  # Tipo B
+            div_etl_opus = _comparar_canonico(valor_etl, valor_opus)    # Tipo A
+            div_grafo_opus = _comparar_canonico(valor_grafo, valor_opus)  # Tipo A pos-norm
+
             # ETL: o que o pipeline extraiu (sempre exibido).
-            st.caption(f"**ETL:** {valor_etl or '---'}")
-            # Opus: o que o supervisor Opus marcou (vem do DB; pode estar vazio).
+            marcador_etl = " :red[(diverge)]" if (div_etl_opus or div_etl_grafo) else ""
+            st.caption(f"**ETL:** {valor_etl or '---'}{marcador_etl}")
+
+            # Opus: o que o supervisor Opus marcou.
             if valor_opus:
-                divergente = (
-                    valor_etl
-                    and valor_opus
-                    and valor_etl.strip().lower() != valor_opus.strip().lower()
-                )
-                marcador = " :red[(diverge)]" if divergente else ""
-                # Trunca longo para não explodir o card.
+                marcador_opus = " :red[(diverge)]" if (div_etl_opus or div_grafo_opus) else ""
                 opus_render = valor_opus if len(valor_opus) <= 60 else valor_opus[:57] + "..."
-                st.caption(f"**Opus:** {opus_render}{marcador}")
+                st.caption(f"**Opus:** {opus_render}{marcador_opus}")
             else:
                 st.caption("**Opus:** _(sem proposta)_")
+
+            # Grafo: estado canonico apos normalizacao (sintetico Sprint 107 etc).
+            if valor_grafo:
+                marcador_grafo = " :red[(diverge)]" if (div_etl_grafo or div_grafo_opus) else ""
+                grafo_render = valor_grafo if len(valor_grafo) <= 60 else valor_grafo[:57] + "..."
+                st.caption(f"**Grafo:** {grafo_render}{marcador_grafo}")
+            else:
+                st.caption("**Grafo:** _(sem node ou não populado)_")
+
+            # Humano: radio OK/Erro/N-A.
             valor_existente = estados_existentes.get(dimensao, {}).get("ok")
             obs_existente = estados_existentes.get(dimensao, {}).get("observacao") or ""
             indice_default = 2  # Não-aplicável
@@ -597,9 +638,9 @@ def _renderizar_painel_item(pendencia: dict, marcacoes_item: list[dict]) -> dict
                 label_visibility="collapsed",
                 placeholder="observação opcional",
             )
-            # Sprint 103: persiste valor_etl junto com o estado humano para
-            # permitir export ground-truth a posteriori.
-            coletadas[dimensao] = (ROTULOS_ESTADO[rotulo], obs, valor_etl)
+            # Persiste valor_etl + valor_grafo_real junto com o estado humano
+            # para permitir export ground-truth a posteriori.
+            coletadas[dimensao] = (ROTULOS_ESTADO[rotulo], obs, valor_etl, valor_grafo)
 
     return coletadas
 
@@ -757,7 +798,7 @@ def renderizar(
                     "Salvar marcações",
                     key=f"revisor_salvar_{item_id}",
                 ):
-                    for dimensao, (estado, obs, valor_etl) in coletadas.items():
+                    for dimensao, (estado, obs, valor_etl, valor_grafo) in coletadas.items():
                         salvar_marcacao(
                             CAMINHO_REVISAO_HUMANA,
                             item_id,
@@ -765,6 +806,7 @@ def renderizar(
                             estado,
                             obs,
                             valor_etl=valor_etl,
+                            valor_grafo_real=valor_grafo,
                         )
                     st.markdown(
                         callout_html(

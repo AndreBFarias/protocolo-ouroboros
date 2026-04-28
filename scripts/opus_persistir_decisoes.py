@@ -13,6 +13,7 @@ PII ja vem mascarada das decisoes_opus.json (LGPD-safe).
 
 from __future__ import annotations
 
+import argparse
 import json
 import sys
 from pathlib import Path
@@ -27,17 +28,33 @@ from src.dashboard.paginas.revisor import (  # noqa: E402
     salvar_marcacao,
 )
 
-_FONTE = _RAIZ / "data" / "output" / "transcricoes_opus" / "decisoes_opus.json"
+_FONTE_PADRAO = _RAIZ / "data" / "output" / "transcricoes_opus" / "decisoes_opus.json"
 
 
-def main() -> int:
-    if not _FONTE.exists():
-        print(f"[ERRO] {_FONTE} não existe.", file=sys.stderr)
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        description=(
+            "Persiste decisões Opus em revisao_humana.sqlite. "
+            "Default lê decisoes_opus.json; passe --arquivo para apontar "
+            "para outro JSON (ex: decisoes_opus_v2.json)."
+        )
+    )
+    parser.add_argument(
+        "--arquivo",
+        type=Path,
+        default=_FONTE_PADRAO,
+        help="Caminho do JSON de decisões Opus. Default: decisoes_opus.json.",
+    )
+    args = parser.parse_args(argv)
+
+    fonte = args.arquivo
+    if not fonte.exists():
+        print(f"[ERRO] {fonte} não existe.", file=sys.stderr)
         print("Rode primeiro scripts/opus_extrair_transcricoes.py", file=sys.stderr)
         return 1
 
-    decisoes = json.loads(_FONTE.read_text(encoding="utf-8"))
-    print(f"Lendo {len(decisoes)} decisoes Opus", file=sys.stderr)
+    decisoes = json.loads(fonte.read_text(encoding="utf-8"))
+    print(f"Lendo {len(decisoes)} decisoes Opus de {fonte.name}", file=sys.stderr)
 
     persistidas = 0
     for item in decisoes:
