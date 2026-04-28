@@ -97,6 +97,23 @@ def test_score_temporal_dentro_da_janela():
     assert score == 1.0
 
 
+def test_audit_timezone_arquivo_2355_mesmo_dia_score_1():
+    """AUDIT-TIMEZONE-OCR: arquivo gerado as 23:55 vs candidato data=hoje
+    retorna score 1.0 (sem flutuacao de TZ porque so compara .date()).
+    """
+    mtime_tarde = datetime(2026, 4, 19, 23, 55, 0).timestamp()
+    score = _score_temporal(mtime_tarde, "2026-04-19", janela_dias=7)
+    assert score == 1.0
+
+
+def test_audit_timezone_arquivo_0005_dia_seguinte_distancia_correta():
+    """Arquivo gerado as 00:05 do dia seguinte vs candidato hoje -> 1 dia."""
+    mtime_madrugada = datetime(2026, 4, 20, 0, 5, 0).timestamp()
+    score = _score_temporal(mtime_madrugada, "2026-04-19", janela_dias=7)
+    # 1 dia de delta numa janela de 7 -> 6/7 = ~0.857
+    assert abs(score - 6 / 7) < 0.01
+
+
 def test_score_temporal_no_limite_da_janela():
     base = datetime(2026, 4, 19)
     falho_mtime = base.timestamp()

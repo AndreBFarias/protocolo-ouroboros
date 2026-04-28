@@ -25,7 +25,7 @@ from __future__ import annotations
 
 import functools
 import json
-from datetime import datetime
+from datetime import date, datetime
 from pathlib import Path
 from typing import Any
 
@@ -167,12 +167,16 @@ def _score_phash(falho: Path, candidato_path: Path | None) -> float:
 
 
 def _score_temporal(falho_mtime: float, candidato_data: str | None, janela_dias: int) -> float:
-    """Score 0..1 baseado em distância temporal vs janela."""
+    """Score 0..1 baseado em distância temporal vs janela.
+
+    AUDIT-TIMEZONE-OCR: compara apenas date() em ambos os lados para evitar
+    flutuação de +/-1 dia causada por timezone naive vs hora local.
+    """
     if not candidato_data:
         return 0.0
     try:
-        d_cand = datetime.fromisoformat(str(candidato_data)[:10])
-        d_falho = datetime.fromtimestamp(falho_mtime)
+        d_cand = date.fromisoformat(str(candidato_data)[:10])
+        d_falho = datetime.fromtimestamp(falho_mtime).date()
         delta_dias = abs((d_cand - d_falho).days)
         if delta_dias > janela_dias:
             return 0.0
