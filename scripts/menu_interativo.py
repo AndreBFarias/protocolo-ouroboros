@@ -200,6 +200,12 @@ def _acao_auditoria_opus() -> bool:
     return rc == 0
 
 
+def _acao_sair() -> bool:
+    """AUDIT-MENU-DISPATCHER: sentinela para encerrar o loop sem follow-up."""
+    _console().print("[dim]Encerrando.[/]")
+    return False  # não disruptiva -- não pergunta proximo passo
+
+
 _DISPATCHER: dict[str, callable] = {  # type: ignore[type-arg]
     "R": _acao_rota_completa,
     "1": _acao_inbox,
@@ -209,6 +215,7 @@ _DISPATCHER: dict[str, callable] = {  # type: ignore[type-arg]
     "5": _acao_tudo,
     "6": _acao_reextrair,
     "7": _acao_auditoria_opus,
+    "0": _acao_sair,
 }
 
 
@@ -249,15 +256,16 @@ def _render_menu(cons: "Console") -> None:
 
 
 def executar_menu() -> int:
-    """Loop principal do menu. Retorna o exit code do processo."""
+    """Loop principal do menu. Retorna o exit code do processo.
+
+    AUDIT-MENU-DISPATCHER: "0" agora mapeia para _acao_sair no _DISPATCHER --
+    proteger contra novos contributors que esquecam o early-return.
+    """
     cons = _console()
     _render_menu(cons)
     # Sprint 101: default vira "R" (rota completa) — usuário aperta Enter e o
     # ciclo inbox + pipeline roda inteiro. "0" continua sendo saída explícita.
     escolha = _prompt("Opção", choices=list(OPCOES_MENU.keys()), default="R")
-    if escolha == "0":
-        cons.print("[dim]Encerrando.[/]")
-        return 0
     acao = _DISPATCHER[escolha]
     disruptiva = acao()
     if disruptiva:

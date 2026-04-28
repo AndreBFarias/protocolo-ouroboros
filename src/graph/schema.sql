@@ -33,3 +33,10 @@ CREATE TABLE IF NOT EXISTS edge (
 CREATE INDEX IF NOT EXISTS idx_edge_src ON edge(src_id);
 CREATE INDEX IF NOT EXISTS idx_edge_dst ON edge(dst_id);
 CREATE INDEX IF NOT EXISTS idx_edge_tipo ON edge(tipo);
+
+-- AUDIT-INDEX-JSON: indice expressao para queries por arquivo_origem em
+-- nodes documento. Acelera _atualizar_grafo em migrar_pessoa_via_cpf de
+-- O(arquivos x nodes_documento) para O(arquivos x log(nodes)).
+CREATE INDEX IF NOT EXISTS idx_node_arquivo_origem
+  ON node(json_extract(metadata, '$.arquivo_origem'))
+  WHERE tipo = 'documento';

@@ -185,18 +185,44 @@ def _score_temporal(falho_mtime: float, candidato_data: str | None, janela_dias:
         return 0.0
 
 
+# AUDIT-SCORE-TEXTUAL: ignorar palavras genericas que casam por acaso em
+# qualquer cupom (BANCO, EMPRESA, COMERCIO, SA, LTDA, etc.).
+_PALAVRAS_GENERICAS_FORNECEDOR: frozenset[str] = frozenset(
+    {
+        "BANCO", "EMPRESA", "COMERCIO", "SA", "S.A.", "S/A", "LTDA",
+        "INDUSTRIA", "SERVICOS", "DISTRIBUIDORA", "CONSULTORIA",
+        "DE", "DA", "DO", "DAS", "DOS",  # preposicoes
+    }
+)
+
+
+def _palavras_especificas_fornecedor(razao: str) -> list[str]:
+    """Filtra fornecedor preservando apenas palavras especificas (>=4 chars,
+    nao-genericas).
+    """
+    return [
+        p
+        for p in razao.upper().split()
+        if p not in _PALAVRAS_GENERICAS_FORNECEDOR and len(p) >= 4
+    ]
+
+
 def _score_textual(falho_nome: str, falho_texto: str, candidato_meta: dict[str, Any]) -> float:
-    """Score 0..1 se fornecedor/CNPJ do candidato aparece no nome ou texto do falho."""
+    """Score 0..1 se fornecedor/CNPJ do candidato aparece no nome ou texto do falho.
+
+    AUDIT-SCORE-TEXTUAL: ignora palavras genericas (BANCO, SA, LTDA) e considera
+    ate 3 palavras especificas + CNPJ raiz. Score = matches / 3.0.
+    """
     fornecedor = (candidato_meta.get("razao_social") or "").upper()
     cnpj_raw = candidato_meta.get("cnpj_emitente") or ""
     cnpj = cnpj_raw.replace(".", "").replace("/", "").replace("-", "")
     falho_combinado = (falho_nome.upper() + " " + (falho_texto or "").upper())[:5000]
     matches = 0
-    if fornecedor and len(fornecedor) >= 4 and fornecedor.split()[0] in falho_combinado:
-        matches += 1
+    palavras = _palavras_especificas_fornecedor(fornecedor)
+    matches += sum(1 for p in palavras[:3] if p in falho_combinado)
     if cnpj and len(cnpj) >= 8 and cnpj[:8] in falho_combinado.replace(" ", ""):
         matches += 1
-    return min(1.0, matches / 2.0) if matches else 0.0
+    return min(1.0, matches / 3.0)
 
 
 def buscar_similar(

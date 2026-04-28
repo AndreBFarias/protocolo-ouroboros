@@ -59,11 +59,22 @@ def _atualizar_grafo(
     arquivo_antigo: Path,
     arquivo_novo: Path,
 ) -> bool:
-    """Atualiza nodes documento cujo arquivo_origem == arquivo_antigo."""
+    r"""Atualiza nodes documento cujo arquivo_origem == arquivo_antigo.
+
+    AUDIT-INDEX-JSON: usa índice expressao em json_extract(metadata,
+    '\$.arquivo_origem') para query O(log N) em vez de full scan + iteracao.
+    """
     if grafo is None:
         return False
+    # Query usa índice expressao quando possivel (Sprint AUDIT-INDEX-JSON).
+    # Procura tres formas: relativo (canon novo), absoluto, raw string.
+    candidatos = (str(arquivo_antigo), str(arquivo_antigo.resolve()), to_relativo(arquivo_antigo))
+    placeholders = ",".join("?" for _ in candidatos)
     cur = grafo._conn.execute(  # noqa: SLF001
-        "SELECT id, tipo, nome_canonico, metadata, aliases FROM node WHERE tipo='documento'"
+        f"SELECT id, tipo, nome_canonico, metadata, aliases FROM node "
+        f"WHERE tipo='documento' "
+        f"AND json_extract(metadata, '$.arquivo_origem') IN ({placeholders})",
+        candidatos,
     )
     atualizados = 0
     for row in cur.fetchall():
