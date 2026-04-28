@@ -69,7 +69,7 @@ sprint:
 
 **Status:** CONCLUÍDA (commit `7f78887`, 2026-04-27 — 5 testes que falhavam agora passam; suite full 1817/1817)
 
-3 ressalvas detectadas pelos executores do cluster v2 que nao bloquearam merge das sprints respectivas mas deixaram main com falhas pequenas:
+3 ressalvas detectadas pelos executores do cluster v2 que não bloquearam merge das sprints respectivas mas deixaram main com falhas pequenas:
 
 1. **Acentuacao em 5 specs UX**: `make lint` falha em main por 8 violacoes em texto PT-BR (`nao`/`sao`/`pagina`/`historico`/`numerico` etc.).
 2. **Contaminação de testes em revisor**: atribuicao direta `d.listar_pendencias_revisao = stub` em `test_dashboard_revisor.py` persiste entre testes, contaminando 4 testes de `test_revisor.py::TestListarPendencias` em suite full.
@@ -79,4 +79,4 @@ Sprint cirurgica: 3 fixes pequenos, 1 commit por fix preferencialmente (3 commit
 
 ---
 
-*"Debito acumulado por achados colaterais nao deve virar refrao -- consolida em 1 sprint enxuta." -- principio do anti-debito*
+*"Débito acumulado por achados colaterais não deve virar refrão -- consolida em 1 sprint enxuta." -- princípio do anti-débito*

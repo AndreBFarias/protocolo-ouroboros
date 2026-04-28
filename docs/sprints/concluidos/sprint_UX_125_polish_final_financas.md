@@ -71,9 +71,9 @@ sprint:
 
 1. **Body 100% horizontal**: hoje a viewport tem ~1600px mas o `.block-container` tem `max-width` que deixa faixa preta a direita. Aproveitar todo o espaco.
 2. **Rename "Dinheiro" -> "Financas"**: termo "Dinheiro" e ambiguo; "Financas" e mais profissional. Alias backward-compat preserva URLs antigas.
-3. **Tabs do Home espelham clusters**: hoje sao "Visao Geral / Dinheiro hoje / Docs hoje / Analise hoje / Metas hoje". Devem ser "Visao Geral / Financas / Documentos / Analise / Metas" (sem "hoje" repetitivo). Cada tab abre a mini-view ja existente (arquivos home_*.py mantem nome interno).
+3. **Tabs do Home espelham clusters**: hoje são "Visao Geral / Dinheiro hoje / Docs hoje / Análise hoje / Metas hoje". Devem ser "Visao Geral / Financas / Documentos / Análise / Metas" (sem "hoje" repetitivo). Cada tab abre a mini-view ja existente (arquivos home_*.py mantem nome interno).
 4. **Sidebar busca**: label muda de "Buscar" para "Busca Global"; placeholder vazio; altura 44px igual aos selectboxes (UX-119 AC3).
-5. **Filtro Area** mostra valores: Home / Financas / Documentos / Analise / Metas.
+5. **Filtro Area** mostra valores: Home / Financas / Documentos / Análise / Metas.
 
 Escopo cirurgico: tudo cabe em ~1.5h, toca apenas tema.py, drilldown.py, app.py, busca_global_sidebar.py + tests.
 

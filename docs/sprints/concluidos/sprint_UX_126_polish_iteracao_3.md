@@ -75,7 +75,7 @@ sprint:
 
 1. Nomes dos baloes "DOCUMENTOS POR TIPO" estao em snake_case crue (`das_parcsn_andre`); precisam ser humanizados via mapping YAML.
 2. Padding simetrico ao redor dos cards (mesma distancia acima e abaixo).
-3. Layout vertical: "Documentos Recentes" 100% width + "Conflitos | Gaps" 50/50 abaixo (hoje sao colunas erradas).
+3. Layout vertical: "Documentos Recentes" 100% width + "Conflitos | Gaps" 50/50 abaixo (hoje são colunas erradas).
 4. Hero "Catalogacao de Documentos" deve aparecer visivel.
 5. Logo da sidebar volta a estar com tamanho ruim; reforcar `.ouroboros-logo-img` com `!important`.
 6. Caption "Dados de DD/MM/YYYY as HH:MM" reformatada para 2 linhas centralizadas com tracos decorativos.
@@ -84,4 +84,4 @@ Sprint depende de UX-125 mergear primeiro (toca `app.py` que UX-125 esta atualiz
 
 ---
 
-*"Detalhe nao e poluicao -- e a borda da credibilidade." -- principio do polish honesto*
+*"Detalhe não é poluição -- é a borda da credibilidade." -- princípio do polish honesto*
