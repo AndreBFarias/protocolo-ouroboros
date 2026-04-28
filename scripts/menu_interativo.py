@@ -181,13 +181,22 @@ def _acao_reextrair() -> bool:
 def _acao_auditoria_opus() -> bool:
     """Sprint 108: dispara auditoria completa via run.sh --reextrair-tudo
     que ja inclui as automacoes (dedup, migrar pessoa, backfill).
+
+    AUDIT-MENU-CONFIRMACAO: confirma UMA vez no Python (TTY garantido) e
+    delega com --sim para o bash, evitando confirmacao silenciosamente
+    cancelada por stdin redirecionado em subprocess.
     """
     cons = _console()
     cons.print(
-        "[magenta]Auditoria Opus completa: cleanup automacoes + reextracao[/]"
+        "[red]ATENCAO: vai limpar nodes 'documento' do grafo e re-ingerir tudo.[/]"
     )
     cons.print("[dim]Sprint 108 -- ordem: dedup -> migrar pessoa -> backfill -> reextrair[/]")
-    rc = _rodar_run_sh("--reextrair-tudo")
+    confirma = _prompt("Confirma? (s/N)", choices=["s", "n", "S", "N"], default="n")
+    if confirma.lower() != "s":
+        cons.print("[yellow]Operação cancelada.[/]")
+        return False
+    cons.print("[magenta]Auditoria Opus completa: rodando com --sim[/]")
+    rc = _rodar_run_sh("--reextrair-tudo", "--sim")
     return rc == 0
 
 

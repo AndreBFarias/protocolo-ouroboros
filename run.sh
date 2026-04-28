@@ -537,10 +537,9 @@ case "${1:-}" in
         ;;
     --reextrair-tudo)
         # Sprint 104 + 108: cleanup automacoes + reextracao completa.
-        # Antes de --forcar-reextracao, roda automacoes para garantir que
-        # data/raw/ esta limpo e o grafo não tem paths quebrados.
+        # AUDIT-MENU-CONFIRMACAO: --sim pula confirmar() (uso pelo menu Python).
         msg_aviso "Reextracao em lote: vai limpar nodes 'documento' do grafo."
-        if confirmar "Tem certeza? (operação irreversivel)"; then
+        if [[ "${2:-}" == "--sim" ]] || confirmar "Tem certeza? (operação irreversivel)"; then
             msg_info "Rodando automacoes de cleanup antes de reextrair (Sprint 108)..."
             run_passo "dedup_classificar" python -m scripts.dedup_classificar_lote --executar
             run_passo "migrar_pessoa_via_cpf" python -m scripts.migrar_pessoa_via_cpf --executar
