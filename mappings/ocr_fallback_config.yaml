@@ -23,6 +23,21 @@ limiar_chars_uteis_por_tipo:
   recibo_nao_fiscal: 30
   default: 50
 
+# Sprint 106a: criterio composite -- palavras conhecidas em PT-BR.
+# Texto com chars uteis acima do limiar mas zero palavras conhecidas e
+# garbage do Tesseract (cupom-foto borrada).
+min_palavras_conhecidas_por_tipo:
+  cupom_fiscal_foto: 8
+  recibo_nao_fiscal: 5
+  default: 8
+
+# Sprint 106a: ratio non-letras (excluindo espacos). OCR garbage tem ratio
+# > 0.40 (muitos digitos/pontuacao espalhados sem semantica).
+max_ratio_non_letras_por_tipo:
+  cupom_fiscal_foto: 0.40
+  recibo_nao_fiscal: 0.45
+  default: 0.45
+
 pesos_score:
   phash: 0.5
   temporal: 0.3

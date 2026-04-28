@@ -38,9 +38,57 @@ def test_ocr_ilegivel_texto_curto():
 
 
 def test_ocr_legivel_texto_longo():
+    """Sprint 106a: texto longo só passa se também tiver palavras PT-BR."""
     cfg = _config_default()
-    longo = "este e um texto longo o suficiente para passar o limiar de 50 caracteres uteis"
-    assert _ocr_e_ilegivel(longo, "cupom_fiscal_foto", cfg) is False
+    cfg.setdefault("min_palavras_conhecidas_por_tipo", {"default": 5})
+    cfg.setdefault("max_ratio_non_letras_por_tipo", {"default": 0.45})
+    coerente = (
+        "este texto longo tem palavras conhecidas como total de valor para pagamento "
+        "data emissao em loja com cnpj e produto comprado por R$ 100,00"
+    )
+    assert _ocr_e_ilegivel(coerente, "cupom_fiscal_foto", cfg) is False
+
+
+def test_sprint_106a_garbage_2000_chars_e_ilegivel():
+    """Garbage do Tesseract com 2000+ chars mas zero palavras PT-BR -> ilegivel."""
+    from src.intake.ocr_fallback_similar import _carregar_config
+
+    cfg = _carregar_config()  # carrega YAML real
+    garbage = "CI Ma Fat 6 A UND imbacia usb toa LM CU LOTE 04 DAE 08 SNL OM 0H Sp TUR MAE " * 30
+    assert _ocr_e_ilegivel(garbage, "cupom_fiscal_foto", cfg) is True
+
+
+def test_sprint_106a_texto_coerente_pt_br_e_legivel():
+    from src.intake.ocr_fallback_similar import _carregar_config
+
+    cfg = _carregar_config()
+    coerente = (
+        "Documento Auxiliar da Nota Fiscal de Consumidor "
+        "VALOR TOTAL: R$ 100,00 PAGAMENTO PIX CNPJ 00.776.574/0160-79 "
+        "Data de emissao 19/04/2026 forma de pagamento credito"
+    )
+    assert _ocr_e_ilegivel(coerente, "cupom_fiscal_foto", cfg) is False
+
+
+def test_sprint_106a_zero_palavras_conhecidas_e_ilegivel():
+    """Texto com chars uteis suficientes mas zero palavras PT-BR -> ilegivel."""
+    from src.intake.ocr_fallback_similar import _carregar_config
+
+    cfg = _carregar_config()
+    sem_pt = "abcde fghij klmno pqrst uvwxy zabcd efghi jklmn opqrs tuvwx " * 5
+    # Tem chars uteis muitos, mas nenhuma palavra conhecida -> ilegivel
+    assert _ocr_e_ilegivel(sem_pt, "cupom_fiscal_foto", cfg) is True
+
+
+def test_sprint_106a_ratio_non_letras_alto_e_ilegivel():
+    """Texto com ratio non-letras > 0.40 -> ilegivel."""
+    from src.intake.ocr_fallback_similar import _carregar_config
+
+    cfg = _carregar_config()
+    # Muitos non-letras, mas tem palavras PT-BR (passa criterio 2)
+    pontuado = "valor total " + "1234567890.|/|().*&^%$#@!" * 30 + " data nota cnpj cpf forma"
+    # Ratio de non-letras acima de 0.40 -> ilegivel
+    assert _ocr_e_ilegivel(pontuado, "cupom_fiscal_foto", cfg) is True
 
 
 def test_score_temporal_dentro_da_janela():

@@ -6,7 +6,7 @@ sprint:
   title: "Refinar criterio de legibilidade OCR (palavras conhecidas em PT-BR + ratio non-letras)"
   prioridade: P2
   estimativa: ~2h
-  origem: "Sprint 106 entregou motor de fallback similar mas o criterio _ocr_e_ilegivel atual (chars uteis < 50) nao detecta garbage do Tesseract. Em runtime real, 2 cupons-foto retornaram 2610 chars cada (em sua maioria caracteres lixo) e nao acionaram o motor"
+  origem: "Sprint 106 entregou motor de fallback similar mas o criterio _ocr_e_ilegivel atual (chars uteis < 50) não detecta garbage do Tesseract. Em runtime real, 2 cupons-foto retornaram 2610 chars cada (em sua maioria caracteres lixo) e não acionaram o motor"
   touches:
     - path: src/intake/ocr_fallback_similar.py
       reason: "_ocr_e_ilegivel: substituir chars-count por composite (palavras conhecidas + ratio non-letras + comprimento de palavras)"
@@ -40,7 +40,7 @@ sprint:
 
 # Sprint 106a -- Criterio de legibilidade OCR
 
-**Status:** BACKLOG (P2, criada 2026-04-28 como achado da execucao Sprint 106)
+**Status:** BACKLOG (P2, criada 2026-04-28 como achado da execução Sprint 106)
 
 ## Motivação
 
@@ -56,7 +56,7 @@ Resultado: motor da Sprint 106 nunca e acionado para esses dois arquivos, justam
 Caracteristicas distintivas de OCR garbage:
 - **Ratio non-letras alto**: cupom-foto borrado tem muitos `\\`, `|`, `.`, `(`, `)`, `:` espalhados sem semantica.
 - **Palavras curtas (< 3 chars) excessivas**: `CI`, `Ma`, `LM`, `CU`, `Po`, `k`, `E`.
-- **Zero palavras conhecidas em PT-BR**: garbage nao casa com `de`, `da`, `do`, `para`, `valor`, `total`, `r$`, etc.
+- **Zero palavras conhecidas em PT-BR**: garbage não casa com `de`, `da`, `do`, `para`, `valor`, `total`, `r$`, etc.
 
 OCR coerente:
 - Ratio non-letras ~ 0.15-0.25 (espacos + pontuacao normal).
@@ -138,4 +138,4 @@ max_ratio_non_letras_por_tipo:
 
 ---
 
-*"O Tesseract sempre devolve algo; cabe a nos saber quando esse algo nao e nada." -- principio do criterio honesto*
+*"O Tesseract sempre devolve algo; cabe a nos saber quando esse algo não e nada." -- principio do criterio honesto*

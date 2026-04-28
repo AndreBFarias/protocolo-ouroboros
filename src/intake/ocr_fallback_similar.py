@@ -69,13 +69,81 @@ def _resetar_cache_config() -> None:
     _CONFIG_CACHE = None
 
 
+# Sprint 106a: whitelist de palavras DOMINIO-ESPECIFICAS para detectar coerência.
+# Preposições curtas (de, da, do, em) foram REMOVIDAS porque aparecem por acaso
+# em garbage do Tesseract -- precisamos de substantivos específicos de fiscal/financeiro.
+_PALAVRAS_PT_BR_COMUNS: frozenset[str] = frozenset(
+    {
+        # Substantivos específicos de documentos fiscais/financeiros
+        "valor", "total", "pagamento", "forma", "documento", "data",
+        "nota", "fiscal", "consumidor", "cnpj", "cpf", "loja", "endereco",
+        "produto", "quantidade", "unidade", "preco", "compra", "boleto",
+        "vencimento", "beneficiario", "pagador", "banco", "conta",
+        "agencia", "codigo", "numero", "serie", "emissao", "protocolo",
+        "autorizacao", "consulta", "chave", "acesso", "filial",
+        "subtotal", "desconto", "imposto", "trib", "tributo",
+        # Variantes com acento
+        "endereço", "código", "número", "série", "emissão",
+        "agência", "preço", "cnpj", "tributário", "vencimento",
+        # Indicadores monetários
+        "r$", "rs",
+        # Verbos comuns em recibos
+        "pagar", "pago", "receber", "recebido", "emitir", "emitido",
+        # Tipos de pagamento
+        "pix", "credito", "debito", "dinheiro", "transferencia", "tef",
+        # Loja/empresarial
+        "ltda", "americanas", "filial", "matriz", "razao", "social",
+    }
+)
+
+import re as _re_106a  # noqa: E402
+
+_RE_PALAVRAS = _re_106a.compile(r"\b[\wÀ-ÿ$]+\b", _re_106a.UNICODE)
+
+
+def _contar_palavras_conhecidas(texto: str) -> int:
+    """Sprint 106a: conta tokens em PT-BR contra whitelist."""
+    palavras = _RE_PALAVRAS.findall((texto or "").lower())
+    return sum(1 for p in palavras if p in _PALAVRAS_PT_BR_COMUNS)
+
+
 def _ocr_e_ilegivel(texto: str, tipo: str, config: dict[str, Any] | None = None) -> bool:
-    """True se texto extraído está abaixo do limiar útil para o tipo."""
+    """True se texto extraído está abaixo dos critérios de legibilidade.
+
+    Sprint 106a: criterio composite (qualquer um dispara ilegível):
+      1. chars úteis (alnum) < limiar_chars_uteis_por_tipo
+      2. palavras conhecidas em PT-BR < min_palavras_conhecidas_por_tipo
+      3. ratio non-letras > max_ratio_non_letras_por_tipo (quando total > 100)
+
+    Garbage do Tesseract pode ter 1000+ chars mas falha (2) e (3).
+    """
     cfg = config or _carregar_config()
+    if not texto:
+        return True
+
+    # Critério 1 (Sprint 106 original): chars úteis
     limiares = cfg.get("limiar_chars_uteis_por_tipo", {})
-    limiar = limiares.get(tipo, limiares.get("default", 50))
-    chars_uteis = sum(1 for c in (texto or "") if c.isalnum())
-    return chars_uteis < limiar
+    limiar_chars = limiares.get(tipo, limiares.get("default", 50))
+    chars_uteis = sum(1 for c in texto if c.isalnum())
+    if chars_uteis < limiar_chars:
+        return True
+
+    # Critério 2 (Sprint 106a): palavras conhecidas em PT-BR
+    min_pal_cfg = cfg.get("min_palavras_conhecidas_por_tipo", {})
+    min_pal = min_pal_cfg.get(tipo, min_pal_cfg.get("default", 5))
+    if _contar_palavras_conhecidas(texto) < min_pal:
+        return True
+
+    # Critério 3 (Sprint 106a): ratio non-letras
+    chars_total = len(texto)
+    if chars_total > 100:
+        non_alpha = sum(1 for c in texto if not c.isalpha() and not c.isspace())
+        max_ratio_cfg = cfg.get("max_ratio_non_letras_por_tipo", {})
+        max_ratio = max_ratio_cfg.get(tipo, max_ratio_cfg.get("default", 0.45))
+        if non_alpha / chars_total > max_ratio:
+            return True
+
+    return False
 
 
 def _phash_imagem(caminho: Path) -> Any:
