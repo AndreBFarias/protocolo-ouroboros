@@ -507,7 +507,19 @@ def _detectar_pdf(caminho: Path) -> Optional[DeteccaoArquivo]:
 
         texto_upper = texto_completo.upper()
 
-        if "ITAÚ UNIBANCO" in texto_upper or "agência: 6450" in texto_completo:
+        # Sprint 90a-1: endurecer deteccao de extrato Itau/Santander.
+        # Antes, qualquer PDF com substring 'ITAU UNIBANCO' ou 'SANTANDER'
+        # casava como extrato bancario -- inclusive holerites/recibos que
+        # mencionam o banco no rodape. Agora exige 2+ ancoras tipicas de
+        # extrato real.
+        ancoras_itau = (
+            "ITAÚ UNIBANCO" in texto_upper,
+            "agência: 6450" in texto_completo or "AGÊNCIA: 6450" in texto_upper,
+            "SALDO ANTERIOR" in texto_upper,
+            "EXTRATO DE CONTA" in texto_upper or "EXTRATO MENSAL" in texto_upper,
+            "ITAU.COM.BR" in texto_upper or "ITAU.COM" in texto_upper,
+        )
+        if sum(ancoras_itau) >= 2:
             periodo = _extrair_periodo_itau(texto_completo)
             return DeteccaoArquivo(
                 banco="itau",
@@ -519,7 +531,15 @@ def _detectar_pdf(caminho: Path) -> Optional[DeteccaoArquivo]:
                 confianca=0.95,
             )
 
-        if "SANTANDER" in texto_upper or "4220 XXXX XXXX 7342" in texto_completo:
+        ancoras_santander = (
+            "SANTANDER" in texto_upper,
+            "4220 XXXX XXXX 7342" in texto_completo,
+            "FATURA" in texto_upper or "EXTRATO" in texto_upper,
+            "CARTÃO DE CRÉDITO" in texto_upper or "CARTAO DE CREDITO" in texto_upper,
+            "VENCIMENTO" in texto_upper and "PAGAMENTO MÍNIMO" in texto_upper,
+            "BANCO SANTANDER" in texto_upper,
+        )
+        if sum(ancoras_santander) >= 2:
             periodo = _extrair_periodo_santander(texto_completo)
             return DeteccaoArquivo(
                 banco="santander",
