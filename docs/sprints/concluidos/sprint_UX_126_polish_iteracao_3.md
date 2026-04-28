@@ -69,7 +69,7 @@ sprint:
 
 # Sprint UX-126 -- Polish iteracao 3
 
-**Status:** BACKLOG (P1, criada 2026-04-27 -- depende UX-125)
+**Status:** CONCLUÍDA (commit `5a78ca8`, 2026-04-27 — 13 testes novos, 37 tipos canônicos no mapping)
 
 6 achados na pagina Catalogacao + sidebar identificados pelo dono apos validar v2:
 
