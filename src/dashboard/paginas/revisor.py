@@ -101,11 +101,16 @@ def garantir_schema(caminho: Path) -> None:
     """Cria o SQLite de revisão com schema canônico se não existir.
 
     Schema:
-      revisao(item_id TEXT, dimensao TEXT, ok INTEGER, observacao TEXT, ts TEXT)
+      revisao(item_id, dimensao, ok, observacao, ts, valor_etl, valor_opus)
       PK (item_id, dimensao); índices em ts e dimensao.
 
     ``ok`` admite ``NULL`` (estado "não-aplicável"). Por isso a coluna não é
     NOT NULL aqui (decisão consciente: a spec diz NULL=N/A).
+
+    Sprint 103: adicionadas colunas ``valor_etl`` e ``valor_opus`` (TEXT, NULL).
+    Permitem comparação 3-colunas (ETL extraiu / Opus propõe / Humano valida)
+    e export de ground-truth CSV. Migração graceful via ALTER TABLE: schema
+    antigo sem essas colunas é detectado e atualizado in-place.
     """
     caminho.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(caminho)
@@ -118,12 +123,21 @@ def garantir_schema(caminho: Path) -> None:
                 ok INTEGER,
                 observacao TEXT,
                 ts TEXT DEFAULT (datetime('now')),
+                valor_etl TEXT,
+                valor_opus TEXT,
                 PRIMARY KEY (item_id, dimensao)
             );
             CREATE INDEX IF NOT EXISTS idx_revisao_ts ON revisao (ts);
             CREATE INDEX IF NOT EXISTS idx_revisao_dimensao ON revisao (dimensao);
             """
         )
+        # Sprint 103: migração graceful para DBs criados antes desta sprint.
+        cur = conn.execute("PRAGMA table_info(revisao)")
+        colunas = {row[1] for row in cur.fetchall()}
+        if "valor_etl" not in colunas:
+            conn.execute("ALTER TABLE revisao ADD COLUMN valor_etl TEXT")
+        if "valor_opus" not in colunas:
+            conn.execute("ALTER TABLE revisao ADD COLUMN valor_opus TEXT")
         conn.commit()
     finally:
         conn.close()
@@ -135,25 +149,35 @@ def salvar_marcacao(
     dimensao: str,
     ok: int | None,
     observacao: str = "",
+    valor_etl: str | None = None,
+    valor_opus: str | None = None,
 ) -> None:
     """Persiste UPSERT de marcação por (item_id, dimensao).
 
     Se já existe marcação para o par, sobrescreve com ``ts = now`` -- isto
     é intencional (humano pode revisar a própria marcação na sessão).
+
+    Sprint 103: ``valor_etl`` e ``valor_opus`` (None = preserva valor anterior
+    quando UPSERT). Para limpar explicitamente, passar string vazia.
     """
     garantir_schema(caminho)
     conn = sqlite3.connect(caminho)
     try:
+        # COALESCE no UPDATE garante que None novo não sobrescreve valor
+        # ja gravado (preserva histórico se quem chama não se importa com
+        # essas colunas).
         conn.execute(
             """
-            INSERT INTO revisao (item_id, dimensao, ok, observacao, ts)
-            VALUES (?, ?, ?, ?, datetime('now'))
+            INSERT INTO revisao (item_id, dimensao, ok, observacao, ts, valor_etl, valor_opus)
+            VALUES (?, ?, ?, ?, datetime('now'), ?, ?)
             ON CONFLICT(item_id, dimensao) DO UPDATE SET
               ok = excluded.ok,
               observacao = excluded.observacao,
-              ts = excluded.ts
+              ts = excluded.ts,
+              valor_etl = COALESCE(excluded.valor_etl, valor_etl),
+              valor_opus = COALESCE(excluded.valor_opus, valor_opus)
             """,
-            (item_id, dimensao, ok, observacao),
+            (item_id, dimensao, ok, observacao, valor_etl, valor_opus),
         )
         conn.commit()
     finally:
@@ -161,23 +185,151 @@ def salvar_marcacao(
 
 
 def carregar_marcacoes(caminho: Path, item_id: str | None = None) -> list[dict]:
-    """Carrega marcações (todas ou de um item específico)."""
+    """Carrega marcações (todas ou de um item específico).
+
+    Sprint 103: campos `valor_etl` e `valor_opus` retornam None se não
+    existirem (DBs antigos). garantir_schema() faz a migração graceful.
+    """
     if not caminho.exists():
         return []
+    garantir_schema(caminho)  # migra DBs antigos antes de SELECT
     conn = sqlite3.connect(caminho)
     conn.row_factory = sqlite3.Row
     try:
+        colunas = "item_id, dimensao, ok, observacao, ts, valor_etl, valor_opus"
         if item_id is not None:
             cursor = conn.execute(
-                "SELECT item_id, dimensao, ok, observacao, ts FROM revisao WHERE item_id = ?",
+                f"SELECT {colunas} FROM revisao WHERE item_id = ?",
                 (item_id,),
             )
         else:
-            cursor = conn.execute("SELECT item_id, dimensao, ok, observacao, ts FROM revisao")
+            cursor = conn.execute(f"SELECT {colunas} FROM revisao")
         resultado = [dict(row) for row in cursor]
     finally:
         conn.close()
     return resultado
+
+
+def extrair_valor_etl_para_dimensao(pendencia: dict, dimensao: str) -> str:
+    """Sprint 103: mapeia o metadata da pendência para o "valor extraído" que
+    o ETL atribuiu a cada dimensão canônica.
+
+    Heurísticas:
+      - data       -> metadata.data_emissao
+      - valor      -> metadata.total
+      - itens      -> metadata.itens (lista) -> contagem
+      - fornecedor -> metadata.razao_social ou nome_canonico
+      - pessoa     -> metadata.pessoa ou inferida do path
+
+    Retorna string vazia se o ETL não preencheu a dimensão (sinal claro
+    para o revisor de que o pipeline NÃO sabe). PII mascarada
+    defensivamente.
+    """
+    meta = pendencia.get("metadata") or {}
+    if dimensao == "data":
+        return mascarar_pii(str(meta.get("data_emissao", "")))
+    if dimensao == "valor":
+        total = meta.get("total")
+        return f"{float(total):.2f}" if total not in (None, "") else ""
+    if dimensao == "itens":
+        itens = meta.get("itens")
+        if isinstance(itens, list):
+            return f"{len(itens)} item(ns)"
+        return ""
+    if dimensao == "fornecedor":
+        razao = meta.get("razao_social") or meta.get("nome_canonico", "")
+        return mascarar_pii(str(razao))
+    if dimensao == "pessoa":
+        pessoa = meta.get("pessoa")
+        if pessoa:
+            return str(pessoa)
+        # Fallback: infere do caminho ('andre/' ou 'casal/' no caminho).
+        caminho = str(pendencia.get("caminho", ""))
+        if "/andre/" in caminho:
+            return "andre (inferido)"
+        if "/casal/" in caminho:
+            return "casal (inferido)"
+        if "/vitoria/" in caminho:
+            return "vitoria (inferido)"
+        return ""
+    return ""
+
+
+def gerar_ground_truth_csv(caminho_db: Path, caminho_csv: Path) -> int:
+    """Sprint 103: exporta tabela `revisao` para CSV com 3 colunas (ETL/Opus/
+    Humano) por dimensao + flag `divergencia`.
+
+    Cabecalho: item_id, dimensao, valor_etl, valor_opus, valor_humano,
+    divergencia, observacao, ts.
+    `valor_humano` mapeia ok={1: "OK", 0: "Erro", None: "Não-aplicável"}.
+    `divergencia` = "1" se valor_etl != valor_opus OR humano marcou Erro
+    (i.e. ETL não casou ground-truth). PII mascarada antes da escrita.
+
+    Retorna número de linhas escritas (excluindo cabeçalho).
+    """
+    import csv
+
+    if not caminho_db.exists():
+        # CSV vazio (so cabecalho).
+        caminho_csv.parent.mkdir(parents=True, exist_ok=True)
+        with caminho_csv.open("w", newline="", encoding="utf-8") as f:
+            writer = csv.writer(f)
+            writer.writerow(
+                [
+                    "item_id",
+                    "dimensao",
+                    "valor_etl",
+                    "valor_opus",
+                    "valor_humano",
+                    "divergencia",
+                    "observacao",
+                    "ts",
+                ]
+            )
+        return 0
+
+    marcacoes = carregar_marcacoes(caminho_db)
+    rotulo_humano = {1: "OK", 0: "Erro", None: "Não-aplicável"}
+
+    caminho_csv.parent.mkdir(parents=True, exist_ok=True)
+    with caminho_csv.open("w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        writer.writerow(
+            [
+                "item_id",
+                "dimensao",
+                "valor_etl",
+                "valor_opus",
+                "valor_humano",
+                "divergencia",
+                "observacao",
+                "ts",
+            ]
+        )
+        n = 0
+        for m in marcacoes:
+            valor_etl = mascarar_pii(m.get("valor_etl") or "")
+            valor_opus = mascarar_pii(m.get("valor_opus") or "")
+            valor_humano = rotulo_humano.get(m.get("ok"), "Não-aplicável")
+            # divergencia: ETL diverge do Opus OU humano marcou Erro.
+            divergencia = "1" if (
+                (valor_etl and valor_opus and valor_etl != valor_opus)
+                or m.get("ok") == 0
+            ) else "0"
+            writer.writerow(
+                [
+                    m["item_id"],
+                    m["dimensao"],
+                    valor_etl,
+                    valor_opus,
+                    valor_humano,
+                    divergencia,
+                    mascarar_pii(m.get("observacao") or ""),
+                    m.get("ts") or "",
+                ]
+            )
+            n += 1
+    return n
 
 
 def _taxa_fidelidade(marcacoes: list[dict]) -> float:
@@ -404,6 +556,11 @@ def _renderizar_painel_item(pendencia: dict, marcacoes_item: list[dict]) -> dict
     for idx, dimensao in enumerate(DIMENSOES_CANONICAS):
         with cols[idx]:
             st.markdown(f"**{dimensao}**")
+            # Sprint 103: mostra valor que o ETL extraiu para esta dimensão.
+            # Linha enxuta acima do radio. Se vazio, sinaliza " --- " para
+            # destacar visualmente que pipeline NÃO sabe.
+            valor_etl = extrair_valor_etl_para_dimensao(pendencia, dimensao)
+            st.caption(f"ETL: {valor_etl or '---'}")
             valor_existente = estados_existentes.get(dimensao, {}).get("ok")
             obs_existente = estados_existentes.get(dimensao, {}).get("observacao") or ""
             indice_default = 2  # Não-aplicável
@@ -425,7 +582,9 @@ def _renderizar_painel_item(pendencia: dict, marcacoes_item: list[dict]) -> dict
                 label_visibility="collapsed",
                 placeholder="observação opcional",
             )
-            coletadas[dimensao] = (ROTULOS_ESTADO[rotulo], obs)
+            # Sprint 103: persiste valor_etl junto com o estado humano para
+            # permitir export ground-truth a posteriori.
+            coletadas[dimensao] = (ROTULOS_ESTADO[rotulo], obs, valor_etl)
 
     return coletadas
 
@@ -549,13 +708,14 @@ def renderizar(
                     "Salvar marcações",
                     key=f"revisor_salvar_{item_id}",
                 ):
-                    for dimensao, (estado, obs) in coletadas.items():
+                    for dimensao, (estado, obs, valor_etl) in coletadas.items():
                         salvar_marcacao(
                             CAMINHO_REVISAO_HUMANA,
                             item_id,
                             dimensao,
                             estado,
                             obs,
+                            valor_etl=valor_etl,
                         )
                     st.markdown(
                         callout_html(
@@ -572,8 +732,8 @@ def renderizar(
 
     st.markdown("---")
 
-    # Ações da sessão: relatório + sugestor de patch.
-    col_rel, col_patch = st.columns(2)
+    # Ações da sessão: relatório + sugestor de patch + export ground-truth (S103).
+    col_rel, col_patch, col_csv = st.columns(3)
     with col_rel:
         if st.button("Gerar relatório da sessão", key="revisor_gerar_relatorio"):
             destino_dir = Path(__file__).resolve().parents[3] / "docs" / "revisoes"
@@ -588,6 +748,27 @@ def renderizar(
                     f"Relatório gravado em `{destino.relative_to(destino_dir.parents[1])}`. "
                     f"PII mascarada (CPF/CNPJ).",
                     titulo="Relatório pronto",
+                ),
+                unsafe_allow_html=True,
+            )
+    with col_csv:
+        # Sprint 103: export ground-truth CSV com 3 colunas (ETL/Opus/Humano)
+        # + flag divergencia. Util para análise quantitativa pós-sessão e
+        # para alimentar futuras métricas de fidelidade do extrator.
+        if st.button("Exportar ground-truth CSV", key="revisor_exportar_csv"):
+            destino_csv = (
+                Path(__file__).resolve().parents[3]
+                / "docs"
+                / "revisoes"
+                / f"ground_truth_{datetime.now().strftime('%Y-%m-%d_%H%M%S')}.csv"
+            )
+            n = gerar_ground_truth_csv(CAMINHO_REVISAO_HUMANA, destino_csv)
+            st.markdown(
+                callout_html(
+                    "success",
+                    f"CSV gerado: `{destino_csv.relative_to(destino_csv.parents[2])}` "
+                    f"({n} linha(s)). PII mascarada.",
+                    titulo="Ground-truth pronto",
                 ),
                 unsafe_allow_html=True,
             )
