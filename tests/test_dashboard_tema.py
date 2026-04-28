@@ -927,12 +927,12 @@ class TestSprintUX119PolishV2:
         assert '[data-testid="stHeader"]' in bloco
         assert "background-color: var(--color-card-fundo)" in bloco
 
-    # AC1 -- label_visibility collapsed (testado via fonte do componente)
-    def test_ac1_busca_global_sidebar_label_collapsed(self):
-        # Lê o código-fonte do componente para confirmar que o
-        # label_visibility foi alterado de 'visible' para 'collapsed'.
-        # Isso preserva a leitura do contrato sem precisar montar mocks
-        # complexos do streamlit.text_input.
+    # AC1 (UX-119) -- label_visibility revertido pela Sprint UX-125 AC4.
+    # Agora a label "Busca Global" volta a ser visível (placeholder vazio).
+    def test_ac1_busca_global_sidebar_label_visible(self):
+        # Sprint UX-125 reverte UX-119 AC1: label_visibility "visible".
+        # Texto duplicado some com placeholder="" (em vez de
+        # "Buscar (documento, fornecedor, aba...)").
         from pathlib import Path
 
         path = (
@@ -940,8 +940,8 @@ class TestSprintUX119PolishV2:
             / "src/dashboard/componentes/busca_global_sidebar.py"
         )
         fonte = path.read_text(encoding="utf-8")
-        assert 'label_visibility="collapsed"' in fonte
-        assert 'label_visibility="visible"' not in fonte
+        assert 'label_visibility="visible"' in fonte
+        assert 'label_visibility="collapsed"' not in fonte
 
 
 # "Simplicidade é a maior sofisticação." -- Leonardo da Vinci

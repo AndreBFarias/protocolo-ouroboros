@@ -131,20 +131,21 @@ class _FakeStSidebar:
 
 
 class TestOrdemSidebar:
-    def test_renderizar_input_busca_chama_text_input_com_placeholder_canonico(
+    def test_renderizar_input_busca_chama_text_input_com_label_canonico(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """AC #1: primeiro elemento abaixo do logo é st.text_input com
-        placeholder 'Buscar (documento, fornecedor, aba...)'."""
+        """AC #1 + Sprint UX-125 AC4: primeiro elemento abaixo do logo é
+        st.text_input com label='Busca Global' (renomeado de 'Buscar' na
+        UX-125) e placeholder='' (vazio, label visível agora cumpre o
+        papel)."""
         fake = _FakeStSidebar()
         monkeypatch.setitem(sys.modules, "streamlit", fake)
         busca_global_sidebar.renderizar_input_busca()
-        assert any(c["label"] == "Buscar" for c in fake.text_input_calls)
+        assert any(c["label"] == "Busca Global" for c in fake.text_input_calls)
         ph = fake.text_input_calls[0]["placeholder"]
-        assert "Buscar" in ph
-        assert "documento" in ph
-        assert "fornecedor" in ph
-        assert "aba" in ph
+        assert ph == ""
+        # Label não é mais 'Buscar' (UX-119); agora é 'Busca Global'.
+        assert not any(c["label"] == "Buscar" for c in fake.text_input_calls)
 
     def test_text_input_aparece_antes_de_qualquer_selectbox_quando_renderizado(
         self, monkeypatch: pytest.MonkeyPatch
@@ -180,15 +181,17 @@ class TestAreaComoSelectbox:
         monkeypatch.setattr(app_mod, "st", fake)
 
         cluster = app_mod._selecionar_cluster()
-        assert cluster in {"Home", "Dinheiro", "Documentos", "Análise", "Metas"}
+        assert cluster in {"Home", "Finanças", "Documentos", "Análise", "Metas"}
         labels_selectbox = [c["label"] for c in fake.selectbox_calls]
         labels_radio = [c["label"] for c in fake.radio_calls]
         assert "Área" in labels_selectbox, "Área deveria ser selectbox após Sprint UX-113"
         assert "Área" not in labels_radio, "Área não deve ser radio mais"
 
     def test_selectbox_area_tem_5_opcoes_canonicas(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        """AC #2 + Sprint UX-121: opções do dropdown Área = ('Home', 'Dinheiro',
-        'Documentos', 'Análise', 'Metas') -- 'Hoje' renomeado para 'Home'."""
+        """AC #2 + Sprint UX-121 + UX-125: opções do dropdown Área =
+        ('Home', 'Finanças', 'Documentos', 'Análise', 'Metas') -- 'Hoje'
+        renomeado para 'Home' (UX-121); 'Dinheiro' renomeado para 'Finanças'
+        (UX-125)."""
         from src.dashboard import app as app_mod
 
         fake = _FakeStSidebar()
@@ -198,7 +201,7 @@ class TestAreaComoSelectbox:
         chamada_area = next(c for c in fake.selectbox_calls if c["label"] == "Área")
         assert chamada_area["options"] == [
             "Home",
-            "Dinheiro",
+            "Finanças",
             "Documentos",
             "Análise",
             "Metas",
