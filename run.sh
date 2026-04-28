@@ -548,6 +548,7 @@ case "${1:-}" in
             python -m scripts.reprocessar_documentos --forcar-reextracao
             run_passo "limpar_revisao_orfaos" python -m scripts.limpar_revisao_orfaos --executar
             run_passo "normalizar_path_relativo" python -m scripts.normalizar_path_relativo --executar
+            run_passo "backfill_metadata_pessoa" python -m scripts.backfill_metadata_pessoa --executar
             msg_ok "Reextracao concluida."
         else
             msg_aviso "Operação cancelada."
