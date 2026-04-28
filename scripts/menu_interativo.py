@@ -58,6 +58,7 @@ OPCOES_MENU: dict[str, str] = {
     "3": "Gerar Relatório do mês",
     "4": "Sincronizar com Obsidian",
     "5": "Tudo (inbox + pipeline + sync)",
+    "6": "Reextrair documentos (limpa grafo e re-ingere) [Sprint 104]",
     "0": "Sair",
 }
 
@@ -163,6 +164,19 @@ def _acao_rota_completa() -> bool:
     return rc == 0
 
 
+def _acao_reextrair() -> bool:
+    """Sprint 104: re-ingere todos os documentos do zero, atualizando metadata
+    no grafo. Util quando extratores ganharam campos novos.
+    """
+    cons = _console()
+    cons.print(
+        "[red]Reextracao em lote vai LIMPAR todos os nodes 'documento' do grafo.[/]"
+    )
+    cons.print("[dim]Use isto so se voce sabe o que esta fazendo.[/]")
+    rc = _rodar_run_sh("--reextrair-tudo")
+    return rc == 0
+
+
 _DISPATCHER: dict[str, callable] = {  # type: ignore[type-arg]
     "R": _acao_rota_completa,
     "1": _acao_inbox,
@@ -170,6 +184,7 @@ _DISPATCHER: dict[str, callable] = {  # type: ignore[type-arg]
     "3": _acao_relatorio,
     "4": _acao_sync,
     "5": _acao_tudo,
+    "6": _acao_reextrair,
 }
 
 

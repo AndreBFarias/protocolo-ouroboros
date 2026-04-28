@@ -380,6 +380,36 @@ def _imprimir_sumario_execucao(
     print("'documento_de'.")
 
 
+def _limpar_documentos_e_arestas(grafo: GrafoDB) -> dict[str, int]:
+    """Sprint 104: limpa nodes 'documento' + arestas relacionadas para forcar
+    reextracao. Retorna contagem por tipo apagado.
+
+    Tipos de aresta limpos (em ordem, para não deixar orfaos):
+      - documento_de  (doc -> transacao)  : Sprint 48
+      - fornecido_por (doc -> fornecedor) : Sprint 47c+
+      - ocorre_em     (doc -> periodo)    : Sprint 47c+
+      - contem_item   (doc -> item)       : Sprint 47c+
+
+    Não toca: transação, fornecedor, periodo, item, categoria. Esses ficam
+    intactos (são re-criados como precisam quando a re-ingestao roda).
+    Ideal para quando extrator foi atualizado (ex: Sprint 95a adicionou
+    'liquido' ao metadata de holerite).
+    """
+    cur = grafo._conn.cursor()  # noqa: SLF001 -- limpeza administrativa
+    edges_apagadas = 0
+    for tipo_edge in ("documento_de", "fornecido_por", "ocorre_em", "contem_item"):
+        cur.execute(
+            "DELETE FROM edge WHERE tipo=? AND src_id IN "
+            "(SELECT id FROM node WHERE tipo='documento')",
+            (tipo_edge,),
+        )
+        edges_apagadas += cur.rowcount
+    cur.execute("DELETE FROM node WHERE tipo='documento'")
+    docs_apagados = cur.rowcount
+    grafo._conn.commit()  # noqa: SLF001
+    return {"docs": docs_apagados, "edges_total": edges_apagadas}
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description="Reprocessa todos os documentos de data/raw e popula o grafo.",
@@ -395,6 +425,16 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument(
         "--grafo", type=Path, default=None, help="Caminho alternativo para grafo.sqlite."
+    )
+    parser.add_argument(
+        "--forcar-reextracao",
+        action="store_true",
+        help=(
+            "Sprint 104: limpa nodes 'documento' e arestas relacionadas antes de "
+            "reingerir. Sem esta flag o pipeline e idempotente (INSERT OR IGNORE), "
+            "entao metadata novo de extrator atualizado não chega ao grafo. "
+            "Com a flag, todo doc e re-extraido do zero."
+        ),
     )
     args = parser.parse_args(argv)
 
@@ -451,6 +491,14 @@ def main(argv: list[str] | None = None) -> int:
     try:
         grafo.criar_schema()
         snap_antes = _contagem_grafo(grafo)
+
+        if args.forcar_reextracao:
+            apagados = _limpar_documentos_e_arestas(grafo)
+            logger.warning(
+                "Sprint 104 --forcar-reextracao: removidos %d nodes 'documento' + %d arestas",
+                apagados["docs"],
+                apagados["edges_total"],
+            )
 
         por_status: Counter = Counter()
         por_extrator_usado: Counter = Counter()
