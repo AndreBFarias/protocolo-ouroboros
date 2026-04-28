@@ -30,7 +30,8 @@ def setup_function():
 
 
 def test_carrega_yaml_fornecedores_sinteticos():
-    sinteticos = _carregar_fornecedores_sinteticos()
+    # AUDIT-CACHE-THREADSAFE: agora retorna tuple-of-tuples (lru_cache friendly).
+    sinteticos = dict(_carregar_fornecedores_sinteticos())
     assert "das_parcsn_andre" in sinteticos
     rf = sinteticos["das_parcsn_andre"]
     assert rf["nome_canonico"] == "RECEITA_FEDERAL"

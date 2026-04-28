@@ -28,6 +28,7 @@ Tipos de aresta:
 
 from __future__ import annotations
 
+import functools
 from datetime import date, timedelta
 from pathlib import Path
 from typing import Any
@@ -44,7 +45,6 @@ JANELA_MATCH_ITEM_DIAS: int = 1
 THRESHOLD_DESCRICAO: int = 82
 MARGEM_DESEMPATE: int = 5
 
-
 # ============================================================================
 # Sprint 107: fornecedores sintéticos para impostos
 # ============================================================================
@@ -52,11 +52,11 @@ MARGEM_DESEMPATE: int = 5
 _PATH_FORNECEDORES_SINTETICOS: Path = (
     Path(__file__).resolve().parents[2] / "mappings" / "fornecedores_sinteticos.yaml"
 )
-_SINTETICOS_CACHE: dict[str, dict[str, Any]] | None = None
 
 
-def _carregar_fornecedores_sinteticos() -> dict[str, dict[str, Any]]:
-    """Carrega o YAML de fornecedores sintéticos (cache em módulo).
+@functools.lru_cache(maxsize=1)
+def _carregar_fornecedores_sinteticos() -> tuple[tuple[str, dict[str, Any]], ...]:
+    """AUDIT-CACHE-THREADSAFE: usa lru_cache(maxsize=1) em vez de global mutavel.
 
     Schema esperado:
         fornecedores:
@@ -65,48 +65,49 @@ def _carregar_fornecedores_sinteticos() -> dict[str, dict[str, Any]]:
             razao_social: "Receita Federal do Brasil"
             aplica_a_tipos: [das_parcsn_andre, ...]
 
-    Devolve dict {tipo_documento: {cnpj, razao_social, ...}} -- mapa
-    invertido para lookup direto.
+    Devolve tupla imutável de (tipo_documento, dict) para compatibilidade com
+    lru_cache (que exige retorno hashable). Caller converte para dict via dict().
     """
-    global _SINTETICOS_CACHE
-    if _SINTETICOS_CACHE is not None:
-        return _SINTETICOS_CACHE
-
     import yaml
 
     if not _PATH_FORNECEDORES_SINTETICOS.exists():
-        _SINTETICOS_CACHE = {}
-        return _SINTETICOS_CACHE
+        return ()
 
     with _PATH_FORNECEDORES_SINTETICOS.open(encoding="utf-8") as fh:
         dados = yaml.safe_load(fh) or {}
 
     fornecedores = dados.get("fornecedores", {}) or {}
-    invertido: dict[str, dict[str, Any]] = {}
+    invertido: list[tuple[str, dict[str, Any]]] = []
     for nome, info in fornecedores.items():
         cnpj = info.get("cnpj") or ""
         razao = info.get("razao_social") or nome
         for tipo in info.get("aplica_a_tipos", []) or []:
-            invertido[tipo] = {
-                "nome_canonico": nome,
-                "cnpj": cnpj,
-                "razao_social": razao,
-            }
-    _SINTETICOS_CACHE = invertido
-    return _SINTETICOS_CACHE
+            invertido.append(
+                (
+                    tipo,
+                    {
+                        "nome_canonico": nome,
+                        "cnpj": cnpj,
+                        "razao_social": razao,
+                    },
+                )
+            )
+    return tuple(invertido)
 
 
 def _resolver_fornecedor_sintetico(tipo_documento: str) -> dict[str, Any] | None:
     """Retorna sintético {cnpj, razao_social, nome_canonico} ou None."""
     if not tipo_documento:
         return None
-    return _carregar_fornecedores_sinteticos().get(tipo_documento)
+    for tipo, info in _carregar_fornecedores_sinteticos():
+        if tipo == tipo_documento:
+            return info
+    return None
 
 
 def _resetar_cache_sinteticos() -> None:
-    """Helper para testes -- força recarregar do YAML."""
-    global _SINTETICOS_CACHE
-    _SINTETICOS_CACHE = None
+    """Helper para testes -- delega para lru_cache.cache_clear()."""
+    _carregar_fornecedores_sinteticos.cache_clear()
 
 
 # ============================================================================
