@@ -197,10 +197,16 @@ def recarregar_pessoas(path: Path | None = None) -> dict:
 
 
 def _casar_via_pessoas_yaml(texto: str) -> tuple[Pessoa | None, str]:
-    """Casa texto contra CNPJ, razão social e alias de pessoas.yaml.
+    """Casa texto contra CPF, CNPJ, razão social e alias de pessoas.yaml.
 
-    Ordem: CNPJ (raiz 8 dígitos) > razão social > alias. Mais específico vence.
-    Se mais de uma pessoa casar, retorna a primeira (ordem de declaração do YAML).
+    Ordem: CPF > CNPJ (raiz 8 dígitos) > razão social > alias. Mais
+    específico vence. Se mais de uma pessoa casar, retorna a primeira
+    (ordem de declaração do YAML).
+
+    Sprint 105: ganhou camada CPF para fechar o gap quando
+    `mappings/cpfs_pessoas.yaml` (mapping antigo) não existe -- o CPF
+    declarado em `mappings/pessoas.yaml` (mais rico) passa a ser
+    consultado direto.
     """
     dados = _carregar_pessoas_se_preciso()
     pessoas = dados.get("pessoas") or {}
@@ -210,7 +216,16 @@ def _casar_via_pessoas_yaml(texto: str) -> tuple[Pessoa | None, str]:
     texto_upper = texto.upper()
     digitos_texto = re.sub(r"\D", "", texto)
 
-    # 1. CNPJ (raiz 8 dígitos)
+    # 1. CPF (Sprint 105) -- 11 dígitos limpos
+    for pessoa, ids in pessoas.items():
+        if pessoa not in _PESSOAS_VALIDAS:
+            continue
+        for cpf in ids.get("cpfs", []) or []:
+            digitos_cpf = re.sub(r"\D", "", str(cpf))
+            if len(digitos_cpf) == 11 and digitos_cpf in digitos_texto:
+                return pessoa, f"CPF hash={hash_curto_pii(digitos_cpf)}"  # type: ignore[return-value]
+
+    # 2. CNPJ (raiz 8 dígitos)
     for pessoa, ids in pessoas.items():
         if pessoa not in _PESSOAS_VALIDAS:
             continue
@@ -219,7 +234,7 @@ def _casar_via_pessoas_yaml(texto: str) -> tuple[Pessoa | None, str]:
             if len(raiz) >= 8 and raiz[:8] in digitos_texto:
                 return pessoa, f"CNPJ {cnpj}"  # type: ignore[return-value]
 
-    # 2. Razão social literal
+    # 3. Razão social literal
     for pessoa, ids in pessoas.items():
         if pessoa not in _PESSOAS_VALIDAS:
             continue
@@ -229,7 +244,7 @@ def _casar_via_pessoas_yaml(texto: str) -> tuple[Pessoa | None, str]:
                 # Substring "razão social" é preservada para compat de testes.
                 return pessoa, f"razão social hash={hash_curto_pii(str(razao))}"  # type: ignore[return-value]
 
-    # 3. Alias curto
+    # 4. Alias curto
     for pessoa, ids in pessoas.items():
         if pessoa not in _PESSOAS_VALIDAS:
             continue
