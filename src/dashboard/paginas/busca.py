@@ -1,17 +1,32 @@
-"""Página Busca Global -- Sprint UX-114 (refactor sobre Sprint 52).
+"""Página Busca Global -- Sprint UX-114 (refactor sobre Sprint 52) + UX-127.
 
 Busca FUNCIONAL com:
 
 - Texto descritivo curto (max 90 chars).
-- Dropdown 'Tipo' com opções canônicas (Todos / Pessoais / ... / IRPF).
 - Input com placeholder MAIÚSCULO.
 - Autocomplete (sugestões via `busca_indice.sugestoes`).
 - Chips abaixo do input com TIPOS DE DOCUMENTOS canônicos (8 fixos).
-- Roteador: query exata casa nome de aba -> link rápido; casa fornecedor
-  -> link rápido para Catalogação filtrada; senão busca_global do grafo.
+- Roteador: query exata casa nome de aba -> mensagem inline; casa
+  fornecedor -> tabela inline (UX-124); senão busca_global do grafo.
 - Filtros sidebar (Mês, Pessoa, Forma de pagamento) impactam resultados.
 - Output em st.dataframe com colunas: Nome do documento, Texto extraído,
   Caminho, Botão Exportar (copia para data/exports/<ts>_<nome>.<ext>).
+
+Sprint UX-127 (4 fixes finais):
+- AC2 dropdown 'Tipo de busca' removido: chips + autocomplete + roteador
+  (UX-114) já cobrem filtragem; widget redundante removido. Constantes
+  `OPCOES_DROPDOWN_TIPO`/`_MAPA_DROPDOWN_TIPOS` e `_filtrar_por_tipo_dropdown`
+  preservadas para compatibilidade com testes regressivos antigos
+  (chamada interna sempre passa "Todos" => no-op).
+- AC3 contagem 'Documentos (N)': enriquece resultados de
+  `buscar_global` com docs vinculados ao fornecedor via edge
+  `fornecido_por` quando rota é fornecedor. Sem isso, `_buscar_documentos`
+  só casa documentos cujo `nome_canonico`/metadata contém o termo
+  literalmente (ex: "Neoenergia"), perdendo os documentos cujo vinculo
+  é apenas relacional (edge no grafo).
+- AC4 sem botões de navegação: `kind='aba'` mostra mensagem inline sem
+  `st.button` que faz `st.query_params`/`st.rerun`. UX-124 já cobre
+  `kind='fornecedor'` com tabela inline.
 
 Padrões canônicos aplicados:
 - (l) subregra retrocompatível: chips Sprint 59 mantidos abaixo do input
@@ -172,6 +187,111 @@ def _aplicar_filtros_sidebar(
     return saida
 
 
+def _docs_vinculados_a_fornecedor(nome_fornecedor: str) -> list[dict]:
+    """Retorna documentos ligados a um fornecedor via edge `fornecido_por`.
+
+    Sprint UX-127 AC3: corrige bug "Documentos (0)" sempre. O
+    `_buscar_documentos` em `dados.py` usa LIKE em `nome_canonico`/
+    metadata do documento -- bate so quando o termo aparece literalmente
+    nesses campos. Para fornecedores cujo vinculo com documento e
+    relacional (edge no grafo), e preciso seguir a aresta.
+
+    Match case-insensitive contra `nome_canonico` e `aliases` do
+    fornecedor (mesmo padrao do `construir_dataframe_fornecedor` da
+    UX-124). Devolve lista no mesmo formato de `_buscar_documentos`
+    (dicts com id/nome_canonico/tipo_documento/data/razao_social/total)
+    para mesclagem direta.
+
+    Args:
+        nome_fornecedor: nome humano do fornecedor (ex: "NEOENERGIA").
+
+    Returns:
+        Lista (possivelmente vazia) de dicts de documentos.
+    """
+    import sqlite3
+
+    if not nome_fornecedor or not str(nome_fornecedor).strip():
+        return []
+    if not _dados.CAMINHO_GRAFO.exists():
+        return []
+
+    alvo = str(nome_fornecedor).strip().lower()
+    padrao = f"%{alvo}%"
+
+    conn = sqlite3.connect(f"file:{_dados.CAMINHO_GRAFO}?mode=ro", uri=True)
+    conn.row_factory = sqlite3.Row
+    docs: list[dict] = []
+    try:
+        # 1) Acha fornecedores que casam com o nome.
+        forn_ids: list[int] = []
+        for row in conn.execute(
+            "SELECT id FROM node "
+            "WHERE tipo = 'fornecedor' "
+            "  AND (LOWER(nome_canonico) LIKE ? OR LOWER(aliases) LIKE ?) "
+            "LIMIT 50",
+            (padrao, padrao),
+        ):
+            forn_ids.append(int(row["id"]))
+
+        if not forn_ids:
+            return []
+
+        # 2) Para cada fornecedor, segue edge `fornecido_por` ate documentos.
+        vistos: set[int] = set()
+        for fid in forn_ids:
+            for edge in conn.execute(
+                "SELECT src_id FROM edge WHERE dst_id = ? AND tipo = 'fornecido_por'",
+                (fid,),
+            ):
+                doc_id = int(edge["src_id"])
+                if doc_id in vistos:
+                    continue
+                doc_row = conn.execute(
+                    "SELECT id, tipo, nome_canonico, metadata FROM node WHERE id = ?",
+                    (doc_id,),
+                ).fetchone()
+                if not doc_row or doc_row["tipo"] != "documento":
+                    continue
+                vistos.add(doc_id)
+                try:
+                    import json as _json
+
+                    meta = _json.loads(doc_row["metadata"] or "{}")
+                except (ValueError, TypeError):
+                    meta = {}
+                docs.append(
+                    {
+                        "id": doc_id,
+                        "nome_canonico": doc_row["nome_canonico"],
+                        "tipo_documento": meta.get("tipo_documento", "desconhecido"),
+                        "data": meta.get("data_emissao", ""),
+                        "razao_social": meta.get("razao_social", ""),
+                        "total": float(meta.get("total", 0.0) or 0.0),
+                    }
+                )
+    finally:
+        conn.close()
+
+    return docs
+
+
+def _mesclar_docs_dedup(base: list[dict], extras: list[dict]) -> list[dict]:
+    """Mescla duas listas de documentos deduplicando por `id`.
+
+    Preserva ordem de `base` primeiro (resultado de `buscar_global`) e
+    adiciona ao final apenas os ids de `extras` que ainda não apareceram.
+    """
+    saida = list(base)
+    ids_existentes = {d.get("id") for d in saida if d.get("id") is not None}
+    for d in extras:
+        did = d.get("id")
+        if did is None or did in ids_existentes:
+            continue
+        ids_existentes.add(did)
+        saida.append(d)
+    return saida
+
+
 def _filtrar_por_tipo_dropdown(docs: list[dict], rotulo: str) -> list[dict]:
     """Filtra documentos por categoria do dropdown de tipo."""
     if not rotulo or rotulo == "Todos":
@@ -262,7 +382,7 @@ def renderizar(
             unsafe_allow_html=True,
         )
 
-    rotulo_tipo, termo = _renderizar_controles(indice)
+    termo = _renderizar_controles(indice)
 
     if not _dados.CAMINHO_GRAFO.exists():
         st.markdown(
@@ -295,8 +415,20 @@ def renderizar(
 
     resultados = buscar_global(termo)
 
-    # Filtros: dropdown tipo + sidebar (mes/pessoa/forma).
-    docs_filtrados = _filtrar_por_tipo_dropdown(resultados.get("documentos", []), rotulo_tipo)
+    # Sprint UX-127 AC3: enriquece resultados com docs vinculados via edge
+    # `fornecido_por` quando rota é fornecedor. Sem isso, a contagem
+    # "Documentos (N)" zera para fornecedores cujo nome humano não consta
+    # no nome_canonico/metadata dos documentos (caso comum: doc canônico
+    # é o número do boleto/chave NFCe; vínculo com fornecedor é relacional).
+    docs_brutos = resultados.get("documentos", [])
+    if rota.get("kind") == "fornecedor" and rota.get("destino"):
+        docs_extras = _docs_vinculados_a_fornecedor(rota["destino"])
+        docs_brutos = _mesclar_docs_dedup(docs_brutos, docs_extras)
+
+    # Filtros: sidebar (mes/pessoa/forma). Dropdown removido na UX-127 AC2;
+    # _filtrar_por_tipo_dropdown chamado com "Todos" preserva contrato
+    # N-para-N com testes regressivos antigos (no-op).
+    docs_filtrados = _filtrar_por_tipo_dropdown(docs_brutos, "Todos")
     docs_filtrados = _aplicar_filtros_sidebar(
         docs_filtrados,
         periodo=periodo,
@@ -348,19 +480,13 @@ def _aplicar_chip_sugestao(valor: str) -> None:
 _aplicar_chip_tipo = _aplicar_chip_sugestao
 
 
-def _renderizar_controles(indice: dict[str, list[str]]) -> tuple[str, str]:
-    """Renderiza dropdown + label + input + autocomplete + chips.
+def _renderizar_controles(indice: dict[str, list[str]]) -> str:
+    """Renderiza label + input + autocomplete + chips.
 
-    Devolve `(rótulo_tipo, termo_query)`.
+    Sprint UX-127 AC2: dropdown 'Tipo de busca' removido. Filtragem por
+    tipo agora vem dos chips clicaveis + auto-deteccao por substring no
+    roteador (UX-114). Devolve apenas `termo_query` (string).
     """
-    rotulo_tipo = st.selectbox(
-        "Tipo de busca",
-        OPCOES_DROPDOWN_TIPO,
-        index=0,
-        key="busca_tipo_dropdown",
-        help="Filtra os resultados por categoria de documento.",
-    )
-
     svg_busca = icon_html("search", tamanho=18, cor=CORES["destaque"])
     st.markdown(
         f'<div class="ouroboros-label-icon" style="margin-top: {SPACING["sm"]}px;">'
@@ -411,7 +537,7 @@ def _renderizar_controles(indice: dict[str, list[str]]) -> tuple[str, str]:
                 args=(sug,),
             )
 
-    return rotulo_tipo, (termo or "").strip()
+    return (termo or "").strip()
 
 
 def _renderizar_rota_rapida(
@@ -431,6 +557,9 @@ def _renderizar_rota_rapida(
     kind = rota.get("kind")
     destino = rota.get("destino", "")
     if kind == "aba" and destino:
+        # Sprint UX-127 AC4: nenhum botao "Ir para aba X" que faz
+        # st.query_params + st.rerun. Mensagem inline apenas; usuario
+        # navega manualmente pelo cluster/sidebar se quiser sair da busca.
         st.markdown(
             callout_html(
                 "info",
@@ -438,17 +567,6 @@ def _renderizar_rota_rapida(
             ),
             unsafe_allow_html=True,
         )
-        if st.button(
-            f"Ir para aba {destino}",
-            key="busca_link_aba",
-            use_container_width=False,
-        ):
-            cluster = rota.get("tipo") or ""
-            params: dict = {"tab": destino}
-            if cluster:
-                params["cluster"] = cluster
-            st.query_params.from_dict(params)
-            st.rerun()
     elif kind == "fornecedor" and destino:
         _renderizar_tabela_inline_fornecedor(
             destino,
