@@ -36,6 +36,7 @@ from typing import Any
 from rapidfuzz import fuzz
 
 from src.graph.db import GrafoDB
+from src.graph.path_canonico import to_relativo
 from src.utils.logger import configurar_logger
 
 logger = configurar_logger("graph.ingestor_documento")
@@ -231,7 +232,7 @@ def ingerir_apolice(
     }
     metadata["tipo_documento"] = "cupom_garantia_estendida"
     if caminho_arquivo is not None:
-        metadata["arquivo_origem"] = str(caminho_arquivo)
+        metadata["arquivo_origem"] = to_relativo(caminho_arquivo)
 
     apolice_id = db.upsert_node("apolice", bilhete["numero_bilhete"], metadata=metadata)
 
@@ -479,7 +480,7 @@ def ingerir_documento_fiscal(
     }
     metadata.setdefault("tipo_documento", "documento_fiscal")
     if caminho_arquivo is not None:
-        metadata["arquivo_origem"] = str(caminho_arquivo)
+        metadata["arquivo_origem"] = to_relativo(caminho_arquivo)
     if sintetico is not None:
         # AUDIT-CONTRIBUINTE-METADATA: sempre grava (mesmo vazio) para sinalizar
         # que o sintético foi aplicado -- auditoria via SQL pode consultar.
@@ -612,7 +613,7 @@ def ingerir_prescricao(
     }
     metadata.setdefault("tipo_documento", "receita_medica")
     if caminho_arquivo is not None:
-        metadata["arquivo_origem"] = str(caminho_arquivo)
+        metadata["arquivo_origem"] = to_relativo(caminho_arquivo)
 
     prescricao_id = db.upsert_node(
         "prescricao",
@@ -821,7 +822,7 @@ def ingerir_garantia(
     }
     metadata.setdefault("tipo_documento", "garantia_fabricante")
     if caminho_arquivo is not None:
-        metadata["arquivo_origem"] = str(caminho_arquivo)
+        metadata["arquivo_origem"] = to_relativo(caminho_arquivo)
 
     garantia_id = db.upsert_node(
         "garantia",

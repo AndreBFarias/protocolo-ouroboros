@@ -32,6 +32,7 @@ from pathlib import Path
 from typing import Any
 
 from src.graph.db import GrafoDB
+from src.graph.path_canonico import to_absoluto, to_relativo
 from src.utils.logger import configurar_logger
 
 logger = configurar_logger("graph.backfill_arquivo_origem")
@@ -136,7 +137,8 @@ def detectar_paths_quebrados(grafo: GrafoDB) -> list[dict[str, Any]]:
     for row in cur:
         meta = json.loads(row[3] or "{}")
         ao = meta.get("arquivo_origem")
-        if ao and not Path(ao).exists():
+        # AUDIT-PATH-RELATIVO: aceita relativo (resolve via to_absoluto) ou absoluto.
+        if ao and not to_absoluto(ao).exists():
             quebrados.append(
                 {
                     "id": row[0],
@@ -210,10 +212,11 @@ def backfill_arquivo_origem(
         stats["resolvidos"] += 1
         if not dry_run:
             meta_novo = dict(meta)
-            meta_novo["arquivo_origem"] = str(achado.resolve())
+            # AUDIT-PATH-RELATIVO: grava como path relativo a _RAIZ_REPO.
+            meta_novo["arquivo_origem"] = to_relativo(achado)
             # Reflete também em arquivo_original para compat com sync_rico.
             if not meta_novo.get("arquivo_original"):
-                meta_novo["arquivo_original"] = str(achado.resolve())
+                meta_novo["arquivo_original"] = to_relativo(achado)
             grafo.upsert_node(
                 tipo="documento",
                 nome_canonico=q["nome_canonico"],
