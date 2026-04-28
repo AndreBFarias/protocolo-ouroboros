@@ -40,7 +40,7 @@ sprint:
 
 # Sprint 100 -- Deep-link tab funcional
 
-**Status:** CONCLUIDA (P1, fechamento bookkeeping em 2026-04-27 pós-cluster UX v3)
+**Status:** CONCLUÍDA (P1, fechamento bookkeeping em 2026-04-27 pós-cluster UX v3)
 
 ## Decisão 2026-04-27 -- Fechamento oficial
 
@@ -56,7 +56,7 @@ Implementação técnica entregue em `c4397ea` / merge `24dd487`. Reabertura foi
 
 Validação visual humana confirmou tab Busca Global ativa via `?cluster=Documentos&tab=Busca+Global` em commit técnico original; UX-110 a UX-114 endereçaram as ressalvas do componente Busca Global. Spirit da spec atendido.
 
-**Sprint 100 = CONCLUIDA. Move-se para `docs/sprints/concluidos/`.**
+**Sprint 100 = CONCLUÍDA. Move-se para `docs/sprints/concluidos/`.**
 
 Streamlit `st.tabs(...)` não expoe API para ativar tab por nome. Sprint usa truque: `st.session_state['_active_tab_<cluster>']` lido do query_params na inicializacao + `st.tabs(...)` retorna lista; injeta JavaScript via `st.components.v1.html()` que clica na tab correspondente apos render.
 
