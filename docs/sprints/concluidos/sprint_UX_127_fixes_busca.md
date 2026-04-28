@@ -65,7 +65,7 @@ sprint:
 
 # Sprint UX-127 -- 4 fixes finais na Busca Global
 
-**Status:** EM PRODUÇÃO (P1, criada 2026-04-27)
+**Status:** CONCLUÍDA (commit `ae02904`, 2026-04-27 — 10 testes novos, dropdown removido, contagem fixada, sem novas abas)
 
 4 achados finais identificados pelo dono apos validar UX-126:
 
