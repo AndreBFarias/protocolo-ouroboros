@@ -30,8 +30,32 @@ sprint:
 
 # Sprint 95c -- noqa inline acentuação
 
-**Status:** BACKLOG (P3, criada 2026-04-26 como sprint-filha da Sprint 95)
-**Origem:** Achado colateral ACH95-3. Pré-existente ao baseline -- não introduzido pela Sprint 95. ruff emite `Invalid noqa directive` em ~8 lugares onde supressão de acentuação foi aplicada na linha mas a palavra alvo está dentro de string literal técnica.
+**Status:** CONCLUÍDA (2026-04-27, fechamento via config-only)
+**Origem:** Achado colateral ACH95-3. Pré-existente ao baseline -- não introduzido pela Sprint 95. ruff emitia `Invalid noqa directive` (RUF100) em ~8 lugares onde supressão de acentuação foi aplicada na linha mas o código `accent` não era reconhecido pelo ruff.
+
+## Solução aplicada (cleaner que a hipótese da spec)
+
+Em vez de reescrever 8+ arquivos trocando `# noqa: accent` por `# noqa` puro (que quebraria o reconhecimento em `scripts/check_acentuacao.py:214` que casa por substring `"noqa: accent"`), a fix foi **config-only** em `pyproject.toml`:
+
+```toml
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+external = ["accent"]
+```
+
+A diretiva `external` declara `accent` como código de linter externo, fazendo ruff aceitá-lo como válido em `# noqa: accent`. Nenhum arquivo `.py` precisou ser tocado. Convenção do projeto (linha-canônica `# noqa: accent`) preservada; check_acentuacao.py continua reconhecendo. Zero risco de regressão.
+
+## Verificação
+
+```
+$ ruff check src/graph/linking.py --select=RUF100
+All checks passed!
+```
+
+Antes: `warning: Invalid 'noqa' directive on src/graph/linking.py:137`.
+Depois: zero warnings, mesmo com `--select=RUF100` explícito.
+
+`pytest tests/`: 1.884 passed (zero regressão). `make lint`: exit 0. `make smoke`: 8/8 + 23/23.
 
 ## Motivação
 
