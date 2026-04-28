@@ -1,0 +1,37 @@
+# =============================================================================
+# mappings/fornecedores_sinteticos.yaml -- entidades fiscais canonicas (Sprint 107)
+# =============================================================================
+#
+# Documentos cujo tipo casa com 'aplica_a_tipos' abaixo terao 'fornecido_por'
+# apontando para o sintetico declarado, em vez do contribuinte.
+#
+# Antes da Sprint 107: DAS PARCSN gravava fornecedor=ANDRE DA SILVA (que e o
+# contribuinte). Linker (Sprint 95) nao casava com tx PIX RECEITA FEDERAL.
+# Agora: DAS PARCSN -> fornecedor=RECEITA_FEDERAL (CNPJ oficial). Contribuinte
+# preservado em metadata.contribuinte para auditoria.
+# =============================================================================
+
+fornecedores:
+  RECEITA_FEDERAL:
+    cnpj: "00394460000141"  # Receita Federal do Brasil (CNPJ oficial)
+    razao_social: "Receita Federal do Brasil"
+    aliases:
+      - "Receita Federal"
+      - "RFB"
+      - "PIX RECEITA FEDERAL"
+      - "RECEITA FEDERAL"
+    aplica_a_tipos:
+      - das_parcsn_andre
+      - das_parcsn_vitoria
+      - darf
+      - dirpf_retif
+      - irpf_parcela
+
+  INSS:
+    cnpj: "29979036000140"  # INSS (CNPJ oficial)
+    razao_social: "Instituto Nacional do Seguro Social"
+    aliases:
+      - "INSS"
+      - "Previdência Social"
+    aplica_a_tipos:
+      - guia_inss
