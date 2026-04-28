@@ -1,7 +1,7 @@
 # ADR-21 -- Fusão Ouroboros + Controle de Bordo (coabitação canônica)
 
 **Data:** 2026-04-26
-**Status:** PROPOSTO (aguarda aprovação humana)
+**Status:** ACEITA (Sprints 70/71 em produção desde 2026-04-22; status atualizado 2026-04-28 pós auditoria externa)
 **Origem:** Auditoria 2026-04-26 (`docs/AUDITORIA_2026-04-26.md` + auditoria do agente Opus em `docs/auditoria_vault_2026-04-26.md`)
 **Referência:** Sprint 94 (`docs/sprints/backlog/sprint_94_*.md`) e ADR-18 (coabitação estrutural).
 

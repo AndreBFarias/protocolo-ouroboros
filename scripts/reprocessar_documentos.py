@@ -511,6 +511,26 @@ def main(argv: list[str] | None = None) -> int:
             if cls_nome:
                 por_extrator_usado[cls_nome] += 1
 
+        # Sprint 104 fix (auditoria 2026-04-28): holerite usa função
+        # processar_holerites() em vez de classe Extrator -- não entra em
+        # EXTRATORES_DOCUMENTAIS. Re-ingere explicitamente apos --forcar-reextracao
+        # para que os 24 nodes holerite voltem.
+        if args.forcar_reextracao:
+            try:
+                from src.extractors.contracheque_pdf import processar_holerites
+
+                pasta_hol = raiz / "andre" / "holerites"
+                if pasta_hol.exists():
+                    holerites = processar_holerites(pasta_hol, grafo=grafo)
+                    logger.info(
+                        "Sprint 104+98a: %d holerites re-ingeridos pos-forcar",
+                        len(holerites),
+                    )
+                    por_status["ingerido"] += len(holerites)
+                    por_extrator_usado["ExtratorContrachequePDF (funcao)"] += len(holerites)
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("Falha ao re-ingerir holerites: %s", exc)
+
         stats_pos = _rodar_fases_pos_ingestao(grafo)
 
         snap_depois = _contagem_grafo(grafo)

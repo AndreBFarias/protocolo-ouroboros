@@ -1,6 +1,28 @@
 # ADR-13: Supervisor Artesanal via Claude Code (sem API programática)
 
-## Status: Aceita
+## Status: Aceita (atualizada 2026-04-28 com Sprint 108: automações encadeadas)
+
+## Update 2026-04-28 (Sprint 108) -- Automações Opus em fluxo canônico
+
+A decisão original "supervisor humano + Claude Code interativo" continua
+vigente para CRIAÇÃO/REVISÃO de regras. Mas operações cíclicas que repetem
+limpeza+migração+backfill foram extraídas para automação não-interativa.
+
+`run.sh` ganhou helper `run_passo()` que encadeia comandos com falha-soft
+e log estruturado em `logs/auditoria_opus.log`. Em `--full-cycle` e
+`--reextrair-tudo`, a sequência roda sem intervenção humana:
+
+```
+[passo 0] inbox processing
+[passo 1] dedup_classificar         (Sprint INFRA-DEDUP)
+[passo 2] migrar_pessoa_via_cpf     (Sprint 105)
+[passo 3] backfill_arquivo_origem   (Sprint 98a)
+[passo 4] pipeline --tudo
+```
+
+Princípio canônico (q): "Automação no fluxo canônico OU não está resolvido".
+Lições da fase Opus que viraram operação manual repetida são falsas
+conclusões. Doc completo: `docs/AUTOMACOES_OPUS.md`.
 
 ## Contexto
 

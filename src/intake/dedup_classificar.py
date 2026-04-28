@@ -77,11 +77,13 @@ def deduplicar_classificar(pasta: Path, dry_run: bool = True) -> dict:
         return {"removidos": 0, "preservados": 0, "grupos": []}
 
     por_hash: dict[str, list[Path]] = {}
+    erros_sha = 0  # P1-03 fix: contador de arquivos que falharam SHA-256
     for arq in arquivos:
         try:
             h = _sha256_arquivo(arq)
         except OSError as exc:
             logger.warning("falha ao calcular sha256 de %s: %s", arq, exc)
+            erros_sha += 1
             continue
         por_hash.setdefault(h, []).append(arq)
 
@@ -114,7 +116,12 @@ def deduplicar_classificar(pasta: Path, dry_run: bool = True) -> dict:
                     continue
             removidos += 1
 
-    return {"removidos": removidos, "preservados": preservados, "grupos": grupos}
+    return {
+        "removidos": removidos,
+        "preservados": preservados,
+        "grupos": grupos,
+        "erros_sha": erros_sha,
+    }
 
 
 # "Onde havia três, fique um -- três cópias do nada não são herança."
