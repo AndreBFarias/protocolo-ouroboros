@@ -66,6 +66,10 @@ line-length = 100
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I"]
+# Sprint 95c: 'accent' eh codigo externo do projeto (scripts/check_acentuacao.py
+# reconhece como diretiva de supressao). Ruff o trata como valido em '# noqa: accent'
+# apos esta declaracao, evitando RUF100 'Invalid noqa directive'.
+external = ["accent"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
