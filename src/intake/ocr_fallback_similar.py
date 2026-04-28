@@ -23,6 +23,7 @@ Graceful degradation:
 
 from __future__ import annotations
 
+import functools
 import json
 from datetime import datetime
 from pathlib import Path
@@ -38,22 +39,6 @@ logger = configurar_logger("intake.ocr_fallback_similar")
 _RAIZ_REPO: Path = Path(__file__).resolve().parents[2]
 _PATH_CONFIG: Path = _RAIZ_REPO / "mappings" / "ocr_fallback_config.yaml"
 
-_CONFIG_CACHE: dict[str, Any] | None = None
-
-
-def _carregar_config() -> dict[str, Any]:
-    """Carrega o YAML de config (cache em módulo)."""
-    global _CONFIG_CACHE
-    if _CONFIG_CACHE is not None:
-        return _CONFIG_CACHE
-    if not _PATH_CONFIG.exists():
-        _CONFIG_CACHE = _config_default()
-        return _CONFIG_CACHE
-    with _PATH_CONFIG.open(encoding="utf-8") as fh:
-        _CONFIG_CACHE = yaml.safe_load(fh) or _config_default()
-    return _CONFIG_CACHE
-
-
 def _config_default() -> dict[str, Any]:
     return {
         "limiar_chars_uteis_por_tipo": {"default": 50},
@@ -63,10 +48,18 @@ def _config_default() -> dict[str, Any]:
     }
 
 
+@functools.lru_cache(maxsize=1)
+def _carregar_config() -> dict[str, Any]:
+    """AUDIT-CACHE-THREADSAFE: usa lru_cache(maxsize=1) em vez de global mutavel."""
+    if not _PATH_CONFIG.exists():
+        return _config_default()
+    with _PATH_CONFIG.open(encoding="utf-8") as fh:
+        return yaml.safe_load(fh) or _config_default()
+
+
 def _resetar_cache_config() -> None:
-    """Helper para testes."""
-    global _CONFIG_CACHE
-    _CONFIG_CACHE = None
+    """Helper para testes -- delega para lru_cache.cache_clear()."""
+    _carregar_config.cache_clear()
 
 
 # Sprint 106a: whitelist de palavras DOMINIO-ESPECIFICAS para detectar coerência.
