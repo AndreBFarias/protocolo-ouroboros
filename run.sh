@@ -436,6 +436,7 @@ exibir_help() {
     echo -e "    ${GREEN}--inbox-dry${NC}         Inspeciona inbox unificada sem mover nada"
     echo -e "    ${GREEN}--mes${NC} ${DIM}YYYY-MM${NC}       Processa um mês específico"
     echo -e "    ${GREEN}--tudo${NC}              Processa todos os dados"
+    echo -e "    ${GREEN}--reextrair-tudo${NC}    Limpa documentos do grafo e re-ingere com extratores atuais"
     echo ""
     echo -e "  ${WHITE}Visualização${NC}"
     echo -e "    ${CYAN}--dashboard${NC}         Abre o dashboard Streamlit"
@@ -508,6 +509,20 @@ case "${1:-}" in
         msg_ok "Inbox processada; iniciando pipeline completo..."
         python -m src.pipeline --tudo
         msg_ok "Rota completa concluída."
+        ;;
+    --reextrair-tudo)
+        # Sprint 104: limpa nodes 'documento' do grafo e re-ingere todos os
+        # arquivos de data/raw com metadata atualizado dos extratores.
+        # Util quando extrator ganhou campos novos (ex: Sprint 95a adicionou
+        # 'liquido' ao holerite) e o grafo precisa refletir essa mudanca.
+        msg_aviso "Reextracao em lote: vai limpar nodes 'documento' do grafo."
+        if confirmar "Tem certeza? (operação irreversivel)"; then
+            msg_info "Re-ingerindo documentos com extratores atualizados..."
+            python -m scripts.reprocessar_documentos --forcar-reextracao
+            msg_ok "Reextracao concluida."
+        else
+            msg_aviso "Operação cancelada."
+        fi
         ;;
     --dashboard)
         msg_info "Abrindo dashboard Streamlit..."

@@ -26,7 +26,7 @@ class TestImportacao:
         assert hasattr(mod, "OPCOES_MENU")
         assert hasattr(mod, "OPCOES_FOLLOW_UP")
 
-    def test_opcoes_menu_tem_cinco_mais_rota_completa_e_saida(self) -> None:
+    def test_opcoes_menu_tem_seis_mais_rota_completa_e_saida(self) -> None:
         import importlib.util
 
         spec = importlib.util.spec_from_file_location("menu_interativo", _SCRIPT)
@@ -34,8 +34,9 @@ class TestImportacao:
         mod = importlib.util.module_from_spec(spec)
         assert spec.loader is not None
         spec.loader.exec_module(mod)
-        # Sprint 101: 5 ações originais + "R" (rota completa, default) + "0" (sair).
-        assert set(mod.OPCOES_MENU.keys()) == {"0", "R", "1", "2", "3", "4", "5"}
+        # Sprint 101 + 104: 6 acoes (1-5 originais + 6 reextrair) + "R" (rota
+        # completa, default) + "0" (sair) = 8 chaves no total.
+        assert set(mod.OPCOES_MENU.keys()) == {"0", "R", "1", "2", "3", "4", "5", "6"}
         # Default visual: R deve aparecer primeiro na ordem de inserção.
         assert next(iter(mod.OPCOES_MENU.keys())) == "R"
 
