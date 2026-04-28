@@ -35,6 +35,7 @@ if str(_RAIZ) not in sys.path:
     sys.path.insert(0, str(_RAIZ))
 
 from src.graph.db import GrafoDB, caminho_padrao  # noqa: E402
+from src.graph.path_canonico import to_relativo  # noqa: E402
 from src.intake.pessoa_detector import detectar_pessoa  # noqa: E402
 from src.utils.logger import configurar_logger  # noqa: E402
 
@@ -67,12 +68,17 @@ def _atualizar_grafo(
     atualizados = 0
     for row in cur.fetchall():
         meta = json.loads(row[3] or "{}")
-        if meta.get("arquivo_origem") == str(arquivo_antigo) or meta.get(
-            "arquivo_origem"
-        ) == str(arquivo_antigo.resolve()):
-            meta["arquivo_origem"] = str(arquivo_novo.resolve())
+        # AUDIT-PATH-RELATIVO: aceita relativo (Sprint AUDIT-PATH-RELATIVO) ou
+        # absoluto (legado pre-sprint) na comparacao.
+        ao_atual = meta.get("arquivo_origem", "")
+        if ao_atual in (
+            str(arquivo_antigo),
+            str(arquivo_antigo.resolve()),
+            to_relativo(arquivo_antigo),
+        ):
+            meta["arquivo_origem"] = to_relativo(arquivo_novo)
             if meta.get("arquivo_original"):
-                meta["arquivo_original"] = str(arquivo_novo.resolve())
+                meta["arquivo_original"] = to_relativo(arquivo_novo)
             grafo.upsert_node(
                 tipo="documento",
                 nome_canonico=row[2],
