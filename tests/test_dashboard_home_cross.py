@@ -39,29 +39,36 @@ class TestOrdemDasAbasHome:
         """AC #1: Home tem exatamente 5 abas em ordem fixa.
 
         Visão Geral em índice 0 preserva URL antiga `?cluster=Home` que
-        cai no default. Mini-views vêm depois em ordem alfabética do
-        cluster-irmão (Dinheiro/Docs/Análise/Metas).
+        cai no default. Sprint UX-125: tabs renomeadas para espelhar
+        clusters-irmãos (sem sufixo "hoje" repetitivo).
         """
         assert app_mod.ABAS_POR_CLUSTER["Home"] == [
             "Visão Geral",
-            "Dinheiro hoje",
-            "Docs hoje",
-            "Análise hoje",
-            "Metas hoje",
+            "Finanças",
+            "Documentos",
+            "Análise",
+            "Metas",
         ]
 
     def test_visao_geral_continua_em_indice_0(self) -> None:
         """Default do cluster Home permanece Visão Geral (compat URL antiga)."""
         assert app_mod.ABAS_POR_CLUSTER["Home"][0] == "Visão Geral"
 
-    def test_mini_views_apontam_para_cluster_home_no_mapa(self) -> None:
-        """N-para-N: as 4 mini-views devem aparecer em MAPA_ABA_PARA_CLUSTER
-        com valor 'Home'. Sem isso, deep-link `?tab=Dinheiro+hoje` falha.
+    def test_mini_views_homonimas_nao_mapeiam_para_home(self) -> None:
+        """Sprint UX-125: tabs do Home homônimas com clusters próprios
+        (Finanças/Documentos/Análise/Metas) NÃO aparecem como entrada
+        para 'Home' em MAPA_ABA_PARA_CLUSTER -- a chave do dict é única
+        e pertence ao cluster canônico próprio. Tabs do Home são
+        acessadas com ?cluster=Home&tab=Finanças (cluster explícito).
         """
-        for aba in ["Dinheiro hoje", "Docs hoje", "Análise hoje", "Metas hoje"]:
-            assert drilldown.MAPA_ABA_PARA_CLUSTER[aba] == "Home", (
-                f"Aba '{aba}' deveria mapear para 'Home'"
-            )
+        for aba in drilldown.ABAS_HOME_HOMONIMAS:
+            if aba in drilldown.MAPA_ABA_PARA_CLUSTER:
+                # "Análise" e "Metas" existem no MAPA pelo cluster próprio.
+                # Garantia: nunca apontam para "Home".
+                assert drilldown.MAPA_ABA_PARA_CLUSTER[aba] != "Home", (
+                    f"Aba homônima '{aba}' não pode mapear para 'Home' "
+                    f"(homonímia consciente UX-125)"
+                )
 
 
 # ============================================================================
@@ -209,14 +216,23 @@ class TestMiniViewsRenderizamSemCrash:
 
 class TestIntegracaoAppPy:
     def test_app_py_declara_5_tabs_no_cluster_home(self) -> None:
-        """Inspeção textual: app.py contém st.tabs com as 5 abas do Home."""
+        """Inspeção textual: app.py contém st.tabs com as 5 abas do Home.
+
+        Sprint UX-125: tabs renomeadas para 'Finanças', 'Documentos',
+        'Análise', 'Metas' (sem sufixo 'hoje').
+        """
         texto = (RAIZ / "src" / "dashboard" / "app.py").read_text(encoding="utf-8")
-        assert '"Dinheiro hoje"' in texto
-        assert '"Docs hoje"' in texto
-        assert '"Análise hoje"' in texto
-        assert '"Metas hoje"' in texto
+        # Os nomes aparecem em duas posições: na lista ABAS_POR_CLUSTER["Home"]
+        # e na chamada st.tabs([...]). Confirma que estão presentes.
+        for aba in ("Visão Geral", "Finanças", "Documentos", "Análise", "Metas"):
+            assert f'"{aba}"' in texto, f"Aba '{aba}' deveria aparecer em app.py"
+        # Sprint UX-125: 'Dinheiro hoje' não deve mais existir como string.
+        assert '"Dinheiro hoje"' not in texto
+        assert '"Docs hoje"' not in texto
 
     def test_app_py_chama_renderizar_das_4_mini_views(self) -> None:
+        """Sprint UX-125: arquivos físicos (home_dinheiro.py etc.) mantêm
+        nome interno; só os labels mudaram. Nomes dos módulos persistem."""
         texto = (RAIZ / "src" / "dashboard" / "app.py").read_text(encoding="utf-8")
         assert "home_dinheiro.renderizar" in texto
         assert "home_docs.renderizar" in texto

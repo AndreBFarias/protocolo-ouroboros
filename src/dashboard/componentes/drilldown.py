@@ -48,20 +48,23 @@ CHAVE_SESSION_ABA_ATIVA: str = "aba_ativa_requerida"
 
 # Sprint 92b (ADR-22): mapa canônico aba -> cluster. Permite que URL antiga
 # no formato ?tab=Extrato (sem parâmetro cluster) seja interpretada pelo
-# leitor inferindo o cluster implícito. URL nova ?cluster=Dinheiro&tab=Extrato
+# leitor inferindo o cluster implícito. URL nova ?cluster=Finanças&tab=Extrato
 # explicita o cluster e pula a inferência.
+#
+# Sprint UX-125: tabs do cluster Home foram renomeadas para espelhar os
+# clusters-irmãos (Visão Geral / Finanças / Documentos / Análise / Metas) -
+# sem o sufixo "hoje" repetitivo. Como "Finanças", "Documentos", "Análise"
+# e "Metas" também são nomes de clusters próprios, apenas o cluster
+# canônico fica registrado neste mapa (chaves únicas em dict). As tabs
+# homônimas dentro do Home são acessadas exclusivamente com cluster
+# explícito (?cluster=Home&tab=Finanças). Sem cluster na URL, ?tab=X infere
+# o cluster próprio (preserva semântica das URLs anteriores).
 MAPA_ABA_PARA_CLUSTER: dict[str, str] = {
     "Visão Geral": "Home",
-    # Sprint UX-123: 4 mini-views cross-area do cluster Home (filtradas
-    # pelo dia mais recente do dataset). Mantem N-para-N com app.py.
-    "Dinheiro hoje": "Home",
-    "Docs hoje": "Home",
-    "Análise hoje": "Home",
-    "Metas hoje": "Home",
-    "Extrato": "Dinheiro",
-    "Contas": "Dinheiro",
-    "Pagamentos": "Dinheiro",
-    "Projeções": "Dinheiro",
+    "Extrato": "Finanças",
+    "Contas": "Finanças",
+    "Pagamentos": "Finanças",
+    "Projeções": "Finanças",
     "Catalogação": "Documentos",
     "Completude": "Documentos",
     "Busca Global": "Documentos",
@@ -73,18 +76,28 @@ MAPA_ABA_PARA_CLUSTER: dict[str, str] = {
     "Metas": "Metas",
 }
 
+# Sprint UX-125: tabs do cluster Home com nome igual a cluster próprio.
+# Lista documenta a homonímia consciente; usado em invariantes de teste
+# para distinguir tabs do Home (resolvidas só com cluster explícito) das
+# tabs canônicas (resolvidas pelo MAPA_ABA_PARA_CLUSTER).
+ABAS_HOME_HOMONIMAS: frozenset[str] = frozenset({"Finanças", "Documentos", "Análise", "Metas"})
+
 # Clusters válidos (ordem canônica do radio). Usado por testes e por validação
 # defensiva em app.py (rejeita cluster fora do conjunto ao ler da URL).
 #
 # Sprint UX-121: cluster "Hoje" renomeado para "Home" (termo padrão web/apps;
 # "Hoje" sugeria período temporal, criando ambiguidade no ponto de entrada).
-CLUSTERS_VALIDOS: tuple[str, ...] = ("Home", "Dinheiro", "Documentos", "Análise", "Metas")
+# Sprint UX-125: cluster "Dinheiro" renomeado para "Finanças" (termo mais
+# profissional; alias backward-compat preserva URLs antigas).
+CLUSTERS_VALIDOS: tuple[str, ...] = ("Home", "Finanças", "Documentos", "Análise", "Metas")
 
 # Sprint UX-121: aliases backward-compat para query_params. Permite que URLs
 # antigas no formato ?cluster=Hoje continuem resolvendo para o novo nome
 # canônico "Home" sem quebrar bookmarks ou links externos. Aplicado em
 # `ler_filtros_da_url` antes da validação contra CLUSTERS_VALIDOS.
-CLUSTER_ALIASES: dict[str, str] = {"Hoje": "Home"}
+#
+# Sprint UX-125: alias adicional ?cluster=Dinheiro -> "Finanças".
+CLUSTER_ALIASES: dict[str, str] = {"Hoje": "Home", "Dinheiro": "Finanças"}
 
 # Chave canônica em session_state para o cluster ativo. Namespace próprio,
 # não colide com filtro_* (drill-down), avancado_* (filtros manuais Extrato)

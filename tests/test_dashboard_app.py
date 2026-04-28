@@ -25,10 +25,12 @@ from src.dashboard.componentes import drilldown
 
 class TestContratosCanonicos:
     def test_clusters_validos_sao_cinco(self) -> None:
-        """Acceptance A92b-1 + Sprint UX-121: 5 clusters Home/Dinheiro/Documentos/Análise/Metas."""
+        """Acceptance A92b-1 + Sprint UX-121 + UX-125: 5 clusters
+        Home/Finanças/Documentos/Análise/Metas (UX-125 renomeou
+        'Dinheiro' para 'Finanças')."""
         assert drilldown.CLUSTERS_VALIDOS == (
             "Home",
-            "Dinheiro",
+            "Finanças",
             "Documentos",
             "Análise",
             "Metas",
@@ -38,19 +40,20 @@ class TestContratosCanonicos:
         """Acceptance: campo cluster lido da URL via ler_filtros_da_url."""
         assert "cluster" in drilldown.CAMPOS_FILTRO_RECONHECIDOS
 
-    def test_mapa_aba_para_cluster_cobre_18_abas(self) -> None:
-        """Acceptance: todas as 18 abas mapeadas para um dos 5 clusters.
+    def test_mapa_aba_para_cluster_cobre_14_abas(self) -> None:
+        """Acceptance: todas as 14 abas canônicas (não-homonímia) mapeadas.
 
-        Sprint D2 adicionou ``Revisor`` ao cluster Documentos (de 13 para 14).
-        Sprint UX-123 adicionou 4 mini-views ao cluster Home (de 14 para 18):
-        ``Dinheiro hoje``, ``Docs hoje``, ``Análise hoje``, ``Metas hoje``.
+        Sprint D2 adicionou ``Revisor`` ao cluster Documentos.
+        Sprint UX-123 adicionou 4 mini-views ao cluster Home com sufixo "hoje".
+        Sprint UX-125 renomeou as mini-views do Home para espelhar os
+        clusters-irmãos (Finanças/Documentos/Análise/Metas) e removeu suas
+        entradas duplicadas do MAPA -- como a chave de dict é única e elas
+        homonimam clusters próprios, MAPA registra apenas a aba canônica.
+        Tabs do Home com nomes homônimos são acessadas via cluster
+        explícito (?cluster=Home&tab=Finanças).
         """
         esperadas = {
             "Visão Geral",
-            "Dinheiro hoje",
-            "Docs hoje",
-            "Análise hoje",
-            "Metas hoje",
             "Extrato",
             "Contas",
             "Pagamentos",
@@ -100,12 +103,15 @@ class _FakeStCluster:
 
 
 class TestBackwardCompatibilityUrlAntiga:
-    def test_tab_extrato_infere_cluster_dinheiro(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        """Acceptance: URL antiga ?tab=Extrato -> cluster_ativo='Dinheiro'."""
+    def test_tab_extrato_infere_cluster_financas(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Acceptance: URL antiga ?tab=Extrato -> cluster_ativo='Finanças'.
+
+        Sprint UX-125: cluster antes era 'Dinheiro'; renomeado para 'Finanças'.
+        """
         fake = _FakeStCluster({"tab": "Extrato"})
         monkeypatch.setitem(sys.modules, "streamlit", fake)
         drilldown.ler_filtros_da_url()
-        assert fake.session_state[drilldown.CHAVE_SESSION_CLUSTER_ATIVO] == "Dinheiro"
+        assert fake.session_state[drilldown.CHAVE_SESSION_CLUSTER_ATIVO] == "Finanças"
         assert fake.session_state[drilldown.CHAVE_SESSION_ABA_ATIVA] == "Extrato"
 
     def test_tab_visao_geral_infere_cluster_home(self, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -176,20 +182,23 @@ class TestUrlNovaClusterExplicito:
         assert fake.session_state[drilldown.CHAVE_SESSION_ABA_ATIVA] == "Extrato"
 
     def test_cluster_com_filtro_e_tab_combinados(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        """URL completa com cluster + tab + filtro, todos os três gravados."""
-        fake = _FakeStCluster({"cluster": "Dinheiro", "tab": "Extrato", "categoria": "Farmácia"})
+        """URL completa com cluster + tab + filtro, todos os três gravados.
+
+        Sprint UX-125: cluster canônico é 'Finanças' (rename de 'Dinheiro').
+        """
+        fake = _FakeStCluster({"cluster": "Finanças", "tab": "Extrato", "categoria": "Farmácia"})
         monkeypatch.setitem(sys.modules, "streamlit", fake)
         drilldown.ler_filtros_da_url()
-        assert fake.session_state[drilldown.CHAVE_SESSION_CLUSTER_ATIVO] == "Dinheiro"
+        assert fake.session_state[drilldown.CHAVE_SESSION_CLUSTER_ATIVO] == "Finanças"
         assert fake.session_state[drilldown.CHAVE_SESSION_ABA_ATIVA] == "Extrato"
         assert fake.session_state["filtro_categoria"] == "Farmácia"
 
     def test_cluster_como_lista_na_url(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Alguns proxies retornam lista para duplicatas; pega primeiro."""
-        fake = _FakeStCluster({"cluster": ["Dinheiro", "Metas"]})
+        fake = _FakeStCluster({"cluster": ["Finanças", "Metas"]})
         monkeypatch.setitem(sys.modules, "streamlit", fake)
         drilldown.ler_filtros_da_url()
-        assert fake.session_state[drilldown.CHAVE_SESSION_CLUSTER_ATIVO] == "Dinheiro"
+        assert fake.session_state[drilldown.CHAVE_SESSION_CLUSTER_ATIVO] == "Finanças"
 
 
 # ============================================================================

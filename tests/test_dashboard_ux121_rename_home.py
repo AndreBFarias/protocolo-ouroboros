@@ -47,11 +47,15 @@ class TestNovoNomeCanonico:
         Sprint UX-121 introduziu a chave 'Home' (antes 'Hoje').
         Sprint UX-123 expandiu para 5 abas (Visão Geral + 4 mini-views
         cross-area). Visão Geral permanece em índice 0 (default da URL antiga).
+        Sprint UX-125 renomeou as 4 mini-views para espelhar clusters-irmãos
+        (Finanças/Documentos/Análise/Metas) -- sem sufixo 'hoje'.
         """
         assert "Home" in app_mod.ABAS_POR_CLUSTER
         assert "Hoje" not in app_mod.ABAS_POR_CLUSTER
         assert app_mod.ABAS_POR_CLUSTER["Home"][0] == "Visão Geral"
-        assert "Dinheiro hoje" in app_mod.ABAS_POR_CLUSTER["Home"]
+        # UX-125: mini-view de finanças agora se chama "Finanças" (não "Dinheiro hoje").
+        assert "Finanças" in app_mod.ABAS_POR_CLUSTER["Home"]
+        assert "Dinheiro hoje" not in app_mod.ABAS_POR_CLUSTER["Home"]
 
     def test_mapa_aba_para_cluster_visao_geral_aponta_home(self) -> None:
         """AC #3: Visão Geral continua mapeada para cluster correto, com nome 'Home'."""
