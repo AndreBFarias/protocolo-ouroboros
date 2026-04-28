@@ -65,7 +65,7 @@ sprint:
 
 # Sprint UX-125 -- Polish final + rename Dinheiro->Financas
 
-**Status:** EM PRODUÇÃO (P1, criada 2026-04-27 terceira parte)
+**Status:** CONCLUÍDA (commit `dd8fe12`, 2026-04-27 — 22 testes novos, validação Playwright OK)
 
 5 ajustes finais identificados pelo dono apos validar cluster v2 mergeado:
 
