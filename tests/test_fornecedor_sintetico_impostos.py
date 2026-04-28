@@ -110,6 +110,31 @@ def test_ingerir_das_parcsn_preserva_contribuinte_em_metadata(tmp_path: Path):
     assert "Receita Federal" in meta["razao_social"]
 
 
+def test_audit_contribuinte_sempre_gravado_mesmo_vazio(tmp_path: Path):
+    """AUDIT-CONTRIBUINTE-METADATA: doc sintético sem razao_social grava
+    metadata.contribuinte='' (sinaliza aplicação do sintético para auditoria).
+    """
+    db = GrafoDB(tmp_path / "g.sqlite")
+    db.criar_schema()
+    documento = {
+        "chave_44": "07182516307670456",
+        "cnpj_emitente": "45850636000160",
+        "data_emissao": "2025-06-30",
+        "tipo_documento": "das_parcsn_andre",
+        "total": 100.0,
+        "numero": "07182516307670456",
+        # razao_social AUSENTE
+    }
+    ingerir_documento_fiscal(db, documento, itens=[])
+
+    cur = db._conn.execute("SELECT metadata FROM node WHERE tipo='documento'")
+    meta = json.loads(cur.fetchone()[0])
+    # Sintético aplicado: contribuinte sempre presente (mesmo vazio).
+    assert "contribuinte" in meta
+    assert meta["contribuinte"] == ""
+    assert "Receita Federal" in meta["razao_social"]
+
+
 def test_ingerir_nfce_preserva_fornecedor_real(tmp_path: Path):
     """NFCe Americanas NÃO casa com nenhum sintético -- preserva fornecedor."""
     db = GrafoDB(tmp_path / "g.sqlite")

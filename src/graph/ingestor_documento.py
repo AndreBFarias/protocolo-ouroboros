@@ -479,8 +479,10 @@ def ingerir_documento_fiscal(
     metadata.setdefault("tipo_documento", "documento_fiscal")
     if caminho_arquivo is not None:
         metadata["arquivo_origem"] = str(caminho_arquivo)
-    if sintetico is not None and documento.get("__contribuinte_original"):
-        metadata["contribuinte"] = documento["__contribuinte_original"]
+    if sintetico is not None:
+        # AUDIT-CONTRIBUINTE-METADATA: sempre grava (mesmo vazio) para sinalizar
+        # que o sintético foi aplicado -- auditoria via SQL pode consultar.
+        metadata["contribuinte"] = documento.get("__contribuinte_original", "")
 
     documento_id = db.upsert_node("documento", documento["chave_44"], metadata=metadata)
 
