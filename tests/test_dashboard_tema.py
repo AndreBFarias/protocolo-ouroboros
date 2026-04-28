@@ -75,8 +75,8 @@ class TestHelpersRender:
 class TestSprintUX122HeroSemNumero:
     """Sprint UX-122: ``hero_titulo_html`` aceita ``numero=''`` por default.
 
-    Quando numero == '', o ``<span>`` do badge não é renderizado (HTML
-    enxuto, header mostra apenas o título). Retrocompat: chamadas antigas
+    Quando o primeiro arg é '', o ``<span>`` do badge não é renderizado
+    (HTML enxuto, header mostra apenas o título). Retrocompat: chamadas antigas
     com primeiro arg numérico seguem renderizando o badge.
     """
 

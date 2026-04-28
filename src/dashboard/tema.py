@@ -227,10 +227,10 @@ def card_sidebar_html(titulo: str, valor: str, cor: str) -> str:
 def hero_titulo_html(numero: str = "", texto: str = "", descricao: str | None = None) -> str:
     """Cabeçalho grande de página (display / hero). Sprint 20.
 
-    Sprint UX-122: ``numero`` virou opcional (default ``""``). Quando vazio, o
-    ``<span>`` do badge numérico é omitido completamente -- header mostra apenas
-    o título. Retrocompatível: chamadas antigas com primeiro arg numérico
-    seguem renderizando o badge como antes.
+    Sprint UX-122: o primeiro parâmetro virou opcional (default ``""``). Quando
+    vazio, o ``<span>`` do badge numérico é omitido completamente -- header
+    mostra apenas o título. Retrocompatível: chamadas antigas com primeiro arg
+    numérico seguem renderizando o badge como antes.
     """
     bloco_desc = ""
     if descricao:

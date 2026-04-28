@@ -72,10 +72,10 @@ sprint:
 1. **Botao de busca da sidebar cortado** em viewport estreito.
 2. **Dropdown "Tipo de busca" redundante** -- chips + autocomplete ja cobrem.
 3. **Bug contagem "Documentos (0)" sempre** -- investigar query e corrigir.
-4. **Busca nao deve abrir nova aba** -- UX-124 cobriu fornecedor; precisa cobrir aba e livre tambem.
+4. **Busca não deve abrir nova aba** -- UX-124 cobriu fornecedor; precisa cobrir aba e livre tambem.
 
-Sprint cirurgica: nao toca o roteador UX-114, apenas a UI em busca.py + responsividade da sidebar.
+Sprint cirurgica: não toca o roteador UX-114, apenas a UI em busca.py + responsividade da sidebar.
 
 ---
 
-*"Filtro que nao filtra e mockup. Botao cortado e amador." -- principio do funcional honesto*
+*"Filtro que não filtra é mockup. Botão cortado é amador." -- princípio do funcional honesto*
