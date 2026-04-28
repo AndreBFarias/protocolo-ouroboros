@@ -1,0 +1,38 @@
+# =============================================================================
+# mappings/ocr_fallback_config.yaml -- Sprint 106 (OCR fallback por similar)
+# =============================================================================
+#
+# Configuracao do motor de matching para OCR ilegivel. Quando texto extraido
+# de uma foto/PDF e abaixo do limiar de chars uteis, o motor busca arquivo do
+# mesmo tipo (cupom_fiscal_foto, recibo_nao_fiscal etc.) cujo OCR foi bem-
+# sucedido e pode ser usado como template.
+#
+# Pesos do score combinado (devem somar 1.0):
+#   phash:     similaridade visual via perceptual hash (imagehash lib).
+#   temporal:  proximidade temporal (mtime do falho vs data_emissao do candidato).
+#   textual:   substring de fornecedor/CNPJ no nome do arquivo ou nos poucos
+#              chars uteis extraidos.
+#
+# Threshold final: confidence >= 0.70 dispara o uso. Abaixo, vai para _conferir/.
+# =============================================================================
+
+# Limiar minimo de chars uteis por tipo. Abaixo disso, OCR e considerado
+# ilegivel e o motor de fallback eh acionado.
+limiar_chars_uteis_por_tipo:
+  cupom_fiscal_foto: 50
+  recibo_nao_fiscal: 30
+  default: 50
+
+pesos_score:
+  phash: 0.5
+  temporal: 0.3
+  textual: 0.2
+
+janela_temporal_dias_por_tipo:
+  cupom_fiscal_foto: 7
+  recibo_nao_fiscal: 30
+  default: 14
+
+# Threshold de aceitacao do match (0.0 a 1.0). Confidence >= esse valor faz
+# o motor copiar metadata do similar para o falho.
+confidence_minima: 0.70
