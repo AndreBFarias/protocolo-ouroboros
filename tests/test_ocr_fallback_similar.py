@@ -147,6 +147,24 @@ def test_score_textual_sem_match():
     assert score == 0.0
 
 
+def test_audit_score_textual_banco_generico_nao_casa():
+    """AUDIT-SCORE-TEXTUAL: fornecedor 'BANCO BRADESCO SA' não casa apenas
+    pela palavra generica 'BANCO' em arquivo não relacionado.
+    """
+    meta = {"razao_social": "BANCO BRADESCO SA", "cnpj_emitente": "60746948000112"}
+    # Cupom Visa generico que MENCIONA 'BANCO' mas não 'BRADESCO' nem CNPJ
+    score = _score_textual("cupom_visa.pdf", "BANCO emitente x cupom", meta)
+    # 'BRADESCO' eh especifica e não aparece -> matches = 0
+    assert score == 0.0
+
+
+def test_audit_score_textual_palavra_especifica_casa():
+    """Palavra especifica ('BRADESCO') no texto do falho -> matches >= 1."""
+    meta = {"razao_social": "BANCO BRADESCO SA", "cnpj_emitente": "60746948000112"}
+    score = _score_textual("cupom_bradesco.pdf", "boleto BRADESCO referente", meta)
+    assert score > 0.0
+
+
 def _criar_grafo_com_candidato(
     tmp_path: Path,
     arquivo_real: Path,
