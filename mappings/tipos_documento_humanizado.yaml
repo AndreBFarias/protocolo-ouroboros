@@ -1,0 +1,70 @@
+# =============================================================================
+# tipos_documento_humanizado.yaml -- nomes humanos para tipos de documento
+# =============================================================================
+#
+# Sprint UX-126 (AC1). Mapping {tipo_canonico_slug -> nome_humano} usado pela
+# UI do dashboard (página Catalogação) para substituir slugs crus
+# (ex: `das_parcsn_andre`) por rótulos legíveis (ex: `DAS Parcelado André`).
+#
+# Canônicos: ver `mappings/tipos_documento.yaml` (schema do intake) e
+# `src/dashboard/paginas/catalogacao.py::ROTULOS_TIPO_DOCUMENTO` (mapping
+# legado restrito a alguns tipos). Este arquivo é a fonte de verdade
+# unificada para humanização de UI.
+#
+# Fallback (helper `humanizar()` em
+# `src/dashboard/componentes/humanizar_tipos.py`): se slug não está aqui,
+# devolve `slug.replace('_', ' ').title()`.
+#
+# Convenção: use acentuação correta (PT-BR humano) -- helper trata como UTF-8.
+# =============================================================================
+
+# --- Holerites e renda ------------------------------------------------------
+holerite: Holerite
+contracheque: Contracheque
+
+# --- DAS / Imposto MEI / Parcelado SN --------------------------------------
+das_parcsn: DAS Parcelado
+das_parcsn_andre: DAS Parcelado André
+das_parcsn_vitoria: DAS Parcelado Vitória
+das_mei: DAS MEI
+
+# --- IRPF / DIRPF -----------------------------------------------------------
+irpf: IRPF
+irpf_parcela: Parcela IRPF
+dirpf: DIRPF
+dirpf_retif: DIRPF Retificadora
+
+# --- Documentos fiscais (NF-e, NFC-e, cupom) -------------------------------
+nota_fiscal: Nota Fiscal
+nfe_modelo_55: Nota Fiscal Eletrônica (NF-e 55)
+nfce_modelo_65: Nota Fiscal Eletrônica
+nfce_consumidor_eletronica: Nota Fiscal Eletrônica
+danfe_nfe55: DANFE (NF-e 55)
+xml_nfe: XML NF-e
+cupom_termico: Cupom Térmico
+cupom_fiscal_foto: Cupom Fiscal (foto)
+cupom_garantia_estendida: Garantia Estendida
+recibo: Recibo
+recibo_nao_fiscal: Recibo (não fiscal)
+
+# --- Boletos / comprovantes / extratos -------------------------------------
+boleto: Boleto
+boleto_servico: Boleto de Serviço
+comprovante: Comprovante
+comprovante_cpf: Comprovante de CPF
+certidao_receita_cnpj: Certidão Receita (CNPJ)
+extrato_bancario: Extrato Bancário
+extrato_c6_pdf: Extrato C6 (PDF)
+fatura_cartao: Fatura de Cartão
+
+# --- Contas de consumo ------------------------------------------------------
+conta_luz: Conta de Luz
+conta_agua: Conta de Água
+
+# --- Saúde / contratos / outros --------------------------------------------
+receita_medica: Receita Médica
+garantia_fabricante: Termo de Garantia
+apolice_seguro: Apólice de Seguro
+contrato: Contrato
+documento_fiscal: Documento Fiscal
+desconhecido: Não Identificado
