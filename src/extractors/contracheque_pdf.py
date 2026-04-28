@@ -9,6 +9,7 @@ Cada PDF gera UMA entrada. Meses com 13º salário produzem entrada adicional
 (tipo "13º Adiantamento" ou "13º Integral") em paralelo à folha mensal.
 """
 
+import functools
 import hashlib
 import re
 from pathlib import Path
@@ -17,9 +18,50 @@ from typing import TYPE_CHECKING, Optional
 import pdfplumber
 import pypdfium2 as pdfium
 import pytesseract
+import yaml
 
 from src.utils.logger import configurar_logger
 from src.utils.parse_br import parse_valor_br_float
+
+_RAIZ_REPO: Path = Path(__file__).resolve().parents[2]
+_PATH_RAZAO_CANONICA: Path = _RAIZ_REPO / "mappings" / "razao_social_canonica.yaml"
+
+
+@functools.lru_cache(maxsize=1)
+def _carregar_razao_canonica() -> dict[str, dict]:
+    """Carrega `mappings/razao_social_canonica.yaml` (cache via lru_cache).
+
+    Devolve dict {sigla_upper: {razao_social_canonica, cnpj, aliases}}.
+    Falha-soft: se o YAML faltar, retorna dict vazio (extractor cai para
+    upper() padrao).
+    """
+    if not _PATH_RAZAO_CANONICA.exists():
+        return {}
+    try:
+        bruto = yaml.safe_load(_PATH_RAZAO_CANONICA.read_text(encoding="utf-8")) or {}
+    except yaml.YAMLError:
+        return {}
+    empresas = bruto.get("empresas", {}) or {}
+    return {str(k).upper(): v for k, v in empresas.items() if isinstance(v, dict)}
+
+
+def resolver_razao_social_canonica(sigla: str) -> tuple[str, str]:
+    """Mapeia sigla -> (razao_social_canonica, cnpj_oficial_ou_vazio).
+
+    Quando sigla não mapeada, devolve (sigla.upper(), "") -- comportamento
+    pre-AUDIT2 preservado.
+    """
+    if not sigla:
+        return "", ""
+    chave = sigla.strip().upper()
+    mapping = _carregar_razao_canonica()
+    entrada = mapping.get(chave)
+    if entrada is None:
+        return chave, ""
+    return (
+        str(entrada.get("razao_social_canonica") or chave),
+        str(entrada.get("cnpj") or ""),
+    )
 
 if TYPE_CHECKING:
     from src.graph.db import GrafoDB
@@ -219,8 +261,12 @@ def _ingerir_holerite_no_grafo(
 
     fonte = registro.get("fonte") or "HOLERITE"
     mes_ref = registro["mes_ref"]
-    empregador = fonte.split(" - ")[0] if " - " in fonte else fonte
-    cnpj_sintetico = f"HOLERITE|{hashlib.sha256(empregador.encode('utf-8')).hexdigest()[:12]}"
+    sigla = fonte.split(" - ")[0] if " - " in fonte else fonte
+    # Sprint AUDIT2-RAZAO-SOCIAL-HOLERITE: mapping declarativo sigla -> oficial.
+    razao_social_oficial, cnpj_oficial = resolver_razao_social_canonica(sigla)
+    # CNPJ sintético preservado como chave_44 estavel (compat Sprint 48). O
+    # CNPJ oficial fica em metadata.cnpj_oficial para entity resolution.
+    cnpj_sintetico = f"HOLERITE|{hashlib.sha256(sigla.encode('utf-8')).hexdigest()[:12]}"
     chave = f"HOLERITE|{fonte}|{mes_ref}".replace(" ", "_")
     documento = {
         "chave_44": chave,
@@ -234,7 +280,9 @@ def _ingerir_holerite_no_grafo(
         # quando match com tx PAGTO SALARIO (que carrega o liquido).
         "bruto": float(registro.get("bruto") or 0.0),
         "liquido": float(registro.get("liquido") or 0.0),
-        "razao_social": empregador.upper(),
+        "razao_social": razao_social_oficial,
+        "razao_social_curta": sigla.upper(),
+        "cnpj_oficial": cnpj_oficial,
         "numero": chave,
         "arquivo_original": str(arquivo.resolve()),
         "periodo_apuracao": mes_ref,
