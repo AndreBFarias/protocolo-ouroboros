@@ -256,14 +256,22 @@ def candidatas_para_documento(
     """
     config = config or carregar_config()
     meta = doc_node.metadata
-    data_emissao = meta.get("data_emissao")
     total = meta.get("total")
     tipo_doc = meta.get("tipo_documento")
 
-    if not data_emissao or total is None:
+    parametros = _parametros_para_tipo(tipo_doc, config)
+    # Sprint 95b: ancora temporal configuravel por tipo (default 'data_emissao').
+    # Permite DAS PARCSN centrar a janela em 'vencimento' em vez de data da guia
+    # -- pagamento PIX cai proximo do vencimento, não da emissao. Fallback
+    # automatico para 'data_emissao' se o campo declarado não existir no doc.
+    ancora_campo = str(parametros.get("ancora_temporal", "data_emissao"))
+    ancora_data = meta.get(ancora_campo) or meta.get("data_emissao")
+
+    if not ancora_data or total is None:
         logger.debug(
-            "documento %s sem data_emissao/total -- sem candidatas",
+            "documento %s sem %s/total -- sem candidatas",
             doc_node.nome_canonico,
+            ancora_campo,
         )
         return []
 
@@ -272,10 +280,9 @@ def candidatas_para_documento(
     except (TypeError, ValueError):
         return []
 
-    parametros = _parametros_para_tipo(tipo_doc, config)
     candidatas_raw = obter_transacoes_candidatas_para_documento(
         db,
-        data_iso=str(data_emissao),
+        data_iso=str(ancora_data),
         total=total_f,
         janela_dias=int(parametros["janela_dias"]),
         diff_valor_percentual=float(parametros["diff_valor_percentual"]),
@@ -289,7 +296,7 @@ def candidatas_para_documento(
         if transacao_id is None:
             continue
         meta_t = cand["metadata"]
-        delta_dias_assinado = _delta_dias_assinado(str(data_emissao), meta_t.get("data"))
+        delta_dias_assinado = _delta_dias_assinado(str(ancora_data), meta_t.get("data"))
         diff_valor_abs = abs(abs(float(meta_t.get("valor") or 0.0)) - abs(total_f))
         cnpj_trans = _cnpj_da_transacao(db, transacao_id) if cnpj_doc else None
         cnpj_bate = bool(cnpj_doc and cnpj_trans and cnpj_doc == cnpj_trans)

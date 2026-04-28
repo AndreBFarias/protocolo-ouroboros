@@ -37,7 +37,21 @@ sprint:
 
 # Sprint 95b -- Linker âncora temporal alternativa
 
-**Status:** BACKLOG (P3, criada 2026-04-26 como sprint-filha da Sprint 95)
+**Status:** CONCLUÍDA (2026-04-28, +3 testes 95b sem regressão)
+
+## Resultado
+
+`mappings/linking_config.yaml` ganhou chave opcional `ancora_temporal` por tipo. Default: `data_emissao`. DAS PARCSN agora declara `ancora_temporal: vencimento` -- mais cirúrgico para parcelas adjacentes.
+
+`src/graph/linking.py:259-280`: lê `parametros.get("ancora_temporal", "data_emissao")`, busca `meta.get(ancora_campo)` e cai para `data_emissao` em fallback automático se o campo não existir no doc.
+
+## Testes regressivos (`tests/test_linking_runtime.py` -- 5 -> 8)
+
+- `test_sprint_95b_das_parcsn_usa_vencimento_como_ancora`: DAS PARCSN com data_emissao=2025-02-28 e vencimento=2025-04-30 + tx em 2025-04-25. Antes: delta=56d (cabe na janela 60d, score 0.72). Depois: delta=-5d (score 0.975). Confirma diff_dias do edge.
+- `test_sprint_95b_holerite_default_ainda_usa_data_emissao`: holerite (sem `ancora_temporal` no config) continua centrado em data_emissao -- backward-compat preservado.
+- `test_sprint_95b_ancora_inexistente_no_doc_cai_para_data_emissao`: DAS sem campo `vencimento` no metadata cai para `data_emissao` em vez de retornar lista vazia silenciosamente.
+
+Backward-compat: tipos sem `ancora_temporal` no YAML continuam usando `data_emissao` (default). Os 5 testes pré-existentes do linker continuam verdes.
 **Origem:** Achado colateral ACH95-2. Sprint 95 deixou 14 propostas de conflito pendentes em `docs/propostas/linking/` -- maioria parcelas DAS PARCSN consecutivas com top-1 e top-2 muito próximos. Janela de 60 dias centrada em `data_emissao` arrasta candidatas adjacentes. Centrar em `metadata.vencimento` (mais próximo da data real de pagamento PIX RECEITA FEDERAL) reduziria sobreposição.
 
 ## Motivação
