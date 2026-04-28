@@ -546,6 +546,7 @@ case "${1:-}" in
             run_passo "backfill_arquivo_origem" python -m scripts.backfill_arquivo_origem_lote --executar
             msg_info "Re-ingerindo documentos com extratores atualizados..."
             python -m scripts.reprocessar_documentos --forcar-reextracao
+            run_passo "limpar_revisao_orfaos" python -m scripts.limpar_revisao_orfaos --executar
             msg_ok "Reextracao concluida."
         else
             msg_aviso "Operação cancelada."
