@@ -46,6 +46,70 @@ MARGEM_DESEMPATE: int = 5
 
 
 # ============================================================================
+# Sprint 107: fornecedores sintéticos para impostos
+# ============================================================================
+
+_PATH_FORNECEDORES_SINTETICOS: Path = (
+    Path(__file__).resolve().parents[2] / "mappings" / "fornecedores_sinteticos.yaml"
+)
+_SINTETICOS_CACHE: dict[str, dict[str, Any]] | None = None
+
+
+def _carregar_fornecedores_sinteticos() -> dict[str, dict[str, Any]]:
+    """Carrega o YAML de fornecedores sintéticos (cache em módulo).
+
+    Schema esperado:
+        fornecedores:
+          RECEITA_FEDERAL:
+            cnpj: "00394460000141"
+            razao_social: "Receita Federal do Brasil"
+            aplica_a_tipos: [das_parcsn_andre, ...]
+
+    Devolve dict {tipo_documento: {cnpj, razao_social, ...}} -- mapa
+    invertido para lookup direto.
+    """
+    global _SINTETICOS_CACHE
+    if _SINTETICOS_CACHE is not None:
+        return _SINTETICOS_CACHE
+
+    import yaml
+
+    if not _PATH_FORNECEDORES_SINTETICOS.exists():
+        _SINTETICOS_CACHE = {}
+        return _SINTETICOS_CACHE
+
+    with _PATH_FORNECEDORES_SINTETICOS.open(encoding="utf-8") as fh:
+        dados = yaml.safe_load(fh) or {}
+
+    fornecedores = dados.get("fornecedores", {}) or {}
+    invertido: dict[str, dict[str, Any]] = {}
+    for nome, info in fornecedores.items():
+        cnpj = info.get("cnpj") or ""
+        razao = info.get("razao_social") or nome
+        for tipo in info.get("aplica_a_tipos", []) or []:
+            invertido[tipo] = {
+                "nome_canonico": nome,
+                "cnpj": cnpj,
+                "razao_social": razao,
+            }
+    _SINTETICOS_CACHE = invertido
+    return _SINTETICOS_CACHE
+
+
+def _resolver_fornecedor_sintetico(tipo_documento: str) -> dict[str, Any] | None:
+    """Retorna sintético {cnpj, razao_social, nome_canonico} ou None."""
+    if not tipo_documento:
+        return None
+    return _carregar_fornecedores_sinteticos().get(tipo_documento)
+
+
+def _resetar_cache_sinteticos() -> None:
+    """Helper para testes -- força recarregar do YAML."""
+    global _SINTETICOS_CACHE
+    _SINTETICOS_CACHE = None
+
+
+# ============================================================================
 # Upserts de nós de apoio
 # ============================================================================
 
@@ -398,6 +462,15 @@ def ingerir_documento_fiscal(
                 "(nó documento ou aresta ficaria órfão)"
             )
 
+    # Sprint 107: troca fornecedor pelo sintético quando tipo_documento casa
+    # (ex: DAS PARCSN -> RECEITA_FEDERAL). Contribuinte preservado em metadata.
+    sintetico = _resolver_fornecedor_sintetico(documento.get("tipo_documento", ""))
+    if sintetico is not None:
+        documento = dict(documento)  # copia local para não mutar caller
+        documento["__contribuinte_original"] = documento.get("razao_social", "")
+        documento["cnpj_emitente"] = sintetico["cnpj"]
+        documento["razao_social"] = sintetico["razao_social"]
+
     metadata = {
         chave: valor
         for chave, valor in documento.items()
@@ -406,6 +479,8 @@ def ingerir_documento_fiscal(
     metadata.setdefault("tipo_documento", "documento_fiscal")
     if caminho_arquivo is not None:
         metadata["arquivo_origem"] = str(caminho_arquivo)
+    if sintetico is not None and documento.get("__contribuinte_original"):
+        metadata["contribuinte"] = documento["__contribuinte_original"]
 
     documento_id = db.upsert_node("documento", documento["chave_44"], metadata=metadata)
 
