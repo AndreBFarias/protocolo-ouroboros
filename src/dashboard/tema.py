@@ -365,6 +365,20 @@ def css_global() -> str:
         padding-bottom: {PADDING_INTERNO}px !important;
         padding-left: {PADDING_INTERNO}px !important;
     }}
+    /* Sprint UX-125 AC1: body 100% horizontal -- Streamlit por padrão aplica
+       max-width restritivo (~736px ou 1200px conforme tema) ao
+       .block-container, deixando faixa preta à direita do conteúdo em
+       monitores wide. Forçamos max-width: 100% e width: 100% para que o
+       conteúdo ocupe toda a viewport. Regra separada do bloco de padding
+       (acima) para preservar regex de testes legados (test_ux_tokens
+       ::test_css_global_declara_padding_bloco) que casa o seletor seguido
+       imediatamente de uma declaração de padding. Aplicado também no
+       testid moderno [data-testid="stMainBlockContainer"] (>=1.32). */
+    .main .block-container,
+    [data-testid="stMainBlockContainer"] {{
+        max-width: 100% !important;
+        width: 100% !important;
+    }}
     .block-container {{ padding-top: {SPACING["xl"]}px; }}
     /* Sprint UX-115 + Sprint UX-119 AC14 (unificação de cor): o container
        externo do conteúdo principal ([data-testid="stMain"]) ficava em
@@ -413,6 +427,14 @@ def css_global() -> str:
     [data-testid="stSelectbox"] div[role="combobox"] > div {{
         overflow: hidden;
         text-overflow: ellipsis;
+    }}
+    /* Sprint UX-125 AC5: input de busca da sidebar ganha altura mínima
+       44px (mesma altura dos selectboxes) para alinhamento visual e
+       acessibilidade WCAG 2.1 (target tátil mínimo). Largura 100% do
+       container já é default do Streamlit; reforçamos para evitar
+       regressão em temas customizados. */
+    [data-testid="stSidebar"] [data-testid="stTextInput"] > div > div {{
+        min-height: 44px;
     }}
     /* Sprint UX-119 AC6: separador vertical roxo 2px entre sidebar e body.
        border-right adiciona linha visual sem mudar background (preservando

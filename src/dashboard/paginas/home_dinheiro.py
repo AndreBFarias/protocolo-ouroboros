@@ -46,10 +46,13 @@ def renderizar(
     """
     _ = mes_selecionado, ctx
 
+    # Sprint UX-125: tab agora se chama "Finanças" (sem sufixo "hoje").
+    # Mantemos "hoje" no subtítulo do hero para sinalizar a dimensão
+    # temporal própria desta mini-view (dia mais recente do dataset).
     st.markdown(
         hero_titulo_html(
             "",
-            "Dinheiro hoje",
+            "Finanças hoje",
             "Resumo das transações do dia mais recente disponível: receita, despesa e saldo.",
         ),
         unsafe_allow_html=True,
@@ -136,7 +139,7 @@ def renderizar(
     if len(df_hoje) > 15:
         st.caption(
             f"Exibindo 15 de {len(df_hoje)} transações. Para ver todas, "
-            "abra o cluster Dinheiro -> Extrato."
+            "abra o cluster Finanças -> Extrato."
         )
 
 

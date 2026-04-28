@@ -50,9 +50,12 @@ class TestUmaTabNaoDefaultPorCluster:
     coerente -- não há "não-default" possível, e isso documenta a borda.
     """
 
-    def test_cluster_dinheiro_tab_pagamentos_indice_2(self) -> None:
-        """Acceptance: ?cluster=Dinheiro&tab=Pagamentos abre tab índice 2."""
-        abas = app.ABAS_POR_CLUSTER["Dinheiro"]
+    def test_cluster_financas_tab_pagamentos_indice_2(self) -> None:
+        """Acceptance: ?cluster=Finanças&tab=Pagamentos abre tab índice 2.
+
+        Sprint UX-125: cluster antes era 'Dinheiro'; renomeado para 'Finanças'.
+        """
+        abas = app.ABAS_POR_CLUSTER["Finanças"]
         html = drilldown.gerar_html_ativar_aba("Pagamentos", abas)
         assert "const indiceAlvo = 2;" in html
         assert '"Pagamentos": 2' in html
@@ -118,7 +121,7 @@ class TestEstruturaDoJavaScriptGerado:
         """Se `[role="tab"]` não existe ainda, reagenda algumas vezes e
         desiste silenciosamente -- sem crash visual.
         """
-        abas = app.ABAS_POR_CLUSTER["Dinheiro"]
+        abas = app.ABAS_POR_CLUSTER["Finanças"]
         html = drilldown.gerar_html_ativar_aba("Contas", abas)
         # Loop de retry com limite finito (atual: 8 tentativas).
         assert "tentativa <" in html
@@ -128,7 +131,7 @@ class TestEstruturaDoJavaScriptGerado:
 
     def test_html_evita_re_instalar_listener(self) -> None:
         """Idempotência: rerun não acumula listeners no mesmo elemento."""
-        abas = app.ABAS_POR_CLUSTER["Dinheiro"]
+        abas = app.ABAS_POR_CLUSTER["Finanças"]
         html = drilldown.gerar_html_ativar_aba("Extrato", abas)
         assert "ouroborosListener" in html
 
@@ -150,22 +153,47 @@ class TestSincroniaConstantes:
         assert set(app.ABAS_POR_CLUSTER.keys()) == set(drilldown.CLUSTERS_VALIDOS)
 
     def test_toda_aba_de_app_aparece_em_mapa_para_cluster(self) -> None:
-        """Invariante N-para-N: o mapa de drilldown enxerga 100% das abas
-        que app.py renderiza.
+        """Invariante N-para-N: toda aba canônica em app.py aparece em
+        MAPA_ABA_PARA_CLUSTER. Sprint UX-125: tabs do Home homônimas com
+        clusters próprios (Finanças/Documentos/Análise/Metas) são exceção
+        documentada via ABAS_HOME_HOMONIMAS. "Análise" e "Metas" também são
+        TABS de seus próprios clusters (cluster Análise tem aba "Análise";
+        cluster Metas tem aba "Metas"), então o MAPA registra a chave única
+        apontando para o cluster canônico próprio. "Finanças" e "Documentos"
+        existem só como tabs do Home (não há aba homônima fora) -- ficam
+        ausentes do MAPA, e o roteamento delas exige cluster explícito.
         """
         abas_app: set[str] = set()
         for lista in app.ABAS_POR_CLUSTER.values():
             abas_app.update(lista)
         abas_mapa = set(drilldown.MAPA_ABA_PARA_CLUSTER.keys())
-        assert abas_app == abas_mapa, (
-            f"Abas em app.py mas não em MAPA_ABA_PARA_CLUSTER: "
-            f"{abas_app - abas_mapa}; e vice-versa: {abas_mapa - abas_app}"
+        # Apenas tabs do Home com nome inexistente em outros clusters podem
+        # ficar fora do MAPA. As demais aparecem todas.
+        abas_so_no_home = drilldown.ABAS_HOME_HOMONIMAS - abas_mapa
+        diff_app_mapa = abas_app - abas_mapa
+        assert diff_app_mapa == abas_so_no_home, (
+            f"Abas em app.py mas não em MAPA: {diff_app_mapa}; "
+            f"esperado apenas tabs Home homônimas sem cluster próprio: "
+            f"{abas_so_no_home}"
         )
+        # Lado inverso: MAPA não tem chave fantasma sem render em app.py.
+        diff_mapa_app = abas_mapa - abas_app
+        assert diff_mapa_app == set(), f"MAPA tem chaves sem render em app.py: {diff_mapa_app}"
 
     def test_cada_aba_pertence_ao_cluster_correto(self) -> None:
-        """Para cada aba em ABAS_POR_CLUSTER[cluster], o mapa diz `cluster`."""
+        """Para cada aba em ABAS_POR_CLUSTER[cluster], o mapa diz `cluster`.
+
+        Sprint UX-125: tabs do Home homônimas com clusters próprios
+        (Finanças/Documentos/Análise/Metas) são puladas neste invariante
+        porque a chave do MAPA é única e pertence ao cluster canônico.
+        Resolução de URL antiga ?tab=X (sem cluster) infere cluster próprio;
+        navegação para tab do Home requer ?cluster=Home explícito.
+        """
         for cluster, abas in app.ABAS_POR_CLUSTER.items():
             for aba in abas:
+                if cluster == "Home" and aba in drilldown.ABAS_HOME_HOMONIMAS:
+                    # Homônimia consciente UX-125 -- pula invariante simétrico.
+                    continue
                 assert drilldown.MAPA_ABA_PARA_CLUSTER[aba] == cluster, (
                     f"Aba '{aba}' está em ABAS_POR_CLUSTER['{cluster}'] mas "
                     f"MAPA_ABA_PARA_CLUSTER aponta para "
