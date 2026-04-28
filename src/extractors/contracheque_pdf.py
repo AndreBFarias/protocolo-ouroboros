@@ -228,6 +228,12 @@ def _ingerir_holerite_no_grafo(
         "data_emissao": f"{mes_ref}-01",
         "tipo_documento": "holerite",
         "total": float(registro.get("bruto") or 0.0),
+        # Sprint 95a: persiste 'bruto' e 'liquido' separados em metadata.
+        # 'total' continua como bruto por compat (Sprint 48 + Sprint 95).
+        # 'liquido' permite linker apertar diff_valor de 0.30 para 0.05
+        # quando match com tx PAGTO SALARIO (que carrega o liquido).
+        "bruto": float(registro.get("bruto") or 0.0),
+        "liquido": float(registro.get("liquido") or 0.0),
         "razao_social": empregador.upper(),
         "numero": chave,
         "arquivo_original": str(arquivo.resolve()),

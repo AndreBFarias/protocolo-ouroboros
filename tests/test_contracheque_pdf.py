@@ -4,7 +4,15 @@ Usa texto sintético que imita o output de pdfplumber/tesseract, permitindo
 testar a lógica de parsing sem depender de PDFs reais (dados privados).
 """
 
-from src.extractors.contracheque_pdf import _parse_g4f, _parse_infobase
+import json
+from pathlib import Path
+
+from src.extractors.contracheque_pdf import (
+    _ingerir_holerite_no_grafo,
+    _parse_g4f,
+    _parse_infobase,
+)
+from src.graph.db import GrafoDB
 
 TEXTO_G4F_FOLHA = """Demonstrativo de Pagamento de Salário: 03/26 Seg: 721
 Empresa: G4F SOLUCOES CORPORATIVAS
@@ -93,6 +101,67 @@ Mensalista Fevereiro de 2026
 def test_infobase_mes_invalido_retorna_none():
     resultado = _parse_infobase("INFOBASE\nMensalista Abracadabra de 2026")
     assert resultado is None
+
+
+# Sprint 95a: persistencia de 'liquido' separado de 'bruto' em metadata do grafo.
+
+
+def _ler_metadata_holerite(grafo: GrafoDB, mes_ref: str) -> dict:
+    """Helper: localiza node holerite pelo mes_ref e retorna metadata parseado."""
+    chave = "HOLERITE|G4F|" + mes_ref
+    chave = chave.replace(" ", "_")
+    cur = grafo._conn.execute(
+        "SELECT metadata FROM node WHERE tipo='documento' AND nome_canonico=?",
+        (chave,),
+    )
+    row = cur.fetchone()
+    assert row is not None, f"node holerite com chave {chave!r} não encontrado"
+    return json.loads(row[0])
+
+
+def test_sprint_95a_metadata_grafo_persiste_liquido_e_bruto(tmp_path: Path):
+    """Sprint 95a: holerite ingerido no grafo deve ter metadata.liquido e .bruto.
+
+    Antes da Sprint 95a o documento dict so gravava 'total' (= bruto), perdendo
+    a info do liquido. Com a fix, o metadata persiste tanto bruto (como 'total'
+    e 'bruto' por compat) quanto liquido como campo dedicado, permitindo o
+    linker (Sprint 95) apertar diff_valor de 0.30 para 0.05.
+    """
+    registro = _parse_g4f(TEXTO_G4F_FOLHA)
+    assert registro is not None
+    assert registro["bruto"] == 8657.25
+    assert registro["liquido"] == 6372.37
+
+    grafo = GrafoDB(tmp_path / "g.sqlite")
+    grafo.criar_schema()
+    arquivo_falso = tmp_path / "holerite_g4f_marco.pdf"
+    arquivo_falso.write_bytes(b"%PDF-1.4 stub")
+    _ingerir_holerite_no_grafo(grafo, registro, arquivo_falso)
+
+    meta = _ler_metadata_holerite(grafo, "2026-03")
+    assert meta["tipo_documento"] == "holerite"
+    assert meta["total"] == 8657.25  # compat: total = bruto
+    assert meta["bruto"] == 8657.25
+    assert meta["liquido"] == 6372.37
+
+
+def test_sprint_95a_liquido_zero_quando_registro_sem_liquido(tmp_path: Path):
+    """Quando registro não traz 'liquido', metadata.liquido = 0.0 (graceful)."""
+    registro = {
+        "mes_ref": "2026-04",
+        "fonte": "G4F",
+        "bruto": 5000.0,
+        # 'liquido' ausente
+    }
+    grafo = GrafoDB(tmp_path / "g.sqlite")
+    grafo.criar_schema()
+    arquivo_falso = tmp_path / "holerite_sem_liquido.pdf"
+    arquivo_falso.write_bytes(b"%PDF-1.4 stub")
+    _ingerir_holerite_no_grafo(grafo, registro, arquivo_falso)
+
+    meta = _ler_metadata_holerite(grafo, "2026-04")
+    assert meta["bruto"] == 5000.0
+    assert meta["liquido"] == 0.0
 
 
 # "Quem tem a coragem de começar tem a coragem de vencer." -- David Viscott
