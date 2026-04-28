@@ -34,6 +34,26 @@ msg_erro()  { echo -e "    ${RED}${BOLD}erro${NC} $1"; }
 msg_info()  { echo -e "    ${CYAN}..${NC}   $1"; }
 msg_aviso() { echo -e "    ${YELLOW}!!${NC}   $1"; }
 
+# Sprint 108: helper para encadear automacoes Opus em ordem fixa.
+# Cada passo loga início/fim/duracao em logs/auditoria_opus.log.
+# Falha-soft: erro em um passo não aborta os proximos.
+run_passo() {
+    local nome="$1"
+    shift
+    local inicio  # início em ASCII para compat com bash sem locale
+    inicio=$(date +%s)
+    msg_info "[Sprint 108] ${nome}..."
+    mkdir -p logs
+    if "$@" >> logs/auditoria_opus.log 2>&1; then
+        local dur=$(($(date +%s) - inicio))
+        msg_ok "[Sprint 108] ${nome} OK (${dur}s)"
+        return 0
+    else
+        msg_aviso "[Sprint 108] ${nome} falhou; seguindo (smoke aritmetico no fim captura regressao)"
+        return 1
+    fi
+}
+
 # ─────────────────────────────────────────────────────────
 # Funções utilitárias
 # ─────────────────────────────────────────────────────────
@@ -497,26 +517,34 @@ case "${1:-}" in
         msg_ok "Pipeline completo."
         ;;
     --full-cycle)
-        # Sprint 101: rota completa em um comando (--inbox + --tudo).
-        # Aborta se a etapa de inbox falhar; se tudo passar, segue para o pipeline.
-        msg_info "Rota completa: inbox + tudo (Sprint 101)..."
+        # Sprint 101 + 108: rota completa com automacoes Opus encadeadas.
+        # Ordem fixa: inbox -> dedup_classificar -> migrar_pessoa -> backfill_arquivo_origem
+        # -> pipeline-tudo. Cada automacao tem falha-soft.
+        msg_info "Rota completa: inbox + automacoes Opus + pipeline (Sprint 101+108)..."
         backup_xlsx
         python -m src.integrations.controle_bordo --executar || msg_aviso "Adapter do vault reportou erro(s); seguindo."
         if ! python -m src.inbox_processor; then
             msg_erro "Inbox falhou; abortando ciclo completo."
             exit 1
         fi
-        msg_ok "Inbox processada; iniciando pipeline completo..."
+        msg_ok "Inbox processada; iniciando automacoes Opus..."
+        run_passo "dedup_classificar" python -m scripts.dedup_classificar_lote --executar
+        run_passo "migrar_pessoa_via_cpf" python -m scripts.migrar_pessoa_via_cpf --executar
+        run_passo "backfill_arquivo_origem" python -m scripts.backfill_arquivo_origem_lote --executar
+        msg_info "Pipeline canonico..."
         python -m src.pipeline --tudo
-        msg_ok "Rota completa concluída."
+        msg_ok "Rota completa concluida."
         ;;
     --reextrair-tudo)
-        # Sprint 104: limpa nodes 'documento' do grafo e re-ingere todos os
-        # arquivos de data/raw com metadata atualizado dos extratores.
-        # Util quando extrator ganhou campos novos (ex: Sprint 95a adicionou
-        # 'liquido' ao holerite) e o grafo precisa refletir essa mudanca.
+        # Sprint 104 + 108: cleanup automacoes + reextracao completa.
+        # Antes de --forcar-reextracao, roda automacoes para garantir que
+        # data/raw/ esta limpo e o grafo não tem paths quebrados.
         msg_aviso "Reextracao em lote: vai limpar nodes 'documento' do grafo."
         if confirmar "Tem certeza? (operação irreversivel)"; then
+            msg_info "Rodando automacoes de cleanup antes de reextrair (Sprint 108)..."
+            run_passo "dedup_classificar" python -m scripts.dedup_classificar_lote --executar
+            run_passo "migrar_pessoa_via_cpf" python -m scripts.migrar_pessoa_via_cpf --executar
+            run_passo "backfill_arquivo_origem" python -m scripts.backfill_arquivo_origem_lote --executar
             msg_info "Re-ingerindo documentos com extratores atualizados..."
             python -m scripts.reprocessar_documentos --forcar-reextracao
             msg_ok "Reextracao concluida."

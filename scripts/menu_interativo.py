@@ -59,6 +59,7 @@ OPCOES_MENU: dict[str, str] = {
     "4": "Sincronizar com Obsidian",
     "5": "Tudo (inbox + pipeline + sync)",
     "6": "Reextrair documentos (limpa grafo e re-ingere) [Sprint 104]",
+    "7": "Auditoria Opus completa (cleanup + reextração) [Sprint 108]",
     "0": "Sair",
 }
 
@@ -177,6 +178,19 @@ def _acao_reextrair() -> bool:
     return rc == 0
 
 
+def _acao_auditoria_opus() -> bool:
+    """Sprint 108: dispara auditoria completa via run.sh --reextrair-tudo
+    que ja inclui as automacoes (dedup, migrar pessoa, backfill).
+    """
+    cons = _console()
+    cons.print(
+        "[magenta]Auditoria Opus completa: cleanup automacoes + reextracao[/]"
+    )
+    cons.print("[dim]Sprint 108 -- ordem: dedup -> migrar pessoa -> backfill -> reextrair[/]")
+    rc = _rodar_run_sh("--reextrair-tudo")
+    return rc == 0
+
+
 _DISPATCHER: dict[str, callable] = {  # type: ignore[type-arg]
     "R": _acao_rota_completa,
     "1": _acao_inbox,
@@ -185,6 +199,7 @@ _DISPATCHER: dict[str, callable] = {  # type: ignore[type-arg]
     "4": _acao_sync,
     "5": _acao_tudo,
     "6": _acao_reextrair,
+    "7": _acao_auditoria_opus,
 }
 
 
