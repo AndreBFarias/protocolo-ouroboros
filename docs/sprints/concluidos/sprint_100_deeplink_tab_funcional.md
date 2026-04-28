@@ -40,7 +40,23 @@ sprint:
 
 # Sprint 100 -- Deep-link tab funcional
 
-**Status:** REABERTA (P1, executada parcialmente em commit `c4397ea` mergeada em `24dd487`; fica em produção até UX-110/111/112/113/114 fecharem)
+**Status:** CONCLUIDA (P1, fechamento bookkeeping em 2026-04-27 pós-cluster UX v3)
+
+## Decisão 2026-04-27 -- Fechamento oficial
+
+Implementação técnica entregue em `c4397ea` / merge `24dd487`. Reabertura foi formal aguardando os 5 pré-requisitos UX. Todos mergeados em main na rodada cluster UX v1+v2+v3:
+
+| Pré-requisito | Commit |
+|---|---|
+| UX-110 (Busca Global como primeira aba do cluster Documentos) | `61464e4` |
+| UX-111 (token cor `#6272A4` → `#c9c9cc`) | `bdaa2ac` |
+| UX-112 (padding/borda foco-ativo globais) | `a50608d` |
+| UX-113 (sidebar refactor: campo Buscar primeiro + Área dropdown) | `5a57c4b` |
+| UX-114 (Busca Global refactor: autocomplete + roteador tab/doc + tabela) | `4be89cf` |
+
+Validação visual humana confirmou tab Busca Global ativa via `?cluster=Documentos&tab=Busca+Global` em commit técnico original; UX-110 a UX-114 endereçaram as ressalvas do componente Busca Global. Spirit da spec atendido.
+
+**Sprint 100 = CONCLUIDA. Move-se para `docs/sprints/concluidos/`.**
 
 Streamlit `st.tabs(...)` não expoe API para ativar tab por nome. Sprint usa truque: `st.session_state['_active_tab_<cluster>']` lido do query_params na inicializacao + `st.tabs(...)` retorna lista; injeta JavaScript via `st.components.v1.html()` que clica na tab correspondente apos render.
 
