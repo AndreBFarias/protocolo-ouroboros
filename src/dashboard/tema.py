@@ -715,6 +715,21 @@ def css_global() -> str:
             flex: 1 1 100% !important;
             min-width: 100% !important;
         }}
+        /* Sprint UX-127 AC1: input de busca da sidebar não corta em viewport
+           estreito. Em telas <=700px o container interno e o <input> ganham
+           width: 100% + box-sizing: border-box + overflow: visible. Sem
+           isso, o conteúdo do <input> some quando a sidebar encolhe abaixo
+           do default do Streamlit (~280px) e o usuário não vê o que digita.
+           Combina com a regra UX-125 AC5 (min-height: 44px) que já vive em
+           outro bloco do css_global. */
+        [data-testid="stSidebar"] [data-testid="stTextInput"] > div > div {{
+            width: 100% !important;
+            overflow: visible !important;
+        }}
+        [data-testid="stSidebar"] [data-testid="stTextInput"] input {{
+            width: 100% !important;
+            box-sizing: border-box !important;
+        }}
     }}
 
     /* --- Gráfico: título não sobrepõe legenda (Sprint 62) --------------- */
