@@ -363,6 +363,7 @@ protocolo-ouroboros/
 | Blueprint da central de vida adulta (DESIGN-01) | `docs/BLUEPRINT_VIDA_ADULTA.md` |
 | Bootstrap de fresh clone (ANTI-MIGUE-10) | `docs/BOOTSTRAP.md` |
 | **Manifesto do supervisor Opus (META-SUPERVISOR-01) — leia se você é um Opus que assumiu a sessão** | `docs/SUPERVISOR_OPUS.md` |
+| **Planos de sessão em curso (DOC-VERDADE-01.A.0) — leia se assumiu sessão recente** | `docs/PLANOS_SESSAO/` |
 | ADRs | `docs/adr/ADR-NN-*.md` |
 | Estado atual | `contexto/ESTADO_ATUAL.md` |
 | Histórico de sessões | `docs/HISTORICO_SESSOES.md` |
