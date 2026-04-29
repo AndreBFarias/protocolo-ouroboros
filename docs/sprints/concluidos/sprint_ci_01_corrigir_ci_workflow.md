@@ -1,3 +1,7 @@
+---
+concluida_em: 2026-04-28
+---
+
 # Sprint CI-01 -- Corrigir CI: pytest com fallback silencioso + falta smoke + falta acentuação
 
 **Origem**: plan pure-swinging-mitten (auditoria honesta 2026-04-29).
