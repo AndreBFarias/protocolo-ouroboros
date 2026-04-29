@@ -261,4 +261,76 @@ A cada sessão, dono pode adicionar mais. Leia `docs/ARMADILHAS.md` quando tema 
 
 ---
 
+## §11 — Comandos garantidamente read-only (DOC-VERDADE-01.D)
+
+Estes comandos podem ser invocados livremente em modo plan, sob orientação "read-only apenas", ou em qualquer fase de diagnóstico. **Não mutam código, dados, nem estado git**:
+
+### Inspeção do filesystem
+
+| Comando | Por que é seguro |
+|---------|------------------|
+| `ls`, `cat`, `head`, `tail`, `wc` | Leitura pura. |
+| `find . [-name | -type | -size]` | Sem `-delete` ou `-exec rm`, é só listagem. |
+| `grep`, `rg`, `ag` | Padrão de busca, não modifica. |
+
+### Git (estado e histórico)
+
+| Comando | Por que é seguro |
+|---------|------------------|
+| `git status [--short]` | Lista mudanças sem aplicar. |
+| `git log [--oneline] [--grep]` | Histórico, leitura pura. |
+| `git diff [--cached] [<rev>]` | Diff entre versões. |
+| `git show <commit>` | Dump de commit. |
+| `git blame <arquivo>` | Quem mudou cada linha. |
+| `git check-ignore <path>` | Confere se path é ignorado. |
+| `git worktree list` | Lista worktrees. |
+| `git rev-parse --show-toplevel` | Caminho da raiz. |
+
+### Testes e qualidade
+
+| Comando | Por que é seguro |
+|---------|------------------|
+| `pytest tests/ --collect-only` | Apenas coleta, não roda. |
+| `pytest tests/ -q` | Testes leem fixtures e DB temporário; não escrevem em produção. |
+| `make lint` | `ruff check` + `check_acentuacao.py --all` — não fixam, só reportam. |
+| `make smoke` | `./run.sh --check` (23 checagens read-only) + `smoke_aritmetico.py --strict` (lê XLSX, exit 0 graceful se ausente). 100% read-only. |
+| `./run.sh --check` | 23 checagens de ambiente, idempotente. |
+
+### Banco e dados
+
+| Comando | Por que é seguro |
+|---------|------------------|
+| `sqlite3 <db> "SELECT ..."` | SELECT puro, sem INSERT/UPDATE/DELETE. |
+| `sqlite3 <db> ".schema"` ou `.tables` | Metadados. |
+| `python -m src.intake.anti_orfao --abrangente` | Não escreve no grafo; só gera relatório em `data/output/orfaos.md`. |
+
+### Scripts auxiliares (com flag dry-run)
+
+| Comando | Por que é seguro |
+|---------|------------------|
+| `python scripts/auditar_cobertura.py` | Sem `--executar` é dry-run; com `--executar` cria arquivo em `docs/auditorias/` (apêndice, não mutação). |
+| `python scripts/propor_extrator.py <tipo>` | Sem `--executar` é dry-run; com `--executar` cria arquivo em `docs/propostas/extracao/` (apêndice). |
+| `python scripts/auditar_estado.py` | Sem `--executar` é dry-run; com `--executar` grava relatório em `docs/auditorias/` (não modifica `ESTADO_ATUAL.md`). |
+| `python scripts/backfill_concluida_em.py` | Sem `--executar` é dry-run. **Atenção**: com `--executar` modifica frontmatter em massa de specs. Trate como **não read-only**. |
+
+### Comandos que **não** são read-only (cuidado)
+
+| Comando | Efeito |
+|---------|--------|
+| `./run.sh --tudo` | Roda pipeline completo, regenera XLSX e grafo. |
+| `./run.sh --full-cycle` | Inbox + automações + pipeline. Modifica filesystem extensivamente. |
+| `./run.sh --reextrair-tudo` | **Destrutivo**: limpa nodes documento do grafo antes de reingerir. Exige `--sim`. |
+| `./run.sh --inbox` | Move arquivos da inbox para `data/raw/`. |
+| `make process`, `make tudo` | Aliases dos acima. |
+| `make format` | `ruff format` + `ruff --fix` — modifica código. |
+| `git add`, `git commit`, `git mv`, `git rm`, `git checkout <branch>` | Mutam working tree e/ou index. |
+| `git push`, `git pull`, `git reset --hard` | Operações remotas/destrutivas — exigem aprovação humana explícita. |
+| `pytest --pdb` ou modo interativo | Pode entrar em REPL e ter side-effect. |
+
+### Princípio
+
+Em modo plan ou em qualquer rodada onde o dono pediu "read-only apenas", **todos os comandos da seção verde acima são liberados**. Não hesite. Ler estado atual via comando real é mais honesto do que raciocinar sobre números antigos guardados na sua memória de contexto.
+
+---
+
 *"O que sou não muda; o que faço se ajusta. O contrato é o mesmo: ler com atenção, propor com humildade, deixar trilha auditável." — princípio do supervisor artesanal*
