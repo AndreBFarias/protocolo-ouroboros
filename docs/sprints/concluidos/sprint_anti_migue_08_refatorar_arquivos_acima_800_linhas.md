@@ -1,3 +1,17 @@
+---
+concluida_em: 2026-04-29
+commits:
+  - 0900ff9 refactor(dashboard): extrai consultas de grafo de dados.py
+  - 08a38ab refactor(dashboard): extrai logica pura do revisor
+  - 727599e refactor(graph): extrai ingestores de prescricao e garantia
+  - b15834e refactor(dashboard): extrai css_global de tema.py
+proof_of_work: |
+  find src -name '*.py' -exec wc -l {} \; | awk '$1>800'
+  -> 0 linhas (acceptance criteria #1 cumprido)
+  pytest: 2022 passed (baseline 2020) -- zero regressao (acceptance #2)
+  make lint: exit 0 (acceptance #3)
+---
+
 # Sprint ANTI-MIGUE-08 -- Refatorar 4 arquivos > 800 linhas (CLAUDE.md §convenções)
 
 **Origem**: plan pure-swinging-mitten (auditoria honesta 2026-04-29).
