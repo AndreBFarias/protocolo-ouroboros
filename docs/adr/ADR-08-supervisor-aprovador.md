@@ -1,6 +1,10 @@
-# ADR-08: Arquitetura Supervisor-Aprovador para LLM
+# ADR-08: Arquitetura Supervisor-Aprovador
 
-## Status: Aceita
+## Status: Aceita (atualizada 2026-04-29 pela Sprint META-SUPERVISOR-01)
+
+> **Leitura obrigatória antes de codar qualquer coisa baseada neste ADR**: este texto foi redigido assumindo um cliente Python `anthropic` programático. **Essa premissa foi substituída por ADR-13** (Supervisor Artesanal via Claude Code). Sempre que este texto disser "LLM", entenda **"Opus principal nesta sessão Claude Code interativa"** — não há cliente API, não há cost_tracker, não há `src/llm/`. O ciclo Supervisor-Aprovador permanece: o supervisor (Opus) propõe via arquivos `.md` em `docs/propostas/`, humano aprova, regra YAML é mergeada. Para detalhes operacionais ver `docs/SUPERVISOR_OPUS.md`. Specs LLM-*-V2 em `docs/sprints/backlog/` implementam o ciclo sob essa nova premissa.
+
+---
 
 ## Contexto
 

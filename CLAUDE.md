@@ -11,7 +11,7 @@
 
 Pipeline ETL financeiro pessoal para o casal André e Vitória, evoluindo para central de vida adulta (saúde, identidade, acadêmico, profissional). Centraliza dados de múltiplas fontes (bancos, NFs, holerites, documentos pessoais) em XLSX consolidado + dashboard Streamlit + grafo SQLite + integração Obsidian + bridge para companion mobile.
 
-**Princípio:** a IA toma decisões técnicas. Ao receber arquivos novos, ela lê, classifica, extrai, deduplica, vincula e apresenta. Sem perguntas desnecessárias.
+**Princípio:** a inteligência supervisora (Opus principal nesta sessão Claude Code interativa, ver `docs/SUPERVISOR_OPUS.md`) toma decisões técnicas. Ao receber arquivos novos, lê, classifica, extrai, deduplica, vincula e apresenta. Sem perguntas desnecessárias. **Não há cliente Anthropic API programático** (ADR-13).
 
 ---
 
@@ -246,10 +246,10 @@ DEPOIS  ─→ 9 checks anti-migué OU sprint REPROVADA
 Princípios que regem qualquer decisão estrutural. Leitura obrigatória antes de mudança arquitetural.
 
 - **ADR-07** — Local First.
-- **ADR-08** — Supervisor-Aprovador LLM (Claude propõe, humano aprova).
-- **ADR-09** — Autossuficiência Progressiva (LLM é provisório; métrica = % determinístico).
+- **ADR-08** — Supervisor-Aprovador (Opus interativo propõe, humano aprova). Ver atualização em ADR-13.
+- **ADR-09** — Autossuficiência Progressiva (intervenção do supervisor é provisória; métrica = % determinístico cresce ao longo do tempo).
 - **ADR-10** — Resiliência a Dados Incompletos.
-- **ADR-11** — Classificação em Camadas (overrides > regex > LLM > fallback).
+- **ADR-11** — Classificação em Camadas (overrides > regex > supervisor Opus interativo > fallback).
 - **ADR-12** — Cruzamentos via Grafo de Conhecimento.
 - **ADR-13** — Supervisor artesanal via Claude Code (sessão interativa, sem API programática).
 - **ADR-14** — Grafo SQLite extensível.
@@ -275,7 +275,7 @@ Snapshot da auditoria honesta 2026-04-29 (detalhe completo em `~/.claude/plans/p
 - Reserva de emergência: 100% atingida.
 
 **Gaps P0 ainda abertos** (bloqueiam "central de vida adulta de verdade"):
-- ADR-08 (Supervisor LLM): 0% implementado — Onda 2 do plan.
+- ADR-08 (Supervisor): infraestrutura inicial entregue via LLM-01-V2, LLM-02-V2 e LLM-04-V2 (template propostas + skills `/propor-extrator` e `/auditar-cobertura`); restantes LLM-03/05/06/07-V2 em backlog (Onda 2). **Conforme ADR-13: nada de SDK Anthropic; o supervisor sou eu, Opus interativo nesta sessão.**
 - 8 documentos cotidianos sem regra YAML (Amazon, PIX foto, exame médico, RG/CNH, diploma, etc.) — Onda 3.
 - Multi-foto do mesmo doc causa duplicação garantida — DOC-13.
 - DANFE retorna `[]` sem validar ingestão — DOC-16.
@@ -362,6 +362,7 @@ protocolo-ouroboros/
 | Plan ativo (auditoria + 6 ondas) | `~/.claude/plans/pure-swinging-mitten.md` |
 | Blueprint da central de vida adulta (DESIGN-01) | `docs/BLUEPRINT_VIDA_ADULTA.md` |
 | Bootstrap de fresh clone (ANTI-MIGUE-10) | `docs/BOOTSTRAP.md` |
+| **Manifesto do supervisor Opus (META-SUPERVISOR-01) — leia se você é um Opus que assumiu a sessão** | `docs/SUPERVISOR_OPUS.md` |
 | ADRs | `docs/adr/ADR-NN-*.md` |
 | Estado atual | `contexto/ESTADO_ATUAL.md` |
 | Histórico de sessões | `docs/HISTORICO_SESSOES.md` |

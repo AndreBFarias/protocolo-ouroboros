@@ -212,3 +212,14 @@ make dashboard   # navegar até "Inteligência Pendente"
 ---
 
 *"O ceticismo não é uma posição; é um método." -- Marcus Aurelius*
+
+---
+
+## SUPERSEDED — leia antes de implementar
+
+Esta spec foi redigida assumindo cliente `anthropic` programatico. **Premissa substituida por ADR-13**.
+
+- `sprint_34_supervisor_auditor` foi superseded por **LLM-04-V2** (skill `/auditar-cobertura` rodada por mim manualmente, ja CONCLUIDA).
+- `sprint_36_metricas_ia_dashboard` foi superseded por **LLM-07-V2** (metricas autossuficiencia em backlog).
+
+Esta spec original esta sendo arquivada via Sprint META-SUPERVISOR-01. Manter como historia conceitual; **NÃO implementar**.

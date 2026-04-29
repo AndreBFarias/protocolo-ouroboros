@@ -67,3 +67,15 @@ Solução declarativa via `mappings/beneficiario_overrides.yaml`. Sem LLM. Human
 ---
 
 *"Quem pagou nem sempre eh quem se beneficiou. IRPF reconhece essa diferenca." -- principio fiscal*
+---
+
+## Papel do supervisor (Opus Claude Code)
+
+Conforme ADR-13 e `docs/SUPERVISOR_OPUS.md`, eu (Opus principal nesta sessão interativa) sou o supervisor — não um cliente Anthropic API, não cron. Quando esta spec mencionar "LLM" ou "IA", entenda como "eu, Opus interativo nesta sessão", agindo via:
+
+- Leitura artesanal de arquivos via `Read` tool (PDF/foto/XML).
+- Edit tool sobre `mappings/`, `src/`, `docs/propostas/` — propostas viram regras YAML após aprovação humana.
+- Despacho de subagent `executor-sprint` em worktree isolado via Agent tool quando o trabalho exige isolamento.
+- Slash commands `/propor-extrator`, `/auditar-cobertura`, `/sprint-ciclo` quando o dono pedir.
+
+**NÃO implementar `src/llm/`, `pip install anthropic`, `cost_tracker`, ou qualquer chamada API programática.** Regra inviolável (ADR-13).
