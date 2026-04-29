@@ -1,3 +1,7 @@
+---
+concluida_em: 2026-04-28
+---
+
 # Sprint ANTI-MIGUE-10 -- Documentar bootstrap em install.sh + docs/BOOTSTRAP.md
 
 **Origem**: plan pure-swinging-mitten (auditoria honesta 2026-04-29).
