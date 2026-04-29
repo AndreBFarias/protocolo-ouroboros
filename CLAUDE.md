@@ -358,6 +358,7 @@ protocolo-ouroboros/
 | Sprints (backlog/concluidos/arquivadas) | `docs/sprints/` |
 | Índice mestre de sprints + relacionamento antigas vs plan | `docs/SPRINTS_INDEX.md` |
 | Plan ativo (auditoria + 6 ondas) | `~/.claude/plans/pure-swinging-mitten.md` |
+| Blueprint da central de vida adulta (DESIGN-01) | `docs/BLUEPRINT_VIDA_ADULTA.md` |
 | ADRs | `docs/adr/ADR-NN-*.md` |
 | Estado atual | `contexto/ESTADO_ATUAL.md` |
 | Histórico de sessões | `docs/HISTORICO_SESSOES.md` |

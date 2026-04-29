@@ -1,3 +1,7 @@
+---
+concluida_em: 2026-04-28
+---
+
 # Sprint DESIGN-01 -- Blueprint: outputs esperados + docs esperados + relacionamentos + aparência de relatórios
 
 **Origem**: plan pure-swinging-mitten (auditoria honesta 2026-04-29).
