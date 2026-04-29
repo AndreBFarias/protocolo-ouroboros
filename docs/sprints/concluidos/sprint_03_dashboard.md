@@ -1,3 +1,7 @@
+---
+concluida_em: 2026-04-19
+---
+
 # Sprint 03 -- Dashboard Streamlit v1
 
 ## Status: Código integrado, bugs visuais pendentes (issue #3 reaberta)

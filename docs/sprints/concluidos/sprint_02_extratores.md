@@ -1,3 +1,7 @@
+---
+concluida_em: 2026-04-19
+---
+
 # Sprint 02 -- Infra de Qualidade e Categorização
 
 ## Status: Concluída

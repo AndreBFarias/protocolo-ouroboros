@@ -1,3 +1,7 @@
+---
+concluida_em: 2026-04-28
+---
+
 # Sprint AUDIT2-METADATA-ITENS-LISTA -- Persistir itens granulares em metadata
 
 **Origem**: Auditoria self-driven 2026-04-29, achado B2.

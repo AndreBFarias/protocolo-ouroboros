@@ -1,3 +1,7 @@
+---
+concluida_em: 2026-04-28
+---
+
 # Sprint AUDIT2-DAS-DATA-ANTIGA-BACKFILL -- Recompor data_emissao em DAS pre-90b
 
 **Origem**: Auditoria self-driven 2026-04-29, achado A2.

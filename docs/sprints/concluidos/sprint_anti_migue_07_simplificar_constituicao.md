@@ -1,3 +1,7 @@
+---
+concluida_em: 2026-04-28
+---
+
 # Sprint ANTI-MIGUE-07 -- Simplificar constituição técnica
 
 **Origem**: plan pure-swinging-mitten (auditoria honesta 2026-04-29, itens 44 e 45).

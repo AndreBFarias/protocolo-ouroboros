@@ -1,3 +1,7 @@
+---
+concluida_em: 2026-04-28
+---
+
 # Sprint AUDIT2-FORNECEDOR-CAPITALIZACAO -- Normalizar caixa de razao_social em cupons
 
 **Origem**: Auditoria self-driven 2026-04-29, achado A3.

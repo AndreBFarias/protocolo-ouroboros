@@ -1,3 +1,7 @@
+---
+concluida_em: 2026-04-19
+---
+
 # Sprint 14 -- Acentuação, Qualidade e Hooks
 
 ## Status: Parcialmente concluída (hooks implementados)

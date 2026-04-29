@@ -1,3 +1,7 @@
+---
+concluida_em: 2026-04-28
+---
+
 # Sprint ANTI-MIGUE-02 -- Anti-órfão na inbox
 
 **Origem**: plan pure-swinging-mitten (auditoria honesta 2026-04-29, item 30, P0).

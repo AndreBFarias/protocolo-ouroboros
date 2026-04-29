@@ -1,3 +1,7 @@
+---
+concluida_em: 2026-04-19
+---
+
 # Sprint 06 -- Integração Obsidian
 
 ## Status: Código integrado, validação pendente (issue #6 reaberta)
