@@ -2,18 +2,30 @@
 
 > Este arquivo te diz como agir, nao apenas o que voce pode fazer. Le com atencao -- a ordem dos passos importa.
 
-## Hierarquia de instrucoes
+## Hierarquia de instrucoes (atualizada 2026-04-29 pela DOC-VERDADE-01.B)
 
-Quando duas regras conflitarem:
+Quando duas regras conflitarem, a ordem de precedencia eh:
 
 1. **Instrucao explicita do dono humano (mensagem direta)** -- prioridade maxima.
-2. **CLAUDE.md** -- constituicao tecnica do projeto (regras inviolaveis).
-3. **VALIDATOR_BRIEF.md** -- padroes canonicos descobertos.
-4. **Spec da sprint que voce esta executando** -- escopo declarado.
-5. **Skills do Claude Code** (sprint-ciclo, validar-sprint, etc).
-6. **Default do sistema**.
+2. **ADRs aceitas em `docs/adr/`** -- decisoes arquiteturais canonicas (ex: ADR-13 sobre supervisor sem API; ADR-08 sobre ciclo Supervisor-Aprovador). Vencem CLAUDE.md em qualquer caso de conflito estrutural.
+3. **CLAUDE.md** -- constituicao tecnica do projeto (regras inviolaveis e workflow).
+4. **`docs/SUPERVISOR_OPUS.md`** -- manifesto canonico do papel do supervisor (Opus interativo).
+5. **`VALIDATOR_BRIEF.md`** -- padroes canonicos descobertos em sprints anteriores. Eh historico-cumulativo (nao regra rigida); pode evoluir.
+6. **`~/.claude/plans/<slug>.md`** -- plan ativo (aspiracao de fechamento, NAO eh verdade do estado atual).
+7. **`docs/PLANOS_SESSAO/<data>_<slug>.md`** -- snapshot versionado de planos em curso (preserva conhecimento entre sessoes).
+8. **Spec da sprint** que voce esta executando -- escopo declarado.
+9. **Skills do Claude Code** (sprint-ciclo, validar-sprint, propor-extrator, auditar-cobertura, etc).
+10. **Default do sistema**.
 
-Se a spec contradiz CLAUDE.md, voce REPROVA a spec antes de executar.
+Se a spec contradiz CLAUDE.md ou ADR, voce REPROVA a spec antes de executar.
+
+### Quando fontes divergem (regras canonicas)
+
+- **ADRs vencem CLAUDE.md** em qualquer decisao estrutural. Se ADR diz "nao implementar X" e CLAUDE.md tem trecho que poderia ser lido como "implementar X", ADR vence. CLAUDE.md deve ser corrigido na proxima oportunidade (sprint META-* ou similar).
+- **Plan ativo eh aspiracao, nao verdade**. Se o plan diz "Sprint Y a fazer" mas `git log` mostra Sprint Y commitada, o git log ganha. Auditar via `python scripts/auditar_estado.py` se desconfiar.
+- **VALIDATOR_BRIEF eh padrao descoberto, nao regra**. Pode evoluir; padroes (a..cc) sao recomendacoes empiricas, nao mandamentos.
+- **`docs/PLANOS_SESSAO/` mostra o que esta em curso AGORA**. Se voce assumiu sessao apos queda do Opus anterior, leia este diretorio antes de qualquer coisa para entender o que estava sendo feito.
+- **Sempre que possivel: confie no codigo, nao na doc**. Verdade vivo eh `git log` + `ls docs/sprints/concluidos/` + comportamento em runtime. Doc eh fotografia.
 
 ## 4 modos de operacao
 
