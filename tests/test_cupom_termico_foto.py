@@ -616,6 +616,40 @@ class TestFallbackSupervisor:
         propostas = list((tmp_path / "propostas").glob("*.md"))
         assert len(propostas) == 1
 
+    def test_fallback_idempotente_duas_execucoes(self, tmp_path: Path):
+        """Sprint ANTI-MIGUE-05: rodar fallback 2x sobre mesma foto deve
+        produzir 1 proposta (não 2). Idempotência via cache_key (Sprint P2.1
+        que substituiu uuid.uuid4 por sha256 determinístico)."""
+        foto = tmp_path / "cupom.jpg"
+        foto.write_bytes(b"\xff\xd8\xff bytes determinantes para sha256 idempotente")
+
+        dir_cache = tmp_path / "cache"
+        dir_conferir = tmp_path / "conferir"
+        dir_propostas = tmp_path / "propostas"
+
+        for _ in range(2):
+            ext = ExtratorCupomTermicoFoto(
+                foto,
+                diretorio_cache=dir_cache,
+                diretorio_conferir=dir_conferir,
+                diretorio_propostas=dir_propostas,
+            )
+            with patch.object(
+                ext,
+                "_rodar_ocr_com_cache",
+                return_value=(_ler(AMERICANAS), 55.0),
+            ):
+                ext.extrair()
+
+        propostas = list(dir_propostas.glob("*.md"))
+        assert len(propostas) == 1, (
+            f"esperava 1 proposta apos 2 execucoes idempotentes, achei {len(propostas)}"
+        )
+        conferidos = list(dir_conferir.iterdir())
+        assert len(conferidos) == 1, (
+            f"esperava 1 dir _conferir apos 2 execucoes, achei {len(conferidos)}"
+        )
+
     def test_fluxo_completo_aprovado_nao_cria_proposta(self, tmp_path: Path, grafo_temp: GrafoDB):
         """Recall=100 + confidence alta: ingere no grafo, sem proposta."""
         foto = tmp_path / "cupom.jpg"

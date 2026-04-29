@@ -1,3 +1,7 @@
+---
+concluida_em: 2026-04-28
+---
+
 # Sprint ANTI-MIGUE-05 -- Fechar Sprint 87d: UUID → hash determinístico em fallback supervisor cupom
 
 **Origem**: plan pure-swinging-mitten (auditoria honesta 2026-04-29).
