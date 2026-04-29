@@ -1,14 +1,15 @@
 """Smoke aritmético: valida contratos globais do ouroboros_2026.xlsx.
 
-Executa 8 contratos sobre as abas `extrato` e `renda` para prevenir regressão
-do bug estrutural detectado na auditoria 2026-04-21 (classificador de tipo).
+Executa 10 contratos sobre as abas `extrato`, `renda` e `resumo_mensal`
+para prevenir regressão do bug estrutural detectado na auditoria 2026-04-21
+(classificador de tipo) e garantir coerência inter-aba.
 
 Uso:
     python scripts/smoke_aritmetico.py            # modo observador (warnings)
     python scripts/smoke_aritmetico.py --strict   # exit 1 na primeira violação
 
 Saída literal:
-    [SMOKE-ARIT] 8/8 contratos OK          quando todos passam
+    [SMOKE-ARIT] 10/10 contratos OK        quando todos passam
     [SMOKE-ARIT] VIOLAÇÃO em <nome>: ...   quando --strict e falha
 """
 
@@ -54,7 +55,9 @@ def _limiar_receita(mes_ref: str) -> float:
     return LIMIAR_RECEITA_DEZEMBRO if mes_ref.endswith("-12") else LIMIAR_RECEITA_PADRAO
 
 
-def contrato_receita_nao_exagera_salario(df: pd.DataFrame, renda: pd.DataFrame) -> str | None:
+def contrato_receita_nao_exagera_salario(
+    df: pd.DataFrame, renda: pd.DataFrame, resumo: pd.DataFrame
+) -> str | None:
     """Receita de cada mês não pode exceder salário bruto × limiar calibrado.
 
     Detecta o tipo de regressão que a Sprint 55 corrigiu: classificador marcando
@@ -90,7 +93,9 @@ def contrato_receita_nao_exagera_salario(df: pd.DataFrame, renda: pd.DataFrame) 
     return None
 
 
-def contrato_despesa_nao_negativa(df: pd.DataFrame, renda: pd.DataFrame) -> str | None:
+def contrato_despesa_nao_negativa(
+    df: pd.DataFrame, renda: pd.DataFrame, resumo: pd.DataFrame
+) -> str | None:
     """Nenhum valor de Despesa pode estar em formato negativo.
 
     Schema do projeto exige valores sempre positivos; direção é codificada em `tipo`.
@@ -101,7 +106,9 @@ def contrato_despesa_nao_negativa(df: pd.DataFrame, renda: pd.DataFrame) -> str 
     return None
 
 
-def contrato_juros_iof_multa_nunca_receita(df: pd.DataFrame, renda: pd.DataFrame) -> str | None:
+def contrato_juros_iof_multa_nunca_receita(
+    df: pd.DataFrame, renda: pd.DataFrame, resumo: pd.DataFrame
+) -> str | None:
     """Zero linhas com local casando /Juros|IOF|Multa/ classificadas como Receita."""
     mask_texto = (
         df["local"].astype(str).str.contains(r"Juros|IOF|Multa", case=False, regex=True, na=False)
@@ -113,7 +120,9 @@ def contrato_juros_iof_multa_nunca_receita(df: pd.DataFrame, renda: pd.DataFrame
     return None
 
 
-def contrato_transferencias_internas_batem(df: pd.DataFrame, renda: pd.DataFrame) -> str | None:
+def contrato_transferencias_internas_batem(
+    df: pd.DataFrame, renda: pd.DataFrame, resumo: pd.DataFrame
+) -> str | None:
     """Para cada par de Transferência Interna deve existir saída e entrada.
 
     Como valores são sempre positivos no schema, o pareamento é feito por
@@ -145,7 +154,9 @@ def contrato_transferencias_internas_batem(df: pd.DataFrame, renda: pd.DataFrame
     return None
 
 
-def contrato_classificacao_soma_despesa(df: pd.DataFrame, renda: pd.DataFrame) -> str | None:
+def contrato_classificacao_soma_despesa(
+    df: pd.DataFrame, renda: pd.DataFrame, resumo: pd.DataFrame
+) -> str | None:
     """Soma(Obrigatório+Questionável+Supérfluo) == Soma(Despesa+Imposto) por mês.
 
     Tolerância de R$ 0,01 por arredondamento float.
@@ -166,7 +177,9 @@ def contrato_classificacao_soma_despesa(df: pd.DataFrame, renda: pd.DataFrame) -
     return None
 
 
-def contrato_categoria_nunca_nula_em_despesa(df: pd.DataFrame, renda: pd.DataFrame) -> str | None:
+def contrato_categoria_nunca_nula_em_despesa(
+    df: pd.DataFrame, renda: pd.DataFrame, resumo: pd.DataFrame
+) -> str | None:
     """Nenhuma linha com tipo=Despesa pode ter categoria NaN."""
     nulas = df[(df["tipo"] == "Despesa") & df["categoria"].isna()]
     if len(nulas) > 0:
@@ -174,7 +187,9 @@ def contrato_categoria_nunca_nula_em_despesa(df: pd.DataFrame, renda: pd.DataFra
     return None
 
 
-def contrato_tipo_em_conjunto_valido(df: pd.DataFrame, renda: pd.DataFrame) -> str | None:
+def contrato_tipo_em_conjunto_valido(
+    df: pd.DataFrame, renda: pd.DataFrame, resumo: pd.DataFrame
+) -> str | None:
     """Coluna `tipo` só aceita {Receita, Despesa, Imposto, Transferência Interna}."""
     invalidos = df[~df["tipo"].isin(TIPOS_VALIDOS)]
     if len(invalidos) > 0:
@@ -183,12 +198,62 @@ def contrato_tipo_em_conjunto_valido(df: pd.DataFrame, renda: pd.DataFrame) -> s
     return None
 
 
-def contrato_banco_origem_valido(df: pd.DataFrame, renda: pd.DataFrame) -> str | None:
+def contrato_banco_origem_valido(
+    df: pd.DataFrame, renda: pd.DataFrame, resumo: pd.DataFrame
+) -> str | None:
     """Coluna `banco_origem` só aceita bancos canônicos documentados."""
     invalidos = df[~df["banco_origem"].isin(BANCOS_VALIDOS)]
     if len(invalidos) > 0:
         vistos = set(invalidos["banco_origem"].dropna().unique().tolist())
         return f"{len(invalidos)} linha(s) com banco_origem inválido: {vistos}"
+    return None
+
+
+def contrato_resumo_mensal_receita_coerente(
+    df: pd.DataFrame, renda: pd.DataFrame, resumo: pd.DataFrame
+) -> str | None:
+    """`resumo_mensal.receita_total` deve bater com soma de tipo=Receita no extrato.
+
+    Invariante de coerência inter-aba detectado na auditoria honesta 2026-04-29
+    (item 39 do plan pure-swinging-mitten). Tolerância de R$ 0,01 por float.
+    """
+    if resumo.empty or "receita_total" not in resumo.columns:
+        return None
+    receita_extrato = df[df["tipo"] == "Receita"].groupby("mes_ref")["valor"].sum()
+    receita_resumo = resumo.set_index("mes_ref")["receita_total"]
+    comum = sorted(set(receita_extrato.index) & set(receita_resumo.index))
+    violacoes = []
+    for mes in comum:
+        e = float(receita_extrato.loc[mes])
+        r = float(receita_resumo.loc[mes])
+        if abs(e - r) > 0.01:
+            violacoes.append(f"{mes}: extrato R$ {e:,.2f} ≠ resumo R$ {r:,.2f}")
+    if violacoes:
+        return "receita resumo ≠ extrato: " + "; ".join(violacoes[:5])
+    return None
+
+
+def contrato_resumo_mensal_despesa_coerente(
+    df: pd.DataFrame, renda: pd.DataFrame, resumo: pd.DataFrame
+) -> str | None:
+    """`resumo_mensal.despesa_total` deve bater com soma de tipo in {Despesa, Imposto}.
+
+    Pareia com o contrato anterior; juntos garantem que o resumo é deriva fiel
+    do extrato e não cache desatualizado.
+    """
+    if resumo.empty or "despesa_total" not in resumo.columns:
+        return None
+    despesa_extrato = df[df["tipo"].isin(["Despesa", "Imposto"])].groupby("mes_ref")["valor"].sum()
+    despesa_resumo = resumo.set_index("mes_ref")["despesa_total"]
+    comum = sorted(set(despesa_extrato.index) & set(despesa_resumo.index))
+    violacoes = []
+    for mes in comum:
+        e = float(despesa_extrato.loc[mes])
+        r = float(despesa_resumo.loc[mes])
+        if abs(e - r) > 0.01:
+            violacoes.append(f"{mes}: extrato R$ {e:,.2f} ≠ resumo R$ {r:,.2f}")
+    if violacoes:
+        return "despesa resumo ≠ extrato: " + "; ".join(violacoes[:5])
     return None
 
 
@@ -201,6 +266,8 @@ CONTRATOS = [
     contrato_categoria_nunca_nula_em_despesa,
     contrato_tipo_em_conjunto_valido,
     contrato_banco_origem_valido,
+    contrato_resumo_mensal_receita_coerente,
+    contrato_resumo_mensal_despesa_coerente,
 ]
 
 
@@ -231,11 +298,15 @@ def main() -> int:
         renda = pd.read_excel(args.xlsx, sheet_name="renda")
     except (ValueError, KeyError):
         renda = pd.DataFrame(columns=["mes_ref", "bruto"])
+    try:
+        resumo = pd.read_excel(args.xlsx, sheet_name="resumo_mensal")
+    except (ValueError, KeyError):
+        resumo = pd.DataFrame(columns=["mes_ref", "receita_total", "despesa_total"])
 
     falhas: list[tuple[str, str]] = []
     for contrato in CONTRATOS:
         nome = contrato.__name__.replace("contrato_", "")
-        violacao = contrato(df, renda)
+        violacao = contrato(df, renda, resumo)
         if violacao is not None:
             falhas.append((nome, violacao))
             if args.strict:
