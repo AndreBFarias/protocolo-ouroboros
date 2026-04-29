@@ -27,6 +27,14 @@ Sessão Opus principal autônoma executando o plan `pure-swinging-mitten`. Atual
 | 14 | LLM-02-V2 | `30da12f` | skill `/propor-extrator` + script gerador + exemplo pix_foto_comprovante |
 | 15 | LLM-04-V2 | `f091558` | skill `/auditar-cobertura` + script Python + relatório runtime real |
 | 16 | META-SUPERVISOR-01 | `ad6c63f` | doc canônico `SUPERVISOR_OPUS.md` + bloco padrão em 30 specs + arquivamento Sprint 34/36 |
+| 17 | DOC-VERDADE-01.A.0 | `1bd54ae` | materializa conhecimento da sessão em `docs/PLANOS_SESSAO/` (plano + outputs das 2 sessões de validação + reforço D5 "sem subagent supervisor") |
+| 18 | DOC-VERDADE-01.A | `67b18fd` | versiona `ESTADO_ATUAL.md` + `COMO_AGIR.md` (whitelist em .gitignore após auditoria PII), sincroniza 11 `[A FAZER]` com realidade, cria `scripts/auditar_estado.py`, expande `SPRINTS_INDEX.md` com tabela de 82 specs |
+| 19 | DOC-VERDADE-01.B | `54f7bec` | hierarquia de 10 camadas em `COMO_AGIR.md` (incluindo ADRs, plan ativo, SUPERVISOR_OPUS, PLANOS_SESSAO) + bloco "quando fontes divergem" + nota canônica no plan ativo |
+| 20 | DOC-VERDADE-01.C | `283de20` | skills > análise manual: tabela "pergunta → skill" em `SUPERVISOR_OPUS.md §3` + passo 2.0 no fluxo padrão + bullet curto em `CLAUDE.md` |
+| 21 | DOC-VERDADE-01.D | `56533d3` | `SUPERVISOR_OPUS.md §11` com 4 sub-tabelas de comandos garantidamente read-only + tabela contraste de não-read-only |
+| 22 | DOC-VERDADE-01.E | `3fb288f` | `docs/GLOSSARIO.md` com 3 camadas (`categoria` string vs `tipo` enum vs node grafo) + 3 exemplos canônicos + cross-references em CLAUDE.md e SUPERVISOR_OPUS |
+
+**Sprint DOC-VERDADE-01 (mãe)** — 6 sub-sprints fechadas (A.0 + A-E). F (re-validação com terceira sessão Claude Code fresh, tarefa Onda 4) **pendente do humano** rodar.
 
 **Achados colaterais formalizados** (zero TODO solto): 9 sub-sprints retroativas Sprint 87.x, 8 novas (DOC-21..26, DASH-02/03), 7 LLM-*-V2 reescritas, 1 fix-test-busca-índice (teste frágil revelado pelo refactor).
 
