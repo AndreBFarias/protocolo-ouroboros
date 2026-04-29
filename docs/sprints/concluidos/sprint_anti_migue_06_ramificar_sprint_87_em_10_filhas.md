@@ -1,3 +1,7 @@
+---
+concluida_em: 2026-04-28
+---
+
 # Sprint ANTI-MIGUE-06 -- Ramificar Sprint 87 (10 sub-tasks abertas) em sprints-filhas formais
 
 **Origem**: plan pure-swinging-mitten (auditoria honesta 2026-04-29).
