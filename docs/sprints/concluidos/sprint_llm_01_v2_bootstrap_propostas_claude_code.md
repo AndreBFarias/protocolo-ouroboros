@@ -1,3 +1,7 @@
+---
+concluida_em: 2026-04-28
+---
+
 # Sprint LLM-01-V2 — Bootstrap de propostas via Claude Code interativo
 
 **Origem**: REVISAO-LLM-ONDA-01 (reescrita sob ADR-13).
