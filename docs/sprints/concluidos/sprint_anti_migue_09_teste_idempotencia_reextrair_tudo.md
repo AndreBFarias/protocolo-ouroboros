@@ -1,3 +1,7 @@
+---
+concluida_em: 2026-04-28
+---
+
 # Sprint ANTI-MIGUE-09 -- Teste de idempotência para `--reextrair-tudo`
 
 **Origem**: plan pure-swinging-mitten (auditoria honesta 2026-04-29).
