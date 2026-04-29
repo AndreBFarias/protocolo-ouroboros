@@ -274,7 +274,16 @@ def obter_todos_arquivos() -> list[Path]:
     arquivos: list[Path] = []
     for ext in EXTENSOES_VALIDAS:
         arquivos.extend(raiz.rglob(f"*{ext}"))
-    excluir = {".venv", "__pycache__", "node_modules", ".git", ".claude", "contexto", "fixtures"}
+    excluir = {
+        ".venv",
+        "__pycache__",
+        "node_modules",
+        ".git",
+        ".claude",
+        "contexto",
+        "fixtures",
+        "auditorias",
+    }
     excluir_arquivos = {"check_acentuacao.py", "duvidas.md"}
     return [
         a
