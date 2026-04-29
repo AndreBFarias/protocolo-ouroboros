@@ -1,8 +1,9 @@
 """Testes do smoke aritmético (scripts/smoke_aritmetico.py).
 
 Valida comportamento do script via subprocess em cenários sintéticos:
-- XLSX saudável: exit 0, output "8/8 contratos OK".
+- XLSX saudável: exit 0, output "10/10 contratos OK".
 - XLSX com despesa negativa: strict exit 1, output contém "VIOLAÇÃO".
+- XLSX com resumo_mensal divergente do extrato: strict exit 1.
 - XLSX ausente: exit 0 com aviso (graceful degradation).
 """
 
@@ -127,6 +128,37 @@ def _xlsx_com_despesa_negativa(caminho: Path) -> None:
         renda.to_excel(w, sheet_name="renda", index=False)
 
 
+def _xlsx_com_resumo_divergente(caminho: Path) -> None:
+    """Gera XLSX sintético com resumo_mensal incoerente com o extrato.
+
+    Cobre os contratos novos resumo_mensal_receita_coerente e
+    resumo_mensal_despesa_coerente (ANTI-MIGUE-04).
+    """
+    _xlsx_saudavel(caminho)
+    df = pd.read_excel(caminho, sheet_name="extrato")
+    renda = pd.read_excel(caminho, sheet_name="renda")
+    # Resumo mente: declara receita_total bem maior que a soma real.
+    resumo = pd.DataFrame(
+        [
+            {
+                "mes_ref": "2026-01",
+                "receita_total": 99999.99,
+                "despesa_total": 600.00,
+                "saldo": 99399.99,
+                "top_categoria": "Alimentação",
+                "top_gasto": "Supermercado",
+                "total_obrigatorio": 600.00,
+                "total_superfluo": 0.0,
+                "total_questionavel": 0.0,
+            }
+        ]
+    )
+    with pd.ExcelWriter(caminho, engine="openpyxl") as w:
+        df.to_excel(w, sheet_name="extrato", index=False)
+        renda.to_excel(w, sheet_name="renda", index=False)
+        resumo.to_excel(w, sheet_name="resumo_mensal", index=False)
+
+
 def _rodar_smoke(xlsx: Path | None, strict: bool = False) -> subprocess.CompletedProcess:
     cmd = [sys.executable, str(SMOKE)]
     if xlsx is not None:
@@ -143,7 +175,7 @@ def test_xlsx_saudavel_retorna_exit_zero(tmp_path):
     resultado = _rodar_smoke(xlsx, strict=True)
 
     assert resultado.returncode == 0, resultado.stdout + resultado.stderr
-    assert "8/8 contratos OK" in resultado.stdout
+    assert "10/10 contratos OK" in resultado.stdout
 
 
 def test_xlsx_com_despesa_negativa_falha_em_strict(tmp_path):
@@ -155,6 +187,17 @@ def test_xlsx_com_despesa_negativa_falha_em_strict(tmp_path):
     assert resultado.returncode == 1, resultado.stdout + resultado.stderr
     assert "VIOLAÇÃO" in resultado.stdout
     assert "despesa_nao_negativa" in resultado.stdout
+
+
+def test_xlsx_com_resumo_divergente_falha_em_strict(tmp_path):
+    xlsx = tmp_path / "resumo_divergente.xlsx"
+    _xlsx_com_resumo_divergente(xlsx)
+
+    resultado = _rodar_smoke(xlsx, strict=True)
+
+    assert resultado.returncode == 1, resultado.stdout + resultado.stderr
+    assert "VIOLAÇÃO" in resultado.stdout
+    assert "resumo_mensal_receita_coerente" in resultado.stdout
 
 
 def test_xlsx_ausente_retorna_zero_com_aviso(tmp_path):
