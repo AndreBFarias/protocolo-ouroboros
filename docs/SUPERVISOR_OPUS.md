@@ -35,6 +35,10 @@ Mesmo o `validador-sprint` é exceção rara — você valida pessoalmente, lend
 
 Sempre que pegar uma sprint do tipo "criar extrator para `<tipo_documento>`":
 
+### 2.0 — Verifique se já existe skill (DOC-VERDADE-01.C)
+
+Antes de qualquer leitura/grep/sqlite manual, consulte a tabela "pergunta → skill" em §3. Se existe skill canônica, use a skill primeiro. Análise manual fica como complemento, não substituto.
+
 ### 2.1 — Leitura artesanal (você leva 1-2 min)
 
 ```
@@ -96,17 +100,44 @@ Após receber o report do agente: leia, pegue 2-3 claims-chave, valide com `bash
 
 ## §3 — Skills disponíveis (slash commands)
 
-Atualizado em 2026-04-29.
+**Regra canônica (DOC-VERDADE-01.C)**: skills > análise manual. Antes de rodar `grep`, `sqlite3`, query ad-hoc ou qualquer reconstrução de relatório do zero, **verifique se já existe skill canônica para responder a pergunta**. Se existe, use a skill. Se não, abra issue/spec sugerindo skill nova.
+
+### Tabela "pergunta → skill"
+
+Quando o dono fizer uma pergunta operacional, a primeira coisa a perguntar a si mesmo é "tem skill que resolve?":
+
+| Pergunta do dono | Skill | Razão |
+|------------------|-------|-------|
+| "Como está a cobertura de categorias?" / "Quais fornecedores ainda em OUTROS?" / "Como evoluiu o % determinístico?" | `/auditar-cobertura [--periodo <mes>]` | Gera relatório completo em `docs/auditorias/` com top fornecedores em OUTROS, cobertura por pessoa, documentos órfãos. Faz exatamente o que `grep + sqlite3` ad-hoc faria, mas versionado. |
+| "Tem extrator pra esse tipo novo?" / "Achei arquivo que classifier não reconhece" | `/propor-extrator <tipo> [<amostra>]` | Pré-popula proposta em `docs/propostas/extracao/` com SHA da hipótese (anti-rejeição duplicada via LLM-06-V2). |
+| "Tem documento sem aresta no grafo?" / "O extrator X está confiável?" | `make conformance-<tipo>` (ANTI-MIGUE-01) ou `/auditar-cobertura` para visão geral | Gate 4-way exige >=3 amostras com ETL × Opus × Grafo × Humano concordando. |
+| "ESTADO_ATUAL.md está atualizado?" / "Que [A FAZER]s já fechei?" | `python scripts/auditar_estado.py` (DOC-VERDADE-01.A) | Confronta cada `[A FAZER]` com `docs/sprints/concluidos/` + `git log --grep`. Indica linhas suspeitas. |
+| "Como está a saúde do projeto?" | `make smoke` + `make lint` + `pytest tests/ -q` | Trifecta canônico read-only. |
+| "Quero criar uma sprint nova a partir desta ideia" | `/planejar-sprint <ideia>` | Despacha `planejador-sprint` (subagent), você revisa spec, aprova ou pede ajuste. |
+| "Quero executar a sprint X" | `/executar-sprint <slug>` ou `/sprint-ciclo <slug>` (auto) | Despacha `executor-sprint` em worktree isolado. **Você integra o trabalho, não o subagent valida**. |
+
+### Tabela completa de skills
 
 | Skill | Quando usar | Implementação |
 |-------|-------------|---------------|
 | `/propor-extrator <tipo> [<amostra>]` | Classifier retorna `None` para arquivo novo | `scripts/propor_extrator.py` (LLM-02-V2) |
 | `/auditar-cobertura [--periodo <YYYY-MM>]` | Dono pede relatório de cobertura | `scripts/auditar_cobertura.py` (LLM-04-V2) |
+| `make conformance-<tipo>` | Gate 4-way para extrator novo (ANTI-MIGUE-01) | `tests/conformance/gate.py` |
+| `python scripts/auditar_estado.py` | Auditar ESTADO_ATUAL contra realidade (DOC-VERDADE-01.A) | Confronta `[A FAZER]` com concluídos + git log |
 | `/sprint-ciclo <slug>` | Ciclo automático plan→exec→val | `~/.claude/commands/sprint-ciclo` |
 | `/sprint-ciclo-manual <slug>` | Mesmo que acima com checkpoints | idem |
 | `/planejar-sprint <ideia>` | Redigir spec a partir de ideia | despacha `planejador-sprint` |
 | `/executar-sprint <slug>` | Implementar spec aprovada | despacha `executor-sprint` |
-| `/validar-sprint <slug>` | Validar sprint atual | despacha `validador-sprint` (raro — você valida pessoalmente, padrão `(p)` BRIEF) |
+| `/validar-sprint <slug>` | Validar sprint atual | despacha `validador-sprint` (raro — supervisor faz validação pessoalmente, padrão `(p)` BRIEF) |
+
+### Quando análise manual é justificável
+
+Apenas quando:
+1. A pergunta é nova e nenhuma skill cobre.
+2. A skill existe mas você precisa cruzar com fonte que ela não acessa.
+3. Bug suspeito na própria skill — você roda manual para conferir.
+
+Em todos os 3 casos, **registre o resultado da análise manual em arquivo versionado** (`docs/auditorias/<tipo>_<data>.md` ou em commit body) — senão o conhecimento evapora na próxima queda da sessão.
 
 ---
 

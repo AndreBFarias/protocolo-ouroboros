@@ -218,6 +218,8 @@ DEPOIS  ─→ 9 checks anti-migué OU sprint REPROVADA
 
 **Skill `/propor-extrator`** (Sprint LLM-02-V2): quando classifier retorna `tipo=None` para arquivo do inbox e não há extrator dedicado, o supervisor (Opus principal interativo) executa `python scripts/propor_extrator.py <tipo> --amostra <caminho> --executar` para gerar proposta em `docs/propostas/extracao/`. Humano revisa e aprova via tab Proposições do Revisor (LLM-05-V2 futuro) ou edit manual. Conforme ADR-13: nenhuma chamada programática a Anthropic API.
 
+**Skills > análise manual** (Sprint DOC-VERDADE-01.C): toda pergunta operacional do dono ("como está a cobertura?", "qual fornecedor sem regra?", "ESTADO_ATUAL está atualizado?") tem skill canônica antes de você sair fazendo `grep`/`sqlite3` ad-hoc. Tabela "pergunta → skill" em `docs/SUPERVISOR_OPUS.md §3`. Análise manual só é justificável quando a pergunta é nova e nenhuma skill cobre — e o resultado deve ir para arquivo versionado (`docs/auditorias/`) para não evaporar na próxima queda.
+
 ### Padrão canônico de commit
 
 - PT-BR imperativa, formato `tipo: descrição` (`feat`, `fix`, `refactor`, `docs`, `test`, `chore`).
