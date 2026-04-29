@@ -72,6 +72,100 @@ Para cada sprint absorvida, o conteúdo importante (gotchas, decisões, dependê
 6. **Onda 6** (UX + OMEGA + MON) — fechamento; depende parcialmente das anteriores.
 7. **Backlog antigo** — executado entre ondas conforme prioridade do dono.
 
+
+## Tabela navegavel: 82 specs em backlog (atualizada 2026-04-29 por DOC-VERDADE-01.A)
+
+Ordenacao: P0 -> P1 -> P2 -> P3 -> ?? -> alfabetica. Para detalhes, abra a spec correspondente em `docs/sprints/backlog/<slug>.md`.
+
+| Prio | Onda | Slug | Esforço | Depende de |
+|------|------|------|---------|------------|
+| P0 | 3 | `sprint_doc_13_multi_foto_selector` | 4h | nenhuma |
+| P0 | 3 | `sprint_doc_16_danfe_validar_ingestao` | 1h | nenhuma |
+| P0 | 4 | `sprint_link_audit_01_investigar_documentos_sem_aresta_documento_de` | 4h | nenhuma |
+| P0 | 5 | `sprint_mob_01_vault_bridge_md` | 5h | nenhuma |
+| P0 | 5 | `sprint_mob_02_mobile_cache_gen` | 4h | MOB-01 |
+| P0 | 6 | `sprint_ux_01_callouts_dracula` | 2h | nenhuma |
+| P1 | 3 | `sprint_doc_01_amazon_pedido` | 5h | LLM-01, ANTI-MIGUE-01 |
+| P1 | 3 | `sprint_doc_02_mercado_nf_fisica` | 5h | LLM-01, ANTI-MIGUE-01 |
+| P1 | 3 | `sprint_doc_03_carteira_estudante` | 3h | LLM-01, ANTI-MIGUE-01 |
+| P1 | 3 | `sprint_doc_04_cnh` | 3h | LLM-01, ANTI-MIGUE-01 |
+| P1 | 3 | `sprint_doc_05_rg` | 3h | LLM-01, ANTI-MIGUE-01 |
+| P1 | 3 | `sprint_doc_06_diploma` | 3h | LLM-01, ANTI-MIGUE-01 |
+| P1 | 3 | `sprint_doc_07_historico_escolar` | 4h | LLM-01, ANTI-MIGUE-01 |
+| P1 | 3 | `sprint_doc_08_certidao_nascimento` | 3h | LLM-01, ANTI-MIGUE-01 |
+| P1 | 3 | `sprint_doc_09_exame_medico` | 5h | LLM-01, ANTI-MIGUE-01 |
+| P1 | 3 | `sprint_doc_10_receita_medica_v2` | 3h | LLM-01, ANTI-MIGUE-01 |
+| P1 | 3 | `sprint_doc_11_plano_saude_carteirinha` | 3h | LLM-01, ANTI-MIGUE-01 |
+| P1 | 3 | `sprint_doc_12_govbr_pdf` | 4h | LLM-01, ANTI-MIGUE-01 |
+| P1 | 3 | `sprint_doc_17_ocr_energia_cleanup` | 3h | nenhuma |
+| P1 | 3 | `sprint_doc_18_holerite_detectar_novas_empresas` | 4h | LLM-02 |
+| P1 | 3 | `sprint_doc_20_extrato_investimento_corretora` | 5h | LLM-01, ANTI-MIGUE-01 |
+| P1 | 3 | `sprint_ocr_audit_01_validar_qualidade_ocr_amostras` | 5h | ANTI-MIGUE-01 |
+| P1 | 3 | `sprint_test_audit_01_expandir_fixtures_reais_para_30_amostras` | 8h | nenhuma |
+| P1 | 4 | `sprint_gap_01_alerta_proativo_transacao_sem_nf` | 4h | MICRO-01 |
+| P1 | 4 | `sprint_irpf_01_pacote_irpf_botao` | 5h | MICRO-01 |
+| P1 | 4 | `sprint_micro_01_linking_micro_runtime` | 5h | DOC-02, DOC-19 |
+| P1 | 5 | `sprint_fonte_01_google_calendar_ics` | 4h | nenhuma |
+| P1 | 5 | `sprint_fonte_02_thunderbird_email_local` | 5h | nenhuma |
+| P1 | 5 | `sprint_fonte_04_assinaturas_detector` | 3h | nenhuma |
+| P1 | 6 | `sprint_mon_01_vault_obsidian_dessincronia` | 3h | nenhuma |
+| P1 | 6 | `sprint_ux_02_treemap_heatmap_wcag` | 3h | nenhuma |
+| P2 | 1 | `sprint_fix_test_busca_indice_fragil` | 1.5h | nenhuma |
+| P2 | 2 | `sprint_llm_03_v2_proposicao_regra_categoria` | 1h | LLM-01-V2 |
+| P2 | 2 | `sprint_llm_05_v2_revisor_tab_proposicoes` | 3h | LLM-01-V2, LLM-03-V2 |
+| P2 | 3 | `sprint_doc_14_anti_duplicacao_semantica` | 3h | nenhuma |
+| P2 | 3 | `sprint_doc_15_parse_data_br_centralizado` | 4h | nenhuma |
+| P2 | 4 | `sprint_grafo_xlsx_01_investigar_discrepancia_xlsx_grafo` | 2h | nenhuma |
+| P2 | 4 | `sprint_irpf_02_irpf_dedutivel_medico` | 3h | DOC-09, DOC-10 |
+| P2 | 4 | `sprint_micro_02_items_canonicos_yaml` | 3h | MICRO-01 |
+| P2 | 4 | `sprint_micro_03_aba_cruzamento_micro` | 4h | MICRO-01, MICRO-02 |
+| P2 | 5 | `sprint_fonte_03_thunderbird_ics_local` | 3h | FONTE-01 |
+| P2 | 5 | `sprint_mob_03_pessoa_a_b_refactor` | 4h | nenhuma |
+| P2 | 6 | `sprint_dash_01_pacote_anual_de_vida` | 4h | IRPF-01, OMEGA-94a, OMEGA-94b, OMEGA-... |
+| P2 | 6 | `sprint_omega_94a_aba_saude` | 5h | DOC-09, DOC-10, DOC-11 |
+| P2 | 6 | `sprint_omega_94b_aba_identidade` | 4h | DOC-04, DOC-05 |
+| P2 | 6 | `sprint_omega_94c_aba_profissional` | 3h | nenhuma |
+| P2 | 6 | `sprint_omega_94d_aba_academica` | 3h | DOC-06, DOC-07 |
+| P2 | 6 | `sprint_ux_03_drilldown_em_5_plots` | 5h | nenhuma |
+| P2 | 6 | `sprint_ux_04_revisor_responsivo_50_itens` | 3h | nenhuma |
+| P2 | 6 | `sprint_ux_10_clarificar_cluster_vs_aba_nomenclatura` | 2h | nenhuma |
+| P3 | 2 | `sprint_llm_06_v2_sha_guard_propostas_rejeitadas` | 1h | LLM-05-V2 |
+| P3 | 2 | `sprint_llm_07_v2_metricas_autossuficiencia` | 2h | LLM-01-V2 |
+| P3 | 3 | `sprint_doc_19_holerite_contem_item_sem_codigo` | 1h | nenhuma |
+| P3 | 3 | `sprint_doc_21_extrator_contrato_locacao` | 4h | ANTI-MIGUE-01 (gate 4-way obrigatório... |
+| P3 | 3 | `sprint_doc_22_extrator_iptu` | 3h | ANTI-MIGUE-01 |
+| P3 | 3 | `sprint_doc_23_extrator_condominio` | 3h | ANTI-MIGUE-01 + Sprint 87.3 (extrator... |
+| P3 | 3 | `sprint_doc_24_extrator_crlv_crv` | 4h | ANTI-MIGUE-01 |
+| P3 | 3 | `sprint_doc_25_extrator_ipva_seguro_auto` | 4h | DOC-24 (precisa node veículo no grafo) |
+| P3 | 3 | `sprint_doc_26_extrator_multas_detran` | 3h | DOC-24 |
+| P3 | 6 | `sprint_adr_23_draft_adr_23_envelope_vs_pessoa_canonico` | 1h (decisão) + variável (execução) | nenhuma |
+| P3 | 6 | `sprint_dash_02_yaml_contatos_emergencia` | 2h | nenhuma |
+| P3 | 6 | `sprint_dash_03_yaml_beneficiarios` | 2h | DASH-02 (mesmo padrão estrutural) |
+| P3 | 6 | `sprint_ux_05_pyvis_fallback_decente` | 1h | nenhuma |
+| P3 | 6 | `sprint_ux_06_doc_coluna_observabilidade` | 1h | nenhuma |
+| P3 | 6 | `sprint_ux_07_snapshot_timestamp_dinamico` | 1h | nenhuma |
+| P3 | 6 | `sprint_ux_08_deep_link_test_completo` | 2h | nenhuma |
+| P3 | 6 | `sprint_ux_09_cleanup_docstrings_quebradas` | 30min | nenhuma |
+| P3 | ? | `sprint_AUDIT2_ENVELOPE_VS_PESSOA_CANONICO` | ? | ? |
+| ?? | ? | `sprint_102_pagador_vs_beneficiario` | ? | ? |
+| ?? | ? | `sprint_24_automacao_bancaria` | ? | ? |
+| ?? | ? | `sprint_25_pacote_irpf` | ? | ? |
+| ?? | ? | `sprint_27b_grafo_motores_avancados` | ? | ? |
+| ?? | ? | `sprint_83_rename_protocolo_ouroboros` | ? | ? |
+| ?? | ? | `sprint_84_schema_er_relacional_visual` | ? | ? |
+| ?? | ? | `sprint_85_xlsx_docs_faltantes_expandido` | ? | ? |
+| ?? | ? | `sprint_86_ressalvas_humano_checklist` | ? | ? |
+| ?? | ? | `sprint_93d_preservacao_forte_downloads` | ? | ? |
+| ?? | ? | `sprint_93e_coluna_arquivo_origem_xlsx` | ? | ? |
+| ?? | ? | `sprint_93h_limpeza_clones_andre` | ? | ? |
+| ?? | ? | `sprint_94_fusao_total_vault_ouroboros` | ? | ? |
+| ?? | ? | `sprint_Fa_ofx_duplicacao_accounts` | ? | ? |
+| ?? | ? | `sprint_INFRA_PII_HISTORY` | ? | ? |
+
+> Tabela gerada automaticamente lendo frontmatter de cada spec. Quando criar spec nova, declare `**Prioridade**: P[0-3]`, `**Onda**: <numero>`, `**Esforço estimado**: <duracao>`, `**Depende de**: <slug ou nenhuma>` para entrar aqui ordenada.
+
+---
+
 ## Princípio de manutenção
 
 Este índice deve ser atualizado:
