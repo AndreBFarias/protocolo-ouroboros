@@ -5,7 +5,15 @@ logs/
 
 # Documentos pessoais (contracheques, Serasa, Registrato, etc.)
 docs/pessoal/
-contexto/
+
+# Contexto: gitignored por padrao (POR_QUE.md e PROMPT_NOVA_SESSAO.md tem PII).
+# Whitelist: ESTADO_ATUAL.md e COMO_AGIR.md sao canonicos sem PII estrutural,
+# versionados a partir da Sprint DOC-VERDADE-01.A. Templates publicos
+# (*.template.md) tambem versionados.
+contexto/*
+!contexto/ESTADO_ATUAL.md
+!contexto/COMO_AGIR.md
+!contexto/*.template.md
 
 # Senhas e credenciais
 mappings/senhas.yaml
