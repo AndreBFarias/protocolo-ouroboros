@@ -1,3 +1,6 @@
+> **superseded_by**: `LLM-07` (`docs/sprints/backlog/sprint_llm_07_metricas_autossuficiencia.md`).
+> Conteúdo conceitual desta spec foi absorvido em LLM-07 do plan pure-swinging-mitten (2026-04-29). Mantida em backlog/ como referência histórica até LLM-07 ser concluída.
+
 ## 0. SPEC (machine-readable)
 
 ```yaml

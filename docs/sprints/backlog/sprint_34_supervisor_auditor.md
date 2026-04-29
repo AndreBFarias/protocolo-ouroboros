@@ -1,3 +1,6 @@
+> **superseded_by**: `LLM-04` (`docs/sprints/backlog/sprint_llm_04_supervisor_modo_auditor.md`).
+> Conteúdo conceitual desta spec foi absorvido em LLM-04 do plan pure-swinging-mitten (2026-04-29). Mantida em backlog/ como referência histórica até LLM-04 ser concluída.
+
 ## 0. SPEC (machine-readable)
 
 ```yaml
