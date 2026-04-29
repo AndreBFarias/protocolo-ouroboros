@@ -261,6 +261,12 @@ A cada sessão, dono pode adicionar mais. Leia `docs/ARMADILHAS.md` quando tema 
 
 ---
 
+## §10.5 — Vocabulário comum
+
+Antes de propor regra envolvendo "categoria" ou "tipo", consulte `docs/GLOSSARIO.md` (DOC-VERDADE-01.E). 3 camadas distintas usam nomes parecidos: `extrato.categoria` (slot livre), `extrato.tipo` (enum estrito Despesa/Receita/Transferência Interna/Imposto), e node tipo `categoria` no grafo SQLite. Confundir as 3 já causou loop de decisão em sessão de validação.
+
+---
+
 ## §11 — Comandos garantidamente read-only (DOC-VERDADE-01.D)
 
 Estes comandos podem ser invocados livremente em modo plan, sob orientação "read-only apenas", ou em qualquer fase de diagnóstico. **Não mutam código, dados, nem estado git**:
