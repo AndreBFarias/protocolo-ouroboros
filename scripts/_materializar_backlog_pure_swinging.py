@@ -19,6 +19,95 @@ BACKLOG = RAIZ / "docs" / "sprints" / "backlog"
 
 
 SPECS: list[dict] = [
+    # ---------- ONDA 0 (blueprint + CI fix — vem antes de tudo) ----------
+    {
+        "id": "CI-01",
+        "slug": "corrigir_ci_workflow",
+        "titulo": "Corrigir CI: pytest com fallback silencioso + falta smoke + falta acentuação",
+        "prio": "P0",
+        "onda": 0,
+        "esf": "1h",
+        "dep": [],
+        "fecha_itens": ["achado da auditoria visual+devops 2026-04-29"],
+        "problema": (
+            ".github/workflows/ci.yml tem 3 problemas críticos:\n"
+            "1. `pytest tests/ -v --tb=short || echo 'Nenhum teste'` — o `||` "
+            "MASCARA falha. CI nunca falha por causa de teste vermelho.\n"
+            "2. Não roda `make smoke` (10 contratos aritméticos).\n"
+            "3. Não roda `scripts/check_acentuacao.py` (regra inviolável #1).\n"
+            "Resultado: CI verde dá falsa segurança. Sprint 55 (1.761 tx "
+            "classificadas erradas) passou direto pelo CI antigo."
+        ),
+        "hipotese": (
+            "Remover `||` do passo de pytest. Adicionar steps para `make smoke` "
+            "e `python scripts/check_acentuacao.py --all`. CI passa a falhar de "
+            "verdade quando regressão é introduzida."
+        ),
+        "implementacao": (
+            "1. Editar .github/workflows/ci.yml: trocar pytest por linha sem `||`.\n"
+            "2. Adicionar step 'Smoke aritmético': `make smoke` (precisa do XLSX, "
+            "rodar `make process` com fixture sintética antes OU pular se não "
+            "houver XLSX e marcar como warning).\n"
+            "3. Adicionar step 'Acentuação PT-BR': "
+            "`python scripts/check_acentuacao.py --all`.\n"
+            "4. Adicionar status badge no README."
+        ),
+        "proof": (
+            "Forçar PR com teste falhando → CI vermelho. "
+            "Forçar PR com 'funcao' sem acento → CI vermelho."
+        ),
+        "acceptance": [
+            "ci.yml sem `||` em pytest.",
+            "Step de smoke + acentuação.",
+            "Badge no README.",
+            "PR de teste forçado falha o CI.",
+        ],
+    },
+    # ---------- ONDA 0 (blueprint de design — vem antes de tudo) ----------
+    {
+        "id": "DESIGN-01",
+        "slug": "blueprint_outputs_relacionamentos",
+        "titulo": "Blueprint: outputs esperados + docs esperados + relacionamentos + aparência de relatórios",  # noqa: E501
+        "prio": "P0",
+        "onda": 0,
+        "esf": "6h",
+        "dep": [],
+        "fecha_itens": ["item AA da revisão 2026-04-29 (visão do dono)"],
+        "problema": (
+            "Antes de codar Onda 3-6, falta consolidar a visão de outputs em "
+            "documento único: quais relatórios o sistema gera, quais documentos "
+            "espera receber por pessoa, qual a aparência canônica de cada "
+            "relatório, quais relações entre dados são primárias vs derivadas. "
+            "Sem esse blueprint, cada sprint executa palpite isolado e a "
+            "central de vida adulta vira agregado sem cara."
+        ),
+        "hipotese": (
+            "Documento `docs/BLUEPRINT_VIDA_ADULTA.md` declarativo cobrindo: "
+            "(1) catálogo de tipos de documento esperados por pessoa por domínio "
+            "(financeiro, identidade, saúde, profissional, acadêmico); "
+            "(2) outputs canônicos do dashboard (XLSX, JSON cache, ZIP IRPF, "
+            "ZIP pacote anual de vida); (3) relacionamentos entre nodes do grafo "
+            "com diagrama; (4) aparência de cada relatório (mockup ASCII ou "
+            "wireframe link); (5) gaps de cobertura aceitáveis vs inaceitáveis."
+        ),
+        "implementacao": (
+            "1. Criar `docs/BLUEPRINT_VIDA_ADULTA.md` (~400 linhas, 5 seções).\n"
+            "2. Mockup ASCII das 5 telas-âncora dos 5 clusters do dashboard.\n"
+            "3. Diagrama de classes do grafo (mermaid ou ASCII).\n"
+            "4. Tabela tipos esperados × pessoa × domínio × prioridade.\n"
+            "5. Sprints existentes ganham referência cruzada para o blueprint."
+        ),
+        "proof": (
+            "Documento publicado e linkado de CLAUDE.md + SPRINTS_INDEX.md. "
+            "Cada sprint da Onda 3-6 cita seção do blueprint que endereça."
+        ),
+        "acceptance": [
+            "BLUEPRINT publicado.",
+            "5 mockups ASCII das telas-âncora.",
+            "Tabela cobertura tipos × pessoa × domínio.",
+            "Referência cruzada nas sprints DOC-* e OMEGA-*.",
+        ],
+    },
     # ---------- ONDA 1 (anti-migué + restaurar débitos) ----------
     {
         "id": "ANTI-MIGUE-01",
@@ -430,6 +519,48 @@ SPECS: list[dict] = [
         "acceptance": ["Tabela criada.", "Teste regressivo de não-duplicação."],
     },
     {
+        "id": "AUDITOR-01",
+        "slug": "relatório_cobertura_documental_por_pessoa",
+        "titulo": "Relatório de cobertura documental por pessoa (Claude lê tudo + fala dos faltantes)",  # noqa: E501
+        "prio": "P1",
+        "onda": 2,
+        "esf": "5h",
+        "dep": ["LLM-01", "DESIGN-01"],
+        "fecha_itens": ["item N da revisão 2026-04-29 (visão do dono)"],
+        "problema": (
+            "Visão do dono: 'eu quero que o claude leia cada arquivo atual, fale "
+            "dos faltantes, gere os outputs, compare com os dele, veja como "
+            "podemos integrar'. Hoje o Revisor 4-way mostra divergência item a "
+            "item, mas falta visão agregada por pessoa (André, Vitória) e por "
+            "domínio (financeiro, identidade, saúde, profissional, acadêmico) "
+            "do que está presente vs faltante."
+        ),
+        "hipotese": (
+            "Comparar `data/raw/<pessoa>/` + nodes do grafo com a tabela do "
+            "BLUEPRINT (DESIGN-01) e gerar relatório por pessoa: lista de "
+            "tipos esperados × tipos presentes × tipos faltantes. Para cada "
+            "faltante, sugerir ação (subir foto, baixar do gov.br, pedir do "
+            "RH, etc.). Output em `data/output/cobertura_<pessoa>.md`."
+        ),
+        "implementacao": (
+            "1. `src/analysis/cobertura_documental.py` — função `gerar_relatório_pessoa(pessoa: str)`.\n"  # noqa: E501
+            "2. Lê tabela do BLUEPRINT (YAML estruturado, derivado).\n"
+            "3. Cruza com nodes do grafo + arquivos físicos.\n"
+            "4. Aba 'Cobertura Pessoal' no dashboard com 2 colunas (André × Vitória).\n"
+            "5. Encadear em `--full-cycle` para regenerar a cada rodada."
+        ),
+        "proof": (
+            "Para cada pessoa, relatório lista pelo menos 30 tipos esperados "
+            "com status presente/faltante/parcial."
+        ),
+        "acceptance": [
+            "Módulo + função.",
+            "Relatórios MD em runtime real.",
+            "Aba dashboard.",
+            "Encadeado em --full-cycle.",
+        ],
+    },
+    {
         "id": "LLM-07",
         "slug": "metricas_autossuficiencia",
         "titulo": "Métricas de autossuficiência (ADR-09) no dashboard",
@@ -625,6 +756,43 @@ SPECS: list[dict] = [
         "acceptance": ["YAML criado.", "Hook supervisor.", "5+ testes."],
     },
     {
+        "id": "DOC-20",
+        "slug": "extrato_investimento_corretora",
+        "titulo": "Extrator: extrato de investimento (B3, NuInvest, Rico, XP, BTG)",
+        "prio": "P1",
+        "onda": 3,
+        "esf": "5h",
+        "dep": ["LLM-01", "ANTI-MIGUE-01"],
+        "fecha_itens": ["item G da revisão 2026-04-29 — IRPF-01 sem investimentos"],
+        "problema": (
+            "Visão do dono: 'gerar IRPF do ano X' deve incluir investimentos. "
+            "Hoje IRPF-01 cobre NFs, holerites, transações, parcelamentos, DAS — "
+            "mas não há extrator de extrato de corretora. Ações, FIIs, RF, "
+            "tesouro direto e cripto ficam invisíveis para tributação e patrimônio."
+        ),
+        "hipotese": (
+            "Extrator unificado por corretora (PDF + CSV). B3 disponibiliza "
+            "informe consolidado anual; corretoras geram extratos mensais. "
+            "Tipo `extrato_investimento` com campos: ativo, quantidade, "
+            "preco_medio, valor_aplicado, valor_atual, rendimento, data, corretora."
+        ),
+        "implementacao": (
+            "1. Tipo em mappings/tipos_documento.yaml.\n"
+            "2. src/extractors/extrato_investimento.py com sub-extratores.\n"
+            "3. Node novo `investimento` no grafo + edge `posicao_em`.\n"
+            "4. Coluna `tipo=Investimento` no XLSX (separa de Receita/Despesa).\n"
+            "5. Fixture sintética + 3 amostras reais para gate 4-way.\n"
+            "6. IRPF-01 consome via grafo."
+        ),
+        "proof": "make conformance-extrato_investimento exit 0.",
+        "acceptance": [
+            "Tipo + extrator + node novo.",
+            "8+ testes.",
+            "Gate 4-way verde.",
+            "IRPF-01 consome.",
+        ],
+    },
+    {
         "id": "DOC-19",
         "slug": "holerite_contem_item_sem_codigo",
         "titulo": "Holerite cria edge contem-item mesmo sem código de produto",
@@ -643,7 +811,96 @@ SPECS: list[dict] = [
         "proof": "Holerite real → 3+ edges contem_item criadas.",
         "acceptance": ["Patch.", "Teste regressivo."],
     },
+    {
+        "id": "OCR-AUDIT-01",
+        "slug": "validar_qualidade_ocr_amostras",
+        "titulo": "Auditoria de qualidade de OCR (5 amostras por extrator com OCR)",
+        "prio": "P1",
+        "onda": 3,
+        "esf": "5h",
+        "dep": ["ANTI-MIGUE-01"],
+        "fecha_itens": ["achado da auditoria de banco 2026-04-29"],
+        "problema": (
+            "Extratores que dependem de OCR (energia_ocr, contracheque_pdf "
+            "fallback Infobase, cupom_termico_foto, nfce com OCR de imagem) "
+            "podem extrair valores errados sem o pipeline detectar. ARMADILHA "
+            "#10 do CLAUDE.md confirma: energia_ocr tem 67% precisão em consumo "
+            "kWh. Outros extratores OCR podem ter problemas similares não-medidos."
+        ),
+        "hipotese": (
+            "Amostrar 5 documentos por extrator OCR. Para cada amostra, "
+            "comparar: (a) texto OCR bruto vs (b) campos extraídos pelo "
+            "pipeline vs (c) verdade ground-truth marcada por humano via "
+            "Revisor 4-way. Computar precisão por campo."
+        ),
+        "implementacao": (
+            "1. tests/ocr_audit/ com fixtures reais (5 PDFs/fotos por extrator "
+            "OCR, total ~25).\n"
+            "2. scripts/auditar_ocr.py que roda extrator e compara com "
+            "ground-truth em YAML.\n"
+            "3. Relatório data/output/auditoria_ocr.md com precisão por campo "
+            "por extrator.\n"
+            "4. Para campos com precisão <90%, criar sprint-filha de fix."
+        ),
+        "proof": (
+            "Relatório com >=25 amostras, precisão por campo, lista de campos "
+            "abaixo de 90% com sprint-filha apontada."
+        ),
+        "acceptance": [
+            "Fixtures + ground-truth.",
+            "Script + relatório.",
+            "Sprints-filhas para gaps detectados.",
+            "Baseline de qualidade documentado.",
+        ],
+    },
     # ---------- ONDA 4 (cruzamento micro + IRPF) ----------
+    {
+        "id": "LINK-AUDIT-01",
+        "slug": "investigar_documentos_sem_aresta_documento_de",
+        "titulo": "Investigar documentos catalogados sem aresta documento_de (linking heuristico falha)",  # noqa: E501
+        "prio": "P0",
+        "onda": 4,
+        "esf": "4h",
+        "dep": [],
+        "fecha_itens": ["achado da auditoria de banco 2026-04-29"],
+        "problema": (
+            "Auditoria do grafo SQLite 2026-04-29 detectou taxas de vinculação "
+            "muito baixas em alguns tipos:\n"
+            "- holerite: 20/24 = 83% (aceitável)\n"
+            "- das_parcsn_andre: 5/19 = 26% (RUIM)\n"
+            "- boleto_servico: 0/2 = 0% (CRITICO)\n"
+            "- nfce_modelo_65: 0/2 = 0% (CRITICO)\n"
+            "Documentos sem documento_de não aparecem no Extrato com Doc=ok, e "
+            "o pacote IRPF (IRPF-01) não os incluirá. Perda silenciosa."
+        ),
+        "hipotese": (
+            "3 hipóteses a validar empiricamente:\n"
+            "(a) janela temporal do linker está apertada para alguns tipos.\n"
+            "(b) tolerância de valor (diff_valor) esta rígida.\n"
+            "(c) pessoa do documento não casa com pessoa da transação "
+            "(documento marcado como 'andre' mas transação como 'casal' por "
+            "exemplo)."
+        ),
+        "implementacao": (
+            "1. Para cada tipo problemático, listar os documentos sem aresta.\n"
+            "2. Para cada um, buscar transação candidata (mesmo mês ±1, valor "
+            "+-5%, qualquer pessoa).\n"
+            "3. Se encontrar, identificar qual critério bloqueia o linking.\n"
+            "4. Ajustar mappings/linking_config.yaml por tipo (boleto: janela "
+            "75d 0.005; nfce: janela 5d 0.001 estrita; das: já tem 60d).\n"
+            "5. Re-rodar linker e validar 80%+ vinculação por tipo."
+        ),
+        "proof": (
+            "Após fix: das_parcsn 26%->=70%; boleto 0%->=80%; nfce 0%->=80%."
+        ),
+        "acceptance": [
+            "Diagnóstico documentado por tipo.",
+            "Config ajustada por tipo.",
+            "Linker re-rodado com vinculação melhorada.",
+            "Teste regressivo cobrindo o cenário detectado.",
+        ],
+    },
+    # ---------- ONDA 4 continua ----------
     {
         "id": "MICRO-01",
         "slug": "linking_micro_runtime",
@@ -719,6 +976,46 @@ SPECS: list[dict] = [
         "implementacao": "src/analysis/pacote_irpf.py + UI no dashboard.",
         "proof": "Gerar pacote 2025 → ZIP com 100% das fontes vinculadas.",
         "acceptance": ["Botão funcional.", "ZIP estruturado.", "Summary com totais."],
+    },
+    {
+        "id": "GAP-01",
+        "slug": "alerta_proativo_transacao_sem_nf",
+        "titulo": "Alerta proativo: transação alta sem NF/comprovante correspondente",
+        "prio": "P1",
+        "onda": 4,
+        "esf": "4h",
+        "dep": ["MICRO-01"],
+        "fecha_itens": ["item E da revisão 2026-04-29 (visão do dono)"],
+        "problema": (
+            "Visão do dono: 'gastei 800 na amazon com idiotice, falta a nota "
+            "fiscal'. Hoje sistema não reage proativamente: transação aparece "
+            "no XLSX, mas se não vem NF, fica invisível. IRPF anual chega "
+            "incompleto sem alerta intermediário."
+        ),
+        "hipotese": (
+            "Detector cruzando extrato vs grafo: para cada transação acima de "
+            "limiar configurável (ex: R$ 100), verificar se existe edge "
+            "documento_de apontando para ela. Se não, listar como 'gap "
+            "documental'. Alertar via aba dedicada + relatório mensal + sync "
+            "para mobile companion (notificação)."
+        ),
+        "implementacao": (
+            "1. src/analysis/gap_documental_proativo.py — `detectar_gaps(limiar)`.\n"
+            "2. mappings/limiares_gap.yaml por categoria (Mercado: R$ 100; "
+            "Eletrônicos: R$ 50; etc.).\n"
+            "3. Aba 'Gaps documentais' no dashboard com lista filtrada.\n"
+            "4. Relatório mensal com top-N gaps.\n"
+            "5. Cache JSON para mobile (vault/.ouroboros/cache/gaps.json)."
+        ),
+        "proof": (
+            "Corpus real → detecta >=10 gaps em transações > R$ 100 sem doc."
+        ),
+        "acceptance": [
+            "Módulo + 8 testes.",
+            "Aba dashboard.",
+            "Relatório mensal.",
+            "Cache mobile.",
+        ],
     },
     {
         "id": "IRPF-02",
@@ -1019,6 +1316,41 @@ SPECS: list[dict] = [
         "acceptance": ["6 fixes."],
     },
     {
+        "id": "UX-10",
+        "slug": "clarificar_cluster_vs_aba_nomenclatura",
+        "titulo": "Clarificar hierarquia cluster vs aba (mesmos rótulos confundem usuário)",
+        "prio": "P2",
+        "onda": 6,
+        "esf": "2h",
+        "dep": [],
+        "fecha_itens": ["achado da auditoria visual 2026-04-29"],
+        "problema": (
+            "Cluster 'Home' tem aba 'Finanças'; cluster 'Documentos' tem aba "
+            "'Catalogação'. A sidebar mostra dropdown 'Área' com clusters; o "
+            "topo mostra abas. Mas alguns rótulos repetem (cluster 'Análise' "
+            "tem aba 'Análise' interna). Usuário não sabe se está em cluster "
+            "ou em aba. Auditoria visual 2026-04-29 detectou ambiguidade."
+        ),
+        "hipotese": (
+            "Renomear sidebar 'Área' para 'Domínio' (5 domínios) e diferenciar "
+            "visualmente domínio (sidebar, label maiúsculo) de aba (top, "
+            "lowercase mono). Eliminar nomes duplicados: cluster 'Análise' "
+            "vira 'Análise & Categorias'."
+        ),
+        "implementacao": (
+            "1. Renomear label sidebar.\n"
+            "2. Auditar MAPA_ABA_PARA_CLUSTER e renomear duplicatas.\n"
+            "3. Adicionar breadcrumb 'Domínio › Aba' em cada página.\n"
+            "4. Validação visual em 5 clusters."
+        ),
+        "proof": "Screenshot lado-a-lado antes/depois mostrando hierarquia clara.",
+        "acceptance": [
+            "Sidebar com label 'Domínio'.",
+            "Zero duplicação de rótulos.",
+            "Breadcrumb por página.",
+        ],
+    },
+    {
         "id": "OMEGA-94a",
         "slug": "aba_saude",
         "titulo": "Aba Saúde (receitas, exames, plano + alertas validade)",
@@ -1092,6 +1424,47 @@ SPECS: list[dict] = [
         "implementacao": "Discussão + draft ADR + execução conforme decisão.",
         "proof": "ADR-23 publicada.",
         "acceptance": ["ADR.", "Pipeline padroniza canônico."],
+    },
+    {
+        "id": "DASH-01",
+        "slug": "pacote_anual_de_vida",
+        "titulo": "Botão 'Gerar pacote anual de vida <ano>' (não só IRPF)",
+        "prio": "P2",
+        "onda": 6,
+        "esf": "4h",
+        "dep": ["IRPF-01", "OMEGA-94a", "OMEGA-94b", "OMEGA-94c", "OMEGA-94d"],
+        "fecha_itens": ["item AB da revisão 2026-04-29 (visão do dono)"],
+        "problema": (
+            "Visão do dono: pacote IRPF é só 1 dos pacotes anuais. Pessoa "
+            "também precisa: pacote Saúde (todas consultas, exames, despesas), "
+            "pacote Profissional (contratos, certificados, holerites), pacote "
+            "Acadêmico (histórico, diplomas, atividades), pacote Identidade "
+            "(estado dos documentos com alertas de validade)."
+        ),
+        "hipotese": (
+            "Generalizar IRPF-01: botão único 'Pacote anual de vida <ano>' "
+            "gera ZIP com 5 pastas (financeiro/saude/profissional/academico/"
+            "identidade), cada uma com summary.md + arquivos vinculados via "
+            "grafo. Filtro por pessoa (André/Vitória/Casal)."
+        ),
+        "implementacao": (
+            "1. src/analysis/pacote_anual_vida.py reusa IRPF-01 + adiciona "
+            "agregadores por domínio.\n"
+            "2. Aba dashboard 'Pacote anual' com seletor (pessoa, ano, "
+            "domínios marcados).\n"
+            "3. summary.md por domínio + summary geral cross-domínio.\n"
+            "4. ZIP estruturado: pacote_<pessoa>_<ano>.zip."
+        ),
+        "proof": (
+            "Gerar pacote 2025 do casal → ZIP com 5 pastas + 5 summaries + "
+            "todos arquivos vinculados via grafo."
+        ),
+        "acceptance": [
+            "Botão funcional.",
+            "ZIP estruturado.",
+            "5 summaries por domínio.",
+            "Filtro por pessoa.",
+        ],
     },
     {
         "id": "MON-01",
