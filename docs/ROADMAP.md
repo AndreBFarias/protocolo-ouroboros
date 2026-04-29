@@ -1,10 +1,29 @@
 # Roadmap -- Protocolo Ouroboros
 
+> **NOTA 2026-04-29**: este roadmap é histórico. A rota canônica vigente está em
+> `~/.claude/plans/pure-swinging-mitten.md` (auditoria honesta com 46 achados +
+> 6 ondas de fechamento, ~170h). Onda 1 (anti-migué + restaurar débitos)
+> em progresso na sessão 2026-04-29; Ondas 2-6 com 60+ specs formais em
+> `docs/sprints/backlog/`. O conteúdo abaixo serve de referência para entender
+> a evolução até a Fase NU.
+
 ```
-VERSÃO: 8.1 | SPRINTS: 137 (93 concluídas, 30 backlog, 14 arquivadas; rodada NU 2026-04-26: 6 P0 + 4 sub-sprints)
-ROTA: Fases ALFA -> MU CONCLUÍDAS + **Fase NU CONCLUÍDA (6 P0 entregues em 2026-04-26)** + Sprints P1 98+101 em execução paralela + Fase OMEGA (Sprint 94a-f, estratégica 12-18 meses, desbloqueada por ADR-21)
-ÚLTIMA ATUALIZAÇÃO: 2026-04-26 (segunda parte). Fase NU executada em sessão maratona pós-auditoria: 95 (linking runtime, 0->23 documento_de), 96 (classifier OCR-curto, inbox/1.jpeg classifica), D2 (revisor visual Streamlit live), 97 (page-split heterogêneo com reversão), 90a (inbox detecta holerite, defesa em duas camadas), 90b (DAS PARCSN drift -47%->0%, 10->19 nodes). 14 commits pushed. pytest 1.530 -> 1.607 (+77, zero regressão). 4 sub-sprints novas (95a/95b/95c, INFRA-D2a, 90a-1) formalizadas como achados colaterais.
+VERSÃO: 9.0 | SPRINTS: 198+ (130+ concluídas, 79 backlog, 14 arquivadas)
+ROTA ATIVA: plan pure-swinging-mitten (Onda 1 em execução 2026-04-29)
+HISTÓRICO: Fases ALFA -> NU CONCLUÍDAS; cluster UX v1+v2+v3 em 2026-04-27;
+auditoria self-driven 2026-04-29 (9 AUDIT2-* em backlog para fechar Tier 1
+antes de qualquer Onda do plan novo).
+ÚLTIMA ATUALIZAÇÃO: 2026-04-29 (sessão pós-brainstorming de redesign). Onda 1
+em progresso: ANTI-MIGUE-02 (anti-órfão), -03 (reconciliar testes), -04
+(smoke 8->10 contratos), -07 (simplificar constituição) commitadas. Pytest
+2.018 -> 2.027 (+9). Smoke 8/8 -> 10/10. Backlog 18 -> 79 specs com 61
+novas materializadas via scripts/_materializar_backlog_pure_swinging.py.
 ```
+
+---
+
+## Detalhe histórico abaixo (Fase NU e anteriores)
+
 
 ---
 

@@ -96,9 +96,15 @@ A IA deve ler o **conteúdo** (não confiar no nome) para detectar:
 
 Fonte primária: extrator de contracheque PDF (`src/extractors/contracheque_pdf.py`). Suporta G4F e Infobase. Folha mensal, 13º adiantamento e 13º integral são entradas distintas via campo `fonte`. Para meses sem holerite, recai para receitas inferidas do extrato bancário (INSS/IRRF/VR-VA ficam vazios).
 
-### `dividas_ativas`, `inventario`, `prazos`
+### `dividas_ativas`, `inventario`, `prazos` (snapshots históricos 2022-2023)
 
-Snapshots históricos 2022-2023, **não atualizados automaticamente**. Cabeçalho de aviso na linha 1 do XLSX. Reabilitação depende de automação bancária (Sprint 24, pós-90d).
+**AVISO**: dados importados do `controle_antigo.xlsx`, **nunca atualizados automaticamente**. Aba do XLSX tem cabeçalho `[Snapshot histórico 2023 — dados não atualizados]` na **linha 1**; colunas começam na **linha 2**. Dashboard lê direto da linha 2 (Sprint 64 reabilita aviso na UI). Reabilitação depende de automação bancária (Sprint 24).
+
+| Aba | Linhas | Conteúdo |
+|---|---|---|
+| `dividas_ativas` | 26 | mes_ref, custo, valor, status, vencimento, quem, recorrente, obs |
+| `inventario` | 18 bens | bem, valor_aquisicao, vida_util_anos, depreciacao_anual, perda_mensal |
+| `prazos` | 6 prazos | conta, dia_vencimento, banco_pagamento, auto_debito (leitura frágil — índices 2/3, não 0/1) |
 
 ### `resumo_mensal` (gerada automaticamente)
 
@@ -106,11 +112,20 @@ Colunas: mes_ref, receita_total, despesa_total, saldo, top_categoria, top_gasto,
 
 ### `irpf`
 
-CNPJ/CPF extraídos contextualmente pelo tagger (`src/transform/irpf_tagger.py`). Colunas: ano, tipo, fonte, cnpj_cpf, valor, mes.
+CNPJ/CPF extraídos contextualmente pelo tagger (`src/transform/irpf_tagger.py`) a partir do campo `_descricao_original` das transações.
+
+| Coluna | Tipo | Preenchido? |
+|--------|------|-------------|
+| ano | int | sim |
+| tipo | str | sim (5 categorias: pagador, fonte_renda, despesa_dedutivel, deducao_legal, imposto_pago) |
+| fonte | str | sim |
+| cnpj_cpf | str | sim quando descrição bruta contém CNPJ/CPF (~75/164 = 44%) |
+| valor | float | sim |
+| mes | str | sim |
 
 ### `analise`
 
-Aba viva desde Sprint 53. Visualizações ricas na página "Análise" do dashboard.
+Aba viva desde Sprint 53. Visualizações ricas na página "Análise" do dashboard: Sankey de fluxo de categorias, heatmap mensal, bar charts de top fornecedores, cobertura de itens. Resumo narrativo textual permanece pendente (Sprint 33, ZETA).
 
 ---
 
@@ -220,6 +235,30 @@ Princípios que regem qualquer decisão estrutural. Leitura obrigatória antes d
 - **ADR-20** — Tracking documental completo.
 - **ADR-21** — Fusão Ouroboros + Controle de Bordo (visão OMEGA).
 - **ADR-22** — Navegação por clusters.
+
+---
+
+## Cobertura conhecida vs gaps
+
+Snapshot da auditoria honesta 2026-04-29 (detalhe completo em `~/.claude/plans/pure-swinging-mitten.md`).
+
+**Funciona hoje:**
+- Pipeline ETL maduro (22 extratores, 6.094 transações, smoke 10/10).
+- Categorização 100% (regex YAML + overrides).
+- Linking transação ↔ documento parcial (~50% docs vinculados desde Sprint 95).
+- Dashboard 13 abas em 5 clusters; Revisor 4-way (ETL × Opus × Grafo × Humano).
+- Vault Obsidian sync via `sync_rico` em `~/Controle de Bordo/Pessoal/Casal/Financeiro/`.
+- Reserva de emergência: 100% atingida.
+
+**Gaps P0 ainda abertos** (bloqueiam "central de vida adulta de verdade"):
+- ADR-08 (Supervisor LLM): 0% implementado — Onda 2 do plan.
+- 8 documentos cotidianos sem regra YAML (Amazon, PIX foto, exame médico, RG/CNH, diploma, etc.) — Onda 3.
+- Multi-foto do mesmo doc causa duplicação garantida — DOC-13.
+- DANFE retorna `[]` sem validar ingestão — DOC-16.
+- Mobile bridge não-auditado (Mob-Ouroboros companion) — Onda 5.
+- Vault Obsidian sem monitor de dessincronia — MON-01.
+
+**Gaps P1**: 13 itens (acessibilidade WCAG, OCR energia frágil, holerites fora G4F+Infobase, integrações Calendar/Email/Assinaturas inexistentes, ADRs adjacentes não-implementadas).
 
 ---
 
