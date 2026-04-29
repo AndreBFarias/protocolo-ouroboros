@@ -1,3 +1,7 @@
+---
+concluida_em: 2026-04-28
+---
+
 # Sprint ANTI-MIGUE-11 -- Pin pyvis<1.0 em pyproject.toml + lock file
 
 **Origem**: plan pure-swinging-mitten (auditoria honesta 2026-04-29).
