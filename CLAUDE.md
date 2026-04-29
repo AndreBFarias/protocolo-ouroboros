@@ -75,6 +75,8 @@ A IA deve ler o **conteúdo** (não confiar no nome) para detectar:
 
 ## Schema do XLSX (8 abas)
 
+> **Atenção a 3 camadas com nomes que se confundem**: `categoria` (slot livre no XLSX), `tipo` (enum estrito) e `categoria` (node tipo no grafo SQLite — ADR-14). Veja `docs/GLOSSARIO.md` para diferença prática + exemplos canônicos antes de propor regra.
+
 ### `extrato` (tabela principal)
 
 | Coluna | Tipo | Obrigatório |
@@ -364,6 +366,7 @@ protocolo-ouroboros/
 | Plan ativo (auditoria + 6 ondas) | `~/.claude/plans/pure-swinging-mitten.md` |
 | Blueprint da central de vida adulta (DESIGN-01) | `docs/BLUEPRINT_VIDA_ADULTA.md` |
 | Bootstrap de fresh clone (ANTI-MIGUE-10) | `docs/BOOTSTRAP.md` |
+| Glossário (`categoria` vs `tipo` vs node grafo, DOC-VERDADE-01.E) | `docs/GLOSSARIO.md` |
 | **Manifesto do supervisor Opus (META-SUPERVISOR-01) — leia se você é um Opus que assumiu a sessão** | `docs/SUPERVISOR_OPUS.md` |
 | **Planos de sessão em curso (DOC-VERDADE-01.A.0) — leia se assumiu sessão recente** | `docs/PLANOS_SESSAO/` |
 | ADRs | `docs/adr/ADR-NN-*.md` |
