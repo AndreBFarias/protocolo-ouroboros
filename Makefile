@@ -80,12 +80,10 @@ smoke: ## Smoke runtime-real (health check + contratos aritméticos)
 anti-migue: lint smoke test ## Gauntlet anti-migué (entry point único do gate de 9 checks)
 	@echo "=== anti-migue gauntlet OK ==="
 	@$(PYTHON) scripts/check_concluida_em.py
-	@echo "Atenção: target conformance-<tipo> ainda não disponível -- depende de ANTI-MIGUE-01."
+	@echo "Para validar gate 4-way de extrator novo: make conformance-<tipo>."
 
-conformance-%: ## Gate 4-way conformance por tipo (depende de ANTI-MIGUE-01)
-	@echo "Target conformance-$* aguarda implementação de ANTI-MIGUE-01."
-	@echo "Quando o gate 4-way estiver implementado, esta regra rodará pytest tests/conformance/ -k $*."
-	@exit 1
+conformance-%: ## Gate 4-way >=3 amostras verdes (Sprint ANTI-MIGUE-01)
+	@$(PYTHON) -m tests.conformance.gate $*
 
 clean: ## Remove artefatos de build (não remove dados)
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
