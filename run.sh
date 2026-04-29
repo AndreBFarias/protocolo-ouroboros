@@ -551,6 +551,7 @@ case "${1:-}" in
             run_passo "normalizar_path_relativo" python -m scripts.normalizar_path_relativo --executar
             run_passo "backfill_metadata_pessoa" python -m scripts.backfill_metadata_pessoa --executar
             run_passo "backfill_razao_social_canonica" python -m scripts.backfill_razao_social_canonica --executar
+            run_passo "anti_orfao" python -m src.intake.anti_orfao
             msg_ok "Reextracao concluida."
         else
             msg_aviso "Operação cancelada."
