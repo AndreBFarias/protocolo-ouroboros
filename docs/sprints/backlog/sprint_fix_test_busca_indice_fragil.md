@@ -1,4 +1,4 @@
-# Sprint FIX-TEST-BUSCA-INDICE-01 — Fix testes frágeis de busca global
+# Sprint FIX-TEST-BUSCA-ÍNDICE-01 — Fix testes frágeis de busca global
 
 **Origem**: achado colateral durante Sprint ANTI-MIGUE-08 (2026-04-29).
 **Prioridade**: P2
