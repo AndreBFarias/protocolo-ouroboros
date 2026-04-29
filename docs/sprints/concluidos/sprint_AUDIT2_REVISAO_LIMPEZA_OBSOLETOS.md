@@ -3,6 +3,8 @@
 **Origem**: Auditoria self-driven 2026-04-29, achado B4.
 **Prioridade**: P2.
 **Estimado**: 30min.
+**concluida_em**: 2026-04-28
+**Commit**: `9f52372`
 
 ## Problema
 

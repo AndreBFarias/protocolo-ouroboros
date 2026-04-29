@@ -1,5 +1,9 @@
 # Sprint AUDIT2-ENVELOPE-VS-PESSOA-CANONICO -- Decidir path canonico em duplicatas
 
+> **superseded_by**: `ADR-23-DRAFT` (`docs/sprints/backlog/sprint_adr_23_draft_adr_23_envelope_vs_pessoa_canonico.md`).
+> Esta spec foi absorvida em ADR-23-DRAFT do plan pure-swinging-mitten (2026-04-29).
+> Mantida em backlog/ como referência histórica até a ADR-23 ser publicada.
+
 **Origem**: Auditoria self-driven 2026-04-29, achado D1 (ambiguidade real).
 **Prioridade**: P3 (decisao arquitetural).
 **Estimado**: 1h (planejamento) + tempo de execução depende da decisao.

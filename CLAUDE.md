@@ -169,38 +169,58 @@ PDFs bancários protegidos. Senhas em `mappings/senhas.yaml` (gitignored). Se au
 
 ---
 
-## Workflow obrigatório
+## Workflow obrigatório — Protocolo de validação tripla
 
-### Antes de implementar
-1. Ler `CLAUDE.md` (este arquivo) e `contexto/ESTADO_ATUAL.md`.
-2. Ler a sprint atual em `docs/sprints/`.
-3. Ler `docs/ARMADILHAS.md` quando relevante.
-4. `make lint` para verificar estado atual.
+Toda sprint passa por **3 fases de validação** explícitas. O Claude valida antes (não chuta), durante (não atropela), e depois (não declara concluído sem prova). Saltar qualquer fase = sprint REPROVADA.
 
-### Ao implementar
-1. Manter compatibilidade com pipeline existente.
-2. Validar hipótese da spec com `grep` antes de codar.
-3. Testar incrementalmente.
-4. Verificar acentuação em todo código novo.
-5. Nunca quebrar as 8 abas do XLSX.
+### Fase ANTES (validação preventiva — antes de qualquer linha de código)
 
-### Antes de concluir
-1. `make lint` (ruff check + format) — exit 0.
-2. `make smoke` (8 contratos aritméticos) — 8/8 OK.
-3. `pytest tests/ -q` — baseline mantida ou crescida.
-4. Verificar dashboard se houver mudanças visuais.
-5. Commit com mensagem PT-BR no formato `tipo: descrição imperativa`.
+1. **Ler contexto canônico em ordem**: `contexto/POR_QUE.md` → `contexto/ESTADO_ATUAL.md` → `contexto/COMO_AGIR.md` → `CLAUDE.md` → spec da sprint.
+2. **Ler ADRs referenciados** na spec (se houver).
+3. **Ler `docs/ARMADILHAS.md`** quando o tema toca extrator, dedup, encoding.
+4. **Validar a hipótese da spec com `grep` antes de codar.** A hipótese **não é dogma** — se grep contraria a spec, escrever achado-bloqueio e consultar o supervisor antes de prosseguir. (Padrão canônico VALIDATOR_BRIEF rodapé `(k)`.)
+5. **Rodar `make lint` + `make smoke` + `pytest`** para confirmar estado verde **antes** de mexer. Vermelho herdado é dívida que precisa ser endereçada antes (não depois).
+6. **Capturar baseline**: `pytest --collect-only -q | tail -1` registra contagem para comparar no final.
 
-### Anti-migué (gate de "concluído")
+### Fase DURANTE (validação contínua — enquanto codifica)
 
-Sprint só vira concluída quando:
-- Hipótese declarada e validada com grep.
-- Proof-of-work runtime-real capturado.
-- Quando aplicável: gate 4-way ≥3 amostras (`make conformance-<tipo>`).
-- Lint, smoke, pytest verdes.
-- Achados colaterais viraram sprint-ID OU Edit-pronto. **Zero "TODO depois".**
-- Validador (humano ou subagent) APROVOU.
-- Spec movida com frontmatter `concluida_em: YYYY-MM-DD`.
+1. **Edit incremental, não rewrite.** Preserve histórico — nunca apague código funcional sem autorização explícita.
+2. **Testar incrementalmente** após cada mudança não-trivial: `pytest tests/test_<area>.py`.
+3. **Lint inline**: rodar `ruff check <arquivo>` antes de salvar arquivo grande.
+4. **Acentuação em todo código novo** — PT-BR ortograficamente correto.
+5. **Validar invariantes do domínio** quando relevante: 8 abas do XLSX intactas, schema do grafo (`node`/`edge`) preservado, contratos do smoke aritmético (10/10) em qualquer momento.
+6. **Achado colateral durante a execução**: NUNCA corrigir dentro da sprint atual (escopo creep) e NUNCA deixar `# TODO`. Criar **sprint-filha formal** em `docs/sprints/backlog/` ou Edit-pronto na hora.
+7. **Trabalhar em worktree** quando a sprint for substantiva: `cd "$WORKTREE_PATH" && ...` + `git rev-parse --show-toplevel` antes de cada commit. (Padrão canônico VALIDATOR_BRIEF rodapé `(j)`.)
+
+### Fase DEPOIS (validação de fechamento — gate anti-migué de 9 checks)
+
+Sprint só vira **CONCLUÍDA** quando todos passam:
+
+1. **Hipótese declarada validada com grep** antes de codar (Fase ANTES item 4).
+2. **Proof-of-work runtime real** capturado em log: `python -m <módulo>` ou `./run.sh --<flag>` mostra o efeito esperado em dados reais.
+3. **Quando aplicável: gate 4-way ≥3 amostras** (`make conformance-<tipo>`) verde — bloqueante para extratores novos a partir do plan pure-swinging-mitten.
+4. **`make lint` exit 0**.
+5. **`make smoke` 10/10 contratos**.
+6. **`pytest tests/ -q` baseline mantida ou crescida**. Comparar com baseline da Fase ANTES.
+7. **Achados colaterais viraram sprint-ID OU Edit-pronto**. Zero "TODO depois", zero issue informal.
+8. **Validador (humano OU subagent) APROVOU**. Auto-aprovação proíbida.
+9. **Spec movida** de `docs/sprints/backlog/` para `docs/sprints/concluidos/` com frontmatter `concluida_em: YYYY-MM-DD` e link para o commit.
+
+### Resumo do protocolo
+
+```
+ANTES   ─→ ler/validar/medir baseline (não chutar)
+DURANTE ─→ edit incremental + testes contínuos + zero TODO solto
+DEPOIS  ─→ 9 checks anti-migué OU sprint REPROVADA
+```
+
+### Padrão canônico de commit
+
+- PT-BR imperativa, formato `tipo: descrição` (`feat`, `fix`, `refactor`, `docs`, `test`, `chore`).
+- Máximo 70 caracteres na primeira linha.
+- Corpo opcional com **WHY**, não WHAT.
+- **Nunca** mencionar Claude, GPT, Anthropic, IA. Hook commit-msg bloqueia.
+- Escolher mensagem que descreva o que mudou e por quê — diff conta o quê.
 
 ---
 
@@ -333,10 +353,13 @@ protocolo-ouroboros/
 | Sync Obsidian | `./run.sh --sync` |
 | Lint | `make lint` |
 | Smoke aritmético | `make smoke` |
-| Sprints | `docs/sprints/sprint_NN_*.md` |
+| Sprints (backlog/concluidos/arquivadas) | `docs/sprints/` |
+| Índice mestre de sprints + relacionamento antigas vs plan | `docs/SPRINTS_INDEX.md` |
+| Plan ativo (auditoria + 6 ondas) | `~/.claude/plans/pure-swinging-mitten.md` |
 | ADRs | `docs/adr/ADR-NN-*.md` |
 | Estado atual | `contexto/ESTADO_ATUAL.md` |
 | Histórico de sessões | `docs/HISTORICO_SESSOES.md` |
+| Padrões canônicos do validador | `VALIDATOR_BRIEF.md` |
 
 ---
 
