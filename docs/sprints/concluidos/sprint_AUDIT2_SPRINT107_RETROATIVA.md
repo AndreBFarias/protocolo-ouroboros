@@ -1,3 +1,7 @@
+---
+concluida_em: 2026-04-28
+---
+
 # Sprint AUDIT2-SPRINT107-RETROATIVA -- Backfill fornecedor sintetico em nodes antigos
 
 **Origem**: Auditoria self-driven 2026-04-29, achado A1.

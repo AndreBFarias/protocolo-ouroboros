@@ -1,3 +1,7 @@
+---
+concluida_em: 2026-04-19
+---
+
 # Sprint 18 -- Dívida Técnica: Acentuação e Deduplicação
 
 ## Status: Concluída

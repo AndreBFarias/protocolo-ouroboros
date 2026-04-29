@@ -1,3 +1,7 @@
+---
+concluida_em: 2026-04-19
+---
+
 # Sprint 07 -- Dashboard v2 (Redesign Dracula)
 
 ## Status: Pendente

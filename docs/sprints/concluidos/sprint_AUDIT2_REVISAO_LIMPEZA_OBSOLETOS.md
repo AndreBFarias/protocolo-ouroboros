@@ -1,3 +1,7 @@
+---
+concluida_em: 2026-04-28
+---
+
 # Sprint AUDIT2-REVISAO-LIMPEZA-OBSOLETOS -- Limpar item_ids orfaos pos-reextracao
 
 **Origem**: Auditoria self-driven 2026-04-29, achado B4.

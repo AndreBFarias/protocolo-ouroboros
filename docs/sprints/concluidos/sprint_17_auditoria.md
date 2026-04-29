@@ -1,3 +1,7 @@
+---
+concluida_em: 2026-04-19
+---
+
 # Sprint 17 -- Auditoria Final e GitHub-Readiness
 
 ## Status: Pendente

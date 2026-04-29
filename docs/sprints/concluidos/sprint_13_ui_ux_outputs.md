@@ -1,3 +1,7 @@
+---
+concluida_em: 2026-04-19
+---
+
 # Sprint 13 -- UI/UX e Outputs Profissionais
 
 ## Status: Concluída (commit b73068a)

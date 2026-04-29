@@ -1,3 +1,7 @@
+---
+concluida_em: 2026-04-28
+---
+
 # Sprint ANTI-MIGUE-03 -- Reconciliar testes 1.987 vs 2.028
 
 **Origem**: plan pure-swinging-mitten (auditoria honesta 2026-04-29, item 36).

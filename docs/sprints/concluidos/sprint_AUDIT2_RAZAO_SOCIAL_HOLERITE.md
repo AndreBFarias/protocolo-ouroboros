@@ -1,3 +1,7 @@
+---
+concluida_em: 2026-04-28
+---
+
 # Sprint AUDIT2-RAZAO-SOCIAL-HOLERITE -- Razao social completa em holerites
 
 **Origem**: Auditoria self-driven 2026-04-29, achado A4.

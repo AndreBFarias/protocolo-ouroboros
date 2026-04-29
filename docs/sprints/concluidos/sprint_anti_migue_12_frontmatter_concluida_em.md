@@ -1,3 +1,7 @@
+---
+concluida_em: 2026-04-28
+---
+
 # Sprint ANTI-MIGUE-12 -- Frontmatter concluida_em: YYYY-MM-DD em sprints concluídas
 
 **Origem**: plan pure-swinging-mitten (auditoria honesta 2026-04-29).

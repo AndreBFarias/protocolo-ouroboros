@@ -1,3 +1,7 @@
+---
+concluida_em: 2026-04-19
+---
+
 # Sprint 05 -- Relatórios e Projeções
 
 ## Status: Código integrado, validação pendente (issue #5 reaberta)

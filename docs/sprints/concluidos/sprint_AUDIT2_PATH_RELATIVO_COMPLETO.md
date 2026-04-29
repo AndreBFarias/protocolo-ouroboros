@@ -1,3 +1,7 @@
+---
+concluida_em: 2026-04-28
+---
+
 # Sprint AUDIT2-PATH-RELATIVO-COMPLETO -- Aplicar to_relativo em todos ingestores
 
 **Origem**: Auditoria self-driven 2026-04-29, achado B1.

@@ -1,3 +1,7 @@
+---
+concluida_em: 2026-04-20
+---
+
 ## 0. SPEC (machine-readable)
 
 ```yaml

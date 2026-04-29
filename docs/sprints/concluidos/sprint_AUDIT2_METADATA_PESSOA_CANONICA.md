@@ -1,3 +1,7 @@
+---
+concluida_em: 2026-04-28
+---
+
 # Sprint AUDIT2-METADATA-PESSOA-CANONICA -- Gravar pessoa canonica no node documento
 
 **Origem**: Auditoria self-driven 2026-04-29, achado B3.

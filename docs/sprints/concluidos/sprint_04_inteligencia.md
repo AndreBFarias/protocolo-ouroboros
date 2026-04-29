@@ -1,3 +1,7 @@
+---
+concluida_em: 2026-04-19
+---
+
 # Sprint 04 -- Inteligência de Categorização
 
 ## Status: Concluída

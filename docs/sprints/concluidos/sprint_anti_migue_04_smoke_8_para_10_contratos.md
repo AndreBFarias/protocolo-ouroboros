@@ -1,3 +1,7 @@
+---
+concluida_em: 2026-04-28
+---
+
 # Sprint ANTI-MIGUE-04 -- Smoke aritmético 8 → 10 contratos
 
 **Origem**: plan pure-swinging-mitten (auditoria honesta 2026-04-29, item 39).
