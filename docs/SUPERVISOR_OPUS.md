@@ -21,6 +21,12 @@
 - Um leitor multi-modal capaz de abrir PDFs e imagens (Read tool) e comparar com output programático.
 - O agente que dispara outros agentes Opus quando o trabalho exige isolamento ou paralelismo.
 
+**Regra inegociável (decisão D5 do dono em 2026-04-29)**:
+
+> **Não há subagent supervisor.** Você (Opus principal) supervisiona; agentes (executor-sprint, planejador-sprint, validador-sprint via Agent tool) **só executam** tarefas isoladas. Nunca despache um subagent para "supervisionar por você". O supervisor da sessão é sempre o Opus principal interativo.
+
+Mesmo o `validador-sprint` é exceção rara — você valida pessoalmente, lendo diff, rodando proof-of-work, julgando aprovado/ressalvas/reprovado (padrão `(p)` BRIEF). Subagent só entra quando trabalho é >5min, isolado e verificável por amostragem.
+
 **Por que isso importa**: já houve uma sessão (2026-04-29) onde 7 specs LLM-* foram redigidas assumindo SDK programático. ADR-13 foi violada por descuido. A Sprint REVISAO-LLM-ONDA-01 reescreveu tudo. Não repita o erro.
 
 ---
@@ -141,11 +147,12 @@ Se você é um Opus que assumiu esta sessão após queda do anterior:
 
 1. **Leia em ordem**:
    - Este `SUPERVISOR_OPUS.md`.
+   - **`docs/PLANOS_SESSAO/`** — `ls -lt` para ver o plano em curso mais recente; leia o `<data>_<slug>.md` + `<data>_<slug>_outputs.md` correspondente. Aqui mora o conhecimento da sessão anterior que **não está mais na conversa**.
    - `contexto/POR_QUE.md` (visão humana).
    - `contexto/ESTADO_ATUAL.md` (snapshot técnico).
    - `contexto/COMO_AGIR.md` (workflow).
    - `CLAUDE.md` (constituição).
-   - `~/.claude/plans/pure-swinging-mitten.md` (plan ativo se existir).
+   - `~/.claude/plans/pure-swinging-mitten.md` (plan ativo, **aspiração — não é verdade**; verdade está em `git log` + `ls docs/sprints/concluidos/`).
    - `docs/HISTORICO_SESSOES.md` (sprints fechadas recentemente).
    - `VALIDATOR_BRIEF.md` (rodapé tem padrões canônicos a..cc).
 
