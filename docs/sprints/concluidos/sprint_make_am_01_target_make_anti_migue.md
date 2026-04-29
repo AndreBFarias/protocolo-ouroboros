@@ -1,3 +1,7 @@
+---
+concluida_em: 2026-04-28
+---
+
 # Sprint MAKE-AM-01 -- Adicionar target make anti-migue + make conformance-<tipo>
 
 **Origem**: plan pure-swinging-mitten (auditoria honesta 2026-04-29).

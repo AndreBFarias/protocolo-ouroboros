@@ -214,6 +214,8 @@ DURANTE ─→ edit incremental + testes contínuos + zero TODO solto
 DEPOIS  ─→ 9 checks anti-migué OU sprint REPROVADA
 ```
 
+**Atalho `make anti-migue`** (Sprint MAKE-AM-01): roda `lint`, `smoke`, `test` e valida frontmatter `concluida_em` em todas as specs concluídas em sequência. Use como entry point único do gate antes de mover qualquer spec para `concluidos/`. O target `make conformance-<tipo>` será habilitado quando ANTI-MIGUE-01 implementar o gate 4-way.
+
 ### Padrão canônico de commit
 
 - PT-BR imperativa, formato `tipo: descrição` (`feat`, `fix`, `refactor`, `docs`, `test`, `chore`).

@@ -1,4 +1,4 @@
-.PHONY: help process inbox tudo dashboard test lint format docs validate check install clean gauntlet smoke
+.PHONY: help process inbox tudo dashboard test lint format docs validate check install clean gauntlet smoke anti-migue
 
 SHELL := /bin/bash
 VENV := .venv
@@ -76,6 +76,16 @@ gauntlet: ## Executa gauntlet de testes (validação completa)
 smoke: ## Smoke runtime-real (health check + contratos aritméticos)
 	@./run.sh --check
 	@$(PYTHON) scripts/smoke_aritmetico.py --strict
+
+anti-migue: lint smoke test ## Gauntlet anti-migué (entry point único do gate de 9 checks)
+	@echo "=== anti-migue gauntlet OK ==="
+	@$(PYTHON) scripts/check_concluida_em.py
+	@echo "Atenção: target conformance-<tipo> ainda não disponível -- depende de ANTI-MIGUE-01."
+
+conformance-%: ## Gate 4-way conformance por tipo (depende de ANTI-MIGUE-01)
+	@echo "Target conformance-$* aguarda implementação de ANTI-MIGUE-01."
+	@echo "Quando o gate 4-way estiver implementado, esta regra rodará pytest tests/conformance/ -k $*."
+	@exit 1
 
 clean: ## Remove artefatos de build (não remove dados)
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true

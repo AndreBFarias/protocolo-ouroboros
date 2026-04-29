@@ -19,8 +19,12 @@ Implementar `tests/conformance/4way_gate.py` que recebe `tipo` e exige ≥3 amos
 
 1. Tabela `conformance_amostras` em SQLite (tipo, item_id, etl_ok, opus_ok, grafo_ok, humano_ok, ts).
 2. CLI `python -m tests.conformance.4way_gate <tipo>` retorna exit 0 se ≥3 linhas verdes; exit 1 caso contrário.
-3. `make conformance-<tipo>` integra ao Makefile.
-4. `scripts/check_anti_migue.sh` chama o gate ao tentar mover spec de extrator para concluidos.
+3. `make conformance-<tipo>` integra ao Makefile (substituindo o stub deixado por MAKE-AM-01 em `Makefile:80-83`).
+4. `scripts/check_anti_migue.sh` (a criar) chama o gate ao tentar mover spec de extrator para concluidos. **Deve invocar também `scripts/check_concluida_em.py`** (já criado por ANTI-MIGUE-12) para validar frontmatter.
+
+### Integração com sprints já fechadas (ANTI-MIGUE-11, 12 e MAKE-AM-01)
+
+Ao executar esta sprint, lembrar que o entry point `make anti-migue` já existe (criado por MAKE-AM-01). Esta sprint ESTENDE o target adicionando `conformance-todos` (ou um wrapper que itera sobre tipos registrados) e remove o stub do `conformance-%` que retorna exit 1.
 
 ## Proof-of-work (runtime real)
 
