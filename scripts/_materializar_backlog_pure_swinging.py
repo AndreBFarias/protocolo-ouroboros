@@ -812,6 +812,108 @@ SPECS: list[dict] = [
         "acceptance": ["Patch.", "Teste regressivo."],
     },
     {
+        "id": "TEST-AUDIT-01",
+        "slug": "expandir_fixtures_reais_para_30_amostras",
+        "titulo": "Expandir fixtures reais de 6 para 30+ (item 28 da auditoria honesta)",
+        "prio": "P1",
+        "onda": 3,
+        "esf": "8h",
+        "dep": [],
+        "fecha_itens": ["item 28 da auditoria honesta 2026-04-29"],
+        "problema": (
+            "1.987 testes mas só 6 fixtures reais (PDF/PNG/XML) em "
+            "tests/fixtures/. Resto é sintético via factory. Bug Sprint 55 "
+            "(1.761 tx classificadas erradas) passou por 1.530 testes verdes "
+            "porque nenhum cobria o caso real. Risco continua até hoje."
+        ),
+        "hipotese": (
+            "Para cada extrator (22), incluir pelo menos 1 fixture real "
+            "redactada (PII mascarada com sed). Total: ~30 fixtures. Cada "
+            "uma com teste regressivo que carrega o arquivo e valida output."
+        ),
+        "implementacao": (
+            "1. Coletar 1 amostra real por extrator (22 extratores).\n"
+            "2. Mascarar PII via script `scripts/mascarar_pii_fixture.py`.\n"
+            "3. Salvar em tests/fixtures/<extrator>/<amostra>.pdf.\n"
+            "4. tests/test_fixture_real_<extrator>.py com teste de carga + "
+            "validação de campos extraídos.\n"
+            "5. CI roda fixture real em todo PR (CI-01 dependência)."
+        ),
+        "proof": (
+            "Cobertura de fixtures reais: 6 -> 30+. CI roda os 22 testes "
+            "em <30s. Zero PII versionada (grep regex CPF/CNPJ vazio)."
+        ),
+        "acceptance": [
+            "30+ fixtures reais redactadas.",
+            "22 testes regressivos em CI.",
+            "Script de mascaramento PII auditado.",
+            "Zero PII em git.",
+        ],
+    },
+    {
+        "id": "GRAFO-XLSX-01",
+        "slug": "investigar_discrepancia_xlsx_grafo",
+        "titulo": "Investigar discrepância 6.093 XLSX vs 6.086 grafo (7 transações órfãs)",
+        "prio": "P2",
+        "onda": 4,
+        "esf": "2h",
+        "dep": [],
+        "fecha_itens": ["achado da auditoria visual 2026-04-29 §1.2"],
+        "problema": (
+            "XLSX tem 6.093 linhas no extrato. Grafo SQLite tem 6.086 nodes "
+            "tipo transação. Delta de 7. Não há explicação documentada. "
+            "Possível causa: dedup tardio no ingestor do grafo ou pipeline "
+            "que escreve XLSX antes de escrever grafo."
+        ),
+        "hipotese": (
+            "Comparar dataframes: para cada (data, valor, local) do XLSX, "
+            "buscar node correspondente no grafo. Listar as 7 órfãs. "
+            "Identificar padrão (tipo, banco, mês)."
+        ),
+        "implementacao": (
+            "scripts/auditar_discrepancia_grafo_xlsx.py com lookup completo "
+            "+ relatório data/output/discrepancia_grafo_xlsx.md."
+        ),
+        "proof": "Lista das 7 órfãs com (data, valor, local, banco, hash).",
+        "acceptance": [
+            "Relatório com causa raiz.",
+            "Fix aplicado OU justificativa documentada.",
+            "Smoke arit aceita delta documentado.",
+        ],
+    },
+    {
+        "id": "MAKE-AM-01",
+        "slug": "target_make_anti_migue",
+        "titulo": "Adicionar target make anti-migue + make conformance-<tipo>",
+        "prio": "P1",
+        "onda": 1,
+        "esf": "1h",
+        "dep": ["ANTI-MIGUE-01"],
+        "fecha_itens": ["achado da auditoria visual 2026-04-29 §3.1"],
+        "problema": (
+            "Makefile não tem target `make anti-migue` nem "
+            "`make conformance-<tipo>`. Sem eles, o gate anti-migué de 9 "
+            "checks não tem entry point único — cada Opus precisa lembrar "
+            "de rodar lint+smoke+pytest+conformance separados."
+        ),
+        "hipotese": (
+            "Targets compostos: `make anti-migue` roda lint+smoke+pytest+"
+            "conformance-todos. Falha se qualquer um falhar."
+        ),
+        "implementacao": (
+            "1. Makefile: target `anti-migue: lint smoke test`.\n"
+            "2. Makefile: target `conformance-%:` que roda "
+            "`pytest tests/conformance/ -k $*`.\n"
+            "3. Documentar no CLAUDE.md §workflow."
+        ),
+        "proof": "make anti-migue exit 0 quando tudo verde; exit 1 se qualquer falhar.",
+        "acceptance": [
+            "Target funcional.",
+            "Documentado em CLAUDE.md.",
+            "Hook pre-push opcional usa.",
+        ],
+    },
+    {
         "id": "OCR-AUDIT-01",
         "slug": "validar_qualidade_ocr_amostras",
         "titulo": "Auditoria de qualidade de OCR (5 amostras por extrator com OCR)",
