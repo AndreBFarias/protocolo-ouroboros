@@ -3,6 +3,46 @@
 > Diário cronológico das sessões maratona. Extraído do CLAUDE.md em 2026-04-29 para manter a constituição enxuta.
 > Cada entrada lista entregas-chave, commits e padrões canônicos descobertos. Detalhes operacionais ficam nos `HANDOFF_<data>_*.md` correspondentes.
 
+## 2026-04-28/29 — Onda 0 + Onda 1 fechadas + Onda 2 LLM iniciada (Opus autônomo)
+
+Sessão Opus principal autônoma executando o plan `pure-swinging-mitten`. Atualização incremental conforme cada sprint fecha — preserva progresso se a sessão cair.
+
+**13 sprints fechadas** (em ordem):
+
+| # | Sprint | Commit | Resumo |
+|---|--------|--------|--------|
+| 1 | ANTI-MIGUE-11 | `1bd52fa` | pin pyvis<1.0 + requirements-lock.txt |
+| 2 | ANTI-MIGUE-12 | `d00b10f` | backfill frontmatter `concluida_em` em 165 specs |
+| 3 | MAKE-AM-01 | `05b97d2` | `make anti-migue` como entry point único do gauntlet |
+| 4 | CI-01 | `3ccd6a3` | CI workflow sem `\|\|` mascarando + smoke + acentuação |
+| 5 | ANTI-MIGUE-05 | `e5a3c1a` | teste regressivo idempotência fallback supervisor cupom |
+| 6 | DESIGN-01 | `5205ff7` | `docs/BLUEPRINT_VIDA_ADULTA.md` (8 domínios + mermaid) |
+| 7 | ANTI-MIGUE-09 | `4580aa0` | teste idempotência end-to-end `--reextrair-tudo` |
+| 8 | ANTI-MIGUE-10 | `e7861d4` | `docs/BOOTSTRAP.md` (clone + setup honesto) |
+| 9 | ANTI-MIGUE-06 | `c41c12b` | ramificação Sprint 87 (9 retroativas + 8 novas DOC/DASH) |
+| 10 | ANTI-MIGUE-08 | `c5f8b5f` | refactor 4 arquivos > 800L (worktree isolado) |
+| 11 | ANTI-MIGUE-01 | `c44a8b3` | gate 4-way conformance + `make conformance-<tipo>` |
+| 12 | REVISAO-LLM-ONDA-01 | `5e87caa` | reescrita 7 LLM-* sob ADR-13 (sem API anthropic) |
+| 13 | LLM-01-V2 | `bc42a6b` | template proposta + supervisor_contexto + `_rejeitadas/` |
+
+**Achados colaterais formalizados** (zero TODO solto): 9 sub-sprints retroativas Sprint 87.x, 8 novas (DOC-21..26, DASH-02/03), 7 LLM-*-V2 reescritas, 1 fix-test-busca-índice (teste frágil revelado pelo refactor).
+
+**Métricas finais**:
+- pytest: 2037 collected baseline → **2053 collected** (+16). 2043 passed, 9 skipped, 1 xfailed.
+- Arquivos > 800L: 4 → **0**.
+- Smoke: 10/10 contratos OK.
+- Lint: exit 0.
+- Specs concluídas com frontmatter `concluida_em`: 187/187 (100%).
+
+**Padrões canônicos novos** registrados em VALIDATOR_BRIEF rodapé:
+- `(aa)` Gate 4-way operacional via `make conformance-<tipo>`.
+- `(bb)` Refactor de arquivos > 800L: extração de cluster coeso + re-export para retrocompat.
+- `(cc)` Refactor revela teste frágil: refactor que aperta correção pode expor bug pré-existente — abrir sprint-filha e seguir.
+
+**Achado-bloqueio em ANTI-MIGUE-08**: 2 testes de busca passavam por acidente em main (dependiam de grafo de produção real). Sprint-filha `sprint_fix_test_busca_indice_fragil` formaliza fix correto.
+
+Próximas sprints prováveis: LLM-02-V2 (skill `/propor-extrator`), LLM-04-V2 (skill `/auditar-cobertura`), LLM-03-V2 (proposição de regra de categoria).
+
 ## 2026-04-29 — Auditoria 4-way self-driven + brainstorming de redesign
 
 Sessão Opus principal sem dispatch de subagents. Foco duplo:

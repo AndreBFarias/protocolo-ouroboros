@@ -1,3 +1,7 @@
+---
+concluida_em: 2026-04-28
+---
+
 # Sprint LLM-02-V2 — Proposição de extrator via Edit em docs/propostas/
 
 **Origem**: REVISAO-LLM-ONDA-01 (reescrita sob ADR-13).
