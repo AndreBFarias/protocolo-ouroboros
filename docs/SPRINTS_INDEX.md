@@ -22,7 +22,7 @@ Detalhe completo em `~/.claude/plans/pure-swinging-mitten.md`.
 |---|---|---|---|
 | **0** | **Blueprint + CI fix (pré-requisitos)** | **2 (DESIGN-01 + CI-01)** | **Backlog (P0)** |
 | 1 | Anti-migué + restaurar débitos | 12 (ANTI-MIGUE-01..12) | **EM EXECUÇÃO** — 02, 03, 04, 07 concluídas em 2026-04-29 |
-| 2 | ADR-08 LLM vivo + auditor cobertura | 8 (LLM-01..07 + AUDITOR-01) | Backlog |
+| 2 | ADR-08 LLM vivo + auditor cobertura (reescrito sob ADR-13) | 7 LLM-*-V2 (sub-spec AUDITOR-01 absorvida em LLM-04-V2) | Backlog (originais arquivadas via REVISAO-LLM-ONDA-01) |
 | 3 | Cobertura documental universal | 20 (DOC-01..20) | Backlog |
 | 4 | Cruzamento micro + IRPF + GAP proativo | 6 (MICRO-01..03 + IRPF-01..02 + GAP-01) | Backlog |
 | 5 | Mobile bridge + fontes adicionais | 7 (MOB-01..03 + FONTE-01..04) | Backlog |
