@@ -214,7 +214,9 @@ DURANTE ─→ edit incremental + testes contínuos + zero TODO solto
 DEPOIS  ─→ 9 checks anti-migué OU sprint REPROVADA
 ```
 
-**Atalho `make anti-migue`** (Sprint MAKE-AM-01): roda `lint`, `smoke`, `test` e valida frontmatter `concluida_em` em todas as specs concluídas em sequência. Use como entry point único do gate antes de mover qualquer spec para `concluidos/`. O target `make conformance-<tipo>` será habilitado quando ANTI-MIGUE-01 implementar o gate 4-way.
+**Atalho `make anti-migue`** (Sprint MAKE-AM-01): roda `lint`, `smoke`, `test` e valida frontmatter `concluida_em` em todas as specs concluídas em sequência. Use como entry point único do gate antes de mover qualquer spec para `concluidos/`. `make conformance-<tipo>` (Sprint ANTI-MIGUE-01) valida gate 4-way para extratores novos.
+
+**Skill `/propor-extrator`** (Sprint LLM-02-V2): quando classifier retorna `tipo=None` para arquivo do inbox e não há extrator dedicado, o supervisor (Opus principal interativo) executa `python scripts/propor_extrator.py <tipo> --amostra <caminho> --executar` para gerar proposta em `docs/propostas/extracao/`. Humano revisa e aprova via tab Proposições do Revisor (LLM-05-V2 futuro) ou edit manual. Conforme ADR-13: nenhuma chamada programática a Anthropic API.
 
 ### Padrão canônico de commit
 

@@ -1,14 +1,15 @@
 ---
-id: <slug-curto-kebab-case>
-tipo: <regra_categoria | extracao | resolver | classificação | er_produtos | linking | outro>
-data_proposta: 2026-04-28
+id: pix_foto_comprovante
+tipo: extracao
+data_proposta: 2026-04-29
 proponente: opus-supervisor
 hipotese: |
-    Texto livre em uma frase: o que esta proposta resolveria.
+    Tipo de documento `pix_foto_comprovante` aparece em data/raw/ ou inbox/ mas o classifier retorna None. Propor extrator dedicado em `src/extractors/pix_foto_comprovante.py` + regra em `mappings/tipos_documento.yaml`. Amostra de referência: `data/raw/_classificar/comprovante_pix.jpg`.
 evidencia:
-    - <amostra ou query do grafo que motivou a proposta>
-    - <link para arquivo em data/raw/ ou node id no grafo>
-sha: <sha256 da hipotese normalizada -- preencher antes de gerar; ver scripts/check_propostas_rejeitadas.py>
+
+    - amostra: data/raw/_classificar/comprovante_pix.jpg
+    - sub-spec sugerida: docs/sprints/backlog/sprint_doc_<X>_extrator_pix_foto_comprovante.md
+sha: deca32fd9a699aec
 decisao_humana:
     status: pendente   # pendente | aprovada | rejeitada
     data: null
@@ -16,11 +17,11 @@ decisao_humana:
     aplicada_em: null  # commit SHA quando merge para mappings/ ou backlog/
 ---
 
-# Proposta: <título humano>
+# Proposta: extrator para `pix_foto_comprovante`
 
 ## Contexto
 
-Por que esta proposta surgiu? Qual a observação que motivou?
+O tipo `pix_foto_comprovante` foi detectado em runtime (classifier retornou None) e não tem extrator dedicado. Proposta gerada via `scripts/propor_extrator.py` para iniciar o ciclo de revisao humana.
 
 ## Mudança proposta
 
