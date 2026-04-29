@@ -56,6 +56,13 @@ def grafo_minimo(tmp_path, monkeypatch):
         "VALUES (1, 'fornecedor', 'NEOENERGIA DISTRIBUICAO BRASILIA', "
         '\'{"cnpj": "00.394.460/0058-87", "categoria": "Energia"}\')'
     )
+    conn.execute(
+        "INSERT INTO node (id, tipo, nome_canonico, metadata) "
+        "VALUES (2, 'documento', 'BOLETO_NEOENERGIA_2026-04', "
+        '\'{"tipo_documento": "conta_energia", "total": 350.0, '
+        '"data_emissao": "2026-04-01", "razao_social": "NEOENERGIA"}\')'
+    )
+    conn.execute("INSERT INTO edge (src_id, dst_id, tipo) VALUES (2, 1, 'fornecido_por')")
     conn.commit()
     conn.close()
 
