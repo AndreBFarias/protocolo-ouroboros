@@ -533,6 +533,7 @@ case "${1:-}" in
         run_passo "backfill_arquivo_origem" python -m scripts.backfill_arquivo_origem_lote --executar
         msg_info "Pipeline canonico..."
         python -m src.pipeline --tudo
+        run_passo "anti_orfao" python -m src.intake.anti_orfao
         msg_ok "Rota completa concluida."
         ;;
     --reextrair-tudo)
