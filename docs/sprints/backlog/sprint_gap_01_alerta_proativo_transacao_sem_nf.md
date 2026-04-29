@@ -15,6 +15,19 @@ Visão do dono: 'gastei 800 na amazon com idiotice, falta a nota fiscal'. Hoje s
 
 Detector cruzando extrato vs grafo: para cada transação acima de limiar configurável (ex: R$ 100), verificar se existe edge documento_de apontando para ela. Se não, listar como 'gap documental'. Alertar via aba dedicada + relatório mensal + sync para mobile companion (notificação).
 
+## Relação com `gap_documental.py` existente (adicionado pela DOC-VERDADE-01 M1)
+
+**Atenção**: já existe `src/analysis/gap_documental.py` (Sprint 75, ~210L) em uso por `src/dashboard/paginas/completude.py:17`. Esta sprint **cria módulo paralelo** (`gap_documental_proativo.py`) por **decisão explícita do dono em 2026-04-29**, não por desconhecimento.
+
+Limites de cada módulo:
+
+| Módulo | Domínio | Quando usar | Quem consome |
+|--------|---------|-------------|--------------|
+| `gap_documental.py` (Sprint 75) | Cobertura **categorial** (mês × categoria com ou sem documento). Calcula heatmap de completude visual. | Análise retrospectiva de meses fechados | Aba `completude.py` no dashboard |
+| `gap_documental_proativo.py` (esta sprint) | **Alerta por transação**: cruza valor da tx individual com presença de aresta `documento_de` no grafo. Limiar configurável por categoria. | Alerta em runtime / mensal sobre tx específica sem NF | Aba "Gaps Documentais" + cache mobile |
+
+Ambos coexistem por design. Não fundir. Se em sessão futura aparecer fricção real, abrir sprint `META-CONSOLIDA-GAP-DOC` decidindo fusão.
+
 ## Implementação proposta
 
 1. src/analysis/gap_documental_proativo.py — `detectar_gaps(limiar)`.
@@ -22,6 +35,7 @@ Detector cruzando extrato vs grafo: para cada transação acima de limiar config
 3. Aba 'Gaps documentais' no dashboard com lista filtrada.
 4. Relatório mensal com top-N gaps.
 5. Cache JSON para mobile (vault/.ouroboros/cache/gaps.json).
+6. **Não tocar em `gap_documental.py` nem em `completude.py`** — escopo isolado.
 
 ## Proof-of-work (runtime real)
 
