@@ -263,3 +263,21 @@ Cada aplicação é 1 linha: `tema.legenda_abaixo(fig)` antes do `st.plotly_char
 ---
 
 *"O que sobrou é débito técnico — mas é débito bem catalogado." — princípio pós-Sprint 79*
+
+---
+
+## Sub-sprints retroativas (ramificação ANTI-MIGUE-06, 2026-04-28)
+
+As 9 sub-tasks declaradas neste documento (87.1 a 87.9) ganharam specs próprias em `docs/sprints/concluidos/sprint_87_<N>_*.md` para auditabilidade e cumprimento do gate anti-migué (zero TODO solto). Cada sub-sprint linka o commit que a fechou.
+
+| Sub-sprint | Spec | Commit |
+|-----------|------|--------|
+| 87.1 | `sprint_87_1_drill_down_3_graficos.md` | `24f5bf9` |
+| 87.2 | `sprint_87_2_coluna_doc_consulta_grafo.md` | `5cdaa1b` |
+| 87.3 | `sprint_87_3_extrator_boleto_pdf.md` | `2e39afb` |
+| 87.4 | `sprint_87_4_regras_yaml_irpf_das_cpf.md` | `3810ac7` |
+| 87.5 | `sprint_87_5_backfill_arquivo_original.md` | `b6c8052` |
+| 87.6 | `sprint_87_6_moc_mensal_vault.md` | `cbc7595` |
+| 87.7 | `sprint_87_7_reconciliacao_boleto_tx_grafo.md` | `e472f3f` |
+| 87.8 | `sprint_87_8_legenda_abaixo_5_plots.md` | `05f773a` |
+| 87.9 | `sprint_87_9_testes_novos_cobertura.md` | (vários, sai junto com 87.1-87.8) |
