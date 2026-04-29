@@ -1,3 +1,7 @@
+---
+concluida_em: 2026-04-28
+---
+
 # Sprint ANTI-MIGUE-01 -- Gate 4-way conformance ≥3 amostras
 
 **Origem**: plan pure-swinging-mitten (auditoria honesta 2026-04-29).
