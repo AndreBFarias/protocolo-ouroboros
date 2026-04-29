@@ -125,8 +125,15 @@ Onda 1 (anti-migue + restaurar debitos -- AUTONOMO):
   ANTI-MIGUE-02/03/04/07 ja CONCLUIDAS em sessao anterior.
 
 Onda 2 (LLM):
-  - LLM-01 PRIMEIRO -- AskUserQuestion para configurar ANTHROPIC_API_KEY
-  - LLM-02..07 e AUDITOR-01 dependem de LLM-01
+  ATENCAO -- ADR-13 declara: supervisor eh Claude Code em sessao interativa,
+  SEM API programatica. Specs LLM-01..07 do backlog falam em SDK Anthropic --
+  CONFLITAM com ADR-13. Antes de executar Onda 2:
+  1. Crie Sprint REVISAO-LLM-ONDA-01: reescrever LLM-01..07 sob ADR-13.
+     Em vez de "src/llm/supervisor.py + anthropic SDK", o supervisor eh o
+     proprio Opus desta sessao -- proposicoes saem de output natural do
+     Opus + sao gravadas em mappings/proposicoes/ via Edit tool, nao API.
+  2. AUDITOR-01 vira: skill /auditar-cobertura que Claude Code roda manualmente.
+  3. AskUserQuestion confirmando antes de prosseguir.
 
 Onda 3 (cobertura documental -- humano marca amostras 4-way):
   - DOC-13 (multi-foto), DOC-14 (anti-dup), DOC-15 (parse data) primeiro
@@ -160,12 +167,14 @@ NUNCA prossiga sem resposta humana nestes pontos:
   1. DESIGN-01: aprovar blueprint de outputs/relatorios
   2. CI-01: aprovar push do workflow corrigido
   3. ANTI-MIGUE-01: humano marca >=3 amostras 4-way no Revisor
-  4. LLM-01: configurar ANTHROPIC_API_KEY em .env local
+  4. REVISAO-LLM-ONDA-01: confirmar adequacao das LLM-* a ADR-13
   5. DOC-01..20 (cada um): marcar 3 amostras 4-way antes de fechar
   6. FONTE-01: OAuth Google Calendar (browser interativo)
-  7. FONTE-02: path do perfil Thunderbird local
-  8. ADR-23: decisao envelope vs pessoa como path canonico
-  9. MOB-01/02/03: coordenacao com Mob-Ouroboros separado
+  7. ADR-23: decisao envelope vs pessoa como path canonico
+  8. MOB-01/02/03: coordenacao com Mob-Ouroboros separado
+
+(Nota: Thunderbird ja conectado conforme dono em 2026-04-29.
+ FONTE-02 pode rodar autonomo lendo ~/.thunderbird/ direto.)
 
 ============================================================
 FASE 5 -- 6 SINAIS DE PARADA DE EMERGENCIA
@@ -245,11 +254,10 @@ Comece agora pela FASE 0 (onboarding). Confirme em 1 frase.
 
 - Cole o bloco de código (entre as ```) integralmente em uma sessão nova.
 - O Opus vai ler 8 docs antes de qualquer ação. Não interrompa.
-- Tenha pronto antes de começar:
-  - `ANTHROPIC_API_KEY` (para LLM-01)
-  - Acesso ao OAuth Google Calendar (para FONTE-01)
-  - Path do perfil Thunderbird (para FONTE-02) — geralmente `~/.thunderbird/<perfil>/Mail/`
-- Espere 9 pontos onde Opus vai te perguntar via AskUserQuestion. Cada um foi previsto.
+- ADR-13 declara: supervisor LLM é o próprio Claude Code interativo, **sem API programática**. Specs LLM-01..07 do backlog precisam ser revisadas (sprint REVISAO-LLM-ONDA-01 cobre).
+- Thunderbird já conectado — FONTE-02 roda sem intervenção.
+- Para FONTE-01 (Google Calendar), acesso OAuth quando chegar.
+- Espere 8 pontos onde Opus vai te perguntar via AskUserQuestion. Cada um foi previsto.
 - Sessão maratona realista: 4-6h fechando 8-12 sprints autônomas + 2-3 com sua intervenção.
 - Para retomar em sessão posterior, cole o mesmo prompt — Opus relê estado e continua de onde parou.
 
