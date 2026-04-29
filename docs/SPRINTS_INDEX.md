@@ -20,12 +20,13 @@ Detalhe completo em `~/.claude/plans/pure-swinging-mitten.md`.
 
 | Onda | Foco | Sprints | Status |
 |---|---|---|---|
+| **0** | **Blueprint + CI fix (pré-requisitos)** | **2 (DESIGN-01 + CI-01)** | **Backlog (P0)** |
 | 1 | Anti-migué + restaurar débitos | 12 (ANTI-MIGUE-01..12) | **EM EXECUÇÃO** — 02, 03, 04, 07 concluídas em 2026-04-29 |
-| 2 | ADR-08 LLM vivo | 7 (LLM-01..07) | Backlog |
-| 3 | Cobertura documental universal | 19 (DOC-01..19) | Backlog |
-| 4 | Cruzamento micro + IRPF | 5 (MICRO-01..03 + IRPF-01..02) | Backlog |
+| 2 | ADR-08 LLM vivo + auditor cobertura | 8 (LLM-01..07 + AUDITOR-01) | Backlog |
+| 3 | Cobertura documental universal | 20 (DOC-01..20) | Backlog |
+| 4 | Cruzamento micro + IRPF + GAP proativo | 6 (MICRO-01..03 + IRPF-01..02 + GAP-01) | Backlog |
 | 5 | Mobile bridge + fontes adicionais | 7 (MOB-01..03 + FONTE-01..04) | Backlog |
-| 6 | UX/UI + OMEGA | 14 (UX-01..09 + OMEGA-94a..d + ADR-23 + MON-01) | Backlog |
+| 6 | UX/UI + OMEGA + pacote anual de vida | 16 (UX-01..09, UX-10 + OMEGA-94a..d + ADR-23 + MON-01 + DASH-01) | Backlog |
 
 ## Mapeamento das sprints antigas (17 em backlog pré-plan)
 
