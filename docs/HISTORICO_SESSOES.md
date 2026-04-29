@@ -26,6 +26,7 @@ Sessão Opus principal autônoma executando o plan `pure-swinging-mitten`. Atual
 | 13 | LLM-01-V2 | `bc42a6b` | template proposta + supervisor_contexto + `_rejeitadas/` |
 | 14 | LLM-02-V2 | `30da12f` | skill `/propor-extrator` + script gerador + exemplo pix_foto_comprovante |
 | 15 | LLM-04-V2 | `f091558` | skill `/auditar-cobertura` + script Python + relatório runtime real |
+| 16 | META-SUPERVISOR-01 | `<próximo>` | doc canônico `SUPERVISOR_OPUS.md` + bloco padrão em 30 specs + arquivamento Sprint 34/36 |
 
 **Achados colaterais formalizados** (zero TODO solto): 9 sub-sprints retroativas Sprint 87.x, 8 novas (DOC-21..26, DASH-02/03), 7 LLM-*-V2 reescritas, 1 fix-test-busca-índice (teste frágil revelado pelo refactor).
 
