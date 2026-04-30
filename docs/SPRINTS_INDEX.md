@@ -73,7 +73,7 @@ Para cada sprint absorvida, o conteúdo importante (gotchas, decisões, dependê
 7. **Backlog antigo** — executado entre ondas conforme prioridade do dono.
 
 
-## Tabela navegavel: 82 specs em backlog (atualizada 2026-04-29 por DOC-VERDADE-01.A)
+## Tabela navegavel: 95 specs em backlog (atualizada 2026-04-29 após D7-extendida)
 
 Ordenacao: P0 -> P1 -> P2 -> P3 -> ?? -> alfabetica. Para detalhes, abra a spec correspondente em `docs/sprints/backlog/<slug>.md`.
 
@@ -85,6 +85,7 @@ Ordenacao: P0 -> P1 -> P2 -> P3 -> ?? -> alfabetica. Para detalhes, abra a spec 
 | P0 | 5 | `sprint_mob_01_vault_bridge_md` | 5h | nenhuma |
 | P0 | 5 | `sprint_mob_02_mobile_cache_gen` | 4h | MOB-01 |
 | P0 | 6 | `sprint_ux_01_callouts_dracula` | 2h | nenhuma |
+| P1 | 2 | `sprint_agentic_fallback_01_extracao_para_tipos_sem_extrator` | 5h | VALIDAÇÃO-CSV-01 |
 | P1 | 3 | `sprint_doc_01_amazon_pedido` | 5h | LLM-01, ANTI-MIGUE-01 |
 | P1 | 3 | `sprint_doc_02_mercado_nf_fisica` | 5h | LLM-01, ANTI-MIGUE-01 |
 | P1 | 3 | `sprint_doc_03_carteira_estudante` | 3h | LLM-01, ANTI-MIGUE-01 |
@@ -111,8 +112,10 @@ Ordenacao: P0 -> P1 -> P2 -> P3 -> ?? -> alfabetica. Para detalhes, abra a spec 
 | P1 | 6 | `sprint_mon_01_vault_obsidian_dessincronia` | 3h | nenhuma |
 | P1 | 6 | `sprint_ux_02_treemap_heatmap_wcag` | 3h | nenhuma |
 | P2 | 1 | `sprint_fix_test_busca_indice_fragil` | 1.5h | nenhuma |
+| P2 | 1 | `sprint_hook_inbox_01_aviso_arquivos_pendentes` | 1h | nenhuma |
 | P2 | 2 | `sprint_llm_03_v2_proposicao_regra_categoria` | 1h | LLM-01-V2 |
 | P2 | 2 | `sprint_llm_05_v2_revisor_tab_proposicoes` | 3h | LLM-01-V2, LLM-03-V2 |
+| P2 | 2 | `sprint_validar_batch_01_skill_validar_inbox` | 2h | VALIDAÇÃO-CSV-01 |
 | P2 | 3 | `sprint_doc_14_anti_duplicacao_semantica` | 3h | nenhuma |
 | P2 | 3 | `sprint_doc_15_parse_data_br_centralizado` | 4h | nenhuma |
 | P2 | 4 | `sprint_grafo_xlsx_01_investigar_discrepancia_xlsx_grafo` | 2h | nenhuma |
@@ -146,6 +149,7 @@ Ordenacao: P0 -> P1 -> P2 -> P3 -> ?? -> alfabetica. Para detalhes, abra a spec 
 | P3 | 6 | `sprint_ux_07_snapshot_timestamp_dinamico` | 1h | nenhuma |
 | P3 | 6 | `sprint_ux_08_deep_link_test_completo` | 2h | nenhuma |
 | P3 | 6 | `sprint_ux_09_cleanup_docstrings_quebradas` | 30min | nenhuma |
+| P3 | frozen | `sprint_subagente_extracao_01_paralelizacao_FROZEN` | 10h | AGENTIC-FALLBACK-01, VALIDAR-BATCH-01, volume |
 | P3 | ? | `sprint_AUDIT2_ENVELOPE_VS_PESSOA_CANONICO` | ? | ? |
 | ?? | ? | `sprint_102_pagador_vs_beneficiario` | ? | ? |
 | ?? | ? | `sprint_24_automacao_bancaria` | ? | ? |
