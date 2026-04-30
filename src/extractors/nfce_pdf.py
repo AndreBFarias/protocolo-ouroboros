@@ -44,6 +44,7 @@ from src.intake.glyph_tolerant import (
     extrair_cnpjs,
     extrair_cpf,
 )
+from src.load import validacao_csv as _validacao_csv
 from src.utils.chave_nfe import (
     extrair_modelo,
     valida_digito_verificador,
@@ -211,6 +212,34 @@ class ExtratorNfcePDF(ExtratorBase):
                     ingerir_documento_fiscal(grafo, doc, itens, caminho_arquivo=self.caminho)
                 except ValueError as erro:
                     self.logger.warning("NFC-e inválida em %s: %s", self.caminho.name, erro)
+                    continue
+                # Sprint VALIDAÇÃO-CSV-01: registrar campos extraídos para
+                # validação humana posterior. Não bloqueia pipeline em caso
+                # de falha (princípio D7: cobertura observável, não gate).
+                try:
+                    campos_canonicos = {
+                        chave: doc.get(chave, "") for chave in (
+                            "chave_44",
+                            "cnpj_emitente",
+                            "razao_social",
+                            "data_emissao",
+                            "total",
+                            "forma_pagamento",
+                            "cpf_consumidor",
+                            "numero",
+                            "serie",
+                        )
+                    }
+                    campos_canonicos["numero_itens"] = len(itens)
+                    _validacao_csv.registrar_extracao(
+                        arquivo=self.caminho,
+                        tipo_arquivo="nfce_modelo_65",
+                        campos=campos_canonicos,
+                    )
+                except Exception as erro:  # noqa: BLE001
+                    self.logger.warning(
+                        "validacao_csv falhou em %s: %s", self.caminho.name, erro
+                    )
         finally:
             if criou_grafo_localmente:
                 grafo.fechar()
