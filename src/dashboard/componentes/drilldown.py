@@ -70,6 +70,7 @@ MAPA_ABA_PARA_CLUSTER: dict[str, str] = {
     "Busca Global": "Documentos",
     "Grafo + Obsidian": "Documentos",
     "Revisor": "Documentos",
+    "Validação por Arquivo": "Documentos",
     "Categorias": "Análise",
     "Análise": "Análise",
     "IRPF": "Análise",

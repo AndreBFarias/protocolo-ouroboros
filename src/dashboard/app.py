@@ -46,6 +46,7 @@ from src.dashboard.paginas import (  # noqa: E402
     pagamentos,
     projecoes,
     revisor,
+    validacao_arquivos,
     visao_geral,
 )
 from src.dashboard.tema import (  # noqa: E402
@@ -84,6 +85,7 @@ ABAS_POR_CLUSTER: dict[str, list[str]] = {
         "Catalogação",
         "Completude",
         "Revisor",
+        "Validação por Arquivo",
         "Grafo + Obsidian",
     ],
     "Análise": ["Categorias", "Análise", "IRPF"],
@@ -400,6 +402,7 @@ def main() -> None:
             tab_catalogacao,
             tab_completude,
             tab_revisor,
+            tab_validacao_arquivos,
             tab_grafo_obsidian,
         ) = st.tabs(
             [
@@ -407,6 +410,7 @@ def main() -> None:
                 "Catalogação",
                 "Completude",
                 "Revisor",
+                "Validação por Arquivo",
                 "Grafo + Obsidian",
             ]
         )
@@ -418,6 +422,8 @@ def main() -> None:
             completude.renderizar(dados, periodo, pessoa, ctx)
         with tab_revisor:
             revisor.renderizar(dados, periodo, pessoa, ctx)
+        with tab_validacao_arquivos:
+            validacao_arquivos.renderizar(dados, periodo, pessoa, ctx)
         with tab_grafo_obsidian:
             grafo_obsidian.renderizar(dados, periodo, pessoa, ctx)
 

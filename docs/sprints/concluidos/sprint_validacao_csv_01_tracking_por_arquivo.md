@@ -1,3 +1,7 @@
+---
+concluida_em: 2026-04-29
+---
+
 # Sprint VALIDAÇÃO-CSV-01 -- Tracking de validação por arquivo (ETL × Opus × Humano)
 
 > **Slug ASCII para referência cruzada**: `validacao_csv_01`. Em texto livre, usar "VALIDAÇÃO-CSV-01".
