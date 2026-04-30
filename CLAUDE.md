@@ -27,6 +27,7 @@ Pipeline ETL financeiro pessoal para o casal André e Vitória, evoluindo para c
 8. **`data/` inteiro no .gitignore** — dados financeiros nunca no repo.
 9. **Paths relativos via `Path`** — nunca hardcoded absolutos.
 10. **Citação de filósofo** como comentário final de todo arquivo `.py` novo.
+11. **Cobertura total na origem (D7)** — extrair tudo dos arquivos (PDF, imagem, XML, CSV) e catalogar cada valor. Sem amostragem, sem cap por valor mínimo, sem filtro silencioso. Linting via `make lint` (chama `scripts/check_cobertura_total.py`); auditoria periódica via `/auditar-cobertura-total`; ferramenta de validação humana em `data/output/validacao_arquivos.csv` (Sprint VALIDAÇÃO-CSV-01). Spec canônica: `docs/sprints/concluidos/sprint_meta_cobertura_total_01_invariante.md`.
 
 ---
 
