@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "if": "Bash(*run.sh*)",
+            "command": "python /home/andrefarias/Desenvolvimento/protocolo-ouroboros/scripts/contar_inbox_pendentes.py",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}
