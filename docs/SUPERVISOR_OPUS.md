@@ -115,6 +115,8 @@ Quando o dono fizer uma pergunta operacional, a primeira coisa a perguntar a si 
 | "Como está a saúde do projeto?" | `make smoke` + `make lint` + `pytest tests/ -q` | Trifecta canônico read-only. |
 | "Quero criar uma sprint nova a partir desta ideia" | `/planejar-sprint <ideia>` | Despacha `planejador-sprint` (subagent), você revisa spec, aprova ou pede ajuste. |
 | "Quero executar a sprint X" | `/executar-sprint <slug>` ou `/sprint-ciclo <slug>` (auto) | Despacha `executor-sprint` em worktree isolado. **Você integra o trabalho, não o subagent valida**. |
+| "Confere se o ETL pegou tudo desse arquivo" / "Valida esse PDF/imagem/CSV" | `/validar-arquivo` | Abre arquivo via Read multimodal e marca `valor_opus` no `data/output/validacao_arquivos.csv` (Sprint VALIDAÇÃO-CSV-01). |
+| "Tem muito arquivo no inbox para validar" / "Valida tudo que joguei essa semana" | `/validar-inbox [--tipo X] [--mes YYYY-MM] [--apenas-divergentes]` | Wrapper batch que itera pendências do CSV agrupadas por arquivo (Sprint VALIDAR-BATCH-01). |
 
 ### Tabela completa de skills
 
@@ -129,6 +131,8 @@ Quando o dono fizer uma pergunta operacional, a primeira coisa a perguntar a si 
 | `/planejar-sprint <ideia>` | Redigir spec a partir de ideia | despacha `planejador-sprint` |
 | `/executar-sprint <slug>` | Implementar spec aprovada | despacha `executor-sprint` |
 | `/validar-sprint <slug>` | Validar sprint atual | despacha `validador-sprint` (raro — supervisor faz validação pessoalmente, padrão `(p)` BRIEF) |
+| `/validar-arquivo` | Abrir arquivo + marcar `valor_opus` no CSV de validação | `scripts/validar_arquivo.py` (Sprint VALIDAÇÃO-CSV-01) |
+| `/validar-inbox [--tipo X] [--mes YYYY-MM] [--apenas-divergentes] [--limite N]` | Iterar pendências do CSV em batch (wrapper sobre `/validar-arquivo`) | `scripts/validar_inbox.py` (Sprint VALIDAR-BATCH-01) |
 
 ### Quando análise manual é justificável
 
