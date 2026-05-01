@@ -71,7 +71,7 @@ def _mk_tx(valor: float, d: date = date(2026, 3, 10)) -> Transacao:
         valor=valor,
         descricao="tx sintetica",
         banco_origem="Itaú",
-        pessoa="André",
+        pessoa="pessoa_a",
         forma_pagamento="Débito",
         tipo="Despesa",
     )
@@ -88,35 +88,35 @@ def _df_fake() -> pd.DataFrame:
             {
                 "banco_origem": "Itaú",
                 "forma_pagamento": "Débito",
-                "quem": "André",
+                "quem": "pessoa_a",
                 "mes_ref": "2026-03",
                 "valor": 100.0,
             },
             {
                 "banco_origem": "Itaú",
                 "forma_pagamento": "Pix",
-                "quem": "André",
+                "quem": "pessoa_a",
                 "mes_ref": "2026-03",
                 "valor": 50.0,
             },
             {
                 "banco_origem": "Santander",
                 "forma_pagamento": "Crédito",
-                "quem": "André",
+                "quem": "pessoa_a",
                 "mes_ref": "2026-03",
                 "valor": 70.0,
             },
             {
                 "banco_origem": "Nubank",
                 "forma_pagamento": "Crédito",
-                "quem": "Vitória",
+                "quem": "pessoa_b",
                 "mes_ref": "2026-03",
                 "valor": 30.0,
             },
             {
                 "banco_origem": "Nubank",
                 "forma_pagamento": "Crédito",
-                "quem": "André",
+                "quem": "pessoa_a",
                 "mes_ref": "2026-03",
                 "valor": 200.0,
             },
@@ -142,7 +142,7 @@ def test_filtro_xlsx_separa_cartao_nubank_por_quem() -> None:
     filtro = FiltroXLSX.simples(
         banco_origem="Nubank",
         formas_pagamento=("Crédito",),
-        quem=("André",),
+        quem=("pessoa_a",),
     )
     df = filtro.aplicar(_df_fake())
     assert len(df) == 1
@@ -153,10 +153,10 @@ def test_filtro_xlsx_multiplos_bancos_aceitos() -> None:
     """Aceita múltiplos rótulos para o mesmo extrator (ex: Nubank (PJ) + Nubank)."""
     filtro = FiltroXLSX(
         bancos_origem=("Nubank (PJ)", "Nubank"),
-        quem=("Vitória",),
+        quem=("pessoa_b",),
     )
     df = filtro.aplicar(_df_fake())
-    # Só a linha Vitória+Nubank entra (Nubank (PJ) não existe no fake).
+    # Só a linha Vitória+Nubank entra (Nubank (PJ) não existe no fake).  # anonimato-allow
     assert len(df) == 1
     assert df.iloc[0]["valor"] == 30.0
 
@@ -440,7 +440,7 @@ def test_aplicar_dedup_pipeline_respeita_identificador() -> None:
         valor=100.0,
         descricao="AAAA",
         banco_origem="Itaú",
-        pessoa="André",
+        pessoa="pessoa_a",
         forma_pagamento="Débito",
         tipo="Despesa",
         identificador="hash_abc",
@@ -450,7 +450,7 @@ def test_aplicar_dedup_pipeline_respeita_identificador() -> None:
         valor=100.0,
         descricao="AAAA",
         banco_origem="Itaú",
-        pessoa="André",
+        pessoa="pessoa_a",
         forma_pagamento="Débito",
         tipo="Despesa",
         identificador="hash_abc",
@@ -460,7 +460,7 @@ def test_aplicar_dedup_pipeline_respeita_identificador() -> None:
         valor=50.0,
         descricao="BBBB",
         banco_origem="Itaú",
-        pessoa="André",
+        pessoa="pessoa_a",
         forma_pagamento="Débito",
         tipo="Despesa",
         identificador="hash_xyz",
@@ -479,7 +479,7 @@ def test_aplicar_dedup_pipeline_fuzzy_hash_colapsa() -> None:
         valor=100.0,
         descricao="Ki-Sabor",
         banco_origem="C6",
-        pessoa="André",
+        pessoa="pessoa_a",
         forma_pagamento="Débito",
         tipo="Despesa",
     )
@@ -488,7 +488,7 @@ def test_aplicar_dedup_pipeline_fuzzy_hash_colapsa() -> None:
         valor=100.0,
         descricao="Ki-Sabor",
         banco_origem="C6",
-        pessoa="André",
+        pessoa="pessoa_a",
         forma_pagamento="Débito",
         tipo="Despesa",
     )
@@ -514,7 +514,7 @@ def test_auditar_banco_com_deduplicado_dir_completo(tmp_path: Path) -> None:
             valor=100.0,
             descricao="AAAA",
             banco_origem="Itaú",
-            pessoa="André",
+            pessoa="pessoa_a",
             forma_pagamento="Débito",
             tipo="Despesa",
             identificador="hash_abc",
@@ -535,7 +535,7 @@ def test_auditar_banco_com_deduplicado_dir_completo(tmp_path: Path) -> None:
             {
                 "banco_origem": "Itaú",
                 "forma_pagamento": "Débito",
-                "quem": "André",
+                "quem": "pessoa_a",
                 "mes_ref": "2026-03",
                 "valor": 100.0,
             }
@@ -607,7 +607,7 @@ def test_ignorar_ti_remove_linhas_transferencia_interna_do_xlsx(tmp_path: Path) 
             valor=100.0,
             descricao="compra",
             banco_origem="C6",
-            pessoa="André",
+            pessoa="pessoa_a",
             forma_pagamento="Crédito",
             tipo="Despesa",
             identificador="compra-1",
@@ -635,7 +635,7 @@ def test_ignorar_ti_remove_linhas_transferencia_interna_do_xlsx(tmp_path: Path) 
                 "tipo": "Despesa",
                 "mes_ref": "2026-03",
                 "valor": 100.0,
-                "quem": "André",
+                "quem": "pessoa_a",
             },
             {
                 "banco_origem": "C6",
@@ -643,7 +643,7 @@ def test_ignorar_ti_remove_linhas_transferencia_interna_do_xlsx(tmp_path: Path) 
                 "tipo": "Transferência Interna",
                 "mes_ref": "2026-03",
                 "valor": 6400.0,
-                "quem": "André",
+                "quem": "pessoa_a",
             },
         ]
     )
@@ -695,7 +695,7 @@ def test_ignorar_ti_nao_se_aplica_a_bancos_que_nao_aceitam(tmp_path: Path) -> No
             valor=100.0,
             descricao="compra",
             banco_origem="Itaú",
-            pessoa="André",
+            pessoa="pessoa_a",
             forma_pagamento="Débito",
             tipo="Despesa",
             identificador="c-1",
@@ -718,7 +718,7 @@ def test_ignorar_ti_nao_se_aplica_a_bancos_que_nao_aceitam(tmp_path: Path) -> No
                 "tipo": "Despesa",
                 "mes_ref": "2026-03",
                 "valor": 100.0,
-                "quem": "André",
+                "quem": "pessoa_a",
             },
             {
                 "banco_origem": "Itaú",
@@ -726,7 +726,7 @@ def test_ignorar_ti_nao_se_aplica_a_bancos_que_nao_aceitam(tmp_path: Path) -> No
                 "tipo": "Transferência Interna",
                 "mes_ref": "2026-03",
                 "valor": 500.0,
-                "quem": "André",
+                "quem": "pessoa_a",
             },
         ]
     )
@@ -781,7 +781,7 @@ def test_com_ofx_opt_in_por_banco(tmp_path: Path) -> None:
             valor=100.0,
             descricao="compra",
             banco_origem="Nubank",
-            pessoa="André",
+            pessoa="pessoa_a",
             forma_pagamento="Crédito",
             tipo="Despesa",
             identificador="n-1",
@@ -808,7 +808,7 @@ def test_com_ofx_opt_in_por_banco(tmp_path: Path) -> None:
                 "tipo": "Despesa",
                 "mes_ref": "2026-03",
                 "valor": 100.0,
-                "quem": "André",
+                "quem": "pessoa_a",
             },
         ]
     )

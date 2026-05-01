@@ -28,7 +28,8 @@ def test_hash_ignora_caixa_espacos():
 
 
 def test_forma_pagamento_pix():
-    assert inferir_forma_pagamento("Pix enviado para João", "Nubank", "cc") == "Pix"
+    forma = inferir_forma_pagamento("Pix enviado para João", "Nubank", "cc")  # anonimato-allow
+    assert forma == "Pix"
 
 
 def test_forma_pagamento_boleto():
@@ -41,7 +42,7 @@ def test_forma_pagamento_cartao_sempre_credito():
 
 
 def test_tipo_transferencia_interna_pix_para_vitoria():
-    """Armadilha de PIX para Vitória = TI, não gasto."""
+    """Armadilha de PIX para Vitória = TI, não gasto."""  # anonimato-allow: comentario narrativo
     desc = "Transferencia enviada - VITORIA MARIA"
     assert inferir_tipo_transacao(-500.0, desc) == "Transferência Interna"
 
@@ -72,23 +73,23 @@ def test_local_fallback_para_descricao_curta():
 
 
 def test_pessoa_itau_eh_andre():
-    assert inferir_pessoa("Itaú") == "André"
+    assert inferir_pessoa("Itaú") == "pessoa_a"
 
 
 def test_pessoa_nubank_pf_eh_vitoria():
     """Sprint 93f: rótulo canônico `Nubank (PF)` (com parênteses) mapeia
-    para Vitória. Antes da 93f o set esperava `Nubank PF` sem parênteses
+    para Vitória. Antes da 93f o set esperava `Nubank PF` sem parênteses  # anonimato-allow
     enquanto extratores emitiam com parênteses, produzindo fallback Casal."""
-    assert inferir_pessoa("Nubank (PF)") == "Vitória"
+    assert inferir_pessoa("Nubank (PF)") == "pessoa_b"
 
 
 def test_pessoa_nubank_default_eh_andre():
-    """Nubank genérico (sem subtipo) = André."""
-    assert inferir_pessoa("Nubank") == "André"
+    """Nubank genérico (sem subtipo) = André."""  # anonimato-allow: comentario narrativo
+    assert inferir_pessoa("Nubank") == "pessoa_a"
 
 
 def test_pessoa_desconhecido_eh_casal():
-    assert inferir_pessoa("BancoX") == "Casal"
+    assert inferir_pessoa("BancoX") == "casal"
 
 
 # --- Sprint 55: regressão do classificador de tipo ---

@@ -27,7 +27,7 @@ def _tx(data: date, valor: float, local: str, banco: str, **extra: Any) -> dict[
         "valor": valor,
         "forma_pagamento": "Pix",
         "local": local,
-        "quem": "Casal",
+        "quem": "casal",
         "categoria": "Alimentação",
         "classificacao": "Obrigatório",
         "banco_origem": banco,

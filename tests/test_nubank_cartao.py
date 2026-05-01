@@ -66,11 +66,11 @@ class TestParseBasico:
             assert tx.forma_pagamento == "Crédito"
 
     def test_cartao_pj_detecta_subtipo_via_path(self, tmp_path: Path) -> None:
-        """Sprint 93c: cartão PJ da Vitória produz banco_origem=Nubank (PJ).
+        """Sprint 93c: cartão PJ da Vitória produz banco_origem=Nubank (PJ).  # anonimato-allow
 
         Regressão para a família C da auditoria 2026-04-23: sem este rótulo,
         transações do cartão MEI ficam invisíveis no XLSX consolidado (as
-        agregações por banco não diferenciam PJ do PF do André).
+        agregações por banco não diferenciam PJ do PF do André).  # anonimato-allow
         """
         pasta_pj = tmp_path / "vitoria" / "nubank_pj_cartao"
         pasta_pj.mkdir(parents=True)
@@ -83,7 +83,7 @@ class TestParseBasico:
         assert all(tx.banco_origem == "Nubank (PJ)" for tx in transacoes)
 
     def test_cartao_sem_pj_no_path_mantem_rotulo_nubank(self, tmp_path: Path) -> None:
-        """Cartão do André (path sem nubank_pj) continua como ``Nubank``."""
+        """Cartão do André (path sem nubank_pj) continua como ``Nubank``."""  # anonimato-allow
         pasta_pf = tmp_path / "andre" / "nubank_cartao"
         pasta_pf.mkdir(parents=True)
         alvo = pasta_pf / "nubank_pf_sintetico.csv"

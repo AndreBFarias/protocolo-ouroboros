@@ -60,7 +60,7 @@ class TestSprintUX126PolishIteracao3:
     def test_ac1_humanizar_substitui_slugs_canonicos_por_nomes_humanos(self) -> None:
         """`humanizar()` devolve o nome humano dos slugs cobertos."""
         assert humanizar("holerite") == "Holerite"
-        assert humanizar("das_parcsn_andre") == "DAS Parcelado André"
+        assert humanizar("das_parcsn_andre") == "DAS Parcelado André"  # anonimato-allow
         assert humanizar("boleto_servico") == "Boleto de Serviço"
         assert humanizar("dirpf_retif") == "DIRPF Retificadora"
         assert humanizar("nfce_modelo_65") == "Nota Fiscal Eletrônica"

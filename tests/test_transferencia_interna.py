@@ -53,7 +53,8 @@ class TestCanonicalizerCasal:
         )
 
     def test_nome_completo_vitoria_bate(self) -> None:
-        assert e_transferencia_do_casal("Vitória Maria Silva dos Santos - CPF - NU PAGAMENTOS")
+        desc = "Vitória Maria Silva dos Santos - CPF - NU PAGAMENTOS"  # anonimato-allow
+        assert e_transferencia_do_casal(desc)
 
     def test_pix_externo_deivid_nao_bate(self) -> None:
         assert not e_transferencia_do_casal(
@@ -62,7 +63,7 @@ class TestCanonicalizerCasal:
 
     def test_pix_externo_joao_nao_bate(self) -> None:
         assert not e_transferencia_do_casal(
-            "Transferência enviada - Joao Alexandre Vaz Ferreira - 995"
+            "Transferência enviada - Joao Alexandre Vaz Ferreira - 995"  # anonimato-allow
         )
 
     def test_pix_externo_jefferson_nao_bate(self) -> None:
@@ -84,8 +85,8 @@ class TestCanonicalizerCasal:
         assert not e_transferencia_do_casal("Pagamento ref <CPF_ANDRE>")
 
     def test_acentuacao_normalizada(self) -> None:
-        """Matcher deve ignorar acentos: 'Vitória' casa com nome do YAML."""
-        assert e_transferencia_do_casal("PIX Vitória Maria Silva dos Santos")
+        """Matcher deve ignorar acentos: 'Vitória' casa com nome do YAML."""  # anonimato-allow
+        assert e_transferencia_do_casal("PIX Vitória Maria Silva dos Santos")  # anonimato-allow
 
 
 class TestInferirTipoNormalizer:
@@ -104,7 +105,7 @@ class TestInferirTipoNormalizer:
         assert inferir_tipo_transacao(-20.0, desc) == "Despesa"
 
     def test_pix_externo_joao_vira_despesa(self) -> None:
-        desc = "Transferência enviada - Joao Alexandre Vaz Ferreira - 995"
+        desc = "Transferência enviada - Joao Alexandre Vaz Ferreira - 995"  # anonimato-allow
         assert inferir_tipo_transacao(-50.0, desc) == "Despesa"
 
     def test_pagamento_fatura_cartao_ainda_e_ti(self) -> None:
@@ -128,21 +129,21 @@ class TestDeduplicatorMarcarTI:
                 "data": date(2024, 5, 10),
                 "valor": 500.0,
                 "tipo": "Despesa",
-                "quem": "André",
+                "quem": "pessoa_a",
                 "_descricao_original": (
                     "Transferência enviada pelo Pix - VITORIA MARIA SILVA DOS SANTOS"
                 ),
-                "local": "Vitória Maria",
+                "local": "Vitória Maria",  # anonimato-allow: fixture de matcher
             },
             {
                 "data": date(2024, 5, 10),
                 "valor": 500.0,
                 "tipo": "Receita",
-                "quem": "Vitória",
+                "quem": "pessoa_b",
                 "_descricao_original": (
                     "Transferência recebida pelo Pix - ANDRE DA SILVA BATISTA DE FARIAS"
                 ),
-                "local": "André da Silva",
+                "local": "André da Silva",  # anonimato-allow: fixture de matcher
             },
         ]
         resultado = marcar_transferencias_internas(transacoes)
@@ -157,7 +158,7 @@ class TestDeduplicatorMarcarTI:
                 "data": date(2024, 5, 10),
                 "valor": 20.0,
                 "tipo": "Despesa",
-                "quem": "André",
+                "quem": "pessoa_a",
                 "_descricao_original": "Transferência enviada - DEIVID DA SILVA ALVES SANTANA",
                 "local": "Deivid",
             },
@@ -165,7 +166,7 @@ class TestDeduplicatorMarcarTI:
                 "data": date(2024, 5, 10),
                 "valor": 20.0,
                 "tipo": "Receita",
-                "quem": "Vitória",
+                "quem": "pessoa_b",
                 "_descricao_original": "Transferência recebida de CLIENTE X LTDA",
                 "local": "Cliente X",
             },
@@ -182,7 +183,7 @@ class TestDeduplicatorMarcarTI:
                 "data": date(2024, 5, 10),
                 "valor": 300.0,
                 "tipo": "Despesa",
-                "quem": "André",
+                "quem": "pessoa_a",
                 "_descricao_original": "TED enviada",
                 "local": "TED",
             },
@@ -190,9 +191,9 @@ class TestDeduplicatorMarcarTI:
                 "data": date(2024, 5, 10),
                 "valor": 300.0,
                 "tipo": "Receita",
-                "quem": "Vitória",
+                "quem": "pessoa_b",
                 "_descricao_original": "Transferência recebida - ANDRE DA SILVA BATISTA DE FARIAS",
-                "local": "André",
+                "local": "pessoa_a",
             },
         ]
         resultado = marcar_transferencias_internas(transacoes)
@@ -209,16 +210,16 @@ class TestNubankCCClassificarTipo:
 
     def test_pix_externo_deivid_negativo_vira_despesa(self, extrator) -> None:
         desc = "Transferência enviada - DEIVID DA SILVA ALVES SANTANA - 418"
-        assert extrator._classificar_tipo(desc, -20.0, "Vitória") == "Despesa"
+        assert extrator._classificar_tipo(desc, -20.0, "pessoa_b") == "Despesa"
 
     def test_pix_para_andre_casal_vira_ti(self, extrator) -> None:
-        desc = "Andre da Silva Batista de Farias - 273.731 - ITAÚ UNIBANCO"
-        assert extrator._classificar_tipo(desc, -500.0, "Vitória") == "Transferência Interna"
+        desc = "Andre da Silva Batista de Farias - 273.731 - ITAÚ UNIBANCO"  # anonimato-allow
+        assert extrator._classificar_tipo(desc, -500.0, "pessoa_b") == "Transferência Interna"
 
     def test_agencia_6450_ainda_vira_ti(self, extrator) -> None:
-        """Sinalizador operacional (agência do Itaú do André) preservado."""
+        """Sinalizador operacional (agência do Itaú do André) preservado."""  # anonimato-allow
         desc = "Transferência - Conta XYZ Agência: 6450 Conta: 123"
-        assert extrator._classificar_tipo(desc, -500.0, "Vitória") == "Transferência Interna"
+        assert extrator._classificar_tipo(desc, -500.0, "pessoa_b") == "Transferência Interna"
 
 
 class TestSantanderExtratorComCanonicalizer:
@@ -333,21 +334,21 @@ class TestNubankCartaoExtratorComCanonicalizer:
         return ExtratorNubankCartao(tmp_path)
 
     def test_compra_comum_vira_despesa(self, extrator: ExtratorNubankCartao) -> None:
-        assert extrator._classificar_tipo("Padaria Ki-Sabor", "André") == "Despesa"
+        assert extrator._classificar_tipo("Padaria Ki-Sabor", "pessoa_a") == "Despesa"
 
     def test_descricao_com_casal_vira_ti(self, extrator: ExtratorNubankCartao) -> None:
         """Descrição que cita nome completo do casal (raro em fatura, mas possível)."""
         assert (
-            extrator._classificar_tipo("VITORIA MARIA SILVA DOS SANTOS", "André")
+            extrator._classificar_tipo("VITORIA MARIA SILVA DOS SANTOS", "pessoa_a")
             == "Transferência Interna"
         )
 
     def test_estorno_permanece_receita(self, extrator: ExtratorNubankCartao) -> None:
-        assert extrator._classificar_tipo("Estorno compra", "André") == "Receita"
+        assert extrator._classificar_tipo("Estorno compra", "pessoa_a") == "Receita"
 
     def test_terceiro_homonimo_nao_vira_ti(self, extrator: ExtratorNubankCartao) -> None:
         """Regressão: 'ANDRE BARATA' (nome curto genérico) não casa whitelist."""
-        assert extrator._classificar_tipo("ANDRE BARATA COMERCIO", "Vitória") == "Despesa"
+        assert extrator._classificar_tipo("ANDRE BARATA COMERCIO", "pessoa_b") == "Despesa"
 
 
 class TestReclassificarTIOrfas:
@@ -401,7 +402,7 @@ class TestReclassificarTIOrfas:
                 "tipo": "Transferência Interna",
                 "valor": -500.0,
                 "_descricao_original": "PIX VITORIA MARIA SILVA DOS SANTOS",
-                "local": "Vitória Maria",
+                "local": "Vitória Maria",  # anonimato-allow: fixture de matcher
             }
         ]
         resultado = _reclassificar_ti_orfas(transacoes)

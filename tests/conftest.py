@@ -12,7 +12,7 @@ def _transacao(
     local: str = "Padaria X",
     banco: str = "Itaú",
     tipo: str = "Despesa",
-    quem: str = "André",
+    quem: str = "pessoa_a",
     forma: str = "Débito",
     mes_ref: str | None = None,
     identificador: str | None = None,

@@ -2,7 +2,7 @@
 
 Cobre:
   1. Helper _calcular_destino preserva subpastas relativas.
-  2. Arquivo com CPF do Andre -> pessoa retorna 'andre' (mock pessoa_detector).
+  2. Arquivo com CPF do Andre -> pessoa retorna 'andre' (mock pessoa_detector).  # anonimato-allow
   3. Arquivo sem CPF claro -> pessoa permanece 'casal' (não migra).
   4. dry_run não move arquivos.
   5. Idempotência: rodar 2x não duplica.

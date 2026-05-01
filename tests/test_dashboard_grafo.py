@@ -187,11 +187,11 @@ def test_label_humano_transacao_prioridade_alias_sobre_metadata() -> None:
     """Se transação tem alias humano, alias vence (back-compat Sprint 60)."""
     node = {
         "tipo": "transacao",
-        "aliases": '["PIX Vitória"]',
+        "aliases": '["PIX Vitória"]',  # anonimato-allow: fixture de matcher
         "metadata": {"data": "2026-03-17", "valor": 50.0, "local": "Local"},
         "nome_canonico": "hash",
     }
-    assert label_humano(node) == "PIX Vitória"
+    assert label_humano(node) == "PIX Vitória"  # anonimato-allow: fixture de matcher
 
 
 def test_rotulo_humano_tipo_retorna_acentuado() -> None:

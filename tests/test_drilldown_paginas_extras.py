@@ -221,4 +221,5 @@ class TestAcceptanceCritico871:
         assert "grafo_obsidian.py" in nomes
 
 
-# "Clicar no número e cair na transação: o dashboard vira ferramenta." -- Andre, 2026-04-22
+# "Clicar no número e cair na transação: o dashboard vira ferramenta."  # anonimato-allow
+# -- ditado popular do projeto, 2026-04-22

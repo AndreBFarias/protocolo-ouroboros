@@ -59,7 +59,7 @@ class TestParseBasico:
 
         for tx in transacoes:
             assert tx.banco_origem == "Itaú"
-            assert tx.pessoa == "André"
+            assert tx.pessoa == "pessoa_a"
 
 
 class TestCornerCases:

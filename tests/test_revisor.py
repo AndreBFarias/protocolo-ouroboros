@@ -238,7 +238,7 @@ class TestPersistenciaSQLite:
 
 class TestMascaramentoPII:
     def test_mascara_cpf_formatado(self):
-        entrada = "supervisor André CPF 123.456.789-00 revisou cupom"
+        entrada = "supervisor André CPF 123.456.789-00 revisou cupom"  # anonimato-allow
         saida = revisor.mascarar_pii(entrada)
         assert "123.456.789-00" not in saida
         assert "XXX.XXX.XXX-XX" in saida

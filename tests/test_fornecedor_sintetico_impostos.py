@@ -68,7 +68,7 @@ def test_ingerir_das_parcsn_aponta_para_receita_federal(tmp_path: Path):
     db.criar_schema()
     documento = {
         "chave_44": "07182516307670455",
-        "cnpj_emitente": "45850636000160",  # CNPJ do contribuinte (MEI Andre)
+        "cnpj_emitente": "45850636000160",  # CNPJ do contribuinte (MEI Andre)  # anonimato-allow
         "data_emissao": "2025-06-30",
         "tipo_documento": "das_parcsn_andre",
         "total": 331.12,
