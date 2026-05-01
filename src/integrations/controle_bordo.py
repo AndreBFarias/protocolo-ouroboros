@@ -2,7 +2,7 @@
 
 Sprint 70 — Fase IOTA P0. Governado por ADR-18.
 
-O Andre usa um vault Obsidian (`~/Controle de Bordo/`) cujo motor próprio em
+O dono do repositório usa um vault Obsidian (`~/Controle de Bordo/`) cujo motor próprio em
 `.sistema/scripts/` detecta e arquiva notas pessoais. O vault tem uma pasta
 `Inbox/` onde ele larga tudo, incluindo arquivos financeiros (PDFs, CSVs,
 fotos de cupom). Este módulo:

@@ -17,8 +17,8 @@ class ExtratorNubankCartao(ExtratorBase):
 
     Formato esperado: date,title,amount
     Usado por:
-        - André: data/raw/andre/nubank_cartao/
-        - Vitória PJ: data/raw/vitoria/nubank_pj_cartao/
+        - pessoa_a: data/raw/andre/nubank_cartao/
+        - pessoa_b PJ: data/raw/vitoria/nubank_pj_cartao/
 
     Nota Sprint 82b -- conta-espelho não aplicável:
         O CSV Nubank cartão não lista linhas de "Pagamento recebido"
@@ -104,7 +104,7 @@ class ExtratorNubankCartao(ExtratorBase):
 
             banco_origem: str = self._rotular_banco_origem(arquivo)
             # Sprint 93f: hash inclui banco_origem para evitar colisão entre
-            # cartão PF do André (`Nubank`) e cartão PJ da Vitória
+            # cartão PF da pessoa_a (`Nubank`) e cartão PJ da pessoa_b
             # (`Nubank (PJ)`) quando uma compra recorrente (ex: assinatura
             # mensal) aparece em ambos com mesmo `(date, title, amount)`.
             # Sem o sufixo, dedup nível 1 por identificador descartava a PJ.
@@ -128,11 +128,11 @@ class ExtratorNubankCartao(ExtratorBase):
     def _rotular_banco_origem(self, caminho: Path) -> str:
         """Rotula banco_origem conforme subconta detectada pelo caminho.
 
-        Sprint 93c: cartão PJ da Vitória ficava sob rótulo genérico ``Nubank``,
-        colidindo com o cartão PF do André. Agora detectamos o subtipo via
+        Sprint 93c: cartão PJ da pessoa_b ficava sob rótulo genérico ``Nubank``,
+        colidindo com o cartão PF da pessoa_a. Agora detectamos o subtipo via
         path (``data/raw/vitoria/nubank_pj_cartao/``) e emitimos ``Nubank (PJ)``
         -- rótulo canônico já aceito pelo smoke aritmético e por
-        ``scripts/auditar_extratores.py``. PF do André permanece ``Nubank``.
+        ``scripts/auditar_extratores.py``. PF da pessoa_a permanece ``Nubank``.
         """
         partes: str = str(caminho).lower()
         if "nubank_pj" in partes:
@@ -175,7 +175,7 @@ class ExtratorNubankCartao(ExtratorBase):
         """Gera hash determinístico como identificador único.
 
         Sprint 93f: parâmetro `banco` faz parte da chave para distinguir
-        cartão PF do André de cartão PJ da Vitória quando linhas
+        cartão PF da pessoa_a de cartão PJ da pessoa_b quando linhas
         compartilham `(date, title, amount)`. Default vazio mantém
         backward-compat para chamadas legadas em tests.
         """

@@ -153,28 +153,34 @@ def inferir_pessoa(
     subtipo: Optional[str] = None,
     descricao: str = "",
 ) -> str:
-    """Infere quem fez a transação pelo banco de origem."""
-    bancos_andre = {"Itaú", "C6", "Santander"}
-    bancos_vitoria_pf = {"Nubank (PF)"}
-    bancos_vitoria_pj = {"Nubank (PJ)"}
+    """Infere quem fez a transação pelo banco de origem.
 
-    if banco_origem in bancos_andre:
-        return "André"
-    if banco_origem in bancos_vitoria_pf:
-        return "Vitória"
-    if banco_origem in bancos_vitoria_pj:
-        return "Vitória"
+    Retorna identificador genérico canônico (Sprint MOB-bridge-1):
+    ``pessoa_a`` / ``pessoa_b`` / ``casal``. O nome real para
+    apresentação é resolvido em runtime via
+    ``src.utils.pessoas.nome_de`` na camada de relatório/UI.
+    """
+    bancos_pessoa_a = {"Itaú", "C6", "Santander"}
+    bancos_pessoa_b_pf = {"Nubank (PF)"}
+    bancos_pessoa_b_pj = {"Nubank (PJ)"}
+
+    if banco_origem in bancos_pessoa_a:
+        return "pessoa_a"
+    if banco_origem in bancos_pessoa_b_pf:
+        return "pessoa_b"
+    if banco_origem in bancos_pessoa_b_pj:
+        return "pessoa_b"
 
     if subtipo == "pj":
-        return "Vitória"
+        return "pessoa_b"
     if subtipo == "pf":
-        return "Vitória"
+        return "pessoa_b"
 
-    # Nubank genérico do André
+    # Nubank genérico (sem subtipo) é da pessoa_a.
     if banco_origem == "Nubank" and subtipo is None:
-        return "André"
+        return "pessoa_a"
 
-    return "Casal"
+    return "casal"
 
 
 def normalizar_transacao(

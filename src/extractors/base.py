@@ -51,13 +51,19 @@ class ExtratorBase(ABC):
         ...
 
     def _detectar_pessoa(self, caminho: Path) -> str:
-        """Detecta a pessoa (André ou Vitória) com base no caminho do arquivo."""
-        partes: str = str(caminho).lower()
-        if "andre" in partes:
-            return "André"
-        if "vitoria" in partes:
-            return "Vitória"
-        return "Desconhecido"
+        """Detecta o identificador genérico de pessoa pelo caminho do arquivo.
+
+        Retorna ``pessoa_a`` / ``pessoa_b`` / ``casal`` (Sprint MOB-bridge-1).
+        Aceita os aliases históricos de pasta (``andre``/``vitoria``)
+        para compatibilidade com a estrutura física legada de
+        ``data/raw/`` (preservada por design, ADR-23).
+        """
+        from src.utils.pessoas import pessoa_id_de_pasta
+
+        resolvido = pessoa_id_de_pasta(caminho)
+        if resolvido is None:
+            return "casal"
+        return resolvido
 
 
 @dataclass

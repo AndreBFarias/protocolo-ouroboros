@@ -190,7 +190,7 @@ class ExtratorC6CC(ExtratorBase):
                 valor=valor,
                 descricao=descricao_completa,
                 banco_origem="C6",
-                pessoa="André",
+                pessoa="pessoa_a",
                 forma_pagamento=forma_pagamento,
                 tipo=tipo,
                 identificador=None,

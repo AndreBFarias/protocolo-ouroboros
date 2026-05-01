@@ -17,8 +17,8 @@ class ExtratorNubankCC(ExtratorBase):
 
     Formato esperado: Data,Valor,Identificador,Descrição
     Usado por:
-        - Vitória PF: data/raw/vitoria/nubank_pf_cc/
-        - Vitória PJ: data/raw/vitoria/nubank_pj_cc/
+        - pessoa_b PF: data/raw/vitoria/nubank_pf_cc/
+        - pessoa_b PJ: data/raw/vitoria/nubank_pj_cc/
     """
 
     REGEX_ANDRE: re.Pattern[str] = re.compile(
@@ -224,7 +224,7 @@ class ExtratorNubankCC(ExtratorBase):
         return "Despesa"
 
     def _e_transferencia_do_andre(self, descricao: str) -> bool:
-        """Verifica operacionalmente se a transação é do André via agência/conta.
+        """Verifica operacionalmente se a transação é da pessoa_a via agência/conta.
 
         Nota Sprint 68: a checagem por nome ("ANDRE.*SILVA.*BATISTA") migrou
         para `canonicalizer_casal.e_transferencia_do_casal`. Este método

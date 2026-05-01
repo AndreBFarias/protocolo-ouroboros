@@ -189,7 +189,7 @@ class ExtratorItauPDF(ExtratorBase):
                 valor=valor,
                 descricao=historico,
                 banco_origem="Itaú",
-                pessoa="André",
+                pessoa="pessoa_a",
                 forma_pagamento=forma_pagamento,
                 tipo=tipo,
                 identificador=identificador,
@@ -224,7 +224,7 @@ class ExtratorItauPDF(ExtratorBase):
         """Classifica o tipo da transação baseado no histórico e valor.
 
         Sprint 68b: substituiu `REGEX_VITORIA` (fragmento genérico que casa
-        qualquer "Vitória", inclusive cidade) pelo matcher formal
+        qualquer ocorrência da palavra (inclusive cidade homônima)) pelo matcher formal
         `canonicalizer_casal.e_transferencia_do_casal`, que consulta
         `mappings/contas_casal.yaml`. `REGEX_PAGAMENTO_FATURA` preservado
         como regra operacional legítima (pagamento da fatura do próprio
