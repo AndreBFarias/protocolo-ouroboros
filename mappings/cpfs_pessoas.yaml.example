@@ -1,27 +1,32 @@
 # =============================================================================
-# cpfs_pessoas.yaml -- mapping CPF -> pessoa para auto-detect no intake (Sprint 41b)
+# cpfs_pessoas.yaml -- mapping CPF -> pessoa para auto-detect no intake
 # =============================================================================
 #
 # COMO USAR:
 #   1. Copie este arquivo para `mappings/cpfs_pessoas.yaml`
 #   2. Preencha com os CPFs reais do casal (e MEI compartilhado se houver)
-#   3. O `mappings/cpfs_pessoas.yaml` está no .gitignore -- NÃO entra no commit
+#   3. O `mappings/cpfs_pessoas.yaml` esta no .gitignore -- NAO entra no commit
 #
-# Schema:
-#   - Chave: CPF como string. Pode ter pontuação ou não -- o detector
-#     normaliza removendo tudo que não é dígito. O importante é serem 11
-#     dígitos no final.
-#   - Valor: "andre" | "vitoria" | "casal"
-#       - andre/vitoria: documentos com esse CPF vão pra `data/raw/<pessoa>/`
+# Schema (Sprint MOB-bridge-1: identificadores genericos):
+#   - Chave: CPF como string. Pode ter pontuacao ou nao -- o detector
+#     normaliza removendo tudo que nao e digito. O importante e serem 11
+#     digitos no final.
+#   - Valor: "pessoa_a" | "pessoa_b" | "casal"
+#       - pessoa_a/pessoa_b: documentos com esse CPF vao pra
+#         data/raw/<bucket>/ correspondente.
 #       - casal: documentos compartilhados (MEI conjunto, conta conjunta)
-#         vão pra `data/raw/casal/`
+#         vao pra data/raw/casal/.
 #
-# Quando um CPF do preview NÃO está mapeado aqui:
-#   - Detector cai pra camada 2 (pasta-pai do arquivo: andre/vitoria)
-#   - Se nem isso casa, cai pra "casal" (NUNCA chuta sem evidência)
+# Nomes reais NAO aparecem aqui. Eles ficam em mappings/pessoas.yaml
+# (tambem gitignored) sob a chave display_name -- usada apenas em
+# relatorios/UI local-first via src.utils.pessoas.nome_de().
+#
+# Quando um CPF do preview NAO esta mapeado aqui:
+#   - Detector cai pra camada 2 (pasta-pai do arquivo)
+#   - Se nem isso casa, cai pra "casal" (NUNCA chuta sem evidencia)
 # =============================================================================
 
 cpfs:
-  "00000000000": andre      # CPF do André (preencher com o real)
-  "11111111111": vitoria    # CPF da Vitória (preencher com o real)
-  # "22222222222": casal    # MEI compartilhado, se aplicável
+  "00000000000": pessoa_a   # CPF do titular primario (preencher)
+  "11111111111": pessoa_b   # CPF do secundario (preencher)
+  # "22222222222": casal    # MEI compartilhado, se aplicavel
