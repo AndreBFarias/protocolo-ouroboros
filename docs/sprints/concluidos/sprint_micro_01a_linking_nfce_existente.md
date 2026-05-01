@@ -1,4 +1,21 @@
+---
+concluida_em: 2026-04-30
+escopo_refinado_por: padrão (k) BRIEF -- hipótese empírica refutou parte da spec
+entrega_real: src/graph/drill_down.py (resolver de drill-down 2 saltos)
+seguimento: sprint_micro_01a_followup_nfce_reais.md (validar com NFCe reais)
+---
+
 # Sprint MICRO-01a -- Linking transação→nfce→item para NFCe já no grafo
+
+> **Nota de fechamento (2026-04-30)**: investigação empírica refutou parte
+> da hipótese original. `src/graph/linking.py` (Sprint 48) JÁ cobre
+> `nfce_modelo_65` em `mappings/linking_config.yaml`. Os 2 NFCe atuais
+> são placeholders PoC sem transação correspondente, por isso 0 arestas
+> `documento_de` para eles. **O gap real entregue**: `src/graph/drill_down.py`
+> com resolver `obter_items_da_transacao` + `obter_documentos_da_transacao`
+> + `contar_drill_down`. Quando NFCe reais aparecerem,
+> `linking.py` cria as arestas automaticamente; a sprint follow-up
+> `MICRO-01a-FOLLOWUP-NFCE-REAIS` valida o ciclo completo.
 
 **Origem**: ramificação de `sprint_micro_01_linking_micro_runtime.md` por decisão do dono em 2026-04-29 (Fase 0 do plano `glittery-munching-russell`, decisão D1).
 **Prioridade**: P1
