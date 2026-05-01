@@ -457,6 +457,7 @@ exibir_help() {
     echo -e "    ${GREEN}--mes${NC} ${DIM}YYYY-MM${NC}       Processa um mês específico"
     echo -e "    ${GREEN}--tudo${NC}              Processa todos os dados"
     echo -e "    ${GREEN}--reextrair-tudo${NC}    Limpa documentos do grafo e re-ingere com extratores atuais"
+    echo -e "    ${GREEN}--mobile-cache${NC}      Gera apenas os caches readonly consumidos pelo Mobile"
     echo ""
     echo -e "  ${WHITE}Visualização${NC}"
     echo -e "    ${CYAN}--dashboard${NC}         Abre o dashboard Streamlit"
@@ -534,7 +535,17 @@ case "${1:-}" in
         msg_info "Pipeline canonico..."
         python -m src.pipeline --tudo
         run_passo "anti_orfao" python -m src.intake.anti_orfao
+        # Sprint MOB-bridge-2: gera caches readonly consumidos pelo Mobile.
+        run_passo "mobile_cache" python -m src.mobile_cache
         msg_ok "Rota completa concluida."
+        ;;
+    --mobile-cache)
+        # Sprint MOB-bridge-2: dispara apenas o gerador de cache do Mobile,
+        # sem rodar o pipeline ETL. Util para regenerar caches sem
+        # reprocessar dados (ex.: troca de XLSX, ajuste de fuso, debug).
+        msg_info "Gerando caches do Mobile (humor-heatmap.json + financas-cache.json)..."
+        python -m src.mobile_cache
+        msg_ok "Caches do Mobile atualizados."
         ;;
     --reextrair-tudo)
         # Sprint 104 + 108: cleanup automacoes + reextracao completa.

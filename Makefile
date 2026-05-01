@@ -1,4 +1,4 @@
-.PHONY: help process inbox tudo dashboard test lint format docs validate check install clean gauntlet smoke anti-migue
+.PHONY: help process inbox tudo dashboard test lint format docs validate check install clean gauntlet smoke anti-migue sync mobile-cache
 
 SHELL := /bin/bash
 VENV := .venv
@@ -22,6 +22,12 @@ inbox: ## Processa arquivos do inbox/
 
 tudo: ## Processa todos os dados disponíveis
 	./run.sh --tudo
+
+sync: ## Pipeline completo + caches Mobile (alias canônico de --full-cycle)
+	./run.sh --full-cycle
+
+mobile-cache: ## Gera apenas os caches readonly do Mobile (humor + financas)
+	./run.sh --mobile-cache
 
 dashboard: ## Abre o dashboard Streamlit
 	./run.sh --dashboard
