@@ -86,7 +86,7 @@ A IA deve ler o **conteúdo** (não confiar no nome) para detectar:
 | valor | float | sim |
 | forma_pagamento | str (Pix/Débito/Crédito/Boleto/Transferência) | sim |
 | local | str | sim |
-| quem | str (André/Vitória/Casal) | sim |
+| quem | str (`pessoa_a` / `pessoa_b` / `casal` -- Sprint MOB-bridge-1) | sim |
 | categoria | str | sim |
 | classificacao | str (Obrigatório/Questionável/Supérfluo/N/A) | sim |
 | banco_origem | str | sim |

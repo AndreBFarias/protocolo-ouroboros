@@ -4,6 +4,25 @@ Todas as alterações relevantes do projeto estão documentadas aqui.
 
 ---
 
+## [Unreleased]
+
+### Refactored
+
+- **Sprint MOB-bridge-1: identidade genérica `pessoa_a` / `pessoa_b` no
+  backend.** Schema do XLSX (coluna `quem`), normalizer, 5 extratores
+  bancários, detector e dashboard passam a operar sobre identificadores
+  genéricos. Nomes reais ficam apenas em `mappings/pessoas.yaml`
+  (gitignored, campo `display_name`) e são resolvidos em runtime via
+  `src.utils.pessoas.nome_de` para apresentação local-first (ADR-24).
+  Resolver canônico em `src/utils/pessoas.py` substitui as cópias de
+  lógica de identidade espalhadas. XLSX já gerados migrados in-place
+  via `scripts/migrar_quem_generico.py` (idempotente, com backup
+  automático). `scripts/check_anonimato.sh` adicionado para travar
+  regressões. ADR-23 e ADR-24 formalizam a decisão (cruzamento com
+  ADR-0011 do companion mobile).
+
+---
+
 ## [1.0.1] - 2026-04-15
 
 ### Adicionado
