@@ -609,7 +609,7 @@ def executar(mes: str | None = None, processar_tudo: bool = False) -> None:
     # 6c. Promover variantes curtas para Transferência Interna (Sprint 82)
     # -- rede de captura simétrica. A Sprint 68b cobriu o rigoroso
     # (nome_aceitos completo + CPF); a 82 cobre formas abreviadas que só
-    # são seguras sob contexto bancário (ex: "Vitória" no Itaú com
+    # são seguras sob contexto bancário (ex: "pessoa_b" no Itaú com
     # marcador PIX/TRANSF + data DD/MM, "ANDRE SILVA BATISTA FARIAS"
     # sem o "DA"). Roda DEPOIS do reclassificar para não reintroduzir
     # falsos-positivos que acabaram de ser degradados.

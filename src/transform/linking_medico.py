@@ -10,7 +10,7 @@ e nodes ``transação`` que comprovam o pagamento, aplicando heurística:
 
   - **CPF do paciente** (preferencial): metadata.cpf_paciente do
     documento bate com metadata.cnpj_cpf da transação OU metadata.quem
-    (André/Vitória) mapeia para o CPF declarado em
+    (pessoa_a/pessoa_b) mapeia para o CPF declarado em
     ``mappings/pessoas.yaml`` (PII gitignored).
   - **Data**: |data_emissao_documento - data_transacao| <= 30 dias.
   - **Valor**: |total_documento - valor_transacao| <= 10% do total.

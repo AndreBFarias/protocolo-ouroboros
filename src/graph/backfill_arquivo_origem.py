@@ -105,8 +105,8 @@ def _resolver_generico(meta: dict[str, Any], raiz_raw: Path) -> Path | None:
     """Fallback: procura por nome exato em raiz_raw.
 
     P1-04 fix Sprint 108: usa rglob com nome literal (sem prefixo glob `*`)
-    para evitar match em pastas erradas (ex: arquivo da Vitória casando
-    sufixo de outro arquivo do Andre). glob.escape protege caracteres
+    para evitar match em pastas erradas (ex: arquivo da pessoa_b casando
+    sufixo de outro arquivo da pessoa_a). glob.escape protege caracteres
     especiais no nome.
     """
     import glob as _glob

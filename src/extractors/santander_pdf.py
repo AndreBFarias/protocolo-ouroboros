@@ -327,7 +327,7 @@ class ExtratorSantanderPDF(ExtratorBase):
                 valor=valor,
                 descricao=descricao_limpa,
                 banco_origem="Santander",
-                pessoa="André",
+                pessoa="pessoa_a",
                 forma_pagamento="Crédito",
                 tipo=tipo,
                 identificador=identificador,

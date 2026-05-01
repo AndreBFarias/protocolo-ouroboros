@@ -21,7 +21,7 @@ Contrato:
   - pode_processar: .pdf em pastas com pista 'das_parcsn', 'impostos/das',
     '_envelopes/originais', ou nome começando por 'DAS_PARCSN_'.
   - extrair() devolve [] de Transacao. Efeito colateral: grafo.
-  - Quando CNPJ é do André (45.850.636), tipo_documento="das_parcsn_andre".
+  - Quando CNPJ é da pessoa_a (45.850.636), tipo_documento="das_parcsn_andre".
     Senão, "das_parcsn".
 """
 
@@ -173,7 +173,7 @@ def _montar_documento(texto: str, caminho: Path) -> dict[str, Any]:
     )
     data_emissao = _parse_data_iso(venc_original_br)
 
-    # tipo_documento discriminado por CNPJ canônico do André (auditoria 2026-04-23).
+    # tipo_documento discriminado por CNPJ canônico da pessoa_a (auditoria 2026-04-23).
     tipo_doc = "das_parcsn_andre" if cnpj.startswith("45.850.636") else "das_parcsn"
 
     documento: dict[str, Any] = {

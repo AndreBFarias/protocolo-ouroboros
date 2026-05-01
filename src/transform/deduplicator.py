@@ -106,7 +106,7 @@ def _parear_espelhos_virtuais(transacoes: list[dict]) -> int:
     conta) que já chega ao deduplicator com tipo="Transferência Interna"
     via regex operacional do extrator ou do pipeline. O pareamento clássico
     de `marcar_transferencias_internas` não cobre esse caso porque ambos
-    os lados já são TI (nenhum é Despesa/None) e ambos têm pessoa="André".
+    os lados já são TI (nenhum é Despesa/None) e ambos têm pessoa="pessoa_a".
 
     Esta função apenas GARANTE que ambos os lados permanecem como TI e
     conta os pares encontrados (pelo menos um dos dois com `_virtual=True`
@@ -147,7 +147,7 @@ def marcar_transferencias_internas(transacoes: list[dict]) -> list[dict]:
     Procura pares onde:
     - Saída de uma conta = Entrada em outra
     - Mesmo valor, mesma data
-    - Entre contas do André e Vitória
+    - Entre contas da pessoa_a e da pessoa_b
 
     Para evitar falso-positivo (Sprint 68), exige que PELO MENOS UM lado
     do par contenha identidade do casal na descrição -- via

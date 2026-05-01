@@ -75,7 +75,7 @@ def resetar_cache() -> None:
 
 
 def e_transferencia_do_casal(descricao: str, caminho_yaml: Optional[str] = None) -> bool:
-    """Retorna True se a descrição casa com identidade de André ou Vitória.
+    """Retorna True se a descrição casa com identidade dos titulares do casal.
 
     Regras de matching:
         1. Nome aceito: .upper() + remoção de acentos, busca com \\b word
@@ -180,7 +180,7 @@ def variantes_curtas(
                     continue
                 # Início de palavra é obrigatório (evita casar "VITORIA"
                 # dentro de "MERCAVITORIA"), mas o FIM aceita limite de
-                # palavra OU dígito aderente (cobre "Vitória09/04" onde
+                # palavra OU dígito aderente (cobre nome+data colados, onde
                 # a data vem colada ao nome em extrato Itaú).
                 padrao = rf"(?<!\w){re.escape(token_norm)}(?=\W|\d|$)"
                 if re.search(padrao, desc_upper_sem_acento):
