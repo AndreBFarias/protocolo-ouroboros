@@ -108,10 +108,25 @@ def renderizar_dataframe(df: pd.DataFrame, na_rep: str = "—") -> pd.DataFrame:
 
 
 def filtrar_por_pessoa(df: pd.DataFrame, pessoa: str) -> pd.DataFrame:
-    """Filtra DataFrame por pessoa (André/Vitória/Todos)."""
+    """Filtra DataFrame por pessoa.
+
+    Aceita ``"Todos"``, o ``display_name`` exibido na UI (resolvido em
+    runtime via ``src.utils.pessoas.nome_de``) ou o identificador
+    genérico canônico (``"pessoa_a"``/``"pessoa_b"``/``"casal"``).
+
+    A normalização bilateral via ``pessoa_id_de_legacy`` garante
+    compatibilidade com XLSX antigos onde ``df["quem"]`` ainda contém
+    rótulos históricos com nome real (Sprint MOB-bridge-1, ADR-23).
+    """
     if pessoa == "Todos" or "quem" not in df.columns:
         return df
-    return df[df["quem"] == pessoa].copy()
+    if df.empty:
+        return df.copy()
+    from src.utils.pessoas import pessoa_id_de_legacy
+
+    alvo = pessoa_id_de_legacy(pessoa)
+    quem_canonico = df["quem"].apply(pessoa_id_de_legacy)
+    return df[quem_canonico == alvo].copy()
 
 
 # Sprint 72: normalização de variações históricas de `forma_pagamento`.

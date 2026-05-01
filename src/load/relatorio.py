@@ -609,23 +609,28 @@ def gerar_relatorio_mes(
     linhas.append(tabela_classificacao(obrigatorio, questionavel, superfluo))
     linhas.append("")
 
-    # Gastos por pessoa
-    gastos_andre = sum(
+    # Gastos por pessoa -- agregação interna em identificador genérico
+    # (Sprint MOB-bridge-1, ADR-23). Display em runtime via nome_de().
+    from src.utils.pessoas import nome_de, pessoa_id_de_legacy
+
+    gastos_pessoa_a = sum(
         t["valor"]
         for t in transacoes_mes
-        if t.get("quem") == "André" and t.get("tipo") in ("Despesa", "Imposto")
+        if pessoa_id_de_legacy(t.get("quem")) == "pessoa_a"
+        and t.get("tipo") in ("Despesa", "Imposto")
     )
-    gastos_vitoria = sum(
+    gastos_pessoa_b = sum(
         t["valor"]
         for t in transacoes_mes
-        if t.get("quem") == "Vitória" and t.get("tipo") in ("Despesa", "Imposto")
+        if pessoa_id_de_legacy(t.get("quem")) == "pessoa_b"
+        and t.get("tipo") in ("Despesa", "Imposto")
     )
 
     conteudo_pessoa = (
         "| Pessoa | Valor |\n"
         "|:-------|------:|\n"
-        f"| André | {formatar_valor(gastos_andre)} |\n"
-        f"| Vitória | {formatar_valor(gastos_vitoria)} |"
+        f"| {nome_de('pessoa_a')} | {formatar_valor(gastos_pessoa_a)} |\n"
+        f"| {nome_de('pessoa_b')} | {formatar_valor(gastos_pessoa_b)} |"
     )
     linhas.append(secao_colapsavel("Gastos por Pessoa", conteudo_pessoa))
     linhas.append("")

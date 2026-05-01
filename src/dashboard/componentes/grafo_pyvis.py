@@ -275,4 +275,4 @@ def construir_grafo_html(
     return html
 
 
-# "O grafo é um mapa. Navegar é o direito." — Andre, Sprint 78
+# "O grafo é um mapa. Navegar é o direito." -- ditado popular do projeto, Sprint 78

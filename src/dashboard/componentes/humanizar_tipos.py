@@ -3,7 +3,7 @@
 Mapping `{tipo_canonico_slug -> nome_humano}` carregado de
 `mappings/tipos_documento_humanizado.yaml`. Usado pela página Catalogação
 (`src/dashboard/paginas/catalogacao.py`) para substituir slugs crus
-(ex: `das_parcsn_andre`) por rótulos legíveis (ex: `DAS Parcelado André`).
+(ex: `das_parcsn_andre`) por rótulos legíveis (ex: `DAS Parcelado pessoa_a`).
 
 Princípios:
 - Cache em módulo (mapping é estável durante a vida do processo).
