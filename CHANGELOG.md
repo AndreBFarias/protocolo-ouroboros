@@ -6,6 +6,27 @@ Todas as alterações relevantes do projeto estão documentadas aqui.
 
 ## [Unreleased]
 
+### Added
+
+- **Sprint MOB-bridge-2: geradores de cache JSON para o Mobile.** Pacote
+  novo `src/mobile_cache/` com três módulos: `atomic.py`
+  (`write_json_atomic` via `.tmp` + `os.replace`), `humor_heatmap.py`
+  (cobre 90 dias retroativos lendo `daily/` e `inbox/mente/humor/`,
+  agrega células por data+autor, calcula `media_humor_30d`,
+  `registros_30d`, `registros_total` por pessoa) e `financas_cache.py`
+  (semana ISO atual a partir do XLSX consolidado, `top_categorias` top
+  5 com percentual, `delta_textual` heurístico vs média de 12 semanas,
+  20 últimas transações). Função `gerar_todos(vault_root, xlsx_path)`
+  orquestra ambos. Saídas em `<vault>/.ouroboros/cache/` com
+  `schema_version: 1` conforme contrato cruzado da ADR-0012 (Mobile).
+  Identidade canônica `pessoa_a`/`pessoa_b`/`casal` em todos os campos
+  `autor` (Regra -1). Integrado ao `--full-cycle` no `run.sh` como
+  passo final com falha-soft; nova flag `--mobile-cache` standalone
+  dispara apenas o gerador. Targets `make sync` (alias de
+  `--full-cycle`) e `make mobile-cache` (apenas caches) adicionados.
+  33 testes novos cobrindo atomic write, humor heatmap, finanças
+  semanais, idempotência e CLI.
+
 ### Refactored
 
 - **Sprint MOB-bridge-1: identidade genérica `pessoa_a` / `pessoa_b` no

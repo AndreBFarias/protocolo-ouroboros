@@ -222,6 +222,32 @@ Ver `docs/GOLDEN_TEST_CASES.md` para detalhes. Resumo:
 
 ---
 
+## 11.5. Caches Mobile (Sprint MOB-bridge-2)
+
+O backend gera dois arquivos JSON readonly em `~/Protocolo-Ouroboros/.ouroboros/cache/`
+durante `make sync` (alias de `./run.sh --full-cycle`). O app Mobile
+**só lê** esses arquivos — ADR cruzada
+`Protocolo-Mob-Ouroboros/docs/ADRs/0012-cache-mobile-readonly.md`.
+
+- `humor-heatmap.json` — alimenta a Tela 21 (Mini Humor). Cobre 90
+  dias retroativos com células `(data, autor, humor, energia,
+  ansiedade, foco)` agregadas a partir de `daily/` e
+  `inbox/mente/humor/` no Vault. Estatísticas `media_humor_30d`,
+  `registros_30d`, `registros_total` por pessoa.
+- `financas-cache.json` — alimenta a Tela 22 (Mini Financeiro).
+  Semana ISO atual com `gasto_semana`, `gasto_semana_anterior`,
+  `delta_textual` (heurística vs média de 12 semanas), top 5
+  categorias com percentual, 20 últimas transações.
+
+Geração via `python -m src.mobile_cache` (também invocado pela flag
+`--mobile-cache` standalone em `run.sh` quando se quer regenerar
+caches sem rodar o pipeline ETL inteiro). Escrita atômica via
+`.tmp` + `os.replace` garante que o leitor SAF do Mobile jamais
+observe arquivo parcial. Schema versionado via campo
+`schema_version: 1` (mudança de shape exige ADR sucessor).
+
+---
+
 ## 12. Referências cruzadas
 
 - `docs/VISAO_UNIFICADA.md` — mapa inteiro das fases e sprints.
