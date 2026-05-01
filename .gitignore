@@ -46,6 +46,7 @@ htmlcov/
 # Ambiente virtual
 .venv/
 venv/
+venv_lock/
 
 # IDE
 .vscode/
