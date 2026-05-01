@@ -365,4 +365,4 @@ def limpar_filtro(campo: str) -> None:
         del st.query_params[campo]
 
 
-# "Clicar num número e ir até a transação é o mínimo." — Andre, 2026-04-21
+# "Clicar num número e ir até a transação é o mínimo." -- ditado popular do projeto, 2026-04-21

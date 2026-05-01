@@ -56,7 +56,7 @@ def renderizar(
         return
 
     # Sprint 72: respeita o filtro global de forma de pagamento (mesmo estando
-    # na aba "Pagamentos", o André pode querer restringir a Pix apenas etc.).
+    # na aba "Pagamentos", o usuário pode querer restringir a Pix apenas etc.).
     extrato = filtrar_por_forma_pagamento(
         filtrar_por_pessoa(dados["extrato"], pessoa),
         filtro_forma_ativo(),

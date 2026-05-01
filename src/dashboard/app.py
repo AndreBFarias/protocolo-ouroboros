@@ -261,9 +261,18 @@ def _sidebar(dados: dict) -> tuple[str, str, str, str]:
             else:
                 periodo = mes_base
 
+        # Sprint MOB-bridge-1 / ADR-24: o dashboard local-first exibe
+        # ``display_name`` real ao dono (resolvido via ``nome_de`` em
+        # runtime, sem persistência), mas o filtro interno opera sobre
+        # identificador genérico ``pessoa_a`` / ``pessoa_b`` / ``casal``.
+        from src.utils.pessoas import nome_de
+
+        nome_a = nome_de("pessoa_a")
+        nome_b = nome_de("pessoa_b")
+        opcoes_pessoa = ["Todos", nome_a, nome_b]
         pessoa: str = st.selectbox(
             "Pessoa",
-            ["Todos", "André", "Vitória"],
+            opcoes_pessoa,
             index=0,
             key="seletor_pessoa",
         )

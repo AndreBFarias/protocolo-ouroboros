@@ -57,7 +57,7 @@ MAPA_CLASSIFICACAO: dict[str, str] = {
 
 # --- Escala tipográfica (Sprint 20) -----------------------------------------
 # Mínimo absoluto é 13px (rebaixado de 14 pela Sprint 76 — legibilidade
-# validada com André em viewport 1600x1000). Saltos garantem hierarquia.
+# validada com o usuário primário em viewport 1600x1000). Saltos garantem hierarquia.
 FONTE_MIN_ABSOLUTA: int = 13  # nenhum texto no app pode cair abaixo disso (Sprint 76)
 FONTE_MINIMA: int = 14
 FONTE_LABEL: int = 13  # uppercase pequeno (legenda, caption, badge)
