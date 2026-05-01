@@ -32,7 +32,7 @@ def grafo_basico(tmp_path: Path) -> GrafoDB:
             "data_emissao": "2026-04-15",
             "total": 250.00,
             "cpf_paciente": "12345678900",
-            "quem": "Vitória",
+            "quem": "pessoa_b",
             "medico": "Dr. Silva",
         },
     )
@@ -43,7 +43,7 @@ def grafo_basico(tmp_path: Path) -> GrafoDB:
             "data": "2026-04-16",
             "valor": 250.00,
             "local": "CLINICA LUDENS",
-            "quem": "Vitória",
+            "quem": "pessoa_b",
             "tag_irpf": "dedutivel_medico",
             "cnpj_cpf": "12345678900",  # CPF do paciente -- rota preferencial
         },
@@ -75,7 +75,7 @@ def test_idempotencia_rodar_2x_nao_duplica(grafo_basico):
 
 
 def test_quem_bate_sem_cpf_ainda_linka(tmp_path):
-    """Sem CPF, mas quem='Vitória' bate em transação 'Vitória': link."""
+    """Sem CPF, mas quem='Vitória' bate em transação 'Vitória': link."""  # anonimato-allow
     db = GrafoDB(tmp_path / "grafo.sqlite")
     db.criar_schema()
     db.upsert_node(
@@ -85,7 +85,7 @@ def test_quem_bate_sem_cpf_ainda_linka(tmp_path):
             "tipo_documento": "receita_medica",
             "data_emissao": "2026-04-15",
             "total": 250.00,
-            "quem": "Vitória",
+            "quem": "pessoa_b",
         },
     )
     db.upsert_node(
@@ -95,7 +95,7 @@ def test_quem_bate_sem_cpf_ainda_linka(tmp_path):
             "data": "2026-04-15",
             "valor": 250.00,
             "local": "CLINICA",
-            "quem": "Vitória",
+            "quem": "pessoa_b",
         },
     )
     stats = linkar_dedutivel_medico(db)
@@ -113,7 +113,7 @@ def test_data_fora_da_janela_30d_nao_linka(tmp_path):
             "tipo_documento": "receita_medica",
             "data_emissao": "2026-01-01",
             "total": 250.00,
-            "quem": "André",
+            "quem": "pessoa_a",
         },
     )
     db.upsert_node(
@@ -123,7 +123,7 @@ def test_data_fora_da_janela_30d_nao_linka(tmp_path):
             "data": "2026-04-30",  # ~120 dias depois
             "valor": 250.00,
             "local": "CLINICA",
-            "quem": "André",
+            "quem": "pessoa_a",
         },
     )
     stats = linkar_dedutivel_medico(db)
@@ -142,7 +142,7 @@ def test_valor_fora_de_10pct_nao_linka(tmp_path):
             "tipo_documento": "receita_medica",
             "data_emissao": "2026-04-15",
             "total": 250.00,
-            "quem": "André",
+            "quem": "pessoa_a",
         },
     )
     db.upsert_node(
@@ -152,7 +152,7 @@ def test_valor_fora_de_10pct_nao_linka(tmp_path):
             "data": "2026-04-16",
             "valor": 500.00,  # 100% diff -- rejeita
             "local": "CLINICA",
-            "quem": "André",
+            "quem": "pessoa_a",
         },
     )
     stats = linkar_dedutivel_medico(db)
@@ -188,7 +188,7 @@ def test_metadata_incompleto_e_tolerado(tmp_path):
         metadata={
             "tipo_documento": "receita_medica",
             # falta data_emissao + total
-            "quem": "André",
+            "quem": "pessoa_a",
         },
     )
     stats = linkar_dedutivel_medico(db)
@@ -277,7 +277,7 @@ def test_dois_candidatos_pega_o_de_score_mais_alto(tmp_path):
             "tipo_documento": "receita_medica",
             "data_emissao": "2026-04-15",
             "total": 250.00,
-            "quem": "André",
+            "quem": "pessoa_a",
         },
     )
     # Candidata fraca: 5 dias depois, valor 5% diff, sem tag
@@ -288,7 +288,7 @@ def test_dois_candidatos_pega_o_de_score_mais_alto(tmp_path):
             "data": "2026-04-20",
             "valor": 262.50,  # 5% diff
             "local": "CLINICA",
-            "quem": "André",
+            "quem": "pessoa_a",
         },
     )
     # Candidata forte: 0 dias, valor exato, com tag
@@ -299,7 +299,7 @@ def test_dois_candidatos_pega_o_de_score_mais_alto(tmp_path):
             "data": "2026-04-15",
             "valor": 250.00,
             "local": "CLINICA",
-            "quem": "André",
+            "quem": "pessoa_a",
             "tag_irpf": "dedutivel_medico",
         },
     )

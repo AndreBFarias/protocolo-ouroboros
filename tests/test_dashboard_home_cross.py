@@ -265,7 +265,7 @@ extrato = pd.DataFrame({{
     "classificacao": ["Obrigatório", "N/A", "Obrigatório"],
     "local": ["Padaria X", "Empresa Y", "Posto Z"],
     "banco_origem": ["Itaú", "Itaú", "Nubank"],
-    "quem": ["André", "André", "André"],
+    "quem": ["pessoa_a", "pessoa_a", "pessoa_a"],
     "forma_pagamento": ["Pix", "Transferência", "Crédito"],
 }})
 dados = {{"extrato": extrato}}
@@ -313,7 +313,7 @@ extrato = pd.DataFrame({{
     "classificacao": ["Obrigatório", "Obrigatório", "Obrigatório"],
     "local": ["Padaria X", "Padaria X", "Posto Z"],
     "banco_origem": ["Itaú", "Itaú", "Nubank"],
-    "quem": ["André", "André", "André"],
+    "quem": ["pessoa_a", "pessoa_a", "pessoa_a"],
     "forma_pagamento": ["Pix", "Pix", "Crédito"],
 }})
 dados = {{"extrato": extrato}}

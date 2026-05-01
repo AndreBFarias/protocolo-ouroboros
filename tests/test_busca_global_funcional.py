@@ -80,7 +80,7 @@ def test_construir_indice_grafo_existente(grafo_indice: Path) -> None:
     assert "abas" in idx
     assert "NEOENERGIA DISTRIBUICAO" in idx["fornecedores"]
     assert "NEOENERGIA DF" in idx["fornecedores"]
-    assert "Arroz Tio Joao 5kg" in idx["descricoes"]
+    assert "Arroz Tio Joao 5kg" in idx["descricoes"]  # anonimato-allow: fixture de matcher
     assert len(idx["tipos_doc"]) >= 8
     assert "Busca Global" in idx["abas"]
 
@@ -231,10 +231,12 @@ def test_filtros_sidebar_mes_impacta() -> None:
 
 def test_filtros_sidebar_pessoa_impacta() -> None:
     docs = [
-        {"id": 1, "data": "2026-04-01", "pessoa": "Andre"},
-        {"id": 2, "data": "2026-04-02", "pessoa": "Vitoria"},
+        {"id": 1, "data": "2026-04-01", "pessoa": "Andre"},  # anonimato-allow: fixture de matcher
+        {"id": 2, "data": "2026-04-02", "pessoa": "Vitoria"},  # anonimato-allow: fixture de matcher
     ]
-    saida = pag._aplicar_filtros_sidebar(docs, periodo=None, pessoa="Vitoria", forma=None)
+    saida = pag._aplicar_filtros_sidebar(
+        docs, periodo=None, pessoa="Vitoria", forma=None,  # anonimato-allow
+    )
     assert len(saida) == 1
     assert saida[0]["id"] == 2
 

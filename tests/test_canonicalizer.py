@@ -149,7 +149,7 @@ def test_e_codigo_tecnico_detecta_cnpj():
 
 
 def test_e_codigo_tecnico_nao_detecta_nome():
-    assert _e_codigo_tecnico("Padaria São João") is False
+    assert _e_codigo_tecnico("Padaria São João") is False  # anonimato-allow: fixture de matcher
 
 
 # ---------------------------------------------------------------------------
@@ -166,7 +166,7 @@ def test_e_codigo_tecnico_nao_detecta_nome():
         "PAO DE QUEIJO DA ESQUINA",
         "SERVICO DE ENTREGA RAPIDA LTDA",
         "00.776.574/0160-79",
-        "Padaria São João",  # já com acento
+        "Padaria São João",  # já com acento  # anonimato-allow: fixture de matcher
     ],
 )
 def test_idempotente(entrada: str):

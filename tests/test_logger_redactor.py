@@ -66,7 +66,7 @@ def test_hash_curto_pii_e_deterministico_e_oito_hex():
 
 def test_hash_curto_pii_normaliza_caixa_e_espacos():
     """Mesmo nome com casing/espaços diferentes gera mesmo hash."""
-    a = hash_curto_pii("Andre Farias")
+    a = hash_curto_pii("Andre Farias")  # anonimato-allow: fixture de matcher
     b = hash_curto_pii("  ANDRE FARIAS  ")
     assert a == b
 
@@ -106,7 +106,7 @@ def test_filter_mascara_cnpj_pj_em_info(logger_com_filter, caplog):
 def test_filter_mascara_cnpj_mei_em_info(logger_com_filter, caplog):
     """CNPJ-MEI tem mesmo formato 0001-XX que PJ -- mesmo placeholder."""
     with caplog.at_level(logging.INFO, logger="teste-pii-99"):
-        logger_com_filter.info("Pessoa via CNPJ 45.850.636/0001-60 (MEI Andre)")
+        logger_com_filter.info("Pessoa via CNPJ 45.850.636/0001-60 (MEI Andre)")  # anonimato-allow
     msgs = [r.getMessage() for r in caplog.records]
     assert any("XX.XXX.XXX/0001-XX" in m for m in msgs)
     assert not any("45.850.636" in m for m in msgs)

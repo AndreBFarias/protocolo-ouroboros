@@ -47,8 +47,8 @@ def test_nivel2_preserva_localizacoes_diferentes(transacao):
 
 def test_nivel2_prefere_nao_historico(transacao):
     """Dedupe mantém versão com banco_origem != 'Histórico' (metadados melhores)."""
-    t_hist = transacao(valor=200.0, local="Loja Y", banco="Histórico", quem="André")
-    t_nova = transacao(valor=200.0, local="Loja Y", banco="Nubank (PF)", quem="Casal")
+    t_hist = transacao(valor=200.0, local="Loja Y", banco="Histórico", quem="pessoa_a")
+    t_nova = transacao(valor=200.0, local="Loja Y", banco="Nubank (PF)", quem="casal")
     resultado = deduplicar_por_hash_fuzzy([t_hist, t_nova])
     assert len(resultado) == 1
     assert resultado[0]["banco_origem"] == "Nubank (PF)"
@@ -75,7 +75,7 @@ def test_nivel2_inclui_transferencia_interna(transacao):
 
 
 def test_nivel3_par_transferencia_marca_ambos_lados(transacao):
-    """Nível 3: Pix André→Vitória marca ambas pontas como Transferência Interna.
+    """Nível 3: Pix André→Vitória marca ambas pontas como Transferência Interna.  # anonimato-allow
 
     Sprint 68 exige identidade formal do casal (nome composto da whitelist
     em `mappings/contas_casal.yaml`) em pelo menos um dos lados do par.
@@ -86,14 +86,14 @@ def test_nivel3_par_transferencia_marca_ambos_lados(transacao):
         valor=500.0,
         local="Pix para VITORIA MARIA SILVA DOS SANTOS",
         tipo="Despesa",
-        quem="André",
+        quem="pessoa_a",
     )
     entrada = transacao(
         data_t=date(2025, 5, 10),
         valor=500.0,
         local="Pix recebido de ANDRE DA SILVA BATISTA DE FARIAS",
         tipo="Receita",
-        quem="Vitória",
+        quem="pessoa_b",
     )
     resultado = marcar_transferencias_internas([saida, entrada])
     assert all(t["tipo"] == "Transferência Interna" for t in resultado)
@@ -101,8 +101,8 @@ def test_nivel3_par_transferencia_marca_ambos_lados(transacao):
 
 def test_nivel3_nao_confunde_mesma_pessoa(transacao):
     """Mesmo valor e data no mesmo `quem` não é par de TI."""
-    t1 = transacao(valor=100.0, tipo="Despesa", quem="André")
-    t2 = transacao(valor=100.0, tipo="Receita", quem="André")
+    t1 = transacao(valor=100.0, tipo="Despesa", quem="pessoa_a")
+    t2 = transacao(valor=100.0, tipo="Receita", quem="pessoa_a")
     resultado = marcar_transferencias_internas([t1, t2])
     assert resultado[0]["tipo"] == "Despesa"
     assert resultado[1]["tipo"] == "Receita"

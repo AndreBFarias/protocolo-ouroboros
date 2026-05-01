@@ -4,8 +4,8 @@ Origem: auditoria de fidelidade 2026-04-23 detectou 459 linhas na aba renda
 vs ~24 reais. Contaminação por reembolsos PIX, cashback, PIX entre pessoas
 e transferências bancárias falsamente classificadas como "Receita".
 
-Whitelist em mappings/fontes_renda.yaml cobre: salário CLT, MEI do André
-(Paim/Suno/F2/Supa/etc.), bolsa Vitória NEES/UFAL, rendimentos de aplicação.
+Whitelist em mappings/fontes_renda.yaml cobre: salário CLT, MEI do André  # anonimato-allow
+(Paim/Suno/F2/Supa/etc.), bolsa Vitória NEES/UFAL, rendimentos de aplicação.  # anonimato-allow
 Blacklist bloqueia reembolsos, estornos, cashback, devoluções, PIX recebido.
 """
 
@@ -86,7 +86,7 @@ class TestCasosAmbiguosFicaFora:
             "Crédito em conta",
             "Depósito Recebido por Boleto",  # ambíguo (poderia ser MEI ou aluguel)
             "",  # vazio
-            "Andre",  # placeholder
+            "Andre",  # placeholder  # anonimato-allow: fixture de matcher
         ],
     )
     def test_ambiguo_rejeitado(self, descricao: str) -> None:

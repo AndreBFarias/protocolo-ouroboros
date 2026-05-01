@@ -38,7 +38,7 @@ def df_extrato_amostra() -> pd.DataFrame:
                 "local": "Padaria Ki-Sabor",
                 "categoria": "Alimentação",
                 "banco_origem": "Itau",
-                "quem": "Andre",
+                "quem": "Andre",  # anonimato-allow: fixture de matcher
                 "mes_ref": "2026-04",
                 "forma_pagamento": "Crédito",
                 "tag_irpf": "",
@@ -49,7 +49,7 @@ def df_extrato_amostra() -> pd.DataFrame:
                 "local": "PADARIA KI-SABOR",
                 "categoria": "Aluguel",
                 "banco_origem": "Itau",
-                "quem": "Casal",
+                "quem": "casal",
                 "mes_ref": "2026-03",
                 "forma_pagamento": "Pix",
                 "tag_irpf": "",
@@ -60,7 +60,7 @@ def df_extrato_amostra() -> pd.DataFrame:
                 "local": "Padaria Ki-Sabor Filial Lago",
                 "categoria": "Alimentação",
                 "banco_origem": "Nubank",
-                "quem": "Vitoria",
+                "quem": "Vitoria",  # anonimato-allow: fixture de matcher
                 "mes_ref": "2026-04",
                 "forma_pagamento": "Débito",
                 "tag_irpf": "",
@@ -71,7 +71,7 @@ def df_extrato_amostra() -> pd.DataFrame:
                 "local": "Outro Fornecedor X",
                 "categoria": "Outros",
                 "banco_origem": "C6",
-                "quem": "Andre",
+                "quem": "Andre",  # anonimato-allow: fixture de matcher
                 "mes_ref": "2026-04",
                 "forma_pagamento": "Crédito",
                 "tag_irpf": "",
@@ -186,8 +186,8 @@ def test_filtro_por_mes_impacta_tabela(df_extrato_amostra: pd.DataFrame) -> None
 def test_filtro_por_pessoa_impacta_tabela(
     df_extrato_amostra: pd.DataFrame,
 ) -> None:
-    """Filtrar por quem='Andre' antes -> só transações do Andre."""
-    df_andre = df_extrato_amostra[df_extrato_amostra["quem"] == "Andre"]
+    """Filtrar por quem='Andre' antes -> só transações do Andre."""  # anonimato-allow
+    df_andre = df_extrato_amostra[df_extrato_amostra["quem"] == "Andre"]  # anonimato-allow
     df = bri.construir_dataframe_fornecedor("Padaria Ki-Sabor", df_andre)
     assert len(df) == 1
     assert df.iloc[0]["Banco"] == "Itau"

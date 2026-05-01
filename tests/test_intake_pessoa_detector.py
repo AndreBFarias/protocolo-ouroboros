@@ -215,7 +215,7 @@ def test_orchestrator_pessoa_indefinida_dispara_autodetect(tmp_path, monkeypatch
     arq_yaml.write_text('cpfs:\n  "05127373122": andre\n', encoding="utf-8")
     monkeypatch.setattr(pd, "_PATH_MAPPING", arq_yaml)
 
-    # arquivo PDF nativo com CPF do André no preview
+    # arquivo PDF nativo com CPF do André no preview  # anonimato-allow: comentario narrativo
     from reportlab.pdfgen import canvas
 
     pseudo_inbox = raiz / "inbox"
@@ -367,7 +367,7 @@ def test_cnpj_vence_razao_social_ambigua(tmp_path, pessoas_yaml_casal):
     arq.write_bytes(b"x")
     texto = "CNPJ 45.850.636/0001-60 VITORIA MARIA SILVA DOS SANTOS"
     pessoa, fonte = pd.detectar_pessoa(arq, texto)
-    # CNPJ do André vence razão social da Vitória no mesmo texto
+    # CNPJ do André vence razão social da Vitória no mesmo texto  # anonimato-allow
     assert pessoa == "andre"
     assert "CNPJ" in fonte
 

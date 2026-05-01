@@ -250,4 +250,4 @@ class TestIntegracaoComLerFiltrosDaUrl:
         assert "const indiceAlvo = 0;" in html  # Categorias é índice 0
 
 
-# "URL é contrato. Quem clicou em link tem direito a chegar onde queria." -- Andre
+# "URL é contrato. Quem clicou em link tem direito a chegar onde queria." -- Andre #anonimato-allow

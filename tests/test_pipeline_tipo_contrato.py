@@ -33,7 +33,7 @@ def test_contrato_global_receita_razoavel(extrato_df: pd.DataFrame) -> None:
     ou Despesa conforme sinal. O aumento é efeito colateral esperado do
     fix (TI falsos-positivos mascaravam receitas reais e também
     classificavam PIX externos como TI). Sprint INFRA futura deve refinar
-    canonicalizer para casar variantes de nome curto (\"Vitória\"
+    canonicalizer para casar variantes de nome curto (\"Vitória\"  # anonimato-allow
     isolado do histórico Itaú) e reduzir esse número para ~300.
     """
     n_receitas = len(extrato_df[extrato_df["tipo"] == "Receita"])
@@ -61,7 +61,7 @@ def test_contrato_abril_2026_receita_total_plausivel(extrato_df: pd.DataFrame) -
     positivos revelou receitas PJ legítimas que antes ficavam ocultas sob
     `Transferência Interna`. Abril 2026 típico:
         - Salário G4F (~R$ 7.500)
-        - Recebimentos PJ Vitória (~R$ 3.300)
+        - Recebimentos PJ Vitória (~R$ 3.300)  # anonimato-allow: fixture de matcher
         - PIX entre contas do casal que canonicalizer atual ainda não
           captura pela forma curta (~R$ 2.000+2.000) — SPRINT INFRA pode
           refinar canonicalizer para reduzir esse componente.

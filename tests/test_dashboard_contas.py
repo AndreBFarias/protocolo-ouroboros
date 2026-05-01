@@ -77,7 +77,7 @@ def dados_minimos() -> dict[str, pd.DataFrame]:
                 "valor": [1500.0],
                 "status": ["Não Pago"],
                 "vencimento": [10],
-                "quem": ["André"],
+                "quem": ["pessoa_a"],
                 "recorrente": [True],
                 "obs": [np.nan],
             }
