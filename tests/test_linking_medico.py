@@ -257,15 +257,6 @@ def test_score_baixo_gera_baixa_confianca(tmp_path):
     assert stats["baixa_confianca"] == 1
 
 
-@pytest.mark.xfail(
-    reason=(
-        "IRPF-02.x: ranking top-1 do linking_medico ainda não prioriza "
-        "tag_irpf=dedutivel_medico o suficiente quando 2 candidatas têm "
-        "quem_bate. Sub-sprint sucessora em backlog/sprint_irpf_02_x_"
-        "ranking_top1_tag_irpf.md."
-    ),
-    strict=True,
-)
 def test_dois_candidatos_pega_o_de_score_mais_alto(tmp_path):
     """2 transações candidatas: linka apenas a de maior score."""
     db = GrafoDB(tmp_path / "grafo.sqlite")

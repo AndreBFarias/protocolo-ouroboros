@@ -1,3 +1,10 @@
+---
+concluida_em: 2026-05-01
+decisao: removido teto do clamp em _calcular_score (mantido floor >=0); peso da aresta clampado em [0,1] no momento da gravacao via min(confidence, 1.0); confidence cru preservado na evidencia para auditoria
+entrega_real: src/transform/linking_medico.py (clamp upper removido, peso normalizado em adicionar_edge), tests/test_linking_medico.py (xfail removido), CHANGELOG entrada Fixed
+testes: 2.176 passed -> 2.177 passed; 3 xfailed -> 2 xfailed
+---
+
 # Sprint IRPF-02.x -- Ranking top-1 do linking_medico precisa peso para tag_irpf
 
 > **Slug ASCII**: `irpf_02_x_ranking_top1_tag_irpf`. Texto livre: "IRPF-02.x".
