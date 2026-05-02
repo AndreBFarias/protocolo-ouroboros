@@ -17,14 +17,17 @@ e nodes ``transação`` que comprovam o pagamento, aplicando heurística:
   - **Tag IRPF**: bonus se a transação já tem
     ``tag_irpf == "dedutivel_medico"`` (sinal forte do irpf_tagger).
 
-Score combinado em [0, 1]:
+Score combinado:
 
   score = base 1.0
         - 0.01 * delta_dias       (peso temporal: 0.01/dia, max 30 dias = 0.30)
         - 0.50 * diff_valor_pct   (peso valor: até 0.50)
         + 0.20 se cpf_bate (preferencial) ou +0.10 se quem_bate (fallback)
         + 0.10 se tag_irpf == "dedutivel_medico"
-        clampado em [0, 1]
+        floor em 0.0; sem teto interno (bonus extras criam separação no
+        ranking quando candidatas saturariam em 1.0). O ``peso`` gravado na
+        aresta é clampado em [0, 1] para preservar contrato do grafo;
+        o ``confidence`` na evidência preserva o valor cru para auditoria.
 
 Cria aresta apenas se ``score >= confidence_minimo`` (default 0.55, mais
 permissivo que linking genérico porque match médico é alto risco
@@ -115,8 +118,6 @@ def _calcular_score(
 
     if score < 0.0:
         score = 0.0
-    if score > 1.0:
-        score = 1.0
     return round(score, 4), round(diff_pct, 4)
 
 
@@ -252,7 +253,7 @@ def linkar_dedutivel_medico(
             src_id=documento.id,
             dst_id=top_node.id,
             tipo=EDGE_DEDUTIVEL_MEDICO,
-            peso=top_evidencia["confidence"],
+            peso=min(top_evidencia["confidence"], 1.0),
             evidencia=top_evidencia,
         )
         stats["linkados"] += 1

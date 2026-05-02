@@ -6,6 +6,26 @@ Todas as alterações relevantes do projeto estão documentadas aqui.
 
 ## [Unreleased]
 
+### Fixed
+
+- **Sprint IRPF-02.x: ranking top-1 do `linking_medico` desempata por `tag_irpf`.**
+  Quando duas candidatas para a mesma receita médica tinham `quem_bate=True`,
+  ambas saturavam em score `1.0` por causa do clamp upper, e o sort estável
+  devolvia a primeira inserida — sem nunca dar preferência à candidata com
+  `tag_irpf=dedutivel_medico` (sinal forte do `irpf_tagger`). Fix cirúrgico
+  em `src/transform/linking_medico.py::_calcular_score`: removido o teto
+  do clamp (`if score > 1.0: score = 1.0` apagado), mantido apenas o floor
+  `>= 0`. Bonus extras agora criam separação real no ranking. O contrato
+  externo do grafo é preservado: o `peso` gravado na aresta continua
+  clampado em `[0, 1]` via `min(top_evidencia["confidence"], 1.0)` no
+  ponto de gravação (`db.adicionar_edge`), e a evidência registra o
+  `confidence` cru para auditoria. Docstring atualizada com a nova
+  semântica. Teste `test_dois_candidatos_pega_o_de_score_mais_alto`
+  perdeu o `@pytest.mark.xfail(strict=True)` e agora passa em runtime
+  real, validando `assert arestas[0].dst_id == tx_forte.id`. Spec
+  movida de `docs/sprints/backlog/` para `docs/sprints/concluidos/`.
+  Total: `2.176 → 2.177 passed`, `3 → 2 xfailed`.
+
 ### Added
 
 - **Sprint MOB-bridge-3: marcos auto-gerados pelo backend Python.**
