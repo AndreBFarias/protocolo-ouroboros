@@ -22,6 +22,7 @@ from __future__ import annotations
 from datetime import date, datetime
 from pathlib import Path
 
+from src.marcos_auto import gerar_marcos_auto
 from src.mobile_cache.atomic import write_json_atomic
 from src.mobile_cache.financas_cache import gerar_financas_cache
 from src.mobile_cache.humor_heatmap import gerar_humor_heatmap
@@ -30,6 +31,7 @@ __all__ = [
     "gerar_humor_heatmap",
     "gerar_financas_cache",
     "gerar_todos",
+    "gerar_marcos_auto",
     "write_json_atomic",
 ]
 
@@ -57,6 +59,18 @@ def gerar_todos(
     """
     vault = Path(vault_root).expanduser()
     paths: list[Path] = []
+    # Marcos auto-gerados rodam ANTES dos caches (Sprint MOB-bridge-3).
+    # Caches ignoram marcos por design; gerar_marcos_auto escreve em
+    # marcos/ via wrapper atômico. Erro em marcos não deve derrubar
+    # o pipeline de caches -- caches são prioridade pelo contrato Mobile.
+    try:
+        gerar_marcos_auto(vault)
+    except Exception as exc:  # noqa: BLE001 -- defesa em depth
+        from src.utils.logger import configurar_logger
+
+        configurar_logger("mobile_cache").warning(
+            "marcos_auto falhou (caches seguem): %s", exc
+        )
     paths.append(
         gerar_humor_heatmap(
             vault,
