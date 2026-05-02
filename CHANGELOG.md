@@ -8,6 +8,38 @@ Todas as alterações relevantes do projeto estão documentadas aqui.
 
 ### Added
 
+- **Sprint MOB-bridge-3: marcos auto-gerados pelo backend Python.**
+  Pacote novo `src/marcos_auto/` com cinco módulos: `dedup.py`
+  (`hash_marco` via SHA-256 truncado em 12 chars sobre
+  `tipo|data|descricao`, idempotente), `parser.py` (lê frontmatter
+  YAML do Vault Mobile com fallback defensivo a YAML malformado),
+  `escrita.py` (`write_md_atomic` reaproveita o padrão `.tmp` +
+  `os.replace` da MOB-bridge-2 adaptado para Markdown com
+  frontmatter), `heuristicas.py` (cinco funções puras:
+  `tres_treinos_em_sete_dias`, `retorno_apos_hiato`,
+  `sete_dias_humor`, `trinta_dias_sem_trigger`,
+  `primeira_vitoria_da_semana`), e
+  `__init__.py::gerar_marcos_auto(vault_root)` que aplica todas as
+  heurísticas em sequência, calcula hash de cada marco e grava
+  `marcos/<data>-auto-<hash>.md` apenas se o arquivo não existe
+  (skip silencioso para idempotência). Plugado em
+  `mobile_cache.gerar_todos` como passo anterior aos caches; falha
+  em marcos não derruba caches (defesa em depth). Cooperação
+  client/backend (M11): mesmo algoritmo de hash garante que arquivos
+  nunca duplicam quando ambos rodam. Marcos manuais existentes
+  (filename sem `-auto-`) nunca são sobrescritos. Descrições secas
+  conforme ADR-0005 (sem motivacional, sem comparativos negativos).
+  32 testes novos: 8 cobrindo hash dedup determinístico, 16 cobrindo
+  as cinco heurísticas (incluindo separação por pessoa, ausência de
+  disparo prematuro, idempotência por autor), e 8 cobrindo
+  orquestração com vault sintético em `tmp_path` (preservação de
+  marcos manuais, robustez a YAML quebrado, casamento entre filename
+  e hash do frontmatter). Validado em runtime real no Vault em
+  `~/Protocolo-Ouroboros/`: 3 treinos em janela curta geraram 1
+  marco `tres_treinos_em_sete_dias`; diário emocional `modo: vitoria`
+  gerou 1 marco `primeira_vitoria_da_semana`; segunda execução de
+  `make sync` manteve contagem total estável (idempotência
+  confirmada). Baseline 2.144 → 2.176 passed (+32, zero regressão).
 - **Sprint MOB-bridge-2: geradores de cache JSON para o Mobile.** Pacote
   novo `src/mobile_cache/` com três módulos: `atomic.py`
   (`write_json_atomic` via `.tmp` + `os.replace`), `humor_heatmap.py`
