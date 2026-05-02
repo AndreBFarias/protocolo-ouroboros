@@ -391,26 +391,46 @@ class TestLinkingComItem:
 
 
 class TestAlertaIngestor:
-    @pytest.mark.xfail(
-        reason=(
-            "GARANTIA-EXPIRANDO-01: extrator/ingestor passa de >30 dias "
-            "direto para EXPIRADA, sem warning intermediário de "
-            "'expira em ... <=30 dias'. Sub-sprint sucessora em backlog/"
-            "sprint_garantia_expirando_01_warning_intermediario.md."
-        ),
-        strict=True,
-    )
     def test_ingestor_loga_warning_quando_expirando(self, grafo_temp, caplog):
-        """Propriedade `expirando=True` no dict faz ingestor logar warning."""
+        """Propriedade `expirando=True` no dict faz ingestor logar warning.
+
+        Usa _parse_garantia direto com hoje-congelado (2026-04-20) para
+        garantir que a fixture (data_fim 2026-04-30) caia em janela
+        expirando=True (10 dias restantes), independente da data real do
+        runner. Logger captado é `graph.ingestor_especiais` -- foi para
+        onde `ingerir_garantia` migrou na Sprint ANTI-MIGUE-08 (re-exportado
+        em ingestor_documento por contrato público).
+        """
         import logging
 
-        caplog.set_level(logging.WARNING, logger="graph.ingestor_documento")
-        extrator = ExtratorGarantiaFabricante(EXPIRANDO, grafo=grafo_temp)
-        extrator.extrair_garantias(EXPIRANDO, texto_override=_ler(EXPIRANDO))
+        caplog.set_level(logging.WARNING, logger="graph.ingestor_especiais")
+        parsed = _parse_garantia(_ler(EXPIRANDO), hoje=date(2026, 4, 20))
+        assert parsed is not None and parsed["expirando"] is True
+        ingerir_garantia(grafo_temp, parsed, caminho_arquivo=EXPIRANDO)
         mensagens = [r.message for r in caplog.records]
         assert any("expira em" in m and "<=30 dias" in m for m in mensagens), (
             f"esperava warning de 'expira em ... <=30 dias', mas só tenho: {mensagens}"
         )
+
+    def test_ingestor_nao_loga_warning_quando_vigente_acima_30d(
+        self, grafo_temp, caplog
+    ):
+        """Garantia com >30 dias restantes não dispara warning de proximidade.
+
+        Acceptance #3 da sub-sprint GARANTIA-EXPIRANDO-01: confirma o
+        silêncio quando expirando=False. Usa Electrolux 12m (data_inicio
+        2026-02-10 -> data_fim ~2027-02) com hoje-congelado em 2026-04-20.
+        """
+        import logging
+
+        caplog.set_level(logging.WARNING, logger="graph.ingestor_especiais")
+        parsed = _parse_garantia(_ler(ELECTROLUX_12M), hoje=date(2026, 4, 20))
+        assert parsed is not None and parsed["expirando"] is False
+        ingerir_garantia(grafo_temp, parsed, caminho_arquivo=ELECTROLUX_12M)
+        mensagens = [r.message for r in caplog.records]
+        assert not any(
+            "expira em" in m and "<=30 dias" in m for m in mensagens
+        ), f"warning de proximidade não deveria disparar: {mensagens}"
 
 
 # ============================================================================
