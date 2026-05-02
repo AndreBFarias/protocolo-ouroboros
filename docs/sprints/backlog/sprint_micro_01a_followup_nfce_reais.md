@@ -4,6 +4,57 @@
 
 **Origem**: achado da execução de MICRO-01a em 2026-04-30. Padrão (k) BRIEF: hipótese da spec original assumia que faltava criar mecanismo de linking, mas `src/graph/linking.py` (Sprint 48) já cobre `nfce_modelo_65`. Os 2 NFCe atuais no grafo são placeholders PoC sem transação correspondente.
 
+## Atualização 2026-05-01 (validação executada)
+
+Ciclo `./run.sh --full-cycle` rodado em 2026-05-01 com 3 PDFs em
+`data/raw/andre/nfs_fiscais/nfce/`. Achados que invalidam parcialmente a
+premissa original e geram o gap real:
+
+1. **Os 2 NFCe nodes no grafo (id 7557 e 7558) NÃO são placeholders PoC.**
+   `arquivo_origem` confirma: são `nfce_americanas_compra.pdf` (R$ 629.98)
+   e `nfce_americanas_supermercado.pdf` (R$ 595.52), ambos com
+   `data_emissao=2026-04-19`. Foram ingeridos pelo `ExtratorNfcePDF` na
+   primeira execução real do pipeline com NFCe reais. A spec original
+   classificou erradamente como PoC porque as chaves de acesso parecem
+   sintéticas (`53260400776574016079653040000432601...`), mas o conteúdo
+   é real (Americanas, valores plausíveis).
+2. **Cada NFCe tem 33 items granulares** linkados via aresta `contem_item`.
+   Drill-down 1 salto (NFCe -> item) funciona; o que falha é o segundo
+   salto (transacao -> documento_de -> NFCe), porque...
+3. **Não há transação bancária no extrato OFX/CSV** dentro da janela
+   `linking.py` para nfce_modelo_65 (janela_dias=1, diff_valor_pct=0.01,
+   confidence_minimo=0.85) com valor próximo de R$ 629.98 ou R$ 595.52
+   em data próxima a 2026-04-19. Hipóteses não exclusivas:
+   - Compra paga em dinheiro físico (não rastreável no OFX).
+   - Compra paga via cartão de crédito que ainda não fechou fatura.
+   - PIX/Picpay/voucher fora do extrato bancário importado.
+4. **`fornecedor_cnpj` ficou `None`** nos 2 NFCe — extrator não conseguiu
+   extrair via OCR/parser. Isso degrada chance de match mesmo se houvesse
+   transação cadastrada com CNPJ Americanas.
+5. **Achado colateral** (não-MICRO-01a, mas relacionado): o 3º PDF
+   `NFCE_2026-04-19_6c1cc203.pdf` foi capturado pelo `ExtratorCupomGarantiaEstendida`
+   e gerou "2 bilhete(s) ingerido(s)" em vez de 1 NFC-e. O classificador
+   de extrator confundiu NFCe consumidor com bilhete de garantia
+   estendida SUSEP. Sub-sprint sucessora candidata:
+   `MICRO-01a-FOLLOWUP-2_NFCE_VS_GARANTIA_CLASSIFICADOR` -- não aberta
+   ainda; aguarda decisão do dono se quer atacar agora ou registrar
+   como achado solto.
+
+**Estado pós-validação**: `transacoes_com_documento=25`, `transacoes_com_items=0`,
+`nfce_no_grafo=2 (REAIS)`, `nfce_com_documento_de=0`. Acceptance criteria
+desta spec (`transacoes_com_items >= 1`) NÃO cumprida -- não por falha
+do código, mas por ausência de dado bancário casável. Spec **permanece
+em backlog** com escopo refinado: aguarda compra-amostra paga via OFX
+rastreável (cartão de débito ou PIX dentro da janela) para validar
+walk completo.
+
+A spec proíbe explicitamente "ajustar config de linking sem evidência
+empírica de que produz mais matches" -- mantemos a configuração estrita
+(janela 1d, diff 1%, confidence 85%) para preservar precisão sobre
+recall em NFCe.
+
+
+
 **Prioridade**: P2
 **Onda**: 4 (continuação MICRO)
 **Esforço estimado**: 2h
