@@ -6,6 +6,36 @@ Todas as alterações relevantes do projeto estão documentadas aqui.
 
 ## [Unreleased]
 
+### Investigated
+
+- **Sprint MICRO-01a-FOLLOWUP-NFCE-REAIS: validação executada em 2026-05-01,
+  spec permanece em backlog com escopo refinado.**
+  Ciclo `./run.sh --full-cycle` rodado com 3 PDFs em
+  `data/raw/andre/nfs_fiscais/nfce/`. Achados que invalidam parcialmente
+  a premissa original e identificam o gap real:
+  (1) Os 2 NFCe nodes no grafo (id 7557 e 7558) NÃO são placeholders
+  PoC como a spec dizia: `arquivo_origem` confirma origem em
+  `nfce_americanas_compra.pdf` (R$ 629.98) e `nfce_americanas_supermercado.pdf`
+  (R$ 595.52), com `data_emissao=2026-04-19`. Cada NFCe tem 33 items
+  granulares linkados via `contem_item`.
+  (2) `transacoes_com_items` continua em `0` porque `linking.py` não
+  encontrou transação bancária em janela `±1 dia` com diferença de valor
+  `<= 1%` para nenhum dos 2 NFCe (pagamento provavelmente em dinheiro,
+  cartão crédito sem fatura fechada, ou PIX/voucher fora do OFX).
+  (3) `fornecedor_cnpj` ficou `None` nos NFCe — extrator não recuperou
+  via OCR, degradando recall mesmo se transação CNPJ-Americanas existisse.
+  (4) Achado colateral: o 3º PDF `NFCE_2026-04-19_6c1cc203.pdf` foi
+  capturado pelo `ExtratorCupomGarantiaEstendida` ao invés do
+  `ExtratorNfcePDF` ("2 bilhete(s) ingerido(s)" em vez de 1 NFC-e) —
+  misclassificação do roteador de extrator. Sub-sprint candidata
+  `MICRO-01a-FOLLOWUP-2_NFCE_VS_GARANTIA_CLASSIFICADOR` registrada como
+  achado, não aberta automaticamente (aguarda decisão do dono).
+  Spec atualizada em `docs/sprints/backlog/sprint_micro_01a_followup_nfce_reais.md`
+  com seção "Atualização 2026-05-01" detalhando achados. Mantemos config
+  estrita do linking NFCe (janela 1d, diff 1%, confidence 85%) por
+  precisão > recall — a spec original proíbe tuning prematuro sem
+  evidência empírica.
+
 ### Fixed
 
 - **Sprint GARANTIA-EXPIRANDO-01: warning intermediário de proximidade no ingestor.**
