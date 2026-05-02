@@ -8,6 +8,26 @@ Todas as alterações relevantes do projeto estão documentadas aqui.
 
 ### Fixed
 
+- **Sprint GARANTIA-EXPIRANDO-01: warning intermediário de proximidade no ingestor.**
+  Diagnóstico revelou bug duplo no teste `test_ingestor_loga_warning_quando_expirando`
+  (não no extrator/ingestor como a spec hipotetizou): (a) o caplog capturava
+  o logger `graph.ingestor_documento`, mas após Sprint ANTI-MIGUE-08 a função
+  `ingerir_garantia` migrou para `src.graph.ingestor_especiais` (re-exportada
+  por contrato público), e logger real é `graph.ingestor_especiais`; (b) o
+  teste chamava `extrair_garantias()` sem congelar `hoje`, e a fixture
+  `garantia_expirando.txt` (data_fim 2026-04-30) já era EXPIRADA em runtime
+  real (2026-05-01), nunca disparando o branch `if garantia.get("expirando")`
+  que já existia no ingestor (`ingestor_especiais.py:354-360`). Fix cirúrgico
+  no teste: parsear via `_parse_garantia(_ler(EXPIRANDO), hoje=date(2026, 4, 20))`
+  diretamente, depois invocar `ingerir_garantia(grafo_temp, parsed, ...)` —
+  garante `expirando=True` independente da data do runner. Logger ajustado
+  para `graph.ingestor_especiais`. `@pytest.mark.xfail(strict=True)` removido.
+  Cobertura adicional: novo `test_ingestor_nao_loga_warning_quando_vigente_acima_30d`
+  com fixture Electrolux 12m (data_fim ~2027) confirma silêncio quando
+  `expirando=False` (acceptance #3 da sub-sprint). Spec movida de
+  `docs/sprints/backlog/` para `docs/sprints/concluidos/`. Total: `2.177 →
+  2.179 passed`, `2 → 1 xfailed`.
+
 - **Sprint IRPF-02.x: ranking top-1 do `linking_medico` desempata por `tag_irpf`.**
   Quando duas candidatas para a mesma receita médica tinham `quem_bate=True`,
   ambas saturavam em score `1.0` por causa do clamp upper, e o sort estável
