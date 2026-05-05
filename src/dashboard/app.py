@@ -35,10 +35,18 @@ from src.dashboard.dados import (  # noqa: E402
 )
 from src.dashboard.paginas import (  # noqa: E402
     analise_avancada,
+    be_ciclo,
+    be_cruzamentos,
     be_diario,
+    be_editor_toml,
     be_eventos,
     be_hoje,
     be_humor,
+    be_medidas,
+    be_memorias,
+    be_privacidade,
+    be_recap,
+    be_rotina,
     busca,
     catalogacao,
     categorias,
@@ -605,46 +613,35 @@ def main() -> None:
             # timeline cronológica DESC + sidebar lateral "Bairros
             # frequentes" agregada do cache (NUNCA hardcoded).
             be_eventos.renderizar(dados, periodo, pessoa, ctx)
+        # Sprint UX-RD-19: as 8 abas restantes ganharam página real.
+        # Mapeamento aba (12 declaradas) -> página (8 entregues):
+        # Medidas->be_medidas; Treinos+Marcos->be_memorias (sub-abas);
+        # Alarmes+Contadores+Tarefas->be_rotina; Ciclo->be_ciclo;
+        # Recap->be_recap. As páginas Cruzamentos/Privacidade/Editor TOML
+        # do mockup ficam acessíveis via expanders dentro de Recap para
+        # preservar o invariante N=12 abas em ABAS_POR_CLUSTER["Bem-estar"].
         with tab_be_medidas:
-            st.info(
-                "Aba 'Medidas' será habilitada na sprint UX-RD-20 "
-                "(peso, pressão, glicose com sparkline)."
-            )
+            be_medidas.renderizar(dados, periodo, pessoa, ctx)
         with tab_be_treinos:
-            st.info(
-                "Aba 'Treinos' será habilitada na sprint UX-RD-21 "
-                "(rotinas semanais + carga de treino)."
-            )
+            be_memorias.renderizar(dados, periodo, pessoa, ctx)
         with tab_be_marcos:
-            st.info(
-                "Aba 'Marcos' será habilitada na sprint UX-RD-22 "
-                "(milestones de saúde, vida e relacionamento)."
-            )
+            be_memorias.renderizar(dados, periodo, pessoa, ctx)
         with tab_be_alarmes:
-            st.info(
-                "Aba 'Alarmes' será habilitada na sprint UX-RD-23 "
-                "(medicação, lembretes recorrentes)."
-            )
+            be_rotina.renderizar(dados, periodo, pessoa, ctx)
         with tab_be_contadores:
-            st.info(
-                "Aba 'Contadores' será habilitada na sprint UX-RD-24 "
-                "(streaks como 'X dias sem fumar')."
-            )
+            be_rotina.renderizar(dados, periodo, pessoa, ctx)
         with tab_be_ciclo:
-            st.info(
-                "Aba 'Ciclo' será habilitada na sprint UX-RD-25 "
-                "(ciclo menstrual, fertilidade)."
-            )
+            be_ciclo.renderizar(dados, periodo, pessoa, ctx)
         with tab_be_tarefas:
-            st.info(
-                "Aba 'Tarefas' será habilitada na sprint UX-RD-26 "
-                "(GTD pessoal integrado ao vault)."
-            )
+            be_rotina.renderizar(dados, periodo, pessoa, ctx)
         with tab_be_recap:
-            st.info(
-                "Aba 'Recap' será habilitada na sprint UX-RD-27 "
-                "(resumo semanal/mensal de Bem-estar)."
-            )
+            be_recap.renderizar(dados, periodo, pessoa, ctx)
+            with st.expander("Cruzamentos", expanded=False):
+                be_cruzamentos.renderizar(dados, periodo, pessoa, ctx)
+            with st.expander("Privacidade A ↔ B", expanded=False):
+                be_privacidade.renderizar(dados, periodo, pessoa, ctx)
+            with st.expander("Editor TOML (rotina)", expanded=False):
+                be_editor_toml.renderizar(dados, periodo, pessoa, ctx)
 
     else:
         # Defensivo: cluster inválido em session_state. Não deveria ocorrer
