@@ -84,9 +84,24 @@ MAPA_ABA_PARA_CLUSTER: dict[str, str] = {
     # MAPA_ABA_PARA_CLUSTER -- sem isso, navegar via deep-link
     # ?tab=Inbox falharia silenciosamente.
     "Inbox": "Inbox",
+    # Sprint UX-RD-17: cluster Bem-estar expande para 12 abas. Cada uma
+    # entra aqui mantendo o invariante N-para-N com ABAS_POR_CLUSTER em
+    # app.py. As que ainda não têm página real caem em fallback graceful
+    # dentro do dispatcher -- a presença no mapa apenas habilita o
+    # deep-link ?tab=<X>. Alias "Diário emocional" preservado para
+    # retrocompat com URLs anteriores à sprint UX-RD-17.
     "Hoje": "Bem-estar",
     "Humor": "Bem-estar",
-    "Diário emocional": "Bem-estar",
+    "Diário": "Bem-estar",
+    "Eventos": "Bem-estar",
+    "Medidas": "Bem-estar",
+    "Treinos": "Bem-estar",
+    "Marcos": "Bem-estar",
+    "Alarmes": "Bem-estar",
+    "Contadores": "Bem-estar",
+    "Ciclo": "Bem-estar",
+    "Tarefas": "Bem-estar",
+    "Recap": "Bem-estar",
     "Skills D7": "Sistema",
     # Sprint UX-RD-05: aba "Styleguide" entra no cluster Sistema.
     # Mantém invariante N-para-N com ABAS_POR_CLUSTER["Sistema"].
@@ -141,6 +156,10 @@ CLUSTER_ALIASES: dict[str, str] = {"Hoje": "Home", "Dinheiro": "Finanças"}
 # ``ler_filtros_da_url`` antes de gravar em session_state.
 ABA_ALIASES_LEGACY: dict[str, str] = {
     "Validação por Arquivo": "Extração Tripla",
+    # Sprint UX-RD-17: cluster Bem-estar adotou nomenclatura mais curta
+    # ("Diário" em vez de "Diário emocional"). URLs antigas resolvem o
+    # alias antes de cair no dispatcher.
+    "Diário emocional": "Diário",
 }
 
 # Chave canônica em session_state para o cluster ativo. Namespace próprio,

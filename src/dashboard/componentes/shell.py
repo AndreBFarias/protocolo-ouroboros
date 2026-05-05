@@ -94,13 +94,21 @@ CLUSTERS_REDESIGN: tuple[dict, ...] = (
     {
         "nome": "Bem-estar",
         "abas": (
-            {"nome": "Hoje", "implementada": False, "sprint_alvo": "UX-RD-16"},
-            {"nome": "Humor", "implementada": False, "sprint_alvo": "UX-RD-17"},
-            {
-                "nome": "Diário emocional",
-                "implementada": False,
-                "sprint_alvo": "UX-RD-18",
-            },
+            # Sprint UX-RD-17: Hoje e Humor estão implementadas; demais
+            # 10 abas seguem com fallback graceful e sprint_alvo
+            # apontando para a sprint que vai habilitar cada uma.
+            {"nome": "Hoje", "implementada": True},
+            {"nome": "Humor", "implementada": True},
+            {"nome": "Diário", "implementada": False, "sprint_alvo": "UX-RD-18"},
+            {"nome": "Eventos", "implementada": False, "sprint_alvo": "UX-RD-19"},
+            {"nome": "Medidas", "implementada": False, "sprint_alvo": "UX-RD-20"},
+            {"nome": "Treinos", "implementada": False, "sprint_alvo": "UX-RD-21"},
+            {"nome": "Marcos", "implementada": False, "sprint_alvo": "UX-RD-22"},
+            {"nome": "Alarmes", "implementada": False, "sprint_alvo": "UX-RD-23"},
+            {"nome": "Contadores", "implementada": False, "sprint_alvo": "UX-RD-24"},
+            {"nome": "Ciclo", "implementada": False, "sprint_alvo": "UX-RD-25"},
+            {"nome": "Tarefas", "implementada": False, "sprint_alvo": "UX-RD-26"},
+            {"nome": "Recap", "implementada": False, "sprint_alvo": "UX-RD-27"},
         ),
     },
     {

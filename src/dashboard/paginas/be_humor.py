@@ -1,0 +1,414 @@
+"""Cluster Bem-estar · aba "Humor" (UX-RD-17).
+
+Heatmap calendário 13 colunas × 7 linhas (91 dias) que consome o cache
+JSON gerado por :func:`gerar_humor_heatmap` e renderiza em três modos:
+
+* ``pessoa_a`` único.
+* ``pessoa_b`` único.
+* ``ambos`` -- overlay diagonal 50% (mockup 18).
+
+Stats dos últimos 30 dias (média, registros, melhor, pior) ficam na
+coluna direita. Detalhe ao clicar em um dia é resolvido por
+``st.selectbox`` -- ao selecionar uma data válida, mostra os
+4 valores (humor/energia/ansiedade/foco) das pessoas A e B.
+
+Lições UX-RD aplicadas: HTML via :func:`minificar`, fallback graceful
+quando o cache não existe, contrato uniforme
+``renderizar(dados, periodo, pessoa, ctx)``.
+"""
+
+from __future__ import annotations
+
+import json
+from datetime import date, timedelta
+from pathlib import Path
+from typing import Any
+
+import pandas as pd
+import streamlit as st
+
+from src.dashboard.componentes.heatmap_humor import (
+    cor_para_humor,
+    gerar_estilos_heatmap,
+    gerar_heatmap_html,
+    gerar_legenda_html,
+)
+from src.dashboard.componentes.html_utils import minificar
+from src.dashboard.tema import CORES
+from src.mobile_cache.humor_heatmap import gerar_humor_heatmap
+from src.mobile_cache.varrer_vault import descobrir_vault_root
+
+PERIODO_HEATMAP_DIAS: int = 91
+
+
+def renderizar(
+    dados: dict[str, pd.DataFrame],
+    periodo: str,
+    pessoa: str,
+    ctx: dict | None = None,
+) -> None:
+    """Renderiza a página Bem-estar / Humor.
+
+    Args:
+        dados: estrutura padrão de DataFrames (não consumida).
+        periodo: período da sidebar (ignorado -- sempre 91 dias).
+        pessoa: pessoa selecionada na sidebar; usado como modo default.
+        ctx: contexto extra (ignorado).
+    """
+    del dados, periodo, ctx
+
+    st.markdown(gerar_estilos_heatmap(), unsafe_allow_html=True)
+    st.markdown(_estilos_locais(), unsafe_allow_html=True)
+
+    hoje = date.today()
+    vault_root = descobrir_vault_root()
+
+    payload = _carregar_payload_heatmap(vault_root)
+    items = payload.get("celulas", []) if payload else []
+    stats_payload = payload.get("estatisticas", {}) if payload else {}
+
+    st.markdown(_page_header_html(len(items)), unsafe_allow_html=True)
+
+    if vault_root is None:
+        st.warning(
+            "Vault Bem-estar não encontrado. Configure `OUROBOROS_VAULT` "
+            "para visualizar o heatmap de humor."
+        )
+        return
+
+    if not payload:
+        st.info(
+            "Nenhum cache `humor-heatmap.json` encontrado no vault. "
+            "Registre humor pela aba Hoje ou rode "
+            "`python -m src.mobile_cache.humor_heatmap` para gerar o cache."
+        )
+        return
+
+    coluna_esq, coluna_dir = st.columns([1.8, 1])
+
+    pessoa_default = pessoa if pessoa in {"pessoa_a", "pessoa_b"} else "ambos"
+
+    with coluna_esq:
+        modo = st.radio(
+            "Modo de visualização",
+            options=["pessoa_a", "pessoa_b", "ambos"],
+            index=["pessoa_a", "pessoa_b", "ambos"].index(pessoa_default),
+            horizontal=True,
+            format_func=lambda v: {
+                "pessoa_a": "Pessoa A",
+                "pessoa_b": "Pessoa B",
+                "ambos": "Sobreposto (50% A + 50% B)",
+            }[v],
+            key="be_humor_modo",
+        )
+
+        st.markdown(
+            gerar_heatmap_html(
+                items,
+                pessoa=modo,
+                periodo_dias=PERIODO_HEATMAP_DIAS,
+                hoje=hoje,
+            ),
+            unsafe_allow_html=True,
+        )
+        st.markdown(gerar_legenda_html(), unsafe_allow_html=True)
+
+        _renderizar_detalhe_dia(items, hoje)
+
+    with coluna_dir:
+        _renderizar_stats(items, stats_payload, hoje, modo)
+
+
+# ---------------------------------------------------------------------------
+# Page header
+# ---------------------------------------------------------------------------
+
+
+def _page_header_html(qtd_celulas: int) -> str:
+    return minificar(
+        f"""
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">BEM-ESTAR · HUMOR</h1>
+            <p class="page-subtitle">
+              Heatmap 13×7 lê <code style="color:{CORES['superfluo']};
+              background:{CORES['fundo_inset']};padding:1px 6px;
+              border-radius:2px;">.ouroboros/cache/humor-heatmap.json</code>
+              gerado por ``mobile_cache.humor_heatmap``. Modo Pessoa A,
+              Pessoa B ou sobreposto. Vazia = sem registro.
+            </p>
+          </div>
+          <div class="page-meta">
+            <span class="sprint-tag">UX-RD-17</span>
+            <span class="pill pill-d7-graduado">{qtd_celulas} células</span>
+          </div>
+        </div>
+        """
+    )
+
+
+# ---------------------------------------------------------------------------
+# Cache loader
+# ---------------------------------------------------------------------------
+
+
+def _carregar_payload_heatmap(vault_root: Path | None) -> dict[str, Any] | None:
+    """Lê ``<vault>/.ouroboros/cache/humor-heatmap.json``.
+
+    Se o arquivo não existir, tenta gerá-lo on-the-fly antes de
+    desistir (graceful, mas não-mascarador: se o vault realmente não
+    tem dailies, ``items`` virá vazio e a UI mostra fallback).
+    """
+    if vault_root is None:
+        return None
+    arquivo = vault_root / ".ouroboros" / "cache" / "humor-heatmap.json"
+    if not arquivo.exists():
+        try:
+            gerar_humor_heatmap(vault_root)
+        except OSError:
+            return None
+    if not arquivo.exists():
+        return None
+    try:
+        return json.loads(arquivo.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+
+
+# ---------------------------------------------------------------------------
+# Stats coluna direita
+# ---------------------------------------------------------------------------
+
+
+def _renderizar_stats(
+    items: list[dict[str, Any]],
+    stats_payload: dict[str, Any],
+    hoje: date,
+    modo: str,
+) -> None:
+    pessoa_foco = "pessoa_a" if modo == "ambos" else modo
+    stats_pessoa = stats_payload.get(pessoa_foco, {}) or {}
+
+    media_30d = stats_pessoa.get("media_humor_30d", 0.0)
+    registros_30d = stats_pessoa.get("registros_30d", 0)
+
+    melhor, pior = _melhor_pior_30d(items, hoje, pessoa_foco)
+
+    st.markdown(
+        _stat_card_html(
+            "média 30 dias",
+            f"{media_30d:.2f}/5" if media_30d else "—",
+            cor=CORES["destaque"],
+        ),
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        _stat_card_html(
+            "registros · 30 dias",
+            f"{registros_30d}/30",
+            cor=CORES["neutro"],
+        ),
+        unsafe_allow_html=True,
+    )
+    col_melhor, col_pior = st.columns(2)
+    with col_melhor:
+        st.markdown(
+            _stat_card_html(
+                "melhor",
+                f"{melhor}/5" if melhor else "—",
+                cor=CORES["positivo"],
+            ),
+            unsafe_allow_html=True,
+        )
+    with col_pior:
+        st.markdown(
+            _stat_card_html(
+                "pior",
+                f"{pior}/5" if pior else "—",
+                cor=CORES["negativo"],
+            ),
+            unsafe_allow_html=True,
+        )
+
+
+def _melhor_pior_30d(
+    items: list[dict[str, Any]],
+    hoje: date,
+    pessoa: str,
+) -> tuple[int, int]:
+    """Devolve ``(melhor, pior)`` humor nos últimos 30 dias para ``pessoa``."""
+    limite = hoje - timedelta(days=29)
+    valores: list[int] = []
+    for it in items:
+        if it.get("autor") != pessoa:
+            continue
+        data_iso = it.get("data")
+        if not isinstance(data_iso, str):
+            continue
+        try:
+            d_obj = date.fromisoformat(data_iso)
+        except ValueError:
+            continue
+        if not (limite <= d_obj <= hoje):
+            continue
+        humor = it.get("humor")
+        if isinstance(humor, int) and 1 <= humor <= 5:
+            valores.append(humor)
+    if not valores:
+        return 0, 0
+    return max(valores), min(valores)
+
+
+def _stat_card_html(label: str, valor: str, *, cor: str) -> str:
+    return minificar(
+        f"""
+        <div class="stat-card-be">
+          <div class="stat-label">{label}</div>
+          <div class="stat-valor" style="color:{cor};">{valor}</div>
+        </div>
+        """
+    )
+
+
+# ---------------------------------------------------------------------------
+# Detalhe do dia
+# ---------------------------------------------------------------------------
+
+
+def _renderizar_detalhe_dia(
+    items: list[dict[str, Any]],
+    hoje: date,
+) -> None:
+    """Selectbox de data com detalhe (humor/energia/ansiedade/foco) por pessoa."""
+    datas_disponiveis = sorted(
+        {it["data"] for it in items if isinstance(it.get("data"), str)},
+        reverse=True,
+    )
+    if not datas_disponiveis:
+        return
+
+    with st.expander("Detalhe do dia", expanded=False):
+        escolhida = st.selectbox(
+            "Selecionar dia",
+            options=datas_disponiveis,
+            key="be_humor_detalhe_dia",
+        )
+
+        registros_dia = [it for it in items if it.get("data") == escolhida]
+        if not registros_dia:
+            st.info("Nenhum registro nesse dia.")
+            return
+
+        for reg in registros_dia:
+            autor = reg.get("autor", "—")
+            humor = reg.get("humor")
+            energia = reg.get("energia")
+            ansiedade = reg.get("ansiedade")
+            foco = reg.get("foco")
+            cor_humor_hex = cor_para_humor(humor)
+            st.markdown(
+                minificar(
+                    f"""
+                    <div class="detalhe-pessoa-card">
+                      <div class="detalhe-pessoa-head">
+                        <span class="detalhe-pessoa-nome">{autor}</span>
+                        <span class="detalhe-pessoa-dia">{escolhida}</span>
+                      </div>
+                      <div class="detalhe-pessoa-grid">
+                        <div><div class="l">humor</div>
+                          <div class="v" style="color:{cor_humor_hex};">{humor}/5</div>
+                        </div>
+                        <div><div class="l">energia</div>
+                          <div class="v">{energia}/5</div>
+                        </div>
+                        <div><div class="l">ansiedade</div>
+                          <div class="v">{ansiedade}/5</div>
+                        </div>
+                        <div><div class="l">foco</div>
+                          <div class="v">{foco}/5</div>
+                        </div>
+                      </div>
+                    </div>
+                    """
+                ),
+                unsafe_allow_html=True,
+            )
+
+
+# ---------------------------------------------------------------------------
+# CSS local
+# ---------------------------------------------------------------------------
+
+
+def _estilos_locais() -> str:
+    return minificar(
+        f"""
+        <style>
+          .stat-card-be {{
+            background: {CORES['card_fundo']};
+            border: 1px solid {CORES['card_elevado']};
+            border-radius: 6px;
+            padding: 14px;
+            margin-bottom: 8px;
+          }}
+          .stat-card-be .stat-label {{
+            font-family: monospace;
+            font-size: 11px;
+            letter-spacing: 0.10em;
+            text-transform: uppercase;
+            color: {CORES['texto_muted']};
+            margin-bottom: 4px;
+          }}
+          .stat-card-be .stat-valor {{
+            font-family: monospace;
+            font-size: 26px;
+            font-weight: 500;
+          }}
+          .detalhe-pessoa-card {{
+            background: {CORES['card_fundo']};
+            border: 1px solid {CORES['card_elevado']};
+            border-left: 3px solid {CORES['destaque']};
+            border-radius: 6px;
+            padding: 12px 14px;
+            margin-bottom: 8px;
+          }}
+          .detalhe-pessoa-head {{
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 6px;
+          }}
+          .detalhe-pessoa-nome {{
+            font-family: monospace;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: {CORES['texto_sec']};
+          }}
+          .detalhe-pessoa-dia {{
+            font-family: monospace;
+            font-size: 11px;
+            color: {CORES['texto_muted']};
+          }}
+          .detalhe-pessoa-grid {{
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+          }}
+          .detalhe-pessoa-grid .l {{
+            font-size: 10px;
+            color: {CORES['texto_muted']};
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+          }}
+          .detalhe-pessoa-grid .v {{
+            font-family: monospace;
+            font-size: 16px;
+            color: {CORES['texto']};
+          }}
+        </style>
+        """
+    )
+
+
+# "Conhece-te a ti mesmo." -- Sócrates

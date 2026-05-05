@@ -35,6 +35,8 @@ from src.dashboard.dados import (  # noqa: E402
 )
 from src.dashboard.paginas import (  # noqa: E402
     analise_avancada,
+    be_hoje,
+    be_humor,
     busca,
     catalogacao,
     categorias,
@@ -113,7 +115,24 @@ ABAS_POR_CLUSTER: dict[str, list[str]] = {
     # Sprint 100 (``?cluster=Inbox&tab=...``) seja preservado quando as
     # páginas vierem (UX-RD-15, UX-RD-16+, UX-RD-05).
     "Inbox": ["Inbox"],
-    "Bem-estar": ["Hoje", "Humor", "Diário emocional"],
+    # Sprint UX-RD-17: cluster Bem-estar ganha 12 abas declaradas para o
+    # deep-link (?cluster=Bem-estar&tab=<X>). Apenas "Hoje" e "Humor" têm
+    # páginas reais nesta sprint; as demais caem em fallback graceful no
+    # dispatcher abaixo até que UX-RD-18+ habilite cada uma.
+    "Bem-estar": [
+        "Hoje",
+        "Humor",
+        "Diário",
+        "Eventos",
+        "Medidas",
+        "Treinos",
+        "Marcos",
+        "Alarmes",
+        "Contadores",
+        "Ciclo",
+        "Tarefas",
+        "Recap",
+    ],
     # Sprint UX-RD-05: cluster Sistema ganha aba "Styleguide" além de
     # "Skills D7". Páginas implementadas em ``paginas/skills_d7.py`` e
     # ``paginas/styleguide.py``; dispatcher abaixo monta as abas reais.
@@ -537,9 +556,93 @@ def main() -> None:
             inbox.renderizar(dados, periodo, pessoa, ctx)
 
     elif cluster == "Bem-estar":
-        # Sprint UX-RD-03: cluster Bem-estar declarado mas com páginas
-        # pendentes (UX-RD-16+). Fallback graceful sem crash.
-        _renderizar_fallback_cluster(cluster)
+        # Sprint UX-RD-17: dispatcher real do cluster Bem-estar com 12
+        # abas declaradas (deep-link). Apenas "Hoje" e "Humor" têm
+        # páginas reais nesta sprint; demais ficam em fallback graceful
+        # apontando a sprint que vai habilitá-las (UX-RD-18+).
+        (
+            tab_be_hoje,
+            tab_be_humor,
+            tab_be_diario,
+            tab_be_eventos,
+            tab_be_medidas,
+            tab_be_treinos,
+            tab_be_marcos,
+            tab_be_alarmes,
+            tab_be_contadores,
+            tab_be_ciclo,
+            tab_be_tarefas,
+            tab_be_recap,
+        ) = st.tabs(
+            [
+                "Hoje",
+                "Humor",
+                "Diário",
+                "Eventos",
+                "Medidas",
+                "Treinos",
+                "Marcos",
+                "Alarmes",
+                "Contadores",
+                "Ciclo",
+                "Tarefas",
+                "Recap",
+            ]
+        )
+        with tab_be_hoje:
+            be_hoje.renderizar(dados, periodo, pessoa, ctx)
+        with tab_be_humor:
+            be_humor.renderizar(dados, periodo, pessoa, ctx)
+        with tab_be_diario:
+            st.info(
+                "Aba 'Diário emocional' será habilitada na sprint UX-RD-18 "
+                "(grid de cards com humor + tags + nota textual)."
+            )
+        with tab_be_eventos:
+            st.info(
+                "Aba 'Eventos' será habilitada na sprint UX-RD-19 "
+                "(timeline + calendário multi-pessoa)."
+            )
+        with tab_be_medidas:
+            st.info(
+                "Aba 'Medidas' será habilitada na sprint UX-RD-20 "
+                "(peso, pressão, glicose com sparkline)."
+            )
+        with tab_be_treinos:
+            st.info(
+                "Aba 'Treinos' será habilitada na sprint UX-RD-21 "
+                "(rotinas semanais + carga de treino)."
+            )
+        with tab_be_marcos:
+            st.info(
+                "Aba 'Marcos' será habilitada na sprint UX-RD-22 "
+                "(milestones de saúde, vida e relacionamento)."
+            )
+        with tab_be_alarmes:
+            st.info(
+                "Aba 'Alarmes' será habilitada na sprint UX-RD-23 "
+                "(medicação, lembretes recorrentes)."
+            )
+        with tab_be_contadores:
+            st.info(
+                "Aba 'Contadores' será habilitada na sprint UX-RD-24 "
+                "(streaks como 'X dias sem fumar')."
+            )
+        with tab_be_ciclo:
+            st.info(
+                "Aba 'Ciclo' será habilitada na sprint UX-RD-25 "
+                "(ciclo menstrual, fertilidade)."
+            )
+        with tab_be_tarefas:
+            st.info(
+                "Aba 'Tarefas' será habilitada na sprint UX-RD-26 "
+                "(GTD pessoal integrado ao vault)."
+            )
+        with tab_be_recap:
+            st.info(
+                "Aba 'Recap' será habilitada na sprint UX-RD-27 "
+                "(resumo semanal/mensal de Bem-estar)."
+            )
 
     else:
         # Defensivo: cluster inválido em session_state. Não deveria ocorrer

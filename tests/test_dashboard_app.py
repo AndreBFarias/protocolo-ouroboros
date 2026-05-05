@@ -65,7 +65,15 @@ class TestContratosCanonicos:
         de 1 para 2 abas; total geral 20 -> 21). As páginas Skills D7 e
         Styleguide existem em ``paginas/`` desde UX-RD-05; Inbox e
         Bem-estar seguem com fallback graceful (UX-RD-15 / UX-RD-16
-        implementam). Total: 21 abas canônicas.
+        implementam).
+        Sprint UX-RD-17 expande Bem-estar para 12 abas reais (Hoje +
+        Humor implementadas; demais com fallback graceful por sprint
+        canônica). Adiciona 10 abas novas: Diário, Eventos, Medidas,
+        Treinos, Marcos, Alarmes, Contadores, Ciclo, Tarefas, Recap.
+        ``Diário emocional`` saiu do MAPA canônico e foi promovido a
+        alias retrocompat em ``ABA_ALIASES_LEGACY`` (URL antiga
+        ?tab=Diário+emocional → ``Diário``). Total geral: 20 + 10 = 30
+        abas canônicas.
         """
         esperadas = {
             "Visão Geral",
@@ -84,14 +92,26 @@ class TestContratosCanonicos:
             "Análise",
             "IRPF",
             "Metas",
-            # UX-RD-03: 5 abas novas dos 3 clusters adicionais.
+            # UX-RD-03: 4 abas novas dos clusters adicionais. "Diário
+            # emocional" foi substituído por "Diário" em UX-RD-17 (alias
+            # retrocompat preservado em ABA_ALIASES_LEGACY).
             "Inbox",
             "Hoje",
             "Humor",
-            "Diário emocional",
             "Skills D7",
             # UX-RD-05: aba Styleguide entra no cluster Sistema.
             "Styleguide",
+            # UX-RD-17: 10 abas em Bem-estar com nome canônico curto.
+            "Diário",
+            "Eventos",
+            "Medidas",
+            "Treinos",
+            "Marcos",
+            "Alarmes",
+            "Contadores",
+            "Ciclo",
+            "Tarefas",
+            "Recap",
         }
         assert set(drilldown.MAPA_ABA_PARA_CLUSTER.keys()) == esperadas
 
