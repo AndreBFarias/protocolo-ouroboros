@@ -47,6 +47,7 @@ from src.dashboard.paginas import (  # noqa: E402
     home_dinheiro,
     home_docs,
     home_metas,
+    inbox,
     irpf,
     metas,
     pagamentos,
@@ -526,9 +527,18 @@ def main() -> None:
         with tab_styleguide:
             styleguide.renderizar(dados, periodo, pessoa, ctx)
 
-    elif cluster in {"Inbox", "Bem-estar"}:
-        # Sprint UX-RD-03: clusters declarados mas com páginas pendentes
-        # (UX-RD-15 / UX-RD-16+). Fallback graceful sem crash.
+    elif cluster == "Inbox":
+        # Sprint UX-RD-15: cluster Inbox tem página real -- dropzone, fila
+        # de arquivos lida de <raiz>/inbox/, drawer sidecar e bloco
+        # skill-instr apontando para o CLI. Fallback graceful era apenas
+        # placeholder até esta sprint.
+        (tab_inbox,) = st.tabs(["Inbox"])
+        with tab_inbox:
+            inbox.renderizar(dados, periodo, pessoa, ctx)
+
+    elif cluster == "Bem-estar":
+        # Sprint UX-RD-03: cluster Bem-estar declarado mas com páginas
+        # pendentes (UX-RD-16+). Fallback graceful sem crash.
         _renderizar_fallback_cluster(cluster)
 
     else:
