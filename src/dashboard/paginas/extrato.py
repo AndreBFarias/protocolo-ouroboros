@@ -1,17 +1,58 @@
-"""Página de extrato detalhado do dashboard financeiro."""
+"""Página de extrato detalhado (UX-RD-06: tabela densa + breakdown + drawer).
+
+Reescrita da página Extrato seguindo o mockup ``novo-mockup/mockups/02-extrato.html``:
+
+* **Saldo no topo**: card grande mono 32px tabular-nums + 3 mini-KPIs do
+  período (Receita, Despesa, Transações count).
+* **Tabela densa** (.table do tema_css.py UX-RD-02): row-h 32px, sticky
+  thead, mono em valor/data, alinhamento tabular nos valores, hover/selected.
+* **Breakdown lateral por categoria**: top 5 categorias em barras
+  proporcionais (1fr direita contra 2.5fr da tabela).
+* **Drawer JSON syntax-highlighted**: clicar uma linha (via selectbox +
+  botão "Abrir drawer") mostra o JSON da transação no painel lateral
+  com cores --syn-key/string/number/bool/null.
+
+Lições aplicadas
+----------------
+* UX-RD-04: HTML grande (tabela com N linhas, breakdown, drawer) emitido
+  via ``minificar()`` para evitar que o parser CommonMark interprete a
+  indentação Python como bloco ``<pre><code>``.
+* Sprint 73 (drill-down) preservada: ``_aplicar_drilldown`` + breadcrumb.
+* Sprint 87.2 (tracking documental): coluna ``Doc?`` continua funcionando
+  via ``_marcar_tracking`` + grafo SQLite.
+* Sprint 92a.8 (paginação 25 linhas): mantida.
+* Filtros (``filtrar_por_periodo``, ``filtrar_por_pessoa``,
+  ``filtrar_por_forma_pagamento``) e exportação CSV: preservados.
+
+Decisão drawer (Streamlit não tem drawer nativo)
+------------------------------------------------
+Optamos por HTML absolute-positioned via ``st.markdown(..., unsafe_allow_html=True)``
+controlado por ``st.session_state["extrato_drawer_idx"]``. O drawer é
+renderizado depois da tabela (no DOM) mas vai para a direita via
+``position: fixed`` do CSS de UX-RD-02. Botão "Fechar" emite ``st.button``
+que limpa o estado e dá rerun. Trade-off: drawer ocupa espaço da tabela em
+viewport estreito; em widescreen fica ao lado, espelhando o mockup.
+"""
+
+from __future__ import annotations
 
 from functools import lru_cache
 from pathlib import Path
+from typing import Any
 
 import pandas as pd
 import streamlit as st
 import yaml
 
+from src.dashboard.componentes.drawer_transacao import (
+    renderizar_drawer,
+    transacao_para_dict,
+)
 from src.dashboard.componentes.drilldown import (
     filtros_ativos_do_session_state,
     limpar_filtro,
 )
-from src.dashboard.componentes.modal_transacao import mostrar_modal
+from src.dashboard.componentes.html_utils import minificar
 from src.dashboard.dados import (
     filtrar_por_forma_pagamento,
     filtrar_por_periodo,
@@ -42,6 +83,21 @@ _MAPA_FILTRO_COLUNA: dict[str, str] = {
 }
 
 
+_CAMINHO_CATEGORIAS_TRACKING: Path = (
+    Path(__file__).resolve().parents[3] / "mappings" / "categorias_tracking.yaml"
+)
+
+TAMANHO_PAGINA_EXTRATO: int = 25
+"""Sprint 92a.8: número de linhas por página na tabela do Extrato."""
+
+_CHAVE_DRAWER_IDX = "extrato_drawer_idx"
+
+
+# ---------------------------------------------------------------------------
+# Helpers (drilldown, tracking documental)
+# ---------------------------------------------------------------------------
+
+
 def _aplicar_drilldown(df: pd.DataFrame) -> tuple[pd.DataFrame, dict[str, str]]:
     """Aplica filtros vindos de drill-down (Sprint 73). Retorna df filtrado
     e dict dos filtros efetivos aplicados (para breadcrumb)."""
@@ -66,17 +122,9 @@ def _aplicar_drilldown(df: pd.DataFrame) -> tuple[pd.DataFrame, dict[str, str]]:
 
 
 def _renderizar_breadcrumb(filtros: dict[str, str]) -> None:
-    """Exibe breadcrumb com X para remover cada filtro ativo (Sprint 73).
-
-    Sprint 92c: o bloco visual de chips passou a ser gerado pelo helper
-    canônico ``breadcrumb_drilldown_html`` (single-source em ``tema.py``);
-    o botão ``×`` continua aqui como widget Streamlit para poder disparar
-    ``limpar_filtro(campo)`` + rerun quando clicado.
-    """
+    """Exibe breadcrumb com X para remover cada filtro ativo (Sprint 73)."""
     if not filtros:
         return
-    import streamlit as st
-
     st.markdown(
         breadcrumb_drilldown_html(filtros),
         unsafe_allow_html=True,
@@ -91,11 +139,6 @@ def _renderizar_breadcrumb(filtros: dict[str, str]) -> None:
             ):
                 limpar_filtro(campo)
                 st.rerun()
-
-
-_CAMINHO_CATEGORIAS_TRACKING: Path = (
-    Path(__file__).resolve().parents[3] / "mappings" / "categorias_tracking.yaml"
-)
 
 
 @lru_cache(maxsize=1)
@@ -116,22 +159,7 @@ def _marcar_tracking(
     obrigatorias: frozenset[str],
     ids_com_doc: set[str],
 ) -> str:
-    """Sprint 87.2 (ADR-20): devolve o marcador da coluna "Doc?" do Extrato.
-
-    Sprint 92c: rótulos curtos em PT-BR substituem "OK"/"!" (pouco comunicativo).
-    ``st.dataframe`` não renderiza HTML, então os ícones Feather viram banner
-    visual no painel "Inspecionar transação" abaixo da tabela; a coluna em si
-    fica com texto legível.
-
-    Prioridade:
-      1. Transação com `identificador` em `ids_com_doc` (aresta `documento_de`
-         no grafo) -> "Doc ok".
-      2. Transação em categoria obrigatória sem vínculo -> "Faltando".
-      3. Caso contrário -> "".
-
-    Função pura para permitir teste sem mockar streamlit. `row` é uma `pd.Series`
-    de uma linha do DataFrame do extrato (pode ou não ter coluna `identificador`).
-    """
+    """Sprint 87.2 (ADR-20): devolve o marcador da coluna "Doc?" do Extrato."""
     ident = row.get("identificador") if hasattr(row, "get") else None
     if ident is not None and not pd.isna(ident):
         ident_str = str(ident)
@@ -143,15 +171,7 @@ def _marcar_tracking(
 
 @st.cache_data(ttl=30)
 def _carregar_ids_com_doc() -> set[str]:
-    """Sprint 87.2 (ADR-20): transações do grafo com documento vinculado.
-
-    Consulta `src.graph.queries.transacoes_com_documento` uma vez por render
-    (TTL 30s) e devolve o conjunto de `nome_canonico` de nodes `transacao`  # noqa: accent
-    com ao menos uma aresta `documento_de`. Graceful degradation: se o grafo
-    não existir ou houver erro de import, loga info e devolve set vazio —
-    a coluna "Doc?" cai no comportamento antigo (apenas heurística de
-    categoria obrigatória).
-    """
+    """Sprint 87.2 (ADR-20): transações do grafo com documento vinculado."""
     try:
         from src.graph.db import GrafoDB, caminho_padrao
         from src.graph.queries import transacoes_com_documento
@@ -168,19 +188,573 @@ def _carregar_ids_com_doc() -> set[str]:
         return set()
 
 
+# ---------------------------------------------------------------------------
+# Cálculos (saldo topo, breakdown lateral)
+# ---------------------------------------------------------------------------
+
+
+def calcular_saldo_topo(df: pd.DataFrame) -> dict[str, float]:
+    """Calcula saldo, receita, despesa e count para o card de topo.
+
+    Convenção: ``valor`` negativo é despesa, positivo é receita. ``tipo``
+    "Transferência Interna" é excluído de ambos para não inflar nem somas
+    nem perdas.
+    """
+    if df.empty:
+        return {"saldo": 0.0, "receita": 0.0, "despesa": 0.0, "transacoes": 0}
+
+    if "tipo" in df.columns:
+        operacional = df[df["tipo"].astype(str) != "Transferência Interna"]
+    else:
+        operacional = df
+
+    valores = pd.to_numeric(operacional.get("valor"), errors="coerce").fillna(0.0)
+    receita = float(valores[valores > 0].sum())
+    despesa = float(valores[valores < 0].sum())  # já negativo
+    saldo = receita + despesa  # despesa é negativa
+    return {
+        "saldo": saldo,
+        "receita": receita,
+        "despesa": despesa,  # negativo
+        "transacoes": int(len(df)),
+    }
+
+
+def calcular_breakdown_categorias(df: pd.DataFrame, top_n: int = 5) -> list[dict[str, Any]]:
+    """Top-N categorias por valor absoluto de despesa.
+
+    Retorna lista ordenada decrescente de dicts ``{categoria, valor, pct}``
+    onde ``valor`` é o total absoluto de despesas (positivo) e ``pct`` é
+    a proporção (0..100) sobre o total.
+    """
+    if df.empty or "categoria" not in df.columns:
+        return []
+
+    if "tipo" in df.columns:
+        operacional = df[df["tipo"].astype(str) != "Transferência Interna"]
+    else:
+        operacional = df
+
+    valores = pd.to_numeric(operacional.get("valor"), errors="coerce").fillna(0.0)
+    apenas_despesas = operacional[valores < 0].copy()
+    apenas_despesas["__abs"] = (-valores[valores < 0]).values
+
+    if apenas_despesas.empty:
+        return []
+
+    agrupado = (
+        apenas_despesas.groupby("categoria", dropna=False)["__abs"]
+        .sum()
+        .sort_values(ascending=False)
+        .head(top_n)
+    )
+    total = float(agrupado.sum())
+    if total <= 0:
+        return []
+
+    resultado: list[dict[str, Any]] = []
+    for categoria, valor in agrupado.items():
+        cat = str(categoria) if not pd.isna(categoria) else "Sem categoria"
+        resultado.append(
+            {
+                "categoria": cat,
+                "valor": float(valor),
+                "pct": float(valor) / total * 100.0,
+            }
+        )
+    return resultado
+
+
+# ---------------------------------------------------------------------------
+# HTML builders
+# ---------------------------------------------------------------------------
+
+
+def _formatar_brl(valor: float) -> str:
+    sinal = "-" if valor < 0 else ""
+    return f"{sinal}R$ {abs(valor):,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
+
+def _saldo_topo_html(metricas: dict[str, float], periodo_rotulo: str) -> str:
+    """Card grande de saldo + 3 mini-KPIs (receita, despesa, count)."""
+    saldo = metricas["saldo"]
+    receita = metricas["receita"]
+    despesa = metricas["despesa"]  # negativo
+    n = int(metricas["transacoes"])
+
+    cor_saldo = CORES["positivo"] if saldo >= 0 else CORES["negativo"]
+
+    return minificar(
+        f"""
+        <div class="extrato-saldo-topo">
+            <div class="extrato-saldo-card">
+                <span class="extrato-saldo-rotulo">SALDO · {periodo_rotulo}</span>
+                <span class="extrato-saldo-valor" style="color:{cor_saldo};">
+                    {_formatar_brl(saldo)}
+                </span>
+                <span class="extrato-saldo-meta">
+                    {n} transações no período
+                </span>
+            </div>
+            <div class="extrato-saldo-mini">
+                <div class="extrato-mini-kpi">
+                    <span class="extrato-mini-rotulo">RECEITA</span>
+                    <span class="extrato-mini-valor" style="color:{CORES['positivo']};">
+                        {_formatar_brl(receita)}
+                    </span>
+                </div>
+                <div class="extrato-mini-kpi">
+                    <span class="extrato-mini-rotulo">DESPESA</span>
+                    <span class="extrato-mini-valor" style="color:{CORES['negativo']};">
+                        {_formatar_brl(despesa)}
+                    </span>
+                </div>
+                <div class="extrato-mini-kpi">
+                    <span class="extrato-mini-rotulo">TRANSAÇÕES</span>
+                    <span class="extrato-mini-valor">{n}</span>
+                </div>
+            </div>
+        </div>
+        """
+    )
+
+
+def _tabela_densa_html(df: pd.DataFrame, idx_drawer: int | None = None) -> str:
+    """Emite ``<table class="table">`` com as linhas do DF.
+
+    Cada linha é gerada como uma única string concatenada (sem indentação
+    interna) e o conjunto é minificado antes do retorno. Isso evita que o
+    parser CommonMark veja indentação ≥ 4 e renderize ``<pre><code>``.
+    """
+    if df.empty:
+        return minificar(
+            """
+            <p class="extrato-vazio">Sem transações para exibir nesta página.</p>
+            """
+        )
+
+    # Formatação leve de cada coluna.
+    linhas: list[str] = []
+    for ord_idx, (_real_idx, row) in enumerate(df.iterrows()):
+        data_v = row.get("data")
+        if data_v is None or pd.isna(data_v):
+            data_str = "-"
+        else:
+            data_str = pd.to_datetime(data_v).strftime("%Y-%m-%d")
+
+        valor = float(pd.to_numeric(row.get("valor"), errors="coerce") or 0.0)
+        cor_val = CORES["negativo"] if valor < 0 else CORES["positivo"]
+        valor_str = _formatar_brl(valor)
+
+        descricao = str(row.get("local") or "-")
+        if len(descricao) > 48:
+            descricao = descricao[:45] + "..."
+
+        categoria = str(row.get("categoria") or "-")
+        forma = str(row.get("forma_pagamento") or "-")
+        quem = str(row.get("quem") or "-")
+
+        # Marcador "Doc?" — vem de _marcar_tracking se a coluna existir
+        tracking = str(row.get("__tracking", "") or "")
+        if tracking == "Doc ok":
+            doc_cell = (
+                '<span class="extrato-doc-ok" title="Documento vinculado no grafo">'
+                "+</span>"
+            )
+        elif tracking == "Faltando":
+            doc_cell = (
+                '<span class="extrato-doc-faltando" '
+                'title="Categoria obrigatória sem comprovante">!</span>'
+            )
+        else:
+            doc_cell = '<span class="extrato-doc-vazio">·</span>'
+
+        classe_linha = "selected" if (idx_drawer is not None and idx_drawer == ord_idx) else ""
+
+        linha = (
+            f'<tr class="{classe_linha}">'
+            f'<td class="col-mono">{data_str}</td>'
+            f'<td class="col-desc">{_escape(descricao)}</td>'
+            f'<td><span class="extrato-pill-cat">{_escape(categoria)}</span></td>'
+            f'<td class="col-num" style="color:{cor_val};">{valor_str}</td>'
+            f'<td class="col-mono">{_escape(forma)}</td>'
+            f'<td><span class="extrato-pill-pessoa">{_escape(quem)}</span></td>'
+            f'<td class="col-doc">{doc_cell}</td>'
+            f"</tr>"
+        )
+        linhas.append(linha)
+
+    cabecalho = (
+        '<thead><tr>'
+        '<th>Data</th>'
+        '<th>Descrição</th>'
+        '<th>Categoria</th>'
+        '<th class="col-num">Valor</th>'
+        '<th>Forma</th>'
+        '<th>Pessoa</th>'
+        '<th>Doc?</th>'
+        "</tr></thead>"
+    )
+    corpo = "<tbody>" + "".join(linhas) + "</tbody>"
+    return minificar(
+        f'<div class="extrato-tabela-wrap"><table class="table">{cabecalho}{corpo}</table></div>'
+    )
+
+
+def _escape(texto: str) -> str:
+    """Escape mínimo para evitar quebra de tags via < ou > em descrição."""
+    return (
+        texto.replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+    )
+
+
+def _breakdown_lateral_html(top_categorias: list[dict[str, Any]]) -> str:
+    """Card lateral com top-N categorias em barras horizontais."""
+    if not top_categorias:
+        return minificar(
+            """
+            <div class="extrato-breakdown">
+                <span class="extrato-breakdown-titulo">BREAKDOWN POR CATEGORIA</span>
+                <p class="extrato-breakdown-vazio">Sem despesas no período.</p>
+            </div>
+            """
+        )
+
+    # Paleta cíclica reusando tokens existentes.
+    paleta = [
+        "var(--accent-purple)",
+        "var(--accent-pink)",
+        "var(--accent-cyan)",
+        "var(--accent-green)",
+        "var(--accent-yellow)",
+    ]
+
+    barras: list[str] = []
+    for i, item in enumerate(top_categorias):
+        cor = paleta[i % len(paleta)]
+        nome = _escape(item["categoria"])
+        valor = _formatar_brl(item["valor"])
+        pct = item["pct"]
+        barra = (
+            f'<div class="extrato-cat-barra">'
+            f'<div class="extrato-cat-linha">'
+            f'<span class="extrato-cat-nome">'
+            f'<span class="extrato-cat-dot" style="background:{cor};"></span>'
+            f"{nome}"
+            f"</span>"
+            f'<span class="extrato-cat-valor">{valor}</span>'
+            f"</div>"
+            f'<div class="extrato-cat-track">'
+            f'<span style="width:{pct:.1f}%; background:{cor};"></span>'
+            f"</div>"
+            f'<span class="extrato-cat-pct">{pct:.0f}%</span>'
+            f"</div>"
+        )
+        barras.append(barra)
+
+    return minificar(
+        '<div class="extrato-breakdown">'
+        '<span class="extrato-breakdown-titulo">'
+        "BREAKDOWN · TOP 5 CATEGORIAS"
+        "</span>"
+        + "".join(barras)
+        + "</div>"
+    )
+
+
+def _estilos_locais_html() -> str:
+    """CSS específico da página Extrato (componentes não previstos em
+    UX-RD-02 ficam aqui para não estourar o tema_css.py).
+    """
+    return minificar(
+        """
+        <style>
+        /* Saldo no topo */
+        .extrato-saldo-topo {
+            display: grid;
+            grid-template-columns: 2fr 3fr;
+            gap: var(--sp-4);
+            margin-bottom: var(--sp-4);
+        }
+        .extrato-saldo-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--r-md);
+            padding: var(--sp-4) var(--sp-5);
+            display: flex;
+            flex-direction: column;
+            gap: var(--sp-2);
+        }
+        .extrato-saldo-rotulo {
+            font-family: var(--ff-mono);
+            font-size: var(--fs-11);
+            letter-spacing: 0.10em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+        }
+        .extrato-saldo-valor {
+            font-family: var(--ff-mono);
+            font-size: 32px;
+            font-weight: 500;
+            font-variant-numeric: tabular-nums;
+            line-height: 1.1;
+        }
+        .extrato-saldo-meta {
+            font-family: var(--ff-mono);
+            font-size: var(--fs-11);
+            color: var(--text-muted);
+        }
+        .extrato-saldo-mini {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: var(--sp-3);
+        }
+        .extrato-mini-kpi {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--r-md);
+            padding: var(--sp-3) var(--sp-4);
+            display: flex;
+            flex-direction: column;
+            gap: var(--sp-1);
+        }
+        .extrato-mini-rotulo {
+            font-family: var(--ff-mono);
+            font-size: var(--fs-11);
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+        }
+        .extrato-mini-valor {
+            font-family: var(--ff-mono);
+            font-size: 18px;
+            font-weight: 500;
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* Layout principal */
+        .extrato-grid {
+            display: grid;
+            grid-template-columns: 2.5fr 1fr;
+            gap: var(--sp-4);
+            margin-top: var(--sp-3);
+        }
+
+        /* Tabela densa */
+        .extrato-tabela-wrap {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--r-md);
+            overflow: hidden;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+        .extrato-pill-cat {
+            font-family: var(--ff-mono);
+            font-size: var(--fs-11);
+            padding: 2px 6px;
+            border-radius: var(--r-xs);
+            background: var(--bg-inset);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-subtle);
+        }
+        .extrato-pill-pessoa {
+            font-family: var(--ff-mono);
+            font-size: var(--fs-11);
+            padding: 2px 6px;
+            border-radius: var(--r-full);
+            background: var(--bg-inset);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-subtle);
+        }
+        .extrato-doc-ok {
+            color: var(--accent-green);
+            font-family: var(--ff-mono);
+            font-weight: 700;
+        }
+        .extrato-doc-faltando {
+            color: var(--accent-orange);
+            font-family: var(--ff-mono);
+            font-weight: 700;
+        }
+        .extrato-doc-vazio { color: var(--text-muted); }
+        .col-desc {
+            color: var(--text-secondary);
+            max-width: 320px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .col-doc { text-align: center; }
+        .extrato-vazio {
+            padding: var(--sp-4);
+            color: var(--text-muted);
+            font-family: var(--ff-mono);
+            font-size: var(--fs-12);
+        }
+        .extrato-info-pagina {
+            color: var(--accent-purple);
+            font-size: var(--fs-13);
+            font-weight: 500;
+            margin: 10px 0;
+        }
+
+        /* Breakdown lateral */
+        .extrato-breakdown {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--r-md);
+            padding: var(--sp-4);
+            display: flex;
+            flex-direction: column;
+            gap: var(--sp-3);
+        }
+        .extrato-breakdown-titulo {
+            font-family: var(--ff-mono);
+            font-size: var(--fs-11);
+            letter-spacing: 0.10em;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border-subtle);
+            padding-bottom: var(--sp-2);
+        }
+        .extrato-breakdown-vazio {
+            color: var(--text-muted);
+            font-size: var(--fs-12);
+        }
+        .extrato-cat-barra {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .extrato-cat-linha {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: var(--fs-12);
+        }
+        .extrato-cat-nome {
+            font-family: var(--ff-mono);
+            color: var(--text-primary);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .extrato-cat-dot {
+            width: 8px; height: 8px; border-radius: 2px; display: inline-block;
+        }
+        .extrato-cat-valor {
+            font-family: var(--ff-mono);
+            font-variant-numeric: tabular-nums;
+            color: var(--text-secondary);
+        }
+        .extrato-cat-track {
+            height: 4px;
+            background: var(--bg-inset);
+            border-radius: var(--r-full);
+            overflow: hidden;
+        }
+        .extrato-cat-track > span {
+            display: block; height: 100%;
+        }
+        .extrato-cat-pct {
+            font-family: var(--ff-mono);
+            font-size: 10px;
+            color: var(--text-muted);
+            align-self: flex-end;
+        }
+
+        /* Drawer JSON detalhe */
+        .drawer-json {
+            background: var(--bg-inset);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--r-sm);
+            padding: var(--sp-3);
+            font-family: var(--ff-mono);
+            font-size: var(--fs-12);
+            line-height: 1.5;
+            color: var(--text-primary);
+            margin: 0 0 var(--sp-3);
+            overflow-x: auto;
+            white-space: pre;
+        }
+        .drawer-titulo {
+            font-family: var(--ff-mono);
+            font-size: var(--fs-11);
+            letter-spacing: 0.10em;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+        }
+        .drawer-hint {
+            font-family: var(--ff-mono);
+            font-size: 10px;
+            color: var(--text-muted);
+        }
+        .drawer-doc, .drawer-doc-vazio {
+            border-top: 1px solid var(--border-subtle);
+            padding-top: var(--sp-3);
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            font-size: var(--fs-12);
+        }
+        .drawer-doc-rotulo {
+            font-family: var(--ff-mono);
+            font-size: var(--fs-11);
+            letter-spacing: 0.10em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: var(--sp-1);
+        }
+        .drawer-doc-linha {
+            display: flex;
+            gap: var(--sp-2);
+            align-items: baseline;
+        }
+        .drawer-doc-chave {
+            font-family: var(--ff-mono);
+            color: var(--text-muted);
+            min-width: 80px;
+        }
+        .drawer-doc-valor {
+            font-family: var(--ff-mono);
+            background: var(--bg-elevated);
+            padding: 2px 6px;
+            border-radius: var(--r-xs);
+        }
+        .drawer-doc-msg {
+            color: var(--text-muted);
+            font-size: var(--fs-12);
+        }
+        </style>
+        """
+    )
+
+
+# ---------------------------------------------------------------------------
+# Função pública
+# ---------------------------------------------------------------------------
+
+
 def renderizar(
     dados: dict[str, pd.DataFrame],
     mes_selecionado: str,
     pessoa: str,
     ctx: dict | None = None,
 ) -> None:
-    """Renderiza a página de extrato."""
+    """Renderiza a página de extrato (UX-RD-06).
+
+    Mantém assinatura intocada para que ``app.py`` continue chamando
+    ``renderizar(dados, periodo, pessoa, ctx)`` sem mudança.
+    """
+    st.markdown(_estilos_locais_html(), unsafe_allow_html=True)
     st.markdown(
         hero_titulo_html(
             "",
             "Extrato",
-            "Transações do período com filtros, busca, drill-down e "
-            "inspeção de documentos vinculados.",
+            "Tabela densa com transações do período, breakdown por categoria "
+            "e drawer detalhado com JSON syntático e documento vinculado.",
         ),
         unsafe_allow_html=True,
     )
@@ -199,7 +773,7 @@ def renderizar(
     df = filtrar_por_periodo(extrato, gran, periodo)
     df = filtrar_por_pessoa(df, pessoa)
     df = filtrar_por_forma_pagamento(df, filtro_forma_ativo())
-    # Sprint 73 (ADR-19): aplica filtros vindos de drill-down (URL / clique).
+    # Sprint 73 (ADR-19): aplica filtros vindos de drill-down.
     df, filtros_drilldown = _aplicar_drilldown(df)
     _renderizar_breadcrumb(filtros_drilldown)
 
@@ -210,21 +784,21 @@ def renderizar(
         )
         return
 
+    # ---------- Saldo no topo ----------
+    metricas_topo = calcular_saldo_topo(df)
+    rotulo_periodo = str(periodo) if periodo else "período"
+    st.markdown(
+        _saldo_topo_html(metricas_topo, rotulo_periodo),
+        unsafe_allow_html=True,
+    )
+
+    # ---------- Filtros locais (busca + avançados) ----------
     busca = st.text_input(
         "Buscar por local",
         key="busca_local",
         placeholder="Digite para filtrar...",
     )
 
-    st.markdown(
-        "<style>.stSelectbox { margin-bottom: 12px; }</style>",
-        unsafe_allow_html=True,
-    )
-
-    # Sprint 77: keys prefixadas com `avancado_` evitam colisão com as
-    # chaves `filtro_*` que o drilldown.ler_filtros_da_url() popula via
-    # query_params (Sprint 73). Sem esse prefixo, selectbox e drill-down
-    # disputavam o mesmo slot em session_state.
     with st.expander("Filtros avançados", expanded=False):
         col1, col2 = st.columns(2)
 
@@ -264,92 +838,44 @@ def renderizar(
     if tipo_sel != "Todos":
         resultado = resultado[resultado["tipo"] == tipo_sel]
 
-    _exibir_tabela(resultado)
-    _inspecionar_transacao(resultado)
-
-
-TAMANHO_PAGINA_EXTRATO: int = 25
-"""Sprint 92a.8: número de linhas por página na tabela do Extrato."""
-
-
-def _calcular_slice_pagina(
-    total_linhas: int, tamanho_pagina: int, pagina_1_based: int
-) -> tuple[int, int]:
-    """Sprint 92a.8: devolve ``(start, stop)`` 0-indexado para ``iloc``.
-
-    Quando ``total_linhas == 0`` ou ``tamanho_pagina <= 0`` retorna
-    ``(0, 0)`` (slice vazio). ``pagina_1_based`` é clampada ao intervalo
-    ``[1, n_paginas]`` para evitar paginação inválida quando o filtro muda
-    e reduz o total.
-    """
-    if total_linhas <= 0 or tamanho_pagina <= 0:
-        return (0, 0)
-    n_paginas = max(1, (total_linhas + tamanho_pagina - 1) // tamanho_pagina)
-    pagina = max(1, min(pagina_1_based, n_paginas))
-    inicio = (pagina - 1) * tamanho_pagina
-    fim = min(inicio + tamanho_pagina, total_linhas)
-    return (inicio, fim)
-
-
-def _exibir_tabela(df: pd.DataFrame) -> None:
-    """Exibe tabela interativa de transações e botão de export."""
-    total = len(df)
-
-    colunas_exibicao: list[str] = [
-        "data",
-        "valor",
-        "local",
-        "categoria",
-        "classificacao",
-        "banco_origem",
-        "tipo",
-        "quem",
-    ]
-
-    colunas_presentes = [c for c in colunas_exibicao if c in df.columns]
-    df_exibir = df[colunas_presentes].copy()
-
-    # Sprint 74 (ADR-20) + Sprint 87.2: coluna de tracking documental.
-    # Se a transação tem aresta `documento_de` no grafo -> "OK".
-    # Se a categoria é obrigatória e ainda não há vínculo -> "!".
-    # Senão -> vazio. Graceful degradation: quando o grafo não existe ou a
-    # coluna `identificador` não chegou ao df, o resultado cai no fallback
-    # histórico (apenas heurística de categoria).
+    # Sprint 87.2: tracking documental — coluna oculta usada pela tabela HTML.
     obrigatorias = _carregar_categorias_obrigatorias()
-    if obrigatorias and "categoria" in df.columns:
+    if obrigatorias and "categoria" in resultado.columns:
         ids_com_doc = _carregar_ids_com_doc()
-        df_exibir["tracking"] = df.apply(
+        resultado = resultado.copy()
+        resultado["__tracking"] = resultado.apply(
             lambda row: _marcar_tracking(row, obrigatorias, ids_com_doc),
             axis=1,
         ).values
 
-    nomes_colunas: dict[str, str] = {
-        "data": "Data",
-        "valor": "Valor",
-        "local": "Local",
-        "categoria": "Categoria",
-        "classificacao": "Classificação",
-        "banco_origem": "Banco",
-        "tipo": "Tipo",
-        "quem": "Quem",
-        "tracking": "Doc?",
-    }
+    # ---------- Layout: tabela (esquerda) + breakdown (direita) ----------
+    breakdown = calcular_breakdown_categorias(resultado)
+    _exibir_layout(resultado, breakdown)
 
-    if "data" in df_exibir.columns:
-        datas = pd.to_datetime(df_exibir["data"], errors="coerce")
-        df_exibir["data"] = datas.dt.strftime("%Y-%m-%d")
+    # ---------- Exportação CSV ----------
+    _exibir_exportacao(resultado)
 
-    df_exibir = df_exibir.rename(columns=nomes_colunas)
+    # ---------- Drawer (renderizado quando idx setado) ----------
+    _exibir_drawer(resultado)
 
-    # Sprint 92a.8: pagina\u00e7\u00e3o manual (25 linhas/p\u00e1gina). Streamlit ainda n\u00e3o
-    # oferece pagina\u00e7\u00e3o nativa em st.dataframe; slice por iloc + selectbox.
+
+def _exibir_layout(df: pd.DataFrame, breakdown: list[dict[str, Any]]) -> None:
+    """Layout 2.5fr (tabela paginada) + 1fr (breakdown) via st.columns."""
+    total = len(df)
+    if total == 0:
+        st.markdown(
+            callout_html("info", "Nenhuma transação após filtros."),
+            unsafe_allow_html=True,
+        )
+        return
+
     tamanho = TAMANHO_PAGINA_EXTRATO
     n_paginas = max(1, (total + tamanho - 1) // tamanho)
 
     col_info, col_pag = st.columns([3, 1])
     with col_pag:
         pagina = st.selectbox(
-            "P\u00e1gina",
+            "Página",
             options=list(range(1, n_paginas + 1)),
             index=0,
             key="extrato_pagina",
@@ -359,55 +885,113 @@ def _exibir_tabela(df: pd.DataFrame) -> None:
     inicio, fim = _calcular_slice_pagina(total, tamanho, int(pagina))
 
     with col_info:
-        if total == 0:
-            st.markdown(
-                f'<p style="color: {CORES["destaque"]};'
-                f" font-size: {FONTE_CORPO}px;"
-                f' font-weight: bold; margin: 10px 0;">'
-                f"0 transa\u00e7\u00f5es encontradas</p>",
-                unsafe_allow_html=True,
-            )
-        else:
-            st.markdown(
-                f'<p style="color: {CORES["destaque"]};'
-                f" font-size: {FONTE_CORPO}px;"
-                f' font-weight: bold; margin: 10px 0;">'
-                f"Mostrando {inicio + 1}-{fim} de {total} transa\u00e7\u00f5es</p>",
-                unsafe_allow_html=True,
-            )
+        st.markdown(
+            f'<p class="extrato-info-pagina">'
+            f"Mostrando {inicio + 1}-{fim} de {total} transações</p>",
+            unsafe_allow_html=True,
+        )
 
-    df_pagina = df_exibir.iloc[inicio:fim]
+    df_pagina = df.iloc[inicio:fim]
 
-    st.dataframe(
-        df_pagina,
-        use_container_width=True,
-        hide_index=True,
-        column_config={
-            "Valor": st.column_config.NumberColumn("Valor", format="R$ %.2f"),
-        },
-    )
-
-    # Sprint 92c: legenda da coluna Doc? ganha \u00edcones Feather inline (check-circle
-    # verde para "Doc ok", alert-triangle laranja para "Faltando"), refor\u00e7ando
-    # visualmente os r\u00f3tulos textuais da tabela (st.dataframe n\u00e3o renderiza HTML
-    # dentro das c\u00e9lulas).
+    # Sprint 92c: legenda educativa da coluna ``Doc?`` (preservada após
+    # migração para tabela HTML densa em UX-RD-06). Usa ``icon_html`` para
+    # renderizar Feather inline (check-circle / alert-triangle) e mantém os
+    # rótulos PT-BR ``Doc ok`` / ``Faltando`` para casar com o contrato de
+    # ``_marcar_tracking``.
     icone_ok = icon_html("check-circle", tamanho=14, cor=CORES["positivo"])
     icone_falt = icon_html("alert-triangle", tamanho=14, cor=CORES["alerta"])
-    st.markdown(
-        f'<p style="color: {CORES["texto_sec"]};'
-        f" font-size: {FONTE_CORPO}px;"
-        ' margin: 4px 0 0 0;">'
-        f"Coluna 'Doc?': "
-        f'<span style="color: {CORES["positivo"]};">{icone_ok} Doc ok</span>'
-        " = documento vinculado no grafo; "
-        f'<span style="color: {CORES["alerta"]};">{icone_falt} Faltando</span>'
-        " = categoria obrigat\u00f3ria sem comprovante; vazio = sem tracking."
-        "</p>",
-        unsafe_allow_html=True,
+    legenda_doc_html = minificar(
+        f"""
+        <p class="extrato-legenda-doc" style="color:{CORES['texto_sec']};
+            font-size:{FONTE_CORPO}px; margin: 4px 0 12px 0;">
+            Coluna 'Doc?':
+            <span style="color:{CORES['positivo']};">{icone_ok} Doc ok</span>
+            = documento vinculado no grafo;
+            <span style="color:{CORES['alerta']};">{icone_falt} Faltando</span>
+            = categoria obrigatória sem comprovante; vazio = sem tracking.
+        </p>
+        """
     )
 
-    # CSV exporta SEMPRE o conjunto completo, n\u00e3o s\u00f3 a p\u00e1gina corrente.
-    csv = "\ufeff" + df_exibir.to_csv(index=False, sep=";", decimal=",")
+    idx_drawer = st.session_state.get(_CHAVE_DRAWER_IDX)
+    idx_drawer_pagina: int | None = None
+    if idx_drawer is not None:
+        try:
+            idx_int = int(idx_drawer)
+            if inicio <= idx_int < fim:
+                idx_drawer_pagina = idx_int - inicio
+        except (TypeError, ValueError):
+            idx_drawer_pagina = None
+
+    col_tabela, col_breakdown = st.columns([2.5, 1])
+    with col_tabela:
+        st.markdown(
+            _tabela_densa_html(df_pagina, idx_drawer=idx_drawer_pagina),
+            unsafe_allow_html=True,
+        )
+        st.markdown(legenda_doc_html, unsafe_allow_html=True)
+    with col_breakdown:
+        st.markdown(
+            _breakdown_lateral_html(breakdown),
+            unsafe_allow_html=True,
+        )
+
+    # Seletor + botão "Abrir drawer" (compromisso pragmático Streamlit).
+    rotulos = _rotulos_transacoes(df_pagina)
+    if rotulos:
+        col_sel, col_btn = st.columns([4, 1])
+        with col_sel:
+            sel_local = st.selectbox(
+                "Inspecionar transação",
+                options=list(range(len(rotulos))),
+                format_func=lambda i: rotulos[i] if i < len(rotulos) else "",
+                key="extrato_seletor_drawer",
+            )
+        with col_btn:
+            st.write("")
+            if st.button("Abrir drawer", key="extrato_btn_drawer", type="primary"):
+                # Converte índice da página para índice global no df filtrado.
+                idx_global = inicio + int(sel_local)
+                st.session_state[_CHAVE_DRAWER_IDX] = idx_global
+
+
+def _rotulos_transacoes(df: pd.DataFrame) -> list[str]:
+    """Rótulos curtos para o selectbox de inspeção."""
+    rotulos: list[str] = []
+    for _, row in df.iterrows():
+        data_v = row.get("data")
+        data_str = (
+            pd.to_datetime(data_v).strftime("%Y-%m-%d")
+            if data_v is not None and not pd.isna(data_v)
+            else "-"
+        )
+        valor = float(pd.to_numeric(row.get("valor"), errors="coerce") or 0.0)
+        local = str(row.get("local") or "")[:40]
+        rotulos.append(f"{data_str} · R$ {valor:,.2f} · {local}")
+    return rotulos
+
+
+def _exibir_exportacao(df: pd.DataFrame) -> None:
+    """Botão de download CSV (preserva contrato Sprint 92)."""
+    if df.empty:
+        return
+    colunas_export = [
+        c
+        for c in [
+            "data",
+            "valor",
+            "local",
+            "categoria",
+            "classificacao",
+            "forma_pagamento",
+            "banco_origem",
+            "tipo",
+            "quem",
+            "mes_ref",
+        ]
+        if c in df.columns
+    ]
+    csv = "﻿" + df[colunas_export].to_csv(index=False, sep=";", decimal=",")
     st.download_button(
         label="Exportar CSV",
         data=csv,
@@ -416,58 +1000,70 @@ def _exibir_tabela(df: pd.DataFrame) -> None:
     )
 
 
-def _inspecionar_transacao(df: pd.DataFrame) -> None:
-    """Sprint 74 — Modal detalhado de uma transação com preview de docs vinculados.
-
-    Streamlit não suporta clique nativo em linha do `st.dataframe`; usamos um
-    selectbox + botão como compromisso. O modal exibe metadados, estado
-    documental e preview inline dos documentos (Sprint 74, ADR-20).
-    """
-    if df.empty:
+def _exibir_drawer(df: pd.DataFrame) -> None:
+    """Renderiza o drawer JSON quando ``session_state`` tem índice setado."""
+    idx = st.session_state.get(_CHAVE_DRAWER_IDX)
+    if idx is None:
+        return
+    try:
+        idx_int = int(idx)
+    except (TypeError, ValueError):
+        return
+    if idx_int < 0 or idx_int >= len(df):
+        # índice obsoleto (filtro mudou); limpa silenciosamente.
+        del st.session_state[_CHAVE_DRAWER_IDX]
         return
 
-    st.markdown("---")
-    st.markdown(
-        f'<p style="color: {CORES["destaque"]}; font-size: {FONTE_CORPO}px; '
-        f'font-weight: bold; margin: 10px 0;">Inspecionar transação</p>',
-        unsafe_allow_html=True,
-    )
+    row = df.iloc[idx_int]
+    transacao = transacao_para_dict(row)
 
-    rotulos: list[str] = []
-    for _, row in df.head(500).iterrows():
-        data_v = row.get("data")
-        data_str = (
-            pd.to_datetime(data_v).strftime("%Y-%m-%d")
-            if data_v is not None and not pd.isna(data_v)
-            else "-"
-        )
-        valor = float(row.get("valor") or 0.0)
-        local = str(row.get("local", ""))[:40]
-        rotulos.append(f"{data_str} — R$ {valor:.2f} — {local}")
+    # Documento vinculado pelo grafo (best-effort).
+    doc_vinculado = _buscar_doc_vinculado(row)
 
-    col_sel, col_btn = st.columns([4, 1])
-    with col_sel:
-        idx = st.selectbox(
-            "Escolha uma transação (até 500 primeiras)",
-            options=list(range(len(rotulos))),
-            format_func=lambda i: rotulos[i] if i < len(rotulos) else "",
-            key="extrato_tx_inspecionar",
-        )
-    with col_btn:
-        st.write("")  # padding vertical
-        clicou = st.button("Ver detalhes", key="extrato_btn_modal", type="primary")
+    drawer_html = renderizar_drawer(transacao, doc_vinculado)
+    st.markdown(drawer_html, unsafe_allow_html=True)
 
-    if clicou and idx is not None and idx < len(df):
-        row = df.iloc[idx]
-        tx = {
-            "data": pd.to_datetime(row.get("data")) if row.get("data") is not None else None,
-            "valor": float(row.get("valor") or 0.0),
-            "categoria": row.get("categoria", "-"),
-            "banco_origem": row.get("banco_origem", "-"),
-            "local": row.get("local", "-"),
-            "quem": row.get("quem", "-"),
-        }
-        mostrar_modal(tx, [])
+    if st.button("Fechar drawer", key="extrato_btn_fechar_drawer"):
+        del st.session_state[_CHAVE_DRAWER_IDX]
+        st.rerun()
+
+
+def _buscar_doc_vinculado(row: pd.Series) -> dict[str, Any] | None:
+    """Best-effort: busca primeiro documento vinculado à transação no grafo.
+
+    Não há ainda função canônica ``documentos_de_transacao`` em
+    ``src/graph/queries.py``; o caminho atual (UX-RD-06) checa apenas se o
+    ``identificador`` da transação está no conjunto de transações com
+    documento vinculado e devolve um stub mínimo. Quando uma sprint futura
+    adicionar a query rica, basta substituir o corpo desta função.
+    """
+    ident = row.get("identificador") if hasattr(row, "get") else None
+    if ident is None or pd.isna(ident):
+        return None
+    try:
+        ids_com_doc = _carregar_ids_com_doc()
+    except Exception:  # noqa: BLE001
+        return None
+    if str(ident) not in ids_com_doc:
+        return None
+    return {
+        "sha8": str(ident)[:8],
+        "tipo_edge_semantico": "documento_de",
+        "nome": "ver módulo de Documentos",
+    }
+
+
+def _calcular_slice_pagina(
+    total_linhas: int, tamanho_pagina: int, pagina_1_based: int
+) -> tuple[int, int]:
+    """Sprint 92a.8: devolve ``(start, stop)`` 0-indexado para ``iloc``."""
+    if total_linhas <= 0 or tamanho_pagina <= 0:
+        return (0, 0)
+    n_paginas = max(1, (total_linhas + tamanho_pagina - 1) // tamanho_pagina)
+    pagina = max(1, min(pagina_1_based, n_paginas))
+    inicio = (pagina - 1) * tamanho_pagina
+    fim = min(inicio + tamanho_pagina, total_linhas)
+    return (inicio, fim)
 
 
 # "O dinheiro é um bom servo, mas um mau mestre." -- Francis Bacon
