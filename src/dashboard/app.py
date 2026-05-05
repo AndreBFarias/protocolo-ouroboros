@@ -35,6 +35,8 @@ from src.dashboard.dados import (  # noqa: E402
 )
 from src.dashboard.paginas import (  # noqa: E402
     analise_avancada,
+    be_diario,
+    be_eventos,
     be_hoje,
     be_humor,
     busca,
@@ -594,15 +596,15 @@ def main() -> None:
         with tab_be_humor:
             be_humor.renderizar(dados, periodo, pessoa, ctx)
         with tab_be_diario:
-            st.info(
-                "Aba 'Diário emocional' será habilitada na sprint UX-RD-18 "
-                "(grid de cards com humor + tags + nota textual)."
-            )
+            # Sprint UX-RD-18: aba "Diário" agora é página real --
+            # lista cronológica DESC com border-left semântica, chips
+            # emoção, slider intensidade e form modal "Registrar diário".
+            be_diario.renderizar(dados, periodo, pessoa, ctx)
         with tab_be_eventos:
-            st.info(
-                "Aba 'Eventos' será habilitada na sprint UX-RD-19 "
-                "(timeline + calendário multi-pessoa)."
-            )
+            # Sprint UX-RD-18: aba "Eventos" agora é página real --
+            # timeline cronológica DESC + sidebar lateral "Bairros
+            # frequentes" agregada do cache (NUNCA hardcoded).
+            be_eventos.renderizar(dados, periodo, pessoa, ctx)
         with tab_be_medidas:
             st.info(
                 "Aba 'Medidas' será habilitada na sprint UX-RD-20 "
