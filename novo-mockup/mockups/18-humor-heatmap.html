@@ -1,0 +1,626 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Ouroboros — Bem-estar · Humor</title>
+<link rel="stylesheet" href="../_shared/tokens.css">
+<link rel="stylesheet" href="../_shared/components.css">
+<style>
+.humor-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.8fr) minmax(0, 1fr);
+  gap: var(--sp-4);
+}
+
+/* ─────────── Card heatmap principal ─────────── */
+.heatmap-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  padding: var(--sp-5);
+}
+.heatmap-head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: var(--sp-4);
+  flex-wrap: wrap; gap: var(--sp-3);
+}
+.heatmap-titulo h2 {
+  font-family: var(--ff-mono);
+  font-size: var(--fs-16);
+  font-weight: 500;
+  margin: 0;
+  letter-spacing: 0.02em;
+}
+.heatmap-titulo .sub {
+  font-family: var(--ff-mono);
+  font-size: var(--fs-11);
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+}
+.modo-toggle { display: flex; gap: 0; }
+.modo-toggle button {
+  background: var(--bg-inset);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  padding: 6px 14px;
+  font-family: var(--ff-mono);
+  font-size: var(--fs-12);
+  cursor: pointer;
+}
+.modo-toggle button:first-child { border-radius: var(--r-sm) 0 0 var(--r-sm); }
+.modo-toggle button:last-child  { border-radius: 0 var(--r-sm) var(--r-sm) 0; border-left: none; }
+.modo-toggle button + button { border-left: none; }
+.modo-toggle button.ativo {
+  background: var(--accent-purple);
+  border-color: var(--accent-purple);
+  color: var(--text-inverse);
+}
+
+/* O grid 13x7 */
+.heatmap-host {
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  gap: var(--sp-3);
+  align-items: start;
+}
+.heatmap-dias-labels {
+  display: grid;
+  grid-template-rows: repeat(7, 1fr);
+  gap: 4px;
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  align-items: center;
+  height: 100%;
+}
+.heatmap-grid-host {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+.heatmap-meses {
+  display: grid;
+  grid-template-columns: repeat(13, 1fr);
+  gap: 4px;
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  height: 14px;
+}
+.heatmap-grid {
+  display: grid;
+  grid-template-columns: repeat(13, 1fr);
+  grid-template-rows: repeat(7, minmax(28px, 1fr));
+  gap: 4px;
+}
+.cell {
+  border-radius: 3px;
+  cursor: pointer;
+  position: relative;
+  transition: transform .12s, box-shadow .12s;
+  border: 1px solid transparent;
+}
+.cell:hover {
+  transform: scale(1.15);
+  border-color: var(--text-primary);
+  z-index: 5;
+}
+.cell.vazio { background: var(--bg-inset); border: 1px solid var(--border-subtle); }
+.cell.hoje  { box-shadow: 0 0 0 1px var(--accent-cyan); }
+.cell.sel   { box-shadow: 0 0 0 2px var(--accent-purple); transform: scale(1.15); z-index: 4; }
+
+/* Legenda */
+.heatmap-legenda {
+  display: flex; align-items: center; gap: var(--sp-3);
+  margin-top: var(--sp-4);
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--border-subtle);
+  font-family: var(--ff-mono);
+  font-size: var(--fs-11);
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.legenda-escala { display: flex; gap: 4px; }
+.legenda-escala .swatch {
+  width: 18px; height: 18px;
+  border-radius: 3px;
+}
+
+/* ─────────── Direita: stats ─────────── */
+.stats-coluna { display: flex; flex-direction: column; gap: var(--sp-3); }
+.stat-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  padding: var(--sp-4);
+}
+.stat-card .label {
+  font-family: var(--ff-mono);
+  font-size: var(--fs-11);
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+.stat-card .v {
+  font-family: var(--ff-mono);
+  font-size: var(--fs-32);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.stat-card .v small {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+.stat-card .delta {
+  font-family: var(--ff-mono);
+  font-size: var(--fs-12);
+  margin-top: 6px;
+  display: flex; align-items: center; gap: 4px;
+}
+.stat-card .delta.up { color: var(--accent-green); }
+.stat-card .delta.down { color: var(--accent-red); }
+.stat-card .delta.flat { color: var(--text-muted); }
+
+/* Sparkline */
+.spark-wrap {
+  margin-top: var(--sp-3);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--border-subtle);
+}
+.spark-wrap svg { width: 100%; height: 38px; }
+
+/* Detalhe do dia (modal inline) */
+.detalhe-dia {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-left: 3px solid var(--accent-purple);
+  border-radius: var(--r-md);
+  padding: var(--sp-4);
+  display: flex; flex-direction: column; gap: var(--sp-3);
+}
+.detalhe-dia-head {
+  display: flex; align-items: center; justify-content: space-between;
+}
+.detalhe-dia-head .titulo {
+  font-family: var(--ff-mono);
+  font-size: var(--fs-14);
+  font-weight: 500;
+  color: var(--text-primary);
+}
+.detalhe-dia-head .data {
+  font-family: var(--ff-mono);
+  font-size: var(--fs-11);
+  color: var(--text-muted);
+}
+.detalhe-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-2);
+}
+.detalhe-met {
+  background: var(--bg-inset);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-sm);
+  padding: var(--sp-2) var(--sp-3);
+}
+.detalhe-met .l {
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+.detalhe-met .v {
+  font-family: var(--ff-mono);
+  font-size: var(--fs-16);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+.detalhe-tags {
+  display: flex; gap: 4px; flex-wrap: wrap;
+}
+.detalhe-tags .pill {
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  border-color: var(--border-subtle);
+}
+.detalhe-nota {
+  font-size: var(--fs-13);
+  color: var(--text-secondary);
+  background: var(--bg-inset);
+  border-left: 2px solid var(--border-strong);
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: 0 var(--r-sm) var(--r-sm) 0;
+  font-style: italic;
+  line-height: 1.5;
+}
+
+/* ─────────── Distribuição por tag ─────────── */
+.tags-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  padding: var(--sp-5);
+  margin-top: var(--sp-4);
+}
+.tags-card h3 {
+  font-family: var(--ff-mono);
+  font-size: var(--fs-11);
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 0 0 var(--sp-4);
+}
+.tags-bars {
+  display: flex; flex-direction: column;
+  gap: 8px;
+}
+.tag-bar {
+  display: grid;
+  grid-template-columns: 120px 1fr 50px;
+  gap: var(--sp-3);
+  align-items: center;
+}
+.tag-bar .nome {
+  font-family: var(--ff-mono);
+  font-size: var(--fs-12);
+  color: var(--text-secondary);
+}
+.tag-bar .barra {
+  height: 8px;
+  background: var(--bg-inset);
+  border-radius: var(--r-full);
+  overflow: hidden;
+  position: relative;
+}
+.tag-bar .barra > span {
+  position: absolute; left: 0; top: 0; bottom: 0;
+  background: var(--cor, var(--accent-purple));
+  border-radius: var(--r-full);
+}
+.tag-bar .qtd {
+  font-family: var(--ff-mono);
+  font-size: var(--fs-12);
+  color: var(--text-muted);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 1100px) {
+  .humor-layout { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div id="shell-root"></div>
+<script src="../_shared/glyphs.js"></script>
+<script src="../_shared/shell.js"></script>
+<script>
+montarShell({
+  clusterAtivo: 'bem-estar',
+  abaAtiva: 'be-humor',
+  breadcrumb: ['Ouroboros', 'Bem-estar', 'Humor'],
+  acoes: [
+    { label: 'Exportar 90d', icon: 'download', onClick: "toast('CSV de humor exportado · 91 dias · 78 registros')" },
+    { label: 'Registrar agora', icon: 'plus', primary: true, href: '17-bem-estar-hoje.html' },
+  ],
+});
+
+// 91 dias × paleta. Gera valores deterministicamente.
+function gerarDados(seed = 1, lacunas = 0.15) {
+  const dados = [];
+  let v = 3;
+  for (let i = 0; i < 91; i++) {
+    if (Math.random() < lacunas) { dados.push(null); continue; }
+    v = Math.max(1, Math.min(5, v + (Math.random() - 0.5) * 1.5));
+    dados.push({
+      humor: Math.round(v),
+      energia: Math.max(1, Math.min(5, Math.round(v + (Math.random() - 0.5) * 1.4))),
+      ansiedade: Math.max(1, Math.min(5, Math.round(6 - v + (Math.random() - 0.5) * 1.4))),
+      foco: Math.max(1, Math.min(5, Math.round(v + (Math.random() - 0.5) * 1.6))),
+    });
+  }
+  return dados;
+}
+
+const PESSOA_A = gerarDados(1, 0.18);
+const PESSOA_B = gerarDados(2, 0.42);
+let MODO = 'A';   // 'A' | 'B' | 'sobreposto'
+let SELECIONADO = 84; // dia selecionado (mais recente com dado)
+
+// Dia 90 = hoje. dia 0 = -90 dias.
+function corHumor(v, modo = 'A') {
+  if (v == null) return 'var(--bg-inset)';
+  // 1=ruim, 5=bom — paleta lilás (A) ou rosa (B)
+  const escala = modo === 'B' ? [
+    'rgba(255,121,198,0.16)', 'rgba(255,121,198,0.32)', 'rgba(255,121,198,0.50)', 'rgba(255,121,198,0.72)', 'rgba(255,121,198,0.95)'
+  ] : [
+    'rgba(189,147,249,0.16)', 'rgba(189,147,249,0.32)', 'rgba(189,147,249,0.50)', 'rgba(189,147,249,0.72)', 'rgba(189,147,249,0.95)'
+  ];
+  return escala[v - 1];
+}
+
+function dataDe(idx) {
+  const hoje = new Date(2026, 2, 31); // 31 mar 2026
+  const d = new Date(hoje);
+  d.setDate(hoje.getDate() - (90 - idx));
+  return d;
+}
+function fmt(d) {
+  const meses = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+  const dias = ['dom','seg','ter','qua','qui','sex','sáb'];
+  return `${dias[d.getDay()]}, ${d.getDate()} ${meses[d.getMonth()]}`;
+}
+
+function renderHeatmap() {
+  // Ordenamos por semana (coluna) × dia da semana (linha).
+  // 13 colunas × 7 linhas = 91 células; índice = col*7 + linha.
+  const celulas = [];
+  for (let c = 0; c < 13; c++) {
+    for (let l = 0; l < 7; l++) {
+      const idx = c * 7 + l;
+      const dA = PESSOA_A[idx];
+      const dB = PESSOA_B[idx];
+      const isHoje = idx === 90;
+      const isSel = idx === SELECIONADO;
+      let style = '';
+      let title = `${fmt(dataDe(idx))}`;
+      if (MODO === 'A') {
+        const cor = corHumor(dA?.humor, 'A');
+        style = `background:${cor};`;
+        title += dA ? ` · humor ${dA.humor}/5` : ' · sem registro';
+      } else if (MODO === 'B') {
+        const cor = corHumor(dB?.humor, 'B');
+        style = `background:${cor};`;
+        title += dB ? ` · humor ${dB.humor}/5` : ' · sem registro';
+      } else {
+        // sobreposto: A em baixo, B em cima com 60% opacity
+        const corA = corHumor(dA?.humor, 'A');
+        const corB = corHumor(dB?.humor, 'B');
+        style = `background: linear-gradient(135deg, ${corA} 50%, ${corB} 50%);`;
+        title += ` · A: ${dA?.humor ?? '—'} · B: ${dB?.humor ?? '—'}`;
+      }
+      const cls = (dA == null && (MODO !== 'B' && MODO !== 'sobreposto')) ||
+                  (dB == null && MODO === 'B') ? 'vazio' : '';
+      celulas.push({ idx, l, c, style, title, cls, isHoje, isSel });
+    }
+  }
+  // Re-ordena para CSS grid (row-major: linha × coluna)
+  // Mas como nossa grid é column-flow visual, vamos imprimir por linha l: pra cada linha, todas as colunas.
+  const html = [];
+  for (let l = 0; l < 7; l++) {
+    for (let c = 0; c < 13; c++) {
+      const cel = celulas.find(x => x.l === l && x.c === c);
+      const classes = `cell ${cel.cls} ${cel.isHoje ? 'hoje' : ''} ${cel.isSel ? 'sel' : ''}`;
+      html.push(`<div class="${classes}" style="${cel.style}" title="${cel.title}" onclick="selecionarDia(${cel.idx})"></div>`);
+    }
+  }
+  document.getElementById('heatmap-grid').innerHTML = html.join('');
+
+  // Cabeçalho de meses (aproximado — 91 dias / 7 ≈ 13 semanas, mostramos mes a cada ~4 colunas)
+  const meses = [];
+  let ultimoMes = -1;
+  for (let c = 0; c < 13; c++) {
+    const data = dataDe(c * 7);
+    if (data.getMonth() !== ultimoMes) {
+      meses.push(`<span style="grid-column: ${c+1};">${['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'][data.getMonth()]}</span>`);
+      ultimoMes = data.getMonth();
+    } else {
+      meses.push(`<span></span>`);
+    }
+  }
+  document.getElementById('heatmap-meses').innerHTML = meses.join('');
+}
+
+function selecionarDia(idx) {
+  if (PESSOA_A[idx] == null && (MODO === 'A' || MODO === 'sobreposto')) {
+    toast('sem registro neste dia');
+    return;
+  }
+  SELECIONADO = idx;
+  renderHeatmap();
+  renderDetalhe();
+}
+
+function setModo(m) {
+  MODO = m;
+  document.querySelectorAll('.modo-toggle button').forEach(b => b.classList.toggle('ativo', b.dataset.modo === m));
+  renderHeatmap();
+}
+
+// ─── Stats ───
+function calcStats(arr30) {
+  const validos = arr30.filter(x => x != null);
+  if (!validos.length) return { media: 0, registros: 0, melhor: 0, pior: 0, picoStreak: 0 };
+  const media = validos.reduce((a, b) => a + b.humor, 0) / validos.length;
+  const melhor = Math.max(...validos.map(x => x.humor));
+  const pior   = Math.min(...validos.map(x => x.humor));
+  // streak: maior sequência de dias com humor >= 4
+  let s = 0, max = 0;
+  for (const x of arr30) {
+    if (x != null && x.humor >= 4) { s++; max = Math.max(max, s); }
+    else s = 0;
+  }
+  return { media: media.toFixed(2), registros: validos.length, melhor, pior, picoStreak: max };
+}
+
+const ULTIMOS_30 = PESSOA_A.slice(60, 91); // 30+1 dias
+const stats = calcStats(ULTIMOS_30);
+
+function sparkSvg(arr) {
+  const w = 400, h = 38, pad = 2;
+  const valid = arr.map((x, i) => x ? { i, v: x.humor } : null);
+  const min = 1, max = 5;
+  const pts = valid.filter(Boolean).map(p => `${pad + (p.i / (arr.length - 1)) * (w - pad * 2)},${h - pad - ((p.v - min) / (max - min)) * (h - pad * 2)}`).join(' ');
+  return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+    <polyline points="${pts}" fill="none" stroke="var(--accent-purple)" stroke-width="1.5" />
+  </svg>`;
+}
+
+function renderDetalhe() {
+  const d = PESSOA_A[SELECIONADO];
+  const data = dataDe(SELECIONADO);
+  if (!d) {
+    document.getElementById('detalhe-host').innerHTML = `
+      <div class="detalhe-dia">
+        <div class="detalhe-dia-head">
+          <span class="titulo">sem registro</span>
+          <span class="data">${fmt(data)}</span>
+        </div>
+        <div style="color:var(--text-muted);font-family:var(--ff-mono);font-size:12px;text-align:center;padding:12px 0;">nenhum humor capturado neste dia</div>
+      </div>`;
+    return;
+  }
+  const tags = ['calma', 'foco', 'gratidão'];
+  document.getElementById('detalhe-host').innerHTML = `
+    <div class="detalhe-dia">
+      <div class="detalhe-dia-head">
+        <span class="titulo">Detalhe do dia</span>
+        <span class="data">${fmt(data)} · 14:42</span>
+      </div>
+      <div class="detalhe-grid">
+        <div class="detalhe-met"><div class="l">humor</div><div class="v" style="color:var(--accent-pink);">${d.humor}<small>/5</small></div></div>
+        <div class="detalhe-met"><div class="l">energia</div><div class="v" style="color:var(--accent-yellow);">${d.energia}<small>/5</small></div></div>
+        <div class="detalhe-met"><div class="l">ansiedade</div><div class="v" style="color:var(--accent-orange);">${d.ansiedade}<small>/5</small></div></div>
+        <div class="detalhe-met"><div class="l">foco</div><div class="v" style="color:var(--accent-cyan);">${d.foco}<small>/5</small></div></div>
+      </div>
+      <div class="detalhe-tags">
+        ${tags.map(t => `<span class="pill">${t}</span>`).join('')}
+      </div>
+      <div class="detalhe-nota">"manhã produtiva, sono ok 6h, tomei medicação no horário. tarde caiu um pouco mas recuperei depois do café."</div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-sm" onclick="toast('Abrindo daily/${data.toISOString().slice(0,10)}.md')">${glyph('eye',12)} Abrir registro</button>
+        <button class="btn btn-sm" onclick="toast('Edição inline em mockup')">${glyph('refresh',12)} Editar</button>
+      </div>
+    </div>`;
+  hidratarGlyphs(document.getElementById('detalhe-host'));
+}
+
+// ─── Distribuição por tag ───
+const TAGS_DIST = [
+  { nome: 'calma',         qtd: 23, cor: 'var(--accent-cyan)' },
+  { nome: 'foco',          qtd: 19, cor: 'var(--accent-purple)' },
+  { nome: 'cansaço',       qtd: 14, cor: 'var(--accent-orange)' },
+  { nome: 'ansiedade',     qtd: 12, cor: 'var(--accent-red)' },
+  { nome: 'tranquilidade', qtd: 11, cor: 'var(--accent-green)' },
+  { nome: 'alegria',       qtd:  9, cor: 'var(--accent-pink)' },
+  { nome: 'gratidão',      qtd:  7, cor: 'var(--accent-yellow)' },
+  { nome: 'irritação',     qtd:  4, cor: 'var(--accent-red)' },
+];
+const maxTag = Math.max(...TAGS_DIST.map(t => t.qtd));
+
+document.getElementById('main-root').innerHTML = `
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">HUMOR · 91 DIAS</h1>
+      <p class="page-subtitle">Heatmap 13×7 lê <code style="color:var(--accent-pink);background:var(--bg-inset);padding:1px 6px;border-radius:2px;">.ouroboros/cache/humor-heatmap.json</code> gerado pelo backend.
+      Modo único pessoa A, único pessoa B, ou sobreposto. <strong style="color:var(--accent-purple);">M10</strong></p>
+    </div>
+    <div class="page-meta">
+      <span class="sprint-tag">M10</span>
+      <span class="pill pill-d7-graduado">${stats.registros}/91 dias</span>
+    </div>
+  </div>
+
+  <div class="humor-layout">
+    <div class="heatmap-card">
+      <div class="heatmap-head">
+        <div class="heatmap-titulo">
+          <h2>Últimos 91 dias</h2>
+          <div class="sub">cada célula = um dia · vazia = sem registro</div>
+        </div>
+        <div class="modo-toggle">
+          <button class="ativo" data-modo="A" onclick="setModo('A')">Pessoa A</button>
+          <button data-modo="B" onclick="setModo('B')">Pessoa B</button>
+          <button data-modo="sobreposto" onclick="setModo('sobreposto')">Sobreposto</button>
+        </div>
+      </div>
+
+      <div class="heatmap-host">
+        <div class="heatmap-dias-labels">
+          <span>seg</span><span>ter</span><span>qua</span><span>qui</span><span>sex</span><span>sáb</span><span>dom</span>
+        </div>
+        <div class="heatmap-grid-host">
+          <div class="heatmap-meses" id="heatmap-meses"></div>
+          <div class="heatmap-grid" id="heatmap-grid"></div>
+        </div>
+      </div>
+
+      <div class="heatmap-legenda">
+        <span>menos</span>
+        <div class="legenda-escala">
+          <span class="swatch" style="background:rgba(189,147,249,0.16);"></span>
+          <span class="swatch" style="background:rgba(189,147,249,0.32);"></span>
+          <span class="swatch" style="background:rgba(189,147,249,0.50);"></span>
+          <span class="swatch" style="background:rgba(189,147,249,0.72);"></span>
+          <span class="swatch" style="background:rgba(189,147,249,0.95);"></span>
+        </div>
+        <span>mais</span>
+        <span style="margin-left:auto;">linha guia · ${glyph('eye', 11)} clique numa célula para detalhe</span>
+      </div>
+    </div>
+
+    <div class="stats-coluna">
+      <div class="stat-card">
+        <div class="label">média 30 dias</div>
+        <div class="v" style="color:var(--accent-purple);">${stats.media}<small>/5</small></div>
+        <div class="delta up">${glyph('trend', 11)} +0.18 vs 30d anteriores</div>
+        <div class="spark-wrap">${sparkSvg(ULTIMOS_30)}</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="label">registros · 30 dias</div>
+        <div class="v" style="color:var(--accent-cyan);">${stats.registros}<small>/30</small></div>
+        <div class="delta up">${glyph('trend', 11)} consistência ${Math.round(stats.registros/30*100)}%</div>
+      </div>
+
+      <div class="stat-card" style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-3);">
+        <div>
+          <div class="label">melhor</div>
+          <div class="v" style="color:var(--accent-green);">${stats.melhor}<small>/5</small></div>
+        </div>
+        <div>
+          <div class="label">pior</div>
+          <div class="v" style="color:var(--accent-red);">${stats.pior}<small>/5</small></div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="label">streak humor ≥ 4</div>
+        <div class="v" style="color:var(--accent-yellow);">${stats.picoStreak}<small> dias</small></div>
+        <div class="delta flat">recorde da janela 30d</div>
+      </div>
+
+      <div id="detalhe-host"></div>
+    </div>
+  </div>
+
+  <div class="tags-card">
+    <h3>Distribuição de tags · últimos 30 dias</h3>
+    <div class="tags-bars">
+      ${TAGS_DIST.map(t => `
+        <div class="tag-bar">
+          <span class="nome">${t.nome}</span>
+          <div class="barra"><span style="--cor:${t.cor};width:${(t.qtd/maxTag)*100}%;"></span></div>
+          <span class="qtd">${t.qtd}×</span>
+        </div>
+      `).join('')}
+    </div>
+  </div>
+`;
+
+renderHeatmap();
+renderDetalhe();
+hidratarGlyphs(document.getElementById('main-root'));
+</script>
+</body>
+</html>

@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><title>Ouroboros — Metas</title>
+<link rel="stylesheet" href="../_shared/tokens.css">
+<link rel="stylesheet" href="../_shared/components.css">
+<style>
+.section-bar { display:flex; align-items:baseline; gap:var(--sp-3); margin: var(--sp-5) 0 var(--sp-3); }
+.section-bar:first-of-type { margin-top: 0; }
+.section-bar h2 { font-family: var(--ff-mono); font-size: var(--fs-13); letter-spacing:.08em; text-transform:uppercase; color: var(--text-secondary); margin:0; font-weight:500; }
+.section-bar .sub { font-family: var(--ff-mono); font-size: 11px; color: var(--text-muted); }
+.metas-fin { display:grid; grid-template-columns: repeat(3,1fr); gap:var(--sp-3); }
+.meta-card { background: var(--bg-surface); border:1px solid var(--border-subtle); border-radius: var(--r-md); padding: var(--sp-4); position:relative; overflow:hidden; }
+.meta-card .ico { width:36px; height:36px; border-radius: var(--r-sm); background: var(--bg-inset); color: var(--cor); display:grid; place-items:center; font-family: var(--ff-mono); font-size:14px; font-weight:600; margin-bottom: var(--sp-3); }
+.meta-card h3 { margin:0 0 4px; font-size: 18px; font-weight:500; }
+.meta-card .hint { font-family: var(--ff-mono); font-size: 11px; color: var(--text-muted); margin-bottom: var(--sp-3); }
+.meta-card .v { font-family: var(--ff-mono); font-size: 22px; font-variant-numeric: tabular-nums; line-height:1; }
+.meta-card .target { font-family: var(--ff-mono); font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+.meta-bar { height: 8px; background: var(--bg-inset); border-radius: var(--r-full); overflow:hidden; margin: var(--sp-3) 0; position:relative; }
+.meta-bar > span { display:block; height:100%; background: var(--cor); transition: width .4s ease; }
+.meta-foot { display:grid; grid-template-columns: repeat(3,1fr); gap: var(--sp-2); padding-top: var(--sp-3); border-top: 1px dashed var(--border-subtle); }
+.meta-foot div { font-family: var(--ff-mono); font-size: 10px; color: var(--text-muted); letter-spacing:.06em; text-transform:uppercase; }
+.meta-foot strong { display:block; font-size: 13px; color: var(--text-primary); margin-top: 2px; }
+.metas-op { display:grid; grid-template-columns: repeat(2,1fr); gap:var(--sp-3); }
+.op-card { background: var(--bg-surface); border:1px solid var(--border-subtle); border-radius: var(--r-md); padding: var(--sp-4); }
+.op-head { display:flex; align-items:center; justify-content:space-between; margin-bottom: var(--sp-3); }
+.op-head h3 { font-family: var(--ff-mono); font-size: 13px; margin: 0; font-weight:500; }
+.op-gauge { position:relative; height: 110px; }
+.op-grid { display:grid; grid-template-columns: 1fr 1fr; gap: var(--sp-3); margin-top: var(--sp-3); }
+.op-stat { background: var(--bg-inset); padding: var(--sp-2) var(--sp-3); border-radius: var(--r-sm); }
+.op-stat .l { font-family: var(--ff-mono); font-size: 9px; letter-spacing:.08em; text-transform:uppercase; color: var(--text-muted); }
+.op-stat .v { font-family: var(--ff-mono); font-size: 16px; font-variant-numeric: tabular-nums; margin-top: 2px; }
+</style>
+</head>
+<body>
+<div id="shell-root"></div>
+<script src="../_shared/glyphs.js"></script>
+<script src="../_shared/shell.js"></script>
+<script>
+montarShell({clusterAtivo:'metas',abaAtiva:'metas',breadcrumb:['Ouroboros','Metas'],acoes:[{label:'Skills D7',icon:'sigma',href:'14-skills-d7.html'},{label:'Nova meta',icon:'plus',primary:true,onClick:"toast('Wizard de nova meta · em dev','warn')"}]});
+const fmt = v => 'R$ ' + v.toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0});
+
+const FIN = [
+  { ico:'', cor:'#50fa7b', name:'Reserva de emergência', hint:'6× custo fixo mensal · prioridade 1', atual:42500, meta:60000, prazo:'set/2026', ritmo:'+R$ 2.500/mês', falta:'5 meses' },
+  { ico:'', cor:'#8be9fd', name:'Viagem · Japão', hint:'25 dias · 2 pessoas · primavera', atual:8400, meta:32000, prazo:'mar/2027', ritmo:'+R$ 1.800/mês', falta:'13 meses' },
+  { ico:'', cor:'#bd93f9', name:'Entrada · imóvel', hint:'20% de R$ 600k · 1º imóvel', atual:38800, meta:120000, prazo:'jun/2027', ritmo:'+R$ 5.500/mês', falta:'14 meses' },
+  { ico:'', cor:'#ffb86c', name:'Troca de carro', hint:'Renault Kwid → SUV compacto', atual:12300, meta:45000, prazo:'jan/2028', ritmo:'+R$ 1.500/mês', falta:'21 meses' },
+  { ico:'∞', cor:'#ff79c6', name:'Independência financeira', hint:'25× custo anual · FIRE conservador', atual:31420, meta:1800000, prazo:'2042', ritmo:'+R$ 6.500/mês', falta:'16 anos' },
+  { ico:'', cor:'#f1fa8c', name:'MBA · 2027', hint:'Insper · Gestão de Negócios', atual:14000, meta:48000, prazo:'fev/2027', ritmo:'+R$ 3.500/mês', falta:'10 meses' },
+];
+
+function donut(pct, color, size=110) {
+  const r = size/2 - 8;
+  const c = 2*Math.PI*r;
+  const off = c*(1-pct);
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+    <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="var(--bg-inset)" stroke-width="6"/>
+    <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${color}" stroke-width="6" stroke-linecap="round"
+      stroke-dasharray="${c}" stroke-dashoffset="${off}" transform="rotate(-90 ${size/2} ${size/2})"/>
+    <text x="${size/2}" y="${size/2+5}" text-anchor="middle" font-family="JetBrains Mono" font-size="20" fill="var(--text-primary)" font-weight="500">${Math.round(pct*100)}%</text>
+    <text x="${size/2}" y="${size/2+22}" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="var(--text-muted)">de ${size>120?'meta':'meta'}</text>
+  </svg>`;
+}
+
+const finHtml = FIN.map(m => {
+  const pct = m.atual/m.meta;
+  return `
+    <div class="meta-card" style="--cor:${m.cor};">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div class="ico" style="background:${m.cor}22;">${m.ico}</div>
+        ${donut(pct, m.cor, 70)}
+      </div>
+      <h3>${m.name}</h3>
+      <div class="hint">${m.hint}</div>
+      <div class="v"><span style="color:${m.cor};">${fmt(m.atual)}</span> <span style="color:var(--text-muted);font-size:14px;">/ ${fmt(m.meta)}</span></div>
+      <div class="meta-bar"><span style="width:${pct*100}%;"></span></div>
+      <div class="meta-foot">
+        <div>prazo<strong>${m.prazo}</strong></div>
+        <div>ritmo<strong>${m.ritmo}</strong></div>
+        <div>falta<strong>${m.falta}</strong></div>
+      </div>
+    </div>
+  `;
+}).join('');
+
+// Operacionais — pipeline
+function gauge(pct, color, label, value) {
+  const cx=110, cy=90, r=70;
+  const start = Math.PI; const end = 2*Math.PI;
+  const a = start + (end-start)*pct;
+  const x1 = cx + r*Math.cos(start), y1 = cy + r*Math.sin(start);
+  const x2 = cx + r*Math.cos(end), y2 = cy + r*Math.sin(end);
+  const xp = cx + r*Math.cos(a), yp = cy + r*Math.sin(a);
+  return `<svg viewBox="0 0 220 110" width="100%" height="110">
+    <path d="M ${x1} ${y1} A ${r} ${r} 0 0 1 ${x2} ${y2}" fill="none" stroke="var(--bg-inset)" stroke-width="10" stroke-linecap="round"/>
+    <path d="M ${x1} ${y1} A ${r} ${r} 0 0 1 ${xp} ${yp}" fill="none" stroke="${color}" stroke-width="10" stroke-linecap="round"/>
+    <text x="${cx}" y="78" text-anchor="middle" font-family="JetBrains Mono" font-size="26" fill="${color}" font-weight="500">${value}</text>
+    <text x="${cx}" y="100" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="var(--text-muted)" letter-spacing="0.06em">${label}</text>
+  </svg>`;
+}
+
+document.getElementById('main-root').innerHTML = `
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">METAS</h1>
+      <p class="page-subtitle">Duas categorias: <strong style="color:var(--accent-purple);">metas financeiras</strong> (objetivos pessoais com horizonte) e <strong style="color:var(--accent-cyan);">metas operacionais</strong> (pipeline de ingestão · cobertura, validação, completude).</p>
+    </div>
+    <div class="page-meta"><span class="sprint-tag">Sprint 6</span><span class="pill pill-d7-graduado">6 financeiras · 4 operacionais</span></div>
+  </div>
+
+  <div class="section-bar">
+    <h2>Metas financeiras</h2>
+    <span class="sub">objetivos com prazo e valor · prioridade impacta sugestão de aporte</span>
+    <span style="margin-left:auto;font-family:var(--ff-mono);font-size:11px;color:var(--text-muted);">total acumulado <strong style="color:var(--text-primary);">${fmt(147420)}</strong> · meta total <strong style="color:var(--text-primary);">${fmt(2105000)}</strong></span>
+  </div>
+  <div class="metas-fin">${finHtml}</div>
+
+  <div class="section-bar">
+    <h2>Metas operacionais · pipeline</h2>
+    <span class="sub">indicadores do sistema. monitorados pelo cluster Sistema.</span>
+  </div>
+  <div class="metas-op">
+    <div class="op-card">
+      <div class="op-head"><h3>Cobertura D7 · skills graduadas</h3><span class="pill pill-d7-graduado">no alvo</span></div>
+      ${gauge(0.78, 'var(--d7-graduado)', 'meta · 75% até Q2', '78%')}
+      <div class="op-grid">
+        <div class="op-stat"><div class="l">graduadas</div><div class="v" style="color:var(--d7-graduado);">14 / 18</div></div>
+        <div class="op-stat"><div class="l">prontas p/ graduar</div><div class="v" style="color:var(--accent-cyan);">3</div></div>
+        <div class="op-stat"><div class="l">regredidas no mês</div><div class="v" style="color:var(--accent-orange);">1</div></div>
+        <div class="op-stat"><div class="l">bloqueadas</div><div class="v">0</div></div>
+      </div>
+    </div>
+
+    <div class="op-card">
+      <div class="op-head"><h3>% transações validadas</h3><span class="pill pill-d7-graduado">no alvo</span></div>
+      ${gauge(0.94, 'var(--d7-graduado)', 'meta · 90%', '94%')}
+      <div class="op-grid">
+        <div class="op-stat"><div class="l">validadas</div><div class="v">2.676 / 2.847</div></div>
+        <div class="op-stat"><div class="l">pendentes</div><div class="v" style="color:var(--accent-yellow);">142</div></div>
+        <div class="op-stat"><div class="l">conflitos</div><div class="v" style="color:var(--accent-red);">29</div></div>
+        <div class="op-stat"><div class="l">SLA médio</div><div class="v">1.2d</div></div>
+      </div>
+    </div>
+
+    <div class="op-card">
+      <div class="op-head"><h3>Completude por tipo · documentos</h3><span class="pill pill-d7-calibracao">calibrando</span></div>
+      <div style="display:flex;flex-direction:column;gap:8px;padding: var(--sp-2) 0;">
+        ${[
+          {n:'OFX bancos', pct:1.00, cor:'var(--d7-graduado)'},
+          {n:'Faturas cartão', pct:0.92, cor:'var(--d7-graduado)'},
+          {n:'Comprovantes Pix', pct:0.84, cor:'var(--d7-calibracao)'},
+          {n:'NF serviços (PJ)', pct:0.71, cor:'var(--d7-calibracao)'},
+          {n:'Recibos diversos', pct:0.42, cor:'var(--accent-orange)'},
+        ].map(t => `
+          <div style="display:grid;grid-template-columns: 140px 1fr 50px;gap:var(--sp-3);align-items:center;font-family:var(--ff-mono);font-size:12px;">
+            <span>${t.n}</span>
+            <div style="height:6px;background:var(--bg-inset);border-radius:var(--r-full);overflow:hidden;"><span style="display:block;height:100%;width:${t.pct*100}%;background:${t.cor};"></span></div>
+            <span style="text-align:right;color:${t.cor};font-variant-numeric:tabular-nums;">${Math.round(t.pct*100)}%</span>
+          </div>
+        `).join('')}
+      </div>
+      <div style="font-family:var(--ff-mono);font-size:10px;color:var(--text-muted);margin-top:var(--sp-3);">meta global · 80% até fim do Q2</div>
+    </div>
+
+    <div class="op-card">
+      <div class="op-head"><h3>Latência média de processamento</h3><span class="pill pill-d7-graduado">estável</span></div>
+      ${gauge(0.62, 'var(--accent-cyan)', 'meta · ≤ 8 min', '4.9 min')}
+      <div class="op-grid">
+        <div class="op-stat"><div class="l">p50</div><div class="v">3.2 min</div></div>
+        <div class="op-stat"><div class="l">p95</div><div class="v">11.4 min</div></div>
+        <div class="op-stat"><div class="l">execuções 30d</div><div class="v">2.184</div></div>
+        <div class="op-stat"><div class="l">falhas</div><div class="v" style="color:var(--accent-red);">0.4%</div></div>
+      </div>
+    </div>
+  </div>
+`;
+hidratarGlyphs(document.getElementById('main-root'));
+</script></body></html>

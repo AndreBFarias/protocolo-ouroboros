@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><title>Ouroboros — Categorias</title>
+<link rel="stylesheet" href="../_shared/tokens.css">
+<link rel="stylesheet" href="../_shared/components.css">
+<style>
+.kpi-row { display:grid; grid-template-columns: repeat(4,1fr); gap:var(--sp-3); margin-bottom:var(--sp-4); }
+.k { background: var(--bg-surface); border:1px solid var(--border-subtle); border-radius: var(--r-md); padding: var(--sp-4); }
+.k .l { font-family: var(--ff-mono); font-size:10px; letter-spacing:.08em; text-transform:uppercase; color: var(--text-muted); }
+.k .v { font-family: var(--ff-mono); font-size:26px; font-weight:500; line-height:1; margin-top:6px; font-variant-numeric:tabular-nums; }
+.k .d { font-family: var(--ff-mono); font-size:11px; color: var(--text-muted); margin-top:6px; }
+.cat-grid { display:grid; grid-template-columns: 1.5fr 1fr; gap: var(--sp-3); }
+.tree-card, .right-card { background: var(--bg-surface); border:1px solid var(--border-subtle); border-radius: var(--r-md); }
+.head { padding: var(--sp-3) var(--sp-4); border-bottom: 1px solid var(--border-subtle); display:flex; align-items:center; justify-content:space-between; }
+.head h3 { font-family: var(--ff-mono); font-size:11px; letter-spacing:.08em; text-transform:uppercase; color: var(--text-secondary); margin:0; }
+.tree { padding: var(--sp-3); }
+.cat-row { display:grid; grid-template-columns: 1fr 80px 100px; gap: var(--sp-3); align-items:center; padding: 8px var(--sp-3); border-radius: var(--r-sm); cursor:pointer; }
+.cat-row:hover { background: var(--bg-elevated); }
+.cat-row .name { font-family: var(--ff-mono); font-size:13px; display:flex; align-items:center; gap: 8px; }
+.cat-row .name .dot { width:10px; height:10px; border-radius:2px; }
+.cat-row .name .arrow { color: var(--text-muted); width: 12px; display:inline-block; }
+.cat-row.l1 { font-weight:500; }
+.cat-row.l2 { padding-left: var(--sp-5); font-size: 12px; }
+.cat-row.l2 .name { color: var(--text-secondary); }
+.cat-row .pct { font-family: var(--ff-mono); font-size: 11px; color: var(--text-muted); text-align:right; font-variant-numeric: tabular-nums; }
+.cat-row .v { font-family: var(--ff-mono); font-size: 13px; text-align:right; font-variant-numeric: tabular-nums; }
+.cat-row .bar { grid-column: 1/-1; height: 3px; background: var(--bg-inset); border-radius: var(--r-full); overflow:hidden; margin-top: 4px; }
+.cat-row .bar > span { display:block; height:100%; }
+.treemap { padding: var(--sp-3); }
+.tm-block { color: var(--bg-base); padding: 10px; font-family: var(--ff-mono); display:flex; flex-direction:column; gap:2px; border-radius: var(--r-xs); overflow:hidden; box-shadow: 0 0 0 1px var(--bg-base); }
+.tm-block .n { font-size: 12px; font-weight:500; }
+.tm-block .v { font-size: 11px; opacity: 0.8; }
+.rules-card { padding: var(--sp-4); }
+.rule { display:grid; grid-template-columns: 1fr auto; gap: var(--sp-2); padding: var(--sp-2) 0; border-bottom: 1px dashed var(--border-subtle); font-size: 12px; }
+.rule:last-child { border-bottom:none; }
+.rule code { font-family: var(--ff-mono); color: var(--accent-purple); font-size:11px; }
+.rule .desc { font-family: var(--ff-mono); color: var(--text-secondary); }
+.rule .ct { font-family: var(--ff-mono); font-size:11px; color: var(--text-muted); }
+</style>
+</head>
+<body>
+<div id="shell-root"></div>
+<script src="../_shared/glyphs.js"></script>
+<script src="../_shared/shell.js"></script>
+<script>
+montarShell({clusterAtivo:'analise',abaAtiva:'categorias',breadcrumb:['Ouroboros','Análise','Categorias'],acoes:[{label:'Nova regra',icon:'plus',onClick:"toast('Nova regra de auto-classificação','ok')"},{label:'Recategorizar',icon:'refresh',primary:true,onClick:"toast('Reclassificando 2.847 transações...'); setTimeout(()=>toast('Cobertura: 94% → 96% (+58 txns)'),1500)"}]});
+const fmt = v => 'R$ ' + v.toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0});
+
+const TREE = [
+  { id:'casa', name:'Casa & moradia', v:2840, c:'#bd93f9', sub:[
+    {name:'Aluguel', v:1280, c:'#bd93f9'}, {name:'Condomínio', v:520, c:'#a777e3'}, {name:'Energia', v:340, c:'#9966dd'}, {name:'Internet+TV', v:258, c:'#8855cc'}, {name:'Água', v:142, c:'#7744bb'}, {name:'Diarista', v:300, c:'#6633aa'},
+  ]},
+  { id:'alim', name:'Alimentação', v:3252, c:'#ff79c6', sub:[
+    {name:'Mercado', v:1842, c:'#ff79c6'}, {name:'Restaurantes', v:1010, c:'#ee68b5'}, {name:'iFood', v:400, c:'#dd57a4'},
+  ]},
+  { id:'tran', name:'Transporte', v:680, c:'#8be9fd', sub:[
+    {name:'Uber+99', v:340, c:'#8be9fd'}, {name:'Combustível', v:220, c:'#7ad8ec'}, {name:'Estacionamento', v:120, c:'#69c7db'},
+  ]},
+  { id:'saud', name:'Saúde', v:1402, c:'#50fa7b', sub:[
+    {name:'Plano de saúde', v:782, c:'#50fa7b'}, {name:'Academia', v:150, c:'#3fe96a'}, {name:'Farmácia', v:280, c:'#2ed859'}, {name:'Terapia', v:190, c:'#1dc748'},
+  ]},
+  { id:'lazr', name:'Lazer & cultura', v:412, c:'#ffb86c', sub:[
+    {name:'Cinema/teatro', v:160, c:'#ffb86c'}, {name:'Livros', v:142, c:'#eea75b'}, {name:'Streaming', v:110, c:'#dd964a'},
+  ]},
+  { id:'inv', name:'Investimento', v:3200, c:'#f1fa8c', sub:[
+    {name:'IVVB11 (B3)', v:3200, c:'#f1fa8c'},
+  ]},
+];
+const total = TREE.reduce((a,t)=>a+t.v,0);
+
+// Tree rendering with first parent expanded
+const treeHtml = TREE.map((t,i)=>`
+  <div class="cat-row l1" style="--c:${t.c};">
+    <div class="name"><span class="arrow">${i===1?'':''}</span><span class="dot" style="background:${t.c};"></span>${t.name}</div>
+    <div class="pct">${(t.v/total*100).toFixed(1)}%</div>
+    <div class="v">${fmt(t.v)}</div>
+    <div class="bar"><span style="width:${t.v/total*100}%;background:${t.c};"></span></div>
+  </div>
+  ${i===1 ? t.sub.map(s=>`
+    <div class="cat-row l2">
+      <div class="name"><span class="dot" style="background:${s.c};"></span>${s.name}</div>
+      <div class="pct">${(s.v/t.v*100).toFixed(0)}%</div>
+      <div class="v">${fmt(s.v)}</div>
+      <div class="bar"><span style="width:${s.v/total*100}%;background:${s.c};"></span></div>
+    </div>
+  `).join('') : ''}
+`).join('');
+
+// Treemap layout (squarified-ish, simple)
+function treemapHtml() {
+  const sorted = [...TREE].sort((a,b)=>b.v-a.v);
+  // Two columns
+  const colA = sorted.slice(0,3);
+  const colB = sorted.slice(3);
+  const sumA = colA.reduce((a,c)=>a+c.v,0);
+  const sumB = colB.reduce((a,c)=>a+c.v,0);
+  const colAHtml = colA.map(c=>`<div class="tm-block" style="background:${c.c};flex:${c.v} 0 0;"><div class="n">${c.name}</div><div class="v">${fmt(c.v)} · ${(c.v/total*100).toFixed(0)}%</div></div>`).join('');
+  const colBHtml = colB.map(c=>`<div class="tm-block" style="background:${c.c};flex:${c.v} 0 0;"><div class="n">${c.name}</div><div class="v">${fmt(c.v)} · ${(c.v/total*100).toFixed(0)}%</div></div>`).join('');
+  return `<div style="display:flex;gap:4px;height:340px;">
+    <div style="flex:${sumA};display:flex;flex-direction:column;gap:4px;">${colAHtml}</div>
+    <div style="flex:${sumB};display:flex;flex-direction:column;gap:4px;">${colBHtml}</div>
+  </div>`;
+}
+
+document.getElementById('main-root').innerHTML = `
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">CATEGORIAS</h1>
+      <p class="page-subtitle">Hierarquia de categorias com regras de auto-classificação. Cobertura atual: <strong style="color:var(--d7-graduado);">94%</strong>. <strong style="color:var(--accent-yellow);">17 transações</strong> não-classificadas aguardam revisão.</p>
+    </div>
+    <div class="page-meta"><span class="sprint-tag">Sprint 5</span><span class="pill pill-d7-graduado">6 famílias · 24 subcategorias</span></div>
+  </div>
+
+  <div class="kpi-row">
+    <div class="k"><div class="l">Saída · 30d</div><div class="v">${fmt(total)}</div><div class="d">142 transações classificadas</div></div>
+    <div class="k"><div class="l">Cobertura auto</div><div class="v" style="color:var(--d7-graduado);">94%</div><div class="d">23 regras ativas · 134/142</div></div>
+    <div class="k"><div class="l">Maior família</div><div class="v" style="color:var(--accent-pink);">${(3252/total*100).toFixed(0)}%</div><div class="d">Alimentação · ${fmt(3252)}</div></div>
+    <div class="k"><div class="l">Não-classificadas</div><div class="v" style="color:var(--accent-yellow);">17</div><div class="d">${fmt(284)} · revisar →</div></div>
+  </div>
+
+  <div class="cat-grid">
+    <div>
+      <div class="tree-card" style="margin-bottom: var(--sp-3);">
+        <div class="head"><h3>Árvore · saída 30d</h3>
+          <div style="display:flex;gap:6px;">
+            <button class="btn btn-sm">expandir tudo</button>
+            <button class="btn btn-sm">por valor</button>
+          </div>
+        </div>
+        <div class="tree">${treeHtml}</div>
+      </div>
+    </div>
+    <div>
+      <div class="tree-card" style="margin-bottom: var(--sp-3);">
+        <div class="head"><h3>Treemap · proporção</h3>
+          <span style="font-family:var(--ff-mono);font-size:11px;color:var(--text-muted);">área = valor</span>
+        </div>
+        <div class="treemap">${treemapHtml()}</div>
+      </div>
+      <div class="tree-card rules-card">
+        <h3 style="font-family:var(--ff-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-secondary);margin:0 0 var(--sp-3);">Regras de auto-classificação</h3>
+        <div class="rule">
+          <div><code>desc ~ /ifood|sushi yamamoto/i</code><div class="desc">→ <strong>Alimentação · iFood</strong></div></div>
+          <div class="ct">42 hits</div>
+        </div>
+        <div class="rule">
+          <div><code>desc ~ /uber|99app|cabify/i</code><div class="desc">→ <strong>Transporte · Uber+99</strong></div></div>
+          <div class="ct">31 hits</div>
+        </div>
+        <div class="rule">
+          <div><code>val == 1280 && conta == 'bradesco'</code><div class="desc">→ <strong>Casa · Aluguel</strong> (recorrência)</div></div>
+          <div class="ct">24 hits</div>
+        </div>
+        <div class="rule">
+          <div><code>desc ~ /b3 .* IVVB|tesouro/</code><div class="desc">→ <strong>Investimento</strong></div></div>
+          <div class="ct">18 hits</div>
+        </div>
+        <div class="rule">
+          <div><code>desc ~ /unimed|amil|hapvida/i</code><div class="desc">→ <strong>Saúde · Plano</strong></div></div>
+          <div class="ct">12 hits</div>
+        </div>
+      </div>
+    </div>
+  </div>
+`;
+hidratarGlyphs(document.getElementById('main-root'));
+</script></body></html>

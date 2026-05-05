@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><title>Ouroboros — IRPF 2026</title>
+<link rel="stylesheet" href="../_shared/tokens.css">
+<link rel="stylesheet" href="../_shared/components.css">
+<style>
+.irpf-grid { display:grid; grid-template-columns: 1fr 380px; gap: var(--sp-4); }
+.tag-row {
+  background: var(--bg-surface); border:1px solid var(--border-subtle);
+  border-left: 4px solid var(--accent-purple);
+  border-radius: var(--r-md); padding: var(--sp-3) var(--sp-4);
+  margin-bottom: var(--sp-2);
+  display:grid; grid-template-columns: 240px 1fr 140px 100px 90px;
+  gap: var(--sp-3); align-items:center;
+}
+.tag-row[data-cor="green"]  { border-left-color: var(--d7-graduado); }
+.tag-row[data-cor="yellow"] { border-left-color: var(--accent-yellow); }
+.tag-row[data-cor="red"]    { border-left-color: var(--accent-red); }
+.tag-row[data-cor="cyan"]   { border-left-color: var(--accent-cyan); }
+.tag-row[data-cor="orange"] { border-left-color: var(--accent-orange); }
+.tag-name { font-family: var(--ff-mono); font-size: 13px; font-weight: 500; }
+.tag-desc { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+.tag-bar { height: 6px; background: var(--bg-inset); border-radius: var(--r-full); overflow: hidden; position: relative; }
+.tag-bar > span { display:block; height:100%; background: var(--accent-purple); }
+.tag-bar-label { font-family: var(--ff-mono); font-size: 11px; color: var(--text-muted); margin-bottom: 2px; display:flex; justify-content:space-between; }
+.tag-val { font-family: var(--ff-mono); font-size: 16px; font-weight: 500; text-align: right; font-variant-numeric: tabular-nums; }
+.tag-conf { text-align: center; font-family: var(--ff-mono); font-size: 11px; padding: 2px 6px; border-radius: var(--r-xs); border:1px solid var(--border-subtle); }
+.confiance-high { color: var(--d7-graduado); border-color: rgba(107,142,127,0.4); }
+.confiance-mid  { color: var(--accent-yellow); border-color: rgba(241,250,140,0.4); }
+.confiance-low  { color: var(--accent-orange); border-color: rgba(255,184,108,0.4); }
+.tag-actions { display:flex; gap: 4px; justify-content:flex-end; }
+
+.export-card { background: var(--bg-surface); border:1px solid var(--border-subtle); border-radius: var(--r-md); padding: var(--sp-4); position:sticky; top: var(--sp-4); }
+.export-card h3 { font-family: var(--ff-mono); font-size: 13px; letter-spacing: .04em; margin: 0 0 var(--sp-2); }
+.export-card .total {
+  font-family: var(--ff-mono); font-size: 32px; font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  background: linear-gradient(135deg, var(--accent-purple), var(--accent-pink));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.export-files {
+  background: var(--bg-inset); border:1px solid var(--border-subtle);
+  border-radius: var(--r-sm); padding: var(--sp-2);
+  font-family: var(--ff-mono); font-size: 11px;
+  display:flex; flex-direction:column; gap: 4px;
+  margin: var(--sp-3) 0;
+}
+.export-files li { display:flex; justify-content:space-between; color: var(--text-secondary); list-style:none; }
+.export-files li code { color: var(--accent-pink); }
+
+.checklist { font-size: 12px; }
+.checklist li {
+  display: grid; grid-template-columns: 16px 1fr;
+  gap: 8px; padding: 4px 0; align-items: baseline;
+}
+.checklist .ck-ok  { color: var(--d7-graduado); }
+.checklist .ck-warn { color: var(--accent-yellow); }
+</style>
+</head>
+<body>
+<div id="shell-root"></div>
+<script src="../_shared/glyphs.js"></script>
+<script src="../_shared/shell.js"></script>
+<script>
+montarShell({
+  clusterAtivo: 'analise', abaAtiva: 'irpf',
+  breadcrumb: ['Ouroboros', 'Análise', 'IRPF 2026'],
+  acoes: [
+    { label: 'Recalcular', icon: 'refresh', onClick: "toast('Recalculando IRPF 2026...'); setTimeout(()=>toast('Saldo: R$ 4.281 a restituir · 96% completude'),1500)" },
+    { label: 'Gerar pacote', icon: 'download', primary: true, onClick: "toast('Pacote IRPF gerado · DEC + DARF + PDFs (12MB)')" },
+  ],
+});
+
+const tags = [
+  { tag:'rendimento_tributavel', cor:'green',  desc:'Salários, pró-labore, aluguéis recebidos', val:'R$ 142.380,00', conf:'high', n:18, completude:0.98 },
+  { tag:'rendimento_isento',     cor:'cyan',   desc:'Indenização, FGTS, lucros distribuídos',    val:'R$ 8.420,00',  conf:'high', n:6, completude:0.92 },
+  { tag:'dedutivel_medico',      cor:'yellow', desc:'Consultas, exames, plano de saúde, medicamentos', val:'R$ 14.760,00', conf:'mid', n:34, completude:0.71 },
+  { tag:'dedutivel_educacional', cor:'cyan',   desc:'Mensalidades educação formal', val:'R$ 0,00', conf:'high', n:0, completude:1.0 },
+  { tag:'previdencia_privada',   cor:'green',  desc:'Contribuições PGBL', val:'R$ 12.000,00', conf:'high', n:12, completude:1.0 },
+  { tag:'imposto_pago',          cor:'red',    desc:'IRRF na fonte (CC, salário, aplicações)', val:'R$ 24.840,00', conf:'high', n:15, completude:0.95 },
+  { tag:'inss_retido',           cor:'orange', desc:'Contribuição previdenciária retida', val:'R$ 7.580,00', conf:'high', n:12, completude:1.0 },
+  { tag:'doacao_dedutivel',      cor:'cyan',   desc:'Fundo da Criança, Idoso, Cultura', val:'R$ 1.200,00', conf:'mid', n:2, completude:0.50 },
+];
+
+const irpfRow = (t) => {
+  const conf = t.conf === 'high' ? 'confiance-high' : t.conf === 'mid' ? 'confiance-mid' : 'confiance-low';
+  return `
+    <div class="tag-row" data-cor="${t.cor}">
+      <div>
+        <div class="tag-name">${t.tag}</div>
+        <div class="tag-desc">${t.desc}</div>
+      </div>
+      <div>
+        <div class="tag-bar-label"><span>${t.n} arquivo(s)</span><span>${Math.round(t.completude*100)}% completude</span></div>
+        <div class="tag-bar"><span style="width:${t.completude*100}%;"></span></div>
+      </div>
+      <div class="tag-val">${t.val}</div>
+      <div><span class="tag-conf ${conf}">${t.conf === 'high' ? '≥90%' : t.conf === 'mid' ? '70–90%' : '<70%'}</span></div>
+      <div class="tag-actions">
+        <button class="btn btn-icon btn-sm" title="Ver arquivos">${glyph('expand',12)}</button>
+        <button class="btn btn-icon btn-sm" title="Editar">${glyph('docs',12)}</button>
+      </div>
+    </div>`;
+};
+
+document.getElementById('main-root').innerHTML = `
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">IRPF 2026</h1>
+      <p class="page-subtitle">Compilação automática a partir do banco catalogado. Cada tag agrega arquivos com a mesma classificação fiscal. Pacote final: PDFs assinados + planilha XLSX + JSON estruturado para importação manual.</p>
+    </div>
+    <div class="page-meta">
+      <span class="sprint-tag">Aplicação</span>
+      <span class="pill pill-d7-calibracao">em revisão humana</span>
+    </div>
+  </div>
+
+  <div class="irpf-grid">
+    <div>${tags.map(irpfRow).join('')}</div>
+
+    <aside class="export-card">
+      <h3>Pacote IRPF</h3>
+      <div class="total">R$ 211.180,00</div>
+      <div style="font-family: var(--ff-mono); font-size: 11px; color: var(--text-muted); margin-top: 4px;">soma das tags · 99 arquivos</div>
+
+      <h4 style="font-family: var(--ff-mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); margin: var(--sp-4) 0 var(--sp-2);">Será gerado</h4>
+      <ul class="export-files">
+        <li><span>${glyph('docs',12)} relatorio_irpf_2026.pdf</span><code>1.2 MB</code></li>
+        <li><span>${glyph('xlsx',12)} planilha_lancamentos.xlsx</span><code>340 KB</code></li>
+        <li><span>${glyph('json',12)} dados_brutos.json</span><code>180 KB</code></li>
+        <li><span>${glyph('folder',12)} arquivos_originais/ (99)</span><code>—</code></li>
+      </ul>
+
+      <h4 style="font-family: var(--ff-mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); margin: 0 0 var(--sp-2);">Checklist</h4>
+      <ul class="checklist" style="padding:0;list-style:none;margin:0 0 var(--sp-4);">
+        <li><span class="ck-ok">${glyph('check',14)}</span> 8/8 tags compiladas</li>
+        <li><span class="ck-ok">${glyph('check',14)}</span> 95/99 arquivos validados por humano</li>
+        <li><span class="ck-warn">${glyph('warn',14)}</span> 4 arquivos com confiança &lt; 70%</li>
+        <li><span class="ck-ok">${glyph('check',14)}</span> totais batem com soma dos arquivos</li>
+        <li><span class="ck-warn">${glyph('warn',14)}</span> 2 fornecedores ainda não cruzados com CNPJ</li>
+      </ul>
+
+      <button class="btn btn-primary" style="width:100%; padding: 10px;">${glyph('download',14)} Gerar pacote IRPF</button>
+      <p style="font-size: 11px; color: var(--text-muted); margin: var(--sp-2) 0 0; text-align: center;">Salva em <code style="color:var(--accent-pink);">data/aplicacoes/irpf_2026/</code></p>
+    </aside>
+  </div>
+`;
+hidratarGlyphs(document.getElementById('main-root'));
+</script>
+</body>
+</html>

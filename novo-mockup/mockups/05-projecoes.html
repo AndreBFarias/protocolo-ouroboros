@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><title>Ouroboros — Projeções</title>
+<link rel="stylesheet" href="../_shared/tokens.css">
+<link rel="stylesheet" href="../_shared/components.css">
+<style>
+.kpi-row { display:grid; grid-template-columns: repeat(4,1fr); gap:var(--sp-3); margin-bottom:var(--sp-4); }
+.k { background: var(--bg-surface); border:1px solid var(--border-subtle); border-radius: var(--r-md); padding: var(--sp-4); }
+.k .l { font-family: var(--ff-mono); font-size:10px; letter-spacing:.08em; text-transform:uppercase; color: var(--text-muted); }
+.k .v { font-family: var(--ff-mono); font-size:26px; font-weight:500; line-height:1; margin-top:6px; font-variant-numeric:tabular-nums; }
+.k .d { font-family: var(--ff-mono); font-size:11px; color: var(--text-muted); margin-top:6px; }
+.proj-grid { display:grid; grid-template-columns: 2fr 1fr; gap: var(--sp-3); margin-bottom: var(--sp-4); }
+.card { background: var(--bg-surface); border:1px solid var(--border-subtle); border-radius: var(--r-md); }
+.card-head { padding: var(--sp-3) var(--sp-4); border-bottom: 1px solid var(--border-subtle); display:flex; align-items:center; justify-content:space-between; }
+.card-head h3 { font-family: var(--ff-mono); font-size:11px; letter-spacing:.08em; text-transform:uppercase; color: var(--text-secondary); margin:0; }
+.scenarios { display:grid; grid-template-columns: repeat(3,1fr); gap: var(--sp-3); margin-bottom: var(--sp-4); }
+.scen { background: var(--bg-surface); border:1px solid var(--border-subtle); border-radius: var(--r-md); padding: var(--sp-4); border-top: 3px solid var(--cor); position:relative; }
+.scen .badge { font-family: var(--ff-mono); font-size:10px; letter-spacing:.10em; text-transform:uppercase; color: var(--cor); }
+.scen h4 { margin: 4px 0 var(--sp-3); font-size: 18px; font-weight:500; }
+.scen .v { font-family: var(--ff-mono); font-size: 26px; font-weight: 500; font-variant-numeric: tabular-nums; line-height:1; }
+.scen .meta { font-family: var(--ff-mono); font-size: 11px; color: var(--text-muted); margin-top: 6px; }
+.scen ul { list-style:none; margin: var(--sp-3) 0 0; padding: var(--sp-3) 0 0; border-top:1px dashed var(--border-subtle); display:flex; flex-direction:column; gap:6px; }
+.scen li { display:flex; justify-content:space-between; font-size:12px; color: var(--text-secondary); font-family: var(--ff-mono); }
+.scen li strong { color: var(--text-primary); }
+.controls { display:flex; gap: var(--sp-3); align-items:center; padding: var(--sp-3) var(--sp-4); background: var(--bg-surface); border:1px solid var(--border-subtle); border-radius: var(--r-md); margin-bottom: var(--sp-3); flex-wrap:wrap; }
+.controls label { font-family: var(--ff-mono); font-size:10px; letter-spacing:.08em; text-transform:uppercase; color: var(--text-muted); }
+.controls input[type=range] { width: 140px; accent-color: var(--accent-purple); }
+.controls .val { font-family: var(--ff-mono); font-size:13px; color: var(--accent-purple); width: 70px; text-align:right; font-variant-numeric:tabular-nums; }
+</style>
+</head>
+<body>
+<div id="shell-root"></div>
+<script src="../_shared/glyphs.js"></script>
+<script src="../_shared/shell.js"></script>
+<script>
+montarShell({clusterAtivo:'financas',abaAtiva:'projecoes',breadcrumb:['Ouroboros','Finanças','Projeções'],acoes:[{label:'Comparar cenários',icon:'diff',onClick:"toast('Cenários A/B/C lado-a-lado','ok')"},{label:'Salvar cenário',icon:'check',primary:true,onClick:"toast('Cenário salvo · março/2026')"}]});
+const fmt = v => 'R$ ' + Math.round(v).toLocaleString('pt-BR');
+
+// Projeção 5 anos — 3 cenários
+const inicio = 31420;
+function projetar(taxa, aporte, meses=60) {
+  const arr = [inicio];
+  let v = inicio;
+  for (let i=0;i<meses;i++){ v = v*(1+taxa/12) + aporte; arr.push(v); }
+  return arr;
+}
+const PESS = projetar(0.06, 4500);
+const REAL = projetar(0.09, 6500);
+const OTIM = projetar(0.13, 9000);
+
+function projSvg(w=560, h=240) {
+  const max = Math.max(...OTIM), min = inicio*0.95;
+  const span = max-min;
+  const xs = i => (i/(REAL.length-1))*w;
+  const ys = v => h - ((v-min)/span)*h*0.92 - 8;
+  const poly = (arr) => arr.map((v,i)=>`${xs(i)},${ys(v)}`).join(' ');
+  const grid = [0.25,0.5,0.75,1.0].map(g => {
+    const v = min + span*g;
+    return `<line x1="0" x2="${w}" y1="${ys(v)}" y2="${ys(v)}" stroke="var(--border-subtle)" stroke-dasharray="2 4" opacity=".5"/>
+            <text x="-4" y="${ys(v)+3}" text-anchor="end" font-family="JetBrains Mono" font-size="9" fill="var(--text-muted)">${fmt(v)}</text>`;
+  }).join('');
+  const yearMarks = [12,24,36,48].map(m=>`
+    <line x1="${xs(m)}" x2="${xs(m)}" y1="0" y2="${h}" stroke="var(--border-subtle)" stroke-dasharray="2 4" opacity=".4"/>
+    <text x="${xs(m)}" y="${h+14}" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="var(--text-muted)">+${m/12}a</text>
+  `).join('');
+  return `<svg viewBox="-58 -8 ${w+70} ${h+30}" style="width:100%;height:auto;display:block;">
+    ${grid}${yearMarks}
+    <polyline points="${poly(PESS)}" fill="none" stroke="var(--accent-orange)" stroke-width="1.4" stroke-dasharray="4 3"/>
+    <polyline points="${poly(REAL)}" fill="none" stroke="var(--accent-purple)" stroke-width="2"/>
+    <polyline points="${poly(OTIM)}" fill="none" stroke="var(--d7-graduado)" stroke-width="1.4" stroke-dasharray="4 3"/>
+    <circle cx="${xs(0)}" cy="${ys(inicio)}" r="3" fill="var(--accent-pink)"/>
+    <text x="${xs(0)+6}" y="${ys(inicio)-6}" font-family="JetBrains Mono" font-size="10" fill="var(--accent-pink)">hoje · ${fmt(inicio)}</text>
+    <circle cx="${xs(60)}" cy="${ys(REAL[60])}" r="3" fill="var(--accent-purple)"/>
+    <text x="${xs(60)-6}" y="${ys(REAL[60])-6}" text-anchor="end" font-family="JetBrains Mono" font-size="10" fill="var(--accent-purple)">${fmt(REAL[60])}</text>
+  </svg>`;
+}
+
+document.getElementById('main-root').innerHTML = `
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">PROJEÇÕES</h1>
+      <p class="page-subtitle">Simulação de patrimônio em <strong style="color:var(--text-primary);">5 anos</strong> baseada em 3 cenários: pessimista (CDI), realista (mistura conservador), otimista (IBOV histórico). Aporte e taxa ajustáveis.</p>
+    </div>
+    <div class="page-meta"><span class="sprint-tag">Sprint 4</span><span class="pill pill-d7-calibracao">simulação</span></div>
+  </div>
+
+  <div class="kpi-row">
+    <div class="k"><div class="l">Patrimônio hoje</div><div class="v">${fmt(inicio)}</div><div class="d">3 contas + investimentos</div></div>
+    <div class="k"><div class="l">Aporte mensal médio</div><div class="v" style="color:var(--accent-purple);">${fmt(6500)}</div><div class="d">CDB + IVVB11 + reserva</div></div>
+    <div class="k"><div class="l">Em 5 anos · realista</div><div class="v" style="color:var(--accent-purple);">${fmt(REAL[60])}</div><div class="d">9% a.a. ·  ${fmt(REAL[60]-inicio)}</div></div>
+    <div class="k"><div class="l">Independência financeira</div><div class="v" style="color:var(--d7-graduado);font-size:18px;">2042 · 16a</div><div class="d">meta 1.8M · cenário realista</div></div>
+  </div>
+
+  <div class="controls">
+    <label>aporte mensal</label>
+    <input type="range" min="0" max="15000" value="6500" step="500" oninput="document.getElementById('aporte-v').textContent=fmt(this.value)">
+    <span class="val" id="aporte-v">${fmt(6500)}</span>
+    <span style="color:var(--border-strong);">·</span>
+    <label>retorno a.a.</label>
+    <input type="range" min="2" max="20" value="9" step="0.5" oninput="document.getElementById('retorno-v').textContent=this.value+'%'">
+    <span class="val" id="retorno-v">9.0%</span>
+    <span style="color:var(--border-strong);">·</span>
+    <label>horizonte</label>
+    <select style="background:var(--bg-inset);color:var(--text-primary);border:1px solid var(--border-subtle);border-radius:var(--r-sm);padding:4px 8px;font-size:12px;"><option>5 anos</option><option>10 anos</option><option>20 anos</option><option>até aposentadoria</option></select>
+    <span style="margin-left:auto;font-family:var(--ff-mono);font-size:11px;color:var(--text-muted);">recalcula em tempo real · não persiste</span>
+  </div>
+
+  <div class="proj-grid">
+    <div class="card">
+      <div class="card-head"><h3>Patrimônio · 5 anos</h3>
+        <div style="display:flex;gap:var(--sp-3);font-family:var(--ff-mono);font-size:11px;">
+          <span style="color:var(--accent-orange);">— · — pessimista 6%</span>
+          <span style="color:var(--accent-purple);">━ realista 9%</span>
+          <span style="color:var(--d7-graduado);">— · — otimista 13%</span>
+        </div>
+      </div>
+      <div style="padding: var(--sp-4) var(--sp-5);">${projSvg()}</div>
+    </div>
+    <div class="card" style="padding: var(--sp-4);">
+      <h3 style="font-family:var(--ff-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-secondary);margin:0 0 var(--sp-3);">Marcos · realista</h3>
+      <ul style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:var(--sp-3);">
+        ${[
+          {q:'1ª centena (R$ 100k)', d:'em 11 meses · 03/2027', cor:'var(--accent-cyan)'},
+          {q:'Reserva 6 meses (R$ 60k)', d:'em 5 meses · 09/2026', cor:'var(--d7-graduado)'},
+          {q:'Entrada apto (R$ 120k)', d:'em 13 meses · 06/2027', cor:'var(--accent-orange)'},
+          {q:'1/4 milhão', d:'em 32 meses · 01/2029', cor:'var(--accent-purple)'},
+          {q:'1/2 milhão', d:'em 6 anos · 04/2032', cor:'var(--accent-pink)'},
+        ].map(m=>`<li style="display:flex;flex-direction:column;gap:2px;border-left:2px solid ${m.cor};padding-left:var(--sp-3);">
+          <strong style="font-size:13px;font-family:var(--ff-mono);">${m.q}</strong>
+          <span style="font-family:var(--ff-mono);font-size:11px;color:var(--text-muted);">${m.d}</span>
+        </li>`).join('')}
+      </ul>
+    </div>
+  </div>
+
+  <div class="scenarios">
+    <div class="scen" style="--cor:var(--accent-orange);">
+      <span class="badge">cenário pessimista</span>
+      <h4>CDI · sem risco</h4>
+      <div class="v">${fmt(PESS[60])}</div>
+      <div class="meta">5 anos · 6% a.a. real</div>
+      <ul><li><span>aporte ano</span><strong>${fmt(54000)}</strong></li><li><span>juros</span><strong style="color:var(--accent-orange);">${fmt(PESS[60]-inicio-54000*5)}</strong></li><li><span>multiplicador</span><strong>${(PESS[60]/inicio).toFixed(1)}×</strong></li></ul>
+    </div>
+    <div class="scen" style="--cor:var(--accent-purple);box-shadow: 0 0 0 1px var(--accent-purple);">
+      <span class="badge">cenário realista · ativo</span>
+      <h4>Carteira balanceada</h4>
+      <div class="v">${fmt(REAL[60])}</div>
+      <div class="meta">5 anos · 9% a.a. real</div>
+      <ul><li><span>aporte ano</span><strong>${fmt(78000)}</strong></li><li><span>juros</span><strong style="color:var(--accent-purple);">${fmt(REAL[60]-inicio-78000*5)}</strong></li><li><span>multiplicador</span><strong>${(REAL[60]/inicio).toFixed(1)}×</strong></li></ul>
+    </div>
+    <div class="scen" style="--cor:var(--d7-graduado);">
+      <span class="badge">cenário otimista</span>
+      <h4>IBOV histórico</h4>
+      <div class="v">${fmt(OTIM[60])}</div>
+      <div class="meta">5 anos · 13% a.a. real</div>
+      <ul><li><span>aporte ano</span><strong>${fmt(108000)}</strong></li><li><span>juros</span><strong style="color:var(--d7-graduado);">${fmt(OTIM[60]-inicio-108000*5)}</strong></li><li><span>multiplicador</span><strong>${(OTIM[60]/inicio).toFixed(1)}×</strong></li></ul>
+    </div>
+  </div>
+`;
+hidratarGlyphs(document.getElementById('main-root'));
+</script></body></html>

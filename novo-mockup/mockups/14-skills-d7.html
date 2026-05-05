@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><title>Ouroboros — Skills D7</title>
+<link rel="stylesheet" href="../_shared/tokens.css">
+<link rel="stylesheet" href="../_shared/components.css">
+<style>
+.kpi-row { display:grid; grid-template-columns: repeat(5,1fr); gap:var(--sp-3); margin-bottom:var(--sp-4); }
+.k { background: var(--bg-surface); border:1px solid var(--border-subtle); border-radius: var(--r-md); padding: var(--sp-4); }
+.k .l { font-family: var(--ff-mono); font-size:10px; letter-spacing:.08em; text-transform:uppercase; color: var(--text-muted); }
+.k .v { font-family: var(--ff-mono); font-size:24px; font-weight:500; line-height:1; margin-top:6px; font-variant-numeric:tabular-nums; }
+.k .d { font-family: var(--ff-mono); font-size:11px; color: var(--text-muted); margin-top:6px; }
+.grid-main { display:grid; grid-template-columns: 1.4fr 1fr; gap: var(--sp-3); margin-bottom: var(--sp-4); }
+.card { background: var(--bg-surface); border:1px solid var(--border-subtle); border-radius: var(--r-md); }
+.card-head { padding: var(--sp-3) var(--sp-4); border-bottom: 1px solid var(--border-subtle); display:flex; align-items:center; justify-content:space-between; }
+.card-head h3 { font-family: var(--ff-mono); font-size:11px; letter-spacing:.08em; text-transform:uppercase; color: var(--text-secondary); margin:0; }
+.skill-row { display:grid; grid-template-columns: 28px 1fr 100px 90px 90px 80px; gap: var(--sp-3); align-items:center; padding: 10px var(--sp-4); border-bottom: 1px dashed var(--border-subtle); cursor:pointer; font-size: 13px; }
+.skill-row:hover { background: var(--bg-elevated); }
+.skill-row .id { font-family: var(--ff-mono); font-size: 10px; color: var(--text-muted); }
+.skill-row .name { font-family: var(--ff-mono); font-size: 13px; }
+.skill-row .name .desc { font-size: 11px; color: var(--text-muted); margin-top: 2px; display:block; }
+.skill-row .d7 { font-family: var(--ff-mono); font-size: 11px; }
+.skill-row .conf { font-family: var(--ff-mono); font-size: 12px; font-variant-numeric: tabular-nums; }
+.skill-row .runs { font-family: var(--ff-mono); font-size: 11px; color: var(--text-muted); text-align:right; }
+.skill-row .trend { font-family: var(--ff-mono); font-size: 11px; }
+.bar-mini { height: 4px; background: var(--bg-inset); border-radius: var(--r-full); overflow:hidden; margin-top: 4px; }
+.bar-mini > span { display:block; height: 100%; }
+.timeline { padding: var(--sp-3) var(--sp-4); }
+.tl-row { display:grid; grid-template-columns: 80px 1fr; gap: var(--sp-3); align-items:start; padding: 6px 0; border-bottom: 1px dashed var(--border-subtle); font-size: 12px; }
+.tl-row:last-child { border-bottom: none; }
+.tl-when { font-family: var(--ff-mono); font-size: 10px; color: var(--text-muted); letter-spacing: .06em; text-transform: uppercase; padding-top: 2px; }
+.tl-event { font-family: var(--ff-mono); font-size: 12px; }
+.tl-event strong { color: var(--text-primary); }
+.tl-event .meta { font-size: 10px; color: var(--text-muted); margin-top: 2px; display: block; }
+.dist-grid { display:grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: var(--sp-3); padding: var(--sp-4); }
+.dist-cell { text-align:center; }
+.dist-cell .num { font-family: var(--ff-mono); font-size: 32px; font-weight: 500; line-height: 1; }
+.dist-cell .lab { font-family: var(--ff-mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); margin-top: 4px; }
+.regr-bar { display: grid; grid-template-columns: 100px 1fr 60px; gap: var(--sp-3); align-items:center; padding: 8px var(--sp-4); border-bottom: 1px dashed var(--border-subtle); font-size: 12px; font-family: var(--ff-mono); }
+.regr-bar:last-child { border-bottom: none; }
+.regr-week { color: var(--text-muted); font-size: 10px; letter-spacing: .06em; text-transform: uppercase; }
+.regr-track { height: 14px; background: var(--bg-inset); border-radius: var(--r-xs); display: flex; overflow:hidden; }
+.regr-track > div { display: flex; align-items:center; justify-content:center; color: var(--bg-base); font-size: 10px; font-weight: 600; }
+.legend-pills { display:flex; gap: var(--sp-2); padding: var(--sp-3) var(--sp-4); border-top: 1px solid var(--border-subtle); font-family: var(--ff-mono); font-size: 11px; color: var(--text-muted); flex-wrap: wrap; }
+.legend-pills .pill-mini { display:inline-flex; align-items:center; gap: 4px; }
+.legend-pills .sw { width: 10px; height: 10px; border-radius: 2px; }
+</style>
+</head>
+<body>
+<div id="shell-root"></div>
+<script src="../_shared/glyphs.js"></script>
+<script src="../_shared/shell.js"></script>
+<script>
+montarShell({clusterAtivo:'sistema',abaAtiva:'skills-d7',breadcrumb:['Ouroboros','Sistema','Skills D7'],acoes:[{label:'Recalibrar',icon:'refresh',onClick:"toast('Recalibrando 18 skills...'); setTimeout(()=>toast('Calibração concluída · 14 graduadas'),1500)"},{label:'Logs',icon:'terminal',primary:true,onClick:"toast('Abrindo terminal · /var/log/ouroboros.d7','ok')"}]});
+
+// 18 skills
+const SKILLS = [
+  { id:'s01', n:'ofx-parse', d:'Parser de extratos OFX bancários', d7:'graduado', conf:0.97, runs:184, t:'+0.4%', stab:0.94 },
+  { id:'s02', n:'pdf-fatura-extract', d:'Extrai linhas de fatura PDF (cartão)', d7:'graduado', conf:0.94, runs:128, t:'+1.1%', stab:0.91 },
+  { id:'s03', n:'cat-mercado', d:'Classifica mercado/supermercado', d7:'graduado', conf:0.96, runs:412, t:'+0.0%', stab:0.93 },
+  { id:'s04', n:'cat-restaurantes', d:'Classifica restaurantes/iFood', d7:'graduado', conf:0.92, runs:288, t:'+0.6%', stab:0.88 },
+  { id:'s05', n:'cat-transporte', d:'Classifica Uber/99/combustível', d7:'graduado', conf:0.95, runs:142, t:'+0.0%', stab:0.92 },
+  { id:'s06', n:'cat-saude', d:'Classifica plano/farmácia/academia', d7:'graduado', conf:0.91, runs:96, t:'+0.2%', stab:0.86 },
+  { id:'s07', n:'cat-investimento', d:'Identifica B3, CDB, tesouro', d7:'graduado', conf:0.99, runs:42, t:'+0.0%', stab:0.97 },
+  { id:'s08', n:'recorrencia-detect', d:'Detecta despesa recorrente', d7:'graduado', conf:0.93, runs:88, t:'+0.8%', stab:0.89 },
+  { id:'s09', n:'cat-casa', d:'Aluguel · contas · condomínio', d7:'graduado', conf:0.93, runs:104, t:'+0.0%', stab:0.90 },
+  { id:'s10', n:'pix-extract', d:'Comprovante Pix (PDF/PNG)', d7:'graduado', conf:0.90, runs:212, t:'+0.0%', stab:0.85 },
+  { id:'s11', n:'duplicate-detect', d:'Detecta lançamento duplicado', d7:'graduado', conf:0.96, runs:1840, t:'+0.0%', stab:0.94 },
+  { id:'s12', n:'salary-detect', d:'Identifica entrada de salário PJ', d7:'graduado', conf:0.98, runs:24, t:'+0.0%', stab:0.96 },
+  { id:'s13', n:'fixos-merge', d:'Consolida pagamentos fixos mensais', d7:'graduado', conf:0.89, runs:76, t:'+1.4%', stab:0.83 },
+  { id:'s14', n:'cat-lazer', d:'Classifica streaming/cinema/livros', d7:'graduado', conf:0.88, runs:62, t:'-0.3%', stab:0.81 },
+
+  { id:'s15', n:'nf-pj-parse', d:'Parser de NF eletrônica de serviços', d7:'calibrando', conf:0.74, runs:38, t:'+5.2%', stab:0.68 },
+  { id:'s16', n:'recibo-livre', d:'OCR de recibos sem layout fixo', d7:'calibrando', conf:0.71, runs:26, t:'+3.8%', stab:0.62 },
+  { id:'s17', n:'previsao-saldo', d:'Projeta saldo futuro 90d', d7:'calibrando', conf:0.68, runs:12, t:'+8.1%', stab:0.55 },
+
+  { id:'s18', n:'cat-presentes', d:'Detecta gastos com presente/sazonal', d7:'regredido', conf:0.62, runs:14, t:'-4.4%', stab:0.48 },
+];
+
+const grad = SKILLS.filter(s=>s.d7==='graduado').length;
+const calib = SKILLS.filter(s=>s.d7==='calibrando').length;
+const regr = SKILLS.filter(s=>s.d7==='regredido').length;
+const blo = 0;
+const total = SKILLS.length;
+
+function pill(d7) {
+  const map = { graduado:'pill-d7-graduado', calibrando:'pill-d7-calibracao', regredido:'pill-d7-regredido', bloqueado:'pill-d7-bloqueado' };
+  return `<span class="pill ${map[d7]}">${d7}</span>`;
+}
+function corDe(d7) {
+  return ({graduado:'var(--d7-graduado)',calibrando:'var(--d7-calibracao)',regredido:'var(--d7-regredido)',bloqueado:'var(--d7-bloqueado)'})[d7];
+}
+
+const skillsHtml = SKILLS.map(s => {
+  const cor = corDe(s.d7);
+  const tcor = s.t.startsWith('+')&&s.t!=='+0.0%' ? 'var(--d7-graduado)' : s.t.startsWith('-') ? 'var(--accent-red)' : 'var(--text-muted)';
+  return `
+    <div class="skill-row">
+      <span class="id">${s.id}</span>
+      <div class="name"><strong>${s.n}</strong><span class="desc">${s.d}</span>
+        <div class="bar-mini"><span style="width:${s.stab*100}%;background:${cor};"></span></div>
+      </div>
+      <div class="d7">${pill(s.d7)}</div>
+      <div class="conf" style="color:${cor};">${(s.conf*100).toFixed(1)}%</div>
+      <div class="runs">${s.runs.toLocaleString('pt-BR')} runs</div>
+      <div class="trend" style="color:${tcor};">${s.t}</div>
+    </div>
+  `;
+}).join('');
+
+// Cobertura por cluster
+const clusters = [
+  {n:'Finanças', total:8, grad:7, calib:1, regr:0},
+  {n:'Documentos', total:5, grad:3, calib:2, regr:0},
+  {n:'Análise', total:3, grad:2, calib:0, regr:1},
+  {n:'Sistema', total:2, grad:2, calib:0, regr:0},
+];
+
+// Linha de evolução graduadas (52 semanas)
+function evoSvg(w=540, h=160) {
+  const pts = [];
+  let g = 4;
+  for (let i=0;i<52;i++) {
+    if (i===8) g=6;
+    if (i===14) g=8;
+    if (i===22) g=10;
+    if (i===30) g=12;
+    if (i===37) g=13;
+    if (i===42) g=14;
+    if (i===46) g=14;
+    if (i===49) g=14;
+    pts.push(g);
+  }
+  const max = 18, min = 0, span = max;
+  const xs = i => (i/(pts.length-1))*w;
+  const ys = v => h - (v/span)*h*0.85 - 8;
+  const poly = pts.map((v,i)=>`${xs(i)},${ys(v)}`).join(' ');
+  const area = `${xs(0)},${h} ${poly} ${xs(pts.length-1)},${h}`;
+  return `<svg viewBox="-30 -8 ${w+60} ${h+24}" style="width:100%;height:auto;">
+    <defs><linearGradient id="evo" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stop-color="#50fa7b" stop-opacity="0.3"/><stop offset="100%" stop-color="#50fa7b" stop-opacity="0.02"/></linearGradient></defs>
+    <line x1="0" x2="${w}" y1="${ys(18)}" y2="${ys(18)}" stroke="var(--accent-purple)" stroke-dasharray="3 4" opacity="0.5"/>
+    <text x="-4" y="${ys(18)+4}" text-anchor="end" font-family="JetBrains Mono" font-size="10" fill="var(--accent-purple)">18 = total</text>
+    <polygon points="${area}" fill="url(#evo)"/>
+    <polyline points="${poly}" fill="none" stroke="var(--d7-graduado)" stroke-width="1.6"/>
+    <circle cx="${xs(51)}" cy="${ys(14)}" r="3" fill="var(--d7-graduado)"/>
+    <text x="${xs(51)+8}" y="${ys(14)+4}" font-family="JetBrains Mono" font-size="11" fill="var(--d7-graduado)">14 graduadas · 78%</text>
+    <text x="0" y="${h+16}" font-family="JetBrains Mono" font-size="10" fill="var(--text-muted)">52 semanas atrás</text>
+    <text x="${w}" y="${h+16}" text-anchor="end" font-family="JetBrains Mono" font-size="10" fill="var(--text-muted)">esta semana</text>
+  </svg>`;
+}
+
+document.getElementById('main-root').innerHTML = `
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">SKILLS · D7</h1>
+      <p class="page-subtitle">Painel analítico do classificador D7. Cada skill atravessa <code style="color:var(--d7-bloqueado);">bloqueado</code> → <code style="color:var(--d7-regredido);">regredido</code> → <code style="color:var(--d7-calibracao);">calibrando</code> → <code style="color:var(--d7-graduado);">graduado</code> conforme acumula execuções consistentes.</p>
+    </div>
+    <div class="page-meta"><span class="sprint-tag">Sprint 6</span><span class="pill pill-d7-graduado">${grad}/${total} graduadas</span></div>
+  </div>
+
+  <div class="kpi-row">
+    <div class="k"><div class="l">Cobertura D7</div><div class="v" style="color:var(--d7-graduado);">${Math.round(grad/total*100)}%</div><div class="d">${grad} de ${total} · meta 75%</div></div>
+    <div class="k"><div class="l">Taxa de graduação</div><div class="v" style="color:var(--accent-purple);">+3 / Q1</div><div class="d">3 skills graduadas no trimestre</div></div>
+    <div class="k"><div class="l">Regressões 30d</div><div class="v" style="color:var(--accent-orange);">1</div><div class="d">cat-presentes · sazonalidade</div></div>
+    <div class="k"><div class="l">Confiança média</div><div class="v">90.4%</div><div class="d">média ponderada por runs</div></div>
+    <div class="k"><div class="l">Execuções 30d</div><div class="v">3.836</div><div class="d">128 runs/dia · p95 2.4s</div></div>
+  </div>
+
+  <div class="grid-main">
+    <div class="card">
+      <div class="card-head"><h3>Inventário · ${total} skills</h3>
+        <div style="display:flex;gap:var(--sp-2);font-family:var(--ff-mono);font-size:11px;">
+          <span style="color:var(--text-muted);">ordenar:</span>
+          <button class="btn btn-sm">D7</button>
+          <button class="btn btn-sm">confiança</button>
+          <button class="btn btn-sm">runs</button>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns: 28px 1fr 100px 90px 90px 80px;gap: var(--sp-3);padding: 8px var(--sp-4);font-family: var(--ff-mono);font-size: 10px;letter-spacing: .08em;text-transform: uppercase;color: var(--text-muted);border-bottom: 1px solid var(--border-subtle);background: var(--bg-elevated);">
+        <span>id</span><span>skill</span><span>D7</span><span>confiança</span><span>execuções</span><span>tendência</span>
+      </div>
+      ${skillsHtml}
+    </div>
+
+    <div>
+      <div class="card" style="margin-bottom: var(--sp-3);">
+        <div class="card-head"><h3>Distribuição por estado</h3>
+          <span style="font-family:var(--ff-mono);font-size:11px;color:var(--text-muted);">snapshot atual</span>
+        </div>
+        <div class="dist-grid">
+          <div class="dist-cell"><div class="num" style="color:var(--d7-graduado);">${grad}</div><div class="lab">Graduado</div></div>
+          <div class="dist-cell"><div class="num" style="color:var(--d7-calibracao);">${calib}</div><div class="lab">Calibrando</div></div>
+          <div class="dist-cell"><div class="num" style="color:var(--d7-regredido);">${regr}</div><div class="lab">Regredido</div></div>
+          <div class="dist-cell"><div class="num" style="color:var(--d7-bloqueado);">${blo}</div><div class="lab">Bloqueado</div></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom: var(--sp-3);">
+        <div class="card-head"><h3>Cobertura por cluster</h3></div>
+        <div style="padding: var(--sp-3) var(--sp-4); display:flex;flex-direction:column; gap:8px;">
+          ${clusters.map(c=>{
+            const tg = (c.grad/c.total*100).toFixed(0);
+            return `<div style="display:grid;grid-template-columns: 90px 1fr 60px;gap:var(--sp-3);align-items:center;font-family:var(--ff-mono);font-size:12px;">
+              <span>${c.n}</span>
+              <div style="height:14px;background:var(--bg-inset);border-radius:var(--r-xs);display:flex;overflow:hidden;">
+                <div style="width:${c.grad/c.total*100}%;background:var(--d7-graduado);"></div>
+                <div style="width:${c.calib/c.total*100}%;background:var(--d7-calibracao);"></div>
+                <div style="width:${c.regr/c.total*100}%;background:var(--d7-regredido);"></div>
+              </div>
+              <span style="text-align:right;color:var(--d7-graduado);">${tg}%</span>
+            </div>`;
+          }).join('')}
+        </div>
+        <div class="legend-pills">
+          <span class="pill-mini"><span class="sw" style="background:var(--d7-graduado);"></span>graduado</span>
+          <span class="pill-mini"><span class="sw" style="background:var(--d7-calibracao);"></span>calibrando</span>
+          <span class="pill-mini"><span class="sw" style="background:var(--d7-regredido);"></span>regredido</span>
+          <span class="pill-mini"><span class="sw" style="background:var(--d7-bloqueado);"></span>bloqueado</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-main">
+    <div class="card">
+      <div class="card-head"><h3>Evolução · skills graduadas (52 semanas)</h3>
+        <span style="font-family:var(--ff-mono);font-size:11px;color:var(--accent-green);">+10 no ano · 4 → 14</span>
+      </div>
+      <div style="padding: var(--sp-4) var(--sp-5);">${evoSvg()}</div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>Histórico de calibração · pipeline ativo</h3></div>
+      <div class="timeline">
+        <div class="tl-row"><div class="tl-when" style="color:var(--accent-purple);">há 6h</div>
+          <div class="tl-event"><strong style="color:var(--d7-graduado);">graduou</strong> · <code style="color:var(--accent-purple);">s14 · cat-lazer</code><span class="meta">conf 88% · 62 runs · 14d sem regressão</span></div></div>
+        <div class="tl-row"><div class="tl-when">2d atrás</div>
+          <div class="tl-event"><strong style="color:var(--d7-regredido);">regrediu</strong> · <code style="color:var(--accent-purple);">s18 · cat-presentes</code><span class="meta">conf caiu 71% → 62% após adoção fora de dezembro</span></div></div>
+        <div class="tl-row"><div class="tl-when">5d atrás</div>
+          <div class="tl-event"><strong style="color:var(--accent-orange);">recalibrou</strong> · <code style="color:var(--accent-purple);">s15 · nf-pj-parse</code><span class="meta">+12 amostras anotadas · conf 68% → 74%</span></div></div>
+        <div class="tl-row"><div class="tl-when">9d atrás</div>
+          <div class="tl-event"><strong style="color:var(--accent-cyan);">novo</strong> · <code style="color:var(--accent-purple);">s17 · previsao-saldo</code><span class="meta">criada · estado inicial calibrando · 12 runs</span></div></div>
+        <div class="tl-row"><div class="tl-when">14d atrás</div>
+          <div class="tl-event"><strong style="color:var(--d7-graduado);">graduou</strong> · <code style="color:var(--accent-purple);">s13 · fixos-merge</code><span class="meta">conf 89% · 76 runs · trend +1.4%</span></div></div>
+        <div class="tl-row"><div class="tl-when">21d atrás</div>
+          <div class="tl-event"><strong style="color:var(--d7-graduado);">graduou</strong> · <code style="color:var(--accent-purple);">s10 · pix-extract</code><span class="meta">conf 90% · 212 runs</span></div></div>
+        <div class="tl-row"><div class="tl-when">28d atrás</div>
+          <div class="tl-event"><strong style="color:var(--accent-orange);">decisão</strong> · revisão de threshold global<span class="meta">conf mín de graduação: 0.85 → 0.87</span></div></div>
+      </div>
+    </div>
+  </div>
+`;
+hidratarGlyphs(document.getElementById('main-root'));
+</script></body></html>

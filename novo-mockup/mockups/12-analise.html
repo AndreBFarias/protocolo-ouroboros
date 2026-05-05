@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><title>Ouroboros — Análise</title>
+<link rel="stylesheet" href="../_shared/tokens.css">
+<link rel="stylesheet" href="../_shared/components.css">
+<style>
+.tabs-bar { display:flex; gap:2px; border-bottom: 1px solid var(--border-subtle); margin-bottom: var(--sp-4); }
+.tab { background: transparent; border:none; padding: 12px 20px; font-family: var(--ff-mono); font-size: 12px; letter-spacing:.06em; text-transform:uppercase; color: var(--text-muted); cursor:pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.tab.active { color: var(--accent-purple); border-bottom-color: var(--accent-purple); }
+.tab:hover:not(.active) { color: var(--text-secondary); }
+.tab .ct { background: var(--bg-inset); color: var(--text-muted); padding: 1px 6px; border-radius: var(--r-full); font-size: 10px; margin-left:6px; }
+.kpi-row { display:grid; grid-template-columns: repeat(4,1fr); gap:var(--sp-3); margin-bottom:var(--sp-4); }
+.k { background: var(--bg-surface); border:1px solid var(--border-subtle); border-radius: var(--r-md); padding: var(--sp-4); }
+.k .l { font-family: var(--ff-mono); font-size:10px; letter-spacing:.08em; text-transform:uppercase; color: var(--text-muted); }
+.k .v { font-family: var(--ff-mono); font-size:24px; font-weight:500; line-height:1; margin-top:6px; font-variant-numeric:tabular-nums; }
+.k .d { font-family: var(--ff-mono); font-size:11px; color: var(--text-muted); margin-top:6px; }
+.card { background: var(--bg-surface); border:1px solid var(--border-subtle); border-radius: var(--r-md); }
+.card-head { padding: var(--sp-3) var(--sp-4); border-bottom: 1px solid var(--border-subtle); display:flex; align-items:center; justify-content:space-between; }
+.card-head h3 { font-family: var(--ff-mono); font-size:11px; letter-spacing:.08em; text-transform:uppercase; color: var(--text-secondary); margin:0; }
+.grid-2 { display:grid; grid-template-columns: 1fr 1fr; gap: var(--sp-3); margin-bottom: var(--sp-3); }
+.grid-3 { display:grid; grid-template-columns: 2fr 1fr; gap: var(--sp-3); }
+.heatmap { padding: var(--sp-4); }
+.hm-grid { display:grid; grid-template-columns: 32px repeat(53, 1fr); gap: 2px; font-family: var(--ff-mono); font-size: 9px; }
+.hm-cell { aspect-ratio:1; border-radius: 2px; }
+.hm-label { color: var(--text-muted); padding: 1px 0; }
+.month-header { display:grid; grid-template-columns: 32px repeat(53, 1fr); gap: 2px; margin-top:8px; font-family: var(--ff-mono); font-size: 9px; color: var(--text-muted); }
+.legend { display:flex; align-items:center; gap: 4px; font-family: var(--ff-mono); font-size: 10px; color: var(--text-muted); justify-content:flex-end; margin-top: var(--sp-3); }
+.legend .sw { width: 12px; height: 12px; border-radius: 2px; }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+.insight { padding: var(--sp-3) var(--sp-4); border-bottom: 1px dashed var(--border-subtle); display:flex; gap: var(--sp-3); align-items:flex-start; }
+.insight:last-child { border-bottom:none; }
+.insight .badge { font-family: var(--ff-mono); font-size: 9px; letter-spacing:.10em; text-transform:uppercase; padding: 2px 6px; border-radius: var(--r-xs); flex-shrink:0; }
+.insight strong { display:block; margin-bottom:2px; font-size: 13px; }
+.insight p { margin: 0; font-size: 12px; color: var(--text-secondary); line-height:1.5; }
+.insight code { font-family: var(--ff-mono); color: var(--accent-purple); font-size:11px; }
+</style>
+</head>
+<body>
+<div id="shell-root"></div>
+<script src="../_shared/glyphs.js"></script>
+<script src="../_shared/shell.js"></script>
+<script>
+montarShell({clusterAtivo:'analise',abaAtiva:'analise',breadcrumb:['Ouroboros','Análise','Visão geral'],acoes:[{label:'Categorias',icon:'folder',href:'11-categorias.html'},{label:'Exportar relatório',icon:'download',primary:true,onClick:"toast('Relatório PDF gerado · 12 meses · 4MB')"}]});
+const fmt = v => 'R$ ' + Math.abs(v).toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0});
+
+// Sankey-ish ribbons
+function sankey(w=540, h=320) {
+  const inflows = [{n:'Salário PJ', v:13800, c:'#50fa7b', y:30}, {n:'Consultoria', v:3214, c:'#8be9fd', y:130}, {n:'Dividendos', v:480, c:'#f1fa8c', y:200}];
+  const outflows = [
+    {n:'Casa', v:2840, c:'#bd93f9', y:20}, {n:'Alimentação', v:3252, c:'#ff79c6', y:90}, {n:'Investimento', v:3200, c:'#50fa7b', y:160},
+    {n:'Saúde', v:1402, c:'#50fa7b', y:230}, {n:'Outros', v:1370, c:'#ffb86c', y:280},
+  ];
+  const totalIn = inflows.reduce((a,c)=>a+c.v,0);
+  const totalOut = outflows.reduce((a,c)=>a+c.v,0);
+  let curIn = 20, curOut = 20;
+  const ribbons = inflows.flatMap(i => {
+    const ribsHere = outflows.map(o => {
+      const portion = i.v * (o.v/totalOut);
+      const inH = (portion/totalIn) * (h-40);
+      const outH = (portion/totalOut) * (h-40);
+      const y1Top = curIn; curIn += inH;
+      // determine y2 (we'll allocate from outflow column)
+      return { from:i, to:o, h:inH, oh: outH };
+    });
+    return ribsHere;
+  });
+  // recompute outflow positions
+  const outAlloc = {};
+  outflows.forEach(o => outAlloc[o.n] = 20);
+  let curIn2 = 20;
+  let svgRibs = '';
+  inflows.forEach(i => {
+    let inY = curIn2;
+    outflows.forEach(o => {
+      const portion = i.v * (o.v/totalOut);
+      const inH = (portion/totalIn) * (h-40);
+      const outH = (portion/totalOut) * (h-40);
+      const y1 = inY; const y1b = inY + inH;
+      const y2 = outAlloc[o.n]; const y2b = outAlloc[o.n] + outH;
+      const x1 = 130, x2 = w-130;
+      const cx = (x1+x2)/2;
+      svgRibs += `<path d="M ${x1} ${y1} C ${cx} ${y1}, ${cx} ${y2}, ${x2} ${y2} L ${x2} ${y2b} C ${cx} ${y2b}, ${cx} ${y1b}, ${x1} ${y1b} Z" fill="${i.c}" opacity="0.18" />`;
+      inY = y1b; outAlloc[o.n] = y2b;
+    });
+    curIn2 += (i.v/totalIn) * (h-40);
+  });
+  // bars
+  let inAccum = 20;
+  const inBars = inflows.map(i => {
+    const ih = (i.v/totalIn) * (h-40);
+    const y = inAccum;
+    inAccum += ih;
+    return `<rect x="120" y="${y}" width="10" height="${ih-2}" fill="${i.c}" rx="1"/>
+      <text x="115" y="${y+ih/2+4}" text-anchor="end" font-family="JetBrains Mono" font-size="11" fill="var(--text-secondary)">${i.n}</text>
+      <text x="115" y="${y+ih/2+18}" text-anchor="end" font-family="JetBrains Mono" font-size="10" fill="var(--text-muted)">${fmt(i.v)}</text>`;
+  }).join('');
+  let outAccum = 20;
+  const outBars = outflows.map(o => {
+    const oh = (o.v/totalOut) * (h-40);
+    const y = outAccum;
+    outAccum += oh;
+    return `<rect x="${w-130}" y="${y}" width="10" height="${oh-2}" fill="${o.c}" rx="1"/>
+      <text x="${w-115}" y="${y+oh/2+4}" font-family="JetBrains Mono" font-size="11" fill="var(--text-secondary)">${o.n}</text>
+      <text x="${w-115}" y="${y+oh/2+18}" font-family="JetBrains Mono" font-size="10" fill="var(--text-muted)">${fmt(o.v)}</text>`;
+  }).join('');
+  return `<svg viewBox="0 0 ${w} ${h}" style="width:100%;height:auto;display:block;">
+    <text x="20" y="14" font-family="JetBrains Mono" font-size="10" fill="var(--text-muted)" letter-spacing="0.06em">ENTRADAS · ${fmt(totalIn)}</text>
+    <text x="${w-20}" y="14" text-anchor="end" font-family="JetBrains Mono" font-size="10" fill="var(--text-muted)" letter-spacing="0.06em">SAÍDAS · ${fmt(totalOut)}</text>
+    ${svgRibs}${inBars}${outBars}
+  </svg>`;
+}
+
+// Heatmap calendário 12 meses (52 semanas x 7 dias) — tons de roxo
+function heatmap() {
+  const weeks = 53;
+  const days = ['','seg','','qua','','sex',''];
+  let cells = '';
+  for (let dow=0; dow<7; dow++) {
+    cells += `<div class="hm-label">${days[dow]}</div>`;
+    for (let w=0; w<weeks; w++) {
+      const idx = w*7+dow;
+      // Pseudo-random based on patterns: weekends low; specific weeks high
+      const isWeekend = dow>=5;
+      const baseV = isWeekend ? 0.35 : 0.55;
+      const seed = Math.sin(idx*0.7) * Math.cos(idx*0.31);
+      const monthEnd = (w%4)===3 && dow>=2 && dow<=4;
+      const weekendFood = isWeekend && (w%3===0);
+      let intensity = baseV + seed*0.3;
+      if (monthEnd) intensity += 0.3;
+      if (weekendFood) intensity += 0.2;
+      intensity = Math.max(0, Math.min(1, intensity));
+      const alpha = 0.05 + intensity * 0.85;
+      const color = `rgba(189,147,249,${alpha.toFixed(2)})`;
+      cells += `<div class="hm-cell" style="background:${color};" title="sem ${w+1} · ${days[dow]||['dom','','ter','','qui','','sáb'][dow]}"></div>`;
+    }
+  }
+  return cells;
+}
+const monthsLabel = ['mai','jun','jul','ago','set','out','nov','dez','jan','fev','mar','abr'];
+let monthHeader = '<div></div>';
+monthsLabel.forEach((m,i) => monthHeader += `<div style="grid-column: span ${Math.round(53/12)}; text-align:left;">${m}</div>`);
+
+const fluxoTab = `
+  <div class="kpi-row">
+    <div class="k"><div class="l">Entradas · 12 meses</div><div class="v" style="color:var(--d7-graduado);">${fmt(207000)}</div><div class="d">+8% vs ano anterior</div></div>
+    <div class="k"><div class="l">Saídas · 12 meses</div><div class="v" style="color:var(--accent-red);">${fmt(122100)}</div><div class="d">59% das entradas</div></div>
+    <div class="k"><div class="l">Investido · 12 meses</div><div class="v" style="color:var(--accent-purple);">${fmt(38400)}</div><div class="d">19% taxa de poupança</div></div>
+    <div class="k"><div class="l">Saldo · 12 meses</div><div class="v" style="color:var(--d7-graduado);">+${fmt(46500)}</div><div class="d"> patrimônio +R$ 22k</div></div>
+  </div>
+  <div class="grid-3">
+    <div class="card">
+      <div class="card-head"><h3>Fluxo de caixa · onde o dinheiro vai</h3>
+        <span style="font-family:var(--ff-mono);font-size:11px;color:var(--text-muted);">média mensal · 12 meses</span></div>
+      <div style="padding: var(--sp-4);">${sankey()}</div>
+    </div>
+    <div class="card">
+      <div class="card-head"><h3>Insights derivados</h3></div>
+      <div class="insight">
+        <span class="badge" style="background:rgba(80,250,123,0.18);color:var(--d7-graduado);">positivo</span>
+        <div><strong>Taxa de poupança consistente</strong><p>Investimento mensal acima de <code>R$ 3k</code> em 11 dos últimos 12 meses. Velocidade compatível com FIRE 2042.</p></div>
+      </div>
+      <div class="insight">
+        <span class="badge" style="background:rgba(255,184,108,0.18);color:var(--accent-orange);">atenção</span>
+        <div><strong>Alimentação fora aumentou 22%</strong><p>iFood + restaurantes passaram de <code>R$ 1.150</code> para <code>R$ 1.410</code> no Q1. Sazonalidade ou novo padrão?</p></div>
+      </div>
+      <div class="insight">
+        <span class="badge" style="background:rgba(189,147,249,0.18);color:var(--accent-purple);">descoberta</span>
+        <div><strong>Recorrência não declarada</strong><p>Pagamento de <code>R$ 89,90</code> à Disney+ em 4 dos últimos 6 meses — promova para "fixo · streaming"?</p></div>
+      </div>
+      <div class="insight">
+        <span class="badge" style="background:rgba(139,233,253,0.18);color:var(--accent-cyan);">previsão</span>
+        <div><strong>Margem prevista — junho</strong><p>Salário maior (PJ ajustado) + saída fixa similar = saldo livre estimado de <code>R$ 4.800</code>. Aporte sugerido em CDB.</p></div>
+      </div>
+    </div>
+  </div>
+`;
+
+const categoriasTab = `
+  <div class="kpi-row">
+    <div class="k"><div class="l">Maior categoria</div><div class="v" style="color:var(--accent-pink);">Alimentação</div><div class="d">26% · ${fmt(3252)}/mês</div></div>
+    <div class="k"><div class="l">Maior crescimento</div><div class="v" style="color:var(--accent-orange);">Casa +18%</div><div class="d">novo aluguel · 03/2026</div></div>
+    <div class="k"><div class="l">Maior queda</div><div class="v" style="color:var(--d7-graduado);">Lazer −12%</div><div class="d">menos viagens · -R$ 380</div></div>
+    <div class="k"><div class="l">Volatilidade</div><div class="v" style="color:var(--accent-yellow);">Restaurantes</div><div class="d">σ = R$ 410 · alta</div></div>
+  </div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-head"><h3>Comparativo · este mês vs média 6m</h3></div>
+      <div style="padding: var(--sp-4);">
+        ${[
+          {n:'Casa', v:2840, m:2400, c:'#bd93f9'},
+          {n:'Alimentação', v:3252, m:2920, c:'#ff79c6'},
+          {n:'Transporte', v:680, m:740, c:'#8be9fd'},
+          {n:'Saúde', v:1402, m:1380, c:'#50fa7b'},
+          {n:'Lazer', v:412, m:530, c:'#ffb86c'},
+          {n:'Investimento', v:3200, m:3050, c:'#f1fa8c'},
+        ].map(r => {
+          const max = 4000;
+          const pctV = (r.v/max)*100, pctM = (r.m/max)*100;
+          const delta = ((r.v-r.m)/r.m*100).toFixed(0);
+          const cor = r.v>r.m ? 'var(--accent-orange)' : 'var(--d7-graduado)';
+          return `<div style="margin-bottom: var(--sp-3);">
+            <div style="display:flex;justify-content:space-between;font-family:var(--ff-mono);font-size:12px;margin-bottom:6px;">
+              <span><span style="display:inline-block;width:8px;height:8px;background:${r.c};border-radius:2px;vertical-align:middle;margin-right:6px;"></span>${r.n}</span>
+              <span style="color:${cor};">${delta>0?'+':''}${delta}%</span>
+            </div>
+            <div style="height:18px;background:var(--bg-inset);border-radius:var(--r-xs);position:relative;overflow:hidden;">
+              <div style="position:absolute;height:100%;background:${r.c};width:${pctV}%;opacity:0.85;"></div>
+              <div style="position:absolute;left:${pctM}%;top:0;bottom:0;width:1px;background:var(--text-primary);"></div>
+              <span style="position:absolute;right:6px;top:1px;font-family:var(--ff-mono);font-size:10px;color:var(--bg-base);font-weight:600;">${fmt(r.v)}</span>
+            </div>
+          </div>`;
+        }).join('')}
+        <div style="font-family:var(--ff-mono);font-size:10px;color:var(--text-muted);margin-top:var(--sp-3);">─ linha vertical = média de 6 meses</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head"><h3>Top 10 merchants · 30d</h3></div>
+      <div style="padding: 0;">
+        ${[
+          {n:'Mercado Extra', c:'Alimentação', v:842, ct:5},
+          {n:'iFood', c:'Alimentação', v:480, ct:18},
+          {n:'B3 (IVVB11)', c:'Investimento', v:3200, ct:1},
+          {n:'Bradesco · aluguel', c:'Casa', v:1280, ct:1},
+          {n:'Unimed', c:'Saúde', v:782, ct:1},
+          {n:'Uber', c:'Transporte', v:340, ct:14},
+          {n:'CPFL', c:'Casa', v:340, ct:1},
+          {n:'Sushi Yamamoto', c:'Alimentação', v:127, ct:2},
+          {n:'BlueFit', c:'Saúde', v:150, ct:1},
+          {n:'Vivo Fibra', c:'Casa', v:139, ct:1},
+        ].map((m,i)=>`
+          <div style="display:grid;grid-template-columns:24px 1fr 80px;gap:var(--sp-3);padding:8px var(--sp-4);border-bottom:1px dashed var(--border-subtle);font-size:13px;align-items:center;">
+            <span style="font-family:var(--ff-mono);color:var(--text-muted);font-size:11px;">${String(i+1).padStart(2,'0')}</span>
+            <div><strong style="font-family:var(--ff-mono);">${m.n}</strong><div style="font-family:var(--ff-mono);font-size:10px;color:var(--text-muted);margin-top:2px;">${m.c} · ${m.ct}× no mês</div></div>
+            <div style="font-family:var(--ff-mono);font-size:13px;text-align:right;font-variant-numeric:tabular-nums;">${fmt(m.v)}</div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  </div>
+`;
+
+const padroesTab = `
+  <div class="kpi-row">
+    <div class="k"><div class="l">Dia mais caro</div><div class="v" style="color:var(--accent-pink);">sábado</div><div class="d">média R$ 245 · mercado+lazer</div></div>
+    <div class="k"><div class="l">Dia mais barato</div><div class="v" style="color:var(--d7-graduado);">terça</div><div class="d">média R$ 78 · só fixos</div></div>
+    <div class="k"><div class="l">Pico mensal</div><div class="v" style="color:var(--accent-orange);">dia 5</div><div class="d">aluguel + concentração</div></div>
+    <div class="k"><div class="l">Sazonalidade</div><div class="v" style="color:var(--accent-yellow);">+34%</div><div class="d">dezembro · presente+ceia</div></div>
+  </div>
+  <div class="card">
+    <div class="card-head"><h3>Calendário de gastos · 365 dias</h3>
+      <div class="legend"><span>menos</span>
+        <span class="sw" style="background:rgba(189,147,249,0.10);"></span>
+        <span class="sw" style="background:rgba(189,147,249,0.30);"></span>
+        <span class="sw" style="background:rgba(189,147,249,0.55);"></span>
+        <span class="sw" style="background:rgba(189,147,249,0.80);"></span>
+        <span>mais</span>
+      </div>
+    </div>
+    <div class="heatmap">
+      <div class="hm-grid">${heatmap()}</div>
+      <div class="month-header">${monthHeader}</div>
+    </div>
+  </div>
+`;
+
+document.getElementById('main-root').innerHTML = `
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">ANÁLISE</h1>
+      <p class="page-subtitle">Três perspectivas sobre o mesmo dataset normalizado: de onde vem e para onde vai (fluxo), o que mudou (categorias), quando acontece (padrões temporais).</p>
+    </div>
+    <div class="page-meta"><span class="sprint-tag">Sprint 5</span><span class="pill pill-d7-graduado">2.847 transações · 12 meses</span></div>
+  </div>
+
+  <div class="tabs-bar">
+    <button class="tab active" data-tab="fluxo">Fluxo de caixa <span class="ct">3</span></button>
+    <button class="tab" data-tab="cat">Categorias <span class="ct">6</span></button>
+    <button class="tab" data-tab="pad">Padrões temporais <span class="ct">365d</span></button>
+    <span style="margin-left:auto;font-family:var(--ff-mono);font-size:11px;color:var(--text-muted);align-self:center;padding-right:var(--sp-3);">3 lentes · ⌘1·⌘2·⌘3</span>
+  </div>
+
+  <div class="tab-content active" id="tab-fluxo">${fluxoTab}</div>
+  <div class="tab-content" id="tab-cat">${categoriasTab}</div>
+  <div class="tab-content" id="tab-pad">${padroesTab}</div>
+`;
+
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
+  document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(x => x.classList.remove('active'));
+  t.classList.add('active');
+  const map = {fluxo:'tab-fluxo', cat:'tab-cat', pad:'tab-pad'};
+  document.getElementById(map[t.dataset.tab]).classList.add('active');
+}));
+hidratarGlyphs(document.getElementById('main-root'));
+</script></body></html>

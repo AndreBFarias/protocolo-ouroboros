@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Ouroboros — Bem-estar · Cruzamentos</title>
+<link rel="stylesheet" href="../_shared/tokens.css">
+<link rel="stylesheet" href="../_shared/components.css">
+<style>
+.cz-grid { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: var(--sp-4); }
+.cz-card { background: var(--bg-surface); border:1px solid var(--border-subtle); border-radius: var(--r-md); padding: var(--sp-5); }
+.cz-card h3 { font-family: var(--ff-mono); font-size: 11px; letter-spacing: 0.10em; text-transform: uppercase; color: var(--text-muted); margin: 0 0 var(--sp-3); }
+
+/* Builder */
+.builder {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-3);
+  margin-bottom: var(--sp-4);
+}
+.builder-bloco { background: var(--bg-inset); border:1px solid var(--border-subtle); border-radius: var(--r-sm); padding: var(--sp-3); border-top: 3px solid var(--cor); }
+.builder-bloco .l { font-family: var(--ff-mono); font-size: 10px; letter-spacing: 0.10em; text-transform: uppercase; color: var(--cor); margin-bottom: 6px; }
+.builder-bloco select, .builder-bloco input {
+  width: 100%; background: var(--bg-base); border: 1px solid var(--border-subtle); border-radius: var(--r-xs);
+  padding: 8px 10px; font-family: var(--ff-mono); font-size: 12px; color: var(--text-primary);
+}
+.builder-bloco .hint { font-family: var(--ff-mono); font-size: 10px; color: var(--text-muted); margin-top: 6px; }
+
+.run-row { display:flex; align-items:center; justify-content:space-between; padding-top: var(--sp-3); border-top: 1px solid var(--border-subtle); }
+.run-row .descritor {
+  font-family: var(--ff-mono); font-size: 12px; color: var(--text-secondary); line-height: 1.5;
+}
+.run-row .descritor strong { color: var(--accent-purple); }
+.run-row .descritor code { background: var(--bg-inset); padding: 1px 5px; border-radius: 2px; color: var(--accent-pink); }
+
+/* Resultado: scatter / scatterbox */
+.scatter-host { position: relative; height: 320px; padding: var(--sp-3); }
+.scatter-host svg { width: 100%; height: 100%; overflow: visible; }
+.scatter-host .axis-l, .scatter-host .axis-b {
+  font-family: var(--ff-mono); font-size: 10px; fill: var(--text-muted);
+}
+.dot {
+  cursor: pointer; transition: r .12s, opacity .12s;
+}
+.dot:hover { stroke: var(--text-primary); stroke-width: 1.5; }
+
+/* Insights cards */
+.insight {
+  background: var(--bg-inset); border:1px solid var(--border-subtle); border-left: 3px solid var(--cor);
+  border-radius: var(--r-sm); padding: var(--sp-3); display:flex; flex-direction:column; gap: 4px;
+  margin-bottom: 6px;
+}
+.insight .head { display:flex; align-items:center; justify-content:space-between; }
+.insight .titulo { font-size: 13px; color: var(--text-primary); font-weight: 500; }
+.insight .conf {
+  font-family: var(--ff-mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase;
+  background: rgba(189,147,249, 0.12); color: var(--accent-purple); padding: 2px 6px; border-radius: var(--r-xs);
+}
+.insight .corpo { font-family: var(--ff-mono); font-size: 11px; color: var(--text-muted); line-height: 1.5; }
+.insight .acao { display:flex; gap: 6px; margin-top: 6px; }
+
+/* Vínculo recap */
+.recap-link {
+  display:flex; align-items:center; gap: 12px; padding: var(--sp-3);
+  background: linear-gradient(135deg, rgba(189,147,249, 0.10), transparent);
+  border: 1px solid rgba(189,147,249, 0.25);
+  border-radius: var(--r-sm);
+  margin-top: var(--sp-3);
+}
+.recap-link .ico { width: 32px; height: 32px; border-radius: 50%; background: var(--accent-purple); color: var(--text-inverse); display:grid; place-items:center; flex-shrink:0; }
+.recap-link .texto { flex: 1; font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
+.recap-link .texto strong { color: var(--text-primary); }
+
+/* Pre-sets */
+.presets { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.preset-btn {
+  text-align: left; background: var(--bg-inset); border: 1px solid var(--border-subtle);
+  border-radius: var(--r-sm); padding: 10px; cursor: pointer; transition: border-color .12s;
+}
+.preset-btn:hover { border-color: var(--accent-purple); }
+.preset-btn .pq { font-family: var(--ff-mono); font-size: 11px; color: var(--text-primary); font-weight: 500; line-height: 1.35; }
+.preset-btn .pa { font-family: var(--ff-mono); font-size: 10px; color: var(--text-muted); margin-top: 4px; }
+</style>
+</head>
+<body>
+<div id="shell-root"></div>
+<script src="../_shared/glyphs.js"></script>
+<script src="../_shared/shell.js"></script>
+<script>
+montarShell({
+  clusterAtivo: 'bem-estar',
+  abaAtiva: 'be-cruzamentos',
+  breadcrumb: ['Ouroboros', 'Bem-estar', 'Cruzamentos'],
+  acoes: [
+    { label: 'Salvar como bloco do Recap', icon: 'sparkle', onClick: "toast(' Padrão salvo · vai aparecer no próximo Recap mensal automaticamente')" },
+    { label: 'Voltar ao Recap', icon: 'list', primary: true, href: '21-recap.html' },
+  ],
+});
+
+// Estado da query
+const QUERY = {
+  metrica: 'humor',
+  vs: 'evento',
+  filtroEvento: 'todos',
+  janela: '90d',
+};
+
+const PRESETS = [
+  { p: 'metrica', v: 'humor',  vs: 'evento',    fE: 'viagem',     j: '180d', q: 'viagens nos fazem bem?', a: 'humor médio em viagens vs base' },
+  { p: 'metrica', v: 'ansiedade', vs: 'evento', fE: 'trabalho',   j: '90d',  q: 'reuniões aumentam ansiedade?', a: 'ansiedade no dia de reunião vs outros' },
+  { p: 'metrica', v: 'humor',  vs: 'evento',    fE: 'casal',      j: '90d',  q: 'rolezinhos ajudam o casal?', a: 'humor de A e B em rolezinhos' },
+  { p: 'metrica', v: 'humor',  vs: 'ciclo',     fE: 'todas-fases',j: '90d',  q: 'ciclo afeta meu humor (B)?', a: 'humor médio por fase do ciclo' },
+  { p: 'metrica', v: 'briga',  vs: 'sono',      fE: 'lt-6h',      j: '90d',  q: 'sono ruim → briga?', a: 'incidência de briga após noite < 6h' },
+  { p: 'metrica', v: 'foco',   vs: 'caminhada', fE: 'depois-trab',j: '60d',  q: 'caminhar vespertina → foco?', a: 'foco em dias com caminhada' },
+];
+
+function setQuery(p) { Object.assign(QUERY, { metrica: p.v, vs: p.vs, filtroEvento: p.fE, janela: p.j }); render(); toast(`Query: ${p.q}`); }
+
+// gera 30 pontos (mock determinístico) com correlação positiva ou negativa
+function gerarScatter() {
+  const pts = [];
+  const corr = QUERY.vs === 'evento' && QUERY.filtroEvento === 'viagem' ? 0.85
+             : QUERY.vs === 'ciclo' ? -0.45 : QUERY.vs === 'sono' ? -0.62 : 0.55;
+  let seed = 42;
+  function rnd() { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; }
+  for (let i = 0; i < 30; i++) {
+    const x = rnd();
+    const y = Math.max(0, Math.min(1, x * corr + (1 - Math.abs(corr)) * rnd() * 0.6 + (corr < 0 ? 0.5 : 0.1)));
+    const isEvento = rnd() > 0.6;
+    pts.push({ x, y, isEvento });
+  }
+  return { pts, corr };
+}
+
+function renderScatter() {
+  const { pts, corr } = gerarScatter();
+  const w = 600, h = 280, pad = 40;
+  // eixos
+  let svg = `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">`;
+  svg += `<line x1="${pad}" y1="${h-pad}" x2="${w-pad}" y2="${h-pad}" stroke="var(--border-subtle)" />`;
+  svg += `<line x1="${pad}" y1="${pad}" x2="${pad}" y2="${h-pad}" stroke="var(--border-subtle)" />`;
+  // grid
+  for (let i = 1; i <= 4; i++) {
+    const y = pad + (h - 2*pad) * (i / 5);
+    svg += `<line x1="${pad}" y1="${y}" x2="${w-pad}" y2="${y}" stroke="var(--border-subtle)" stroke-dasharray="2 4" opacity="0.4"/>`;
+  }
+  // labels
+  svg += `<text class="axis-l" x="6" y="${pad+4}" text-anchor="start">5</text>`;
+  svg += `<text class="axis-l" x="6" y="${h-pad+4}" text-anchor="start">1</text>`;
+  svg += `<text class="axis-b" x="${pad}" y="${h-12}" text-anchor="start">${QUERY.vs}: baixo</text>`;
+  svg += `<text class="axis-b" x="${w-pad}" y="${h-12}" text-anchor="end">${QUERY.vs}: alto</text>`;
+  svg += `<text class="axis-l" x="${pad-6}" y="${pad-12}" text-anchor="end">${QUERY.metrica}</text>`;
+  // dots
+  pts.forEach((p, i) => {
+    const cx = pad + p.x * (w - 2*pad);
+    const cy = pad + (1 - p.y) * (h - 2*pad);
+    const cor = p.isEvento ? 'var(--accent-purple)' : 'var(--accent-cyan)';
+    const r = p.isEvento ? 6 : 4;
+    svg += `<circle class="dot" cx="${cx}" cy="${cy}" r="${r}" fill="${cor}" opacity="${p.isEvento ? 0.85 : 0.5}" onclick="toast('dia ${i+1} · ${QUERY.metrica} ${(p.y*4+1).toFixed(1)} · ${QUERY.vs} ${(p.x*4+1).toFixed(1)}')"/>`;
+  });
+  // linha de tendência simplificada
+  const x1 = pad, y1 = pad + (1 - (corr > 0 ? 0.3 : 0.7)) * (h - 2*pad);
+  const x2 = w - pad, y2 = pad + (1 - (corr > 0 ? 0.7 : 0.3)) * (h - 2*pad);
+  svg += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="var(--accent-pink)" stroke-width="1.5" stroke-dasharray="4 4" opacity="0.7"/>`;
+  // r²
+  svg += `<text x="${w-pad-8}" y="${pad+18}" text-anchor="end" font-family="JetBrains Mono, monospace" font-size="11" fill="var(--accent-pink)">corr ${corr > 0 ? '+' : ''}${corr.toFixed(2)}</text>`;
+  svg += `</svg>`;
+  return svg;
+}
+
+function render() {
+  document.getElementById('descritor').innerHTML = `
+    cruzando <strong>${QUERY.metrica}</strong> <code>×</code> <strong>${QUERY.vs}${QUERY.filtroEvento !== 'todos' ? ' (' + QUERY.filtroEvento + ')' : ''}</strong>
+    em <strong>${QUERY.janela}</strong> · base: humor.json + dailies + ${QUERY.vs}/*.json
+  `;
+  document.getElementById('scatter-host').innerHTML = renderScatter();
+}
+
+document.getElementById('main-root').innerHTML = `
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">CRUZAMENTOS · HUMOR × EVENTOS × CICLO</h1>
+      <p class="page-subtitle">Builder de queries entre métricas e contexto. Cada query salva vira um bloco automático no
+      <strong style="color:var(--accent-purple);">Recap mensal</strong>. Roda local sobre os JSONs do <code style="color:var(--accent-pink);background:var(--bg-inset);padding:1px 6px;border-radius:2px;">.ouroboros/cache/</code>.</p>
+    </div>
+    <div class="page-meta">
+      <span class="sprint-tag">M30</span>
+      <span class="pill pill-d7-graduado">8 padrões salvos</span>
+    </div>
+  </div>
+
+  <div class="cz-grid">
+    <div>
+      <div class="cz-card">
+        <h3>Builder · query atual</h3>
+        <div class="builder">
+          <div class="builder-bloco" style="--cor:var(--accent-purple);">
+            <div class="l">métrica</div>
+            <select onchange="QUERY.metrica=this.value;render();">
+              <option value="humor" selected>humor</option>
+              <option value="energia">energia</option>
+              <option value="ansiedade">ansiedade</option>
+              <option value="foco">foco</option>
+              <option value="briga">incidência de briga</option>
+              <option value="sono">qualidade do sono</option>
+            </select>
+            <div class="hint">o que estamos medindo</div>
+          </div>
+          <div class="builder-bloco" style="--cor:var(--accent-cyan);">
+            <div class="l">cruzar com</div>
+            <select onchange="QUERY.vs=this.value;render();">
+              <option value="evento" selected>evento</option>
+              <option value="ciclo">fase do ciclo (B)</option>
+              <option value="sono">horas de sono</option>
+              <option value="caminhada">caminhada vespertina</option>
+              <option value="medicacao">aderência medicação</option>
+              <option value="dia-semana">dia da semana</option>
+            </select>
+            <div class="hint">contexto que possivelmente influencia</div>
+          </div>
+          <div class="builder-bloco" style="--cor:var(--accent-pink);">
+            <div class="l">filtro / janela</div>
+            <select onchange="QUERY.filtroEvento=this.value;render();">
+              <option value="todos" selected>todos</option>
+              <option value="trabalho">tipo: trabalho</option>
+              <option value="casal">tipo: casal</option>
+              <option value="viagem">tipo: viagem</option>
+              <option value="saude">tipo: saúde</option>
+              <option value="lt-6h">sono &lt; 6h</option>
+              <option value="depois-trab">depois do trabalho</option>
+            </select>
+            <div class="hint">refina contexto · janela <strong>${QUERY.janela}</strong></div>
+          </div>
+        </div>
+        <div class="run-row">
+          <span class="descritor" id="descritor"></span>
+          <button class="btn btn-sm btn-primary" onclick="toast('Re-rodando query · 1.2s mock')">${glyph('refresh', 12)} Rodar</button>
+        </div>
+      </div>
+
+      <div class="cz-card" style="margin-top: var(--sp-4);">
+        <h3>Resultado · scatter ${QUERY.janela}</h3>
+        <div class="scatter-host" id="scatter-host"></div>
+        <div style="display:flex;gap:var(--sp-3);font-family:var(--ff-mono);font-size:10px;color:var(--text-muted);justify-content:center;margin-top:var(--sp-2);">
+          <span><span style="display:inline-block;width:8px;height:8px;background:var(--accent-purple);border-radius:50%;margin-right:4px;"></span>dia com evento</span>
+          <span><span style="display:inline-block;width:6px;height:6px;background:var(--accent-cyan);border-radius:50%;margin-right:4px;"></span>dia base</span>
+          <span><span style="display:inline-block;width:14px;height:1.5px;background:var(--accent-pink);margin-right:4px;vertical-align:middle;"></span>tendência linear</span>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="cz-card">
+        <h3>Perguntas pré-prontas — clique para rodar</h3>
+        <div class="presets" id="presets"></div>
+      </div>
+
+      <div class="cz-card" style="margin-top: var(--sp-4);">
+        <h3>Insights desta query</h3>
+        <div class="insight" style="--cor: var(--accent-green);">
+          <div class="head">
+            <span class="titulo">viagens elevam humor médio em +1.4 pontos</span>
+            <span class="conf">conf 91%</span>
+          </div>
+          <div class="corpo">3 viagens em 180d · humor médio durante: 4.6 · base: 3.2 · efeito persiste 4 dias após volta</div>
+          <div class="acao">
+            <button class="btn btn-sm" onclick="toast('Salvo · vai aparecer no próximo Recap')">${glyph('check', 11)} salvar</button>
+            <button class="btn btn-sm" onclick="toast('Memória/dailies relevantes abertos em painel lateral')">${glyph('eye', 11)} ver dias</button>
+          </div>
+        </div>
+        <div class="insight" style="--cor: var(--accent-orange);">
+          <div class="head">
+            <span class="titulo">após viagem longa, humor dá 1 dia de queda (re-entrada)</span>
+            <span class="conf">conf 68%</span>
+          </div>
+          <div class="corpo">2/3 viagens · drop médio 1.1 ponto no 1º dia útil pós-volta</div>
+        </div>
+        <div class="insight" style="--cor: var(--accent-purple);">
+          <div class="head">
+            <span class="titulo">dias de viagem com evento social → ansiedade ↑</span>
+            <span class="conf">conf 60%</span>
+          </div>
+          <div class="corpo">amostra pequena (n=4) · útil reforçar com mais dados</div>
+        </div>
+
+        <div class="recap-link">
+          <div class="ico">${glyph('sparkle', 16)}</div>
+          <div class="texto">
+            Cruzamentos salvos viram <strong>blocos automáticos</strong> no <a href="21-recap.html" style="color:var(--accent-purple);">Recap</a>
+            mensal — alimentam o prompt do Sonnet com o contexto numérico, não só o markdown bruto.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+`;
+
+document.getElementById('presets').innerHTML = PRESETS.map((p, i) => `
+  <button class="preset-btn" onclick="setQuery(${JSON.stringify(p).replace(/"/g, '&quot;')})">
+    <div class="pq">${p.q}</div>
+    <div class="pa">${p.a} · ${p.j}</div>
+  </button>
+`).join('');
+
+render();
+hidratarGlyphs(document.getElementById('main-root'));
+</script>
+</body>
+</html>

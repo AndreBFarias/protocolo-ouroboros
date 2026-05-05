@@ -1,0 +1,60 @@
+{
+  "meta": {
+    "nome": "Ouroboros — Espaçamento e dimensões",
+    "principio": "Densidade alta. Múltiplos de 4px. Cards justos.",
+    "base": "4px"
+  },
+
+  "espacamento": {
+    "0":  { "value": "0" },
+    "1":  { "value": "4px" },
+    "2":  { "value": "8px" },
+    "3":  { "value": "12px" },
+    "4":  { "value": "16px" },
+    "5":  { "value": "20px" },
+    "6":  { "value": "24px" },
+    "8":  { "value": "32px" },
+    "10": { "value": "40px" },
+    "12": { "value": "48px" },
+    "16": { "value": "64px" }
+  },
+
+  "raio": {
+    "none": { "value": "0" },
+    "xs":   { "value": "2px", "uso": "pill, badge" },
+    "sm":   { "value": "4px", "uso": "input, botão" },
+    "md":   { "value": "6px", "uso": "card padrão" },
+    "lg":   { "value": "8px", "uso": "modal, painel lateral" },
+    "full": { "value": "999px" }
+  },
+
+  "dimensoes": {
+    "sidebar_width":            { "value": "240px" },
+    "sidebar_collapsed":        { "value": "56px" },
+    "topbar_height":            { "value": "56px" },
+    "page_header_height":       { "value": "72px" },
+    "table_row_height":         { "value": "32px",  "uso": "tabela densa" },
+    "table_row_height_compact": { "value": "28px" },
+    "kpi_tile_min_width":       { "value": "160px" },
+    "kpi_tile_max_width":       { "value": "200px" },
+    "kpi_tile_height":          { "value": "96px" },
+    "card_padding":             { "value": "16px" },
+    "card_padding_compact":     { "value": "12px" },
+    "drawer_width":             { "value": "480px", "uso": "painel lateral deslizante" },
+    "icon_xs":                  { "value": "12px" },
+    "icon_sm":                  { "value": "14px" },
+    "icon_md":                  { "value": "16px" },
+    "icon_lg":                  { "value": "20px" },
+    "thumb_sm":                 { "value": "32px" },
+    "thumb_lg":                 { "value": "96px" }
+  },
+
+  "z_index": {
+    "base":     0,
+    "sticky":   10,
+    "drawer":   40,
+    "modal":    50,
+    "toast":    60,
+    "tooltip":  70
+  }
+}

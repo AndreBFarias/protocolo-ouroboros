@@ -1,0 +1,95 @@
+{
+  "meta": {
+    "nome": "Ouroboros — Tipografia",
+    "principio": "Sans para discurso, mono para dados. Tabular-nums obrigatório em colunas numéricas.",
+    "self_host": true,
+    "fontes_externas_runtime": false,
+    "diretorio_assets": "assets/fonts/"
+  },
+
+  "familias": {
+    "sans": {
+      "value": "Inter",
+      "fallback": "ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",
+      "pesos_disponiveis": [300, 400, 500, 600, 700],
+      "uso": "headings, corpo, labels"
+    },
+    "mono": {
+      "value": "JetBrains Mono",
+      "fallback": "ui-monospace, 'SF Mono', Menlo, Consolas, monospace",
+      "pesos_disponiveis": [400, 500, 700],
+      "uso": "valores monetários, sha8, CNPJ, CPF, JSON, código, headers de página (mono-display)"
+    }
+  },
+
+  "escala": {
+    "11": { "value": "11px", "line_height": "16px", "uso": "caption, sprint-tag, kbd" },
+    "12": { "value": "12px", "line_height": "16px", "uso": "metadata, table-row secundária" },
+    "13": { "value": "13px", "line_height": "20px", "uso": "default em tabelas densas" },
+    "14": { "value": "14px", "line_height": "20px", "uso": "corpo padrão" },
+    "16": { "value": "16px", "line_height": "24px", "uso": "corpo confortável" },
+    "18": { "value": "18px", "line_height": "26px", "uso": "subtítulo de card" },
+    "20": { "value": "20px", "line_height": "28px", "uso": "h3" },
+    "24": { "value": "24px", "line_height": "32px", "uso": "h2, KPI secundário" },
+    "32": { "value": "32px", "line_height": "40px", "uso": "h1, KPI primário (mono)" },
+    "40": { "value": "40px", "line_height": "48px", "uso": "header de página (mono-display)" }
+  },
+
+  "estilos": {
+    "h1_pagina": {
+      "familia": "mono",
+      "peso": 500,
+      "tamanho": "40",
+      "letter_spacing": "-0.02em",
+      "transform": "uppercase",
+      "uso": "header de página — mono-display brutal"
+    },
+    "h2_secao": {
+      "familia": "sans",
+      "peso": 600,
+      "tamanho": "20",
+      "letter_spacing": "-0.01em"
+    },
+    "h3_card": {
+      "familia": "sans",
+      "peso": 500,
+      "tamanho": "14",
+      "letter_spacing": "0.04em",
+      "transform": "uppercase",
+      "color": "text.secondary"
+    },
+    "kpi_valor": {
+      "familia": "mono",
+      "peso": 500,
+      "tamanho": "32",
+      "letter_spacing": "-0.02em",
+      "font_variant_numeric": "tabular-nums"
+    },
+    "kpi_label": {
+      "familia": "sans",
+      "peso": 500,
+      "tamanho": "11",
+      "letter_spacing": "0.08em",
+      "transform": "uppercase",
+      "color": "text.muted"
+    },
+    "tabela_celula": {
+      "familia": "sans",
+      "peso": 400,
+      "tamanho": "13"
+    },
+    "tabela_celula_mono": {
+      "familia": "mono",
+      "peso": 400,
+      "tamanho": "12",
+      "font_variant_numeric": "tabular-nums"
+    },
+    "sprint_tag": {
+      "familia": "mono",
+      "peso": 500,
+      "tamanho": "11",
+      "letter_spacing": "0.04em",
+      "transform": "uppercase"
+    }
+  }
+}

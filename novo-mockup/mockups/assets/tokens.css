@@ -1,0 +1,169 @@
+/* Ouroboros — tokens compartilhados (paleta Dracula refinada).
+   Espelha tokens/colors.json + typography.json + spacing.json + shadows.json.
+   Fonte de verdade: arquivos JSON. Aqui é a versão consumível por HTML/CSS. */
+
+:root {
+  /* === bg / surface === */
+  --bg-base:     #0e0f15;
+  --bg-surface:  #1a1d28;
+  --bg-elevated: #232735;
+  --bg-inset:    #0a0b10;
+
+  /* aliases backward-compat com tema.py existente
+     (fundo / card_fundo / superfluo). O agente Claude Code usa estes
+     nomes em src/dashboard/tema.py. Migração documentada em
+     implementation/INSTRUCOES_PARA_CLAUDE_CODE.md §3. */
+  --color-fundo:        var(--bg-base);
+  --color-card-fundo:   var(--bg-surface);
+  --color-card-elevado: var(--bg-elevated);
+
+  /* === border === */
+  --border-subtle: #313445;
+  --border-strong: #4a4f63;
+  --border-accent: #6b5a9c;
+
+  /* === text === */
+  --text-primary:   #f8f8f2;
+  --text-secondary: #a8a9b8;
+  --text-muted:     #6c6f7d;
+  --text-inverse:   #0e0f15;
+
+  --color-texto:     var(--text-primary);
+  --color-texto-sec: var(--text-secondary);
+
+  /* === accent === */
+  --accent-purple: #bd93f9;
+  --accent-pink:   #ff79c6;
+  --accent-cyan:   #8be9fd;
+  --accent-green:  #50fa7b;
+  --accent-yellow: #f1fa8c;
+  --accent-orange: #ffb86c;
+  --accent-red:    #ff5555;
+
+  --color-positivo:    var(--accent-green);
+  --color-negativo:    var(--accent-red);
+  --color-alerta:      var(--accent-orange);
+  --color-destaque:    var(--accent-purple);
+  --color-neutro:      var(--accent-cyan);
+  --color-info:        var(--accent-yellow);
+  --color-superfluo:   var(--accent-pink);
+
+  /* === D7 — cobertura observável, não gate === */
+  --d7-graduado:   #6b8e7f;
+  --d7-calibracao: #f1fa8c;
+  --d7-regredindo: #ffb86c;
+  --d7-pendente:   #6c6f7d;
+
+  /* === validação humana === */
+  --humano-aprovado:  #6b8e7f;
+  --humano-rejeitado: #ff5555;
+  --humano-revisar:   #f1fa8c;
+  --humano-pendente:  #6c6f7d;
+
+  /* === diff === */
+  --diff-added-bg:      rgba(80, 250, 123, 0.10);
+  --diff-added-gutter:  #50fa7b;
+  --diff-removed-bg:    rgba(255, 85, 85, 0.10);
+  --diff-removed-gutter:#ff5555;
+  --diff-neutral-gutter:#4a4f63;
+
+  /* === syntax === */
+  --syntax-key:     #ff79c6;
+  --syntax-string:  #f1fa8c;
+  --syntax-number:  #bd93f9;
+  --syntax-boolean: #ffb86c;
+  --syntax-null:    #6c6f7d;
+  --syntax-comment: #6c6f7d;
+
+  /* === espaçamento === */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* === raio === */
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-full: 999px;
+
+  /* === dimensões === */
+  --sidebar-width: 240px;
+  --sidebar-collapsed: 56px;
+  --topbar-height: 56px;
+  --page-header-height: 72px;
+  --table-row-height: 32px;
+  --kpi-tile-min-w: 160px;
+  --kpi-tile-h: 96px;
+  --drawer-width: 480px;
+
+  /* === sombras === */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.40);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.50), inset 0 1px 0 rgba(255, 255, 255, 0.02);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.60), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  --shadow-xl: 0 24px 64px rgba(0, 0, 0, 0.70), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  --focus-ring: 0 0 0 2px var(--bg-base), 0 0 0 4px var(--accent-purple);
+
+  /* === tipografia === */
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+  /* === z-index === */
+  --z-sticky: 10;
+  --z-drawer: 40;
+  --z-modal: 50;
+  --z-toast: 60;
+  --z-tooltip: 70;
+}
+
+/* === reset mínimo === */
+*, *::before, *::after { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg-base);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 20px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: 'cv11', 'ss01';
+}
+button { font-family: inherit; cursor: pointer; }
+input, select, textarea { font-family: inherit; color: inherit; }
+table { border-collapse: collapse; }
+
+/* === fontes (Google Fonts CDN — só pro mockup; produção self-host) === */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+/* === utilitárias === */
+.mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.uppercase { text-transform: uppercase; letter-spacing: 0.04em; }
+.tracked { letter-spacing: 0.08em; }
+.muted { color: var(--text-muted); }
+.secondary { color: var(--text-secondary); }
+.tabular { font-variant-numeric: tabular-nums; }
+
+.row { display: flex; align-items: center; gap: var(--space-2); }
+.row-between { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
+.col { display: flex; flex-direction: column; gap: var(--space-2); }
+
+/* === scrollbar customizada === */
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb { background: var(--border-subtle); border-radius: 4px; }
+*::-webkit-scrollbar-thumb:hover { background: var(--border-strong); }
+
+/* === focus ring acessível === */
+*:focus-visible { outline: none; box-shadow: var(--focus-ring); border-radius: var(--radius-sm); }
+
+/* === seleção === */
+::selection { background: var(--accent-purple); color: var(--text-inverse); }

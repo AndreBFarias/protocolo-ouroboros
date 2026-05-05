@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><title>Ouroboros — Pagamentos</title>
+<link rel="stylesheet" href="../_shared/tokens.css">
+<link rel="stylesheet" href="../_shared/components.css">
+<style>
+.kpi-row { display:grid; grid-template-columns: repeat(4,1fr); gap:var(--sp-3); margin-bottom:var(--sp-4); }
+.k { background: var(--bg-surface); border:1px solid var(--border-subtle); border-radius: var(--r-md); padding: var(--sp-4); }
+.k .l { font-family: var(--ff-mono); font-size:10px; letter-spacing:.08em; text-transform:uppercase; color: var(--text-muted); }
+.k .v { font-family: var(--ff-mono); font-size:28px; font-weight:500; font-variant-numeric:tabular-nums; line-height:1; margin-top:6px; }
+.k .d { font-family: var(--ff-mono); font-size:11px; color: var(--text-muted); margin-top:6px; }
+.cal-grid { display:grid; grid-template-columns: 1.6fr 1fr; gap: var(--sp-3); }
+.calendar { background: var(--bg-surface); border:1px solid var(--border-subtle); border-radius: var(--r-md); padding: var(--sp-4); }
+.cal-head { display:flex; justify-content:space-between; align-items:center; margin-bottom: var(--sp-3); }
+.cal-head h3 { font-family: var(--ff-mono); font-size:14px; margin:0; font-weight:500; }
+.cal-grid7 { display:grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.cal-dow { font-family: var(--ff-mono); font-size: 10px; letter-spacing:.10em; text-transform:uppercase; color: var(--text-muted); text-align:center; padding: 4px 0; }
+.cal-day { background: var(--bg-inset); border:1px solid var(--border-subtle); border-radius: var(--r-sm); padding: 6px; min-height: 64px; position:relative; font-family: var(--ff-mono); font-size: 11px; }
+.cal-day.outside { opacity: 0.30; }
+.cal-day.today { border-color: var(--accent-purple); background: rgba(189,147,249,0.08); }
+.cal-day .num { color: var(--text-secondary); font-size: 12px; }
+.cal-day.today .num { color: var(--accent-purple); font-weight:500; }
+.cal-day .pay { display:block; margin-top:3px; padding: 1px 4px; border-radius: var(--r-xs); font-size: 9px; letter-spacing:.04em; text-transform:uppercase; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.cal-day .pay.fix { background: rgba(189,147,249,0.18); color: var(--accent-purple); }
+.cal-day .pay.var { background: rgba(255,121,198,0.18); color: var(--accent-pink); }
+.cal-day .pay.cc { background: rgba(255,184,108,0.18); color: var(--accent-orange); }
+.cal-day .pay.late { background: rgba(255,85,85,0.18); color: var(--accent-red); }
+.upcoming { background: var(--bg-surface); border:1px solid var(--border-subtle); border-radius: var(--r-md); }
+.up-head { padding: var(--sp-3) var(--sp-4); border-bottom: 1px solid var(--border-subtle); display:flex; align-items:center; justify-content:space-between; }
+.up-head h3 { font-family: var(--ff-mono); font-size:11px; letter-spacing:.08em; text-transform:uppercase; color: var(--text-secondary); margin:0; }
+.up-row { display:grid; grid-template-columns: 50px 1fr 80px auto; gap: var(--sp-3); padding: 10px var(--sp-4); border-bottom: 1px dashed var(--border-subtle); align-items:center; font-size:13px; cursor:pointer; }
+.up-row:hover { background: var(--bg-elevated); }
+.up-when { font-family: var(--ff-mono); font-size: 11px; color: var(--text-muted); letter-spacing:.04em; text-transform:uppercase; }
+.up-when.late { color: var(--accent-red); }
+.up-desc strong { display:block; }
+.up-desc .meta { font-family: var(--ff-mono); font-size:11px; color: var(--text-muted); margin-top:2px; }
+.up-val { font-family: var(--ff-mono); font-size: 14px; text-align:right; font-variant-numeric: tabular-nums; }
+.legend { display:flex; gap: var(--sp-3); padding: var(--sp-3) var(--sp-4); font-family: var(--ff-mono); font-size:11px; color: var(--text-muted); border-top: 1px solid var(--border-subtle); flex-wrap:wrap; }
+.legend span { display:inline-flex; align-items:center; gap:6px; }
+.legend .sw { width:10px; height:10px; border-radius:2px; }
+</style>
+</head>
+<body>
+<div id="shell-root"></div>
+<script src="../_shared/glyphs.js"></script>
+<script src="../_shared/shell.js"></script>
+<script>
+montarShell({clusterAtivo:'financas',abaAtiva:'pagamentos',breadcrumb:['Ouroboros','Finanças','Pagamentos'],acoes:[{label:'Marcar pago',icon:'check',onClick:"toast('Selecione 1+ pagamentos antes','warn')"},{label:'Adicionar',icon:'upload',primary:true,onClick:"toast('Novo pagamento · prompt em dev','warn')"}]});
+const fmt = v => 'R$ ' + v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+
+// Calendar — mai/2026
+// Dia de hoje: 1
+const HOJE = 1;
+const PAGAMENTOS = {
+  10:[{tipo:'cc', nome:'Fatura Nubank', val:6420, conta:'C6'}],
+  15:[{tipo:'cc', nome:'Fatura C6', val:2840, conta:'C6'}],
+  5: [{tipo:'fix', nome:'Aluguel', val:1280, conta:'Bradesco'}],
+  7: [{tipo:'fix', nome:'Internet · Vivo', val:139, conta:'C6'}],
+  12:[{tipo:'fix', nome:'Plano de saúde', val:782, conta:'Bradesco'}],
+  20:[{tipo:'fix', nome:'Aporte IVVB11', val:3200, conta:'Inter'}],
+  22:[{tipo:'fix', nome:'Reserva emerg.', val:2500, conta:'Inter'}],
+  3: [{tipo:'late', nome:'CPFL · luz', val:148, conta:'C6'}],
+  8: [{tipo:'var', nome:'Mensalidade BlueFit', val:150, conta:'C6'}],
+  18:[{tipo:'var', nome:'Babá (Ana)', val:850, conta:'Bradesco'}],
+};
+let cells = '';
+for (let d=-3; d<=0; d++) cells += `<div class="cal-day outside"><span class="num">${30+d}</span></div>`;
+for (let d=1; d<=31; d++) {
+  const today = d === HOJE ? 'today' : '';
+  const ps = PAGAMENTOS[d] || [];
+  const tags = ps.map(p => `<span class="pay ${p.tipo}" title="${p.nome} · ${fmt(p.val)}">${p.nome}</span>`).join('');
+  cells += `<div class="cal-day ${today}"><span class="num">${d}</span>${tags}</div>`;
+}
+for (let d=1; d<=4; d++) cells += `<div class="cal-day outside"><span class="num">${d}</span></div>`;
+
+const UPCOMING = [
+  { dt:'hoje · 01', desc:'CPFL · luz', meta:'em atraso 3d · sha8 7745bbef', val:148, late:true },
+  { dt:'02 mai', desc:'Aporte CDB Inter', meta:'agendado · automático', val:1100 },
+  { dt:'03 mai', desc:'Salário · TecnoCorp', meta:'previsto · entrada', val:-13800 },
+  { dt:'05 mai', desc:'Aluguel', meta:'TED Bradesco · há 24 meses', val:1280 },
+  { dt:'07 mai', desc:'Vivo Fibra', meta:'débito automático', val:139 },
+  { dt:'10 mai', desc:'Fatura Nubank', meta:'cartão · vence em 9 dias', val:6420 },
+  { dt:'12 mai', desc:'Plano de saúde', meta:'titular + 2 dependentes', val:782 },
+  { dt:'15 mai', desc:'Fatura C6 cartão', meta:'fatura ainda em aberto', val:2840 },
+];
+const upHtml = UPCOMING.map(u => `
+  <div class="up-row">
+    <div class="up-when ${u.late?'late':''}">${u.dt}</div>
+    <div class="up-desc"><strong>${u.desc}</strong><span class="meta">${u.meta}</span></div>
+    <div class="up-val" style="color:${u.late?'var(--accent-red)':u.val<0?'var(--d7-graduado)':'var(--text-primary)'};">${u.val<0?'+ ':''}${fmt(Math.abs(u.val))}</div>
+    <button class="btn btn-sm">${u.late?'pagar':'agendar'}</button>
+  </div>
+`).join('');
+
+document.getElementById('main-root').innerHTML = `
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">PAGAMENTOS</h1>
+      <p class="page-subtitle">Calendário consolidado de débitos automáticos, faturas, transferências e aportes. <strong style="color:var(--accent-red);">1 em atraso</strong>. Próxima fatura grande em 9 dias.</p>
+    </div>
+    <div class="page-meta"><span class="sprint-tag">Sprint 4</span><span class="pill pill-d7-calibracao">maio · 2026</span></div>
+  </div>
+
+  <div class="kpi-row">
+    <div class="k"><div class="l">A pagar · maio</div><div class="v">${fmt(18509)}</div><div class="d">10 lançamentos · 2 já pagos</div></div>
+    <div class="k"><div class="l">Em atraso</div><div class="v" style="color:var(--accent-red);">${fmt(148)}</div><div class="d">CPFL · 3 dias · pagar hoje</div></div>
+    <div class="k"><div class="l">Cartões · faturas</div><div class="v" style="color:var(--accent-orange);">${fmt(9260)}</div><div class="d">2 cartões · vence 10 e 15</div></div>
+    <div class="k"><div class="l">Fixos identificados</div><div class="v" style="color:var(--accent-purple);">7</div><div class="d">aluguel · saúde · internet · 4 +</div></div>
+  </div>
+
+  <div class="cal-grid">
+    <div class="calendar">
+      <div class="cal-head">
+        <h3>maio · 2026</h3>
+        <div style="display:flex;gap:6px;align-items:center;font-family:var(--ff-mono);font-size:11px;">
+          <button class="btn btn-icon btn-sm">←</button>
+          <span style="color:var(--text-muted);">SEG-DOM</span>
+          <button class="btn btn-icon btn-sm">→</button>
+        </div>
+      </div>
+      <div class="cal-grid7">
+        <div class="cal-dow">seg</div><div class="cal-dow">ter</div><div class="cal-dow">qua</div><div class="cal-dow">qui</div><div class="cal-dow">sex</div><div class="cal-dow">sáb</div><div class="cal-dow">dom</div>
+        ${cells}
+      </div>
+      <div class="legend">
+        <span><span class="sw" style="background:var(--accent-purple);"></span>fixo</span>
+        <span><span class="sw" style="background:var(--accent-pink);"></span>variável</span>
+        <span><span class="sw" style="background:var(--accent-orange);"></span>cartão</span>
+        <span><span class="sw" style="background:var(--accent-red);"></span>em atraso</span>
+        <span style="margin-left:auto;">10 pagamentos no mês · ${fmt(18509)}</span>
+      </div>
+    </div>
+
+    <div class="upcoming">
+      <div class="up-head">
+        <h3>Próximos 14 dias</h3>
+        <span style="font-family:var(--ff-mono);font-size:11px;color:var(--text-muted);">8 eventos</span>
+      </div>
+      ${upHtml}
+    </div>
+  </div>
+`;
+hidratarGlyphs(document.getElementById('main-root'));
+</script></body></html>

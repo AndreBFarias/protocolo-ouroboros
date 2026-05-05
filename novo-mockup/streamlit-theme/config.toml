@@ -1,0 +1,33 @@
+# .streamlit/config.toml — proposto para Ouroboros
+# Paleta Dracula refinada. Tokens de cor sincronizados com tokens/colors.json.
+# Self-host de fontes via assets/fonts/ — Streamlit não suporta @font-face nativo,
+# a injeção real acontece via st.markdown(<style>...</style>) — ver
+# implementation/css-injection-guide.md.
+
+[theme]
+base               = "dark"
+primaryColor       = "#bd93f9"
+backgroundColor    = "#0e0f15"
+secondaryBackgroundColor = "#1a1d28"
+textColor          = "#f8f8f2"
+font               = "sans serif"
+
+[server]
+headless           = true
+runOnSave          = true
+fileWatcherType    = "auto"
+maxUploadSize      = 200
+
+[browser]
+gatherUsageStats   = false
+
+[client]
+toolbarMode        = "minimal"
+showErrorDetails   = true
+
+[runner]
+magicEnabled       = true
+fastReruns         = true
+
+[logger]
+level              = "info"
