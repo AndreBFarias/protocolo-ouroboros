@@ -154,12 +154,15 @@ def test_listagem_de_paginas_nao_vazia() -> None:
 # (HTML inline com glyph Ω animado), substituindo o helper
 # ``hero_titulo_html``. Removida desta lista para que o invariante
 # Sprint UX-122 continue valendo nas demais páginas.
+# Sprint UX-RD-07: ``pagamentos.py`` foi reescrita com page-header
+# redesigned (calendário 14d + lista lateral), abandonando o
+# ``hero_titulo_html`` em favor da composição UX-RD-XX padrão. Removida
+# desta lista pelo mesmo critério de visao_geral.py / extrato.py.
 PAGINAS_COM_HERO: frozenset[str] = frozenset(
     {
         "categorias.py",
         "extrato.py",
         "contas.py",
-        "pagamentos.py",
         "projecoes.py",
         "metas.py",
         "analise_avancada.py",

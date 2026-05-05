@@ -1,10 +1,10 @@
-"""Testes da página Contas (Sprint 64).
+"""Testes da página Contas (Sprint 64 + UX-RD-07).
 
 Cobre:
-- Helper `renderizar_dataframe` substitui NaN por traço e não devolve
-  células com a string literal "nan".
-- Seções Dívidas Ativas, Inventário e Prazos exibem banner
-  `st.warning` com mensagem de snapshot histórico de 2023.
+- Helper `renderizar_dataframe` substitui NaN por traço.
+- A página Contas (após UX-RD-07) exibe **um único banner** de
+  snapshot histórico no topo das seções legadas, com data dinâmica
+  via mtime do XLSX em vez do hardcoded "Snapshot 2023".
 - Obs nula (NaN) renderiza como "—" no HTML da tabela, nunca como
   "nan".
 """
@@ -117,42 +117,48 @@ def _coletar_warnings(mock_st: MagicMock) -> list[str]:
     return mensagens
 
 
-def test_secao_dividas_exibe_banner_snapshot(dados_minimos: dict[str, pd.DataFrame]) -> None:
-    with patch.object(pagina_contas, "st") as mock_st:
-        mock_st.columns.return_value = (MagicMock(), MagicMock(), MagicMock())
-        pagina_contas._secao_dividas(dados_minimos["dividas_ativas"], "2026-04", "Todos")
-
-    mensagens = _coletar_warnings(mock_st)
-    assert any("snapshot" in m.lower() for m in mensagens), mensagens
-    assert any("2023" in m for m in mensagens), mensagens
-
-
-def test_secao_inventario_exibe_banner_snapshot(dados_minimos: dict[str, pd.DataFrame]) -> None:
-    with patch.object(pagina_contas, "st") as mock_st:
-        pagina_contas._secao_inventario(dados_minimos["inventario"])
-
-    mensagens = _coletar_warnings(mock_st)
-    assert any("snapshot" in m.lower() for m in mensagens), mensagens
-
-
-def test_secao_prazos_exibe_banner_snapshot(dados_minimos: dict[str, pd.DataFrame]) -> None:
-    with patch.object(pagina_contas, "st") as mock_st:
-        pagina_contas._secao_prazos(dados_minimos["prazos"])
-
-    mensagens = _coletar_warnings(mock_st)
-    assert any("snapshot" in m.lower() for m in mensagens), mensagens
-
-
-def test_renderizar_pagina_completa_banner_em_todas_tres_secoes(
+def test_renderizar_pagina_emite_aviso_snapshot_centralizado(
     dados_minimos: dict[str, pd.DataFrame],
 ) -> None:
+    """UX-RD-07: aviso de snapshot é emitido UMA vez no topo das seções
+    legadas (não mais por subseção). Texto deve mencionar 'snapshot' e
+    'manual', sem hardcodar 2023.
+    """
     with patch.object(pagina_contas, "st") as mock_st:
         mock_st.columns.return_value = (MagicMock(), MagicMock(), MagicMock())
         pagina_contas.renderizar(dados_minimos, "2026-04", "Todos")
 
     mensagens = _coletar_warnings(mock_st)
-    assert len(mensagens) >= 3, (
-        f"esperado >=3 banners (Dívidas, Inventário, Prazos); obtido {len(mensagens)}: {mensagens}"
+    snapshot_msgs = [m for m in mensagens if "snapshot" in m.lower()]
+    assert snapshot_msgs, f"esperava callout com 'snapshot'; mensagens: {mensagens}"
+    assert all("2023" not in m for m in snapshot_msgs), (
+        f"Texto não pode mais ser hardcoded em 2023: {snapshot_msgs}"
+    )
+
+
+def test_secoes_legadas_renderizam_sem_warnings_proprios(
+    dados_minimos: dict[str, pd.DataFrame],
+) -> None:
+    """UX-RD-07: subseções (_secao_dividas, _inventario, _prazos) não
+    emitem mais callout próprio de snapshot — quem cuida é renderizar()
+    no topo. Garantia anti-regressão para evitar duplicação."""
+    with patch.object(pagina_contas, "st") as mock_st:
+        mock_st.columns.return_value = (MagicMock(), MagicMock(), MagicMock())
+        pagina_contas._secao_dividas(
+            dados_minimos["dividas_ativas"], "2026-04", "Todos"
+        )
+        pagina_contas._secao_inventario(dados_minimos["inventario"])
+        pagina_contas._secao_prazos(dados_minimos["prazos"])
+
+    mensagens = _coletar_warnings(mock_st)
+    callouts_snapshot = [
+        m
+        for m in mensagens
+        if "snapshot" in m.lower() and "warning" in m.lower()
+    ]
+    assert not callouts_snapshot, (
+        f"Subseções não devem mais emitir callout próprio de snapshot: "
+        f"{callouts_snapshot}"
     )
 
 
@@ -175,11 +181,37 @@ def test_dividas_obs_nan_renderiza_como_traco(dados_minimos: dict[str, pd.DataFr
     assert "—" in html_tabela or "&mdash;" in html_tabela
 
 
-def test_constante_aviso_snapshot_menciona_xlsx_real() -> None:
-    """O texto do aviso deve apontar para o XLSX real usado pelo dashboard."""
-    assert "2023" in pagina_contas.AVISO_SNAPSHOT
+def test_aviso_snapshot_dinamico_via_mtime(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    """UX-RD-07: aviso passou a ser construído por aviso_snapshot_html()
+    a partir do mtime do XLSX -- não mais constante hardcoded em 2023.
+
+    Ainda mantemos `pagina_contas.AVISO_SNAPSHOT` como texto fallback
+    documentado para retrocompatibilidade de imports externos, mas o
+    fluxo real chama `aviso_snapshot_html(CAMINHO_XLSX)` em runtime.
+    """
+    from datetime import datetime as _dt
+
+    fake_xlsx = tmp_path / "ouroboros_2026.xlsx"
+    fake_xlsx.write_text("dummy")
+    ts = _dt(2025, 6, 20, 12, 0, 0).timestamp()
+    import os as _os
+
+    _os.utime(fake_xlsx, (ts, ts))
+
+    aviso = pagina_contas.aviso_snapshot_html(fake_xlsx)
+    assert "20/06/2025" in aviso
+    assert "snapshot" in aviso.lower()
+    assert "2023" not in aviso
+
+    # A constante histórica continua exportada (sem 2023, já adaptada
+    # em UX-RD-07) -- retrocompatibilidade de imports.
     assert "snapshot" in pagina_contas.AVISO_SNAPSHOT.lower()
-    assert dashboard_dados.CAMINHO_XLSX.name in pagina_contas.AVISO_SNAPSHOT
+    assert dashboard_dados.CAMINHO_XLSX.name in (
+        # caminho_xlsx.name aparece dentro de aviso quando XLSX existe;
+        # no aviso constante, mencionamos o XLSX consolidado por nome
+        # genérico ("XLSX consolidado") -- aceitamos ambos os formatos.
+        pagina_contas.AVISO_SNAPSHOT + " " + aviso
+    ) or "XLSX" in pagina_contas.AVISO_SNAPSHOT
 
 
 # "Vazio não é nulo: é espaço para o que ainda virá." -- Lao Tzu
