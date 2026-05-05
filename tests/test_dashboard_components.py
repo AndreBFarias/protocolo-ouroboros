@@ -127,17 +127,32 @@ class TestCssGlobalResponsivo:
 
 
 class TestIntegracaoVisaoGeral:
-    """Garante que a refatoração não quebrou o import da página."""
+    """Garante que a página continua importável após o redesign UX-RD-04
+    (reescrita: KPI grid agora é HTML custom local, não consome
+    ``kpi_grid_html``). O contrato canônico verificado é a presença das
+    funções públicas ``renderizar`` e ``_kpi_grid_html`` -- esta última
+    espelhando a primitiva do mockup ``01-visao-geral.html``.
+    """
 
-    def test_visao_geral_importa_kpi_grid(self):
+    def test_visao_geral_expoe_renderizar(self):
         from src.dashboard.paginas import visao_geral
 
-        # `kpi_grid_html` deve estar disponível no namespace da página.
-        assert hasattr(visao_geral, "kpi_grid_html")
+        # Assinatura preservada: ``renderizar(dados, mes, pessoa, ctx)``.
+        assert callable(visao_geral.renderizar)
+
+    def test_visao_geral_expoe_kpi_grid_local(self):
+        """UX-RD-04 trocou o helper compartilhado ``kpi_grid_html``
+        (componentes/) pelo emissor local ``_kpi_grid_html`` no próprio
+        módulo da página. Garante que o redesign está ativo."""
+        from src.dashboard.paginas import visao_geral
+
+        assert hasattr(visao_geral, "_kpi_grid_html")
 
     def test_componentes_expoe_helpers(self):
         from src.dashboard import componentes
 
+        # ``componentes`` continua expondo os helpers para outras
+        # páginas que ainda os utilizam.
         assert hasattr(componentes, "kpi_card_html")
         assert hasattr(componentes, "kpi_grid_html")
 

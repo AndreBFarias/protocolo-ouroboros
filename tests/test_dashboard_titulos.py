@@ -150,9 +150,12 @@ def test_listagem_de_paginas_nao_vazia() -> None:
 # ruído visual arbitrário; o helper continua obrigatório, mas com badge
 # vazio. Lista mantida para garantir que todas as páginas seguem chamando
 # o helper canônico.
+# Sprint UX-RD-04: ``visao_geral.py`` foi reescrita com hero próprio
+# (HTML inline com glyph Ω animado), substituindo o helper
+# ``hero_titulo_html``. Removida desta lista para que o invariante
+# Sprint UX-122 continue valendo nas demais páginas.
 PAGINAS_COM_HERO: frozenset[str] = frozenset(
     {
-        "visao_geral.py",
         "categorias.py",
         "extrato.py",
         "contas.py",
