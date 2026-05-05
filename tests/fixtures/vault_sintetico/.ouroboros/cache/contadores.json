@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "schema": "contadores",
+  "gerado_em": "2026-05-05T02:05:52-03:00",
+  "vault_root": "/home/andrefarias/Desenvolvimento/protocolo-ouroboros/tests/fixtures/vault_sintetico",
+  "items": [
+    {
+      "id": "sem-acucar",
+      "autor": "pessoa_a",
+      "nome": "Dias sem acucar",
+      "data_inicio": "2026-04-01",
+      "ultima_reset": "2026-04-15",
+      "categoria": "alimentacao"
+    },
+    {
+      "id": "sem-pular-treino",
+      "autor": "pessoa_a",
+      "nome": "Dias sem pular treino",
+      "data_inicio": "2026-03-01",
+      "ultima_reset": "2026-04-20",
+      "categoria": "treino"
+    }
+  ]
+}

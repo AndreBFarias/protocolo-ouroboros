@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "schema": "medidas",
+  "gerado_em": "2026-05-05T02:05:52-03:00",
+  "vault_root": "/home/andrefarias/Desenvolvimento/protocolo-ouroboros/tests/fixtures/vault_sintetico",
+  "items": [
+    {
+      "data": "2026-04-01",
+      "autor": "pessoa_a",
+      "peso": 78.4,
+      "cintura": 88.0,
+      "quadril": 96.0,
+      "peito": 100.0,
+      "braco": 32.0,
+      "coxa": 56.0,
+      "fotos": []
+    },
+    {
+      "data": "2026-05-01",
+      "autor": "pessoa_a",
+      "peso": 77.9,
+      "cintura": 87.5,
+      "quadril": 96.0,
+      "peito": 100.5,
+      "braco": 32.5,
+      "coxa": 56.5,
+      "fotos": [
+        "perfil_2026-05-01.jpg"
+      ]
+    }
+  ]
+}

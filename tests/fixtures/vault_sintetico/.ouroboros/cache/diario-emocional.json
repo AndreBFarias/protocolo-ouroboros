@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "schema": "diario-emocional",
+  "gerado_em": "2026-05-05T02:05:52-03:00",
+  "vault_root": "/home/andrefarias/Desenvolvimento/protocolo-ouroboros/tests/fixtures/vault_sintetico",
+  "items": [
+    {
+      "data": "2026-04-29",
+      "autor": "pessoa_b",
+      "modo": "vitoria",
+      "emocoes": [
+        "alegria",
+        "gratidao"
+      ],
+      "intensidade": 4,
+      "com": [],
+      "texto": "terminei o que comecei sem travar no meio."
+    },
+    {
+      "data": "2026-04-30",
+      "autor": "pessoa_a",
+      "modo": "trigger",
+      "emocoes": [
+        "ansiedade"
+      ],
+      "intensidade": 3,
+      "com": [
+        "pessoa_b"
+      ],
+      "texto": "reuniao chata logo cedo."
+    }
+  ]
+}

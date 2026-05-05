@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "schema": "ciclo",
+  "gerado_em": "2026-05-05T02:05:52-03:00",
+  "vault_root": "/home/andrefarias/Desenvolvimento/protocolo-ouroboros/tests/fixtures/vault_sintetico",
+  "items": [
+    {
+      "data": "2026-04-10",
+      "autor": "pessoa_b",
+      "fase": "menstrual",
+      "sintomas": [
+        "colica",
+        "cansaco"
+      ],
+      "observacoes": "dia 1 do ciclo."
+    },
+    {
+      "data": "2026-04-25",
+      "autor": "pessoa_b",
+      "fase": "ovulacao",
+      "sintomas": [
+        "aumento de libido"
+      ],
+      "observacoes": "pico fertil."
+    }
+  ]
+}
