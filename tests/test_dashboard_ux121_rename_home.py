@@ -37,8 +37,16 @@ class _FakeStCluster:
 
 class TestNovoNomeCanonico:
     def test_clusters_validos_comeca_com_home(self) -> None:
-        """AC #1: 'Home' é o primeiro cluster (substitui 'Hoje')."""
-        assert drilldown.CLUSTERS_VALIDOS[0] == "Home"
+        """AC #1: 'Home' permanece como ponto de entrada cognitivo.
+
+        Sprint UX-121 substituiu 'Hoje' por 'Home'.
+        Sprint UX-RD-03 estendeu CLUSTERS_VALIDOS para 8 itens; 'Inbox'
+        passou a ser o primeiro item visual da sidebar (fila de novos
+        arquivos), mas 'Home' continua sendo o ponto de entrada cognitivo
+        do usuário recorrente -- é o default quando a URL não especifica
+        cluster (ver ``_selecionar_cluster`` em ``app.py``).
+        """
+        assert "Home" in drilldown.CLUSTERS_VALIDOS
         assert "Hoje" not in drilldown.CLUSTERS_VALIDOS
 
     def test_abas_por_cluster_tem_chave_home(self) -> None:

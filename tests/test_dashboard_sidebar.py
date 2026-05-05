@@ -166,80 +166,81 @@ class TestOrdemSidebar:
 
 
 # ============================================================================
-# Acceptance: Área é st.selectbox (era radio)
+# Acceptance: Área deixa de ser widget Streamlit -- vira sidebar HTML
 # ============================================================================
 
 
-class TestAreaComoSelectbox:
-    def test_selecionar_cluster_usa_selectbox_em_vez_de_radio(
+class TestAreaComoSidebarHtml:
+    """Sprint UX-RD-03: o widget ``st.selectbox`` da Sprint UX-113 foi
+    substituído pela sidebar HTML redesenhada (links ``?cluster=X``). A
+    função ``_selecionar_cluster`` agora apenas resolve o cluster a partir
+    do session_state populado por ``ler_filtros_da_url``.
+    """
+
+    def test_selecionar_cluster_nao_emite_widget_streamlit(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """AC #2: widget Área agora é dropdown (selectbox)."""
+        """AC UX-RD-03: ``_selecionar_cluster`` não chama mais selectbox/radio."""
         from src.dashboard import app as app_mod
 
         fake = _FakeStSidebar()
         monkeypatch.setattr(app_mod, "st", fake)
 
         cluster = app_mod._selecionar_cluster()
-        assert cluster in {"Home", "Finanças", "Documentos", "Análise", "Metas"}
+        assert cluster in set(app_mod.CLUSTERS_VALIDOS)
         labels_selectbox = [c["label"] for c in fake.selectbox_calls]
         labels_radio = [c["label"] for c in fake.radio_calls]
-        assert "Área" in labels_selectbox, "Área deveria ser selectbox após Sprint UX-113"
-        assert "Área" not in labels_radio, "Área não deve ser radio mais"
+        assert "Área" not in labels_selectbox, (
+            "UX-RD-03: Área deixa de ser selectbox; sidebar HTML cuida da navegação"
+        )
+        assert "Área" not in labels_radio
 
-    def test_selectbox_area_tem_5_opcoes_canonicas(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        """AC #2 + Sprint UX-121 + UX-125: opções do dropdown Área =
-        ('Home', 'Finanças', 'Documentos', 'Análise', 'Metas') -- 'Hoje'
-        renomeado para 'Home' (UX-121); 'Dinheiro' renomeado para 'Finanças'
-        (UX-125)."""
+    def test_selecionar_cluster_devolve_home_por_default(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Sem cluster na URL, default é Home (ponto de entrada cognitivo)."""
         from src.dashboard import app as app_mod
 
         fake = _FakeStSidebar()
         monkeypatch.setattr(app_mod, "st", fake)
 
-        app_mod._selecionar_cluster()
-        chamada_area = next(c for c in fake.selectbox_calls if c["label"] == "Área")
-        assert chamada_area["options"] == [
-            "Home",
-            "Finanças",
-            "Documentos",
-            "Análise",
-            "Metas",
-        ]
+        cluster = app_mod._selecionar_cluster()
+        assert cluster == "Home"
 
 
 # ============================================================================
-# Acceptance: leitura de query_params['cluster'] como default
+# Acceptance: leitura de query_params['cluster'] resolve cluster ativo
 # ============================================================================
 
 
 class TestDefaultLeQueryParams:
-    def test_query_params_cluster_define_indice_default(
+    def test_query_params_cluster_define_cluster_ativo(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """AC #2: default lê de ``query_params['cluster']`` via
-        ``CHAVE_SESSION_CLUSTER_ATIVO``."""
+        """AC: cluster vindo do session_state (populado por
+        ``ler_filtros_da_url``) é o cluster retornado por
+        ``_selecionar_cluster``.
+        """
         from src.dashboard import app as app_mod
         from src.dashboard.componentes.drilldown import CHAVE_SESSION_CLUSTER_ATIVO
 
         fake = _FakeStSidebar()
-        # Simula efeito de ler_filtros_da_url para cluster=Documentos.
         fake.session_state[CHAVE_SESSION_CLUSTER_ATIVO] = "Documentos"
         monkeypatch.setattr(app_mod, "st", fake)
 
-        app_mod._selecionar_cluster()
-        chamada_area = next(c for c in fake.selectbox_calls if c["label"] == "Área")
-        assert chamada_area["index"] == 2  # Documentos é índice 2
+        cluster = app_mod._selecionar_cluster()
+        assert cluster == "Documentos"
 
-    def test_sem_query_params_default_e_indice_zero(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_sem_query_params_default_e_home(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         from src.dashboard import app as app_mod
 
         fake = _FakeStSidebar()
         monkeypatch.setattr(app_mod, "st", fake)
 
-        app_mod._selecionar_cluster()
-        chamada_area = next(c for c in fake.selectbox_calls if c["label"] == "Área")
-        assert chamada_area["index"] == 0  # default = primeiro (Hoje)
+        cluster = app_mod._selecionar_cluster()
+        assert cluster == "Home"
 
 
 # ============================================================================

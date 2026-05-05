@@ -78,14 +78,22 @@ class TestAc2RenameFinancas:
         assert "Dinheiro" not in drilldown.CLUSTERS_VALIDOS
 
     def test_clusters_validos_ordem_canonica(self) -> None:
-        """Ordem fixa Home/Finanças/Documentos/Análise/Metas."""
-        assert drilldown.CLUSTERS_VALIDOS == (
-            "Home",
-            "Finanças",
-            "Documentos",
-            "Análise",
-            "Metas",
-        )
+        """Ordem canônica posiciona Finanças após Home.
+
+        Sprint UX-125 fixou Finanças como segundo nome canônico financeiro
+        (depois de Home).
+        Sprint UX-RD-03 estendeu CLUSTERS_VALIDOS para 8 itens; Inbox
+        precede Home como fila de entrada, mas a sequência relativa
+        Home -> Finanças -> Documentos -> Análise -> Metas continua
+        intacta. Este teste valida essa subordem (relativa).
+        """
+        ordem = drilldown.CLUSTERS_VALIDOS
+        i_home = ordem.index("Home")
+        i_financas = ordem.index("Finanças")
+        i_documentos = ordem.index("Documentos")
+        i_analise = ordem.index("Análise")
+        i_metas = ordem.index("Metas")
+        assert i_home < i_financas < i_documentos < i_analise < i_metas
 
     def test_mapa_aba_para_cluster_aponta_para_financas(self) -> None:
         """4 abas que antes apontavam para 'Dinheiro' agora apontam para 'Finanças'."""

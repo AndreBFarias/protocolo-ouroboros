@@ -24,24 +24,28 @@ from src.dashboard.componentes import drilldown
 
 
 class TestContratosCanonicos:
-    def test_clusters_validos_sao_cinco(self) -> None:
-        """Acceptance A92b-1 + Sprint UX-121 + UX-125: 5 clusters
-        Home/Finanças/Documentos/Análise/Metas (UX-125 renomeou
-        'Dinheiro' para 'Finanças')."""
+    def test_clusters_validos_sao_oito(self) -> None:
+        """Acceptance A92b-1 + Sprint UX-121 + UX-125 + UX-RD-03: 8 clusters
+        canônicos. UX-RD-03 estendeu de 5 para 8 (Inbox + Bem-estar +
+        Sistema entram). Ordem espelha 1:1 a sidebar do redesign
+        (``novo-mockup/_shared/shell.js``)."""
         assert drilldown.CLUSTERS_VALIDOS == (
+            "Inbox",
             "Home",
             "Finanças",
             "Documentos",
             "Análise",
             "Metas",
+            "Bem-estar",
+            "Sistema",
         )
 
     def test_whitelist_inclui_cluster(self) -> None:
         """Acceptance: campo cluster lido da URL via ler_filtros_da_url."""
         assert "cluster" in drilldown.CAMPOS_FILTRO_RECONHECIDOS
 
-    def test_mapa_aba_para_cluster_cobre_15_abas(self) -> None:
-        """Acceptance: todas as 15 abas canônicas (não-homonímia) mapeadas.
+    def test_mapa_aba_para_cluster_cobre_20_abas(self) -> None:
+        """Acceptance: todas as 20 abas canônicas (não-homonímia) mapeadas.
 
         Sprint D2 adicionou ``Revisor`` ao cluster Documentos.
         Sprint UX-123 adicionou 4 mini-views ao cluster Home com sufixo "hoje".
@@ -53,7 +57,12 @@ class TestContratosCanonicos:
         explícito (?cluster=Home&tab=Finanças).
 
         Sprint VALIDAÇÃO-CSV-01 adicionou ``Validação por Arquivo`` ao
-        cluster Documentos. Total: 15 abas canônicas.
+        cluster Documentos.
+        Sprint UX-RD-03 adicionou 5 abas dos novos clusters Inbox /
+        Bem-estar / Sistema (Inbox, Hoje, Humor, Diário emocional,
+        Skills D7). As páginas ainda não existem em ``paginas/`` (UX-RD-15
+        / UX-RD-16+ / UX-RD-05 implementam), mas as entradas no MAPA
+        preservam o invariante N-para-N. Total: 20 abas canônicas.
         """
         esperadas = {
             "Visão Geral",
@@ -71,6 +80,12 @@ class TestContratosCanonicos:
             "Análise",
             "IRPF",
             "Metas",
+            # UX-RD-03: 5 abas novas dos 3 clusters adicionais.
+            "Inbox",
+            "Hoje",
+            "Humor",
+            "Diário emocional",
+            "Skills D7",
         }
         assert set(drilldown.MAPA_ABA_PARA_CLUSTER.keys()) == esperadas
 

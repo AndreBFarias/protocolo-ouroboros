@@ -19,6 +19,11 @@ from src.dashboard.componentes.drilldown import (  # noqa: E402
     gerar_html_ativar_aba,
     ler_filtros_da_url,
 )
+from src.dashboard.componentes.shell import (  # noqa: E402
+    instalar_atalhos_globais,
+    renderizar_sidebar,
+    renderizar_topbar,
+)
 from src.dashboard.dados import (  # noqa: E402
     CAMINHO_XLSX,
     carregar_dados,
@@ -90,6 +95,25 @@ ABAS_POR_CLUSTER: dict[str, list[str]] = {
     ],
     "Análise": ["Categorias", "Análise", "IRPF"],
     "Metas": ["Metas"],
+    # Sprint UX-RD-03: clusters novos sem páginas implementadas. Cada
+    # entrada lista as abas que aparecem no mockup; o dispatcher de
+    # ``main()`` renderiza fallback graceful com ponteiro para a sprint
+    # alvo. Mantemos as abas declaradas aqui para que o deep-link da
+    # Sprint 100 (``?cluster=Inbox&tab=...``) seja preservado quando as
+    # páginas vierem (UX-RD-15, UX-RD-16+, UX-RD-05).
+    "Inbox": ["Inbox"],
+    "Bem-estar": ["Hoje", "Humor", "Diário emocional"],
+    "Sistema": ["Skills D7"],
+}
+
+# Sprint UX-RD-03: mapa cluster -> sprint que vai habilitar suas páginas.
+# Usado pelo fallback do dispatcher para mostrar mensagem informativa
+# quando o cluster está em CLUSTERS_VALIDOS mas as páginas ainda não
+# existem.
+SPRINT_ALVO_POR_CLUSTER: dict[str, str] = {
+    "Inbox": "UX-RD-15",
+    "Bem-estar": "UX-RD-16",
+    "Sistema": "UX-RD-05",
 }
 
 
@@ -105,52 +129,65 @@ def _configurar_pagina() -> None:
 
 
 def _selecionar_cluster() -> str:
-    """Renderiza o seletor de clusters na sidebar e devolve o cluster ativo.
+    """Resolve o cluster ativo a partir do session_state.
 
-    Sprint 92b (ADR-22): 5 áreas canônicas (Home / Finanças / Documentos /
-    Análise / Metas). `CHAVE_SESSION_CLUSTER_ATIVO` é populado pela URL via
-    `ler_filtros_da_url` quando aplicável (backward compatibility); caso
-    contrário, default é o primeiro cluster ("Home").
+    Sprint 92b (ADR-22): 5 áreas canônicas. ``CHAVE_SESSION_CLUSTER_ATIVO``
+    é populado pela URL via ``ler_filtros_da_url`` quando aplicável.
 
-    Sprint UX-121: cluster "Hoje" renomeado para "Home". URLs antigas
-    (?cluster=Hoje) continuam funcionando via CLUSTER_ALIASES no leitor
-    de query_params. Sprint UX-125 estende o padrão para
-    ?cluster=Dinheiro -> "Finanças".
+    Sprint UX-121: cluster "Hoje" renomeado para "Home" (alias backward-compat
+    via ``CLUSTER_ALIASES``). Sprint UX-125: ``?cluster=Dinheiro`` -> "Finanças".
 
-    Sprint UX-113: widget mudou de ``st.radio`` para ``st.selectbox``
-    (dropdown). Economiza ~120px de altura vertical na sidebar (5 linhas
-    -> 1 linha colapsada), liberando espaço para o campo Buscar acima.
-    A lógica de cluster permanece N-para-N com ``ABAS_POR_CLUSTER`` e
-    ``MAPA_ABA_PARA_CLUSTER`` -- só a UI mudou.
+    Sprint UX-RD-03: o widget ``st.selectbox`` foi substituído pela sidebar
+    HTML redesenhada (``shell.renderizar_sidebar``). Os 8 clusters são
+    apresentados como links ``<a href="?cluster=X">``; clicar recarrega a
+    página com a query string e ``ler_filtros_da_url`` popula o
+    session_state. Esta função agora apenas resolve o cluster atual lendo
+    o session_state e aplicando default ("Home") quando a URL não
+    especifica nada. Mantida com a mesma assinatura para não quebrar
+    chamadores. A primeira execução (sem cluster na URL) retorna "Home"
+    como ponto de entrada cognitivo padrão.
     """
     cluster_na_url = st.session_state.get(CHAVE_SESSION_CLUSTER_ATIVO, "")
     if cluster_na_url in CLUSTERS_VALIDOS:
-        indice_default = CLUSTERS_VALIDOS.index(cluster_na_url)
-    else:
-        indice_default = 0
-
-    cluster_escolhido: str = st.selectbox(
-        "Área",
-        list(CLUSTERS_VALIDOS),
-        index=indice_default,
-        key=CHAVE_SESSION_CLUSTER_ATIVO,
-    )
-    return cluster_escolhido
+        return cluster_na_url
+    # Default: Home (índice 1 no novo CLUSTERS_VALIDOS, pois Inbox vem antes
+    # mas Home é o ponto de entrada cognitivo do usuário recorrente).
+    return "Home"
 
 
-def _sidebar(dados: dict) -> tuple[str, str, str, str]:
+def _sidebar(dados: dict, aba_ativa: str = "") -> tuple[str, str, str, str]:
     """Renderiza sidebar com filtros globais e retorna seleções.
+
+    Sprint UX-RD-03: a sidebar passou a ter duas camadas:
+
+      1. Bloco HTML estático (``shell.renderizar_sidebar``) com brand,
+         busca placeholder, 8 clusters e itens de aba. Cada item é um
+         link ``<a href="?cluster=X&tab=Y">`` que recarrega a página
+         para acionar o roteamento via ``ler_filtros_da_url``.
+      2. Widgets Streamlit interativos (busca real, granularidade, mês,
+         pessoa, forma de pagamento) renderizados depois, abaixo do
+         bloco HTML, dentro do mesmo ``with st.sidebar:``. Compõem a
+         camada de filtros globais existentes (preservados das sprints
+         UX-113/119/126).
 
     Returns:
         Tupla com (período selecionado, pessoa, granularidade, cluster).
     """
+    cluster_ativo = _selecionar_cluster()
+
     with st.sidebar:
-        # Sprint UX-126 AC5: largura sobe de 64 para 120px (default da
-        # função). CSS `.ouroboros-logo-img` em `tema.py` força width:
-        # 120px !important, então o atributo HTML "width" deve casar
-        # para evitar reflow visual no carregamento. Sprint UX-118
-        # já havia subido o teto via max-width; UX-126 garante que o
-        # tamanho efetivo é 120px (não 64px sob max-width: 120px).
+        # Sprint UX-RD-03: bloco HTML do shell redesenhado. Contém brand,
+        # busca placeholder e 8 clusters/abas como links navegáveis. O
+        # selectbox dropdown da Sprint UX-113 foi substituído.
+        st.markdown(
+            renderizar_sidebar(cluster_ativo=cluster_ativo, aba_ativa=aba_ativa),
+            unsafe_allow_html=True,
+        )
+
+        # Sprint UX-126 AC5/AC6: logo + caption "Dados de ..." continuam
+        # exibidos como bloco compacto abaixo da navegação por
+        # compatibilidade. Acceptance da UX-RD-03 não pede remover --
+        # remoção fica para sprint de "limpeza visual sidebar" futura.
         logo_html = logo_sidebar_html(largura_px=120)
         if logo_html:
             st.markdown(logo_html, unsafe_allow_html=True)
@@ -163,11 +200,6 @@ def _sidebar(dados: dict) -> tuple[str, str, str, str]:
 
             mtime = os.path.getmtime(CAMINHO_XLSX)
             ultima = datetime.fromtimestamp(mtime)
-            # Sprint UX-126 AC6: caption reformatada em duas linhas
-            # centralizadas. Linha 1: "Dados de DD/MM/YYYY". Linha 2:
-            # "— HH:MM —" com travessões decorativos. Substitui o
-            # `st.caption` (que quebrava em duas linhas pela largura,
-            # mas sem alinhamento central nem travessões).
             data_str = ultima.strftime("%d/%m/%Y")
             hora_str = ultima.strftime("%H:%M")
             st.markdown(
@@ -183,25 +215,11 @@ def _sidebar(dados: dict) -> tuple[str, str, str, str]:
 
         st.markdown("---")
 
-        # Sprint UX-113: campo Buscar é o primeiro elemento abaixo do logo --
-        # ponto de entrada cognitivo da sidebar. Submeter delega para o
-        # roteador da Sprint UX-114 (fallback graceful enquanto UX-114 não
-        # mergeia: salva em session_state apenas).
+        # Sprint UX-113: campo Buscar interativo (Streamlit). Coexiste com
+        # o input HTML decorativo da sidebar redesenhada -- a tecla `/`
+        # foca o input HTML (sem reload), e este componente Python lida
+        # com a submissão real via roteador da Sprint UX-114.
         renderizar_input_busca()
-
-        # Sprint UX-119 AC4: separadores `st.markdown("---")` que existiam
-        # entre Buscar / Área / Granularidade / Mês / Pessoa / Forma foram
-        # removidos. Os 6 controles formam agora um bloco visual contínuo;
-        # o respiro entre eles vem do margin-bottom uniforme dos elementos
-        # do Streamlit. Os separadores ANTES (logo+caption) e DEPOIS (cards
-        # Receita/Despesa/Saldo) permanecem porque marcam fronteiras
-        # semânticas distintas (cabeçalho da sidebar / resumo financeiro).
-
-        # Sprint 92b (ADR-22) + UX-113: seletor de cluster como dropdown.
-        # Fica acima dos filtros de período/pessoa para reforçar a hierarquia
-        # (área > filtros), mas abaixo do campo Buscar -- mental model
-        # "buscar primeiro, navegar depois".
-        cluster_ativo = _selecionar_cluster()
 
         meses = obter_meses_disponiveis(dados)
 
@@ -330,6 +348,30 @@ def _cards_sidebar(dados: dict, periodo: str, pessoa: str, granularidade: str) -
     )
 
 
+def _renderizar_topbar_para(cluster: str, aba_ativa: str) -> None:
+    """Emite topbar com breadcrumb 'Ouroboros / <Cluster> / <Aba>' atual."""
+    breadcrumb = ["Ouroboros", cluster]
+    if aba_ativa:
+        breadcrumb.append(aba_ativa)
+    st.markdown(renderizar_topbar(breadcrumb), unsafe_allow_html=True)
+
+
+def _renderizar_fallback_cluster(cluster: str) -> None:
+    """Mensagem informativa para clusters declarados mas sem páginas.
+
+    Sprint UX-RD-03: clusters Inbox, Bem-estar e Sistema entraram em
+    ``CLUSTERS_VALIDOS`` antes das páginas existirem. Em vez de crash,
+    mostramos um ``st.info`` apontando a sprint que vai habilitar as
+    páginas.
+    """
+    sprint_alvo = SPRINT_ALVO_POR_CLUSTER.get(cluster, "futura")
+    st.info(
+        f"Cluster '{cluster}' está reservado pelo redesign mas as páginas ainda "
+        f"não foram implementadas. A sprint {sprint_alvo} habilita o conteúdo. "
+        "Use a sidebar para voltar a um cluster ativo."
+    )
+
+
 def main() -> None:
     """Função principal do dashboard."""
     _configurar_pagina()
@@ -344,10 +386,14 @@ def main() -> None:
         st.error("Nenhum dado encontrado. Verifique se o arquivo XLSX existe em data/output/.")
         st.stop()
 
-    periodo, pessoa, granularidade, cluster = _sidebar(dados)
+    aba_requerida_topbar: str = str(st.session_state.get(CHAVE_SESSION_ABA_ATIVA, ""))
+    periodo, pessoa, granularidade, cluster = _sidebar(dados, aba_ativa=aba_requerida_topbar)
 
     if not periodo:
         st.stop()
+
+    # Sprint UX-RD-03: topbar com breadcrumb antes do conteúdo principal.
+    _renderizar_topbar_para(cluster, aba_requerida_topbar)
 
     ctx = {"granularidade": granularidade, "periodo": periodo}
 
@@ -454,9 +500,15 @@ def main() -> None:
         with tab_metas:
             metas.renderizar(dados, periodo, pessoa)
 
+    elif cluster in {"Inbox", "Bem-estar", "Sistema"}:
+        # Sprint UX-RD-03: clusters declarados mas com páginas pendentes
+        # (UX-RD-15 / UX-RD-16+ / UX-RD-05). Fallback graceful sem crash.
+        _renderizar_fallback_cluster(cluster)
+
     else:
-        # Defensivo: cluster inválido em session_state (não deveria ocorrer
-        # dado que o radio é fechado em CLUSTERS_VALIDOS). Fallback para Hoje.
+        # Defensivo: cluster inválido em session_state. Não deveria ocorrer
+        # porque ler_filtros_da_url só popula valores em CLUSTERS_VALIDOS,
+        # mas mantemos o fallback para evitar tela branca.
         st.warning(f"Cluster desconhecido '{cluster}'. Exibindo Visão Geral.")
         visao_geral.renderizar(dados, periodo, pessoa, ctx)
 
@@ -474,6 +526,12 @@ def main() -> None:
             from streamlit.components import v1 as components
 
             components.html(html_js, height=0)
+
+    # Sprint UX-RD-03: atalhos globais (g h, g i, g v, g r, g f, g c,
+    # /, ?, Esc) instalados no fim de main(). Idempotente -- guard
+    # ``__ouroborosAtalhosInstalados`` impede empilhamento de listeners
+    # em re-runs do Streamlit.
+    instalar_atalhos_globais()
 
 
 if __name__ == "__main__":

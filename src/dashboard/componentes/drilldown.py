@@ -75,6 +75,16 @@ MAPA_ABA_PARA_CLUSTER: dict[str, str] = {
     "Análise": "Análise",
     "IRPF": "Análise",
     "Metas": "Metas",
+    # Sprint UX-RD-03: abas dos 3 clusters novos. As páginas ainda não
+    # existem (UX-RD-15 / UX-RD-16+ / UX-RD-05 implementam), mas a entrada
+    # no mapa preserva o invariante N-para-N entre ABAS_POR_CLUSTER e
+    # MAPA_ABA_PARA_CLUSTER -- sem isso, navegar via deep-link
+    # ?tab=Inbox falharia silenciosamente.
+    "Inbox": "Inbox",
+    "Hoje": "Bem-estar",
+    "Humor": "Bem-estar",
+    "Diário emocional": "Bem-estar",
+    "Skills D7": "Sistema",
 }
 
 # Sprint UX-125: tabs do cluster Home com nome igual a cluster próprio.
@@ -83,14 +93,33 @@ MAPA_ABA_PARA_CLUSTER: dict[str, str] = {
 # tabs canônicas (resolvidas pelo MAPA_ABA_PARA_CLUSTER).
 ABAS_HOME_HOMONIMAS: frozenset[str] = frozenset({"Finanças", "Documentos", "Análise", "Metas"})
 
-# Clusters válidos (ordem canônica do radio). Usado por testes e por validação
+# Clusters válidos (ordem canônica da sidebar). Usado por testes e por validação
 # defensiva em app.py (rejeita cluster fora do conjunto ao ler da URL).
 #
 # Sprint UX-121: cluster "Hoje" renomeado para "Home" (termo padrão web/apps;
 # "Hoje" sugeria período temporal, criando ambiguidade no ponto de entrada).
 # Sprint UX-125: cluster "Dinheiro" renomeado para "Finanças" (termo mais
 # profissional; alias backward-compat preserva URLs antigas).
-CLUSTERS_VALIDOS: tuple[str, ...] = ("Home", "Finanças", "Documentos", "Análise", "Metas")
+#
+# Sprint UX-RD-03: cluster set estendido de 5 para 8 áreas (Inbox, Bem-estar,
+# Sistema entram). Inbox é ponto de entrada da fila de novos arquivos
+# (UX-RD-15 implementa); Bem-estar agrupa as 12 telas pessoais não-financeiras
+# do redesign (UX-RD-16+ implementa); Sistema reúne Skills D7, Styleguide e
+# Índice (UX-RD-05 implementa). Ordem aqui espelha 1:1 a ordem da sidebar
+# definida em ``novo-mockup/_shared/shell.js`` (CLUSTERS_OUROBOROS). Páginas
+# desses 3 clusters ainda não existem em ``paginas/``; o dispatcher em
+# ``app.main()`` renderiza fallback graceful (st.info) que aponta para a
+# sprint que vai implementar.
+CLUSTERS_VALIDOS: tuple[str, ...] = (
+    "Inbox",
+    "Home",
+    "Finanças",
+    "Documentos",
+    "Análise",
+    "Metas",
+    "Bem-estar",
+    "Sistema",
+)
 
 # Sprint UX-121: aliases backward-compat para query_params. Permite que URLs
 # antigas no formato ?cluster=Hoje continuem resolvendo para o novo nome
