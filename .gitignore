@@ -79,3 +79,20 @@ docs/propostas/er_produtos/
 
 # Sprint 90: identidade completa do casal (CPFs + CNPJs + razao social)
 mappings/pessoas.yaml
+
+# --- anti-IA (anonimato local) ---
+AGENTS.md
+GEMINI.md
+COPILOT.md
+HANDOFF-PROMPT.md
+HANDOFF.md
+HOW_TO_RESUME.md
+VALIDATOR_BRIEF.md
+STATE.md
+.cursorrules
+.windsurfrules
+.claude/
+.cursor/
+.aider*
+.continue/
+.github/copilot-instructions.md
