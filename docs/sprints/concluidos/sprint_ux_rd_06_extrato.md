@@ -1,6 +1,5 @@
 ---
 concluida_em: 2026-05-04
-debito_associado: DEBT-UX-RD-06.A
 ---
 
 ## 0. SPEC (machine-readable)
