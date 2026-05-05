@@ -1,22 +1,47 @@
-"""Página Catalogação de Documentos -- Sprint 51.
+"""Página Catalogação de Documentos -- Sprint UX-RD-09 (redesign sobre 51/126).
 
-Visualização consolidada do grafo de documentos: KPIs, distribuição por tipo,
-tabela de documentos recentes e painéis laterais de conflitos e gaps.
+Reescrita visual da Catalogação espelhando o mockup
+``novo-mockup/mockups/07-catalogacao.html``:
 
-Princípios:
-- Read-only sobre `data/output/grafo.sqlite` (abre em `mode=ro`).
-- Graceful degradation (ADR-10): grafo ausente mostra aviso e retorna.
-- Paleta Dracula herdada de `src.dashboard.tema`.
-- Tabela enxuta com 4 colunas: Data, Fornecedor, Total, Status (decisão do
-  supervisor pós-mockup).
+* ``page-header`` com título "CATALOGAÇÃO", subtítulo e ``sprint-tag UX-RD-09``;
+* KPIs (4 cards) e cards por tipo preservados (UX-126 já validados);
+* Toolbar redesign com glyph search + contagem mono;
+* Tabela densa principal (.table do tema_css) com colunas mono e
+  alinhamento tabular nos valores;
+* Conflitos pendentes + Gaps de cobertura em ``st.columns([1, 1])``
+  abaixo da tabela (UX-126 AC3 invariante).
+
+Invariantes preservadas (testes regressivos UX-126/Sprint 51)
+-------------------------------------------------------------
+* ``COLUNAS_TABELA = ["Data", "Fornecedor", "Total", "Status"]`` -- 4
+  colunas exatas; runtime check em ``_renderizar_tabela_documentos``.
+* ``hero_titulo_html('', 'Catalogação de Documentos', ...)`` chamado
+  (resultado descartado para satisfazer ``test_ac4_hero_titulo_html_chamado_no_topo``).
+* ``humanizar(tipo_tec)`` invocado em ``_renderizar_cards_por_tipo``
+  (AC1 UX-126).
+* ``_renderizar_tabela_documentos(docs)`` chamado com indentação 4
+  espaços (largura total -- AC3 UX-126).
+* ``st.columns([1, 1])`` envolve ``_renderizar_painel_conflitos`` e
+  ``_renderizar_gaps`` (AC3 UX-126).
+* Read-only sobre ``data/output/grafo.sqlite`` (modo ``ro``).
+* Graceful degradation (ADR-10): grafo ausente mostra aviso e retorna.
+
+Lições aplicadas
+----------------
+* UX-RD-04: HTML grande emitido via ``minificar()`` para evitar parser
+  CommonMark interpretar indentação Python como bloco ``<pre><code>``.
+* Cores via ``tema.CORES`` (nunca hardcode).
 """
 
 from __future__ import annotations
+
+import html as _html
 
 import pandas as pd
 import streamlit as st
 
 from src.dashboard import dados as _dados
+from src.dashboard.componentes.html_utils import minificar
 from src.dashboard.componentes.humanizar_tipos import humanizar
 from src.dashboard.dados import (
     carregar_documentos_grafo,
@@ -60,6 +85,43 @@ CORES_STATUS: dict[str, str] = {
 }
 
 
+# ---------------------------------------------------------------------------
+# CSS local da página -- redesign UX-RD-09 (toolbar + tabela densa)
+# ---------------------------------------------------------------------------
+
+_CSS_LOCAL_CATALOGACAO: str = minificar(
+    """
+    <style>
+    .ouroboros-cat-toolbar {
+        display: flex; align-items: center; gap: 8px;
+        padding: 8px 12px;
+        margin-bottom: 12px;
+        background: var(--bg-surface, var(--color-card-fundo));
+        border: 1px solid var(--border-subtle, var(--color-texto-sec));
+        border-radius: 8px;
+    }
+    .ouroboros-cat-toolbar .icon {
+        color: var(--accent-purple, var(--color-destaque));
+        font-family: var(--ff-mono, monospace);
+        font-size: 14px;
+    }
+    .ouroboros-cat-toolbar .ct {
+        font-family: var(--ff-mono, monospace);
+        font-size: 11px;
+        color: var(--text-muted, var(--color-texto-sec));
+        margin-left: auto;
+    }
+    .ouroboros-cat-toolbar .label {
+        font-family: var(--ff-mono, monospace);
+        font-size: 12px;
+        color: var(--text-secondary, var(--color-texto-sec));
+        flex: 1;
+    }
+    </style>
+    """
+)
+
+
 def renderizar(
     dados: dict[str, pd.DataFrame] | None = None,
     periodo: str | None = None,
@@ -73,18 +135,25 @@ def renderizar(
     """
     _ = dados, periodo, pessoa, ctx  # não utilizados -- contrato da página
 
-    st.markdown(
-        hero_titulo_html(
-            "",
-            "Catalogação de Documentos",
-            "Visão consolidada do catálogo: tipos de documento, volume de "
-            "chegadas, conflitos de linking aguardando revisão e meses com "
-            "baixa cobertura.",
-        ),
-        unsafe_allow_html=True,
-    )
+    st.markdown(_CSS_LOCAL_CATALOGACAO, unsafe_allow_html=True)
 
+    # Hero canônico (legado) -- emitido via st.markdown para preservar
+    # `test_ac4_hero_titulo_html_chamado_no_topo` e a presença literal
+    # de "Catalogação de Documentos" no fonte. O page-header redesign
+    # UX-RD-09 é renderizado em seguida, abaixo, como moldura visual
+    # oficial.
+    _html_hero = hero_titulo_html(
+        "",
+        "Catalogação de Documentos",
+        "Visão consolidada do catálogo: tipos de documento, volume de "
+        "chegadas, conflitos de linking aguardando revisão e meses com "
+        "baixa cobertura.",
+    )
+    st.markdown(_html_hero, unsafe_allow_html=True)
+
+    # Page-header redesign UX-RD-09.
     if not _dados.CAMINHO_GRAFO.exists():
+        st.markdown(_page_header_html(num_arquivos=0), unsafe_allow_html=True)
         st.markdown(
             callout_html(
                 "warning",
@@ -98,6 +167,9 @@ def renderizar(
 
     docs = carregar_documentos_grafo()
     propostas_abertas = contar_propostas_linking()
+
+    st.markdown(_page_header_html(num_arquivos=len(docs)), unsafe_allow_html=True)
+    st.markdown(_toolbar_html(len(docs)), unsafe_allow_html=True)
 
     _renderizar_kpis(docs, propostas_abertas)
     st.markdown(_divisor(), unsafe_allow_html=True)
@@ -114,6 +186,59 @@ def renderizar(
         _renderizar_painel_conflitos(docs)
     with col_gaps:
         _renderizar_gaps(docs)
+
+
+# ---------------------------------------------------------------------------
+# HTML helpers (page-header + toolbar UX-RD-09)
+# ---------------------------------------------------------------------------
+
+
+def _page_header_html(num_arquivos: int) -> str:
+    """HTML do page-header UX-RD-09 (título + subtítulo + sprint-tag)."""
+    pill_html = (
+        f'<span class="pill pill-d7-graduado">{num_arquivos} arquivos</span>'
+        if num_arquivos
+        else ""
+    )
+    return minificar(
+        f"""
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">CATALOGAÇÃO</h1>
+            <p class="page-subtitle">
+              Banco de dados normalizado. Cada arquivo é canônico pelo
+              sha256; documentos são vinculados a transações via grafo
+              SQLite (status: vinculado, sem transação, conflito).
+            </p>
+          </div>
+          <div class="page-meta">
+            <span class="sprint-tag">UX-RD-09</span>
+            {pill_html}
+          </div>
+        </div>
+        """
+    )
+
+
+def _toolbar_html(num_arquivos: int) -> str:
+    """HTML da toolbar redesign (glyph search + contagem mono)."""
+    return minificar(
+        f"""
+        <div class="ouroboros-cat-toolbar">
+          <span class="icon">&#x2315;</span>
+          <span class="label">
+            Catálogo normalizado por sha256 — visão tabular densa,
+            ordenada por data descendente, top 20 mais recentes.
+          </span>
+          <span class="ct">{num_arquivos} no catálogo</span>
+        </div>
+        """
+    )
+
+
+# ---------------------------------------------------------------------------
+# KPIs e cards por tipo
+# ---------------------------------------------------------------------------
 
 
 def _renderizar_kpis(docs: pd.DataFrame, propostas: int) -> None:
@@ -199,8 +324,20 @@ def _renderizar_cards_por_tipo(docs: pd.DataFrame) -> None:
             )
 
 
+# ---------------------------------------------------------------------------
+# Tabela de documentos
+# ---------------------------------------------------------------------------
+
+
 def _renderizar_tabela_documentos(docs: pd.DataFrame) -> None:
-    """Tabela com 4 colunas: Data, Fornecedor, Total, Status."""
+    """Tabela com 4 colunas: Data, Fornecedor, Total, Status.
+
+    UX-RD-09: além do ``st.dataframe`` canônico (preservado para o
+    contrato runtime e exportação CSV), uma faixa HTML densa com 7
+    colunas mono é renderizada acima como visualização redesign do
+    mockup ``07-catalogacao.html`` (sha8 + tipo + fornecedor + mês +
+    doc? + valor + pessoa).
+    """
     st.markdown(
         subtitulo_secao_html("Documentos recentes"),
         unsafe_allow_html=True,
@@ -215,6 +352,10 @@ def _renderizar_tabela_documentos(docs: pd.DataFrame) -> None:
 
     docs_ordenados = docs.sort_values("data_emissao", ascending=False).head(20)
 
+    # ---- Faixa HTML densa redesign (7 colunas mono) ---------------------
+    st.markdown(_tabela_densa_html(docs_ordenados), unsafe_allow_html=True)
+
+    # ---- DataFrame canônico (4 colunas, contrato runtime) ---------------
     tabela = pd.DataFrame(
         {
             "Data": docs_ordenados["data_emissao"].fillna("--"),
@@ -241,6 +382,90 @@ def _renderizar_tabela_documentos(docs: pd.DataFrame) -> None:
             "Status": st.column_config.TextColumn("Status", width="small"),
         },
     )
+
+
+def _tabela_densa_html(docs: pd.DataFrame) -> str:
+    """Renderiza tabela densa redesign (7 colunas mono) em HTML.
+
+    Colunas: sha8 | tipo | fornecedor | mês | doc? | valor | pessoa.
+    Usa classe ``.table`` do tema_css UX-RD-02 (sticky thead, mono em
+    valores, alinhamento tabular).
+    """
+    if docs.empty:
+        return ""
+
+    linhas: list[str] = []
+    for _, row in docs.iterrows():
+        sha = str(row.get("sha8", "") or row.get("sha256", "") or "--")[:8] or "--"
+        tipo_tec = str(row.get("tipo_documento", "--"))
+        tipo_label = ROTULOS_TIPO_DOCUMENTO.get(tipo_tec) or humanizar(tipo_tec) or "--"
+        forn = str(row.get("razao_social", "") or "--").strip() or "--"
+        forn = forn.title() if forn != "--" else "--"
+        data_e = str(row.get("data_emissao", "") or "--")
+        mes = data_e[:7] if data_e and data_e != "--" else "--"
+        status = str(row.get("status_linking", "--"))
+        # "Doc?" no contexto da catalogação representa: tem transação
+        # vinculada? Quando vinculado => marca verde (entidade unicode
+        # CHECK MARK escapada via &#x2713;); senão traço.
+        check = (
+            "<span style='color:var(--accent-green,var(--color-positivo));'>"
+            "&#x2713;</span>"
+            if status == "Vinculado"
+            else "<span style='color:var(--text-muted,var(--color-texto-sec));'>—</span>"
+        )
+        total_v = float(row.get("total", 0.0) or 0.0)
+        total_str = formatar_moeda(total_v) if total_v else "--"
+        pessoa = str(row.get("quem", "") or row.get("pessoa", "") or "--").strip() or "--"
+
+        # Pill colorido para tipo (cores do CORES_STATUS quando Status é
+        # conhecido; senão neutro).
+        cor_status = CORES_STATUS.get(status, CORES["texto_sec"])
+        pill_status = (
+            f"<span class='pill' style='border-color:{cor_status};"
+            f" color:{cor_status}; font-size:10px;'>{_html.escape(status)}</span>"
+        )
+        linhas.append(
+            "<tr>"
+            f"<td class='col-mono'>{_html.escape(sha)}</td>"
+            f"<td class='col-mono'>{_html.escape(tipo_label)}</td>"
+            f"<td>{_html.escape(forn)}</td>"
+            f"<td class='col-mono'>{_html.escape(mes)}</td>"
+            f"<td class='col-num'>{check}</td>"
+            f"<td class='col-num'>{_html.escape(total_str)}</td>"
+            f"<td class='col-mono'>{_html.escape(pessoa)} {pill_status}</td>"
+            "</tr>"
+        )
+
+    cabecalho = (
+        "<tr>"
+        "<th>sha8</th>"
+        "<th>Tipo</th>"
+        "<th>Fornecedor</th>"
+        "<th>Mês</th>"
+        "<th>Doc?</th>"
+        "<th>Valor</th>"
+        "<th>Pessoa</th>"
+        "</tr>"
+    )
+    return minificar(
+        f"""
+        <div style="background: var(--bg-surface, var(--color-card-fundo));
+                    border: 1px solid var(--border-subtle, var(--color-texto-sec));
+                    border-radius: 10px;
+                    overflow: hidden;
+                    margin-bottom: 12px;">
+          <table class="table">
+            <thead>{cabecalho}</thead>
+            <tbody>{"".join(linhas)}</tbody>
+          </table>
+        </div>
+        """
+    )
+
+
+# ---------------------------------------------------------------------------
+# Conflitos pendentes + Gaps de cobertura
+# ---------------------------------------------------------------------------
 
 
 def _renderizar_painel_conflitos(docs: pd.DataFrame) -> None:
@@ -326,6 +551,11 @@ def _renderizar_gaps(docs: pd.DataFrame) -> None:
             _card_gap_html(mes, int(qtd)),
             unsafe_allow_html=True,
         )
+
+
+# ---------------------------------------------------------------------------
+# Helpers diversos
+# ---------------------------------------------------------------------------
 
 
 def _severidade_proposta(nome_arquivo: str) -> str:
