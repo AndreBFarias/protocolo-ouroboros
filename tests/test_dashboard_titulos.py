@@ -165,14 +165,17 @@ def test_listagem_de_paginas_nao_vazia() -> None:
 # painel de regras YAML (mockup ``11-categorias.html``). Usa ``page-header``
 # canônico em vez de ``hero_titulo_html``. Removida desta lista pelo mesmo
 # critério das anteriores.
+# Sprint UX-RD-14: ``irpf.py`` (mockup ``15-irpf.html``) e ``metas.py``
+# (mockup ``13-metas.html``) foram reescritas com ``page-header`` +
+# donuts/gauges Plotly. Ambas abandonaram ``hero_titulo_html`` em favor
+# da composição UX-RD-XX padrão e saem desta lista pelo mesmo critério
+# das anteriores.
 PAGINAS_COM_HERO: frozenset[str] = frozenset(
     {
         "extrato.py",
         "contas.py",
         "projecoes.py",
-        "metas.py",
         "analise_avancada.py",
-        "irpf.py",
     }
 )
 
