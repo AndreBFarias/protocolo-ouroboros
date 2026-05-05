@@ -1,8 +1,12 @@
 [theme]
-primaryColor = "#BD93F9"
-backgroundColor = "#282A36"
-secondaryBackgroundColor = "#44475A"
-textColor = "#F8F8F2"
+# Sprint UX-RD-01: paleta migrada espelhando src/dashboard/tema.py CORES.
+# backgroundColor = bg-base ; secondaryBackgroundColor = bg-surface ;
+# textColor = text-primary. primaryColor mantém roxo Dracula como acento
+# da marca (botões, links, focus ring).
+primaryColor = "#bd93f9"
+backgroundColor = "#0e0f15"
+secondaryBackgroundColor = "#1a1d28"
+textColor = "#f8f8f2"
 font = "monospace"
 
 [server]
