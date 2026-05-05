@@ -190,14 +190,21 @@ class TestBarChartGrafoObsidianDrillDown:
 
 
 class TestTop10CategoriasLimitacao:
-    def test_top10_categorias_limitacao_registrada(self) -> None:
-        """A docstring do ranking documenta a limitação Sprint 87.1 / R73-1."""
-        doc = categorias._ranking_com_variacao.__doc__ or ""
-        assert "Sprint 87.1" in doc
-        assert "R73-1" in doc
-        assert "tabela HTML" in doc or "tabela" in doc
-        # Apontando para o fallback (treemap) preservado
-        assert "treemap" in doc.lower()
+    def test_treemap_categorias_drill_para_extrato(self) -> None:
+        """Sprint UX-RD-12 substitui a tabela Top10 (Sprint 87.1 / R73-1) pelo
+        treemap como única fonte de drill-down em Categorias.
+
+        A limitação canônica do `st.dataframe` (sem `on_select`) continua
+        valendo: por isso a página NÃO tenta drill em tabela. O drill-down
+        agora acontece exclusivamente via `_treemap_categorias` apontando
+        para a aba Extrato. Este teste garante que a função existe e a
+        chamada a `aplicar_drilldown` permanece via treemap.
+        """
+        import inspect
+
+        codigo = inspect.getsource(categorias._treemap_categorias)
+        assert "aplicar_drilldown" in codigo
+        assert 'tab_destino="Extrato"' in codigo or "tab_destino='Extrato'" in codigo
 
 
 # ---------------------------------------------------------------------------

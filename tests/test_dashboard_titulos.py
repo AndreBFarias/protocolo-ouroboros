@@ -161,9 +161,12 @@ def test_listagem_de_paginas_nao_vazia() -> None:
 # Sprint UX-RD-10: ``completude.py`` foi reescrita com matriz tipo × mês +
 # page-header próprio (espelhando o mockup ``08-completude.html``). Removida
 # desta lista pelo mesmo critério das anteriores.
+# Sprint UX-RD-12: ``categorias.py`` foi reescrita com árvore + treemap +
+# painel de regras YAML (mockup ``11-categorias.html``). Usa ``page-header``
+# canônico em vez de ``hero_titulo_html``. Removida desta lista pelo mesmo
+# critério das anteriores.
 PAGINAS_COM_HERO: frozenset[str] = frozenset(
     {
-        "categorias.py",
         "extrato.py",
         "contas.py",
         "projecoes.py",
