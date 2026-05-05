@@ -44,8 +44,8 @@ class TestContratosCanonicos:
         """Acceptance: campo cluster lido da URL via ler_filtros_da_url."""
         assert "cluster" in drilldown.CAMPOS_FILTRO_RECONHECIDOS
 
-    def test_mapa_aba_para_cluster_cobre_20_abas(self) -> None:
-        """Acceptance: todas as 20 abas canônicas (não-homonímia) mapeadas.
+    def test_mapa_aba_para_cluster_cobre_21_abas(self) -> None:
+        """Acceptance: todas as 21 abas canônicas (não-homonímia) mapeadas.
 
         Sprint D2 adicionou ``Revisor`` ao cluster Documentos.
         Sprint UX-123 adicionou 4 mini-views ao cluster Home com sufixo "hoje".
@@ -60,9 +60,12 @@ class TestContratosCanonicos:
         cluster Documentos.
         Sprint UX-RD-03 adicionou 5 abas dos novos clusters Inbox /
         Bem-estar / Sistema (Inbox, Hoje, Humor, Diário emocional,
-        Skills D7). As páginas ainda não existem em ``paginas/`` (UX-RD-15
-        / UX-RD-16+ / UX-RD-05 implementam), mas as entradas no MAPA
-        preservam o invariante N-para-N. Total: 20 abas canônicas.
+        Skills D7).
+        Sprint UX-RD-05 adicionou ``Styleguide`` ao cluster Sistema (passa
+        de 1 para 2 abas; total geral 20 -> 21). As páginas Skills D7 e
+        Styleguide existem em ``paginas/`` desde UX-RD-05; Inbox e
+        Bem-estar seguem com fallback graceful (UX-RD-15 / UX-RD-16
+        implementam). Total: 21 abas canônicas.
         """
         esperadas = {
             "Visão Geral",
@@ -86,6 +89,8 @@ class TestContratosCanonicos:
             "Humor",
             "Diário emocional",
             "Skills D7",
+            # UX-RD-05: aba Styleguide entra no cluster Sistema.
+            "Styleguide",
         }
         assert set(drilldown.MAPA_ABA_PARA_CLUSTER.keys()) == esperadas
 

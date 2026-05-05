@@ -51,6 +51,8 @@ from src.dashboard.paginas import (  # noqa: E402
     pagamentos,
     projecoes,
     revisor,
+    skills_d7,
+    styleguide,
     validacao_arquivos,
     visao_geral,
 )
@@ -103,7 +105,10 @@ ABAS_POR_CLUSTER: dict[str, list[str]] = {
     # páginas vierem (UX-RD-15, UX-RD-16+, UX-RD-05).
     "Inbox": ["Inbox"],
     "Bem-estar": ["Hoje", "Humor", "Diário emocional"],
-    "Sistema": ["Skills D7"],
+    # Sprint UX-RD-05: cluster Sistema ganha aba "Styleguide" além de
+    # "Skills D7". Páginas implementadas em ``paginas/skills_d7.py`` e
+    # ``paginas/styleguide.py``; dispatcher abaixo monta as abas reais.
+    "Sistema": ["Skills D7", "Styleguide"],
 }
 
 # Sprint UX-RD-03: mapa cluster -> sprint que vai habilitar suas páginas.
@@ -500,9 +505,19 @@ def main() -> None:
         with tab_metas:
             metas.renderizar(dados, periodo, pessoa)
 
-    elif cluster in {"Inbox", "Bem-estar", "Sistema"}:
+    elif cluster == "Sistema":
+        # Sprint UX-RD-05: cluster Sistema com 2 abas reais.
+        # Skills D7 = painel analítico do classificador; Styleguide = QA
+        # visual dos tokens/classes do redesign.
+        tab_skills, tab_styleguide = st.tabs(["Skills D7", "Styleguide"])
+        with tab_skills:
+            skills_d7.renderizar(dados, periodo, pessoa, ctx)
+        with tab_styleguide:
+            styleguide.renderizar(dados, periodo, pessoa, ctx)
+
+    elif cluster in {"Inbox", "Bem-estar"}:
         # Sprint UX-RD-03: clusters declarados mas com páginas pendentes
-        # (UX-RD-15 / UX-RD-16+ / UX-RD-05). Fallback graceful sem crash.
+        # (UX-RD-15 / UX-RD-16+). Fallback graceful sem crash.
         _renderizar_fallback_cluster(cluster)
 
     else:

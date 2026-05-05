@@ -85,6 +85,9 @@ MAPA_ABA_PARA_CLUSTER: dict[str, str] = {
     "Humor": "Bem-estar",
     "Diário emocional": "Bem-estar",
     "Skills D7": "Sistema",
+    # Sprint UX-RD-05: aba "Styleguide" entra no cluster Sistema.
+    # Mantém invariante N-para-N com ABAS_POR_CLUSTER["Sistema"].
+    "Styleguide": "Sistema",
 }
 
 # Sprint UX-125: tabs do cluster Home com nome igual a cluster próprio.
