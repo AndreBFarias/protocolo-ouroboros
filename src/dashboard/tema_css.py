@@ -619,6 +619,149 @@ def _classes_redesign() -> str:
         color: var(--text-muted);
         font-size: var(--fs-12);
     }
+
+    /* ─── COMPLETUDE (UX-RD-10) — matriz tipo × mês ─── */
+    .completude-matriz-card {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--r-md);
+        padding: var(--sp-4);
+        margin-bottom: var(--sp-4);
+    }
+    .completude-matriz-grid {
+        display: grid;
+        gap: 3px;
+        font-family: var(--ff-mono);
+        font-size: 10px;
+    }
+    .completude-matriz-h {
+        color: var(--text-muted);
+        padding: 4px;
+        text-align: center;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+    }
+    .completude-matriz-rotulo {
+        color: var(--text-muted);
+        padding: 8px 4px;
+        text-align: right;
+        font-size: 11px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .completude-cell {
+        aspect-ratio: 1.5;
+        border-radius: var(--r-xs);
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+        position: relative;
+        font-size: 10px;
+        color: var(--bg-base);
+        font-weight: 500;
+        text-decoration: none;
+        transition: transform 90ms ease;
+    }
+    .completude-cell-full    { background: var(--d7-graduado); }
+    .completude-cell-partial { background: var(--accent-yellow); color: var(--bg-base); }
+    .completude-cell-missing { background: var(--accent-red); color: var(--bg-base); }
+    .completude-cell-empty   {
+        background: var(--bg-inset); color: var(--text-muted); cursor: default;
+    }
+    .completude-cell:hover:not(.completude-cell-empty) {
+        transform: scale(1.08);
+        z-index: 1;
+        box-shadow: 0 0 0 2px var(--accent-purple);
+    }
+    .completude-matriz-legenda {
+        display: flex;
+        gap: var(--sp-3);
+        font-family: var(--ff-mono);
+        font-size: 11px;
+        color: var(--text-muted);
+        margin-top: var(--sp-3);
+    }
+    .completude-matriz-legenda .dot {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 2px;
+        vertical-align: middle;
+        margin-right: 4px;
+    }
+    .completude-secao-titulo {
+        font-family: var(--ff-mono);
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--text-secondary);
+        margin: var(--sp-4) 0 var(--sp-3);
+    }
+
+    /* ─── REVISOR (UX-RD-10) — cards de divergência 4-way ─── */
+    .revisor-card {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--r-md);
+        padding: var(--sp-3) var(--sp-4);
+        margin-bottom: var(--sp-3);
+        position: relative;
+        transition: box-shadow 120ms ease;
+    }
+    .revisor-card[data-revisor-foco="1"] {
+        box-shadow: 0 0 0 2px var(--accent-purple);
+    }
+    .revisor-card-fontes {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: var(--sp-3);
+        margin-top: var(--sp-3);
+    }
+    .revisor-fonte {
+        background: var(--bg-inset);
+        border-left: 3px solid var(--border-subtle);
+        border-radius: var(--r-sm);
+        padding: var(--sp-2) var(--sp-3);
+        min-height: 64px;
+        font-family: var(--ff-mono);
+        font-size: var(--fs-12);
+    }
+    .revisor-fonte-etl    { border-left-color: var(--accent-green); }
+    .revisor-fonte-opus   { border-left-color: var(--accent-purple); }
+    .revisor-fonte-grafo  { border-left-color: var(--accent-yellow); }
+    .revisor-fonte-humano { border-left-color: var(--accent-pink); }
+    .revisor-fonte-rotulo {
+        font-size: 10px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        margin-bottom: 4px;
+    }
+    .revisor-fonte-valor {
+        color: var(--text-primary);
+        word-break: break-word;
+    }
+    .revisor-fonte-valor.diverge {
+        background: var(--diff-added-bg, rgba(255, 121, 198, 0.08));
+        padding: 2px 4px;
+        border-radius: var(--r-xs);
+    }
+    .revisor-card-titulo {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--sp-3);
+        font-family: var(--ff-mono);
+        font-size: var(--fs-12);
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--text-secondary);
+    }
+    .revisor-card-dimensao {
+        font-weight: 500;
+        color: var(--text-primary);
+    }
     """
 
 

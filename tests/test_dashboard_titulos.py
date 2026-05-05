@@ -158,6 +158,9 @@ def test_listagem_de_paginas_nao_vazia() -> None:
 # redesigned (calendário 14d + lista lateral), abandonando o
 # ``hero_titulo_html`` em favor da composição UX-RD-XX padrão. Removida
 # desta lista pelo mesmo critério de visao_geral.py / extrato.py.
+# Sprint UX-RD-10: ``completude.py`` foi reescrita com matriz tipo × mês +
+# page-header próprio (espelhando o mockup ``08-completude.html``). Removida
+# desta lista pelo mesmo critério das anteriores.
 PAGINAS_COM_HERO: frozenset[str] = frozenset(
     {
         "categorias.py",
@@ -167,7 +170,6 @@ PAGINAS_COM_HERO: frozenset[str] = frozenset(
         "metas.py",
         "analise_avancada.py",
         "irpf.py",
-        "completude.py",
     }
 )
 
