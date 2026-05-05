@@ -40,6 +40,7 @@ from src.dashboard.paginas import (  # noqa: E402
     categorias,
     completude,
     contas,
+    extracao_tripla,
     extrato,
     grafo_obsidian,
     home_analise,
@@ -53,9 +54,13 @@ from src.dashboard.paginas import (  # noqa: E402
     revisor,
     skills_d7,
     styleguide,
-    validacao_arquivos,
     visao_geral,
 )
+
+# Sprint UX-RD-11: ``validacao_arquivos`` permanece importável como stub
+# de retrocompat (rota ?tab=Validação+por+Arquivo é resolvida via
+# ABA_ALIASES_LEGACY antes de cair no dispatcher). Não é referenciado
+# diretamente neste módulo, mas o pacote ``paginas`` continua exportando-o.
 from src.dashboard.tema import (  # noqa: E402
     CORES,
     card_sidebar_html,
@@ -92,7 +97,10 @@ ABAS_POR_CLUSTER: dict[str, list[str]] = {
         "Catalogação",
         "Completude",
         "Revisor",
-        "Validação por Arquivo",
+        # Sprint UX-RD-11: aba "Validação por Arquivo" foi renomeada para
+        # "Extração Tripla" (layout 3 colunas: lista | viewer | tabela
+        # ETL × Opus × Humano). Retrocompat via alias em CLUSTER_ALIASES.
+        "Extração Tripla",
         "Grafo + Obsidian",
     ],
     "Análise": ["Categorias", "Análise", "IRPF"],
@@ -457,12 +465,15 @@ def main() -> None:
             projecoes.renderizar(dados, periodo, pessoa)
 
     elif cluster == "Documentos":
+        # Sprint UX-RD-11: aba "Validação por Arquivo" -> "Extração Tripla".
+        # ``validacao_arquivos.py`` virou stub de retrocompat (visualizado
+        # apenas se rota antiga for explicitada em código futuro).
         (
             tab_busca,
             tab_catalogacao,
             tab_completude,
             tab_revisor,
-            tab_validacao_arquivos,
+            tab_extracao_tripla,
             tab_grafo_obsidian,
         ) = st.tabs(
             [
@@ -470,7 +481,7 @@ def main() -> None:
                 "Catalogação",
                 "Completude",
                 "Revisor",
-                "Validação por Arquivo",
+                "Extração Tripla",
                 "Grafo + Obsidian",
             ]
         )
@@ -482,8 +493,8 @@ def main() -> None:
             completude.renderizar(dados, periodo, pessoa, ctx)
         with tab_revisor:
             revisor.renderizar(dados, periodo, pessoa, ctx)
-        with tab_validacao_arquivos:
-            validacao_arquivos.renderizar(dados, periodo, pessoa, ctx)
+        with tab_extracao_tripla:
+            extracao_tripla.renderizar(dados, periodo, pessoa, ctx)
         with tab_grafo_obsidian:
             grafo_obsidian.renderizar(dados, periodo, pessoa, ctx)
 

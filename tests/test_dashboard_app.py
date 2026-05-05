@@ -76,7 +76,8 @@ class TestContratosCanonicos:
             "Catalogação",
             "Completude",
             "Revisor",
-            "Validação por Arquivo",
+            # Sprint UX-RD-11: aba renomeada para "Extração Tripla".
+            "Extração Tripla",
             "Busca Global",
             "Grafo + Obsidian",
             "Categorias",

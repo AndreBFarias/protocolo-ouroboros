@@ -70,7 +70,10 @@ MAPA_ABA_PARA_CLUSTER: dict[str, str] = {
     "Busca Global": "Documentos",
     "Grafo + Obsidian": "Documentos",
     "Revisor": "Documentos",
-    "Validação por Arquivo": "Documentos",
+    # Sprint UX-RD-11: "Validação por Arquivo" -> "Extração Tripla". A chave
+    # canônica é a nova; o alias antigo é resolvido em ABA_ALIASES_LEGACY
+    # antes de hit aqui (preserva bookmarks ?tab=Validação+por+Arquivo).
+    "Extração Tripla": "Documentos",
     "Categorias": "Análise",
     "Análise": "Análise",
     "IRPF": "Análise",
@@ -131,6 +134,14 @@ CLUSTERS_VALIDOS: tuple[str, ...] = (
 #
 # Sprint UX-125: alias adicional ?cluster=Dinheiro -> "Finanças".
 CLUSTER_ALIASES: dict[str, str] = {"Hoje": "Home", "Dinheiro": "Finanças"}
+
+# Sprint UX-RD-11: aliases backward-compat para nomes de aba renomeados.
+# Permite que URLs antigas no formato ?tab=Validação+por+Arquivo continuem
+# resolvendo para o novo nome canônico "Extração Tripla". Aplicado em
+# ``ler_filtros_da_url`` antes de gravar em session_state.
+ABA_ALIASES_LEGACY: dict[str, str] = {
+    "Validação por Arquivo": "Extração Tripla",
+}
 
 # Chave canônica em session_state para o cluster ativo. Namespace próprio,
 # não colide com filtro_* (drill-down), avancado_* (filtros manuais Extrato)
@@ -251,7 +262,10 @@ def ler_filtros_da_url() -> None:
         valor_tab = qp["tab"]
         if isinstance(valor_tab, list):
             valor_tab = valor_tab[0] if valor_tab else ""
-        st.session_state[CHAVE_SESSION_ABA_ATIVA] = str(valor_tab)
+        # Sprint UX-RD-11: resolve aliases legados antes de gravar em session.
+        nome_aba = str(valor_tab)
+        nome_aba = ABA_ALIASES_LEGACY.get(nome_aba, nome_aba)
+        st.session_state[CHAVE_SESSION_ABA_ATIVA] = nome_aba
 
     # Sprint 92b: resolve cluster ativo (explícito ou inferido pela aba).
     cluster_explicito: str = ""
