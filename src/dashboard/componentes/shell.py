@@ -489,70 +489,76 @@ def instalar_fix_sidebar_padding() -> None:
         ).forEach(a => {
           if (a.tagName === 'A') a.target = '_self';
         });
-        // BODY-FIX (2026-05-06): mainBlockContainer tem padding default
-        // 32px 75px 150px do Streamlit que afasta o conteúdo do canto
-        // superior esquerdo. Mockup canônico tem topbar full-width
-        // (sem padding) + body com padding lateral 24px.
+        // BODY-FIX (2026-05-06): mainBlockContainer SEM padding —
+        // topbar ocupa toda a largura naturalmente, e cada filho
+        // não-topbar ganha padding 24px individual.
         const mainBlock = doc.querySelector('[data-testid="stMainBlockContainer"]');
         if (mainBlock) {
-          // padding-top 0 para topbar colar no canto superior;
-          // laterais 0 também para topbar ocupar largura total;
-          // demais elementos compensam com margin-left/right via CSS.
           mainBlock.style.setProperty('padding', '0', 'important');
           mainBlock.style.setProperty('max-width', 'none', 'important');
         }
-        // TOPBAR-FULL-WIDTH: topbar ocupa toda a largura disponível
-        // (do final da sidebar até a borda direita do viewport),
-        // começando em y=0. Mockup canônico tem topbar sticky no topo.
-        const topbar = doc.querySelector('.topbar');
-        if (topbar) {
-          topbar.style.setProperty('position', 'sticky', 'important');
-          topbar.style.setProperty('top', '0', 'important');
-          topbar.style.setProperty('left', '0', 'important');
-          topbar.style.setProperty('z-index', '10', 'important');
-          topbar.style.setProperty('width', 'calc(100vw - 240px)', 'important');
-          topbar.style.setProperty('margin', '0', 'important');
-        }
-        // BODY-PADDING: aplicar padding 24px APENAS no stVerticalBlock
-        // de TOPO (filho direto do mainBlockContainer). VBs aninhados
-        // (filhos de stColumn) recebem padding 0 para evitar duplo
-        // afastamento que desalinhava clusters em x=288 vs hero=264.
+        // stVerticalBlock TOPO: sem padding, sem margin negativa.
+        // Topbar ocupa 100% do parent naturalmente.
         const topVB = doc.querySelector(
           '[data-testid="stMainBlockContainer"] > [data-testid="stVerticalBlock"]'
         );
         if (topVB) {
-          topVB.style.setProperty('gap', '12px', 'important');
-          topVB.style.setProperty('padding', '0 24px', 'important');
+          topVB.style.setProperty('gap', '0', 'important');
+          topVB.style.setProperty('padding', '0', 'important');
         }
-        // VBs aninhados (dentro de stColumn) sem padding adicional.
+        // VBs aninhados (dentro de stColumn) sem padding.
         doc.querySelectorAll(
           '[data-testid="stMain"] [data-testid="stColumn"] [data-testid="stVerticalBlock"]'
         ).forEach(b => {
           b.style.setProperty('padding', '0', 'important');
           b.style.setProperty('gap', '12px', 'important');
         });
-        // Topbar é o filho 1 (após âncora skip-link); precisa
-        // ESCAPAR do padding 24px do parent + compensar 12px de gap
-        // residual do stVerticalBlock (gap entre filhos invisíveis).
-        if (topbar) {
-          topbar.style.setProperty('margin-left', '-24px', 'important');
-          topbar.style.setProperty('margin-right', '-24px', 'important');
-          topbar.style.setProperty('margin-top', '-12px', 'important');
-          topbar.style.setProperty('width', 'calc(100vw - 240px)', 'important');
-        }
-        // Esconder filhos com altura 0 (estilos injetados via st.markdown
-        // não-visíveis) para o gap do stVerticalBlock não criar espaço.
+        // Esconder filhos com altura 0 (estilos invisíveis injetados).
+        const __vbsel = '[data-testid="stMain"] [data-testid="stVerticalBlock"]';
         doc.querySelectorAll(
-          '[data-testid="stMain"] [data-testid="stVerticalBlock"] > [data-testid="stElementContainer"]'
+          __vbsel + ' > [data-testid="stElementContainer"]'
         ).forEach(c => {
           if (c.getBoundingClientRect().height === 0) {
             c.style.setProperty('display', 'none', 'important');
           }
         });
-        // ALINHAMENTO HORIZONTAL: st.columns aplica padding interno
-        // em stColumn + gap em stHorizontalBlock que cria 24px
-        // adicional. Zerar tudo para clusters/sprint alinharem com
-        // hero/KPIs em x=264 (240 sidebar + 24 padding canônico).
+        // TOPBAR sem margin negativa: ocupa 100% naturalmente.
+        const topbar = doc.querySelector('.topbar');
+        if (topbar) {
+          topbar.style.setProperty('position', 'sticky', 'important');
+          topbar.style.setProperty('top', '0', 'important');
+          topbar.style.setProperty('left', '0', 'important');
+          topbar.style.setProperty('z-index', '10', 'important');
+          topbar.style.setProperty('width', '100%', 'important');
+          topbar.style.setProperty('margin', '0', 'important');
+          // Padding interno canônico mantido (24px laterais) para
+          // breadcrumb e botões respirarem em relação às bordas.
+          // O CSS do .topbar já tem padding: 0 var(--sp-6) — só
+          // garantir que JS não sobrescreve.
+          topbar.style.removeProperty('padding-left');
+          topbar.style.removeProperty('padding-right');
+          // Gap entre topbar e próximo bloco.
+          const topbarContainer = topbar.closest('[data-testid="stElementContainer"]');
+          if (topbarContainer) {
+            topbarContainer.style.setProperty('margin-bottom', '16px', 'important');
+          }
+        }
+        // PADDING INDIVIDUAL nos filhos não-topbar (hero, KPIs,
+        // clusters, sprint atual) para respeitar 24px lateral
+        // sem afetar a topbar full-width.
+        const __mbsel = '[data-testid="stMainBlockContainer"] > [data-testid="stVerticalBlock"]';
+        doc.querySelectorAll(
+          __mbsel + ' > [data-testid="stElementContainer"]'
+        ).forEach((c, i) => {
+          // Pular o primeiro filho NÃO-invisível (que é a topbar).
+          if (c.getBoundingClientRect().height === 0) return;
+          const hasTopbar = c.querySelector('.topbar');
+          if (hasTopbar) return;
+          c.style.setProperty('padding', '0 24px', 'important');
+          c.style.setProperty('margin-bottom', '12px', 'important');
+        });
+        // ALINHAMENTO HORIZONTAL: st.columns aplica padding em
+        // stColumn + gap em stHorizontalBlock. Zerar tudo.
         doc.querySelectorAll(
           '[data-testid="stMain"] [data-testid="stColumn"]'
         ).forEach(c => {
@@ -565,14 +571,18 @@ def instalar_fix_sidebar_padding() -> None:
           b.style.setProperty('margin-left', '0', 'important');
           b.style.setProperty('margin-right', '0', 'important');
         });
-        // BG-CONTINUITY: stApp tem bg #1a1d28 (correto), mas main tem
-        // bg #0e0f15 (body). Para a parte do topo direito não mostrar
-        // body bg quando topbar não cobre (cantos arredondados etc),
-        // forçar stMain bg como surface bg-base que combine.
+        // BG-CONTINUITY: main bg #0e0f15 (canônico bg-base).
         const stMain = doc.querySelector('[data-testid="stMain"]');
         if (stMain) {
           stMain.style.setProperty('background-color', '#0e0f15', 'important');
         }
+        // OVERFLOW-X: forçar hidden em todos ancestrais para
+        // eliminar barra de scroll horizontal residual.
+        ['html', 'body', '[data-testid="stAppViewContainer"]',
+         '[data-testid="stMain"]', '.stApp'].forEach(sel => {
+          const e = doc.querySelector(sel);
+          if (e) e.style.setProperty('overflow-x', 'hidden', 'important');
+        });
         // VG-GAP-FIX: stElementContainer com margin-bottom 0 para
         // eliminar gaps mortos entre Hero/KPIs/Clusters.
         doc.querySelectorAll(
