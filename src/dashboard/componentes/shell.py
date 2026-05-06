@@ -497,6 +497,20 @@ def instalar_fix_sidebar_padding() -> None:
           mainBlock.style.setProperty('padding', '24px', 'important');
           mainBlock.style.setProperty('max-width', 'none', 'important');
         }
+        // VG-GAP-FIX: Streamlit aplica margin-bottom 1rem em cada
+        // stElementContainer e gap em stVerticalBlock. Resulta em
+        // espaços verticais excessivos entre filtros/hero/KPIs.
+        // Mockup canônico tem gap 16px entre seções principais.
+        doc.querySelectorAll(
+          '[data-testid="stMain"] [data-testid="stElementContainer"]'
+        ).forEach(c => {
+          c.style.setProperty('margin-bottom', '0', 'important');
+        });
+        doc.querySelectorAll(
+          '[data-testid="stMain"] [data-testid="stVerticalBlock"]'
+        ).forEach(b => {
+          b.style.setProperty('gap', '12px', 'important');
+        });
         // Lupa centralizada no input de busca: força top: 50% +
         // transform translateY(-50%) explícito (browser pode estar
         // calculando matrix com offset diferente).

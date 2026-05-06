@@ -453,10 +453,9 @@ def _hero_html(sprint_atual_titulo: str = "") -> str:
     no parágrafo do hero.
     """
     svg = _ler_svg_ouroboros()
-    marca = (
-        '<span class="marca">Sistema agentic-first '
-        '<span class="marca-cluster">· cluster Home</span></span>'
-    )
+    # VG-FIDELIDADE-FIX: mockup canônico (_visao-render.js) tem
+    # apenas "Sistema agentic-first" sem o "· cluster Home" extra.
+    marca = '<span class="marca">Sistema agentic-first</span>'
     titulo = "<h1>Os arquivos da sua vida financeira, normalizados.</h1>"
     sprint_html = ""
     if sprint_atual_titulo:
