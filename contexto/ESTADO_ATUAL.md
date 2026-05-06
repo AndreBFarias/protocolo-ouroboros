@@ -1,11 +1,40 @@
-# ESTADO_ATUAL.md -- Snapshot tecnico em 2026-05-05 (pos-auditoria honesta do redesign)
+# ESTADO_ATUAL.md -- Snapshot tecnico em 2026-05-06 (pos-Onda T fechada, Onda M especificada)
 
-> **Versionado a partir de 2026-04-29 pela Sprint DOC-VERDADE-01.A; atualizado em 2026-05-05 com auditoria do redesign UX/RD**.
+> **Versionado a partir de 2026-04-29 pela Sprint DOC-VERDADE-01.A; atualizado em 2026-05-06 com Onda M (modularização) especificada**.
 > Whitelist em `.gitignore` permite este arquivo + COMO_AGIR.md no repo (POR_QUE.md e PROMPT_NOVA_SESSAO.md continuam locais por conter PII estrutural).
 > Esta doc e fotografia do momento — para verdade vivo consulte `git log` + `ls docs/sprints/concluidos/`.
 > Para auditar este snapshot contra realidade: `python scripts/auditar_estado.py`.
 
-## Sessao 2026-05-06 -- Reorganização por tela (Onda U+T+Q vigente, Fase Corretiva arquivada)
+## Sessao 2026-05-06 (parte 2) -- Onda M especificada (modularização do dashboard)
+
+Após Onda T+Q+U fecharem em 2026-05-06 (29 sprints UX-T-* + 3 UX-Q-* + 4 UX-U-* + ressalvas), revisão visual do dono em 2026-05-06 expôs problemas estruturais na arquitetura CSS/componentes do dashboard:
+
+- **17 páginas com `_CSS_LOCAL_*`** (50-300 linhas inline cada).
+- **`tema_css.py` com 1675 linhas** de CSS hard-coded em Python.
+- **`instalar_fix_sidebar_padding` com 211 linhas e 56 `setProperty`** afetando TODAS as páginas globalmente.
+- **17 funções HTML helpers em `tema.py`** (9 são componentes, 8 utilitários — espalhados).
+- **4 páginas com duplicação de header** (`hero_titulo_html` + `_page_header_html`) — corrigidas em commit `2817706`.
+
+**Causa identificada**: commit `928628c` ("topbar polish") aplicou regras JS universais que bagunçaram layouts internos de páginas como Busca Global e Extração Tripla — revertido em `2817706`.
+
+**Decisão (dono, 2026-05-06)**: criar Onda M (modularização real) ANTES de continuar com mais sprints visuais.
+
+**Onda M — 4 sprints + 4 sub-sprints** (commit `4b62b0b`):
+- **UX-M-01** — Tokens CSS centralizados (copiar `novo-mockup/_shared/tokens.css`).
+- **UX-M-02** — Componentes universais HTML (consolidar em `ui.py`).
+- **UX-M-03** — CSS canônico do mockup (copiar `novo-mockup/_shared/components.css`).
+- **UX-M-04** — Shell consolidado em CSS estático (211→80 linhas, 56→10 setProperty).
+- **UX-M-02.A..D** — Migração de 30+ páginas em 4 clusters (paralelo).
+
+**Esforço total**: 36-44h. Detalhes em `docs/sprints/backlog/INDICE_ONDA_M_MODULARIZACAO.md`.
+
+**Sprint UX-M-AUDITORIA** (2026-05-06, plano `auditoria-honesta-da-magical-lovelace.md`): refinou as 4 specs para alinhar com realidade do código (descobriu que `instalar_fix_sidebar_padding` tem 211 linhas, não 120; mockup já tem `tokens.css`/`components.css` canônicos; 17 helpers em `tema.py`); criou `VALIDATOR_BRIEF.md` (faltava); atualizou 7 docs canônicos.
+
+**Próximo passo**: dono valida specs Onda M endurecidas; ao aprovar, executor começa por UX-M-01 ou UX-M-04 (paralelos).
+
+---
+
+## Sessao 2026-05-06 (parte 1) -- Reorganização por tela (Onda U+T+Q vigente, Fase Corretiva arquivada)
 
 Após executar as 14 sprints UX-RD-FIX-01..14 em 2026-05-05 (gauntlet verde, métricas DOM passaram), uma revisão visual em 2026-05-06 mostrou que **a percepção integrada continua quebrada**: sidebar mistura widgets antigos (logo escudo, Granularidade/Mês/Pessoa selectbox, Busca Global text input) com shell HTML novo; KPIs semantica errados na Home (financeiros vs agentic-first do mockup); layout esparso; bugs Plotly "undefined".
 

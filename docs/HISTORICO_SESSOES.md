@@ -3,6 +3,41 @@
 > Diário cronológico das sessões maratona. Extraído do CLAUDE.md em 2026-04-29 para manter a constituição enxuta.
 > Cada entrada lista entregas-chave, commits e padrões canônicos descobertos. Detalhes operacionais ficam nos `HANDOFF_<data>_*.md` correspondentes.
 
+## 2026-05-06 — Onda M especificada + endurecida (Opus principal interativo)
+
+Sessão crítica que desencadeou a Onda M (modularização do dashboard) após Onda T+Q+U fecharem.
+
+**Sequência cronológica:**
+
+1. **Manhã:** dono valida visualmente Visão Geral pós-Onda T+Q+U. Identifica 4 problemas residuais na topbar (botões cortados, gap preto, sem espaçamento topbar↔filtros, scroll horizontal).
+2. **Plan + execução `928628c`:** "topbar polish + sem scroll horizontal + gap canonico". Validação playwright passou para Visão Geral.
+3. **Validação cruzada (dono):** outras páginas (Busca Global, Extração Tripla) ficaram **bagunçadas**. JS runtime universal afetou layouts internos.
+4. **Decisão (dono):** "preciso que seja o cérebro, não aja na tentativa e erro. Pense por favor antes de agir no óbvio."
+5. **Plan + revert `2817706`:** revert seletivo de `instalar_fix_sidebar_padding` para versão `9f5c73e` + correção de duplicação de header em 4 páginas (busca, catalogacao, contas, projecoes).
+6. **Pergunta-chave do dono:** "Por que sidebar/topbar/body/filtros não são universais? Por que CSS não é modularizado? Estamos fazendo tudo na mão a cada página?"
+7. **Plan arquitetural Onda M `4b62b0b`:** 4 specs UX-M-01..04 + INDICE_ONDA_M_MODULARIZACAO.md.
+8. **Auditoria honesta + endurecimento:** dono pediu "estudo aprofundado". 3 explorações paralelas revelaram: fonte canônica `tokens.css`/`components.css` JÁ EXISTE em `novo-mockup/_shared/`; `tema_css.py` tem 1675 linhas; `instalar_fix_sidebar_padding` tem 211 linhas (não 120); 17 helpers em `tema.py`; 7 docs canônicos não citam Onda M; `VALIDATOR_BRIEF.md` faltava.
+9. **Refinamento das specs Onda M (este commit):** specs M-01..M-04 reescritas para alinhar com realidade; 4 sub-sprints UX-M-02.A..D criadas; `VALIDATOR_BRIEF.md` criado; 7 docs canônicos atualizados.
+
+**Commits desta sessão:**
+
+| # | Commit | Resumo |
+|---|--------|--------|
+| 1 | `928628c` (revertido) | Topbar polish (causou bagunça em outras páginas) |
+| 2 | `2817706` | Revert + remover duplicação header em 4 páginas |
+| 3 | `4b62b0b` | Specs Onda M criadas (4 specs + INDICE) |
+| 4 | (pendente) | Refinamento specs Onda M + sub-sprints + VALIDATOR_BRIEF + docs canônicos |
+
+**Padrões canônicos descobertos:**
+
+- **(w) JS runtime global afetando todas páginas** — `setProperty('important')` em seletores Streamlit genéricos. Preferir CSS estático escopado. Caso emblemático: commit `928628c`. Adicionado em `VALIDATOR_BRIEF.md` e `docs/ARMADILHAS.md` #23.
+- **Plano antes de patch** — quando dono diz "estávamos quase perfeito uma alteração atrás", REVERTER e auditar antes de adicionar mais correções. Trial-and-error compounds.
+- **Auditoria por subagents paralelos** — 3 Explore agents em paralelo (sprints, docs, código vs specs) entregam visão consolidada que solo workflow não alcança em tempo razoável.
+
+**Próximo passo:** dono valida specs Onda M endurecidas. Ao aprovar, executor inicia UX-M-01 ou UX-M-04 (paralelos).
+
+---
+
 ## 2026-04-28/29 — Onda 0 + Onda 1 fechadas + Onda 2 LLM iniciada (Opus autônomo)
 
 Sessão Opus principal autônoma executando o plan `pure-swinging-mitten`. Atualização incremental conforme cada sprint fecha — preserva progresso se a sessão cair.

@@ -1,18 +1,19 @@
 # Sprints — Índice mestre
 
-> Atualizado em 2026-05-05 (auditoria honesta do redesign + 14 sprints corretivas UX-RD-FIX).
-> Antes em 2026-04-29 (brainstorming redesign). Mapeia todas as sprints do projeto: as **antigas em backlog** (pré-plan) versus o **plan ativo `pure-swinging-mitten`** (Ondas 1-6) versus o **plan lazy-noodling-wind** (UX-RD-* + roteiro corretivo UX-RD-FIX-*).
+> Atualizado em 2026-05-06 (Onda M especificada após auditoria pós-Onda T+Q+U).
+> Antes em 2026-05-05 (auditoria honesta do redesign + 14 sprints corretivas UX-RD-FIX). Mapeia todas as sprints do projeto: **antigas em backlog** (pré-plan) versus **plan ativo `pure-swinging-mitten`** (Ondas 1-6) versus **plan lazy-noodling-wind** (UX-RD-* + UX-RD-FIX-*) versus **Onda M** (modularização 2026-05-06).
 > Resolve conflitos (sprint antiga e nova endereçando o mesmo problema), absorções (antiga superseded por nova) e complementaridades (ortogonais).
 
 ## Status agregado
 
 | Categoria | Quantidade |
 |---|---|
-| Concluídas em `docs/sprints/concluidos/` | ~130 |
+| Concluídas em `docs/sprints/concluidos/` | ~234 |
 | Backlog antigo (pré-plan) | 17 |
 | Backlog novo (plan pure-swinging-mitten) | 61 |
+| **Backlog Onda M (modularização 2026-05-06)** | **8 (UX-M-01..04 + UX-M-02.A..D)** |
 | Arquivadas em `docs/sprints/arquivadas/` | 14 |
-| **Total** | ~222 |
+| **Total** | ~334 |
 
 ## Ondas do plan ativo (rota canônica)
 
@@ -36,9 +37,27 @@ Plan completo: `~/.claude/plans/lazy-noodling-wind.md`. Auditoria honesta: `docs
 |---|---|---|
 | Onda 0-6 (UX-RD-01..19) | 19 sprints reescrevendo dashboard 1:1 com 29 mockups HTML | **CONCLUÍDAS** em 2026-05-04. Score real (auditoria): 64/100 |
 | Fase Corretiva (UX-RD-FIX-01..14) | 14 sprints transversais corrigindo divergências catalogadas | **EXECUTADAS** em 2026-05-05 (gauntlet verde). Specs **arquivadas** em 2026-05-06 em `docs/sprints/arquivadas/2026-05-tentativa-fix-transversal/` porque a abordagem transversal não fechou a percepção visual integrada |
-| **Fase Tela-a-Tela (UX-U-01..04 + UX-T-01..29 + UX-Q-01..03)** | 36 sprints em 3 ondas (U/T/Q) -- cada sprint entrega peça completa | **VIGENTE** -- ROTEIRO_TELAS_2026-05-06.md |
+| **Fase Tela-a-Tela (UX-U-01..04 + UX-T-01..29 + UX-Q-01..03)** | 36 sprints em 3 ondas (U/T/Q) -- cada sprint entrega peça completa | **CONCLUÍDA** em 2026-05-06 (commit `550e2b1` merge na main) |
+| **Onda M — Modularização (UX-M-01..04 + sub UX-M-02.A..D)** | 4 sprints estruturantes + 4 sub-sprints de migração de páginas | **BACKLOG** (P0). Especificada 2026-05-06 (commit `4b62b0b`), endurecida pós-auditoria (commit pendente). Detalhes em `docs/sprints/backlog/INDICE_ONDA_M_MODULARIZACAO.md` |
 
 Plano operacional: `~/.claude/plans/auditoria-honesta-da-magical-lovelace.md`. Garantias: validação humana entre sprints, captura side-by-side mockup × dashboard automática, reversibilidade. Meta: score ≥95/100 após Q-03.
+
+## Onda M — Modularização (2026-05-06+)
+
+Plan operacional: `~/.claude/plans/auditoria-honesta-da-magical-lovelace.md`. Índice da onda: `docs/sprints/backlog/INDICE_ONDA_M_MODULARIZACAO.md`.
+
+| Sprint | Título | Depende | Esforço | Status |
+|---|---|---|---|---|
+| UX-M-01 | Tokens CSS centralizados (copy `novo-mockup/_shared/tokens.css`) | — | 3-5h | Backlog |
+| UX-M-02 | Componentes universais HTML (consolidar em `ui.py`) | M-01 | 8-10h | Backlog |
+| UX-M-03 | CSS canônico do mockup (copy `novo-mockup/_shared/components.css`) | M-01, M-02 | 4-6h | Backlog |
+| UX-M-04 | Shell consolidado em CSS estático (211→80 linhas) | M-01 | 5-7h | Backlog (paralelo com M-01) |
+| UX-M-02.A | Migração cluster Documentos | M-02, M-03 | 4h | Backlog |
+| UX-M-02.B | Migração cluster Finanças | M-02, M-03 | 3h | Backlog |
+| UX-M-02.C | Migração cluster Análise+Metas+Inbox+Sistema | M-02, M-03 | 3h | Backlog |
+| UX-M-02.D | Migração cluster Bem-estar | M-02, M-03 | 6h | Backlog |
+
+**Total**: 36-44h. Meta: zero `_CSS_LOCAL_*`, ≤10 `setProperty`, fonte canônica em `novo-mockup/_shared/`.
 
 ## Mapeamento das sprints antigas (17 em backlog pré-plan)
 

@@ -116,7 +116,7 @@ Critério global de pronto: 29 telas com fidelidade ≥85%, deep-link funcional,
 
 ---
 
-## Fase Tela-a-Tela (2026-05-06) — Onda U + T + Q (vigente)
+## Fase Tela-a-Tela (2026-05-06) — Onda U + T + Q (CONCLUÍDA)
 
 Após arquivar a Fase Corretiva, o dono pediu reorganização por **peça completa**: cada sprint entrega ou (a) uma peça estruturante universal (Onda U) ou (b) uma tela inteira 1:1 com mockup (Onda T) ou (c) quality gate final (Onda Q). Total: **36 sprints** em ~5-6 semanas.
 
@@ -124,11 +124,38 @@ Roteiro canônico: `docs/sprints/backlog/ROTEIRO_TELAS_2026-05-06.md`. Plano ope
 
 | Onda | Sprints | Foco | Status |
 |---|--:|---|---|
-| **U** | 4 (U-01..U-04) | Estruturantes universais (sidebar, topbar, page-header, filtros página) | Specs em backlog/ |
-| **T** | 29 (T-01..T-29) | Uma tela por sprint, layout 1:1 + funcional + dados + validação humana | A escrever após U mergeada |
-| **Q** | 3 (Q-01..Q-03) | Auditoria visual + regressão funcional + fechamento | A escrever após T mergeada |
+| **U** | 4 (U-01..U-04) | Estruturantes universais (sidebar, topbar, page-header, filtros página) | **CONCLUÍDA** em 2026-05-06 |
+| **T** | 29 (T-01..T-29) | Uma tela por sprint, layout 1:1 + funcional + dados + validação humana | **CONCLUÍDA** em 2026-05-06 (merge `550e2b1`) |
+| **Q** | 3 (Q-01..Q-03) | Auditoria visual + regressão funcional + fechamento | **CONCLUÍDA** em 2026-05-06 |
 
 **Garantias**: validação humana obrigatória entre cada sprint; captura side-by-side mockup × dashboard automática; reversibilidade (commits isolados); quality gates por onda.
+
+---
+
+## Fase Modularização (2026-05-06+) — Onda M (próxima fase)
+
+Após Onda T+Q+U fecharem, auditoria visual em 2026-05-06 expôs débito arquitetural significativo:
+
+- **17 páginas com `_CSS_LOCAL_*`** — CSS espalhado, com fallbacks duplicados.
+- **`tema_css.py` com 1675 linhas** — CSS hard-coded em Python.
+- **`instalar_fix_sidebar_padding` com 211 linhas e 56 `setProperty`** afetando todas as páginas.
+- **17 helpers HTML em `tema.py`** sem fronteira única.
+
+Commit `928628c` ("topbar polish") evidenciou o problema: regras JS universais bagunçaram layouts de outras páginas. Revertido em `2817706`.
+
+**Onda M — 4 sprints + 4 sub-sprints** (specs em `backlog/`, índice em `INDICE_ONDA_M_MODULARIZACAO.md`):
+
+| Sprint | Foco | Esforço |
+|---|---|---|
+| UX-M-01 | Tokens CSS centralizados (copy `novo-mockup/_shared/tokens.css`) | 3-5h |
+| UX-M-02 | Componentes universais HTML (consolidar em `ui.py`) | 8-10h |
+| UX-M-03 | CSS canônico do mockup (copy `novo-mockup/_shared/components.css`) | 4-6h |
+| UX-M-04 | Shell consolidado em CSS estático | 5-7h |
+| UX-M-02.A..D | Migração de 30+ páginas em 4 clusters | 16h (paralelo) |
+
+**Total**: 36-44h. Meta: zero `_CSS_LOCAL_*`, ≤10 `setProperty`, fonte canônica em `novo-mockup/_shared/`.
+
+Padrões canônicos descobertos: `(w)` JS runtime global afetando todas páginas (anti-padrão).
 
 ---
 

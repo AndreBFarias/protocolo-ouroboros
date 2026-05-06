@@ -1,178 +1,200 @@
 ---
 id: UX-M-03
-titulo: CSS escopado por componente em css/components/
+titulo: CSS canônico do mockup centralizado em css/components.css
 status: backlog
 prioridade: alta
 data_criacao: 2026-05-06
+data_revisao: 2026-05-06
 fase: MODULARIZAÇÃO
 depende_de: [UX-M-01, UX-M-02]
-bloqueia: []
+bloqueia: [UX-M-02.A, UX-M-02.B, UX-M-02.C, UX-M-02.D]
+esforco_estimado_horas: 4-6
 ---
 
-# Sprint UX-M-03 — CSS escopado por componente
+# Sprint UX-M-03 — CSS canônico do mockup centralizado
 
 ## Contexto
 
-Após UX-M-02 entregar componentes universais (`ui_canonico.py`), cada componente precisa de seu CSS canônico. Hoje o CSS de elementos repetidos vive espalhado em 17 `_CSS_LOCAL_*` nas páginas, com ~50-300 linhas cada.
+Após UX-M-02 entregar componentes universais (`ui.py`), cada componente precisa de seu CSS canônico para renderizar idêntico ao mockup.
+
+**Achado da auditoria 2026-05-06**: a fonte canônica de CSS **JÁ EXISTE** em `novo-mockup/_shared/components.css` (387 linhas, 87 classes: `.shell`, `.sidebar`, `.page-header`, `.kpi`, `.btn`, `.card`, `.pill`, `.table`, `.drawer`, `.skill-instr`, etc.). Sprint UX-RD-02 trouxe partes desse CSS para `tema_css.py` mas em formato hard-coded dentro de Python.
+
+`tema_css.py` tem 1675 linhas. ~400 linhas vieram de `components.css` (estimativa). Migrar para arquivo CSS separado:
+
+1. Reduz `tema_css.py` em ~400 linhas.
+2. Permite designer/humano editar CSS sem entender Python.
+3. Mantém sincronia 1:1 com mockup canônico (fonte de verdade).
+4. Prepara base para futura divisão por componente (UX-M-03b futuro).
 
 ## Objetivo
 
-Criar pasta `src/dashboard/css/components/` com **um CSS por componente**. `ui_canonico.py` carrega o CSS automaticamente quando a função correspondente é chamada (cache em sessão para não duplicar). Páginas existentes têm seus `_CSS_LOCAL_*` removidos.
+Extrair as 87 classes do mockup para `src/dashboard/css/components.css` (cópia 1:1 de `novo-mockup/_shared/components.css`). `tema_css.py` carrega via `Path.read_text()` e remove o bloco hard-coded equivalente. Sub-divisão por componente (`css/components/page_header.css`, etc.) é débito separado.
 
 ## Hipótese
 
-Cada componente em `ui_canonico.py` (UX-M-02) precisa de ~30-80 linhas CSS estáveis. Centralizar em arquivo dedicado simplifica:
-- 1 lugar para mexer em estilo de KPI cards
-- 1 lugar para mexer em search bar
-- etc.
+**A**: 1 arquivo `components.css` monolítico cobrindo todos os componentes do mockup é suficiente para Onda M.
+**Não-A** (futuro): dividir em 8 arquivos por componente (`page_header.css`, `kpi.css`, etc.).
 
-## Validação ANTES
+Razão A: divisão por componente é over-engineering nesta fase. Monolítico é fonte de verdade clara, fácil grep, fácil diff com mockup. Divisão vira sprint futura quando houver pressão real de manutenção.
+
+## Validação ANTES (grep obrigatório)
 
 ```bash
-# Volume atual de CSS local
-wc -l src/dashboard/paginas/*.py | tail -1
-# Esperado: linhas totais
+# Volume atual de CSS hard-coded em Python
+wc -l src/dashboard/tema_css.py
+# Esperado: ~1675 linhas
 
-grep -rn "_CSS_LOCAL\|<style>" src/dashboard/paginas/ | wc -l
-# Esperado: ~17+ ocorrências
+# Confirmar fonte canônica
+wc -l novo-mockup/_shared/components.css
+# Esperado: 387 linhas
 
-# Tokens já centralizados (UX-M-01)?
-test -f src/dashboard/css/tokens.css && echo OK || echo FALTA-M01
+# Contar classes no mockup
+grep -cE "^\.[a-z]" novo-mockup/_shared/components.css
+# Esperado: 87 classes
+
+# tokens.css existe (M-01)?
+test -f src/dashboard/css/tokens.css && echo "M-01 OK" || echo "BLOQUEADO: M-01 não rodou"
+
+# ui.py existe (M-02)?
+test -f src/dashboard/componentes/ui.py && echo "M-02 OK" || echo "BLOQUEADO: M-02 não rodou"
 ```
 
 ## Spec de implementação
 
-### 1. Criar estrutura `src/dashboard/css/components/`
+### 1. Copiar `components.css` do mockup
 
-```
-src/dashboard/css/
-├── tokens.css                    # criado em UX-M-01
-└── components/
-    ├── page_header.css
-    ├── kpi_card.css
-    ├── section_header.css
-    ├── group_card.css
-    ├── data_row.css
-    ├── search_bar.css
-    ├── chip_group.css
-    └── toolbar.css
+```bash
+# tokens.css já existe (UX-M-01)
+cp novo-mockup/_shared/components.css src/dashboard/css/components.css
 ```
 
-### 2. Cada CSS de componente — exemplo `kpi_card.css`
+Adicionar header no topo:
 
 ```css
-.kpi-card {
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  padding: var(--sp-4) var(--sp-5);
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-2);
-}
-
-.kpi-card--purple { border-left: 3px solid var(--accent-purple); }
-.kpi-card--cyan { border-left: 3px solid var(--accent-cyan); }
-.kpi-card--green { border-left: 3px solid var(--accent-green); }
-.kpi-card--yellow { border-left: 3px solid var(--accent-yellow); }
-.kpi-card--red { border-left: 3px solid var(--accent-red); }
-.kpi-card--orange { border-left: 3px solid var(--accent-orange); }
-.kpi-card--pink { border-left: 3px solid var(--accent-pink); }
-
-.kpi-label {
-  font-family: var(--ff-mono);
-  font-size: var(--fs-label);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-}
-
-.kpi-valor {
-  font-family: var(--ff-mono);
-  font-size: 28px;
-  color: var(--text-primary);
-  font-weight: 600;
-}
-
-.kpi-sub {
-  font-family: var(--ff-mono);
-  font-size: var(--fs-mono);
-  color: var(--text-muted);
-}
+/* Componentes CSS canônicos do dashboard Ouroboros.
+ * Fonte: novo-mockup/_shared/components.css (mantida 1:1).
+ * 87 classes: shell, sidebar, page-header, kpi, btn, card, pill,
+ * table, drawer, skill-instr, etc.
+ *
+ * Sprint UX-M-03 — Onda M (modularização).
+ *
+ * REGRA: ao editar uma classe aqui, atualizar o mockup canônico
+ * na MESMA sprint. Inconsistência = drift visual silencioso.
+ */
 ```
 
-### 3. Auto-load em `ui_canonico.py`
+### 2. Refatorar `tema_css.py`
+
+Adicionar no topo:
 
 ```python
-import streamlit as st
-from pathlib import Path
-from functools import lru_cache
-
-_CSS_DIR = Path(__file__).resolve().parent.parent / "css" / "components"
-
-@lru_cache(maxsize=None)
-def _carregar_css(nome: str) -> str:
-    caminho = _CSS_DIR / f"{nome}.css"
-    return f"<style>{caminho.read_text(encoding='utf-8')}</style>"
-
-
-def _emitir_css(nome: str) -> None:
-    """Emite CSS do componente uma vez por sessão Streamlit."""
-    chave = f"_css_emitido_{nome}"
-    if chave not in st.session_state:
-        st.markdown(_carregar_css(nome), unsafe_allow_html=True)
-        st.session_state[chave] = True
-
-
-def page_header(titulo, ...):
-    _emitir_css("page_header")
-    return minificar(...)
-
-
-def kpi_card(label, ...):
-    _emitir_css("kpi_card")
-    return minificar(...)
+_COMPONENTS_CSS = (_RAIZ_DASHBOARD / "css" / "components.css").read_text(encoding="utf-8")
 ```
 
-### 4. Remover `_CSS_LOCAL_*` das páginas migradas
+Identificar bloco hard-coded em `tema_css.py` que veio de `components.css` (Sprint UX-RD-02). Substituir por:
 
-Para cada página migrada para usar `ui_canonico` (sub-sprints UX-M-02.A..D):
-- Remover blocos `_CSS_LOCAL_*` que duplicavam CSS dos componentes.
-- Manter CSS específico DA PÁGINA (raros: gráficos plotly, layouts únicos não-genéricos).
+```python
+def _components_redesign() -> str:
+    """Classes canônicas do mockup. Sprint UX-M-03.
+
+    Fonte: src/dashboard/css/components.css.
+    """
+    return f"\n{_COMPONENTS_CSS}\n"
+```
+
+E na função `css_global()`, garantir que `_components_redesign()` é chamado UMA vez (não duplicar com bloco hard-coded antigo).
+
+### 3. Validação cruzada com mockup
+
+Criar teste de sincronia (opcional, se houver tempo):
+
+```python
+# tests/test_components_css_sync.py
+def test_components_css_identico_ao_mockup():
+    """Sincronia: src/dashboard/css/components.css == novo-mockup/_shared/components.css."""
+    raiz = Path(__file__).resolve().parent.parent
+    src_css = (raiz / "src" / "dashboard" / "css" / "components.css").read_text("utf-8")
+    mockup_css = (raiz / "novo-mockup" / "_shared" / "components.css").read_text("utf-8")
+    # Remover header comment do src se diferir
+    src_sem_header = re.sub(r"^/\*.*?\*/\s*", "", src_css, count=1, flags=re.DOTALL)
+    assert src_sem_header.strip() == mockup_css.strip(), (
+        "Drift detectado entre mockup e dashboard. Sincronizar."
+    )
+```
+
+## Estratégia gradual (não big-bang)
+
+| Etapa | Quando | Escopo |
+|---|---|---|
+| Etapa 1 (esta sprint) | UX-M-03 | Copiar `components.css` inteiro para `src/dashboard/css/`. Refatorar `tema_css.py` para ler dele. |
+| Etapa 2 (sub-sprints) | UX-M-02.A..D | Páginas migradas para `from ui import ...` consomem classes do `components.css` automaticamente. |
+| Etapa 3 (sprint futura UX-M-03b) | OPCIONAL | Dividir `components.css` em arquivos por componente (`page_header.css`, `kpi.css`, etc.). Só se houver pressão real. |
+
+## Validação DEPOIS
+
+```bash
+# components.css existe e tem mesmo tamanho do mockup
+diff -q src/dashboard/css/components.css novo-mockup/_shared/components.css | head -1
+# Esperado: vazio (ou apenas diff em comment header)
+
+# tema_css.py reduziu (≥300 linhas a menos)
+wc -l src/dashboard/tema_css.py
+# Esperado: ~1300 linhas (era ~1675; M-01 já reduziu ~150)
+
+# 87 classes presentes no CSS servido
+curl -s http://127.0.0.1:8765 | grep -c "\.kpi\|\.page-header\|\.sidebar"
+# Esperado: ≥3 (classes presentes no HTML)
+
+# Lint, smoke, tests
+make lint && make smoke && pytest tests/ -q
+```
 
 ## Proof-of-work
 
 ```bash
-# Após criar todos os CSS:
-ls src/dashboard/css/components/ | wc -l
-# Esperado: 8 arquivos
-
-# Após remover _CSS_LOCAL_* de N páginas migradas:
-grep -rn "_CSS_LOCAL" src/dashboard/paginas/ | wc -l
-# Esperado: < 5 (só páginas com layouts realmente únicos)
+# Restart dashboard
+pkill -f "streamlit run" 2>/dev/null || true
+make dashboard &
+sleep 5
 
 # Validação visual: 5 páginas-amostra sem regressão
-make dashboard
-# Comparar antes/depois das 5 páginas piloto.
+# - Visão Geral: page-header com gradient idêntico ao mockup
+# - Busca Global: search-bar com cor purple, kbd / visível
+# - Catalogação: KPIs com bordas semânticas (verde/amarelo/laranja)
+# - Contas: cards de banco com .card.interactive
+# - Projeções: pills SIMULAÇÃO renderizam com classes corretas
 ```
 
 ## Critério de aceitação
 
-1. `src/dashboard/css/components/` existe com ≥8 arquivos.
-2. `ui_canonico.py` carrega CSS via `_emitir_css(nome)` com cache de sessão.
-3. Cada CSS de componente referencia tokens via `var(--xxx)` (sem fallback).
-4. ≥10 páginas têm `_CSS_LOCAL_*` REMOVIDO após migração para `ui_canonico`.
-5. Lint, smoke, tests verdes.
-6. Validação visual: 5 páginas-amostra sem regressão visual.
+1. `src/dashboard/css/components.css` existe e é cópia 1:1 de `novo-mockup/_shared/components.css` (exceto header comment).
+2. `tema_css.py` carrega `components.css` UMA vez via `Path.read_text()`.
+3. `tema_css.py` reduziu ≥300 linhas (combinado com M-01: ≥400 linhas reduzidas total).
+4. Bloco hard-coded equivalente em `tema_css.py` removido.
+5. (Opcional) Teste de sincronia mockup ↔ dashboard adicionado.
+6. Lint, smoke, tests verdes.
+7. Validação visual: 5 páginas-amostra sem regressão.
 
-## Não-objetivos
+## Não-objetivos (escopo fechado)
 
-- NÃO migrar todas as 17 páginas que têm `_CSS_LOCAL_*` — restantes ficam em backlog.
-- NÃO mexer em `instalar_fix_sidebar_padding` (isso é UX-M-04).
+- NÃO dividir `components.css` em arquivos por componente — débito futuro UX-M-03b.
+- NÃO migrar páginas para usar classes canônicas (sub-sprints UX-M-02.A..D fazem).
+- NÃO migrar bloco `_root_legado` ou outras seções de `tema_css.py` — débito separado.
+- NÃO criar componentes novos não-presentes no mockup — usar `ui.py` (M-02).
 
 ## Referência
 
-- UX-M-01 (depende de) — tokens CSS.
-- UX-M-02 (depende de) — componentes universais.
+- `novo-mockup/_shared/components.css` — fonte canônica (387 linhas, 87 classes).
+- `src/dashboard/tema_css.py` — destino do refactor.
+- UX-M-01 (depende) — tokens CSS.
+- UX-M-02 (depende) — componentes universais.
+- UX-M-02.A..D (bloqueia) — sub-sprints que CONSOMEM as classes canônicas.
 
-*"O CSS do botão vive perto do botão." — princípio da Onda M*
+## Dúvidas que NÃO precisam ser perguntadas
+
+- "Devo dividir em 8 arquivos?" Não — monolítico é suficiente nesta fase.
+- "E o `_root_legado` e outras seções?" Fora de escopo — débito separado.
+- "Como os componentes Streamlit nativos vão usar?" Eles não — só componentes nossos via `ui.py`.
+- "E se mockup e dashboard divergirem?" Teste de sincronia detecta (item 5 do critério).
+
+*"O CSS do botão vive perto do botão... e do mockup do botão." — princípio da Onda M*

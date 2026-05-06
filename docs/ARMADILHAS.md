@@ -315,4 +315,22 @@ Originalmente descoberta na Sprint 87b. Reforçando aqui: `GrafoDB.upsert_node` 
 
 ---
 
+## Sessão 2026-05-06 (Onda M — modularização) -- 1 armadilha nova
+
+### 23. JS runtime global em `instalar_fix_sidebar_padding` afeta TODAS as páginas
+
+**Sintoma:** commit `928628c` ("topbar polish + sem scroll horizontal + gap canonico") foi visualmente bom para Visão Geral mas bagunçou layouts internos de outras páginas (Busca Global, Extração Tripla, Categorias, etc.). Headers ficaram duplicados visualmente; cards desalinhados; espaçamentos verticais errados.
+
+**Causa raiz:** a função `instalar_fix_sidebar_padding()` em `src/dashboard/componentes/shell.py` aplica `setProperty('important')` em seletores Streamlit GENÉRICOS (`stColumn`, `stHorizontalBlock`, `stVerticalBlock`, `stElementContainer`). Esses seletores existem em TODAS as 30+ páginas. Cada nova regra é aplicada universalmente, sem escopo.
+
+O commit `928628c` mudou o modelo de "padding 24px no parent topVB único" para "padding 24px filho-a-filho via `forEach`". Isso enfatizou separações visuais entre elementos (cada `stElementContainer` virou "card isolado"), expondo duplicações pré-existentes (`hero_titulo_html` + `_page_header_html` em 4 páginas) e desalinhando layouts internos.
+
+**Fix imediato:** revert do commit em `2817706`. Modelo voltou ao "padding único no parent" do `9f5c73e`.
+
+**Fix estrutural:** Sprint UX-M-04 (Onda M) substitui ~80% dos `setProperty` por CSS estático escopado em `src/dashboard/css/shell.css` com specificity `html body [data-testid="..."]`. JS runtime fica APENAS para regras que CSS não alcança (atributos HTML como `target="_self"`, detecção runtime de filhos com h=0).
+
+**Princípio canônico (padrão `(w)` do VALIDATOR_BRIEF):** layout deve ser declarativo via CSS. JS runtime só para regras que CSS comprovadamente não cobre. Antes de adicionar mais um `setProperty('important')` em seletor Streamlit genérico, perguntar: "isso afetaria outras páginas?". Se sim, escopar com classe específica ou seletor combinado, ou virar CSS.
+
+---
+
 *"Experiência é simplesmente o nome que damos aos nossos erros." -- Oscar Wilde*
