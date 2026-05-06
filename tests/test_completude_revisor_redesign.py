@@ -278,3 +278,6 @@ def test_page_header_completude_mostra_pill_d7_calibracao_para_84pct() -> None:
     assert "pill-d7-calibracao" in html
     assert "84%" in html
     assert "UX-RD-10" in html
+
+
+# "É próprio do espírito bem formado caber em todos os tópicos." -- Quintiliano

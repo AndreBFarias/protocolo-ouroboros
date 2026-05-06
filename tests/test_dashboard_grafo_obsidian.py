@@ -252,7 +252,10 @@ class TestRenderizacaoPagina:
         at.run()
         assert not at.exception
         markdowns = " ".join(m.value for m in at.markdown)
-        assert "Grafo Visual" in markdowns
+        # UX-U-03: page-header canônico emite "GRAFO VISUAL + OBSIDIAN" em
+        # UPPERCASE (CSS .page-title text-transform: uppercase). Comparação
+        # case-insensitive garante presença do título sem acoplar a estilo.
+        assert "grafo visual" in markdowns.lower()
 
 
 class TestIntegracaoDashboard:

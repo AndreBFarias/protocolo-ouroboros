@@ -47,6 +47,7 @@ from src.dashboard.tema import (
     hero_titulo_html,
     rgba_cor,
 )
+from src.dashboard.tema_plotly import st_plotly_chart_dracula
 
 # ---------------------------------------------------------------------------
 # Tokens de cenário — mapa cor por cenário (UX-RD-08).
@@ -718,7 +719,7 @@ def _grafico_cenarios(
     )
     tema.legenda_abaixo(fig)
     aplicar_locale_ptbr(fig)
-    st.plotly_chart(fig, width="stretch")
+    st_plotly_chart_dracula(fig)
 
 
 def _grafico_simulacao(
@@ -785,7 +786,7 @@ def _grafico_simulacao(
     )
     tema.legenda_abaixo(fig)
     aplicar_locale_ptbr(fig, valores_eixo_x=meses_labels)
-    st.plotly_chart(fig, width="stretch")
+    st_plotly_chart_dracula(fig)
 
 
 # "A preparação de hoje determina a conquista de amanhã." -- Roger Staubach

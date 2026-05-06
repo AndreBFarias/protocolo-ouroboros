@@ -64,7 +64,6 @@ from src.dashboard.tema import (
     FONTE_CORPO,
     breadcrumb_drilldown_html,
     callout_html,
-    hero_titulo_html,
     icon_html,
 )
 
@@ -208,14 +207,24 @@ def calcular_saldo_topo(df: pd.DataFrame) -> dict[str, float]:
     else:
         operacional = df
 
+    # FIX-02: filtrar por coluna canônica `tipo` (enum estrito do schema)
+    # em vez de signal `valor < 0`. XLSX armazena valores positivos; o tipo
+    # (Receita/Despesa/Transferência Interna/Imposto) é o sinalizador.
+    # Robusto a ambos os formatos: XLSX real (positivos) ou mock (negativos).
     valores = pd.to_numeric(operacional.get("valor"), errors="coerce").fillna(0.0)
-    receita = float(valores[valores > 0].sum())
-    despesa = float(valores[valores < 0].sum())  # já negativo
-    saldo = receita + despesa  # despesa é negativa
+    if "tipo" in operacional.columns:
+        receita = float(valores[operacional["tipo"] == "Receita"].sum())
+        despesa_raw = float(valores[operacional["tipo"] == "Despesa"].sum())
+    else:
+        # fallback (df sem coluna tipo): heurística antiga por signal
+        receita = float(valores[valores > 0].sum())
+        despesa_raw = float(valores[valores < 0].sum())  # negativo
+    # Saldo = receita - magnitude(despesa); funciona com ambos os sinais.
+    saldo = receita - abs(despesa_raw)
     return {
         "saldo": saldo,
         "receita": receita,
-        "despesa": despesa,  # negativo
+        "despesa": despesa_raw,  # mantém sinal original do dataset
         "transacoes": int(len(df)),
     }
 
@@ -235,9 +244,14 @@ def calcular_breakdown_categorias(df: pd.DataFrame, top_n: int = 5) -> list[dict
     else:
         operacional = df
 
-    valores = pd.to_numeric(operacional.get("valor"), errors="coerce").fillna(0.0)
-    apenas_despesas = operacional[valores < 0].copy()
-    apenas_despesas["__abs"] = (-valores[valores < 0]).values
+    # FIX-02: filtrar por tipo == "Despesa" (canônico do schema XLSX) em vez
+    # de valor < 0 (XLSX armazena valores positivos; tipo é o sinalizador).
+    # O filtro antigo retornava conjunto vazio porque valores são sempre
+    # positivos -> bug "Despesa R$ 0,00" mesmo com 4760 despesas no XLSX.
+    apenas_despesas = operacional[operacional["tipo"] == "Despesa"].copy()
+    apenas_despesas["__abs"] = (
+        pd.to_numeric(apenas_despesas["valor"], errors="coerce").fillna(0.0).abs()
+    )
 
     if apenas_despesas.empty:
         return []
@@ -749,12 +763,18 @@ def renderizar(
     ``renderizar(dados, periodo, pessoa, ctx)`` sem mudança.
     """
     st.markdown(_estilos_locais_html(), unsafe_allow_html=True)
+    # UX-U-03: page-header canônico via helper (substitui hero_titulo_html
+    # que emitia h1 fora do padrão UPPERCASE 40px gradient do mockup).
+    from src.dashboard.componentes.page_header import renderizar_page_header
     st.markdown(
-        hero_titulo_html(
-            "",
-            "Extrato",
-            "Tabela densa com transações do período, breakdown por categoria "
-            "e drawer detalhado com JSON syntático e documento vinculado.",
+        renderizar_page_header(
+            titulo="EXTRATO",
+            subtitulo=(
+                "Tabela densa com transações do período, breakdown por "
+                "categoria e drawer detalhado com JSON sintático e documento "
+                "vinculado."
+            ),
+            sprint_tag="UX-RD-06",
         ),
         unsafe_allow_html=True,
     )

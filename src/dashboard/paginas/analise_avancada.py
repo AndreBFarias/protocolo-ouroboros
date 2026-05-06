@@ -59,9 +59,9 @@ from src.dashboard.tema import (
     FONTE_SUBTITULO,
     LAYOUT_PLOTLY,
     callout_html,
-    hero_titulo_html,
     rgba_cor,
 )
+from src.dashboard.tema_plotly import st_plotly_chart_dracula
 
 # ---------------------------------------------------------------------------
 # Constantes
@@ -471,7 +471,7 @@ def _renderizar_aba_fluxo(df: pd.DataFrame) -> None:
     tema.legenda_abaixo(fig)
     # Margens generosas (l=40, r=160) para evitar corte de label longo.
     fig.update_layout(margin=dict(l=40, r=160, t=fig.layout.margin.t, b=fig.layout.margin.b))
-    st.plotly_chart(fig, use_container_width=True)
+    st_plotly_chart_dracula(fig)
 
 
 def _renderizar_aba_comparativo(df: pd.DataFrame) -> None:
@@ -554,7 +554,7 @@ def _renderizar_aba_comparativo(df: pd.DataFrame) -> None:
         hovermode="x unified",
     )
 
-    st.plotly_chart(fig, use_container_width=True)
+    st_plotly_chart_dracula(fig)
 
 
 def _renderizar_aba_padroes(df: pd.DataFrame) -> None:
@@ -634,13 +634,17 @@ def renderizar(
     ctx: dict | None = None,
 ) -> None:
     """Renderiza página Análise com 3 sub-abas (Fluxo / Comparativo / Padrões)."""
+    # UX-U-03: page-header canônico via helper.
+    from src.dashboard.componentes.page_header import renderizar_page_header
     st.markdown(
-        hero_titulo_html(
-            "",
-            "Análise",
-            "Três perspectivas sobre o mesmo dataset normalizado: para onde "
-            "vai o dinheiro (fluxo), o que mudou ao longo do tempo "
-            "(comparativo) e quando acontece (padrões).",
+        renderizar_page_header(
+            titulo="ANÁLISE",
+            subtitulo=(
+                "Três perspectivas sobre o mesmo dataset normalizado: para "
+                "onde vai o dinheiro (fluxo), o que mudou ao longo do tempo "
+                "(comparativo) e quando acontece (padrões)."
+            ),
+            sprint_tag="UX-RD-12",
         ),
         unsafe_allow_html=True,
     )

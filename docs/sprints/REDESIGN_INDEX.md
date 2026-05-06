@@ -83,6 +83,55 @@ validada **visualmente pelo dono Opus principal** (não despacha
 | UX-08 (deep-link teste 13 abas) | RE-AVALIAR | UX-RD-03 mantém URL deep-link com novo shell |
 | UX-09 (cleanup acentuação) | NÃO ABSORVIDA | sprint pequena de higiene, separada |
 
+## Fase Corretiva pós-Onda 6 (2026-05-05) — 14 sprints UX-RD-FIX (ARQUIVADA em 2026-05-06)
+
+A auditoria honesta `docs/auditorias/AUDITORIA_REDESIGN_2026-05-05.md` (após Onda 6 marcada concluída em 2026-05-04) revelou **score real 64/100** vs meta 95+. Treze classes de divergências mockup × dashboard foram catalogadas e atribuídas a **14 sprints corretivas**. Todas executadas em 2026-05-05 com gauntlet verde (lint+smoke+pytest).
+
+**Resultado**: métricas DOM passaram, mas em revisão visual em 2026-05-06 o dono constatou que **a percepção integrada continuou quebrada** — sidebar mistura widgets antigos (logo escudo, Granularidade/Mês/Pessoa selectbox, Busca Global text input) com shell HTML novo, KPIs semânticos errados na Visão Geral, layout esparso, bugs Plotly. A abordagem transversal (1 fix mexe em N páginas) não isolou shell global × conteúdo de tela.
+
+**Decisão (2026-05-06)**: arquivar a Fase Corretiva e adotar abordagem por tela. Os fixes aplicados (UX-RD-FIX-01..14) **permanecem no código** — apenas as specs movem para `arquivadas/2026-05-tentativa-fix-transversal/`. Roteiro substituto em `ROTEIRO_TELAS_2026-05-06.md`.
+
+Decisão arquitetural confirmada (2026-05-05, dono): **Decisão A** — criar 5 páginas Bem-estar reais (Treinos, Marcos, Alarmes, Contadores, Tarefas). Páginas órfãs (Memórias, Rotina, Cruzamentos, Privacidade, Editor TOML) acessíveis via deep-link interno `?secao=` (FIX-14).
+
+| ID | Tema | Onda corretiva | Esforço | Depende de |
+|---|---|--:|--:|---|
+| FIX-01 | Lint acentuação 11 .md | C1 | 1h | -- |
+| FIX-02 | Bug Despesa R$ 0,00 no Extrato | C1 | 2h | -- |
+| FIX-03 | KPI grid minmax 220→180 | C1 | 30min | -- |
+| FIX-04 | Material Symbols vazando | C1 | 2h | -- |
+| FIX-05 | Breadcrumb clicável | C1 | 1h | -- |
+| FIX-06 | H1 duplicado (remover st.title) | C1 | 1h | -- |
+| FIX-07 | 23 glyphs SVG portados | C2 | 1d | -- |
+| FIX-08 | Tipografia escala fina | C2 | 1d | -- |
+| FIX-09 | Plotly modebar + Dracula | C2 | 1d | -- |
+| FIX-10 | Criar 5 páginas Bem-estar reais | C3 | 2d | -- |
+| FIX-11 | Deep-link 12 abas Bem-estar | C4 | 4h | FIX-10 |
+| FIX-12 | Acessibilidade WCAG | C5 | 4h | -- |
+| FIX-14 | Rota interna 5 órfãs | C5 | 6h | FIX-10, FIX-11 |
+| FIX-13 | Citação filosófica em .py | C5 | 2h | TODAS |
+
+**Total estimado**: ~7-8 dias úteis. Paralelizável em 9 worktrees (C1+C2). FIX-13 obrigatoriamente última.
+
+Critério global de pronto: 29 telas com fidelidade ≥85%, deep-link funcional, lint exit 0, smoke 10/10, pytest baseline mantida, zero TODO inline, citação em todos os .py novos. Após FIX-13 → re-auditoria gera `AUDITORIA_REDESIGN_2026-05-12.md` confirmando ≥95/100.
+
+---
+
+## Fase Tela-a-Tela (2026-05-06) — Onda U + T + Q (vigente)
+
+Após arquivar a Fase Corretiva, o dono pediu reorganização por **peça completa**: cada sprint entrega ou (a) uma peça estruturante universal (Onda U) ou (b) uma tela inteira 1:1 com mockup (Onda T) ou (c) quality gate final (Onda Q). Total: **36 sprints** em ~5-6 semanas.
+
+Roteiro canônico: `docs/sprints/backlog/ROTEIRO_TELAS_2026-05-06.md`. Plano operacional: `~/.claude/plans/auditoria-honesta-da-magical-lovelace.md`.
+
+| Onda | Sprints | Foco | Status |
+|---|--:|---|---|
+| **U** | 4 (U-01..U-04) | Estruturantes universais (sidebar, topbar, page-header, filtros página) | Specs em backlog/ |
+| **T** | 29 (T-01..T-29) | Uma tela por sprint, layout 1:1 + funcional + dados + validação humana | A escrever após U mergeada |
+| **Q** | 3 (Q-01..Q-03) | Auditoria visual + regressão funcional + fechamento | A escrever após T mergeada |
+
+**Garantias**: validação humana obrigatória entre cada sprint; captura side-by-side mockup × dashboard automática; reversibilidade (commits isolados); quality gates por onda.
+
+---
+
 ## Observabilidade da reforma
 
 A skill `/auditar-cobertura-total` continua válida — não há contrato de

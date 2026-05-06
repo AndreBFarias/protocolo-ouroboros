@@ -133,42 +133,18 @@ def _legenda_html() -> str:
 
 
 def _page_header_html(ativo: bool) -> str:
-    pill = (
-        '<span style="background:{0};color:{1};padding:3px 8px;border-radius:4px;'
-        'font-family:ui-monospace,monospace;font-size:11px;'.format(
-            CORES["positivo"], CORES["fundo"]
-        )
-        + 'letter-spacing:0.04em;">opt-in ativo</span>'
-        if ativo
-        else (
-            '<span style="background:{0};color:{1};padding:3px 8px;border-radius:4px;'
-            'font-family:ui-monospace,monospace;font-size:11px;'.format(
-                CORES["alerta"], CORES["fundo"]
-            )
-            + 'letter-spacing:0.04em;">desativado</span>'
-        )
-    )
-    return minificar(
-        f"""
-        <div style="display:flex;justify-content:space-between;align-items:flex-end;
-                    margin-bottom:18px;border-bottom:1px solid {CORES['texto_sec']}33;
-                    padding-bottom:14px;">
-            <div>
-                <h1 style="margin:0;font-size:24px;letter-spacing:0.04em;
-                            color:{CORES['texto']};">CICLO MENSTRUAL</h1>
-                <p style="margin:4px 0 0;color:{CORES['texto_sec']};font-size:13px;">
-                    Track de fluxo, fase e sintomas. Opcional, opt-in.
-                </p>
-            </div>
-            <div style="font-family:ui-monospace,monospace;font-size:11px;
-                        color:{CORES['texto_muted']};letter-spacing:0.04em;">
-                <span style="background:{CORES['fundo_inset']};padding:3px 8px;
-                              border:1px solid {CORES['texto_sec']}33;
-                              border-radius:4px;">UX-RD-19</span>
-                <span style="margin-left:8px;">{pill}</span>
-            </div>
-        </div>
-        """
+    """UX-U-03: usa helper canônico ``componentes/page_header``."""
+    from src.dashboard.componentes.page_header import renderizar_page_header
+
+    pills = [
+        {"texto": "opt-in ativo" if ativo else "desativado",
+         "tipo": "d7-graduado" if ativo else "d7-regredindo"},
+    ]
+    return renderizar_page_header(
+        titulo="CICLO MENSTRUAL",
+        subtitulo="Track de fluxo, fase e sintomas. Opcional, opt-in.",
+        sprint_tag="UX-RD-19",
+        pills=pills,
     )
 
 

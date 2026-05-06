@@ -432,7 +432,14 @@ class TestImportSmokeApp:
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """O módulo app.py deve poder ser importado mesmo se busca_roteador
-        (UX-114) não existe ainda. Branch reversível ativo."""
+        (UX-114) não existe ainda. Branch reversível ativo.
+
+        UX-U-04: ``renderizar_input_busca`` foi removido da sidebar
+        (sidebar = shell-only). O componente continua existindo em
+        ``componentes/busca_global_sidebar.py`` — pode ser usado por
+        páginas opt-in. Aqui só validamos que app.py importa e que as
+        funções essenciais permanecem.
+        """
         # Garante import limpo.
         sys.modules.pop("src.dashboard.app", None)
         # Mantém streamlit real disponível para o import.
@@ -441,11 +448,8 @@ class TestImportSmokeApp:
         # _sidebar e _selecionar_cluster existem após refactor.
         assert hasattr(app_mod, "_sidebar")
         assert hasattr(app_mod, "_selecionar_cluster")
-        # Import do componente novo é declarado em app.py.
-        assert "renderizar_input_busca" in dir(app_mod) or any(
-            "renderizar_input_busca" in line
-            for line in __import__("inspect").getsource(app_mod).splitlines()
-        )
+        # UX-U-04: validar que filtros migraram para função própria.
+        assert hasattr(app_mod, "_filtros_globais_main")
 
 
 class TestSprintUX119SidebarAgrupada:
@@ -463,20 +467,23 @@ class TestSprintUX119SidebarAgrupada:
     """
 
     def test_ac4_apenas_dois_separadores_intermediarios_removidos(self) -> None:
-        # Lê o código-fonte direto: o número total de st.markdown("---")
-        # em app.py deve ser 2 (cabeçalho/filtros + filtros/cards), não 4.
+        """UX-U-04: sidebar virou shell-only — separadores na sidebar
+        deixaram de existir. Antes de UX-U-04 esperávamos 2 separadores
+        (cabeçalho/filtros + filtros/cards). Após UX-U-04 esperamos 0
+        separadores ``st.markdown("---")`` em ``app.py`` (sidebar não
+        emite mais ``--`` e os filtros migraram para expander no main).
+        """
         from pathlib import Path
 
         path = Path(__file__).resolve().parents[1] / "src/dashboard/app.py"
         fonte = path.read_text(encoding="utf-8")
-        # Conta apenas chamadas reais (não matches em comentários).
         ocorrencias = [
             linha
             for linha in fonte.splitlines()
             if 'st.markdown("---")' in linha and not linha.lstrip().startswith("#")
         ]
-        assert len(ocorrencias) == 2, (
-            f"Esperado 2 separadores em app.py (cabecalho + cards); "
+        assert len(ocorrencias) == 0, (
+            f"UX-U-04: esperado 0 separadores em app.py (sidebar shell-only); "
             f"encontrei {len(ocorrencias)}: {ocorrencias}"
         )
 

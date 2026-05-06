@@ -133,11 +133,18 @@ def _href_para(cluster: str, aba: str | None = None) -> str:
 
 
 def _renderizar_brand_html() -> str:
-    """Bloco do brand (topo da sidebar): glyph + nome em mono uppercase."""
+    """Bloco do brand (topo da sidebar): glyph SVG ouroboros + nome em mono uppercase.
+
+    FIX-07: porta o glyph 'ouroboros' do mockup canônico (componentes/glyphs.py)
+    em vez de placeholder letra "O". Antes: ``<span>O</span>`` (visualmente lia
+    "OOuroboros"); agora: ``<svg viewBox="0 0 24 24">...</svg>`` herdando cor.
+    """
+    from src.dashboard.componentes.glyphs import glyph  # noqa: PLC0415
+
     return (
         '<a class="sidebar-brand" href="?cluster=Home" '
         'style="text-decoration:none;color:inherit;">'
-        '<span class="sidebar-brand-glyph" aria-hidden="true">O</span>'
+        f'{glyph("ouroboros", tamanho_px=20, classe="sidebar-brand-glyph")}'
         "<span>Ouroboros</span>"
         "</a>"
     )
@@ -178,6 +185,9 @@ def _renderizar_cluster_html(
         # Quando o cluster é o ativo e nenhuma aba específica foi marcada,
         # destacamos a primeira aba implementada (default visual).
         classe = "sidebar-item active" if ativa else "sidebar-item"
+        # FIX-12: aria-current="page" no item ativo para tecnologias
+        # assistivas (WCAG 1.3.1 Info and Relationships).
+        aria_current = ' aria-current="page"' if ativa else ""
         href = _href_para(nome_cluster, nome_aba)
         rotulo = html.escape(nome_aba)
         if not aba.get("implementada", True):
@@ -189,15 +199,24 @@ def _renderizar_cluster_html(
         else:
             badge = ""
         itens_html.append(
-            f'<a class="{classe}" href="{href}" data-cluster="{nome_seguro}" '
+            f'<a class="{classe}"{aria_current} href="{href}" data-cluster="{nome_seguro}" '
             f'data-aba="{rotulo}">{rotulo}{badge}</a>'
         )
+
+    # UX-U-01: badge canônica no header do cluster (mockup 00-shell-navegacao
+    # mostra <span class="badge">3</span> no Inbox). Por hora apenas Inbox
+    # recebe badge; valor placeholder "..." enquanto contagem real do
+    # data/raw/_inbox/ não está implementada.
+    badge_cluster_html = ""
+    if nome_cluster == "Inbox":
+        badge_cluster_html = '<span class="badge" title="Arquivos pendentes na fila">...</span>'
 
     return (
         '<div class="sidebar-cluster">'
         '<div class="sidebar-cluster-header">'
         f'<span style="display:inline-flex;align-items:center;gap:8px;">'
         f"{nome_seguro}</span>"
+        f"{badge_cluster_html}"
         "</div>"
         + "".join(itens_html)
         + "</div>"
@@ -219,6 +238,13 @@ def renderizar_sidebar(cluster_ativo: str, aba_ativa: str = "") -> str:
         DENTRO de ``with st.sidebar:``.
     """
     blocos: list[str] = []
+    # FIX-12: skip-link no início da sidebar (WCAG 2.4.1 Bypass Blocks).
+    # Invisível por padrão; aparece quando recebe foco via Tab.
+    blocos.append(
+        '<a class="skip-link sr-only-focusable" href="#main-root">'
+        "Pular para conteúdo principal"
+        "</a>"
+    )
     blocos.append(_renderizar_brand_html())
     blocos.append(_renderizar_busca_html())
     for cluster in CLUSTERS_REDESIGN:
@@ -258,15 +284,35 @@ def renderizar_topbar(
         Bloco HTML pronto para ``st.markdown(html, unsafe_allow_html=True)``
         no início de ``main()``, antes do conteúdo principal.
     """
+    # FIX-05: segmentos não-current viram <a href="?cluster=...">; current
+    # permanece <span>. Mockup canônico (components.css:114-121) define
+    # .breadcrumb .seg como elemento clicável; current é a página atual
+    # (não-clicável). Importação atrasada de CLUSTERS_VALIDOS para evitar
+    # ciclo. "Ouroboros" (primeiro segmento) aponta para ?cluster=Home.
+    from src.dashboard.componentes.drilldown import CLUSTERS_VALIDOS  # noqa: PLC0415
+
     segmentos = list(breadcrumb)
     n = len(segmentos)
     partes_seg: list[str] = []
     for i, seg in enumerate(segmentos):
         ultimo = i == n - 1
-        classe = "seg current" if ultimo else "seg"
         rotulo = html.escape(seg)
         sep = "" if ultimo else '<span class="sep">/</span>'
-        partes_seg.append(f'<span class="{classe}">{rotulo}</span>{sep}')
+        if ultimo:
+            partes_seg.append(f'<span class="seg current">{rotulo}</span>{sep}')
+        else:
+            # primeiro segmento "Ouroboros" -> Home; demais -> cluster homônimo se válido
+            if i == 0:
+                href_pai = "?cluster=Home"
+            elif seg in CLUSTERS_VALIDOS:
+                href_pai = f"?cluster={html.escape(seg, quote=True)}"
+            else:
+                href_pai = "?cluster=Home"
+            partes_seg.append(
+                f'<a class="seg" href="{href_pai}" '
+                'style="text-decoration:none;color:inherit;">'
+                f'{rotulo}</a>{sep}'
+            )
 
     partes_acoes: list[str] = []
     for acao in acoes or []:
@@ -284,10 +330,23 @@ def renderizar_topbar(
         else:
             partes_acoes.append(f'<button class="{classe}">{label}</button>')
 
+    # UX-U-02: slot dinâmico vindo de st.session_state['topbar_acoes_html'],
+    # alimentado pelo helper componentes/topbar_actions.renderizar_grupo_acoes()
+    # que cada página pode chamar no início de seu renderizar(). main() em
+    # app.py reseta o slot antes de cada run para evitar leak entre páginas.
+    acoes_session_html = ""
+    try:
+        import streamlit as _st
+        acoes_session_html = _st.session_state.get("topbar_acoes_html", "")
+    except Exception:
+        acoes_session_html = ""
+
+    slot_html = "".join(partes_acoes) + acoes_session_html
+
     return (
         '<header class="topbar ouroboros-topbar-redesign">'
         f'<nav class="breadcrumb" aria-label="Localização">{"".join(partes_seg)}</nav>'
-        f'<div class="topbar-actions">{"".join(partes_acoes)}</div>'
+        f'<div class="topbar-actions">{slot_html}</div>'
         "</header>"
     )
 

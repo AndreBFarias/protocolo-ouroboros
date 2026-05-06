@@ -207,12 +207,14 @@ def aplicar_drilldown(
     """
     if not key_grafico:
         raise ValueError("key_grafico é obrigatório para on_select funcionar")
-    import streamlit as st
+
+    import streamlit as st  # noqa: PLC0415
+
+    from src.dashboard.tema_plotly import st_plotly_chart_dracula
 
     fig.update_layout(clickmode="event+select")
-    resultado = st.plotly_chart(
+    resultado = st_plotly_chart_dracula(
         fig,
-        use_container_width=True,
         key=key_grafico,
         on_select="rerun",
     )

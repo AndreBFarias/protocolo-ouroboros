@@ -24,7 +24,6 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
-from src.dashboard.componentes.html_utils import minificar
 from src.dashboard.tema import CORES
 from src.mobile_cache.varrer_vault import descobrir_vault_root
 
@@ -85,28 +84,17 @@ def _salvar_estado(caminho: Path, estado: dict[str, bool]) -> None:
 
 
 def _page_header_html(qtd_compartilhadas: int, caminho: Path) -> str:
-    return minificar(
-        f"""
-        <div style="display:flex;justify-content:space-between;align-items:flex-end;
-                    margin-bottom:18px;border-bottom:1px solid {CORES['texto_sec']}33;
-                    padding-bottom:14px;">
-            <div>
-                <h1 style="margin:0;font-size:24px;letter-spacing:0.04em;
-                            color:{CORES['texto']};">PRIVACIDADE · A ↔ B</h1>
-                <p style="margin:4px 0 0;color:{CORES['texto_sec']};font-size:13px;">
-                    Controle por schema do que cada pessoa vê do outro.
-                    <strong>{qtd_compartilhadas} de 6</strong> áreas compartilhadas.
-                </p>
-            </div>
-            <div style="font-family:ui-monospace,monospace;font-size:11px;
-                        color:{CORES['texto_muted']};letter-spacing:0.04em;">
-                <span style="background:{CORES['fundo_inset']};padding:3px 8px;
-                              border:1px solid {CORES['texto_sec']}33;
-                              border-radius:4px;">UX-RD-19</span>
-                <span style="margin-left:8px;color:{CORES['destaque']};">{caminho.name}</span>
-            </div>
-        </div>
-        """
+    """UX-U-03: usa helper canônico ``componentes/page_header``."""
+    from src.dashboard.componentes.page_header import renderizar_page_header
+
+    return renderizar_page_header(
+        titulo="PRIVACIDADE · A ↔ B",
+        subtitulo=(
+            f"Controle por schema do que cada pessoa vê do outro. "
+            f"{qtd_compartilhadas} de 6 áreas compartilhadas."
+        ),
+        sprint_tag="UX-RD-19",
+        pills=[{"texto": caminho.name, "tipo": "generica"}],
     )
 
 

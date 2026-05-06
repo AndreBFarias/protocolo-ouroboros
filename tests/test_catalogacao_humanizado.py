@@ -15,6 +15,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
+import pytest
 import yaml
 
 from src.dashboard.componentes.humanizar_tipos import (
@@ -192,32 +193,26 @@ class TestSprintUX126PolishIteracao3:
         assert "aspect-ratio: 724 / 733 !important" in bloco
         assert "display: block !important" in bloco
 
+    @pytest.mark.skip(reason="UX-U-04: logo_sidebar_html removido da sidebar (shell-only)")
     def test_ac5_app_chama_logo_com_120px(self) -> None:
-        """`app.py` passa `largura_px=120` para `logo_sidebar_html`."""
-        conteudo = APP_PATH.read_text(encoding="utf-8")
-        assert "logo_sidebar_html(largura_px=120)" in conteudo, (
-            "app.py deve passar largura_px=120 (era 64 antes da Sprint UX-126)"
-        )
+        """Sprint UX-126 AC5 era válido até UX-RD-03. UX-U-04 corta widgets
+        antigos da sidebar (sidebar = shell HTML puro). O brand canônico vem
+        do glyph SVG ouroboros (FIX-07) emitido pelo ``renderizar_brand_html``
+        em ``componentes/shell.py``. Logo escudo ``logo_sidebar_html`` segue
+        existindo no módulo ``tema.py`` mas não é mais chamado por ``app.py``.
+        """
 
     # ----------------------------------------------------------------
-    # AC6 -- caption sidebar reformatada
+    # AC6 -- caption sidebar reformatada (UX-U-04 removeu)
     # ----------------------------------------------------------------
 
+    @pytest.mark.skip(reason="UX-U-04: caption 'Dados de' removida da sidebar (shell-only)")
     def test_ac6_caption_sidebar_em_duas_linhas_centralizadas(self) -> None:
-        """`app.py` substituiu `st.caption` por bloco HTML com 2 linhas
-        centralizadas e travessões decorativos na hora."""
-        conteudo = APP_PATH.read_text(encoding="utf-8")
-        # `st.caption(f"Dados de {ultima.strftime('%d/%m/%Y às %H:%M')}")` removido.
-        assert 'st.caption(f"Dados de' not in conteudo, (
-            "ainda usa st.caption antigo -- AC6 não aplicado"
-        )
-        # Novo bloco HTML.
-        assert "ouroboros-sidebar-caption" in conteudo, "div .ouroboros-sidebar-caption ausente"
-        assert "text-align:center" in conteudo
-        # Travessões decorativos (em-dash unicode).
-        assert "— {hora_str} —" in conteudo, "travessões decorativos em-dash ausentes na linha 2"
-        # Linha 1: data sem hora.
-        assert "Dados de {data_str}" in conteudo
+        """Sprint UX-126 AC6 era válido até UX-RD-03. UX-U-04 corta widgets
+        antigos da sidebar; caption ``Dados de DD/MM — HH:MM —`` foi
+        eliminada porque o mockup canônico (00-shell-navegacao.html) não
+        tem caption na sidebar — apenas o footer ``D7 cobertura
+        observável`` em monospace."""
 
 
 # "Detalhe não é poluição -- é a borda da credibilidade." -- princípio do polish honesto

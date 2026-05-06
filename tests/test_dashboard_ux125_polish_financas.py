@@ -158,17 +158,14 @@ class TestAc3TabsHomeEspelhamClusters:
                 f"Aba '{aba}' do Home não pode mais ter 'hoje' (UX-125)"
             )
 
+    @pytest.mark.skip(
+        reason="UX-T-01: cluster Home renderiza Visão Geral diretamente. "
+        "Tabs 'Finanças/Documentos/Análise/Metas' do Home foram eliminadas "
+        "porque clusters próprios já oferecem essas vistas (sidebar canônica)."
+    )
     def test_app_py_dispatcha_para_home_dinheiro_via_tab_financas(self) -> None:
         """Inspeção textual: roteador em main() chama home_dinheiro.renderizar
         no bloco da tab 'Finanças' do cluster Home (arquivo físico mantém nome)."""
-        texto = (RAIZ / "src" / "dashboard" / "app.py").read_text(encoding="utf-8")
-        # tab 'Finanças' aparece no st.tabs(...) do cluster Home
-        assert '"Finanças"' in texto
-        # As 4 mini-views ainda são chamadas pelo nome físico
-        assert "home_dinheiro.renderizar" in texto
-        assert "home_docs.renderizar" in texto
-        assert "home_analise.renderizar" in texto
-        assert "home_metas.renderizar" in texto
 
     def test_abas_home_homonimas_documentadas(self) -> None:
         """Sprint UX-125: ABAS_HOME_HOMONIMAS lista as 4 tabs do Home com

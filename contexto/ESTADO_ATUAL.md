@@ -1,9 +1,49 @@
-# ESTADO_ATUAL.md -- Snapshot tecnico em 2026-04-29 (pos-brainstorming de redesign)
+# ESTADO_ATUAL.md -- Snapshot tecnico em 2026-05-05 (pos-auditoria honesta do redesign)
 
-> **Versionado a partir de 2026-04-29 pela Sprint DOC-VERDADE-01.A**.
+> **Versionado a partir de 2026-04-29 pela Sprint DOC-VERDADE-01.A; atualizado em 2026-05-05 com auditoria do redesign UX/RD**.
 > Whitelist em `.gitignore` permite este arquivo + COMO_AGIR.md no repo (POR_QUE.md e PROMPT_NOVA_SESSAO.md continuam locais por conter PII estrutural).
 > Esta doc e fotografia do momento — para verdade vivo consulte `git log` + `ls docs/sprints/concluidos/`.
 > Para auditar este snapshot contra realidade: `python scripts/auditar_estado.py`.
+
+## Sessao 2026-05-06 -- Reorganização por tela (Onda U+T+Q vigente, Fase Corretiva arquivada)
+
+Após executar as 14 sprints UX-RD-FIX-01..14 em 2026-05-05 (gauntlet verde, métricas DOM passaram), uma revisão visual em 2026-05-06 mostrou que **a percepção integrada continua quebrada**: sidebar mistura widgets antigos (logo escudo, Granularidade/Mês/Pessoa selectbox, Busca Global text input) com shell HTML novo; KPIs semantica errados na Home (financeiros vs agentic-first do mockup); layout esparso; bugs Plotly "undefined".
+
+**Diagnóstico arquitetural** (Explore agent + leitura `app.py:206-364`):
+- `_sidebar()` faz dois shells concorrentes: emite `renderizar_sidebar()` HTML novo E DEPOIS injeta logo+caption+4 selectbox+text_input.
+- Tupla `(periodo, pessoa, granularidade, cluster)` retornada para 29 páginas força filtros globais. Mockup pede filtros inline por página.
+- 14 fixes transversais cada um corrigia detalhe em N páginas; bagunça acumulou.
+
+**Decisão (dono)**: arquivar Fase Corretiva (specs UX-RD-FIX-* movidas para `docs/sprints/arquivadas/2026-05-tentativa-fix-transversal/`; código permanece). Adotar **abordagem por tela**:
+- **Onda U** (4 sprints estruturantes): U-01 sidebar canônica scroll, U-02 topbar com slot ações, U-03 page-header canônico, U-04 filtros por página + sidebar shell-only.
+- **Onda T** (29 sprints): UMA tela inteira por sprint -- layout 1:1 mockup + funcional + dados reais + validação humana.
+- **Onda Q** (3 sprints): auditoria visual completa + regressão funcional + fechamento.
+- **Total**: 36 sprints em ~5-6 semanas.
+
+Roteiro canônico: `docs/sprints/backlog/ROTEIRO_TELAS_2026-05-06.md`. Plano operacional: `~/.claude/plans/auditoria-honesta-da-magical-lovelace.md`.
+
+**Garantias para confiança**: validação humana obrigatória entre cada sprint; captura side-by-side mockup × dashboard automática; reversibilidade (commits isolados); validador integrador (Opus interativo) revisa cada output; quality gates por onda.
+
+**Próximo passo**: dono valida ROTEIRO + 4 specs Onda U; ao aprovar U-01, executor começa com captura BEFORE.
+
+---
+
+## Sessao 2026-05-05 -- Auditoria honesta da reforma de UI + 14 sprints corretivas
+
+Branch `ux/redesign-v1` fechou 19 sprints UX-RD-01..19 em 2026-05-04 (todas marcadas concluida). Auditoria independente em 2026-05-05 (Opus principal interativo) revelou:
+
+- **Score real 64/100** (vs meta 95+). Detalhe em `docs/auditorias/AUDITORIA_REDESIGN_2026-05-05.md`.
+- **13 divergencias** ainda abertas: 5 telas Bem-estar inacessiveis por deep-link, 5 abas-fantasma duplicando 2 paginas, bug Despesa R$ 0 no Extrato, lint quebrado (11 .md), iconografia 0% portada (0/52 glyphs SVG do `glyphs.js`), tipografia escala-grossa (config.toml `font="monospace"` vaza Source Code Pro), Plotly modebar visivel + paleta nao-Dracula, Material Symbols vazando como texto bruto ("keyboard_double_arrow_left"), h1 duplicado (`st.title` global + page-title), 60 .py sem citacao filosofica, kpi-grid 220px (mockup pede 180), breadcrumb nao-clicavel (`<span>` em vez de `<a>`), skip-links + aria-current ausentes.
+- **Decisao arquitetural** confirmada pelo dono: **Decisao A** — criar 5 paginas Bem-estar reais (Treinos, Marcos, Alarmes, Contadores, Tarefas). FIX-14 cobre as 5 orfas (Memorias, Rotina, Cruzamentos, Privacidade, Editor TOML) via deep-link interno `?secao=`.
+- **14 sprints corretivas** redigidas em `docs/sprints/backlog/sprint_ux_rd_fix_01..14.md` + roteiro mestre `ROTEIRO_REDESIGN_FINAL.md`.
+
+Pytest baseline pos-redesign: **2.520 passed / 9 skipped / 1 xfailed** (validado 2026-05-05). Smoke 10/10. Lint exit 1 (FIX-01 corrige).
+
+XLSX consolidado real: `data/output/ouroboros_2026.xlsx` (nao `extrato_consolidado.xlsx` como CLAUDE.md menciona — divergencia documental pequena).
+
+Linha de montagem das 14: ~7-8 dias uteis. Onda C1 (FIX-01..06) paralelizavel; C2 (FIX-07..09) paralelizavel; C3 (FIX-10) bloqueia C4 (FIX-11) e C5 (FIX-14); FIX-13 sempre ULTIMA.
+
+---
 
 
 ## Versao + saude geral

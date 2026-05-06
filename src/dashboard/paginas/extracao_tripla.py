@@ -38,7 +38,7 @@ import streamlit as st
 from src.dashboard.componentes.html_utils import minificar
 from src.dashboard.componentes.preview_documento import preview_documento
 from src.dashboard.componentes.preview_documento import tipo_arquivo as _tipo_preview
-from src.dashboard.tema import CORES, callout_html, hero_titulo_html
+from src.dashboard.tema import CORES, callout_html
 from src.load import validacao_csv as vc
 
 _PADRAO_CPF = re.compile(r"\b\d{3}\.\d{3}\.\d{3}-\d{2}\b")
@@ -516,12 +516,16 @@ def renderizar(
     """Entry point da aba Extração Tripla."""
     del dados, mes_selecionado, pessoa, ctx  # aba opera sobre CSV próprio
 
+    # UX-U-03: page-header canônico via helper.
+    from src.dashboard.componentes.page_header import renderizar_page_header
     st.markdown(
-        hero_titulo_html(
-            "",
-            "Extração Tripla",
-            "Lista de arquivos · viewer · tabela ETL × Opus × Humano. "
-            "Divergências em laranja; consenso pré-popula a coluna humana.",
+        renderizar_page_header(
+            titulo="EXTRAÇÃO TRIPLA",
+            subtitulo=(
+                "Lista de arquivos · viewer · tabela ETL × Opus × Humano. "
+                "Divergências em laranja; consenso pré-popula a coluna humana."
+            ),
+            sprint_tag="UX-RD-11",
         ),
         unsafe_allow_html=True,
     )

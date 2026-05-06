@@ -29,8 +29,6 @@ from typing import Any
 import pandas as pd
 import streamlit as st
 
-from src.dashboard.componentes.html_utils import minificar
-from src.dashboard.tema import CORES
 from src.mobile_cache.varrer_vault import descobrir_vault_root
 
 
@@ -147,32 +145,16 @@ def _correlacao_treinos_humor(
 
 
 def _page_header_html() -> str:
-    return minificar(
-        f"""
-        <div style="display:flex;justify-content:space-between;align-items:flex-end;
-                    margin-bottom:18px;border-bottom:1px solid {CORES['texto_sec']}33;
-                    padding-bottom:14px;">
-            <div>
-                <h1 style="margin:0;font-size:24px;letter-spacing:0.04em;
-                            color:{CORES['texto']};">CRUZAMENTOS</h1>
-                <p style="margin:4px 0 0;color:{CORES['texto_sec']};font-size:13px;">
-                    Correlações determinísticas entre humor, eventos,
-                    medidas e treinos. Roda local sobre os JSONs em
-                    <code style="color:{CORES['destaque']};
-                                  background:{CORES['fundo_inset']};
-                                  padding:1px 6px;border-radius:2px;">
-                        .ouroboros/cache/
-                    </code>.
-                </p>
-            </div>
-            <div style="font-family:ui-monospace,monospace;font-size:11px;
-                        color:{CORES['texto_muted']};letter-spacing:0.04em;">
-                <span style="background:{CORES['fundo_inset']};padding:3px 8px;
-                              border:1px solid {CORES['texto_sec']}33;
-                              border-radius:4px;">UX-RD-19</span>
-            </div>
-        </div>
-        """
+    """UX-U-03: usa helper canônico ``componentes/page_header``."""
+    from src.dashboard.componentes.page_header import renderizar_page_header
+
+    return renderizar_page_header(
+        titulo="CRUZAMENTOS",
+        subtitulo=(
+            "Correlações determinísticas entre humor, eventos, medidas e "
+            "treinos. Roda local sobre os JSONs em .ouroboros/cache/."
+        ),
+        sprint_tag="UX-RD-19",
     )
 
 

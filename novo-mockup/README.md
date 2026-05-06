@@ -31,11 +31,11 @@ ouroboros-redesign-v1/
 - 07-catalogacao · banco normalizado
 - 08-completude · matriz tipo × mês + gaps
 - 09-revisor · revisão de divergências (j/k/a)
-- 10-validacao-arquivos · diff ETL ↔ Opus
+- `10-validacao-arquivos` · diff ETL ↔ Opus
 
 **Análise**
 - 11-categorias · árvore + treemap + regras
-- 12-analise · sankey, comparativo, heatmap (3 abas)
+- `12-analise` · sankey, comparativo, heatmap (3 abas)
 - 15-irpf · pacote anual
 
 **Metas**

@@ -1,6 +1,6 @@
 ---
 concluida_em: 2026-05-01
-diagnostico_revisado: bug duplo no teste, nao no extrator/ingestor; (a) caplog capturava logger errado (graph.ingestor_documento vs real graph.ingestor_especiais apos migracao Sprint ANTI-MIGUE-08); (b) teste nao congelava hoje, e fixture data_fim 2026-04-30 ja era EXPIRADA em runtime 2026-05-01
+diagnostico_revisado: bug duplo no teste, não no extrator/ingestor; (a) caplog capturava logger errado (graph.ingestor_documento vs real graph.ingestor_especiais apos migração Sprint ANTI-MIGUE-08); (b) teste não congelava hoje, e fixture data_fim 2026-04-30 ja era EXPIRADA em runtime 2026-05-01
 entrega_real: tests/test_garantia.py (xfail removido, parsea via _parse_garantia com hoje=2026-04-20, logger graph.ingestor_especiais, novo teste de regressao para vigente >30d), CHANGELOG entrada Fixed
 testes: 2.177 passed -> 2.179 passed; 2 xfailed -> 1 xfailed
 ---

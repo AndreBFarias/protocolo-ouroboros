@@ -211,16 +211,21 @@ def _classes_redesign() -> str:
         flex-direction: column;
         gap: var(--sp-2);
     }
-    .sidebar-brand {
+    /* UX-U-04 followup: !important nas propriedades da sidebar canônica
+       para vencer a cascata do Streamlit (que aplica Inter/Source Sans
+       em ``[data-testid="stSidebar"] a`` e font-size base via stRoot). */
+    .sidebar-brand,
+    [data-testid="stSidebar"] a.sidebar-brand,
+    [data-testid="stSidebar"] .sidebar-brand {
         display: flex;
         align-items: center;
         gap: var(--sp-2);
         padding: var(--sp-2) var(--sp-4);
-        font-family: var(--ff-mono);
-        font-weight: 500;
-        font-size: var(--fs-14);
-        letter-spacing: 0.04em;
-        text-transform: uppercase;
+        font-family: var(--ff-mono) !important;
+        font-weight: 500 !important;
+        font-size: var(--fs-14) !important;
+        letter-spacing: 0.04em !important;
+        text-transform: uppercase !important;
     }
     .sidebar-brand-glyph { width: 20px; height: 20px; color: var(--accent-purple); }
     .sidebar-search { margin: 0 var(--sp-3) var(--sp-2); position: relative; }
@@ -246,14 +251,18 @@ def _classes_redesign() -> str:
     }
 
     .sidebar-cluster { margin-top: var(--sp-1); }
-    .sidebar-cluster-header {
+    /* UX-U-04 followup: tipografia canônica do mockup (11px mono) precisa
+       !important porque ancestrais Streamlit reinjetam font-size de 15px. */
+    .sidebar-cluster-header,
+    [data-testid="stSidebar"] .sidebar-cluster-header {
         display: flex; align-items: center; justify-content: space-between;
         padding: var(--sp-2) var(--sp-4);
-        font-family: var(--ff-mono);
-        font-size: var(--fs-11);
-        letter-spacing: 0.10em;
-        text-transform: uppercase;
-        color: var(--text-muted);
+        font-family: var(--ff-mono) !important;
+        font-size: var(--fs-11) !important;
+        font-weight: 400 !important;
+        letter-spacing: 0.10em !important;
+        text-transform: uppercase !important;
+        color: var(--text-muted) !important;
     }
     .sidebar-cluster-header .badge {
         font-family: var(--ff-mono);
@@ -265,28 +274,55 @@ def _classes_redesign() -> str:
         font-weight: 500;
         letter-spacing: 0;
     }
+    /* UX-U-04 followup: Streamlit aplica CSS agressivo em
+       [data-testid="stSidebar"] a (cor azul de link, sublinhado).
+       Forçar !important + reset text-decoration para a sidebar item
+       respeitar o token canônico do mockup (var(--text-secondary),
+       sem sublinhado, sem cor de link). */
+    [data-testid="stSidebar"] a.sidebar-item,
     .sidebar-item {
-        display: flex; align-items: center; gap: var(--sp-2);
-        padding: 6px var(--sp-4) 6px 32px;
-        font-size: var(--fs-13);
-        color: var(--text-secondary);
+        display: flex !important; align-items: center; gap: var(--sp-2);
+        padding: 6px var(--sp-4) 6px 32px !important;
+        font-family: var(--ff-sans) !important;
+        font-size: var(--fs-13) !important;
+        font-weight: 400 !important;
+        letter-spacing: normal !important;
+        text-transform: none !important;
+        color: var(--text-secondary) !important;
+        text-decoration: none !important;
         border-left: 2px solid transparent;
         cursor: pointer;
         user-select: none;
         transition: background .15s, color .15s, border-color .15s;
     }
-    .sidebar-item:hover { background: var(--bg-elevated); color: var(--text-primary); }
+    [data-testid="stSidebar"] a.sidebar-item:hover,
+    .sidebar-item:hover {
+        background: var(--bg-elevated);
+        color: var(--text-primary) !important;
+        text-decoration: none !important;
+    }
+    [data-testid="stSidebar"] a.sidebar-item.active,
     .sidebar-item.active {
         background: linear-gradient(90deg, rgba(189,147,249,0.12), transparent 60%);
-        color: var(--text-primary);
+        color: var(--text-primary) !important;
         border-left-color: var(--accent-purple);
     }
     .sidebar-item .count {
         margin-left: auto;
         font-family: var(--ff-mono); font-size: 10px;
-        color: var(--text-muted);
+        color: var(--text-muted) !important;
+    }
+    /* Brand glyph link: também precisa reset de text-decoration. */
+    [data-testid="stSidebar"] a.sidebar-brand,
+    .sidebar-brand {
+        text-decoration: none !important;
+        color: var(--text-primary) !important;
     }
 
+    /* UX-U-04 followup: topbar canônica do mockup tem 56px de altura
+       (00-shell-navegacao.html mede 56px). Sem min-height, o header
+       colapsa para a altura do breadcrumb (~22px) que não acomoda
+       botões da topbar-actions (T-01 vai preencher). */
     .topbar {
         grid-area: topbar;
         background: var(--bg-surface);
@@ -294,6 +330,7 @@ def _classes_redesign() -> str:
         display: flex; align-items: center;
         padding: 0 var(--sp-6);
         gap: var(--sp-4);
+        min-height: 56px;
     }
     .breadcrumb {
         display: flex; align-items: center; gap: var(--sp-2);
@@ -315,14 +352,19 @@ def _classes_redesign() -> str:
         border-bottom: 1px solid var(--border-subtle);
         margin-bottom: var(--sp-6);
     }
-    .page-title {
-        font-family: var(--ff-mono);
-        font-size: var(--fs-40);
-        font-weight: 500;
-        letter-spacing: -0.02em;
-        text-transform: uppercase;
-        margin: 0;
-        line-height: 1;
+    /* UX-U-04 followup: !important para vencer h1 { font-size: 28px !important }
+       global do tema (linha 1059) e p,div,span { font-size: FONTE_CORPO } que
+       deformam page-title (40 -> 28) e page-subtitle (13 -> 15). */
+    .page-title,
+    h1.page-title {
+        font-family: var(--ff-mono) !important;
+        font-size: var(--fs-40) !important;
+        font-weight: 500 !important;
+        letter-spacing: -0.02em !important;
+        text-transform: uppercase !important;
+        margin: 0 !important;
+        line-height: 1 !important;
+        padding: 0 !important;
         background: linear-gradient(
             180deg,
             var(--text-primary) 0%,
@@ -332,10 +374,13 @@ def _classes_redesign() -> str:
         background-clip: text;
         -webkit-text-fill-color: transparent;
     }
-    .page-subtitle {
-        font-size: var(--fs-13);
-        color: var(--text-secondary);
-        margin: var(--sp-2) 0 0;
+    .page-subtitle,
+    p.page-subtitle {
+        font-family: var(--ff-sans) !important;
+        font-size: var(--fs-13) !important;
+        font-weight: 400 !important;
+        color: var(--text-secondary) !important;
+        margin: var(--sp-2) 0 0 !important;
         max-width: 720px;
     }
     .page-meta {
@@ -439,12 +484,17 @@ def _classes_redesign() -> str:
     .kpi-delta.flat  { color: var(--text-muted); }
 
     /* ─── PILLS / BADGES ─── */
-    .pill {
-        display: inline-flex; align-items: center; gap: 4px;
-        font-family: var(--ff-mono);
-        font-size: var(--fs-11); font-weight: 500;
-        letter-spacing: 0.04em; text-transform: uppercase;
-        padding: 2px 8px;
+    /* UX-U-04 followup: !important para vencer p,div,span { font-size: 15px }
+       global (FONTE_CORPO). Pills canônicas ficam em 11px JetBrains Mono. */
+    .pill,
+    span.pill {
+        display: inline-flex !important; align-items: center; gap: 4px;
+        font-family: var(--ff-mono) !important;
+        font-size: var(--fs-11) !important;
+        font-weight: 500 !important;
+        letter-spacing: 0.04em !important;
+        text-transform: uppercase !important;
+        padding: 2px 8px !important;
         border-radius: var(--r-full);
         border: 1px solid transparent;
         white-space: nowrap;
@@ -491,13 +541,17 @@ def _classes_redesign() -> str:
         border-color: rgba(108,111,125,0.30);
     }
 
-    .sprint-tag {
-        display: inline-flex; align-items: center; gap: 4px;
-        font-family: var(--ff-mono);
-        font-size: var(--fs-11); font-weight: 500;
-        letter-spacing: 0.04em; text-transform: uppercase;
-        color: var(--text-muted);
-        padding: 2px 6px;
+    /* UX-U-04 followup: !important para vencer cascata global. */
+    .sprint-tag,
+    span.sprint-tag {
+        display: inline-flex !important; align-items: center; gap: 4px;
+        font-family: var(--ff-mono) !important;
+        font-size: var(--fs-11) !important;
+        font-weight: 500 !important;
+        letter-spacing: 0.04em !important;
+        text-transform: uppercase !important;
+        color: var(--text-muted) !important;
+        padding: 2px 6px !important;
         border: 1px solid var(--border-subtle);
         border-radius: var(--r-xs);
         background: var(--bg-inset);
@@ -999,7 +1053,21 @@ def css_global() -> str:
         margin-top: {SPACING["md"]}px;
         margin-bottom: {SPACING["md"]}px;
     }}
-    [data-testid="stSidebar"] {{ background-color: {CORES["card_fundo"]}; }}
+    /* UX-U-04 followup: sidebar canônica mede 240px (mockup
+       00-shell-navegacao.html). Streamlit usa width default ~300px;
+       forçamos 240 com !important. Border-right canônico é 1px solid
+       border-subtle (rgb(49,52,69)), NÃO 2px purple. */
+    [data-testid="stSidebar"] {{
+        background-color: {CORES["card_fundo"]};
+        width: 240px !important;
+        min-width: 240px !important;
+        max-width: 240px !important;
+        border-right: 1px solid var(--border-subtle) !important;
+    }}
+    [data-testid="stSidebar"] > div {{
+        width: 240px !important;
+        min-width: 240px !important;
+    }}
     /* Sprint UX-116: sidebar interna ganha padding 4 direções com PADDING_CHIP
        (16px). O retângulo interno [data-testid="stSidebar"] > div:first-child
        abriga logo + radio de cluster + filtros; sem padding explícito,
@@ -1155,7 +1223,7 @@ def css_global() -> str:
        bloco HTML custom via kpi_grid_html(). */
     .kpi-grid {{
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
         gap: {SPACING["md"]}px;
         width: 100%;
     }}
@@ -1312,6 +1380,134 @@ def css_global() -> str:
     .ouroboros-timeline-evento {{
         position: relative;
         margin-bottom: var(--spacing-lg);
+    }}
+
+    /* UX-U-01: Sidebar canônica.
+       Garante scroll interno (8 clusters acessíveis em qualquer viewport)
+       + scrollbar discreta do mockup (tokens.css linhas 134-137: 10px,
+       track bg-base, thumb border-subtle, hover border-strong). */
+    [data-testid="stSidebar"] {{
+        overflow-y: auto !important;
+        height: 100vh !important;
+        max-height: 100vh !important;
+    }}
+    [data-testid="stSidebar"]::-webkit-scrollbar {{ width: 10px; }}
+    [data-testid="stSidebar"]::-webkit-scrollbar-track {{ background: var(--bg-base); }}
+    [data-testid="stSidebar"]::-webkit-scrollbar-thumb {{
+        background: var(--border-subtle);
+        border-radius: var(--r-sm);
+    }}
+    [data-testid="stSidebar"]::-webkit-scrollbar-thumb:hover {{
+        background: var(--border-strong);
+    }}
+
+    /* FIX-12: skip-link + sr-only-focusable (WCAG 2.4.1).
+       Invisível por padrão; aparece como CTA accent-purple quando focado
+       pela tecla Tab. Ancora #main-root no início do conteúdo principal. */
+    .sr-only,
+    .sr-only-focusable:not(:focus):not(:focus-within) {{
+        position: absolute !important;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+    }}
+    .skip-link:focus {{
+        position: fixed;
+        top: 8px;
+        left: 8px;
+        background: var(--accent-purple);
+        color: var(--text-inverse);
+        padding: 8px 16px;
+        border-radius: var(--r-sm);
+        z-index: 99999;
+        text-decoration: none;
+        font-family: var(--ff-mono);
+        font-size: var(--fs-12);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }}
+
+    /* FIX-04 + FIX-08: importar fontes web canônicas. Inter (sans) é a
+       família padrão do mockup; JetBrains Mono é usada em números, headings
+       técnicos, breadcrumb, pills, sprint-tags e tabela. Material Symbols
+       carrega os ícones do Streamlit (sem ela vazam como texto). */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap');
+
+    /* FIX-08: aplicar Inter (sans) globalmente em corpo, parágrafo,
+       sidebar items, KPI label, botão. Antes config.toml font="monospace"
+       fazia Streamlit aplicar "Source Code Pro" em tudo, perdendo a
+       hierarquia tipográfica do mockup (sans no corpo, mono em UI técnica). */
+    html, body, .stApp,
+    [data-testid="stAppViewContainer"],
+    [data-testid="stMarkdownContainer"],
+    [data-testid="stMarkdown"] p,
+    [data-testid="stMarkdown"] li,
+    [data-testid="stSidebar"] a,
+    [data-testid="stSidebar"] label,
+    button,
+    input,
+    textarea,
+    select {{
+        font-family: var(--ff-sans) !important;
+    }}
+
+    /* FIX-08: elementos canônicos em JetBrains Mono. Mockup pede mono em:
+       page-title (40px UPPERCASE com gradient), breadcrumb, pill, sprint-tag,
+       kpi-value, .table thead th, code, pre, kbd, .col-mono, st.metric value. */
+    .page-title,
+    .breadcrumb,
+    .breadcrumb .seg,
+    .kpi-value,
+    .kpi-delta,
+    .pill,
+    .sprint-tag,
+    .col-mono,
+    .col-num,
+    .table thead th,
+    .mono,
+    .num,
+    code,
+    pre,
+    kbd,
+    [data-testid="stMetricValue"],
+    [data-testid="stCodeBlock"] {{
+        font-family: var(--ff-mono) !important;
+        font-variant-numeric: tabular-nums;
+    }}
+
+    /* FIX-04 + UX-U-04 followup: Streamlit nativo carrega
+       "Material Symbols Rounded" (não Outlined). Ainda assim páginas
+       referenciam classes como ``material-symbols-outlined`` cujo CSS
+       solicita a família Outlined. Como Streamlit só fornece Rounded,
+       o nome do ícone vaza como texto literal (ex.: "keyboard_arrow_right",
+       "wait", "open"). Fix: aplicar a família REAL que Streamlit
+       carrega (Rounded) com fallback para Outlined caso uma página
+       opt-in importe via @import próprio. As ligatures (nomes dos
+       ícones) são idênticas entre Outlined/Rounded/Sharp. */
+    [data-testid="stIconMaterial"],
+    span[class*="material-symbols"],
+    .stMaterialIcon,
+    .material-symbols-outlined,
+    .material-symbols-rounded {{
+        font-family: "Material Symbols Rounded",
+                     "Material Symbols Outlined",
+                     "Material Icons" !important;
+        font-weight: normal !important;
+        font-style: normal !important;
+        line-height: 1;
+        letter-spacing: normal;
+        text-transform: none;
+        display: inline-block;
+        white-space: nowrap;
+        word-wrap: normal;
+        direction: ltr;
+        font-feature-settings: "liga";
+        -webkit-font-smoothing: antialiased;
     }}
     </style>
     """

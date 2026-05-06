@@ -230,14 +230,15 @@ class TestIntegracaoAppPy:
         assert '"Dinheiro hoje"' not in texto
         assert '"Docs hoje"' not in texto
 
+    @pytest.mark.skip(
+        reason="UX-T-01: cluster Home renderiza Visão Geral diretamente. As "
+        "mini-views (home_dinheiro/home_docs/home_analise/home_metas) saíram "
+        "do dispatcher mas continuam exportadas para retrocompat. Sprint "
+        "DEPRECATED-HOME-SUBVIEWS vai limpar."
+    )
     def test_app_py_chama_renderizar_das_4_mini_views(self) -> None:
         """Sprint UX-125: arquivos físicos (home_dinheiro.py etc.) mantêm
         nome interno; só os labels mudaram. Nomes dos módulos persistem."""
-        texto = (RAIZ / "src" / "dashboard" / "app.py").read_text(encoding="utf-8")
-        assert "home_dinheiro.renderizar" in texto
-        assert "home_docs.renderizar" in texto
-        assert "home_analise.renderizar" in texto
-        assert "home_metas.renderizar" in texto
 
 
 # ============================================================================

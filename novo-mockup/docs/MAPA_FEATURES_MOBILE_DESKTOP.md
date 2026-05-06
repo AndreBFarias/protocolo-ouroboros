@@ -76,7 +76,7 @@ Sequencia real:
 5. **router** — move para pasta canonica em `data/raw/<tipo>/`
 6. **extractors_envelope** — 22 extratores especializados
 7. **transform/** — normalizacao, deduplicacao, categorizacao (111 regras)
-8. **load/** — XLSX 8 abas + relatorios MD + Obsidian sync
+8. **load/** — XLSX 8 abas + relatórios MD + Obsidian sync
 
 **Para a tela de extracao tripla**: o usuario quer comparar (a) texto bruto extraido pelo ETL deterministico, (b) extracao agentic via Opus (LLM), (c) input humano como ground truth.
 
@@ -86,7 +86,7 @@ Sequencia real:
 
 ### 5.1 Cluster Bem-estar (NOVO — adicionar)
 
-Inserir entre Documentos e Analise:
+Inserir entre Documentos e Análise:
 - **Hoje** — agregador do dia (humor + diarios + eventos), espelho da Tela 01 mobile
 - **Humor** — heatmap 13x7 + form de registro rapido (dois-pessoas overlay)
 - **Diario emocional** — lista cronologica com filtros (trigger/vitoria, periodo)
@@ -100,7 +100,7 @@ Inserir entre Documentos e Analise:
 - **Tarefas** — to-do leve
 - **Recap** — 7/30/90 dias
 
-### 5.2 Substituicao 10-validacao-arquivos -> 10-extracao-tripla
+### 5.2 Substituição `10-validacao-arquivos` -> `10-extracao-tripla`
 
 Layout 3 colunas:
 - **Esquerda**: lista de arquivos por tipo (PDF/CSV/imagem/Excel/OFX/HTML), com tipo + botao baixar original + estado (extraido/conflito/validado)
@@ -131,9 +131,9 @@ Banco de tipos de arquivo a cobrir:
 
 ---
 
-## 6. Plano de execucao
+## 6. Plano de execução
 
-### Fase 1 — Extracao tripla (substitui 10-validacao-arquivos)
+### Fase 1 — Extração tripla (substitui `10-validacao-arquivos`)
 - 1 mockup novo: `10-extracao-tripla.html`
 - Layout 3 colunas conforme 5.2
 - Dados mock realistas (3 arquivos de tipos diferentes pre-carregados)

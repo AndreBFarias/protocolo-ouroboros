@@ -81,8 +81,9 @@ def test_grafico_cenarios_tem_tres_traces() -> None:
     def fake_plotly_chart(fig: go.Figure, **_: Any) -> None:
         figura_capturada["fig"] = fig
 
-    with patch("src.dashboard.paginas.projecoes.st") as mock_st:
-        mock_st.plotly_chart = fake_plotly_chart
+    # FIX-09: projecoes chama st_plotly_chart_dracula(fig); patch no wrapper.
+    alvo = "src.dashboard.paginas.projecoes.st_plotly_chart_dracula"
+    with patch(alvo, side_effect=fake_plotly_chart):
         # Curvas mínimas
         pess = projecoes._projetar_curva(10_000.0, 0.06, 4_000.0)
         real = projecoes._projetar_curva(10_000.0, 0.09, 4_000.0)
@@ -115,8 +116,9 @@ def test_grafico_cenarios_marcos_verticais_visiveis() -> None:
     def fake_plotly_chart(fig: go.Figure, **_: Any) -> None:
         figura_capturada["fig"] = fig
 
-    with patch("src.dashboard.paginas.projecoes.st") as mock_st:
-        mock_st.plotly_chart = fake_plotly_chart
+    # FIX-09: projecoes chama st_plotly_chart_dracula(fig); patch no wrapper.
+    alvo = "src.dashboard.paginas.projecoes.st_plotly_chart_dracula"
+    with patch(alvo, side_effect=fake_plotly_chart):
         pess = projecoes._projetar_curva(10_000.0, 0.06, 8_000.0)
         real = projecoes._projetar_curva(10_000.0, 0.09, 8_000.0)
         otim = projecoes._projetar_curva(10_000.0, 0.13, 8_000.0)

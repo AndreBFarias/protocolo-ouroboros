@@ -170,12 +170,14 @@ def test_listagem_de_paginas_nao_vazia() -> None:
 # donuts/gauges Plotly. Ambas abandonaram ``hero_titulo_html`` em favor
 # da composição UX-RD-XX padrão e saem desta lista pelo mesmo critério
 # das anteriores.
+# Sprint UX-U-03: ``extrato.py`` e ``analise_avancada.py`` migraram para
+# ``renderizar_page_header`` (helper canônico Onda U). ``hero_titulo_html``
+# está em deprecação progressiva. ``contas.py`` e ``projecoes.py``
+# permanecem na lista até serem refatoradas em sprint formal (Onda T).
 PAGINAS_COM_HERO: frozenset[str] = frozenset(
     {
-        "extrato.py",
         "contas.py",
         "projecoes.py",
-        "analise_avancada.py",
     }
 )
 

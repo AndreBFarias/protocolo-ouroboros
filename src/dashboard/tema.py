@@ -192,6 +192,10 @@ def logo_sidebar_html(largura_px: int = 120) -> str:
         if st is not None and hasattr(st, "session_state"):
             st.session_state["_logo_b64"] = b64  # type: ignore[union-attr]
 
+    # FIX-06: trocar h1 por div.sidebar-brand-text. O brand canônico vem
+    # do shell HTML (componentes/shell.py:_renderizar_brand_html); o h1
+    # extra criava 2 h1 visíveis simultaneamente em todas as telas,
+    # violando hierarquia HTML/A11y. O alt do img já provê acessibilidade.
     return (
         f'<div style="text-align:center; margin-bottom:{SPACING["md"]}px;">'
         f'<img src="data:image/png;base64,{b64}" '
@@ -199,10 +203,11 @@ def logo_sidebar_html(largura_px: int = 120) -> str:
         f'width="{largura_px}" '
         f'style="display:block; margin:0 auto;" '
         f'alt="Protocolo Ouroboros"/>'
-        f'<h1 style="margin-top:{SPACING["sm"]}px; '
-        f"font-family:monospace; "
+        f'<div class="sidebar-brand-text" style="margin-top:{SPACING["sm"]}px; '
+        f'font-family:var(--ff-mono); font-size:13px; font-weight:500; '
+        f'letter-spacing:0.04em; text-transform:uppercase; '
         f"color:{CORES['destaque']}; "
-        f'text-align:center;">Protocolo Ouroboros</h1>'
+        f'text-align:center;">Protocolo Ouroboros</div>'
         f"</div>"
     )
 

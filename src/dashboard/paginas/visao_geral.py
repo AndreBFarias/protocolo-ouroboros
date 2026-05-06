@@ -34,12 +34,7 @@ import streamlit as st
 from src.dashboard import tema
 from src.dashboard.componentes.drilldown import aplicar_drilldown
 from src.dashboard.dados import (
-    calcular_saldo_acumulado,
-    filtrar_por_forma_pagamento,
     filtrar_por_mes,
-    filtrar_por_periodo,
-    filtrar_por_pessoa,
-    filtro_forma_ativo,
     formatar_moeda,
 )
 from src.dashboard.tema import (
@@ -61,69 +56,64 @@ def renderizar(
     pessoa: str,
     ctx: dict | None = None,
 ) -> None:
-    """Renderiza a página de visão geral redesenhada (UX-RD-04)."""
+    """Renderiza a Visão Geral canônica (UX-T-01).
+
+    Mockup-fonte: ``novo-mockup/mockups/01-visao-geral.html``.
+    Layout:
+      - Topbar-actions: ``Atualizar`` + ``Ir para Validação`` (primary).
+      - Hero: marca + título + subtítulo (com linha ``Sprint atual: <ID>``)
+        + anel ouroboros animado.
+      - KPIs agentic-first (4 cards): Arquivos catalogados / Paridade ETL ↔
+        Opus / Aguardando humano / Skills regredindo.
+      - Bloco dual: ``OS 5 CLUSTERS`` (6 cards) à esquerda; ``Atividade
+        recente`` + ``Sprint atual`` à direita.
+    """
+    del mes_selecionado, pessoa, ctx  # filtros migraram para U-04 expander
+
+    # UX-U-02: topbar-actions canônicas.
+    from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
+    from src.dashboard.componentes.visao_geral_widgets import (
+        calcular_kpis_agentic,
+        ler_atividade_recente,
+        ler_sprint_atual,
+        montar_clusters_canonicos,
+    )
+
+    renderizar_grupo_acoes(
+        [
+            {"label": "Atualizar", "kbd": "r", "title": "Recarregar a página"},
+            {
+                "label": "Ir para Validação",
+                "primary": True,
+                "href": "?cluster=Documentos&tab=Extra%C3%A7%C3%A3o+Tripla",
+                "title": "Abrir página de Extração Tripla",
+            },
+        ]
+    )
+
+    st.markdown(_estilos_locais(), unsafe_allow_html=True)
+    st.markdown(_estilos_t01_canonicos(), unsafe_allow_html=True)
+
+    sprint_meta = ler_sprint_atual()
+    sprint_titulo_no_hero = (sprint_meta or {}).get("sprint_numero", "") if sprint_meta else ""
+    st.markdown(_hero_html(sprint_titulo_no_hero), unsafe_allow_html=True)
+
     if "extrato" not in dados:
-        st.markdown(_estilos_locais(), unsafe_allow_html=True)
-        st.markdown(_hero_html(), unsafe_allow_html=True)
         st.markdown(
             callout_html("warning", "Nenhum dado encontrado para a visão geral."),
             unsafe_allow_html=True,
         )
         return
 
-    gran = ctx.get("granularidade", "Mês") if ctx else "Mês"
-    periodo = ctx.get("periodo", mes_selecionado) if ctx else mes_selecionado
+    kpis = calcular_kpis_agentic()
+    st.markdown(_kpis_agentic_html(kpis), unsafe_allow_html=True)
 
-    extrato = dados["extrato"]
-    extrato_filtrado = filtrar_por_forma_pagamento(
-        filtrar_por_pessoa(extrato, pessoa), filtro_forma_ativo()
-    )
-    extrato_periodo = filtrar_por_periodo(extrato_filtrado, gran, periodo)
-
-    receitas = float(extrato_periodo[extrato_periodo["tipo"] == "Receita"]["valor"].sum())
-    despesas = float(
-        extrato_periodo[extrato_periodo["tipo"].isin(["Despesa", "Imposto"])]["valor"].sum()
-    )
-    saldo = receitas - despesas
-
-    reserva_atual = max(calcular_saldo_acumulado(dados, mes_selecionado, pessoa), 0.0)
-    reserva_meta = float(RESERVA_META_PADRAO)
-    reserva_pct = (reserva_atual / reserva_meta * 100.0) if reserva_meta > 0 else 0.0
-
-    delta_receita, delta_despesa, delta_saldo = _calcular_deltas(
-        extrato_filtrado, mes_selecionado, gran
-    )
-
-    st.markdown(_estilos_locais(), unsafe_allow_html=True)
-    st.markdown(_hero_html(), unsafe_allow_html=True)
-    st.markdown(
-        _kpi_grid_html(
-            receitas=receitas,
-            despesas=despesas,
-            saldo=saldo,
-            reserva_atual=reserva_atual,
-            reserva_meta=reserva_meta,
-            reserva_pct=reserva_pct,
-            delta_receita=delta_receita,
-            delta_despesa=delta_despesa,
-            delta_saldo=delta_saldo,
-        ),
-        unsafe_allow_html=True,
-    )
-
-    # Bloco dual: gráfico (esquerda, 1.4fr) + timeline (direita, 1fr).
     col_esq, col_dir = st.columns([1.4, 1.0])
-
     with col_esq:
-        _grafico_barras_historico(extrato_filtrado, mes_selecionado)
-
+        st.markdown(_clusters_canonicos_html(montar_clusters_canonicos()), unsafe_allow_html=True)
     with col_dir:
-        st.markdown(
-            _timeline_html(_ultimos_eventos(extrato_periodo, n=5)),
-            unsafe_allow_html=True,
-        )
-
-    st.markdown(_cluster_grid_html(dados), unsafe_allow_html=True)
+        st.markdown(_atividade_recente_html(ler_atividade_recente(n=6)), unsafe_allow_html=True)
+        st.markdown(_sprint_atual_html(sprint_meta), unsafe_allow_html=True)
 
 
 # ---------------------------------------------------------------------------
@@ -444,19 +434,30 @@ def _estilos_locais() -> str:
     """
 
 
-def _hero_html() -> str:
-    """Hero com marca, título, subtítulo e Ω animado embutido."""
+def _hero_html(sprint_atual_titulo: str = "") -> str:
+    """Hero com marca, título, subtítulo (com linha Sprint atual) e Ω animado.
+
+    UX-T-01: subtítulo passa a incluir a linha "Sprint atual: <ID>" — espelha
+    o mockup canônico ``01-visao-geral.html`` que destaca a sprint vigente
+    no parágrafo do hero.
+    """
     svg = _ler_svg_ouroboros()
     marca = (
         '<span class="marca">Sistema agentic-first '
         '<span class="marca-cluster">· cluster Home</span></span>'
     )
     titulo = "<h1>Os arquivos da sua vida financeira, normalizados.</h1>"
+    sprint_html = ""
+    if sprint_atual_titulo:
+        sprint_html = (
+            " Sprint atual: <code style=\"color:var(--accent-purple);\">"
+            f"{sprint_atual_titulo}</code> — medindo paridade entre as duas extrações."
+        )
     subt = (
         "<p>Pipeline auto-referente. Cada arquivo é registrado pelo "
         "sha256, extraído em duas vias (ETL determinística + Opus "
         "agentic), validado por humano-no-loop, e catalogado para "
-        "análise.</p>"
+        f"análise.{sprint_html}</p>"
     )
     return (
         '<div class="vg-hero">'
@@ -716,6 +717,228 @@ def _grafico_barras_historico(
         campo_customdata="mes_ref",
         tab_destino="Extrato",
         key_grafico="bar_receita_despesa",
+    )
+
+
+# ---------------------------------------------------------------------------
+# UX-T-01 — blocos canônicos (mockup 01-visao-geral.html)
+# ---------------------------------------------------------------------------
+
+
+def _estilos_t01_canonicos() -> str:
+    """CSS local UX-T-01 — espelha estilo inline do mockup canônico."""
+    return """
+    <style>
+      .vg-t01 { font-family: var(--ff-sans); }
+      .vg-t01-kpis {
+        display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+        margin: 0 0 16px;
+      }
+      .vg-t01-kpi {
+        background: var(--bg-surface); border: 1px solid var(--border-subtle);
+        border-radius: var(--r-md); padding: 16px;
+        display: flex; flex-direction: column; gap: 6px;
+        text-decoration: none; color: inherit;
+        transition: border-color .15s, transform .15s;
+      }
+      .vg-t01-kpi:hover { border-color: var(--accent-purple); transform: translateY(-2px); }
+      .vg-t01-kpi .l {
+        font-family: var(--ff-mono); font-size: var(--fs-11);
+        letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted);
+      }
+      .vg-t01-kpi .v {
+        font-family: var(--ff-mono); font-size: 32px; font-weight: 500;
+        line-height: 1; font-variant-numeric: tabular-nums;
+      }
+      .vg-t01-kpi .d {
+        font-family: var(--ff-mono); font-size: var(--fs-12); color: var(--text-muted);
+      }
+      .vg-t01-kpi.up   .v { color: var(--d7-graduado); }
+      .vg-t01-kpi.warn .v { color: var(--accent-yellow); }
+      .vg-t01-kpi.bad  .v { color: var(--accent-red); }
+
+      .vg-t01-section-label {
+        font-family: var(--ff-mono); font-size: var(--fs-13);
+        letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted);
+        margin: 0 0 8px;
+      }
+      .vg-t01-cluster-grid {
+        display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+      }
+      .vg-t01-cluster-card {
+        background: var(--bg-surface); border: 1px solid var(--border-subtle);
+        border-radius: var(--r-md); padding: 16px;
+        text-decoration: none; color: inherit;
+        display: flex; flex-direction: column; gap: 8px;
+        transition: border-color .15s, transform .15s;
+      }
+      .vg-t01-cluster-card:hover {
+        border-color: var(--accent-purple);
+        transform: translateY(-2px);
+      }
+      .vg-t01-cluster-card h3 {
+        font-family: var(--ff-mono); font-size: var(--fs-15); font-weight: 500;
+        margin: 0; letter-spacing: -0.01em;
+      }
+      .vg-t01-cluster-card .desc {
+        font-size: var(--fs-13); color: var(--text-muted); line-height: 1.5;
+      }
+      .vg-t01-cluster-card .stats {
+        display: flex; gap: 12px; margin-top: auto; padding-top: 8px;
+        border-top: 1px solid var(--border-subtle);
+      }
+      .vg-t01-cluster-card .stats span {
+        font-family: var(--ff-mono); font-size: var(--fs-11); color: var(--text-secondary);
+      }
+      .vg-t01-cluster-card .stats strong {
+        color: var(--text-primary); margin-right: 4px;
+      }
+
+      .vg-t01-card { background: var(--bg-surface); border: 1px solid var(--border-subtle);
+                     border-radius: var(--r-md); padding: 16px; }
+      .vg-t01-tl-item {
+        display: grid; grid-template-columns: 90px 24px 1fr; gap: 8px;
+        padding: 8px 0; border-bottom: 1px dashed var(--border-subtle);
+      }
+      .vg-t01-tl-item:last-child { border-bottom: 0; }
+      .vg-t01-tl-item .when {
+        font-family: var(--ff-mono); font-size: var(--fs-11); color: var(--text-muted);
+        padding-top: 2px;
+      }
+      .vg-t01-tl-item .ic { color: var(--accent-purple); padding-top: 2px; }
+      .vg-t01-tl-item .what {
+        font-size: var(--fs-13);
+        color: var(--text-secondary);
+        line-height: 1.45;
+      }
+      .vg-t01-tl-item .what strong { color: var(--text-primary); font-family: var(--ff-mono); }
+      .vg-t01-tl-item .what code { color: var(--accent-purple); }
+
+      .vg-t01-sprint-card { margin-top: 16px; }
+      .vg-t01-sprint-head {
+        display: flex; align-items: baseline; justify-content: space-between;
+        margin-bottom: 12px;
+      }
+      .vg-t01-sprint-head .meta {
+        font-family: var(--ff-mono); font-size: 11px; letter-spacing: 0.06em;
+        text-transform: uppercase; color: var(--text-muted);
+      }
+      .vg-t01-sprint-head .titulo {
+        font-family: var(--ff-mono); font-size: 18px; font-weight: 500; margin-top: 4px;
+      }
+      .vg-t01-sprint-card .desc {
+        font-size: 13px; color: var(--text-secondary); line-height: 1.5;
+      }
+      .vg-t01-sprint-card .desc strong { color: var(--text-primary); }
+    </style>
+    """
+
+
+def _kpis_agentic_html(kpis: dict) -> str:
+    """KPIs agentic-first canônicos do mockup."""
+    from src.dashboard.componentes.html_utils import minificar
+
+    def _card(modifier: str, href: str, label: str, valor: str, delta: str) -> str:
+        return (
+            f'<a class="vg-t01-kpi {modifier}" href="{href}" '
+            f'style="text-decoration:none;color:inherit;">'
+            f'<span class="l">{label}</span>'
+            f'<span class="v">{valor}</span>'
+            f'<span class="d">{delta}</span>'
+            f"</a>"
+        )
+
+    return minificar(
+        '<div class="vg-t01-kpis">'
+        + _card("up", "?cluster=Documentos&tab=Catalogação",
+                "Arquivos catalogados", kpis["arquivos_catalogados"], kpis["arquivos_delta"])
+        + _card("", "?cluster=Documentos&tab=Extra%C3%A7%C3%A3o+Tripla",
+                "Paridade ETL ↔ Opus", kpis["paridade_pct"], kpis["paridade_meta"])
+        + _card("warn", "?cluster=Documentos&tab=Revisor",
+                "Aguardando humano", kpis["aguardando_humano"], kpis["aguardando_breakdown"])
+        + _card("bad", "?cluster=Sistema&tab=Skills+D7",
+                "Skills regredindo", kpis["skills_regredindo"], kpis["skills_nomes"])
+        + "</div>"
+    )
+
+
+def _clusters_canonicos_html(cards: list[dict]) -> str:
+    """Bloco "OS 5 CLUSTERS" do mockup com 6 cards descritivos."""
+    from src.dashboard.componentes.html_utils import minificar
+
+    cards_html = []
+    for c in cards:
+        cards_html.append(
+            f'<a class="vg-t01-cluster-card" href="{c["href"]}">'
+            f'<h3>{c["nome"]}</h3>'
+            f'<div class="desc">{c["descricao"]}</div>'
+            f'<div class="stats">'
+            f'<span><strong>{c["stat1_value"]}</strong>{c["stat1_label"]}</span>'
+            f'<span><strong>{c["stat2_value"]}</strong>{c["stat2_label"]}</span>'
+            f"</div>"
+            f"</a>"
+        )
+    return minificar(
+        '<h2 class="vg-t01-section-label">Os 5 clusters</h2>'
+        '<div class="vg-t01-cluster-grid">'
+        f'{"".join(cards_html)}'
+        "</div>"
+    )
+
+
+def _atividade_recente_html(entries: list[dict]) -> str:
+    """Timeline de eventos recentes."""
+    from src.dashboard.componentes.html_utils import minificar
+
+    if not entries:
+        body = (
+            '<div class="vg-t01-tl-item"><span class="when">—</span>'
+            '<span class="ic">·</span>'
+            '<span class="what">Sem atividade recente registrada.</span></div>'
+        )
+    else:
+        body = "".join(
+            '<div class="vg-t01-tl-item">'
+            f'<span class="when">{e["when"]}</span>'
+            '<span class="ic">·</span>'
+            f'<span class="what">{e["what_html"]}</span>'
+            "</div>"
+            for e in entries
+        )
+    return minificar(
+        '<h2 class="vg-t01-section-label">Atividade recente</h2>'
+        '<div class="vg-t01-card">'
+        f'<div class="vg-t01-timeline">{body}</div>'
+        "</div>"
+    )
+
+
+def _sprint_atual_html(meta: dict | None) -> str:
+    """Card 'SPRINT ATUAL' canônico."""
+    from src.dashboard.componentes.html_utils import minificar
+
+    if not meta:
+        return minificar(
+            '<h2 class="vg-t01-section-label" style="margin-top:20px;">Sprint atual</h2>'
+            '<div class="vg-t01-card vg-t01-sprint-card">'
+            '<div style="font-size:13px;color:var(--text-muted);">'
+            "Nenhuma sprint registrada."
+            "</div>"
+            "</div>"
+        )
+    pill_classe = f"pill pill-{meta.get('pill_tipo', 'd7-pendente')}"
+    return minificar(
+        '<h2 class="vg-t01-section-label" style="margin-top:20px;">Sprint atual</h2>'
+        '<div class="vg-t01-card vg-t01-sprint-card">'
+        '<div class="vg-t01-sprint-head">'
+        "<div>"
+        f'<div class="meta">{meta["sprint_numero"]} · {meta["periodo"]}</div>'
+        f'<div class="titulo">{meta["titulo"]}</div>'
+        "</div>"
+        f'<span class="{pill_classe}">{meta["pill_texto"]}</span>'
+        "</div>"
+        f'<div class="desc">{meta["descricao"]}</div>'
+        "</div>"
     )
 
 
