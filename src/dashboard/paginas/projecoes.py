@@ -515,7 +515,13 @@ def renderizar(
     mes_selecionado: str,
     pessoa: str,
 ) -> None:
-    """Renderiza a página de projeções financeiras (UX-RD-08)."""
+    """Renderiza a página de projeções financeiras (UX-RD-08 + UX-T-05)."""
+    from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
+    renderizar_grupo_acoes([
+        {"label": "Comparar cenários", "title": "A/B/C lado a lado"},
+        {"label": "Salvar cenário", "primary": True, "title": "Persistir cenário ativo"},
+    ])
+
     if "extrato" not in dados:
         st.markdown(
             callout_html("warning", "Nenhum dado de extrato disponível para projeções."),

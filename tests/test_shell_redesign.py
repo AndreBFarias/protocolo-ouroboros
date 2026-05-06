@@ -121,10 +121,22 @@ def test_renderizar_topbar_breadcrumb_marca_ultimo_segmento() -> None:
 
 
 def test_renderizar_topbar_acoes_vazias_emite_slot() -> None:
-    """[08] Topbar com acoes=None emite slot ``topbar-actions`` vazio."""
+    """[08] Topbar com acoes=None emite slot ``topbar-actions`` vazio.
+
+    UX-U-02: ``renderizar_topbar`` agora também consulta
+    ``st.session_state['topbar_acoes_html']`` para alimentar o slot
+    dinamicamente. Em ambiente de teste o session_state pode estar
+    poluído por testes anteriores; este teste isola limpando o estado
+    antes de chamar.
+    """
+    try:
+        import streamlit as _st
+        _st.session_state["topbar_acoes_html"] = ""
+    except Exception:
+        pass
+
     html = renderizar_topbar(["Ouroboros", "Home"])
     assert '<div class="topbar-actions">' in html
-    # Slot existe mas sem buttons/links dentro.
     bloco_acoes = html.split('<div class="topbar-actions">')[1].split("</div>")[0]
     assert "<button" not in bloco_acoes
     assert "<a " not in bloco_acoes

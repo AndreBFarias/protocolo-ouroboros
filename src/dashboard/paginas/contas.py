@@ -476,12 +476,18 @@ def _card_cartao_html(cartao: dict[str, object]) -> str:
 
 
 def renderizar(dados: dict[str, pd.DataFrame], mes_selecionado: str, pessoa: str) -> None:
-    """Renderiza a página de contas (UX-RD-07).
+    """Renderiza a página de contas (UX-RD-07 + UX-T-03).
 
-    Mantém compatibilidade com chamada de ``app.py``: assinatura sem
-    ``ctx``. ``mes_selecionado`` continua usado pelas seções legadas
-    (Dívidas Ativas).
+    UX-T-03: topbar-actions canônicas adicionadas (Adicionar conta +
+    Sincronizar OFX).
     """
+    from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
+    renderizar_grupo_acoes([
+        {"label": "Adicionar conta", "title": "Cadastrar nova conta bancária"},
+        {"label": "Sincronizar OFX", "primary": True,
+         "title": "Reprocessar OFX e atualizar saldos"},
+    ])
+
     extrato = dados.get("extrato", pd.DataFrame())
     extrato_pessoa = (
         filtrar_por_pessoa(extrato, pessoa) if not extrato.empty else extrato

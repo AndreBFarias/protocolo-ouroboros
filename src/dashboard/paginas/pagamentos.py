@@ -537,11 +537,14 @@ def renderizar(
     pessoa: str,
     ctx: dict | None = None,
 ) -> None:
-    """Renderiza Pagamentos (UX-RD-07).
-
-    Mantém ``ctx`` na assinatura por compatibilidade com app.py.
-    """
+    """Renderiza Pagamentos (UX-RD-07 + UX-T-04)."""
     del mes_selecionado, ctx
+
+    from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
+    renderizar_grupo_acoes([
+        {"label": "Marcar pago", "title": "Marcar pagamentos selecionados"},
+        {"label": "Adicionar", "primary": True, "title": "Novo pagamento"},
+    ])
 
     if "extrato" not in dados:
         st.markdown(
