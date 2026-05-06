@@ -74,10 +74,10 @@ def renderizar(
     """
     from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
     renderizar_grupo_acoes([
-        {"label": "Diário emocional",
+        {"label": "Diário emocional", "glyph": "heart",
          "href": "?cluster=Bem-estar&tab=Diário",
          "title": "Ir para o diário"},
-        {"label": "Salvar humor", "primary": True,
+        {"label": "Salvar humor", "primary": True, "glyph": "validar",
          "title": "Persistir registro de humor de hoje"},
     ])
 

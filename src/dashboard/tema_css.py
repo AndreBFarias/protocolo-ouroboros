@@ -269,6 +269,16 @@ def _classes_redesign() -> str:
         letter-spacing: 0.10em !important;
         text-transform: uppercase !important;
         color: var(--text-muted) !important;
+        overflow: visible !important;
+    }
+    /* Badge não deve ser cortada por overflow do parent. */
+    .sidebar-cluster-header .badge {
+        flex-shrink: 0 !important;
+    }
+    /* SVG dos cluster headers herda cor + tamanho fixo. */
+    .sidebar-cluster-header svg {
+        flex-shrink: 0;
+        color: var(--accent-purple);
     }
     .sidebar-cluster-header .badge {
         font-family: var(--ff-mono);
@@ -285,11 +295,14 @@ def _classes_redesign() -> str:
        Forçar !important + reset text-decoration para a sidebar item
        respeitar o token canônico do mockup (var(--text-secondary),
        sem sublinhado, sem cor de link). */
-    /* auditoria-sidebar: item.h = 30px (mockup) -> padding 4px 16px 4px 32px
-       (era 6px) para reduzir altura em 4px. Comprimento 240px completo. */
+    /* SIDEBAR-CANON-FIX: cursor pointer !important para vencer cascata
+       Streamlit (que pode aplicar col-resize ou default em <a>). */
     [data-testid="stSidebar"] a.sidebar-item,
+    [data-testid="stSidebar"] .sidebar-item,
     .sidebar-item {
-        display: flex !important; align-items: center; gap: var(--sp-2);
+        display: flex !important;
+        align-items: center;
+        gap: var(--sp-2);
         padding: 4px 16px 4px 32px !important;
         font-family: var(--ff-sans) !important;
         font-size: var(--fs-13) !important;
@@ -300,15 +313,17 @@ def _classes_redesign() -> str:
         color: var(--text-secondary) !important;
         text-decoration: none !important;
         border-left: 2px solid transparent;
-        cursor: pointer;
+        cursor: pointer !important;
         user-select: none;
         transition: background .15s, color .15s, border-color .15s;
     }
     [data-testid="stSidebar"] a.sidebar-item:hover,
+    [data-testid="stSidebar"] .sidebar-item:hover,
     .sidebar-item:hover {
-        background: var(--bg-elevated);
+        background: var(--bg-elevated) !important;
         color: var(--text-primary) !important;
         text-decoration: none !important;
+        cursor: pointer !important;
     }
     [data-testid="stSidebar"] a.sidebar-item.active,
     .sidebar-item.active {
@@ -321,11 +336,12 @@ def _classes_redesign() -> str:
         font-family: var(--ff-mono); font-size: 10px;
         color: var(--text-muted) !important;
     }
-    /* Brand glyph link: também precisa reset de text-decoration. */
+    /* Brand glyph link: também precisa reset de text-decoration + cursor. */
     [data-testid="stSidebar"] a.sidebar-brand,
     .sidebar-brand {
         text-decoration: none !important;
         color: var(--text-primary) !important;
+        cursor: pointer !important;
     }
 
     /* UX-U-04 followup: topbar canônica do mockup tem 56px de altura
@@ -1082,17 +1098,18 @@ def css_global() -> str:
         margin-top: {SPACING["md"]}px;
         margin-bottom: {SPACING["md"]}px;
     }}
-    /* UX-U-04 + auditoria-sidebar-2026-05-06: sidebar canônica mede
-       240px. Streamlit por default aplica padding interno de ~26px que
-       deixa o conteúdo em 188px (sub-medida). Forçamos padding ZERO
-       no wrapper interno para que o conteúdo ocupe os 240px completos
-       (mockup canônico tem aside.sidebar à largura cheia x=0). */
+    /* SIDEBAR-CANON-FIX (2026-05-06): wrapper Streamlit precisa de
+       box-sizing: border-box + overflow-x: hidden para não criar barra
+       de rolagem horizontal no rodapé. Antes: stSidebarContent tinha
+       padding default 16px sem box-sizing -> width effective 256px ->
+       overflow-x: auto ativado automaticamente pelo Streamlit. */
     [data-testid="stSidebar"] {{
         background-color: {CORES["card_fundo"]};
         width: 240px !important;
         min-width: 240px !important;
         max-width: 240px !important;
         border-right: 1px solid var(--border-subtle) !important;
+        overflow-x: hidden !important;
     }}
     [data-testid="stSidebar"] > div,
     [data-testid="stSidebar"] > div > div,
@@ -1102,6 +1119,9 @@ def css_global() -> str:
         min-width: 240px !important;
         max-width: 240px !important;
         padding: 0 !important;
+        margin: 0 !important;
+        box-sizing: border-box !important;
+        overflow-x: hidden !important;
     }}
     /* aside.sidebar (HTML interno) ocupa 240px completos. */
     [data-testid="stSidebar"] aside.sidebar,
@@ -1110,6 +1130,8 @@ def css_global() -> str:
         max-width: 240px !important;
         margin: 0 !important;
         padding: 12px 0 !important;
+        box-sizing: border-box !important;
+        overflow-x: hidden !important;
     }}
     /* Sprint UX-116: sidebar interna ganha padding 4 direções com PADDING_CHIP
        (16px). O retângulo interno [data-testid="stSidebar"] > div:first-child

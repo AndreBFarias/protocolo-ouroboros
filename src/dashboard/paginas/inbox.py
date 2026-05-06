@@ -76,8 +76,9 @@ def renderizar(
     """
     from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
     renderizar_grupo_acoes([
-        {"label": "Abrir pasta", "title": "Abrir ~/Ouroboros/inbox"},
-        {"label": "Atualizar fila", "primary": True,
+        {"label": "Abrir pasta", "glyph": "docs",
+         "title": "Abrir ~/Ouroboros/inbox"},
+        {"label": "Atualizar fila", "primary": True, "glyph": "refresh",
          "title": "Verificar novos arquivos"},
     ])
 

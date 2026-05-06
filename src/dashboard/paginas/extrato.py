@@ -859,12 +859,14 @@ def renderizar(
         [
             {
                 "label": "Importar OFX",
+                "glyph": "upload",
                 "href": "?cluster=Inbox&tab=Inbox",
                 "title": "Abrir Inbox para importar arquivo OFX",
             },
             {
                 "label": "Exportar",
                 "primary": True,
+                "glyph": "download",
                 "title": "Exportar transações filtradas",
             },
         ]

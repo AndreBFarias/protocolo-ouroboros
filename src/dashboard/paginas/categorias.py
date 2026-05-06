@@ -714,8 +714,8 @@ def renderizar(
     """Renderiza a página Categorias (UX-RD-12 + UX-T-11)."""
     from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
     renderizar_grupo_acoes([
-        {"label": "Nova regra", "title": "Adicionar regra YAML"},
-        {"label": "Recategorizar", "primary": True,
+        {"label": "Nova regra", "glyph": "upload", "title": "Adicionar regra YAML"},
+        {"label": "Recategorizar", "primary": True, "glyph": "refresh",
          "title": "Reclassificar transações"},
     ])
 

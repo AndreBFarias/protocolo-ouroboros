@@ -19,12 +19,15 @@ from typing import Iterable, TypedDict
 class Acao(TypedDict, total=False):
     """Estrutura canônica de uma ação na topbar.
 
+    SIDEBAR-CANON-FIX (2026-05-06): campo ``kbd`` removido — mockup
+    canônico (00-shell-navegacao.html / 01-visao-geral.html) NÃO usa
+    pílula ``<kbd>`` em botões da topbar. Antes esse campo causava
+    vazamento de texto (ex.: "Atualizar r").
+
     - ``label`` (obrigatório): texto visível no botão.
     - ``href``: se presente, vira ``<a>`` (link); senão vira ``<button>``.
     - ``primary``: ``True`` aplica classe ``btn-primary`` (cor accent).
-    - ``glyph``: nome do glyph SVG em ``componentes/glyphs.py`` para ícone à
-      esquerda do label.
-    - ``kbd``: tecla de atalho exibida como pílula ``<kbd>`` à direita.
+    - ``glyph``: nome do glyph SVG em ``componentes/glyphs.py``.
     - ``title``: tooltip (atributo ``title`` HTML).
     """
 
@@ -32,7 +35,6 @@ class Acao(TypedDict, total=False):
     href: str
     primary: bool
     glyph: str
-    kbd: str
     title: str
 
 
@@ -49,16 +51,10 @@ def _renderizar_acao(acao: Acao) -> str:
             glyph_html = _glyph(glyph_nome, tamanho_px=14)
         except Exception:
             glyph_html = ""
-    kbd_text = acao.get("kbd")
-    kbd_html = (
-        f'<kbd class="kbd">{_html.escape(str(kbd_text))}</kbd>'
-        if kbd_text
-        else ""
-    )
     title_attr = ""
     if acao.get("title"):
         title_attr = f' title="{_html.escape(str(acao["title"]), quote=True)}"'
-    conteudo = f'{glyph_html}<span>{label}</span>{kbd_html}'
+    conteudo = f'{glyph_html}<span>{label}</span>'
     if href:
         href_esc = _html.escape(str(href), quote=True)
         return (

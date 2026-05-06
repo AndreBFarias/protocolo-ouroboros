@@ -42,6 +42,21 @@ from collections.abc import Iterable
 # Documentos, Análise, Metas). Os 3 clusters novos (Inbox, Bem-estar,
 # Sistema) ainda não têm páginas em ``paginas/``; o dispatcher em
 # ``main()`` mostra fallback graceful.
+# SIDEBAR-CANON-FIX (2026-05-06): mapeamento canônico cluster -> glyph
+# SVG. Espelha os ícones que o mockup `_visao-render.js` injeta no bloco
+# "OS 5 CLUSTERS". Cluster ausente do dict cai no fallback "" (sem glyph).
+GLYPH_POR_CLUSTER: dict[str, str] = {
+    "Inbox": "inbox",
+    "Home": "home",
+    "Finanças": "financas",
+    "Documentos": "docs",
+    "Análise": "analise",
+    "Metas": "metas",
+    "Bem-estar": "heart",
+    "Sistema": "sigma",
+}
+
+
 CLUSTERS_REDESIGN: tuple[dict, ...] = (
     {
         "nome": "Inbox",
@@ -153,17 +168,18 @@ def _renderizar_brand_html() -> str:
 def _renderizar_busca_html() -> str:
     """Bloco do campo de busca placeholder + tecla `/`.
 
-    Sprint UX-RD-03 usa o input HTML estático espelhando o mockup. O
-    componente Streamlit interativo (``renderizar_input_busca`` da Sprint
-    UX-113/114) continua sendo renderizado via Python por ``app.py`` --
-    este input HTML é apenas decorativo, mostra o placeholder e o ``kbd``,
-    e provê o alvo de foco para a tecla ``/`` mesmo antes do componente
-    Streamlit hidratar.
+    SIDEBAR-CANON-FIX (2026-05-06): substitui o ``?`` literal pelo glyph
+    SVG canônico ``search`` (mockup ``00-shell-navegacao.html``). Placeholder
+    reduzido para apenas ``"Buscar"`` conforme pedido do dono.
     """
+    from src.dashboard.componentes.glyphs import glyph  # noqa: PLC0415
+
     return (
         '<div class="sidebar-search">'
-        '<span class="sidebar-search-icon" aria-hidden="true">?</span>'
-        '<input type="text" placeholder="Buscar fornecedor, sha8, valor..." '
+        '<span class="sidebar-search-icon" aria-hidden="true">'
+        f'{glyph("search", tamanho_px=14)}'
+        "</span>"
+        '<input type="text" placeholder="Buscar" '
         'aria-label="Buscar (atalho: tecla /)" '
         'data-ouroboros-busca="placeholder" />'
         "<kbd>/</kbd>"
@@ -211,11 +227,18 @@ def _renderizar_cluster_html(
     if nome_cluster == "Inbox":
         badge_cluster_html = '<span class="badge" title="Arquivos pendentes na fila">...</span>'
 
+    # SIDEBAR-CANON-FIX: cluster header ganha glyph SVG canônico ao lado
+    # do nome (mockup 00-shell-navegacao.html). Mapeamento extraído de
+    # _visao-render.js linha 130 + atribuições convencionais.
+    from src.dashboard.componentes.glyphs import glyph  # noqa: PLC0415
+    glyph_nome = GLYPH_POR_CLUSTER.get(nome_cluster, "")
+    glyph_html = glyph(glyph_nome, tamanho_px=14) if glyph_nome else ""
+
     return (
         '<div class="sidebar-cluster">'
         '<div class="sidebar-cluster-header">'
         f'<span style="display:inline-flex;align-items:center;gap:8px;">'
-        f"{nome_seguro}</span>"
+        f"{glyph_html}{nome_seguro}</span>"
         f"{badge_cluster_html}"
         "</div>"
         + "".join(itens_html)

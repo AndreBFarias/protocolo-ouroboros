@@ -81,10 +81,15 @@ def renderizar(
 
     renderizar_grupo_acoes(
         [
-            {"label": "Atualizar", "kbd": "r", "title": "Recarregar a página"},
+            {
+                "label": "Atualizar",
+                "glyph": "refresh",
+                "title": "Recarregar a página",
+            },
             {
                 "label": "Ir para Validação",
                 "primary": True,
+                "glyph": "validar",
                 "href": "?cluster=Documentos&tab=Extra%C3%A7%C3%A3o+Tripla",
                 "title": "Abrir página de Extração Tripla",
             },

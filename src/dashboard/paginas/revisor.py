@@ -389,8 +389,9 @@ def renderizar(
     """Ponto de entrada da página Revisor (UX-T-09)."""
     from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
     renderizar_grupo_acoes([
-        {"label": "Próxima divergência", "title": "Pular para próxima divergência"},
-        {"label": "Aprovar Opus & avançar", "primary": True,
+        {"label": "Próxima divergência", "glyph": "diff",
+         "title": "Pular para próxima divergência"},
+        {"label": "Aprovar Opus & avançar", "primary": True, "glyph": "validar",
          "title": "Aceitar extração Opus para a transação corrente"},
     ])
 
