@@ -231,15 +231,21 @@ def test_calcular_saldo_topo_separa_receita_de_despesa(df_pequeno: pd.DataFrame)
 
 
 def test_saldo_topo_html_tem_tabular_nums_e_minificado(df_pequeno: pd.DataFrame) -> None:
+    """UX-T-02: HTML emite os 4 KPIs canônicos do mockup com classe ``.t02-kpi``.
+
+    Labels canônicos: Saldo consolidado / Entrada · 30d / Saída · 30d /
+    Investido · 30d. Antes de UX-T-02 (UX-RD-06), os KPIs eram
+    Saldo + RECEITA + DESPESA + TRANSAÇÕES — esses labels saíram com a
+    migração para o padrão agentic-first.
+    """
     metricas = calcular_saldo_topo(df_pequeno)
     html = _saldo_topo_html(metricas, "2026-04")
-    # Sem indentação ≥ 4 espaços
     assert "    " not in html
-    # Classes renderizadas para tabular-nums
-    assert "extrato-saldo-valor" in html
-    assert "RECEITA" in html
-    assert "DESPESA" in html
-    assert "TRANSAÇÕES" in html
+    assert "t02-kpi" in html
+    assert "Saldo consolidado" in html
+    assert "Entrada · 30d" in html
+    assert "Saída · 30d" in html
+    assert "Investido · 30d" in html
 
 
 # ---------------------------------------------------------------------------

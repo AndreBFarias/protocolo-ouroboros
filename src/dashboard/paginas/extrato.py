@@ -193,14 +193,18 @@ def _carregar_ids_com_doc() -> set[str]:
 
 
 def calcular_saldo_topo(df: pd.DataFrame) -> dict[str, float]:
-    """Calcula saldo, receita, despesa e count para o card de topo.
+    """Calcula saldo, receita, despesa, investido e count para o card de topo.
 
     Convenção: ``valor`` negativo é despesa, positivo é receita. ``tipo``
     "Transferência Interna" é excluído de ambos para não inflar nem somas
-    nem perdas.
+    nem perdas. UX-T-02: campo ``investido`` adicionado (despesas com
+    categoria que contém "Investimento", case-insensitive).
     """
     if df.empty:
-        return {"saldo": 0.0, "receita": 0.0, "despesa": 0.0, "transacoes": 0}
+        return {
+            "saldo": 0.0, "receita": 0.0, "despesa": 0.0,
+            "investido": 0.0, "transacoes": 0,
+        }
 
     if "tipo" in df.columns:
         operacional = df[df["tipo"].astype(str) != "Transferência Interna"]
@@ -221,10 +225,18 @@ def calcular_saldo_topo(df: pd.DataFrame) -> dict[str, float]:
         despesa_raw = float(valores[valores < 0].sum())  # negativo
     # Saldo = receita - magnitude(despesa); funciona com ambos os sinais.
     saldo = receita - abs(despesa_raw)
+    # UX-T-02: investido = despesas categorizadas como "Investimento".
+    investido = 0.0
+    if "categoria" in operacional.columns and "tipo" in operacional.columns:
+        cat_str = operacional["categoria"].astype(str).str.lower()
+        eh_investimento = cat_str.str.contains("investimento", na=False)
+        eh_despesa = operacional["tipo"] == "Despesa"
+        investido = abs(float(valores[eh_despesa & eh_investimento].sum()))
     return {
         "saldo": saldo,
         "receita": receita,
-        "despesa": despesa_raw,  # mantém sinal original do dataset
+        "despesa": despesa_raw,
+        "investido": investido,
         "transacoes": int(len(df)),
     }
 
@@ -290,43 +302,50 @@ def _formatar_brl(valor: float) -> str:
 
 
 def _saldo_topo_html(metricas: dict[str, float], periodo_rotulo: str) -> str:
-    """Card grande de saldo + 3 mini-KPIs (receita, despesa, count)."""
+    """UX-T-02: 4 KPIs canônicos do mockup ``02-extrato.html``.
+
+    Saldo Consolidado · Entrada · 30d · Saída · 30d · Investido · 30d
+    (labels canônicos do mockup). Mantém sufixo ``periodo_rotulo`` para
+    contextualizar a janela ativa quando o usuário muda o filtro.
+    """
     saldo = metricas["saldo"]
     receita = metricas["receita"]
-    despesa = metricas["despesa"]  # negativo
+    despesa = metricas["despesa"]
     n = int(metricas["transacoes"])
 
-    cor_saldo = CORES["positivo"] if saldo >= 0 else CORES["negativo"]
+    investido = float(metricas.get("investido", 0.0))
+    pct_investido = (
+        (investido / receita * 100.0) if receita > 0 else 0.0
+    )
 
     return minificar(
         f"""
-        <div class="extrato-saldo-topo">
-            <div class="extrato-saldo-card">
-                <span class="extrato-saldo-rotulo">SALDO · {periodo_rotulo}</span>
-                <span class="extrato-saldo-valor" style="color:{cor_saldo};">
-                    {_formatar_brl(saldo)}
-                </span>
-                <span class="extrato-saldo-meta">
-                    {n} transações no período
-                </span>
+        <div class="t02-kpi-row">
+            <div class="t02-kpi">
+                <div class="l">Saldo consolidado</div>
+                <div class="v">{_formatar_brl(saldo)}</div>
+                <div class="d">{n} transações · {periodo_rotulo}</div>
             </div>
-            <div class="extrato-saldo-mini">
-                <div class="extrato-mini-kpi">
-                    <span class="extrato-mini-rotulo">RECEITA</span>
-                    <span class="extrato-mini-valor" style="color:{CORES['positivo']};">
-                        {_formatar_brl(receita)}
-                    </span>
+            <div class="t02-kpi">
+                <div class="l">Entrada · 30d</div>
+                <div class="v" style="color:var(--d7-graduado);">
+                    {_formatar_brl(receita)}
                 </div>
-                <div class="extrato-mini-kpi">
-                    <span class="extrato-mini-rotulo">DESPESA</span>
-                    <span class="extrato-mini-valor" style="color:{CORES['negativo']};">
-                        {_formatar_brl(despesa)}
-                    </span>
+                <div class="d">PJ + salário + dividendos</div>
+            </div>
+            <div class="t02-kpi">
+                <div class="l">Saída · 30d</div>
+                <div class="v" style="color:var(--accent-red);">
+                    {_formatar_brl(abs(despesa))}
                 </div>
-                <div class="extrato-mini-kpi">
-                    <span class="extrato-mini-rotulo">TRANSAÇÕES</span>
-                    <span class="extrato-mini-valor">{n}</span>
+                <div class="d">{n} txns no período</div>
+            </div>
+            <div class="t02-kpi">
+                <div class="l">Investido · 30d</div>
+                <div class="v" style="color:var(--accent-purple);">
+                    {_formatar_brl(investido)}
                 </div>
+                <div class="d">{pct_investido:.0f}% da receita</div>
             </div>
         </div>
         """
@@ -485,7 +504,78 @@ def _estilos_locais_html() -> str:
     return minificar(
         """
         <style>
-        /* Saldo no topo */
+        /* UX-T-02: KPIs canônicos do mockup 02-extrato.html */
+        .t02-kpi-row {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+            margin-bottom: 16px;
+        }
+        .t02-kpi {
+            background: var(--bg-surface); border: 1px solid var(--border-subtle);
+            border-radius: var(--r-md); padding: 12px 16px;
+            display: flex; flex-direction: column; gap: 4px;
+        }
+        .t02-kpi .l {
+            font-family: var(--ff-mono); font-size: 10px;
+            letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted);
+        }
+        .t02-kpi .v {
+            font-family: var(--ff-mono); font-size: 26px; font-weight: 500;
+            line-height: 1.1; font-variant-numeric: tabular-nums;
+        }
+        .t02-kpi .d {
+            font-family: var(--ff-mono); font-size: 11px; color: var(--text-muted);
+        }
+
+        /* UX-T-02: filt-bar inline canônica */
+        .t02-filt-bar {
+            display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+            background: var(--bg-surface); border: 1px solid var(--border-subtle);
+            padding: 8px 12px; border-radius: var(--r-md); margin-bottom: 12px;
+        }
+        .t02-filt-bar label {
+            font-family: var(--ff-mono); font-size: 10px;
+            letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted);
+        }
+        .t02-chip {
+            font-family: var(--ff-mono); font-size: 11px; padding: 3px 8px;
+            border: 1px solid var(--border-subtle); border-radius: var(--r-full);
+            background: var(--bg-inset); color: var(--text-secondary); cursor: pointer;
+        }
+        .t02-chip.on {
+            background: rgba(189,147,249,0.10); color: var(--accent-purple);
+            border-color: rgba(189,147,249,0.30);
+        }
+
+        /* UX-T-02: right-cards (Saldo 90d, Breakdown, Origens) */
+        .t02-right-card {
+            background: var(--bg-surface); border: 1px solid var(--border-subtle);
+            border-radius: var(--r-md); padding: 16px; margin-bottom: 12px;
+        }
+        .t02-right-card h3 {
+            font-family: var(--ff-mono); font-size: 11px;
+            letter-spacing: 0.08em; text-transform: uppercase;
+            color: var(--text-secondary); margin: 0 0 12px;
+        }
+        .t02-cat-bar {
+            display: grid; grid-template-columns: 1fr auto; gap: 8px;
+            align-items: center; margin-bottom: 6px; font-size: 12px;
+        }
+        .t02-cat-bar .name { font-family: var(--ff-mono); }
+        .t02-cat-bar .v {
+            font-family: var(--ff-mono); font-variant-numeric: tabular-nums;
+            color: var(--text-secondary);
+        }
+        .t02-cat-bar .track {
+            grid-column: 1/-1; height: 4px; background: var(--bg-inset);
+            border-radius: var(--r-full); overflow: hidden;
+        }
+        .t02-cat-bar .track > span { display: block; height: 100%; }
+        .t02-dot {
+            width: 8px; height: 8px; border-radius: 2px; display: inline-block;
+            margin-right: 6px; vertical-align: middle;
+        }
+
+        /* Saldo no topo (UX-RD-06 — preservado em paralelo aos KPIs T-02) */
         .extrato-saldo-topo {
             display: grid;
             grid-template-columns: 2fr 3fr;
@@ -762,19 +852,36 @@ def renderizar(
     Mantém assinatura intocada para que ``app.py`` continue chamando
     ``renderizar(dados, periodo, pessoa, ctx)`` sem mudança.
     """
+    # UX-T-02: topbar-actions canônicas (Importar OFX + Exportar primary).
+    from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
+
+    renderizar_grupo_acoes(
+        [
+            {
+                "label": "Importar OFX",
+                "href": "?cluster=Inbox&tab=Inbox",
+                "title": "Abrir Inbox para importar arquivo OFX",
+            },
+            {
+                "label": "Exportar",
+                "primary": True,
+                "title": "Exportar transações filtradas",
+            },
+        ]
+    )
+
     st.markdown(_estilos_locais_html(), unsafe_allow_html=True)
-    # UX-U-03: page-header canônico via helper (substitui hero_titulo_html
-    # que emitia h1 fora do padrão UPPERCASE 40px gradient do mockup).
+    # UX-U-03 + UX-T-02: page-header canônico via helper.
     from src.dashboard.componentes.page_header import renderizar_page_header
     st.markdown(
         renderizar_page_header(
             titulo="EXTRATO",
             subtitulo=(
-                "Tabela densa com transações do período, breakdown por "
-                "categoria e drawer detalhado com JSON sintático e documento "
-                "vinculado."
+                "Transações normalizadas dos OFX, faturas, comprovantes Pix. "
+                "Cada linha tem sha8 de origem rastreável até o arquivo bruto."
             ),
-            sprint_tag="UX-RD-06",
+            sprint_tag="UX-T-02",
+            pills=[{"texto": "rastreabilidade sha256", "tipo": "d7-graduado"}],
         ),
         unsafe_allow_html=True,
     )
