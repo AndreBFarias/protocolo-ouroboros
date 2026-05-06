@@ -429,18 +429,9 @@ def main() -> None:
     # FIX-12: âncora alvo do skip-link (WCAG 2.4.1).
     st.markdown('<div id="main-root" tabindex="-1"></div>', unsafe_allow_html=True)
 
-    # VG-FIDELIDADE-FIX (2026-05-06): expander "Filtros globais" REMOVIDO
-    # da main() — mockup canônico 01-visao-geral.html não tem barra de
-    # filtros entre topbar e hero. Páginas que precisam de filtros usam
-    # componentes/filtros_pagina inline (helper Onda U-04). Pré-populamos
-    # session_state com defaults seguros para preservar o contrato das
-    # 29 páginas que ainda lêem os valores via st.session_state[seletor_*].
-    meses = obter_meses_disponiveis(dados)
-    periodo = st.session_state.get("seletor_periodo") or (meses[0] if meses else "")
-    granularidade = st.session_state.get("seletor_granularidade", "Mês")
-    pessoa = st.session_state.get("seletor_pessoa", "Todos")
-    if "filtro_forma" not in st.session_state:
-        st.session_state["filtro_forma"] = None
+    # SIDEBAR-CANON-FIX: filtros globais no main, ABAIXO da topbar.
+    # Restaurado após pedido do dono (removê-lo era engano).
+    periodo, pessoa, granularidade = _filtros_globais_main(dados)
     if not periodo:
         st.stop()
 

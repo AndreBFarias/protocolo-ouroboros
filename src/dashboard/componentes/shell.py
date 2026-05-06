@@ -489,6 +489,22 @@ def instalar_fix_sidebar_padding() -> None:
         ).forEach(a => {
           if (a.tagName === 'A') a.target = '_self';
         });
+        // BODY-FIX (2026-05-06): mainBlockContainer tem padding default
+        // 32px 75px 150px do Streamlit que afasta o conteúdo do canto
+        // superior esquerdo. Mockup canônico tem padding 24px.
+        const mainBlock = doc.querySelector('[data-testid="stMainBlockContainer"]');
+        if (mainBlock) {
+          mainBlock.style.setProperty('padding', '24px', 'important');
+          mainBlock.style.setProperty('max-width', 'none', 'important');
+        }
+        // Lupa centralizada no input de busca: força top: 50% +
+        // transform translateY(-50%) explícito (browser pode estar
+        // calculando matrix com offset diferente).
+        const searchIcon = doc.querySelector('.sidebar-search-icon');
+        if (searchIcon) {
+          searchIcon.style.setProperty('top', '50%', 'important');
+          searchIcon.style.setProperty('transform', 'translateY(-50%)', 'important');
+        }
       };
       apply();
       // Reaplica quando Streamlit re-renderiza wrappers.
