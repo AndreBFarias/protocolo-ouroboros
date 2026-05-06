@@ -211,19 +211,20 @@ def _classes_redesign() -> str:
         flex-direction: column;
         gap: var(--sp-2);
     }
-    /* UX-U-04 followup: !important nas propriedades da sidebar canônica
-       para vencer a cascata do Streamlit (que aplica Inter/Source Sans
-       em ``[data-testid="stSidebar"] a`` e font-size base via stRoot). */
+    /* UX-U-04 + auditoria-sidebar: !important para vencer cascata
+       Streamlit. Padding canônico 8px 16px (mockup) = h 36px com fs
+       14px line 1.45. Antes h era 40px por padding excessivo. */
     .sidebar-brand,
     [data-testid="stSidebar"] a.sidebar-brand,
     [data-testid="stSidebar"] .sidebar-brand {
         display: flex;
         align-items: center;
-        gap: var(--sp-2);
-        padding: var(--sp-2) var(--sp-4);
+        gap: 8px;
+        padding: 8px 16px !important;
         font-family: var(--ff-mono) !important;
         font-weight: 500 !important;
         font-size: var(--fs-14) !important;
+        line-height: 1.45 !important;
         letter-spacing: 0.04em !important;
         text-transform: uppercase !important;
     }
@@ -250,16 +251,21 @@ def _classes_redesign() -> str:
         padding: 1px 4px;
     }
 
-    .sidebar-cluster { margin-top: var(--sp-1); }
-    /* UX-U-04 followup: tipografia canônica do mockup (11px mono) precisa
-       !important porque ancestrais Streamlit reinjetam font-size de 15px. */
+    /* auditoria-sidebar-2026-05-06: cluster fontSize 14px (era 15px
+       herdado de p,div,span global). H igual ao mockup (32px = 8px
+       padding * 2 + 16px line-height de 11px font). */
+    .sidebar-cluster {
+        margin-top: var(--sp-1);
+        font-size: var(--fs-13) !important;
+    }
     .sidebar-cluster-header,
     [data-testid="stSidebar"] .sidebar-cluster-header {
         display: flex; align-items: center; justify-content: space-between;
-        padding: var(--sp-2) var(--sp-4);
+        padding: 8px 16px !important;
         font-family: var(--ff-mono) !important;
         font-size: var(--fs-11) !important;
         font-weight: 400 !important;
+        line-height: 1.45 !important;
         letter-spacing: 0.10em !important;
         text-transform: uppercase !important;
         color: var(--text-muted) !important;
@@ -279,13 +285,16 @@ def _classes_redesign() -> str:
        Forçar !important + reset text-decoration para a sidebar item
        respeitar o token canônico do mockup (var(--text-secondary),
        sem sublinhado, sem cor de link). */
+    /* auditoria-sidebar: item.h = 30px (mockup) -> padding 4px 16px 4px 32px
+       (era 6px) para reduzir altura em 4px. Comprimento 240px completo. */
     [data-testid="stSidebar"] a.sidebar-item,
     .sidebar-item {
         display: flex !important; align-items: center; gap: var(--sp-2);
-        padding: 6px var(--sp-4) 6px 32px !important;
+        padding: 4px 16px 4px 32px !important;
         font-family: var(--ff-sans) !important;
         font-size: var(--fs-13) !important;
         font-weight: 400 !important;
+        line-height: 1.5 !important;
         letter-spacing: normal !important;
         text-transform: none !important;
         color: var(--text-secondary) !important;
@@ -388,24 +397,44 @@ def _classes_redesign() -> str:
     }
 
     /* ─── BOTÕES ─── */
-    .btn {
-        display: inline-flex; align-items: center; gap: var(--sp-2);
-        background: var(--bg-elevated);
-        color: var(--text-primary);
-        border: 1px solid var(--border-subtle);
-        border-radius: var(--r-sm);
-        padding: 6px 12px;
-        font-size: var(--fs-13); font-weight: 500;
+    /* auditoria-sidebar: btn canônico mockup tem fs 12px / padding 4px 8px /
+       gap 6-8px, h ~27px. Antes era 31px com fs 13px. !important para
+       vencer o estilo de Streamlit ``[data-testid] a`` que aplica cor
+       azul de link em ``<a class="btn">`` (incluindo btn-primary). */
+    .btn,
+    .topbar-actions a.btn,
+    .topbar-actions button.btn {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 8px !important;
+        background: var(--bg-elevated) !important;
+        color: var(--text-primary) !important;
+        border: 1px solid var(--border-subtle) !important;
+        border-radius: var(--r-sm) !important;
+        padding: 4px 8px !important;
+        font-family: var(--ff-sans) !important;
+        font-size: var(--fs-12) !important;
+        font-weight: 500 !important;
+        text-decoration: none !important;
+        line-height: 1.45 !important;
         transition: border-color .15s, background .15s, transform .12s;
     }
-    .btn:active { transform: translateY(1px); }
-    .btn:hover { border-color: var(--border-strong); background: var(--bg-surface); }
-    .btn-primary {
-        background: var(--accent-purple);
-        color: var(--text-inverse);
-        border-color: var(--accent-purple);
+    .btn:active,
+    .topbar-actions a.btn:active { transform: translateY(1px); }
+    .btn:hover,
+    .topbar-actions a.btn:hover {
+        border-color: var(--border-strong) !important;
+        background: var(--bg-surface) !important;
     }
-    .btn-primary:hover { filter: brightness(1.08); }
+    .btn-primary,
+    .topbar-actions a.btn-primary,
+    .topbar-actions button.btn-primary {
+        background: var(--accent-purple) !important;
+        color: var(--text-inverse) !important;
+        border-color: var(--accent-purple) !important;
+    }
+    .btn-primary:hover,
+    .topbar-actions a.btn-primary:hover { filter: brightness(1.08); }
     .btn-ghost { background: transparent; }
     .btn-danger {
         background: transparent;
@@ -1053,10 +1082,11 @@ def css_global() -> str:
         margin-top: {SPACING["md"]}px;
         margin-bottom: {SPACING["md"]}px;
     }}
-    /* UX-U-04 followup: sidebar canônica mede 240px (mockup
-       00-shell-navegacao.html). Streamlit usa width default ~300px;
-       forçamos 240 com !important. Border-right canônico é 1px solid
-       border-subtle (rgb(49,52,69)), NÃO 2px purple. */
+    /* UX-U-04 + auditoria-sidebar-2026-05-06: sidebar canônica mede
+       240px. Streamlit por default aplica padding interno de ~26px que
+       deixa o conteúdo em 188px (sub-medida). Forçamos padding ZERO
+       no wrapper interno para que o conteúdo ocupe os 240px completos
+       (mockup canônico tem aside.sidebar à largura cheia x=0). */
     [data-testid="stSidebar"] {{
         background-color: {CORES["card_fundo"]};
         width: 240px !important;
@@ -1064,9 +1094,22 @@ def css_global() -> str:
         max-width: 240px !important;
         border-right: 1px solid var(--border-subtle) !important;
     }}
-    [data-testid="stSidebar"] > div {{
+    [data-testid="stSidebar"] > div,
+    [data-testid="stSidebar"] > div > div,
+    [data-testid="stSidebarContent"],
+    [data-testid="stSidebar"] section {{
         width: 240px !important;
         min-width: 240px !important;
+        max-width: 240px !important;
+        padding: 0 !important;
+    }}
+    /* aside.sidebar (HTML interno) ocupa 240px completos. */
+    [data-testid="stSidebar"] aside.sidebar,
+    aside.sidebar.ouroboros-sidebar-redesign {{
+        width: 240px !important;
+        max-width: 240px !important;
+        margin: 0 !important;
+        padding: 12px 0 !important;
     }}
     /* Sprint UX-116: sidebar interna ganha padding 4 direções com PADDING_CHIP
        (16px). O retângulo interno [data-testid="stSidebar"] > div:first-child

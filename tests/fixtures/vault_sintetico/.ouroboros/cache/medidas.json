@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "schema": "medidas",
-  "gerado_em": "2026-05-06T02:33:30-03:00",
+  "gerado_em": "2026-05-06T16:02:34-03:00",
   "vault_root": "/home/andrefarias/Desenvolvimento/protocolo-ouroboros/tests/fixtures/vault_sintetico",
   "items": [
     {
