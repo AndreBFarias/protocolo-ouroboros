@@ -100,7 +100,9 @@ def renderizar(
     st.markdown(_estilos_t01_canonicos(), unsafe_allow_html=True)
 
     sprint_meta = ler_sprint_atual()
-    sprint_titulo_no_hero = (sprint_meta or {}).get("sprint_numero", "") if sprint_meta else ""
+    # VG-FIDELIDADE-FIX: usa o titulo canonico (ex.: VALIDAÇÃO-CSV-01)
+    # em vez do ID interno UX-T-NN — mockup canônico mostra o titulo.
+    sprint_titulo_no_hero = (sprint_meta or {}).get("titulo", "") if sprint_meta else ""
     st.markdown(_hero_html(sprint_titulo_no_hero), unsafe_allow_html=True)
 
     if "extrato" not in dados:

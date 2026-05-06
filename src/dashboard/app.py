@@ -364,10 +364,20 @@ def _renderizar_topbar_para(cluster: str, aba_ativa: str):
     ``componentes/topbar_actions.renderizar_grupo_acoes``. Como o dispatcher
     de páginas roda DEPOIS do topbar, usamos placeholder reservando posição
     no DOM e preenchemos no fim (``_finalizar_topbar``) com o slot já populado.
+
+    VG-FIDELIDADE-FIX (2026-05-06): quando ``cluster == "Home"`` e
+    ``aba_ativa == "Visão Geral"`` o breadcrumb é 2-segmentos
+    (``Ouroboros / Visão Geral``) em vez de 3, espelhando o mockup
+    canônico 01-visao-geral.html que mostra apenas
+    ``OUROBOROS / VISÃO GERAL`` (sem o cluster intermediário "Home"
+    porque a Visão Geral é a tela default do Home).
     """
-    breadcrumb = ["Ouroboros", cluster]
-    if aba_ativa:
-        breadcrumb.append(aba_ativa)
+    if cluster == "Home" and aba_ativa in ("", "Visão Geral"):
+        breadcrumb = ["Ouroboros", "Visão Geral"]
+    else:
+        breadcrumb = ["Ouroboros", cluster]
+        if aba_ativa:
+            breadcrumb.append(aba_ativa)
     placeholder = st.empty()
     st.session_state["topbar_acoes_html"] = ""
     return placeholder, breadcrumb
@@ -419,10 +429,18 @@ def main() -> None:
     # FIX-12: âncora alvo do skip-link (WCAG 2.4.1).
     st.markdown('<div id="main-root" tabindex="-1"></div>', unsafe_allow_html=True)
 
-    # SIDEBAR-CANON-FIX: filtros globais no main, ABAIXO da topbar.
-    # Antes: _sidebar() chamava _filtros_globais_main e o expander
-    # aparecia acima da topbar.
-    periodo, pessoa, granularidade = _filtros_globais_main(dados)
+    # VG-FIDELIDADE-FIX (2026-05-06): expander "Filtros globais" REMOVIDO
+    # da main() — mockup canônico 01-visao-geral.html não tem barra de
+    # filtros entre topbar e hero. Páginas que precisam de filtros usam
+    # componentes/filtros_pagina inline (helper Onda U-04). Pré-populamos
+    # session_state com defaults seguros para preservar o contrato das
+    # 29 páginas que ainda lêem os valores via st.session_state[seletor_*].
+    meses = obter_meses_disponiveis(dados)
+    periodo = st.session_state.get("seletor_periodo") or (meses[0] if meses else "")
+    granularidade = st.session_state.get("seletor_granularidade", "Mês")
+    pessoa = st.session_state.get("seletor_pessoa", "Todos")
+    if "filtro_forma" not in st.session_state:
+        st.session_state["filtro_forma"] = None
     if not periodo:
         st.stop()
 
