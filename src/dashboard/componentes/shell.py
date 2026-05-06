@@ -491,25 +491,49 @@ def instalar_fix_sidebar_padding() -> None:
         });
         // BODY-FIX (2026-05-06): mainBlockContainer tem padding default
         // 32px 75px 150px do Streamlit que afasta o conteúdo do canto
-        // superior esquerdo. Mockup canônico tem padding 24px.
+        // superior esquerdo. Mockup canônico tem topbar full-width
+        // (sem padding) + body com padding lateral 24px.
         const mainBlock = doc.querySelector('[data-testid="stMainBlockContainer"]');
         if (mainBlock) {
-          mainBlock.style.setProperty('padding', '24px', 'important');
+          // padding-top 0 para topbar colar no canto superior;
+          // laterais 0 também para topbar ocupar largura total;
+          // demais elementos compensam com margin-left/right via CSS.
+          mainBlock.style.setProperty('padding', '0', 'important');
           mainBlock.style.setProperty('max-width', 'none', 'important');
         }
-        // VG-GAP-FIX: Streamlit aplica margin-bottom 1rem em cada
-        // stElementContainer e gap em stVerticalBlock. Resulta em
-        // espaços verticais excessivos entre filtros/hero/KPIs.
-        // Mockup canônico tem gap 16px entre seções principais.
-        doc.querySelectorAll(
-          '[data-testid="stMain"] [data-testid="stElementContainer"]'
-        ).forEach(c => {
-          c.style.setProperty('margin-bottom', '0', 'important');
-        });
+        // TOPBAR-FULL-WIDTH: topbar ocupa toda a largura disponível
+        // (do final da sidebar até a borda direita), começando em y=0.
+        // Mockup canônico tem topbar como header sticky no topo.
+        const topbar = doc.querySelector('.topbar');
+        if (topbar) {
+          topbar.style.setProperty('position', 'sticky', 'important');
+          topbar.style.setProperty('top', '0', 'important');
+          topbar.style.setProperty('z-index', '10', 'important');
+          topbar.style.setProperty('width', '100%', 'important');
+          topbar.style.setProperty('margin', '0', 'important');
+        }
+        // BODY-PADDING: aplicar padding 24px nas bordas laterais e
+        // bottom dos blocos VERTICAIS internos do main (não no
+        // mainBlock direto, para topbar ficar livre).
         doc.querySelectorAll(
           '[data-testid="stMain"] [data-testid="stVerticalBlock"]'
         ).forEach(b => {
           b.style.setProperty('gap', '12px', 'important');
+          b.style.setProperty('padding', '0 24px', 'important');
+        });
+        // Topbar é o filho 1 (após âncora skip-link); precisa ESCAPAR
+        // do padding 24px do parent — usar margin negativa.
+        if (topbar) {
+          topbar.style.setProperty('margin-left', '-24px', 'important');
+          topbar.style.setProperty('margin-right', '-24px', 'important');
+          topbar.style.setProperty('width', 'calc(100% + 48px)', 'important');
+        }
+        // VG-GAP-FIX: stElementContainer com margin-bottom 0 para
+        // eliminar gaps mortos entre Hero/KPIs/Clusters.
+        doc.querySelectorAll(
+          '[data-testid="stMain"] [data-testid="stElementContainer"]'
+        ).forEach(c => {
+          c.style.setProperty('margin-bottom', '0', 'important');
         });
         // Lupa centralizada no input de busca: força top: 50% +
         // transform translateY(-50%) explícito (browser pode estar
