@@ -95,25 +95,25 @@ _CSS_LOCAL_CATALOGACAO: str = minificar(
         display: flex; align-items: center; gap: 8px;
         padding: 8px 12px;
         margin-bottom: 12px;
-        background: var(--bg-surface, var(--color-card-fundo));
-        border: 1px solid var(--border-subtle, var(--color-texto-sec));
+        background: var(--bg-surface);
+        border: 1px solid var(--border-subtle);
         border-radius: 8px;
     }
     .ouroboros-cat-toolbar .icon {
-        color: var(--accent-purple, var(--color-destaque));
+        color: var(--accent-purple);
         font-family: var(--ff-mono, monospace);
         font-size: 14px;
     }
     .ouroboros-cat-toolbar .ct {
         font-family: var(--ff-mono, monospace);
         font-size: 11px;
-        color: var(--text-muted, var(--color-texto-sec));
+        color: var(--text-muted);
         margin-left: auto;
     }
     .ouroboros-cat-toolbar .label {
         font-family: var(--ff-mono, monospace);
         font-size: 12px;
-        color: var(--text-secondary, var(--color-texto-sec));
+        color: var(--text-secondary);
         flex: 1;
     }
     </style>
@@ -397,10 +397,10 @@ def _tabela_densa_html(docs: pd.DataFrame) -> str:
         # vinculada? Quando vinculado => marca verde (entidade unicode
         # CHECK MARK escapada via &#x2713;); senão traço.
         check = (
-            "<span style='color:var(--accent-green,var(--color-positivo));'>"
+            "<span style='color:var(--accent-green);'>"
             "&#x2713;</span>"
             if status == "Vinculado"
-            else "<span style='color:var(--text-muted,var(--color-texto-sec));'>—</span>"
+            else "<span style='color:var(--text-muted);'>—</span>"
         )
         total_v = float(row.get("total", 0.0) or 0.0)
         total_str = formatar_moeda(total_v) if total_v else "--"
@@ -438,8 +438,8 @@ def _tabela_densa_html(docs: pd.DataFrame) -> str:
     )
     return minificar(
         f"""
-        <div style="background: var(--bg-surface, var(--color-card-fundo));
-                    border: 1px solid var(--border-subtle, var(--color-texto-sec));
+        <div style="background: var(--bg-surface);
+                    border: 1px solid var(--border-subtle);
                     border-radius: 10px;
                     overflow: hidden;
                     margin-bottom: 12px;">

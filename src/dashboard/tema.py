@@ -44,6 +44,14 @@ DRACULA: dict[str, str] = {
 # Dracula originais, pois serve de fonte histórica para testes legados
 # (test_dashboard_tema.py::test_sprint_ux111_*). A migração acontece
 # apenas em ``CORES``, que é a interface pública consumida pelas páginas.
+#
+# ─────────────────────────────────────────────────────────────────────
+# CORES — espelho Python de src/dashboard/css/tokens.css (Sprint UX-M-01).
+# Manter sincronizado: editar AQUI e em tokens.css na MESMA sprint.
+# Inconsistência = bug visual silencioso (CSS injetado usa um valor,
+# código Python que formata strings usa outro).
+# Fonte canônica do design: novo-mockup/_shared/tokens.css.
+# ─────────────────────────────────────────────────────────────────────
 CORES: dict[str, str] = {
     # --- Fundo (escala de profundidade nova) -------------------------------
     # bg-base: viewport / html, body
@@ -101,6 +109,9 @@ MAPA_CLASSIFICACAO: dict[str, str] = {
 # --- Escala tipográfica (Sprint 20) -----------------------------------------
 # Mínimo absoluto é 13px (rebaixado de 14 pela Sprint 76 — legibilidade
 # validada com o usuário primário em viewport 1600x1000). Saltos garantem hierarquia.
+#
+# Espelho de src/dashboard/css/tokens.css `--fs-*` (Sprint UX-M-01).
+# Tokens CSS canônicos: --fs-11..--fs-40. Manter sincronizado.
 FONTE_MIN_ABSOLUTA: int = 13  # nenhum texto no app pode cair abaixo disso (Sprint 76)
 FONTE_MINIMA: int = 14
 FONTE_LABEL: int = 13  # uppercase pequeno (legenda, caption, badge)
@@ -145,6 +156,9 @@ BREAKPOINT_COMPACTO: int = 1000  # abaixo disso, cards 2×2
 BREAKPOINT_MINIMO: int = 700  # abaixo disso, 1 coluna
 
 # --- Spacing scale (Sprint 20) ----------------------------------------------
+#
+# Espelho de src/dashboard/css/tokens.css `--sp-*` (Sprint UX-M-01).
+# Tokens CSS canônicos: --sp-1 (4px) .. --sp-16 (64px). Manter sincronizado.
 SPACING: dict[str, int] = {
     "xs": 4,
     "sm": 8,

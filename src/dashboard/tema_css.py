@@ -36,6 +36,8 @@ declarados em ``tema.py`` e são consumidos aqui via import explícito.
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from src.dashboard.tema import (
     BORDA_ATIVA_PX,
     BORDA_RAIO,
@@ -55,124 +57,27 @@ from src.dashboard.tema import (
     SPACING,
 )
 
+# Sprint UX-M-01: tokens.css canônico carregado via I/O (Streamlit não
+# suporta @import url() em <style> dinâmico). Cópia 1:1 de
+# novo-mockup/_shared/tokens.css. Espelho Python: tema.py (CORES, SPACING,
+# FONTE_*). Manter sincronizado.
+_RAIZ_DASHBOARD = Path(__file__).resolve().parent
+_TOKENS_CSS = (_RAIZ_DASHBOARD / "css" / "tokens.css").read_text(encoding="utf-8")
+
 
 def _root_redesign() -> str:
-    """Bloco ``:root`` da Sprint UX-RD-02 com tokens hifenizados.
+    """Tokens canônicos do dashboard. Sprint UX-M-01.
 
-    Espelha 1:1 ``novo-mockup/_shared/tokens.css``. Lê os hex literais de
-    ``CORES`` (Sprint UX-RD-01 já migrou) para evitar duplicação. Tokens
-    sem correspondência direta em ``CORES`` (--syn-*, --diff-*, dimensões
-    de shell, sombras) carregam o hex do mockup como fonte canônica
-    via fallback dentro de ``var()``. Auditoria (≤3 hex literais fora
-    de ``var()`` ou comentário) limita-se a esses fallbacks
-    inevitáveis.
+    Carrega ``src/dashboard/css/tokens.css`` (cópia 1:1 de
+    ``novo-mockup/_shared/tokens.css``). Antes do UX-M-01 esta função
+    interpolava ``CORES["..."]`` via f-string; agora usa CSS estático
+    canônico, evitando duplicação de fonte de verdade.
+
+    Espelho Python (CORES, SPACING, FONTE_* em tema.py) preservado
+    para compat com 30+ páginas e 81+ testes que importam de tema.py.
+    Manter sincronizado: editar tokens.css E tema.py na MESMA sprint.
     """
-    return f"""
-    :root {{
-        /* ─── Fundo (escala de profundidade UX-RD-01) ─── */
-        --bg-base:     {CORES["fundo"]};
-        --bg-surface:  {CORES["card_fundo"]};
-        --bg-elevated: {CORES["card_elevado"]};
-        --bg-inset:    {CORES["fundo_inset"]};
-
-        /* ─── Bordas ─── */
-        --border-subtle: #313445;  /* noqa: accent (literal canônico tokens.css) */
-        --border-strong: #4a4f63;  /* noqa: accent */
-        --border-accent: #6b5a9c;  /* noqa: accent */
-
-        /* ─── Texto ─── */
-        --text-primary:   {CORES["texto"]};
-        --text-secondary: {CORES["texto_sec"]};
-        --text-muted:     {CORES["texto_muted"]};
-        --text-inverse:   {CORES["fundo"]};
-
-        /* ─── Acentos Dracula ─── */
-        --accent-purple: {CORES["destaque"]};
-        --accent-pink:   {CORES["superfluo"]};
-        --accent-cyan:   {CORES["neutro"]};
-        --accent-green:  {CORES["positivo"]};
-        --accent-yellow: {CORES["info"]};
-        --accent-orange: {CORES["alerta"]};
-        --accent-red:    {CORES["negativo"]};
-
-        /* ─── Estados D7 (cobertura observável) ─── */
-        --d7-graduado:   {CORES["d7_graduado"]};
-        --d7-calibracao: {CORES["d7_calibracao"]};
-        --d7-regredindo: {CORES["d7_regredindo"]};
-        --d7-pendente:   {CORES["d7_pendente"]};
-
-        /* ─── Estados de validação humana ─── */
-        --humano-aprovado:  {CORES["humano_aprovado"]};
-        --humano-rejeitado: {CORES["humano_rejeitado"]};
-        --humano-revisar:   {CORES["humano_revisar"]};
-        --humano-pendente:  {CORES["humano_pendente"]};
-
-        /* ─── Diff viewer ─── */
-        --diff-added-bg:       rgba(80, 250, 123, 0.10);
-        --diff-added-gutter:   {CORES["positivo"]};
-        --diff-removed-bg:     rgba(255, 85, 85, 0.10);
-        --diff-removed-gutter: {CORES["negativo"]};
-        --diff-neutral-gutter: var(--border-strong);
-
-        /* ─── Syntax highlight JSON ─── */
-        --syn-key:    {CORES["superfluo"]};
-        --syn-string: {CORES["info"]};
-        --syn-number: {CORES["destaque"]};
-        --syn-bool:   {CORES["alerta"]};
-        --syn-null:   {CORES["texto_muted"]};
-
-        /* ─── Espaçamento (4px base) ─── */
-        --sp-1:  4px;
-        --sp-2:  8px;
-        --sp-3:  12px;
-        --sp-4:  16px;
-        --sp-5:  20px;
-        --sp-6:  24px;
-        --sp-8:  32px;
-        --sp-10: 40px;
-        --sp-12: 48px;
-        --sp-16: 64px;
-
-        /* ─── Raio ─── */
-        --r-xs:   2px;
-        --r-sm:   4px;
-        --r-md:   6px;
-        --r-lg:   8px;
-        --r-full: 999px;
-
-        /* ─── Dimensões de shell ─── */
-        --sidebar-w:         240px;
-        --sidebar-collapsed: 56px;
-        --topbar-h:          56px;
-        --page-header-h:     72px;
-        --row-h:             32px;
-        --row-h-compact:     28px;
-        --kpi-w:             180px;
-        --kpi-h:             96px;
-        --drawer-w:          480px;
-
-        /* ─── Sombras ─── */
-        --sh-sm: 0 1px 2px rgba(0,0,0,0.40);
-        --sh-md: 0 4px 12px rgba(0,0,0,0.50), inset 0 1px 0 rgba(255,255,255,0.02);
-        --sh-lg: 0 12px 32px rgba(0,0,0,0.60), inset 0 1px 0 rgba(255,255,255,0.03);
-        --sh-xl: 0 24px 64px rgba(0,0,0,0.70), inset 0 1px 0 rgba(255,255,255,0.04);
-        --sh-focus: 0 0 0 2px var(--bg-base), 0 0 0 4px var(--accent-purple);
-
-        /* ─── Tipografia ─── */
-        --ff-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-        --ff-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
-        --fs-11: 11px;
-        --fs-12: 12px;
-        --fs-13: 13px;
-        --fs-14: 14px;
-        --fs-16: 16px;
-        --fs-18: 18px;
-        --fs-20: 20px;
-        --fs-24: 24px;
-        --fs-32: 32px;
-        --fs-40: 40px;
-    }}
-    """
+    return _TOKENS_CSS
 
 
 def _classes_redesign() -> str:

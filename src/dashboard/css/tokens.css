@@ -1,0 +1,152 @@
+/* Tokens CSS canônicos do dashboard Ouroboros.
+ * Fonte: novo-mockup/_shared/tokens.css (mantida 1:1 — não editar valores aqui
+ * sem editar lá ao mesmo tempo).
+ * Espelho Python: src/dashboard/tema.py (CORES, SPACING, FONTE_*).
+ * Sprint UX-M-01 — Onda M (modularização).
+ *
+ * REGRA: ao editar QUALQUER token aqui, atualizar o espelho em tema.py
+ * na MESMA sprint. Inconsistência = bug visual silencioso (CSS usa um
+ * valor, Python outro).
+ *
+ * Carregamento: lido por src/dashboard/tema_css.py via Path.read_text() e
+ * concatenado ao CSS injetado. Streamlit não suporta @import url() em
+ * <style> dinâmico — leitura runtime é o caminho correto.
+ */
+
+/* Ouroboros — tokens CSS espelhando tokens/*.json (header original mockup)
+   Fonte única de verdade. Toda página importa este arquivo.
+   Mantém alinhamento com src/dashboard/tema.py do projeto real. */
+
+:root {
+  /* Fundo */
+  --bg-base:     #0e0f15;
+  --bg-surface:  #1a1d28;
+  --bg-elevated: #232735;
+  --bg-inset:    #0a0b10;
+
+  /* Bordas */
+  --border-subtle: #313445;
+  --border-strong: #4a4f63;
+  --border-accent: #6b5a9c;
+
+  /* Texto */
+  --text-primary:   #f8f8f2;
+  --text-secondary: #a8a9b8;
+  --text-muted:     #6c6f7d;
+  --text-inverse:   #0e0f15;
+
+  /* Acentos Dracula */
+  --accent-purple: #bd93f9;
+  --accent-pink:   #ff79c6;
+  --accent-cyan:   #8be9fd;
+  --accent-green:  #50fa7b;
+  --accent-yellow: #f1fa8c;
+  --accent-orange: #ffb86c;
+  --accent-red:    #ff5555;
+
+  /* Estados D7 — cobertura observável, não gate */
+  --d7-graduado:   #6b8e7f;
+  --d7-calibracao: #f1fa8c;
+  --d7-regredindo: #ffb86c;
+  --d7-pendente:   #6c6f7d;
+
+  /* Estados de validação humana */
+  --humano-aprovado:  #6b8e7f;
+  --humano-rejeitado: #ff5555;
+  --humano-revisar:   #f1fa8c;
+  --humano-pendente:  #6c6f7d;
+
+  /* Diff viewer */
+  --diff-added-bg:      rgba(80, 250, 123, 0.10);
+  --diff-added-gutter:  #50fa7b;
+  --diff-removed-bg:    rgba(255, 85, 85, 0.10);
+  --diff-removed-gutter:#ff5555;
+  --diff-neutral-gutter:#4a4f63;
+
+  /* Syntax highlight JSON */
+  --syn-key:     #ff79c6;
+  --syn-string:  #f1fa8c;
+  --syn-number:  #bd93f9;
+  --syn-bool:    #ffb86c;
+  --syn-null:    #6c6f7d;
+
+  /* Espaçamento (4px base) */
+  --sp-1:  4px;
+  --sp-2:  8px;
+  --sp-3:  12px;
+  --sp-4:  16px;
+  --sp-5:  20px;
+  --sp-6:  24px;
+  --sp-8:  32px;
+  --sp-10: 40px;
+  --sp-12: 48px;
+  --sp-16: 64px;
+
+  /* Raio */
+  --r-xs:   2px;
+  --r-sm:   4px;
+  --r-md:   6px;
+  --r-lg:   8px;
+  --r-full: 999px;
+
+  /* Dimensões */
+  --sidebar-w:        240px;
+  --sidebar-collapsed:56px;
+  --topbar-h:         56px;
+  --page-header-h:    72px;
+  --row-h:            32px;
+  --row-h-compact:    28px;
+  --kpi-w:            180px;
+  --kpi-h:            96px;
+  --drawer-w:         480px;
+
+  /* Sombras */
+  --sh-sm: 0 1px 2px rgba(0,0,0,0.40);
+  --sh-md: 0 4px 12px rgba(0,0,0,0.50), inset 0 1px 0 rgba(255,255,255,0.02);
+  --sh-lg: 0 12px 32px rgba(0,0,0,0.60), inset 0 1px 0 rgba(255,255,255,0.03);
+  --sh-xl: 0 24px 64px rgba(0,0,0,0.70), inset 0 1px 0 rgba(255,255,255,0.04);
+  --sh-focus: 0 0 0 2px var(--bg-base), 0 0 0 4px var(--accent-purple);
+
+  /* Tipografia */
+  --ff-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --ff-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --fs-11: 11px;
+  --fs-12: 12px;
+  --fs-13: 13px;
+  --fs-14: 14px;
+  --fs-16: 16px;
+  --fs-18: 18px;
+  --fs-20: 20px;
+  --fs-24: 24px;
+  --fs-32: 32px;
+  --fs-40: 40px;
+}
+
+/* Reset mínimo + base */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  background: var(--bg-base);
+  color: var(--text-primary);
+  font-family: var(--ff-sans);
+  font-size: var(--fs-14);
+  line-height: 1.4;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+a { color: var(--accent-purple); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+:focus-visible { outline: none; box-shadow: var(--sh-focus); border-radius: var(--r-sm); }
+
+/* Numéricos sempre tabulares */
+.mono, code, pre, .tab-num { font-family: var(--ff-mono); font-variant-numeric: tabular-nums; }
+.num { font-variant-numeric: tabular-nums; }
+
+/* Scrollbar discreta */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--bg-base); }
+::-webkit-scrollbar-thumb { background: var(--border-subtle); border-radius: var(--r-sm); }
+::-webkit-scrollbar-thumb:hover { background: var(--border-strong); }
