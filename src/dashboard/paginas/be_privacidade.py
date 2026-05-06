@@ -104,7 +104,14 @@ def renderizar(
     pessoa: str,
     ctx: dict | None = None,
 ) -> None:
-    """Renderiza a página Bem-estar / Privacidade."""
+    """Renderiza Bem-estar / Privacidade (UX-T-27)."""
+    from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
+    renderizar_grupo_acoes([
+        {"label": "Audit log", "title": "Abrir audit log de privacidade"},
+        {"label": "Salvar permissões", "primary": True,
+         "title": "Persistir permissoes.toml"},
+    ])
+
     del dados, periodo, pessoa, ctx
 
     caminho = _resolver_caminho()

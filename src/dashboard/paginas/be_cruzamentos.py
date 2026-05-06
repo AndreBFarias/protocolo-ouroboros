@@ -164,7 +164,15 @@ def renderizar(
     pessoa: str,
     ctx: dict | None = None,
 ) -> None:
-    """Renderiza a página Bem-estar / Cruzamentos."""
+    """Renderiza Bem-estar / Cruzamentos (UX-T-26)."""
+    from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
+    renderizar_grupo_acoes([
+        {"label": "Salvar como bloco do Recap",
+         "title": "Padrão vai aparecer no Recap mensal"},
+        {"label": "Voltar ao Recap", "primary": True,
+         "href": "?cluster=Bem-estar&tab=Recap"},
+    ])
+
     del dados, periodo, pessoa, ctx
 
     st.markdown(_page_header_html(), unsafe_allow_html=True)

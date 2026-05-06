@@ -124,14 +124,14 @@ def renderizar(
     pessoa: str,
     ctx: dict | None = None,
 ) -> None:
-    """Renderiza a página Bem-estar / Editor TOML.
+    """Renderiza Bem-estar / Editor TOML (UX-T-28)."""
+    from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
+    renderizar_grupo_acoes([
+        {"label": "Histórico (git log)", "title": "git log .ouroboros/rotina/"},
+        {"label": "Salvar (commit)", "primary": True,
+         "title": "git commit -m 'rotina: ...'"},
+    ])
 
-    Args:
-        dados: estrutura padrão de DataFrames (não consumida).
-        periodo: período da sidebar (ignorado).
-        pessoa: pessoa da sidebar (ignorado).
-        ctx: contexto extra (ignorado).
-    """
     del dados, periodo, pessoa, ctx
 
     caminho = _resolver_caminho_rotina()

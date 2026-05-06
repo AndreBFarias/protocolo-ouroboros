@@ -154,7 +154,14 @@ def renderizar(
     pessoa: str,
     ctx: dict | None = None,
 ) -> None:
-    """Renderiza a página Bem-estar / Ciclo."""
+    """Renderiza Bem-estar / Ciclo (UX-T-25)."""
+    from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
+    renderizar_grupo_acoes([
+        {"label": "Histórico", "title": "12 ciclos anteriores"},
+        {"label": "Registrar dia", "primary": True,
+         "title": "Fluxo, sintomas, humor, energia"},
+    ])
+
     del dados, periodo, pessoa, ctx
 
     vault_root = descobrir_vault_root()

@@ -156,7 +156,14 @@ def renderizar(
     pessoa: str,
     ctx: dict | None = None,
 ) -> None:
-    """Renderiza a página Bem-estar / Memórias."""
+    """Renderiza Bem-estar / Memórias (UX-T-23)."""
+    from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
+    renderizar_grupo_acoes([
+        {"label": "Random", "title": "Memória aleatória"},
+        {"label": "Capturar", "primary": True,
+         "title": "Foto/áudio/texto/vídeo"},
+    ])
+
     del dados, periodo, pessoa, ctx
 
     st.markdown(_page_header_html(), unsafe_allow_html=True)

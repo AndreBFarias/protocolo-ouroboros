@@ -170,14 +170,14 @@ def renderizar(
     pessoa: str,
     ctx: dict | None = None,
 ) -> None:
-    """Renderiza a página Bem-estar / Rotina.
+    """Renderiza Bem-estar / Rotina (UX-T-20)."""
+    from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
+    renderizar_grupo_acoes([
+        {"label": "Hoje", "href": "?cluster=Bem-estar&tab=Hoje"},
+        {"label": "Novo", "primary": True,
+         "title": "Wizard alarme/tarefa/contador"},
+    ])
 
-    Args:
-        dados: estrutura padrão (não consumida).
-        periodo: período da sidebar (ignorado).
-        pessoa: pessoa da sidebar (ignorado nesta visualização).
-        ctx: contexto extra (ignorado).
-    """
     del dados, periodo, pessoa, ctx
 
     caminho = _resolver_caminho_rotina()

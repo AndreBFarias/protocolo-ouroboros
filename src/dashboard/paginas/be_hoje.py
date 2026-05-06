@@ -72,6 +72,15 @@ def renderizar(
             default ao gravar humor.
         ctx: contexto extra (granularidade etc., ignorado).
     """
+    from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
+    renderizar_grupo_acoes([
+        {"label": "Diário emocional",
+         "href": "?cluster=Bem-estar&tab=Diário",
+         "title": "Ir para o diário"},
+        {"label": "Salvar humor", "primary": True,
+         "title": "Persistir registro de humor de hoje"},
+    ])
+
     del dados, periodo, ctx
 
     st.markdown(_estilos_locais(), unsafe_allow_html=True)

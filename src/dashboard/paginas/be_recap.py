@@ -193,7 +193,14 @@ def renderizar(
     pessoa: str,
     ctx: dict | None = None,
 ) -> None:
-    """Renderiza a página Bem-estar / Recap."""
+    """Renderiza Bem-estar / Recap (UX-T-21)."""
+    from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
+    renderizar_grupo_acoes([
+        {"label": "Re-gerar agora", "title": "Gerar Recap do período"},
+        {"label": "Compartilhar com Pessoa B", "primary": True,
+         "title": "Vista resumida sem trechos íntimos"},
+    ])
+
     del dados, periodo, pessoa, ctx
 
     periodo_label = st.radio(

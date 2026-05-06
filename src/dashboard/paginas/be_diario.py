@@ -69,14 +69,16 @@ def renderizar(
     pessoa: str,
     ctx: dict | None = None,
 ) -> None:
-    """Renderiza a página Bem-estar / Diário emocional.
+    """Renderiza Bem-estar / Diário emocional (UX-T-19)."""
+    from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
+    renderizar_grupo_acoes([
+        {"label": "Heatmap", "href": "?cluster=Bem-estar&tab=Humor",
+         "title": "Ver humor 91 dias"},
+        {"label": "Hoje", "primary": True,
+         "href": "?cluster=Bem-estar&tab=Hoje",
+         "title": "Registrar humor de hoje"},
+    ])
 
-    Args:
-        dados: estrutura padrão de DataFrames (não consumida).
-        periodo: período da sidebar (ignorado -- a página tem filtro próprio).
-        pessoa: pessoa selecionada na sidebar; usada como pré-filtro.
-        ctx: contexto extra (ignorado).
-    """
     del dados, periodo, ctx
 
     st.markdown(_estilos_locais(), unsafe_allow_html=True)
