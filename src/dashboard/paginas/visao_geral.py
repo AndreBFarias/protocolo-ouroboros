@@ -250,13 +250,17 @@ def _estilos_locais() -> str:
         gap: 32px;
         align-items: center;
       }}
+      /* UX-T-01 followup: !important para vencer h1 global
+         (font-size: FONTE_HERO !important; font-weight: 700) que
+         deformava o hero para 28px/700. Mockup canônico
+         01-visao-geral.html usa 32px/500. */
       .vg-hero h1 {{
-        font-family: ui-monospace, 'JetBrains Mono', monospace;
-        font-size: 32px;
-        font-weight: 500;
-        letter-spacing: -0.02em;
-        margin: 0 0 8px;
-        color: {texto_pri};
+        font-family: ui-monospace, 'JetBrains Mono', monospace !important;
+        font-size: 32px !important;
+        font-weight: 500 !important;
+        letter-spacing: -0.02em !important;
+        margin: 0 0 8px !important;
+        color: {texto_pri} !important;
       }}
       .vg-hero p {{
         color: {texto_sec};
