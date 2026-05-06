@@ -64,6 +64,13 @@ from src.dashboard.tema import (
 _RAIZ_DASHBOARD = Path(__file__).resolve().parent
 _TOKENS_CSS = (_RAIZ_DASHBOARD / "css" / "tokens.css").read_text(encoding="utf-8")
 
+# Sprint UX-M-04: shell.css canônico carregado via I/O. Substitui ~80% das
+# regras que antes rodavam em runtime via setProperty('important') na
+# função instalar_fix_sidebar_padding(). Specificity escopada via
+# "html body [data-testid='...']" (0,1,2) vence Streamlit emotion (0,1,0)
+# com !important. Manter sincronizado com shell.py se layout mudar.
+_SHELL_CSS = (_RAIZ_DASHBOARD / "css" / "shell.css").read_text(encoding="utf-8")
+
 
 def _root_redesign() -> str:
     """Tokens canônicos do dashboard. Sprint UX-M-01.
@@ -78,6 +85,27 @@ def _root_redesign() -> str:
     Manter sincronizado: editar tokens.css E tema.py na MESMA sprint.
     """
     return _TOKENS_CSS
+
+
+def _shell_redesign() -> str:
+    """Regras canônicas do shell (sidebar, topbar, main). Sprint UX-M-04.
+
+    Carrega ``src/dashboard/css/shell.css`` que substitui ~80% das
+    regras que antes rodavam em runtime via JS (setProperty) na função
+    ``instalar_fix_sidebar_padding()``. CSS estático escopado via
+    ``html body [data-testid="..."]`` (specificity 0,1,2 com !important)
+    vence o Streamlit emotion CSS-in-JS (0,1,0).
+
+    Anti-padrão (w) do VALIDATOR_BRIEF: JS runtime global afetando todas
+    as páginas; cada nova regra setProperty era universal e quebrou
+    layouts internos no commit 928628c (revertido em 2817706). Esta
+    refatoração mata 46 das 56 ``setProperty`` originais.
+
+    O JS residual em ``shell.py::instalar_fix_sidebar_padding()`` mantém
+    apenas o que CSS comprovadamente não alcança: atributos HTML
+    (``target='_self'``) e detecção runtime de filhos invisíveis (h=0).
+    """
+    return _SHELL_CSS
 
 
 def _classes_redesign() -> str:
@@ -795,6 +823,7 @@ def css_global() -> str:
     """
     bloco_redesign_root = _root_redesign()
     bloco_redesign_classes = _classes_redesign()
+    bloco_shell_redesign = _shell_redesign()
     return f"""
     <style>
     /* SIDEBAR-CANON-FIX (2026-05-06): cor de fundo do body é bg-base
@@ -1573,6 +1602,16 @@ def css_global() -> str:
         font-feature-settings: "liga";
         -webkit-font-smoothing: antialiased;
     }}
+
+    /* ============================================================
+       UX-M-04 — Shell consolidado em CSS estático escopado.
+       Substitui ~80% das regras de instalar_fix_sidebar_padding()
+       que antes rodavam via setProperty('important') em runtime.
+       Specificity 'html body [data-testid=...]' (0,1,2) vence o
+       Streamlit emotion CSS-in-JS (0,1,0) com !important.
+       Fonte canônica: src/dashboard/css/shell.css.
+       ============================================================ */
+    {bloco_shell_redesign}
     </style>
     """
 

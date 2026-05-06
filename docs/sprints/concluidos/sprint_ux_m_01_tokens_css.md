@@ -1,7 +1,7 @@
 ---
 id: UX-M-01
 titulo: Tokens CSS centralizados em um único arquivo
-status: concluida
+status: concluída
 concluida_em: 2026-05-06
 prioridade: alta
 data_criacao: 2026-05-06

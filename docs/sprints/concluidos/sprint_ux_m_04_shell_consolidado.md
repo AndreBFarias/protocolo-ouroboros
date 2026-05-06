@@ -1,7 +1,8 @@
 ---
 id: UX-M-04
 titulo: Shell consolidado em CSS estático (matar JS runtime patches)
-status: backlog
+status: concluída
+concluida_em: 2026-05-06
 prioridade: alta
 data_criacao: 2026-05-06
 data_revisao: 2026-05-06
@@ -308,3 +309,58 @@ Se Streamlit emotion CSS-in-JS for muito agressivo:
 - "E se `MutationObserver` for o problema?" Não é — é necessário para Streamlit re-render. Mantém.
 
 *"CSS é declarativo. JS é imperativo. Layout deve ser declarativo." — princípio da Onda M*
+
+---
+
+## Resultado da execução (2026-05-06)
+
+### Métricas
+
+| Métrica | Antes | Depois | Meta | Status |
+|---|---|---|---|---|
+| `setProperty` em `shell.py` | 56 | 2 (1 no JS payload + 1 no docstring) | ≤10 | hipótese A vencida |
+| Linhas em `instalar_fix_sidebar_padding` | 211 | 72 | ≤80 | OK |
+| Tamanho de `shell.py` | 604 | 465 | -- | redução de 139 linhas |
+| Linhas de `shell.css` | 0 | 159 | -- | criado |
+
+### Hipótese A confirmada
+
+96% dos `setProperty` migraram para CSS estático escopado via `html body [data-testid="..."]`. Streamlit emotion CSS-in-JS perdeu a especificidade contra `(0,1,2)` + `!important`. Plano B (50%) não foi necessário.
+
+### Regras que ficaram em JS (e por quê)
+
+1. **`target="_self"` em `<a>` da sidebar/topbar/breadcrumb/cards** — atributo HTML; CSS não muda atributos. Streamlit força `target="_blank"` em links de `unsafe_allow_html=True`.
+2. **`display:none` em `stElementContainer` com `height === 0`** — detecção runtime via `getBoundingClientRect`. CSS `:empty` não detecta porque os containers têm child nodes apesar de altura zero.
+
+Ambas as regras encapsuladas em ~20 linhas de JS dentro do bloco `apply()` + `MutationObserver`. Total final: 72 linhas (incluindo docstring + boilerplate `components.html`).
+
+### Validação visual (playwright)
+
+6 páginas-amostra capturadas em viewport 1440×900, headless:
+- `/tmp/protocolo_uxm04_visao_geral_*.png`
+- `/tmp/protocolo_uxm04_busca_global_*.png`
+- `/tmp/protocolo_uxm04_catalogacao_*.png`
+- `/tmp/protocolo_uxm04_contas_*.png`
+- `/tmp/protocolo_uxm04_projecoes_*.png`
+- `/tmp/protocolo_uxm04_extrato_*.png`
+
+Layouts idênticos ao baseline pós-revert (commit 2817706). Sidebar 240px, aside `translateX(-10px)`, topbar full-width sticky, mainBlockContainer sem padding default Streamlit, lupa centralizada — todos preservados via CSS.
+
+### Achados colaterais
+
+1. Frontmatter `concluida` (sem acento) em `docs/sprints/concluidos/sprint_ux_m_01_tokens_css.md` quebrava `make lint`. Aplicado **Edit-pronto** no escopo desta sprint (uma única linha) — débito da sprint UX-M-01 corrigido inline. Padrão `(b)` do VALIDATOR_BRIEF.
+
+2. Baseline pytest tinha **7 falhas pré-existentes** (não 4 como a spec mencionava). Mesmo conjunto antes e depois da M-04, zero regressão. Padrão `(cc)` aplicado: refactor revelou contagem desatualizada na spec; abrir UX-M-TESTES-REGRESSIVOS já existente é cabível para tratar.
+
+### Gate anti-migué
+
+| Check | Status |
+|---|---|
+| Hipótese validada com grep antes de codar | OK (56 setProperty + 211 linhas + tokens.css presente) |
+| Proof-of-work runtime real | OK (6 PNGs playwright + assert no `css_global()` ok) |
+| `make lint` exit 0 | OK |
+| `make smoke` 10/10 contratos | OK |
+| `pytest tests/ -q` baseline mantida | OK (2550 passed, mesmas 7 falhas pré-existentes) |
+| Achado colateral viraria sprint-filha OU Edit-pronto | OK (Edit-pronto inline) |
+| Spec movida para `concluidos/` com `concluida_em` | OK |
+
