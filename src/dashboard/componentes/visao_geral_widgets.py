@@ -202,7 +202,7 @@ def ler_atividade_recente(n: int = 6) -> list[TimelineEntry]:
         except sqlite3.DatabaseError:
             pass
 
-    # Sprint concluida mais recente (não-T para não recursividade).
+    # Sprint concluída mais recente (não-T para não recursividade).
     concluidos = _raiz_repo() / "docs" / "sprints" / "concluidos"
     if concluidos.exists():
         recentes = sorted(
@@ -315,7 +315,7 @@ def ler_sprint_atual() -> SprintAtual | None:
 
 
 # Cards canônicos do mockup `_visao-render.js` linha 130. Cada tupla:
-# (href, glyph, nome, descricao, label_left, label_right) — valores
+# (href, glyph, nome, descrição, label_left, label_right) — valores
 # reais virão de calcular_kpis_clusters() em sprint futura; por hora,
 # os contadores são lidos do grafo SQLite quando possível.
 def montar_clusters_canonicos() -> list[dict[str, str]]:

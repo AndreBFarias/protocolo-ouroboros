@@ -139,14 +139,22 @@ class TestKeyCasaComSessionState:
 
 
 class TestTituloSemPrefixoSprint:
-    """Sprint 59 acceptance #3: remover '52' do título."""
+    """Sprint 59 acceptance #3: título sem prefixo 'Sprint 52'.
 
-    def test_hero_nao_recebe_52(self):
+    2026-05-06: hero_titulo_html legado removido (UX-RD-09 page-header
+    canônico assumiu o cabeçalho da página). Teste agora verifica que o
+    page-header canônico está presente e sem prefixo numérico legado.
+    """
+
+    def test_pagina_usa_page_header_canonico(self):
         fonte = (RAIZ / "src" / "dashboard" / "paginas" / "busca.py").read_text(encoding="utf-8")
-        # hero_titulo_html recebe "" como primeiro argumento
-        assert 'hero_titulo_html(\n            "",\n            "Busca Global"' in fonte
-        # e NÃO deve estar chamando com "52" literal
-        assert 'hero_titulo_html(\n            "52"' not in fonte
+        # _page_header_html é a moldura canônica UX-RD-09
+        assert "_page_header_html()" in fonte
+        # NÃO deve haver chamada de hero_titulo_html (causava duplicação)
+        assert "hero_titulo_html(" not in fonte
+        # Título canônico em UPPERCASE (sem prefixo Sprint 52)
+        assert "BUSCA GLOBAL" in fonte
+        assert "Sprint 52" not in fonte
 
 
 class TestChipDisparaBuscaPontaAPonta:

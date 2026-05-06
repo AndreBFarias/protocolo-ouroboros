@@ -15,8 +15,8 @@ Invariantes preservadas (testes regressivos UX-126/Sprint 51)
 -------------------------------------------------------------
 * ``COLUNAS_TABELA = ["Data", "Fornecedor", "Total", "Status"]`` -- 4
   colunas exatas; runtime check em ``_renderizar_tabela_documentos``.
-* ``hero_titulo_html('', 'Catalogação de Documentos', ...)`` chamado
-  (resultado descartado para satisfazer ``test_ac4_hero_titulo_html_chamado_no_topo``).
+* ``_page_header_html()`` é a moldura canônica UX-RD-09 (substitui
+  ``hero_titulo_html`` legado — duplicação eliminada 2026-05-06).
 * ``humanizar(tipo_tec)`` invocado em ``_renderizar_cards_por_tipo``
   (AC1 UX-126).
 * ``_renderizar_tabela_documentos(docs)`` chamado com indentação 4
@@ -56,7 +56,6 @@ from src.dashboard.tema import (
     SPACING,
     callout_html,
     card_html,
-    hero_titulo_html,
     rgba_cor_inline,
     subtitulo_secao_html,
 )
@@ -140,21 +139,8 @@ def renderizar(
 
     st.markdown(_CSS_LOCAL_CATALOGACAO, unsafe_allow_html=True)
 
-    # Hero canônico (legado) -- emitido via st.markdown para preservar
-    # `test_ac4_hero_titulo_html_chamado_no_topo` e a presença literal
-    # de "Catalogação de Documentos" no fonte. O page-header redesign
-    # UX-RD-09 é renderizado em seguida, abaixo, como moldura visual
-    # oficial.
-    _html_hero = hero_titulo_html(
-        "",
-        "Catalogação de Documentos",
-        "Visão consolidada do catálogo: tipos de documento, volume de "
-        "chegadas, conflitos de linking aguardando revisão e meses com "
-        "baixa cobertura.",
-    )
-    st.markdown(_html_hero, unsafe_allow_html=True)
-
-    # Page-header redesign UX-RD-09.
+    # Page-header canônico UX-RD-09 (substitui hero_titulo_html legado
+    # — duplicação visual eliminada 2026-05-06).
     if not _dados.CAMINHO_GRAFO.exists():
         st.markdown(_page_header_html(num_arquivos=0), unsafe_allow_html=True)
         st.markdown(

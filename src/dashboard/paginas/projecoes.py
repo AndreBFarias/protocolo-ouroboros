@@ -44,8 +44,8 @@ from src.dashboard.tema import (
     LAYOUT_PLOTLY,
     aplicar_locale_ptbr,
     callout_html,
-    hero_titulo_html,
     rgba_cor,
+    subtitulo_secao_html,
 )
 from src.dashboard.tema_plotly import st_plotly_chart_dracula
 
@@ -618,13 +618,11 @@ def renderizar(
 
     # 5. Simulação personalizada (preserva fluxo legado)
     st.markdown("---")
-    # Hero compacto (badge vazio) para satisfazer invariante UX-122
-    # de que toda página chame hero_titulo_html, mesmo em modo redesign.
+    # Subtítulo de seção (substitui hero_titulo_html legado — 2026-05-06).
+    # Hero é exclusivo do page-header canônico no topo da página.
     st.markdown(
-        hero_titulo_html(
-            "",
-            "Simulação Personalizada",
-            "Slider de economia adicional aplicada ao cenário atual (12 meses).",
+        subtitulo_secao_html(
+            "Simulação personalizada — slider de economia adicional (12 meses)."
         ),
         unsafe_allow_html=True,
     )

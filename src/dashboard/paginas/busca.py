@@ -20,8 +20,9 @@ Invariantes preservadas (testes regressivos UX-114/124/126/127)
   UX-127, mas constantes auxiliares mantidas para testes antigos).
 * ``_aplicar_chip_sugestao`` callback grava em ``busca_termo_input``;
   ``text_input`` usa ``key="busca_termo_input"`` para casamento N-para-N.
-* ``hero_titulo_html("", "Busca Global", ...)`` chamado (resultado
-  descartado para satisfazer testes regressivos da Sprint 59).
+* ``_page_header_html()`` é a moldura canônica do título (substitui
+  ``hero_titulo_html`` legado da Sprint 59 — duplicação eliminada
+  2026-05-06).
 * ``_renderizar_controles`` retorna ``str`` (apenas o termo).
 * Loop iterando ``CHIPS_TIPOS_CANONICOS`` para chips com
   ``on_click=_aplicar_chip_sugestao`` (Sprint 59 não permite chips
@@ -77,7 +78,6 @@ from src.dashboard.tema import (
     FONTE_LABEL,
     SPACING,
     callout_html,
-    hero_titulo_html,
     icon_html,
     rgba_cor_inline,
     subtitulo_secao_html,
@@ -568,24 +568,8 @@ def renderizar(
 
     st.markdown(_CSS_LOCAL_BUSCA, unsafe_allow_html=True)
 
-    # Hero canônico (legado) -- emitido via st.markdown para preservar
-    # contrato com testes regressivos que fazem match no markdown
-    # renderizado (busca pela string "Busca Global"). Indentação
-    # canônica de 12 espaços satisfaz `test_hero_nao_recebe_52` da
-    # Sprint 59, que faz match literal do snippet
-    # `hero_titulo_html(\n            "",\n            "Busca Global"`.
-    # O page-header redesign UX-RD-09 é renderizado em seguida, abaixo,
-    # como nova moldura visual oficial.
-    # fmt: off
-    _html_hero = hero_titulo_html(
-            "",
-            "Busca Global",
-            TEXTO_DESCRITIVO,
-        )
-    # fmt: on
-    st.markdown(_html_hero, unsafe_allow_html=True)
-
-    # Page-header redesign UX-RD-09.
+    # Page-header canônico UX-RD-09 (substitui hero_titulo_html legado
+    # da Sprint 59 — duplicação visual eliminada 2026-05-06).
     st.markdown(_page_header_html(), unsafe_allow_html=True)
 
     # Branch (m) reversível: tenta construir índice; página segue funcional

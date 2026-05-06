@@ -168,11 +168,19 @@ class TestSprintUX126PolishIteracao3:
     # ----------------------------------------------------------------
 
     def test_ac4_hero_titulo_html_chamado_no_topo(self) -> None:
-        """`hero_titulo_html('', 'Catalogação de Documentos', ...)` está no topo."""
+        """Page-header canônico UX-RD-09 com título "Catalogação de Documentos".
+
+        2026-05-06: ``hero_titulo_html`` legado removido (causava duplicação
+        visual com o page-header novo). O título canônico agora vive em
+        ``_page_header_html`` (UPPERCASE, no padrão da Onda U-03).
+        """
         conteudo = CATALOGACAO_PATH.read_text(encoding="utf-8")
-        # Procura padrão chave: hero com título "Catalogação de Documentos".
-        assert "hero_titulo_html(" in conteudo
-        assert "Catalogação de Documentos" in conteudo
+        # Page-header canônico está presente
+        assert "_page_header_html(" in conteudo
+        # Título canônico (UPPERCASE no HTML, original na docstring)
+        assert "Catalogação de Documentos" in conteudo or "CATALOGAÇÃO" in conteudo.upper()
+        # Hero legado não deve mais ser chamado
+        assert "hero_titulo_html(" not in conteudo
 
     # ----------------------------------------------------------------
     # AC5 -- logo 120px efetivo

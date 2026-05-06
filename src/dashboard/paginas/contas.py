@@ -44,8 +44,8 @@ from src.dashboard.tema import (
     FONTE_MINIMA,
     callout_html,
     card_html,
-    hero_titulo_html,
     rgba_cor,
+    subtitulo_secao_html,
 )
 
 # Limites de utilização de cartão de crédito (escala D7).
@@ -585,14 +585,10 @@ def renderizar(dados: dict[str, pd.DataFrame], mes_selecionado: str, pessoa: str
         ),
         unsafe_allow_html=True,
     )
-    # Hero compacto (badge vazio) para satisfazer invariante UX-122
-    # de que toda página chame hero_titulo_html, mesmo em modo redesign.
+    # Subtítulo de seção (substitui hero_titulo_html legado — 2026-05-06).
+    # Hero é exclusivo do page-header canônico no topo da página.
     st.markdown(
-        hero_titulo_html(
-            "",
-            "Snapshot histórico",
-            "Dívidas ativas, inventário e prazos do XLSX legado.",
-        ),
+        subtitulo_secao_html("Dívidas ativas, inventário e prazos do XLSX legado."),
         unsafe_allow_html=True,
     )
     st.markdown(
