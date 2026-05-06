@@ -919,6 +919,19 @@ def renderizar(
         unsafe_allow_html=True,
     )
 
+    # ---------- T-02.B right-cards (Saldo 90d + Breakdown + Origens) ----------
+    breakdown_top5 = calcular_breakdown_categorias(df, top_n=5)
+    extrato_full = filtrar_por_pessoa(extrato, pessoa)
+    extrato_full = filtrar_por_forma_pagamento(extrato_full, filtro_forma_ativo())
+    st.markdown(
+        _t02_right_cards_html(
+            df_filtrado=df,
+            breakdown=breakdown_top5,
+            extrato_completo=extrato_full,
+        ),
+        unsafe_allow_html=True,
+    )
+
     # ---------- Filtros locais (busca + avançados) ----------
     busca = st.text_input(
         "Buscar por local",
@@ -1191,6 +1204,173 @@ def _calcular_slice_pagina(
     inicio = (pagina - 1) * tamanho_pagina
     fim = min(inicio + tamanho_pagina, total_linhas)
     return (inicio, fim)
+
+
+# ---------------------------------------------------------------------------
+# T-02.B — Right-cards canônicos (Saldo 90d / Breakdown / Origens)
+# ---------------------------------------------------------------------------
+
+
+def _saldo_90d_svg(saldos: list[float], w: int = 540, h: int = 120) -> str:
+    """SVG inline de área de saldo 90 dias. Espelha _extrato-render.js."""
+    if not saldos or len(saldos) < 2:
+        return '<div style="color:var(--text-muted);font-size:12px;">Sem dados.</div>'
+    minv = min(saldos)
+    maxv = max(saldos)
+    span = max(maxv - minv, 1.0)
+    n = len(saldos) - 1
+    pts = " ".join(
+        f"{(i / n) * w:.1f},{h - ((v - minv) / span) * h * 0.85 - 6:.1f}"
+        for i, v in enumerate(saldos)
+    )
+    area = f"0,{h} {pts} {w},{h}"
+    txt_l = (
+        f'<text x="0" y="{h + 14}" font-family="JetBrains Mono" '
+        'font-size="10" fill="var(--text-muted)">90 dias atrás</text>'
+    )
+    txt_r = (
+        f'<text x="{w}" y="{h + 14}" text-anchor="end" '
+        'font-family="JetBrains Mono" font-size="10" '
+        'fill="var(--text-muted)">hoje</text>'
+    )
+    return (
+        f'<svg viewBox="0 0 {w} {h + 18}" '
+        'style="width:100%;height:auto;display:block;">'
+        '<defs><linearGradient id="t02sg" x1="0" x2="0" y1="0" y2="1">'
+        '<stop offset="0%" stop-color="#bd93f9" stop-opacity="0.4"/>'
+        '<stop offset="100%" stop-color="#bd93f9" stop-opacity="0.02"/>'
+        '</linearGradient></defs>'
+        f'<polygon points="{area}" fill="url(#t02sg)"/>'
+        f'<polyline points="{pts}" fill="none" '
+        'stroke="var(--accent-purple)" stroke-width="1.4"/>'
+        f"{txt_l}{txt_r}"
+        "</svg>"
+    )
+
+
+def _calcular_saldo_90d(extrato_full: pd.DataFrame) -> list[float]:
+    """Calcula série diária de saldo cumulativo dos últimos 90 dias."""
+    if extrato_full.empty or "data" not in extrato_full.columns:
+        return []
+    df = extrato_full.copy()
+    df["__data"] = pd.to_datetime(df["data"], errors="coerce")
+    df = df.dropna(subset=["__data"])
+    if df.empty:
+        return []
+    df["__valor_signed"] = df.apply(
+        lambda r: float(r.get("valor", 0))
+        if str(r.get("tipo", "")) == "Receita"
+        else -abs(float(r.get("valor", 0))),
+        axis=1,
+    )
+    df = df.sort_values("__data")
+    diario = df.groupby(df["__data"].dt.date)["__valor_signed"].sum().sort_index()
+    cum = diario.cumsum()
+    if len(cum) > 90:
+        cum = cum.tail(90)
+    return [float(v) for v in cum.tolist()]
+
+
+def _t02_right_cards_html(
+    df_filtrado: pd.DataFrame,
+    breakdown: list[dict[str, Any]],
+    extrato_completo: pd.DataFrame,
+) -> str:
+    """3 cards lado-a-lado (mockup 02-extrato.html right-cards)."""
+    saldos = _calcular_saldo_90d(extrato_completo)
+    saldo_chart = _saldo_90d_svg(saldos)
+    if saldos:
+        minimo = min(saldos)
+        maximo = max(saldos)
+        delta = saldos[-1] - saldos[0]
+        saldo_meta = (
+            f'<div style="display:flex;gap:12px;margin-top:8px;'
+            'font-family:var(--ff-mono);font-size:11px;">'
+            f'<div><span style="color:var(--text-muted);">mín</span> '
+            f'{_formatar_brl(minimo)}</div>'
+            f'<div><span style="color:var(--text-muted);">máx</span> '
+            f'{_formatar_brl(maximo)}</div>'
+            f'<div style="margin-left:auto;color:'
+            f'{"var(--d7-graduado)" if delta >= 0 else "var(--accent-red)"};">'
+            f"{'+' if delta >= 0 else ''}{_formatar_brl(delta)}</div>"
+            "</div>"
+        )
+    else:
+        saldo_meta = ""
+
+    bd_html = ""
+    if breakdown:
+        total_bd = sum(c["valor"] for c in breakdown) or 1
+        for c in breakdown:
+            pct = (c["valor"] / total_bd) * 100
+            bd_html += (
+                '<div class="t02-cat-bar">'
+                f'<span class="name">{c["categoria"]}</span>'
+                f'<span class="v">{_formatar_brl(c["valor"])} · {pct:.0f}%</span>'
+                f'<div class="track"><span style="width:{pct:.1f}%;'
+                'background:var(--accent-purple);"></span></div>'
+                "</div>"
+            )
+    else:
+        bd_html = (
+            '<div style="color:var(--text-muted);font-size:12px;">'
+            "Sem despesas no período."
+            "</div>"
+        )
+
+    bancos: dict[str, int] = {}
+    if "banco_origem" in df_filtrado.columns and not df_filtrado.empty:
+        bancos = (
+            df_filtrado["banco_origem"]
+            .fillna("—")
+            .astype(str)
+            .value_counts()
+            .to_dict()
+        )
+    total_origens = sum(int(v) for v in bancos.values()) or 1
+    cores = ["var(--d7-graduado)", "var(--accent-purple)", "var(--accent-pink)",
+             "var(--accent-yellow)", "var(--accent-cyan)"]
+    origens_html = ""
+    for i, (banco, count) in enumerate(list(bancos.items())[:5]):
+        pct = (count / total_origens) * 100
+        cor = cores[i % len(cores)]
+        origens_html += (
+            '<div style="display:flex;align-items:center;gap:8px;'
+            'margin-bottom:6px;">'
+            f'<span style="font-family:var(--ff-mono);width:80px;color:{cor};'
+            f'font-size:11px;">{banco}</span>'
+            '<div style="flex:1;height:4px;background:var(--bg-inset);'
+            'border-radius:2px;overflow:hidden;">'
+            f'<span style="display:block;height:100%;width:{pct:.1f}%;'
+            f'background:{cor};"></span></div>'
+            f'<span style="font-family:var(--ff-mono);color:var(--text-muted);'
+            f'font-size:11px;">{count} txns</span>'
+            "</div>"
+        )
+    if not origens_html:
+        origens_html = (
+            '<div style="color:var(--text-muted);font-size:12px;">'
+            "Sem origens no período."
+            "</div>"
+        )
+
+    return minificar(
+        '<div style="display:grid;grid-template-columns:repeat(3,1fr);'
+        'gap:12px;margin-bottom:16px;">'
+        '<div class="t02-right-card">'
+        '<h3>Saldo · 90 dias</h3>'
+        f"{saldo_chart}{saldo_meta}"
+        "</div>"
+        '<div class="t02-right-card">'
+        '<h3>Breakdown · saída do período</h3>'
+        f"{bd_html}"
+        "</div>"
+        '<div class="t02-right-card">'
+        '<h3>Origens dos dados</h3>'
+        f"{origens_html}"
+        "</div>"
+        "</div>"
+    )
 
 
 # "O dinheiro é um bom servo, mas um mau mestre." -- Francis Bacon
