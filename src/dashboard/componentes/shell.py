@@ -502,31 +502,76 @@ def instalar_fix_sidebar_padding() -> None:
           mainBlock.style.setProperty('max-width', 'none', 'important');
         }
         // TOPBAR-FULL-WIDTH: topbar ocupa toda a largura disponível
-        // (do final da sidebar até a borda direita), começando em y=0.
-        // Mockup canônico tem topbar como header sticky no topo.
+        // (do final da sidebar até a borda direita do viewport),
+        // começando em y=0. Mockup canônico tem topbar sticky no topo.
         const topbar = doc.querySelector('.topbar');
         if (topbar) {
           topbar.style.setProperty('position', 'sticky', 'important');
           topbar.style.setProperty('top', '0', 'important');
+          topbar.style.setProperty('left', '0', 'important');
           topbar.style.setProperty('z-index', '10', 'important');
-          topbar.style.setProperty('width', '100%', 'important');
+          topbar.style.setProperty('width', 'calc(100vw - 240px)', 'important');
           topbar.style.setProperty('margin', '0', 'important');
         }
-        // BODY-PADDING: aplicar padding 24px nas bordas laterais e
-        // bottom dos blocos VERTICAIS internos do main (não no
-        // mainBlock direto, para topbar ficar livre).
+        // BODY-PADDING: aplicar padding 24px APENAS no stVerticalBlock
+        // de TOPO (filho direto do mainBlockContainer). VBs aninhados
+        // (filhos de stColumn) recebem padding 0 para evitar duplo
+        // afastamento que desalinhava clusters em x=288 vs hero=264.
+        const topVB = doc.querySelector(
+          '[data-testid="stMainBlockContainer"] > [data-testid="stVerticalBlock"]'
+        );
+        if (topVB) {
+          topVB.style.setProperty('gap', '12px', 'important');
+          topVB.style.setProperty('padding', '0 24px', 'important');
+        }
+        // VBs aninhados (dentro de stColumn) sem padding adicional.
         doc.querySelectorAll(
-          '[data-testid="stMain"] [data-testid="stVerticalBlock"]'
+          '[data-testid="stMain"] [data-testid="stColumn"] [data-testid="stVerticalBlock"]'
         ).forEach(b => {
+          b.style.setProperty('padding', '0', 'important');
           b.style.setProperty('gap', '12px', 'important');
-          b.style.setProperty('padding', '0 24px', 'important');
         });
-        // Topbar é o filho 1 (após âncora skip-link); precisa ESCAPAR
-        // do padding 24px do parent — usar margin negativa.
+        // Topbar é o filho 1 (após âncora skip-link); precisa
+        // ESCAPAR do padding 24px do parent + compensar 12px de gap
+        // residual do stVerticalBlock (gap entre filhos invisíveis).
         if (topbar) {
           topbar.style.setProperty('margin-left', '-24px', 'important');
           topbar.style.setProperty('margin-right', '-24px', 'important');
-          topbar.style.setProperty('width', 'calc(100% + 48px)', 'important');
+          topbar.style.setProperty('margin-top', '-12px', 'important');
+          topbar.style.setProperty('width', 'calc(100vw - 240px)', 'important');
+        }
+        // Esconder filhos com altura 0 (estilos injetados via st.markdown
+        // não-visíveis) para o gap do stVerticalBlock não criar espaço.
+        doc.querySelectorAll(
+          '[data-testid="stMain"] [data-testid="stVerticalBlock"] > [data-testid="stElementContainer"]'
+        ).forEach(c => {
+          if (c.getBoundingClientRect().height === 0) {
+            c.style.setProperty('display', 'none', 'important');
+          }
+        });
+        // ALINHAMENTO HORIZONTAL: st.columns aplica padding interno
+        // em stColumn + gap em stHorizontalBlock que cria 24px
+        // adicional. Zerar tudo para clusters/sprint alinharem com
+        // hero/KPIs em x=264 (240 sidebar + 24 padding canônico).
+        doc.querySelectorAll(
+          '[data-testid="stMain"] [data-testid="stColumn"]'
+        ).forEach(c => {
+          c.style.setProperty('padding', '0', 'important');
+        });
+        doc.querySelectorAll(
+          '[data-testid="stMain"] [data-testid="stHorizontalBlock"]'
+        ).forEach(b => {
+          b.style.setProperty('gap', '24px', 'important');
+          b.style.setProperty('margin-left', '0', 'important');
+          b.style.setProperty('margin-right', '0', 'important');
+        });
+        // BG-CONTINUITY: stApp tem bg #1a1d28 (correto), mas main tem
+        // bg #0e0f15 (body). Para a parte do topo direito não mostrar
+        // body bg quando topbar não cobre (cantos arredondados etc),
+        // forçar stMain bg como surface bg-base que combine.
+        const stMain = doc.querySelector('[data-testid="stMain"]');
+        if (stMain) {
+          stMain.style.setProperty('background-color', '#0e0f15', 'important');
         }
         // VG-GAP-FIX: stElementContainer com margin-bottom 0 para
         // eliminar gaps mortos entre Hero/KPIs/Clusters.
