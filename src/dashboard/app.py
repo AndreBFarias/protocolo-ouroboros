@@ -225,8 +225,15 @@ def _sidebar(dados: dict, aba_ativa: str = "") -> tuple[str, str, str, str]:
             unsafe_allow_html=True,
         )
 
-    # Filtros globais migrados para o main como expander colapsado.
-    periodo, pessoa, granularidade = _filtros_globais_main(dados)
+    # SIDEBAR-CANON-FIX (2026-05-06): _filtros_globais_main NÃO é mais
+    # chamado aqui — ele renderizava ANTES da topbar (visualmente
+    # acima dela). main() agora chama o expander DEPOIS de
+    # _renderizar_topbar_para para ficar abaixo do breadcrumb.
+    # Para esta função preservar contrato (4-tuple), retornamos
+    # defaults — o expander real é renderizado pela main().
+    periodo = str(st.session_state.get("seletor_periodo", "")) or ""
+    pessoa = str(st.session_state.get("seletor_pessoa", "Todos")) or "Todos"
+    granularidade = str(st.session_state.get("seletor_granularidade", "Mês")) or "Mês"
     return periodo, pessoa, granularidade, cluster_ativo
 
 
@@ -402,16 +409,22 @@ def main() -> None:
         st.stop()
 
     aba_requerida_topbar: str = str(st.session_state.get(CHAVE_SESSION_ABA_ATIVA, ""))
-    periodo, pessoa, granularidade, cluster = _sidebar(dados, aba_ativa=aba_requerida_topbar)
-
-    if not periodo:
-        st.stop()
+    # _sidebar() agora só renderiza shell HTML; defaults para periodo/
+    # pessoa/granularidade são preenchidos depois por _filtros_globais_main.
+    _, _, _, cluster = _sidebar(dados, aba_ativa=aba_requerida_topbar)
 
     # Sprint UX-RD-03 + UX-U-02: topbar via placeholder (preenchido após
     # dispatcher para capturar ações injetadas pela página corrente).
     _topbar_ph, _topbar_bc = _renderizar_topbar_para(cluster, aba_requerida_topbar)
     # FIX-12: âncora alvo do skip-link (WCAG 2.4.1).
     st.markdown('<div id="main-root" tabindex="-1"></div>', unsafe_allow_html=True)
+
+    # SIDEBAR-CANON-FIX: filtros globais no main, ABAIXO da topbar.
+    # Antes: _sidebar() chamava _filtros_globais_main e o expander
+    # aparecia acima da topbar.
+    periodo, pessoa, granularidade = _filtros_globais_main(dados)
+    if not periodo:
+        st.stop()
 
     ctx = {"granularidade": granularidade, "periodo": periodo}
 

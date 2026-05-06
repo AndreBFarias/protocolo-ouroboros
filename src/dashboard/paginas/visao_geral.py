@@ -789,6 +789,14 @@ def _estilos_t01_canonicos() -> str:
         font-family: var(--ff-mono); font-size: var(--fs-15); font-weight: 500;
         margin: 0; letter-spacing: -0.01em;
       }
+      .vg-t01-cluster-head {
+        display: flex; align-items: center; gap: 8px;
+      }
+      .vg-t01-cluster-ic {
+        color: var(--accent-purple);
+        display: inline-flex; align-items: center;
+      }
+      .vg-t01-cluster-ic svg { color: var(--accent-purple); }
       .vg-t01-cluster-card .desc {
         font-size: var(--fs-13); color: var(--text-muted); line-height: 1.5;
       }
@@ -872,20 +880,30 @@ def _kpis_agentic_html(kpis: dict) -> str:
 
 
 def _clusters_canonicos_html(cards: list[dict]) -> str:
-    """Bloco "OS 5 CLUSTERS" do mockup com 6 cards descritivos."""
+    """Bloco "OS 5 CLUSTERS" do mockup com 6 cards descritivos.
+
+    SIDEBAR-CANON-FIX (2026-05-06): cada card recebe glyph SVG canônico
+    no header (mockup ``_visao-render.js`` linha 130 usa ``glyph(ic, 18)``).
+    """
+    from src.dashboard.componentes.glyphs import glyph
     from src.dashboard.componentes.html_utils import minificar
 
     cards_html = []
     for c in cards:
+        glyph_nome = c.get("glyph", "")
+        glyph_html = glyph(glyph_nome, tamanho_px=18) if glyph_nome else ""
         cards_html.append(
-            f'<a class="vg-t01-cluster-card" href="{c["href"]}">'
+            f'<a class="vg-t01-cluster-card" href="{c["href"]}" target="_self">'
+            '<div class="vg-t01-cluster-head">'
+            f'<span class="vg-t01-cluster-ic">{glyph_html}</span>'
             f'<h3>{c["nome"]}</h3>'
+            "</div>"
             f'<div class="desc">{c["descricao"]}</div>'
-            f'<div class="stats">'
+            '<div class="stats">'
             f'<span><strong>{c["stat1_value"]}</strong>{c["stat1_label"]}</span>'
             f'<span><strong>{c["stat2_value"]}</strong>{c["stat2_label"]}</span>'
-            f"</div>"
-            f"</a>"
+            "</div>"
+            "</a>"
         )
     return minificar(
         '<h2 class="vg-t01-section-label">Os 5 clusters</h2>'

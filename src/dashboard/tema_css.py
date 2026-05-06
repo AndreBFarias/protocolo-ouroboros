@@ -892,6 +892,13 @@ def css_global() -> str:
     bloco_redesign_classes = _classes_redesign()
     return f"""
     <style>
+    /* SIDEBAR-CANON-FIX (2026-05-06): cor de fundo do body é bg-base
+       (#0e0f15), não bg-surface (#1a1d28). Sidebar mantém bg-surface
+       para destaque visual. Antes: stApp herdava cor errada. */
+    html, body, .stApp, [data-testid="stAppViewContainer"], [data-testid="stMain"] {{
+        background-color: #0e0f15 !important;
+    }}
+
     /* =========================================================
        SIDEBAR-CANON-FIX-2 (2026-05-06): paridade visual definitiva
        com mockup 00-shell-navegacao.html. Espelha:

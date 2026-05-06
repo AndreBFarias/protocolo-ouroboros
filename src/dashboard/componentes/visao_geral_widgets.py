@@ -326,7 +326,7 @@ def montar_clusters_canonicos() -> list[dict[str, str]]:
         },
         {
             "href": "?cluster=Finan%C3%A7as&tab=Extrato",
-            "glyph": "wallet",
+            "glyph": "financas",
             "nome": "Finanças",
             "descricao": "Extrato, contas, pagamentos, projeções.",
             "stat1_label": "contas",
@@ -336,7 +336,7 @@ def montar_clusters_canonicos() -> list[dict[str, str]]:
         },
         {
             "href": "?cluster=Documentos&tab=Busca+Global",
-            "glyph": "file",
+            "glyph": "docs",
             "nome": "Documentos",
             "descricao": "Busca, catálogo, completude, revisor, validação.",
             "stat1_label": "arquivos",
@@ -346,7 +346,7 @@ def montar_clusters_canonicos() -> list[dict[str, str]]:
         },
         {
             "href": "?cluster=An%C3%A1lise&tab=Categorias",
-            "glyph": "sankey",
+            "glyph": "analise",
             "nome": "Análise",
             "descricao": "Categorias, multi-perspectiva, IRPF.",
             "stat1_label": "categorias",
@@ -356,7 +356,7 @@ def montar_clusters_canonicos() -> list[dict[str, str]]:
         },
         {
             "href": "?cluster=Metas&tab=Metas",
-            "glyph": "target",
+            "glyph": "metas",
             "nome": "Metas",
             "descricao": "Financeiras + operacionais (skills D7).",
             "stat1_label": "fornecedores",

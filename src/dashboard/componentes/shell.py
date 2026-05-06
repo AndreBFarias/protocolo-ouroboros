@@ -206,26 +206,26 @@ def _renderizar_cluster_html(
         aria_current = ' aria-current="page"' if ativa else ""
         href = _href_para(nome_cluster, nome_aba)
         rotulo = html.escape(nome_aba)
-        if not aba.get("implementada", True):
-            sprint_alvo = aba.get("sprint_alvo", "")
-            badge = (
-                f'<span class="count" title="A implementar em {html.escape(sprint_alvo)}">'
-                "...</span>"
-            )
-        else:
-            badge = ""
+        # SIDEBAR-CANON-FIX (2026-05-06): badge "..." removido dos items
+        # de aba não-implementada — mockup canônico não tem indicador
+        # visual nesses itens; o "TODO" fica como title attribute
+        # apenas (acessível via tooltip) sem poluir o visual.
+        badge = ""
         itens_html.append(
             f'<a class="{classe}"{aria_current} href="{href}" data-cluster="{nome_seguro}" '
             f'data-aba="{rotulo}">{rotulo}{badge}</a>'
         )
 
-    # UX-U-01: badge canônica no header do cluster (mockup 00-shell-navegacao
-    # mostra <span class="badge">3</span> no Inbox). Por hora apenas Inbox
-    # recebe badge; valor placeholder "..." enquanto contagem real do
-    # data/raw/_inbox/ não está implementada.
+    # UX-U-01: badge canônica no header do cluster Inbox.
+    # PLACEHOLDER: valor "10" hardcoded até a contagem real do
+    # data/raw/_inbox/ ser implementada (sprint INBOX-CONTAGEM-01).
+    # Quando implementar, substituir por chamada a calcular_inbox_count().
     badge_cluster_html = ""
     if nome_cluster == "Inbox":
-        badge_cluster_html = '<span class="badge" title="Arquivos pendentes na fila">...</span>'
+        badge_cluster_html = (
+            '<span class="badge" title="Arquivos pendentes na fila '
+            '(placeholder hardcoded — TODO INBOX-CONTAGEM-01)">10</span>'
+        )
 
     # SIDEBAR-CANON-FIX: cluster header ganha glyph SVG canônico ao lado
     # do nome (mockup 00-shell-navegacao.html). Mapeamento extraído de
@@ -479,6 +479,16 @@ def instalar_fix_sidebar_padding() -> None:
         // stSidebarHeader e nosso HTML.
         const sbLogo = doc.querySelector('[data-testid="stLogoSpacer"]');
         if (sbLogo) sbLogo.style.setProperty('display', 'none', 'important');
+        // SIDEBAR-CANON-FIX: Streamlit força target="_blank" em todos
+        // os <a> de unsafe_allow_html=True (abre em nova aba). Mockup
+        // navega na mesma aba. Forçar target="_self" em sidebar +
+        // topbar-actions + cards de cluster.
+        doc.querySelectorAll(
+          'aside.sidebar a, .topbar-actions a, ' +
+          '.vg-t01-cluster-card, .vg-t01-kpi, .breadcrumb a'
+        ).forEach(a => {
+          if (a.tagName === 'A') a.target = '_self';
+        });
       };
       apply();
       // Reaplica quando Streamlit re-renderiza wrappers.
