@@ -513,8 +513,15 @@ def renderizar(
     pessoa: str,
     ctx: dict | None = None,
 ) -> None:
-    """Entry point da aba Extração Tripla."""
-    del dados, mes_selecionado, pessoa, ctx  # aba opera sobre CSV próprio
+    """Entry point da aba Extração Tripla (UX-T-10)."""
+    from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
+    renderizar_grupo_acoes([
+        {"label": "Baixar lote", "title": "ZIP com 10 arquivos"},
+        {"label": "Salvar validações", "primary": True,
+         "title": "Persistir flags humanas"},
+    ])
+
+    del dados, mes_selecionado, pessoa, ctx
 
     # UX-U-03: page-header canônico via helper.
     from src.dashboard.componentes.page_header import renderizar_page_header

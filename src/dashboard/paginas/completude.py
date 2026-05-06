@@ -309,8 +309,15 @@ def renderizar(
     pessoa: str,
     ctx: dict | None = None,
 ) -> None:
-    """Entry point da aba Completude. Assinatura intocada (UX-RD-10)."""
-    del mes_selecionado, ctx  # Completude olha todos os meses por default.
+    """Entry point da aba Completude (UX-RD-10 + UX-T-08)."""
+    from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
+    renderizar_grupo_acoes([
+        {"label": "Reprocessar", "title": "Reanalisar completude"},
+        {"label": "Exportar gaps", "primary": True,
+         "title": "Exportar lista de lacunas"},
+    ])
+
+    del mes_selecionado, ctx
 
     if "extrato" not in dados:
         st.markdown(_page_header_html(0.0, 0), unsafe_allow_html=True)

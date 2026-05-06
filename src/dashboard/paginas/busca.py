@@ -553,7 +553,15 @@ def renderizar(
     pessoa: str | None = None,
     ctx: dict | None = None,
 ) -> None:
-    """Ponto de entrada da página Busca Global (UX-RD-09 redesign)."""
+    """Ponto de entrada da página Busca Global (UX-RD-09 + UX-T-06)."""
+    from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
+    renderizar_grupo_acoes([
+        {"label": "Filtros avançados", "title": "Painel de filtros avançados"},
+        {"label": "Catalogação", "primary": True,
+         "href": "?cluster=Documentos&tab=Catalogação",
+         "title": "Ir para Catalogação"},
+    ])
+
     _ = dados
     ctx = ctx or {}
     forma_pagamento = ctx.get("forma_pagamento")

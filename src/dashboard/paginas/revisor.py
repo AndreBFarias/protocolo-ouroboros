@@ -386,12 +386,14 @@ def renderizar(
     pessoa: str | None = None,
     ctx: dict | None = None,
 ) -> None:
-    """Ponto de entrada da página Revisor (cluster Documentos).
+    """Ponto de entrada da página Revisor (UX-T-09)."""
+    from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
+    renderizar_grupo_acoes([
+        {"label": "Próxima divergência", "title": "Pular para próxima divergência"},
+        {"label": "Aprovar Opus & avançar", "primary": True,
+         "title": "Aceitar extração Opus para a transação corrente"},
+    ])
 
-    Argumentos não utilizados: a fonte de verdade é o grafo + diretórios
-    raw, não o XLSX. Mantido apenas para casar a assinatura comum das
-    demais páginas (compatibilidade com ``app.py``).
-    """
     _ = dados, periodo, pessoa, ctx
 
     pendencias = listar_pendencias_revisao()

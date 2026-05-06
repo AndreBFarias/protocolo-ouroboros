@@ -128,12 +128,15 @@ def renderizar(
     pessoa: str | None = None,
     ctx: dict | None = None,
 ) -> None:
-    """Ponto de entrada da página Catalogação.
+    """Ponto de entrada da página Catalogação (UX-T-07)."""
+    from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
+    renderizar_grupo_acoes([
+        {"label": "Reprocessar", "title": "Re-extrair documentos"},
+        {"label": "Adicionar tipo", "primary": True,
+         "title": "Cadastrar novo tipo de documento"},
+    ])
 
-    Assinatura compatível com demais páginas do dashboard (argumentos não
-    usados aqui porque a fonte de verdade é o grafo, não o XLSX).
-    """
-    _ = dados, periodo, pessoa, ctx  # não utilizados -- contrato da página
+    _ = dados, periodo, pessoa, ctx
 
     st.markdown(_CSS_LOCAL_CATALOGACAO, unsafe_allow_html=True)
 
