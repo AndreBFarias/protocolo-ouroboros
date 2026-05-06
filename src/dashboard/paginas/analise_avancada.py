@@ -633,7 +633,15 @@ def renderizar(
     pessoa: str,
     ctx: dict | None = None,
 ) -> None:
-    """Renderiza página Análise com 3 sub-abas (Fluxo / Comparativo / Padrões)."""
+    """Renderiza página Análise (UX-RD-12 + UX-T-12)."""
+    from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
+    renderizar_grupo_acoes([
+        {"label": "Categorias", "href": "?cluster=Análise&tab=Categorias",
+         "title": "Ir para regras de categorias"},
+        {"label": "Exportar relatório", "primary": True,
+         "title": "Gerar PDF do relatório"},
+    ])
+
     # UX-U-03: page-header canônico via helper.
     from src.dashboard.componentes.page_header import renderizar_page_header
     st.markdown(

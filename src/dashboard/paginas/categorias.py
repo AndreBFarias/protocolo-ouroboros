@@ -711,7 +711,14 @@ def renderizar(
     pessoa: str,
     ctx: dict | None = None,
 ) -> None:
-    """Renderiza a página Categorias (UX-RD-12)."""
+    """Renderiza a página Categorias (UX-RD-12 + UX-T-11)."""
+    from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
+    renderizar_grupo_acoes([
+        {"label": "Nova regra", "title": "Adicionar regra YAML"},
+        {"label": "Recategorizar", "primary": True,
+         "title": "Reclassificar transações"},
+    ])
+
     st.markdown(_CSS_PAGINA, unsafe_allow_html=True)
 
     if "extrato" not in dados:

@@ -86,7 +86,14 @@ def renderizar(
     pessoa: str,
     ctx: dict | None = None,
 ) -> None:
-    """Renderiza a página IRPF com 8 categorias + card de pacote anual."""
+    """Renderiza a página IRPF (UX-RD-14 + UX-T-15)."""
+    from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
+    renderizar_grupo_acoes([
+        {"label": "Recalcular", "title": "Recalcular IRPF do ano"},
+        {"label": "Gerar pacote", "primary": True,
+         "title": "DEC + DARF + PDFs"},
+    ])
+
     extrato = dados.get("extrato") if isinstance(dados, dict) else None
     anos_disponiveis = _extrair_anos(extrato)
 

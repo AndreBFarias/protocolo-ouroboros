@@ -439,7 +439,15 @@ def _card_metrica_op_html(metrica: dict[str, Any]) -> str:
 
 
 def renderizar(dados: dict, mes_selecionado: str, pessoa: str) -> None:
-    """Renderiza a página Metas: financeiras (donuts) + operacionais (gauges)."""
+    """Renderiza a página Metas (UX-RD-14 + UX-T-13)."""
+    from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
+    renderizar_grupo_acoes([
+        {"label": "Skills D7", "href": "?cluster=Sistema&tab=Skills+D7",
+         "title": "Ver skills operacionais"},
+        {"label": "Nova meta", "primary": True,
+         "title": "Wizard de nova meta"},
+    ])
+
     metas = _carregar_metas()
     metas = _atualizar_valor_atual(metas, dados, mes_selecionado, pessoa)
 

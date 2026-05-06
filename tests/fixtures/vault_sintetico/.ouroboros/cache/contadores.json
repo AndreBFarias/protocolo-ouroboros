@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "schema": "contadores",
-  "gerado_em": "2026-05-05T22:43:38-03:00",
+  "gerado_em": "2026-05-05T22:49:36-03:00",
   "vault_root": "/home/andrefarias/Desenvolvimento/protocolo-ouroboros/tests/fixtures/vault_sintetico",
   "items": [
     {

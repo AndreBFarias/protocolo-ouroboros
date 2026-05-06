@@ -74,6 +74,13 @@ def renderizar(
         pessoa: Pessoa selecionada na sidebar (ignorada).
         ctx: Contexto extra (granularidade etc., ignorado).
     """
+    from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
+    renderizar_grupo_acoes([
+        {"label": "Abrir pasta", "title": "Abrir ~/Ouroboros/inbox"},
+        {"label": "Atualizar fila", "primary": True,
+         "title": "Verificar novos arquivos"},
+    ])
+
     del dados, periodo, pessoa, ctx
 
     st.markdown(_estilos_locais(), unsafe_allow_html=True)

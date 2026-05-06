@@ -48,10 +48,14 @@ def renderizar(
     pessoa: str,
     ctx: dict | None = None,
 ) -> None:
-    """Renderiza a página Skills D7 (cluster Sistema, aba 1)."""
-    # ``dados``/``periodo``/``pessoa``/``ctx`` ainda não são consumidos --
-    # o painel é cross-financeiro e cross-pessoa (snapshot de skills).
-    # Assinatura preservada para manter contrato uniforme do dispatcher.
+    """Renderiza a página Skills D7 (UX-RD-05 + UX-T-14)."""
+    from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
+    renderizar_grupo_acoes([
+        {"label": "Recalibrar", "title": "Recalibrar 18 skills"},
+        {"label": "Logs", "primary": True,
+         "title": "Abrir terminal de logs"},
+    ])
+
     del dados, periodo, pessoa, ctx
 
     st.markdown(_estilos_locais(), unsafe_allow_html=True)
