@@ -391,4 +391,104 @@ def instalar_atalhos_globais() -> None:
     components.html(gerar_html_atalhos(), height=0)
 
 
+def instalar_fix_sidebar_padding() -> None:
+    """SIDEBAR-CANON-FIX-3: força padding/margin/overflow zero via JS inline.
+
+    Streamlit injeta CSS-in-JS com classes ``st-emotion-cache-*`` no
+    ``<head>`` em runtime, vencendo qualquer ``<style>`` do projeto.
+    Único caminho confiável é aplicar ``style.setProperty(..., 'important')``
+    diretamente no DOM via ``window.parent`` (o iframe de
+    ``components.html`` precisa atravessar para o documento principal).
+
+    Roda toda vez que ``main()`` reexecuta — idempotente porque sempre
+    aplica os mesmos valores.
+    """
+    try:
+        from streamlit.components import v1 as components
+    except ImportError:  # pragma: no cover
+        return
+
+    js = """
+    <script>
+    (function() {
+      const doc = window.parent.document;
+      const apply = () => {
+        const sbc = doc.querySelector('[data-testid="stSidebarContent"]');
+        if (sbc) {
+          sbc.style.setProperty('padding', '0', 'important');
+          sbc.style.setProperty('margin', '0', 'important');
+          sbc.style.setProperty('overflow-y', 'visible', 'important');
+          sbc.style.setProperty('overflow-x', 'hidden', 'important');
+          sbc.style.setProperty('height', 'auto', 'important');
+          sbc.style.setProperty('max-height', 'none', 'important');
+        }
+        const sb = doc.querySelector('[data-testid="stSidebar"]');
+        if (sb) {
+          sb.style.setProperty('overflow-y', 'visible', 'important');
+          sb.style.setProperty('overflow-x', 'hidden', 'important');
+          sb.style.setProperty('height', 'auto', 'important');
+          sb.style.setProperty('max-height', 'none', 'important');
+          sb.style.setProperty('min-height', '100vh', 'important');
+        }
+        // Wrappers internos: stVerticalBlock, stElementContainer,
+        // stMarkdown, stMarkdownContainer.
+        const wrappers = doc.querySelectorAll(
+          '[data-testid="stSidebar"] [data-testid="stVerticalBlock"],' +
+          '[data-testid="stSidebar"] [data-testid="stElementContainer"],' +
+          '[data-testid="stSidebar"] [data-testid="stMarkdown"],' +
+          '[data-testid="stSidebar"] [data-testid="stMarkdownContainer"]'
+        );
+        wrappers.forEach(w => {
+          w.style.setProperty('padding', '0', 'important');
+          w.style.setProperty('margin', '0', 'important');
+          w.style.setProperty('gap', '0', 'important');
+          w.style.setProperty('overflow-x', 'hidden', 'important');
+          w.style.setProperty('overflow-y', 'visible', 'important');
+          w.style.setProperty('width', '240px', 'important');
+          w.style.setProperty('max-width', '240px', 'important');
+        });
+        // aside canônico: usa transform translateX(-10px) para compensar
+        // offset residual de origem desconhecida (Streamlit aplica gap/
+        // alinhamento em wrapper interno via emotion CSS-in-JS que
+        // empurra o conteúdo 10px para a direita mesmo com pad/margin/
+        // position 0). transform vence porque é GPU-applied no rendering.
+        const aside = doc.querySelector('aside.sidebar.ouroboros-sidebar-redesign');
+        if (aside) {
+          aside.style.setProperty('margin', '0', 'important');
+          aside.style.setProperty('padding', '12px 0', 'important');
+          aside.style.setProperty('width', '240px', 'important');
+          aside.style.setProperty('overflow-y', 'visible', 'important');
+          aside.style.setProperty('overflow-x', 'hidden', 'important');
+          aside.style.setProperty('height', 'auto', 'important');
+          aside.style.setProperty('max-height', 'none', 'important');
+          aside.style.setProperty('transform', 'translateX(-10px)', 'important');
+        }
+        // Esconde header Streamlit (botão Deploy + hambúrguer).
+        const header = doc.querySelector('[data-testid="stHeader"]');
+        if (header) header.style.setProperty('display', 'none', 'important');
+        // Botão de colapso da sidebar do Streamlit (canto superior
+        // direito) — esconder porque o mockup não tem.
+        const collapseBtn = doc.querySelector('[data-testid="stSidebarCollapseButton"]');
+        if (collapseBtn) collapseBtn.style.setProperty('display', 'none', 'important');
+        // stSidebarHeader: barrinha de 30px com botão keyboard_double_arrow_left
+        // que Streamlit insere antes do conteúdo. Esconder para o aside
+        // começar em y=0.
+        const sbHeader = doc.querySelector('[data-testid="stSidebarHeader"]');
+        if (sbHeader) sbHeader.style.setProperty('display', 'none', 'important');
+        // stLogoSpacer: placeholder de logo Streamlit (vazio) entre o
+        // stSidebarHeader e nosso HTML.
+        const sbLogo = doc.querySelector('[data-testid="stLogoSpacer"]');
+        if (sbLogo) sbLogo.style.setProperty('display', 'none', 'important');
+      };
+      apply();
+      // Reaplica quando Streamlit re-renderiza wrappers.
+      const obs = new MutationObserver(apply);
+      obs.observe(doc.body, {childList: true, subtree: true});
+      window.parent.__ouroborosSidebarFixObs = obs;
+    })();
+    </script>
+    """
+    components.html(js, height=0)
+
+
 # "Tudo flui, nada permanece." -- Heráclito

@@ -892,6 +892,93 @@ def css_global() -> str:
     bloco_redesign_classes = _classes_redesign()
     return f"""
     <style>
+    /* =========================================================
+       SIDEBAR-CANON-FIX-2 (2026-05-06): paridade visual definitiva
+       com mockup 00-shell-navegacao.html. Espelha:
+       (1) header Streamlit oculto (mockup não tem cabeçalho extra),
+       (2) sidebar começa em x=0,y=0 (sem padding interno do wrapper),
+       (3) sidebar SEM scroll vertical próprio — scroll é da página
+           inteira (overflow herda do body, não da sidebar),
+       (4) badge não cortada (overflow visible no header).
+       Estas regras vêm ANTES das outras para vencer a cascata local
+       e a herança Streamlit. ============================================ */
+    header[data-testid="stHeader"],
+    [data-testid="stHeader"] {{
+        display: none !important;
+    }}
+    [data-testid="stAppViewContainer"] > section.stMain,
+    [data-testid="stMain"] {{
+        padding-top: 0 !important;
+    }}
+    /* Sidebar wrapper: SEM padding, SEM overflow vertical próprio,
+       altura natural (cresce com conteúdo, scroll é da página). */
+    [data-testid="stSidebar"] {{
+        height: auto !important;
+        max-height: none !important;
+        min-height: 100vh !important;
+        overflow-y: visible !important;
+        overflow-x: hidden !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }}
+    [data-testid="stSidebarContent"],
+    [data-testid="stSidebar"] [data-testid="stSidebarContent"],
+    [data-testid="stSidebar"] > div,
+    [data-testid="stSidebar"] > div > div,
+    [data-testid="stSidebar"] section {{
+        padding: 0 !important;
+        margin: 0 !important;
+        height: auto !important;
+        max-height: none !important;
+        overflow-y: visible !important;
+        overflow-x: hidden !important;
+        width: 240px !important;
+        min-width: 240px !important;
+        max-width: 240px !important;
+        box-sizing: border-box !important;
+    }}
+    /* Streamlit envolve nosso aside em vários containers (stVerticalBlock,
+       stElementContainer, stMarkdown, stMarkdownContainer). Todos com padding
+       ou margin default que empurram o aside para x=26. Zeramos TUDO. */
+    [data-testid="stSidebar"] [data-testid="stVerticalBlock"],
+    [data-testid="stSidebar"] [data-testid="stElementContainer"],
+    [data-testid="stSidebar"] [data-testid="stMarkdown"],
+    [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] {{
+        padding: 0 !important;
+        margin: 0 !important;
+        gap: 0 !important;
+        width: 240px !important;
+        max-width: 240px !important;
+        overflow-x: hidden !important;
+        overflow-y: visible !important;
+        box-sizing: border-box !important;
+    }}
+    /* aside.sidebar começa em x=0, y=0 absoluto da viewport. Streamlit
+       wrapper aplica padding 16px que não conseguimos vencer via
+       cascata de classe emotion (mudam a cada release). Solução:
+       margin negativa puxa o aside de volta ao canto + width >= 240px. */
+    [data-testid="stSidebar"] aside.sidebar,
+    aside.sidebar.ouroboros-sidebar-redesign {{
+        position: relative !important;
+        width: 240px !important;
+        max-width: 240px !important;
+        margin: -16px 0 0 -16px !important;
+        padding: 12px 0 !important;
+        height: auto !important;
+        max-height: none !important;
+        overflow-y: visible !important;
+        overflow-x: hidden !important;
+        box-sizing: border-box !important;
+    }}
+    /* Badge nunca cortada. */
+    .sidebar-cluster-header {{
+        overflow: visible !important;
+    }}
+    .sidebar-cluster-header .badge {{
+        flex-shrink: 0 !important;
+        margin-right: 12px !important;
+    }}
+
     {bloco_redesign_root}
     :root {{
         --color-fundo: {CORES["fundo"]};

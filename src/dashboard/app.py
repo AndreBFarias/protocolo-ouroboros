@@ -17,6 +17,7 @@ from src.dashboard.componentes.drilldown import (  # noqa: E402
 )
 from src.dashboard.componentes.shell import (  # noqa: E402
     instalar_atalhos_globais,
+    instalar_fix_sidebar_padding,
     renderizar_sidebar,
     renderizar_topbar,
 )
@@ -560,6 +561,11 @@ def main() -> None:
     # ``__ouroborosAtalhosInstalados`` impede empilhamento de listeners
     # em re-runs do Streamlit.
     instalar_atalhos_globais()
+
+    # SIDEBAR-CANON-FIX-3: força via JS o reset de padding/margin/overflow
+    # nos wrappers Streamlit (CSS-in-JS emotion vence cascata, JS inline
+    # vence emotion). Idempotente.
+    instalar_fix_sidebar_padding()
 
 
 if __name__ == "__main__":
