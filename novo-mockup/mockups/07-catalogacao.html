@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><title>Ouroboros — Catalogação</title>
+<link rel="stylesheet" href="../_shared/tokens.css">
+<link rel="stylesheet" href="../_shared/components.css">
+<style>
+.cat-layout { display:grid; grid-template-columns: 220px 1fr; gap: var(--sp-4); }
+.facets { display:flex; flex-direction:column; gap: var(--sp-2); }
+.facet-card { background: var(--bg-surface); border:1px solid var(--border-subtle); border-radius: var(--r-md); padding: var(--sp-3); }
+.facet-title { font-family: var(--ff-mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); margin: 0 0 var(--sp-2); }
+.facet-row { display:flex; justify-content:space-between; padding: 4px 0; font-size: 12px; cursor:pointer; }
+.facet-row:hover { color: var(--accent-purple); }
+.facet-row .n { font-family: var(--ff-mono); color: var(--text-muted); }
+.facet-row.sel { color: var(--accent-purple); font-weight:500; }
+.cat-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: var(--sp-3); }
+.doc-card {
+  background: var(--bg-surface); border:1px solid var(--border-subtle);
+  border-radius: var(--r-md); overflow:hidden;
+  display:flex; flex-direction:column;
+}
+.doc-thumb {
+  height: 110px; background: var(--bg-inset);
+  display:grid; place-items:center; color:var(--text-muted);
+  border-bottom: 1px solid var(--border-subtle); position:relative;
+}
+.doc-thumb .ext { position:absolute; top:6px; right:6px; font-family: var(--ff-mono); font-size: 9px; letter-spacing:.08em; padding: 2px 5px; border:1px solid var(--border-subtle); border-radius: var(--r-xs); background: var(--bg-elevated); }
+.doc-meta { padding: 8px 12px 10px; }
+.doc-name { font-size: 12px; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.doc-info { font-family: var(--ff-mono); font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+.doc-tags { display:flex; gap: 4px; flex-wrap:wrap; padding: 6px 12px; border-top:1px solid var(--border-subtle); background: var(--bg-inset); }
+.toolbar {
+  display:flex; align-items:center; gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3); margin-bottom: var(--sp-3);
+  background: var(--bg-surface); border:1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+}
+.toolbar input { flex: 1; background: var(--bg-inset); border: 1px solid var(--border-subtle); border-radius: var(--r-sm); padding: 6px 10px; color: var(--text-primary); font-size: 13px; }
+.view-toggle { display:flex; gap: 0; border:1px solid var(--border-subtle); border-radius: var(--r-sm); overflow:hidden; }
+.view-toggle button { background: transparent; border: 0; padding: 6px 10px; color: var(--text-muted); }
+.view-toggle button.on { background: var(--bg-elevated); color: var(--text-primary); }
+</style>
+</head>
+<body>
+<div id="shell-root"></div>
+<script src="../_shared/glyphs.js"></script>
+<script src="../_shared/shell.js"></script>
+<script>
+montarShell({
+  clusterAtivo: 'documentos', abaAtiva: 'catalogacao',
+  breadcrumb: ['Ouroboros', 'Documentos', 'Catalogação'],
+  acoes: [
+    { label: 'Exportar consulta', icon: 'download', onClick: "toast('Consulta exportada · 439 arquivos · CSV')" },
+    { label: 'Nova vista', icon: 'expand', primary: true, onClick: "toast('Nova vista de consulta · em dev','warn')" },
+  ],
+});
+
+const tipos = [
+  ['extrato_cc', 142], ['fatura_cartao', 86], ['recibo_medico', 54],
+  ['fatura_concessionaria', 38], ['cupom_fiscal', 72], ['comprovante', 29], ['nota_servico', 18],
+];
+const periodos = [['2026-Q1', 89], ['2025-Q4', 124], ['2025-Q3', 102], ['2025-Q2', 78], ['2025-Q1', 46]];
+const fontes = [['Nubank', 87], ['Itaú', 64], ['C6', 52], ['Santander', 38], ['Drogasil', 18], ['outros', 180]];
+
+const docs = [
+  { ext:'pdf', nome:'extrato_nubank_cc_2026-03.pdf', sha:'a3f9c1e2', tags:['extrato_cc','Nubank'], data:'2026-03-31' },
+  { ext:'pdf', nome:'fatura_c6_cartao_2026-03.pdf', sha:'b7d2a04f', tags:['fatura_cartao','C6'], data:'2026-03-22' },
+  { ext:'jpg', nome:'recibo_drogasil_03-15.jpg', sha:'c1e8b302', tags:['recibo_medico','Drogasil'], data:'2026-03-15' },
+  { ext:'pdf', nome:'energia_neoenergia_03.pdf', sha:'b2e6f48d', tags:['fatura_conc.','Neoenergia'], data:'2026-03-10' },
+  { ext:'ofx', nome:'extrato_itau_03.ofx', sha:'e0a7c843', tags:['extrato_cc','Itaú'], data:'2026-03-31' },
+  { ext:'pdf', nome:'consulta_cardio.pdf', sha:'d4b6f192', tags:['nota_servico'], data:'2026-03-20' },
+  { ext:'png', nome:'cupom_padaria.png', sha:'f29b1c75', tags:['cupom_fiscal'], data:'2026-03-12' },
+  { ext:'pdf', nome:'aluguel_03_recibo.pdf', sha:'f5a9d271', tags:['comprovante'], data:'2026-03-05' },
+  { ext:'csv', nome:'inss_2025.csv', sha:'c7d3a128', tags:['tabela'], data:'2025-12-31' },
+  { ext:'xlsx', nome:'fatura_santander_03.xlsx', sha:'e1f8c360', tags:['fatura_cartao','Santander'], data:'2026-03-25' },
+  { ext:'pdf', nome:'plano_saude_unimed_03.pdf', sha:'2a8b1f4d', tags:['plano_saude','Unimed'], data:'2026-03-01' },
+  { ext:'pdf', nome:'comprovante_pix_2026-03-20.pdf', sha:'9b4c7d20', tags:['comprovante','Pix'], data:'2026-03-20' },
+];
+
+const facetas = (titulo, lista) => `
+  <div class="facet-card">
+    <h3 class="facet-title">${titulo}</h3>
+    ${lista.map(([k,n],i) => `<div class="facet-row ${i===0&&titulo==='Tipo'?'sel':''}"><span>${k}</span><span class="n">${n}</span></div>`).join('')}
+  </div>`;
+
+const docHTML = (d) => `
+  <div class="doc-card">
+    <div class="doc-thumb">
+      ${glyph(d.ext === 'pdf' ? 'pdf' : d.ext === 'jpg' || d.ext === 'png' ? 'img' : d.ext === 'ofx' ? 'ofx' : d.ext === 'csv' ? 'csv' : 'xlsx', 36)}
+      <span class="ext">${d.ext.toUpperCase()}</span>
+    </div>
+    <div class="doc-meta">
+      <div class="doc-name" title="${d.nome}">${d.nome}</div>
+      <div class="doc-info">${d.sha} · ${d.data}</div>
+    </div>
+    <div class="doc-tags">
+      ${d.tags.map(t => `<span class="pill" style="background:var(--bg-elevated);color:var(--text-secondary);border-color:var(--border-subtle);">${t}</span>`).join('')}
+    </div>
+  </div>`;
+
+document.getElementById('main-root').innerHTML = `
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">CATALOGAÇÃO</h1>
+      <p class="page-subtitle">Banco de dados normalizado. <strong style="color:var(--text-primary);">439 arquivos</strong> · 7 tipos · 2.847 transações. Cada arquivo é canônico pelo sha256.</p>
+    </div>
+    <div class="page-meta">
+      <span class="sprint-tag">Cluster · Catalogação</span>
+      <span class="pill pill-d7-graduado">graduado</span>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    ${glyph('search',16)}
+    <input placeholder="Buscar por sha8, nome, fornecedor, valor, hint…" />
+    <span style="color:var(--text-muted);font-family:var(--ff-mono);font-size:11px;">12 de 439</span>
+    <div class="view-toggle">
+      <button class="on" title="Grade">${glyph('expand',14)}</button>
+      <button title="Tabela">${glyph('hash',14)}</button>
+      <button title="Linha do tempo">${glyph('clock',14)}</button>
+    </div>
+  </div>
+
+  <div class="cat-layout">
+    <aside class="facets">
+      ${facetas('Tipo', tipos)}
+      ${facetas('Período', periodos)}
+      ${facetas('Fonte', fontes)}
+    </aside>
+    <section>
+      <div class="cat-grid">${docs.map(docHTML).join('')}</div>
+    </section>
+  </div>
+`;
+hidratarGlyphs(document.getElementById('main-root'));
+</script>
+</body>
+</html>

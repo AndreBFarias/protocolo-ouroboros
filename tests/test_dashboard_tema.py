@@ -239,11 +239,19 @@ class TestPaletaDracula:
     def test_sprint_ux111_comment_customizado_para_contraste_alto(self):
         """Sprint UX-111: DRACULA['comment'] foi customizado de #6272A4 (Dracula
         original) para #c9c9cc para aumentar contraste contra fundo escuro
-        em telas de baixo brilho. CORES['texto_sec'] e CORES['na'] herdam.
+        em telas de baixo brilho. O dict ``DRACULA`` permanece como fonte
+        histórica para esta decisão.
+
+        Sprint UX-RD-01: ``CORES['texto_sec']`` e ``CORES['na']`` deixaram
+        de herdar de ``DRACULA['comment']`` -- agora referenciam a nova
+        escala migrada (``#a8a9b8`` para texto secundário, ``#6c6f7d``
+        para itens neutros), espelhando ``novo-mockup/_shared/tokens.css``.
+        Cobertura específica em ``tests/test_tema_tokens_redesign.py``.
         """
         assert tema.DRACULA["comment"].lower() == "#c9c9cc"
-        assert tema.CORES["texto_sec"].lower() == "#c9c9cc"
-        assert tema.CORES["na"].lower() == "#c9c9cc"
+        # Pós-UX-RD-01: texto_sec migrou para a nova escala harmonizada.
+        assert tema.CORES["texto_sec"].lower() == "#a8a9b8"
+        assert tema.CORES["na"].lower() == "#6c6f7d"
 
     def test_cores_semanticas_mapeadas(self):
         chaves = {
@@ -727,9 +735,14 @@ class TestSprintUX118PolishCombo:
         assert "background-color: var(--color-card-fundo)" in bloco
 
     def test_ac2_token_cores_fundo_intocado_em_282a36(self):
-        # AC explicito do spec: token CORES['fundo'] permanece em #282A36
-        # (DRACULA default). UX-118 muda apenas o seletor stApp, não o token.
-        assert tema.CORES["fundo"].lower() == "#282a36"
+        # AC original UX-118: token CORES['fundo'] permanecia em #282A36
+        # (Dracula default). UX-118 mudava apenas o seletor stApp.
+        #
+        # Sprint UX-RD-01 sobrescreve essa decisão: a paleta inteira foi
+        # migrada para a nova escala de fundo (`#0e0f15` bg-base). O dict
+        # ``DRACULA`` continua intocado como fonte histórica para esta
+        # decisão UX-118 + memória do Dracula original.
+        assert tema.CORES["fundo"].lower() == "#0e0f15"
         assert tema.DRACULA["background"].lower() == "#282a36"
 
     # AC3 -- logo dimensoes

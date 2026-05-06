@@ -78,14 +78,22 @@ class TestAc2RenameFinancas:
         assert "Dinheiro" not in drilldown.CLUSTERS_VALIDOS
 
     def test_clusters_validos_ordem_canonica(self) -> None:
-        """Ordem fixa Home/Finanças/Documentos/Análise/Metas."""
-        assert drilldown.CLUSTERS_VALIDOS == (
-            "Home",
-            "Finanças",
-            "Documentos",
-            "Análise",
-            "Metas",
-        )
+        """Ordem canônica posiciona Finanças após Home.
+
+        Sprint UX-125 fixou Finanças como segundo nome canônico financeiro
+        (depois de Home).
+        Sprint UX-RD-03 estendeu CLUSTERS_VALIDOS para 8 itens; Inbox
+        precede Home como fila de entrada, mas a sequência relativa
+        Home -> Finanças -> Documentos -> Análise -> Metas continua
+        intacta. Este teste valida essa subordem (relativa).
+        """
+        ordem = drilldown.CLUSTERS_VALIDOS
+        i_home = ordem.index("Home")
+        i_financas = ordem.index("Finanças")
+        i_documentos = ordem.index("Documentos")
+        i_analise = ordem.index("Análise")
+        i_metas = ordem.index("Metas")
+        assert i_home < i_financas < i_documentos < i_analise < i_metas
 
     def test_mapa_aba_para_cluster_aponta_para_financas(self) -> None:
         """4 abas que antes apontavam para 'Dinheiro' agora apontam para 'Finanças'."""
@@ -150,17 +158,14 @@ class TestAc3TabsHomeEspelhamClusters:
                 f"Aba '{aba}' do Home não pode mais ter 'hoje' (UX-125)"
             )
 
+    @pytest.mark.skip(
+        reason="UX-T-01: cluster Home renderiza Visão Geral diretamente. "
+        "Tabs 'Finanças/Documentos/Análise/Metas' do Home foram eliminadas "
+        "porque clusters próprios já oferecem essas vistas (sidebar canônica)."
+    )
     def test_app_py_dispatcha_para_home_dinheiro_via_tab_financas(self) -> None:
         """Inspeção textual: roteador em main() chama home_dinheiro.renderizar
         no bloco da tab 'Finanças' do cluster Home (arquivo físico mantém nome)."""
-        texto = (RAIZ / "src" / "dashboard" / "app.py").read_text(encoding="utf-8")
-        # tab 'Finanças' aparece no st.tabs(...) do cluster Home
-        assert '"Finanças"' in texto
-        # As 4 mini-views ainda são chamadas pelo nome físico
-        assert "home_dinheiro.renderizar" in texto
-        assert "home_docs.renderizar" in texto
-        assert "home_analise.renderizar" in texto
-        assert "home_metas.renderizar" in texto
 
     def test_abas_home_homonimas_documentadas(self) -> None:
         """Sprint UX-125: ABAS_HOME_HOMONIMAS lista as 4 tabs do Home com

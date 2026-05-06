@@ -1,0 +1,34 @@
+{
+  "meta": {
+    "nome": "Ouroboros — Sombras",
+    "principio": "Sutis. Em fundo escuro, sombra pura tem pouco efeito — usar combinação de sombra + leve borda interna luminosa para elevação."
+  },
+
+  "sombra": {
+    "none": { "value": "none" },
+    "sm":   {
+      "value": "0 1px 2px rgba(0, 0, 0, 0.40)",
+      "uso": "card padrão"
+    },
+    "md":   {
+      "value": "0 4px 12px rgba(0, 0, 0, 0.50), inset 0 1px 0 rgba(255, 255, 255, 0.02)",
+      "uso": "card elevado, hover de tile"
+    },
+    "lg":   {
+      "value": "0 12px 32px rgba(0, 0, 0, 0.60), inset 0 1px 0 rgba(255, 255, 255, 0.03)",
+      "uso": "popover, dropdown"
+    },
+    "xl":   {
+      "value": "0 24px 64px rgba(0, 0, 0, 0.70), inset 0 1px 0 rgba(255, 255, 255, 0.04)",
+      "uso": "modal, painel lateral"
+    },
+    "focus_ring": {
+      "value": "0 0 0 2px #0e0f15, 0 0 0 4px #bd93f9",
+      "uso": "outline de foco — anel duplo, vazio interno + roxo externo"
+    },
+    "focus_ring_subtle": {
+      "value": "0 0 0 2px rgba(189, 147, 249, 0.40)",
+      "uso": "focus em input dentro de card"
+    }
+  }
+}

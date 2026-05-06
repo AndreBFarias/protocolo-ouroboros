@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><title>Ouroboros — Completude</title>
+<link rel="stylesheet" href="../_shared/tokens.css">
+<link rel="stylesheet" href="../_shared/components.css">
+<style>
+.kpi-row { display:grid; grid-template-columns: repeat(4,1fr); gap:var(--sp-3); margin-bottom:var(--sp-4); }
+.k { background: var(--bg-surface); border:1px solid var(--border-subtle); border-radius: var(--r-md); padding: var(--sp-4); }
+.k .l { font-family: var(--ff-mono); font-size:10px; letter-spacing:.08em; text-transform:uppercase; color: var(--text-muted); }
+.k .v { font-family: var(--ff-mono); font-size:26px; font-weight:500; line-height:1; margin-top:6px; font-variant-numeric:tabular-nums; }
+.k .d { font-family: var(--ff-mono); font-size:11px; color: var(--text-muted); margin-top:6px; }
+.grid-main { display:grid; grid-template-columns: 1fr 1fr; gap:var(--sp-3); margin-bottom: var(--sp-4); }
+.card { background: var(--bg-surface); border:1px solid var(--border-subtle); border-radius: var(--r-md); }
+.card-head { padding: var(--sp-3) var(--sp-4); border-bottom: 1px solid var(--border-subtle); display:flex; align-items:center; justify-content:space-between; }
+.card-head h3 { font-family: var(--ff-mono); font-size:11px; letter-spacing:.08em; text-transform:uppercase; color: var(--text-secondary); margin:0; }
+.cal { display:grid; grid-template-columns: 60px repeat(12,1fr); gap: 3px; padding: var(--sp-4); font-family: var(--ff-mono); font-size: 10px; }
+.cal-h { color: var(--text-muted); padding: 4px; text-align:center; }
+.cal-row-l { color: var(--text-muted); padding: 8px 4px; text-align:right; font-size: 11px; }
+.cal-c { aspect-ratio: 1.5; border-radius: var(--r-xs); display: grid; place-items: center; cursor:pointer; position:relative; font-size: 10px; color: var(--bg-base); font-weight:500; }
+.cal-c.full { background: var(--d7-graduado); }
+.cal-c.partial { background: var(--accent-yellow); color: var(--bg-base); }
+.cal-c.missing { background: var(--accent-red); }
+.cal-c.empty { background: var(--bg-inset); color: var(--text-muted); cursor:default; }
+.cal-c:hover:not(.empty) { transform: scale(1.08); z-index: 1; box-shadow: 0 0 0 2px var(--accent-purple); }
+
+.gap-row { display:grid; grid-template-columns: 100px 1fr 80px 100px; gap: var(--sp-3); padding: 10px var(--sp-4); border-bottom: 1px dashed var(--border-subtle); align-items:center; font-size: 13px; cursor:pointer; }
+.gap-row:hover { background: var(--bg-elevated); }
+.gap-when { font-family: var(--ff-mono); font-size:11px; color: var(--text-muted); letter-spacing:.04em; text-transform:uppercase; }
+.gap-desc strong { display:block; }
+.gap-desc .meta { font-family: var(--ff-mono); font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+.health-bar { display:flex; height: 28px; border-radius: var(--r-sm); overflow:hidden; margin: var(--sp-3) 0; }
+.health-bar > div { display: flex; align-items:center; justify-content:center; font-family: var(--ff-mono); font-size: 11px; color: var(--bg-base); font-weight:600; }
+
+.checklist { padding: var(--sp-3) var(--sp-4); }
+.cl-row { display: grid; grid-template-columns: 24px 1fr auto; gap: var(--sp-3); align-items: center; padding: 8px 0; border-bottom: 1px dashed var(--border-subtle); font-size: 13px; }
+.cl-row:last-child { border-bottom:none; }
+.cl-row .check { width: 18px; height: 18px; border-radius: var(--r-xs); border:1.5px solid var(--border-strong); display:grid; place-items:center; font-size: 12px; }
+.cl-row.done .check { background: var(--d7-graduado); border-color: var(--d7-graduado); color: var(--bg-base); }
+.cl-row.warn .check { background: var(--accent-yellow); border-color: var(--accent-yellow); color: var(--bg-base); }
+.cl-row.miss .check { border-color: var(--accent-red); color: var(--accent-red); }
+.cl-row.done .label { color: var(--text-secondary); }
+.cl-row.miss .label { color: var(--accent-red); }
+.cl-row .meta { font-family: var(--ff-mono); font-size: 11px; color: var(--text-muted); }
+</style>
+</head>
+<body>
+<div id="shell-root"></div>
+<script src="../_shared/glyphs.js"></script>
+<script src="../_shared/shell.js"></script>
+<script>
+montarShell({clusterAtivo:'documentos',abaAtiva:'completude',breadcrumb:['Ouroboros','Documentos','Completude'],acoes:[{label:'Reprocessar',icon:'refresh',onClick:"toast('Reanalisando completude · 12 meses'); setTimeout(()=>toast('Reprocessamento concluído · 7 gaps detectados'),1500)"},{label:'Exportar gaps',icon:'download',primary:true}]});
+
+// Cobertura mensal × tipo. 5 tipos × 12 meses
+const TIPOS = [
+  {n:'OFX bancos', cor:'var(--d7-graduado)'},
+  {n:'Faturas cartão', cor:'var(--accent-cyan)'},
+  {n:'Comprovantes Pix', cor:'var(--accent-purple)'},
+  {n:'NF serviços', cor:'var(--accent-orange)'},
+  {n:'Recibos', cor:'var(--accent-pink)'},
+];
+const MESES = ['mai','jun','jul','ago','set','out','nov','dez','jan','fev','mar','abr'];
+
+// Estado: full / partial / missing / empty
+// Cada célula = % cobertura
+const COB = [
+  // OFX (sempre completo)
+  ['full','full','full','full','full','full','full','full','full','full','full','full'],
+  // Faturas cartão
+  ['full','full','full','partial','full','full','full','full','full','full','full','partial'],
+  // Pix
+  ['full','partial','full','full','partial','full','full','partial','full','full','partial','full'],
+  // NF serviços
+  ['partial','missing','partial','full','partial','partial','full','full','partial','full','partial','full'],
+  // Recibos
+  ['missing','missing','partial','missing','partial','missing','partial','partial','missing','partial','missing','partial'],
+];
+const PCT = {full:'100%', partial:'70%', missing:'30%', empty:'·'};
+
+let calHtml = '<div class="cal-h"></div>';
+MESES.forEach(m => calHtml += `<div class="cal-h">${m}</div>`);
+TIPOS.forEach((t,ti) => {
+  calHtml += `<div class="cal-row-l">${t.n}</div>`;
+  COB[ti].forEach((s,mi)=>{
+    calHtml += `<div class="cal-c ${s}" title="${t.n} · ${MESES[mi]} · ${PCT[s]}">${s==='full'?'':s==='partial'?'~':s==='missing'?'!':''}</div>`;
+  });
+});
+
+const GAPS = [
+  {dt:'jun · 2025', desc:'Faturas Nubank — 1 ausente', meta:'esperado: 1 fatura mensal · sha previsto · cartão final 5532', sev:'crítico', acao:'pedir ao banco'},
+  {dt:'set · 2025', desc:'Comprovantes Pix — 4 do mês não foram baixados', meta:'4 transferências sem sidecar · valor total R$ 4.200', sev:'médio', acao:'baixar PDFs'},
+  {dt:'jan · 2026', desc:'NF Cliente J.Mota — 1 NF de R$ 1.213,85 sem PDF', meta:'transação OFX presente · falta documento fiscal', sev:'crítico', acao:'solicitar NF'},
+  {dt:'fev · 2026', desc:'Recibos diversos — 8 pagamentos avulsos sem comprovante', meta:'soma R$ 1.840 em transações sem documento de origem', sev:'baixo', acao:'tolerância OK'},
+  {dt:'mar · 2026', desc:'Comprovantes Pix — 2 ausentes', meta:'aluguel garagem (sha esperado) e babá', sev:'médio', acao:'pedir ao remetente'},
+];
+const sevCor = { 'crítico':'var(--accent-red)', 'médio':'var(--accent-yellow)', 'baixo':'var(--text-muted)' };
+
+document.getElementById('main-root').innerHTML = `
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">COMPLETUDE</h1>
+      <p class="page-subtitle">Mapa de cobertura por tipo × mês. Verde = todos os documentos esperados estão presentes; amarelo = parcial; vermelho = faltam. <strong style="color:var(--text-primary);">17 lacunas</strong> detectadas no período de 12 meses.</p>
+    </div>
+    <div class="page-meta"><span class="sprint-tag">Sprint 5</span><span class="pill pill-d7-calibracao">cobertura 84% global</span></div>
+  </div>
+
+  <div class="kpi-row">
+    <div class="k"><div class="l">Cobertura global · 12m</div><div class="v" style="color:var(--d7-calibracao);">84%</div><div class="d">meta · 90%</div></div>
+    <div class="k"><div class="l">Tipos completos</div><div class="v" style="color:var(--d7-graduado);">2 / 5</div><div class="d">OFX e faturas cartão</div></div>
+    <div class="k"><div class="l">Lacunas críticas</div><div class="v" style="color:var(--accent-red);">3</div><div class="d">faturas Nubank · NF · Pix</div></div>
+    <div class="k"><div class="l">Lacunas médias</div><div class="v" style="color:var(--accent-yellow);">14</div><div class="d">tolerável · sem bloquear</div></div>
+  </div>
+
+  <div class="card" style="margin-bottom: var(--sp-4);">
+    <div class="card-head"><h3>Mapa de cobertura · 12 meses</h3>
+      <div style="display:flex;gap:var(--sp-3);font-family:var(--ff-mono);font-size:11px;color:var(--text-muted);">
+        <span><span style="display:inline-block;width:10px;height:10px;background:var(--d7-graduado);border-radius:2px;vertical-align:middle;margin-right:4px;"></span>completo</span>
+        <span><span style="display:inline-block;width:10px;height:10px;background:var(--accent-yellow);border-radius:2px;vertical-align:middle;margin-right:4px;"></span>parcial</span>
+        <span><span style="display:inline-block;width:10px;height:10px;background:var(--accent-red);border-radius:2px;vertical-align:middle;margin-right:4px;"></span>ausente</span>
+      </div>
+    </div>
+    <div class="cal">${calHtml}</div>
+  </div>
+
+  <div class="grid-main">
+    <div class="card">
+      <div class="card-head"><h3>Lacunas detectadas · ordenadas por impacto</h3>
+        <span style="font-family:var(--ff-mono);font-size:11px;color:var(--text-muted);">5 grupos</span>
+      </div>
+      ${GAPS.map(g=>`
+        <div class="gap-row">
+          <div class="gap-when" style="color:${sevCor[g.sev]};">${g.dt}</div>
+          <div class="gap-desc"><strong>${g.desc}</strong><span class="meta">${g.meta}</span></div>
+          <div style="font-family:var(--ff-mono);font-size:11px;color:${sevCor[g.sev]};text-transform:uppercase;letter-spacing:.06em;">${g.sev}</div>
+          <button class="btn btn-sm">${g.acao}</button>
+        </div>
+      `).join('')}
+    </div>
+
+    <div>
+      <div class="card" style="margin-bottom: var(--sp-3);">
+        <div class="card-head"><h3>Health · pipeline atual</h3></div>
+        <div style="padding: var(--sp-4);">
+          <div style="font-family:var(--ff-mono);font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;">cobertura por tipo</div>
+          <div class="health-bar">
+            <div style="width:30%;background:var(--d7-graduado);">OFX · 30%</div>
+            <div style="width:24%;background:var(--accent-cyan);">Cartão · 24%</div>
+            <div style="width:18%;background:var(--accent-purple);">Pix · 18%</div>
+            <div style="width:14%;background:var(--accent-orange);">NF · 14%</div>
+            <div style="width:14%;background:var(--accent-pink);">Recibo · 14%</div>
+          </div>
+          <div style="font-family:var(--ff-mono);font-size:11px;color:var(--text-muted);">439 documentos · 84% completos · 17 lacunas remanescentes</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h3>Checklist · documentos esperados (mês corrente)</h3></div>
+        <div class="checklist">
+          <div class="cl-row done">
+            <div class="check"></div>
+            <div class="label">Extrato OFX · Bradesco · abril</div>
+            <div class="meta">b7d2a04f · 142 txns</div>
+          </div>
+          <div class="cl-row done">
+            <div class="check"></div>
+            <div class="label">Extrato OFX · C6 · abril</div>
+            <div class="meta">a1f9c1e2 · 48 txns</div>
+          </div>
+          <div class="cl-row done">
+            <div class="check"></div>
+            <div class="label">Extrato OFX · Inter · abril</div>
+            <div class="meta">2bdd91aa · 32 txns</div>
+          </div>
+          <div class="cl-row done">
+            <div class="check"></div>
+            <div class="label">Fatura Nubank · abril</div>
+            <div class="meta">PDF + parser</div>
+          </div>
+          <div class="cl-row warn">
+            <div class="check">~</div>
+            <div class="label">Fatura C6 cartão · abril</div>
+            <div class="meta">parcial · falta página 3/4</div>
+          </div>
+          <div class="cl-row done">
+            <div class="check"></div>
+            <div class="label">12 comprovantes Pix esperados</div>
+            <div class="meta">12/12 baixados</div>
+          </div>
+          <div class="cl-row miss">
+            <div class="check">!</div>
+            <div class="label">NF de receita PJ · abril</div>
+            <div class="meta">3/4 emitidas · falta cliente J.Mota</div>
+          </div>
+          <div class="cl-row warn">
+            <div class="check">~</div>
+            <div class="label">Recibos avulsos · abril</div>
+            <div class="meta">4/8 anexados (tolerância 50%)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+`;
+hidratarGlyphs(document.getElementById('main-root'));
+</script></body></html>

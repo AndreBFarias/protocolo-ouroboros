@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><title>Ouroboros — Busca global</title>
+<link rel="stylesheet" href="../_shared/tokens.css">
+<link rel="stylesheet" href="../_shared/components.css">
+<style>
+.search-bar { background: var(--bg-surface); border: 1px solid var(--accent-purple); border-radius: var(--r-md); padding: var(--sp-3) var(--sp-4); display: flex; align-items: center; gap: var(--sp-3); margin-bottom: var(--sp-4); box-shadow: 0 0 0 4px rgba(189,147,249,0.10); }
+.search-bar input { flex:1; background: transparent; border: none; outline: none; color: var(--text-primary); font-family: var(--ff-mono); font-size: 18px; padding: 4px 0; }
+.search-bar input::placeholder { color: var(--text-muted); }
+.search-bar .kbd { font-family: var(--ff-mono); font-size: 10px; color: var(--text-muted); border:1px solid var(--border-subtle); padding: 2px 6px; border-radius: var(--r-xs); background: var(--bg-inset); }
+.facets { display: grid; grid-template-columns: 220px 1fr; gap: var(--sp-3); }
+.facet-side { display: flex; flex-direction: column; gap: var(--sp-3); }
+.facet-card { background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--r-md); padding: var(--sp-3) var(--sp-4); }
+.facet-card h4 { font-family: var(--ff-mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); margin: 0 0 var(--sp-2); }
+.facet-row { display: flex; justify-content: space-between; padding: 4px 0; font-family: var(--ff-mono); font-size: 12px; cursor:pointer; color: var(--text-secondary); }
+.facet-row:hover { color: var(--text-primary); }
+.facet-row.on { color: var(--accent-purple); }
+.facet-row .ct { color: var(--text-muted); font-size: 11px; }
+.results { display: flex; flex-direction: column; gap: var(--sp-3); }
+.res-group { background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--r-md); }
+.res-head { padding: var(--sp-3) var(--sp-4); border-bottom: 1px solid var(--border-subtle); display: flex; align-items: center; gap: var(--sp-3); }
+.res-head .icon { width: 28px; height: 28px; border-radius: var(--r-sm); background: var(--bg-inset); color: var(--cor); display: grid; place-items: center; font-family: var(--ff-mono); font-size: 11px; font-weight: 600; }
+.res-head h3 { font-family: var(--ff-mono); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--text-secondary); margin: 0; }
+.res-head .ct { font-family: var(--ff-mono); font-size: 11px; color: var(--text-muted); margin-left: auto; }
+.res-row { padding: var(--sp-3) var(--sp-4); border-bottom: 1px dashed var(--border-subtle); cursor: pointer; }
+.res-row:last-child { border-bottom: none; }
+.res-row:hover { background: var(--bg-elevated); }
+.res-title { font-size: 14px; margin-bottom: 4px; }
+.res-title mark { background: rgba(241,250,140,0.30); color: var(--accent-yellow); padding: 0 2px; border-radius: 2px; font-weight: 500; }
+.res-meta { font-family: var(--ff-mono); font-size: 11px; color: var(--text-muted); display: flex; gap: var(--sp-3); }
+.res-meta code { color: var(--accent-purple); }
+.res-snippet { font-family: var(--ff-mono); font-size: 12px; color: var(--text-secondary); margin-top: 6px; padding: 6px 10px; background: var(--bg-inset); border-radius: var(--r-sm); border-left: 2px solid var(--accent-purple); line-height: 1.5; }
+.res-snippet mark { background: rgba(241,250,140,0.18); color: var(--accent-yellow); padding: 0 2px; }
+</style>
+</head>
+<body>
+<div id="shell-root"></div>
+<script src="../_shared/glyphs.js"></script>
+<script src="../_shared/shell.js"></script>
+<script>
+montarShell({clusterAtivo:'documentos',abaAtiva:'busca-global',breadcrumb:['Ouroboros','Documentos','Busca global'],acoes:[{label:'Filtros avançados',icon:'expand',onClick:"toast('Painel de filtros avançados','ok')"},{label:'Catalogação',icon:'folder',primary:true,href:'07-catalogacao.html'}]});
+
+document.getElementById('main-root').innerHTML = `
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">BUSCA GLOBAL</h1>
+      <p class="page-subtitle">Busca atravessa <strong style="color:var(--text-primary);">439 documentos</strong>, <strong style="color:var(--text-primary);">2.847 transações</strong> e <strong style="color:var(--text-primary);">1.284 sidecars</strong>. Texto extraído por OCR é indexado junto com metadados (sha8, valor, data, conta, categoria).</p>
+    </div>
+    <div class="page-meta"><span class="sprint-tag">Sprint 5</span></div>
+  </div>
+
+  <div class="search-bar">
+    <span style="color:var(--accent-purple);font-family:var(--ff-mono);">⌕</span>
+    <input value="aluguel 2026" placeholder="busca por descrição, valor, sha, data..." autofocus>
+    <span style="font-family:var(--ff-mono);font-size:11px;color:var(--text-muted);">52 resultados em 47ms</span>
+    <span class="kbd">⌘K</span>
+  </div>
+
+  <div class="facets">
+    <div class="facet-side">
+      <div class="facet-card">
+        <h4>Tipo</h4>
+        <div class="facet-row on"><span>todos</span><span class="ct">52</span></div>
+        <div class="facet-row"><span>transações</span><span class="ct">24</span></div>
+        <div class="facet-row"><span>documentos</span><span class="ct">22</span></div>
+        <div class="facet-row"><span>sidecars</span><span class="ct">6</span></div>
+      </div>
+      <div class="facet-card">
+        <h4>Período</h4>
+        <div class="facet-row"><span>últimos 7 dias</span><span class="ct">2</span></div>
+        <div class="facet-row"><span>30 dias</span><span class="ct">8</span></div>
+        <div class="facet-row on"><span>2026 inteiro</span><span class="ct">52</span></div>
+        <div class="facet-row"><span>todo período</span><span class="ct">142</span></div>
+      </div>
+      <div class="facet-card">
+        <h4>Conta</h4>
+        <div class="facet-row on"><span>todas</span><span class="ct">52</span></div>
+        <div class="facet-row"><span>Bradesco</span><span class="ct">38</span></div>
+        <div class="facet-row"><span>C6</span><span class="ct">12</span></div>
+        <div class="facet-row"><span>Inter</span><span class="ct">2</span></div>
+      </div>
+      <div class="facet-card">
+        <h4>Categoria</h4>
+        <div class="facet-row on"><span>Casa · Aluguel</span><span class="ct">42</span></div>
+        <div class="facet-row"><span>Casa · Condomínio</span><span class="ct">8</span></div>
+        <div class="facet-row"><span>não-categorizadas</span><span class="ct">2</span></div>
+      </div>
+    </div>
+
+    <div class="results">
+      <div class="res-group">
+        <div class="res-head">
+          <div class="icon" style="--cor:var(--d7-graduado);">TX</div>
+          <h3>Transações</h3>
+          <span class="ct">24 resultados</span>
+        </div>
+        ${[
+          {desc:'TED <mark>aluguel</mark> · imobiliária Lar Certo', val:'-R$ 1.280,00', dt:'2026-04-05', sha:'fe8a01dd', conta:'Bradesco', snip:'Pagamento mensal recorrente · 24 meses consecutivos · variação 0%'},
+          {desc:'TED <mark>aluguel</mark> · imobiliária Lar Certo', val:'-R$ 1.280,00', dt:'2026-03-05', sha:'2c91ab07', conta:'Bradesco'},
+          {desc:'TED <mark>aluguel</mark> · imobiliária Lar Certo', val:'-R$ 1.280,00', dt:'2026-02-05', sha:'b7e2940a', conta:'Bradesco'},
+          {desc:'Pix · J.M. Imóveis · ref <mark>aluguel</mark> jan/2026 - garagem', val:'-R$ 220,00', dt:'2026-01-28', sha:'4a1c33ff', conta:'C6'},
+        ].map(r=>`
+          <div class="res-row">
+            <div class="res-title">${r.desc}</div>
+            <div class="res-meta">
+              <span style="color:var(--accent-red);">${r.val}</span>
+              <span>${r.dt}</span>
+              <span>conta · ${r.conta}</span>
+              <span>sha8 <code>${r.sha}</code></span>
+            </div>
+            ${r.snip?`<div class="res-snippet">${r.snip}</div>`:''}
+          </div>
+        `).join('')}
+      </div>
+
+      <div class="res-group">
+        <div class="res-head">
+          <div class="icon" style="--cor:var(--accent-purple);">DC</div>
+          <h3>Documentos</h3>
+          <span class="ct">22 resultados</span>
+        </div>
+        ${[
+          {n:'contrato_<mark>aluguel</mark>_2024-2026.pdf', meta:'PDF · 12 págs · sha8 33aa0011 · ingerido 2024-03-15', snip:'CLÁUSULA 4ª — DO VALOR DO <mark>ALUGUEL</mark> · O <mark>aluguel</mark> mensal é fixado em R$ 1.180,00 (mil cento e oitenta reais), reajustado anualmente pelo IGP-M...'},
+          {n:'reajuste_<mark>aluguel</mark>_2026.pdf', meta:'PDF · 2 págs · sha8 91ddef34 · ingerido 2026-03-01', snip:'Aviso de reajuste · novo valor R$ 1.280,00 a partir de 03/2026 · IGP-M 8,4%'},
+          {n:'extrato_bradesco_2026-04.ofx', meta:'OFX · 142 lançamentos · sha8 b7d2a04f', snip:'<mark>aluguel</mark> · 2026-04-05 · -1280,00 · TED · CHAVE 33aa1100'},
+        ].map(r=>`
+          <div class="res-row">
+            <div class="res-title">${r.n}</div>
+            <div class="res-meta"><span>${r.meta}</span></div>
+            <div class="res-snippet">${r.snip}</div>
+          </div>
+        `).join('')}
+      </div>
+
+      <div class="res-group">
+        <div class="res-head">
+          <div class="icon" style="--cor:var(--accent-pink);">SC</div>
+          <h3>Sidecars · anotações humanas</h3>
+          <span class="ct">6 resultados</span>
+        </div>
+        ${[
+          {n:'fe8a01dd.sidecar.md · nota sobre <mark>aluguel</mark> abr/26', meta:'autor · você · 2026-04-05 19:42', snip:'Confirmei débito após reajuste IGP-M. <mark>Aluguel</mark> reajustado de 1180 → 1280. Próximo reajuste 03/2027.'},
+          {n:'33aa0011.sidecar.md · revisão contrato', meta:'autor · você · 2024-03-16 14:10', snip:'Cláusula 4ª define <mark>aluguel</mark>. Garagem em separado por mais R$ 220 mensais (Pix).'},
+        ].map(r=>`
+          <div class="res-row">
+            <div class="res-title">${r.n}</div>
+            <div class="res-meta"><span>${r.meta}</span></div>
+            <div class="res-snippet">${r.snip}</div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  </div>
+`;
+hidratarGlyphs(document.getElementById('main-root'));
+</script></body></html>

@@ -31,21 +31,64 @@ DRACULA: dict[str, str] = {
     "yellow": "#F1FA8C",
 }
 
+# Sprint UX-RD-01: paleta migrada para a nova escala de fundo + texto
+# espelhando ``novo-mockup/_shared/tokens.css``. Aliases legacy
+# (`fundo`, `card_fundo`, `texto`, `texto_sec`, `positivo`, `negativo`,  # noqa: accent
+# `neutro`, `alerta`, `destaque`, `superfluo`, `info`, `obrigatorio`,    # noqa: accent
+# `questionavel`, `na`) foram preservados como chaves para retrocompat   # noqa: accent
+# das 14 páginas existentes -- apenas o hex foi atualizado. Tokens novos
+# (`card_elevado`, `fundo_inset`, `texto_muted`, `d7_*`, `humano_*`) são
+# referenciados pelas páginas redesenhadas em UX-RD-02+.
+#
+# Escolha intencional: o dict ``DRACULA`` acima permanece com os hex
+# Dracula originais, pois serve de fonte histórica para testes legados
+# (test_dashboard_tema.py::test_sprint_ux111_*). A migração acontece
+# apenas em ``CORES``, que é a interface pública consumida pelas páginas.
 CORES: dict[str, str] = {
-    "fundo": DRACULA["background"],
-    "card_fundo": DRACULA["current_line"],
-    "texto": DRACULA["foreground"],
-    "texto_sec": DRACULA["comment"],
-    "positivo": DRACULA["green"],
-    "negativo": DRACULA["red"],
-    "neutro": DRACULA["cyan"],
-    "alerta": DRACULA["orange"],
-    "destaque": DRACULA["purple"],
-    "superfluo": DRACULA["pink"],
-    "info": DRACULA["yellow"],
-    "obrigatorio": DRACULA["green"],
-    "questionavel": DRACULA["orange"],
-    "na": DRACULA["comment"],
+    # --- Fundo (escala de profundidade nova) -------------------------------
+    # bg-base: viewport / html, body
+    "fundo": "#0e0f15",
+    # bg-surface: cards, sidebar, headers
+    "card_fundo": "#1a1d28",
+    # bg-elevated: modais, popovers, drawer (NOVO)
+    "card_elevado": "#232735",
+    # bg-inset: code blocks, inputs profundos (NOVO)
+    "fundo_inset": "#0a0b10",
+    # --- Texto -------------------------------------------------------------
+    # text-primary: corpo principal
+    "texto": "#f8f8f2",
+    # text-secondary: legendas, captions (era #c9c9cc -- UX-111 legado,
+    # agora harmonizado com a paleta da Sprint UX-RD-01)
+    "texto_sec": "#a8a9b8",
+    # text-muted: rótulos secundários, placeholders, estados pendentes (NOVO)
+    "texto_muted": "#6c6f7d",
+    # --- Acentos Dracula (hex literais, sem mais herança de DRACULA) -------
+    "positivo": "#50fa7b",
+    "negativo": "#ff5555",
+    "neutro": "#8be9fd",
+    "alerta": "#ffb86c",
+    "destaque": "#bd93f9",
+    "superfluo": "#ff79c6",
+    "info": "#f1fa8c",
+    # --- Classificação financeira (alias semântico) ------------------------
+    "obrigatorio": "#50fa7b",  # noqa: accent (chave canônica do dict legado)
+    "questionavel": "#ffb86c",  # noqa: accent (chave canônica do dict legado)
+    # `na` historicamente herdou de `comment`. Mantemos a mesma decisão
+    # apontando agora para `texto_muted` -- um cinza estável para itens
+    # neutros (transferências internas, receitas).
+    "na": "#6c6f7d",
+    # --- Estados D7: cobertura observável, não-gate (NOVO) -----------------
+    # Espelha tokens.css --d7-* dos mockups.
+    "d7_graduado": "#6b8e7f",
+    "d7_calibracao": "#f1fa8c",
+    "d7_regredindo": "#ffb86c",
+    "d7_pendente": "#6c6f7d",
+    # --- Estados de validação humana (NOVO) --------------------------------
+    # Espelha tokens.css --humano-* dos mockups.
+    "humano_aprovado": "#6b8e7f",
+    "humano_rejeitado": "#ff5555",
+    "humano_revisar": "#f1fa8c",
+    "humano_pendente": "#6c6f7d",
 }
 
 MAPA_CLASSIFICACAO: dict[str, str] = {
@@ -149,6 +192,10 @@ def logo_sidebar_html(largura_px: int = 120) -> str:
         if st is not None and hasattr(st, "session_state"):
             st.session_state["_logo_b64"] = b64  # type: ignore[union-attr]
 
+    # FIX-06: trocar h1 por div.sidebar-brand-text. O brand canônico vem
+    # do shell HTML (componentes/shell.py:_renderizar_brand_html); o h1
+    # extra criava 2 h1 visíveis simultaneamente em todas as telas,
+    # violando hierarquia HTML/A11y. O alt do img já provê acessibilidade.
     return (
         f'<div style="text-align:center; margin-bottom:{SPACING["md"]}px;">'
         f'<img src="data:image/png;base64,{b64}" '
@@ -156,10 +203,11 @@ def logo_sidebar_html(largura_px: int = 120) -> str:
         f'width="{largura_px}" '
         f'style="display:block; margin:0 auto;" '
         f'alt="Protocolo Ouroboros"/>'
-        f'<h1 style="margin-top:{SPACING["sm"]}px; '
-        f"font-family:monospace; "
+        f'<div class="sidebar-brand-text" style="margin-top:{SPACING["sm"]}px; '
+        f'font-family:var(--ff-mono); font-size:13px; font-weight:500; '
+        f'letter-spacing:0.04em; text-transform:uppercase; '
         f"color:{CORES['destaque']}; "
-        f'text-align:center;">Protocolo Ouroboros</h1>'
+        f'text-align:center;">Protocolo Ouroboros</div>'
         f"</div>"
     )
 

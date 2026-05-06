@@ -70,11 +70,42 @@ MAPA_ABA_PARA_CLUSTER: dict[str, str] = {
     "Busca Global": "Documentos",
     "Grafo + Obsidian": "Documentos",
     "Revisor": "Documentos",
-    "Validação por Arquivo": "Documentos",
+    # Sprint UX-RD-11: "Validação por Arquivo" -> "Extração Tripla". A chave
+    # canônica é a nova; o alias antigo é resolvido em ABA_ALIASES_LEGACY
+    # antes de hit aqui (preserva bookmarks ?tab=Validação+por+Arquivo).
+    "Extração Tripla": "Documentos",
     "Categorias": "Análise",
     "Análise": "Análise",
     "IRPF": "Análise",
     "Metas": "Metas",
+    # Sprint UX-RD-03: abas dos 3 clusters novos. As páginas ainda não
+    # existem (UX-RD-15 / UX-RD-16+ / UX-RD-05 implementam), mas a entrada
+    # no mapa preserva o invariante N-para-N entre ABAS_POR_CLUSTER e
+    # MAPA_ABA_PARA_CLUSTER -- sem isso, navegar via deep-link
+    # ?tab=Inbox falharia silenciosamente.
+    "Inbox": "Inbox",
+    # Sprint UX-RD-17: cluster Bem-estar expande para 12 abas. Cada uma
+    # entra aqui mantendo o invariante N-para-N com ABAS_POR_CLUSTER em
+    # app.py. As que ainda não têm página real caem em fallback graceful
+    # dentro do dispatcher -- a presença no mapa apenas habilita o
+    # deep-link ?tab=<X>. Alias "Diário emocional" preservado para
+    # retrocompat com URLs anteriores à sprint UX-RD-17.
+    "Hoje": "Bem-estar",
+    "Humor": "Bem-estar",
+    "Diário": "Bem-estar",
+    "Eventos": "Bem-estar",
+    "Medidas": "Bem-estar",
+    "Treinos": "Bem-estar",
+    "Marcos": "Bem-estar",
+    "Alarmes": "Bem-estar",
+    "Contadores": "Bem-estar",
+    "Ciclo": "Bem-estar",
+    "Tarefas": "Bem-estar",
+    "Recap": "Bem-estar",
+    "Skills D7": "Sistema",
+    # Sprint UX-RD-05: aba "Styleguide" entra no cluster Sistema.
+    # Mantém invariante N-para-N com ABAS_POR_CLUSTER["Sistema"].
+    "Styleguide": "Sistema",
 }
 
 # Sprint UX-125: tabs do cluster Home com nome igual a cluster próprio.
@@ -83,14 +114,33 @@ MAPA_ABA_PARA_CLUSTER: dict[str, str] = {
 # tabs canônicas (resolvidas pelo MAPA_ABA_PARA_CLUSTER).
 ABAS_HOME_HOMONIMAS: frozenset[str] = frozenset({"Finanças", "Documentos", "Análise", "Metas"})
 
-# Clusters válidos (ordem canônica do radio). Usado por testes e por validação
+# Clusters válidos (ordem canônica da sidebar). Usado por testes e por validação
 # defensiva em app.py (rejeita cluster fora do conjunto ao ler da URL).
 #
 # Sprint UX-121: cluster "Hoje" renomeado para "Home" (termo padrão web/apps;
 # "Hoje" sugeria período temporal, criando ambiguidade no ponto de entrada).
 # Sprint UX-125: cluster "Dinheiro" renomeado para "Finanças" (termo mais
 # profissional; alias backward-compat preserva URLs antigas).
-CLUSTERS_VALIDOS: tuple[str, ...] = ("Home", "Finanças", "Documentos", "Análise", "Metas")
+#
+# Sprint UX-RD-03: cluster set estendido de 5 para 8 áreas (Inbox, Bem-estar,
+# Sistema entram). Inbox é ponto de entrada da fila de novos arquivos
+# (UX-RD-15 implementa); Bem-estar agrupa as 12 telas pessoais não-financeiras
+# do redesign (UX-RD-16+ implementa); Sistema reúne Skills D7, Styleguide e
+# Índice (UX-RD-05 implementa). Ordem aqui espelha 1:1 a ordem da sidebar
+# definida em ``novo-mockup/_shared/shell.js`` (CLUSTERS_OUROBOROS). Páginas
+# desses 3 clusters ainda não existem em ``paginas/``; o dispatcher em
+# ``app.main()`` renderiza fallback graceful (st.info) que aponta para a
+# sprint que vai implementar.
+CLUSTERS_VALIDOS: tuple[str, ...] = (
+    "Inbox",
+    "Home",
+    "Finanças",
+    "Documentos",
+    "Análise",
+    "Metas",
+    "Bem-estar",
+    "Sistema",
+)
 
 # Sprint UX-121: aliases backward-compat para query_params. Permite que URLs
 # antigas no formato ?cluster=Hoje continuem resolvendo para o novo nome
@@ -99,6 +149,18 @@ CLUSTERS_VALIDOS: tuple[str, ...] = ("Home", "Finanças", "Documentos", "Anális
 #
 # Sprint UX-125: alias adicional ?cluster=Dinheiro -> "Finanças".
 CLUSTER_ALIASES: dict[str, str] = {"Hoje": "Home", "Dinheiro": "Finanças"}
+
+# Sprint UX-RD-11: aliases backward-compat para nomes de aba renomeados.
+# Permite que URLs antigas no formato ?tab=Validação+por+Arquivo continuem
+# resolvendo para o novo nome canônico "Extração Tripla". Aplicado em
+# ``ler_filtros_da_url`` antes de gravar em session_state.
+ABA_ALIASES_LEGACY: dict[str, str] = {
+    "Validação por Arquivo": "Extração Tripla",
+    # Sprint UX-RD-17: cluster Bem-estar adotou nomenclatura mais curta
+    # ("Diário" em vez de "Diário emocional"). URLs antigas resolvem o
+    # alias antes de cair no dispatcher.
+    "Diário emocional": "Diário",
+}
 
 # Chave canônica em session_state para o cluster ativo. Namespace próprio,
 # não colide com filtro_* (drill-down), avancado_* (filtros manuais Extrato)
@@ -145,12 +207,14 @@ def aplicar_drilldown(
     """
     if not key_grafico:
         raise ValueError("key_grafico é obrigatório para on_select funcionar")
-    import streamlit as st
+
+    import streamlit as st  # noqa: PLC0415
+
+    from src.dashboard.tema_plotly import st_plotly_chart_dracula
 
     fig.update_layout(clickmode="event+select")
-    resultado = st.plotly_chart(
+    resultado = st_plotly_chart_dracula(
         fig,
-        use_container_width=True,
         key=key_grafico,
         on_select="rerun",
     )
@@ -219,7 +283,10 @@ def ler_filtros_da_url() -> None:
         valor_tab = qp["tab"]
         if isinstance(valor_tab, list):
             valor_tab = valor_tab[0] if valor_tab else ""
-        st.session_state[CHAVE_SESSION_ABA_ATIVA] = str(valor_tab)
+        # Sprint UX-RD-11: resolve aliases legados antes de gravar em session.
+        nome_aba = str(valor_tab)
+        nome_aba = ABA_ALIASES_LEGACY.get(nome_aba, nome_aba)
+        st.session_state[CHAVE_SESSION_ABA_ATIVA] = nome_aba
 
     # Sprint 92b: resolve cluster ativo (explícito ou inferido pela aba).
     cluster_explicito: str = ""

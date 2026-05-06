@@ -20,7 +20,7 @@ premissa original e geram o gap real:
    é real (Americanas, valores plausíveis).
 2. **Cada NFCe tem 33 items granulares** linkados via aresta `contem_item`.
    Drill-down 1 salto (NFCe -> item) funciona; o que falha é o segundo
-   salto (transacao -> documento_de -> NFCe), porque...
+   salto (`transacao` -> `documento_de` -> NFCe), porque...
 3. **Não há transação bancária no extrato OFX/CSV** dentro da janela
    `linking.py` para nfce_modelo_65 (janela_dias=1, diff_valor_pct=0.01,
    confidence_minimo=0.85) com valor próximo de R$ 629.98 ou R$ 595.52

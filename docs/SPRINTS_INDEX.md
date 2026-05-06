@@ -1,7 +1,7 @@
 # Sprints — Índice mestre
 
-> Atualizado em 2026-04-29 após brainstorming de redesign + auditoria honesta.
-> Mapeia todas as sprints do projeto: as **antigas em backlog** (pré-plan) versus o **plan ativo `pure-swinging-mitten`** (Ondas 1-6).
+> Atualizado em 2026-05-05 (auditoria honesta do redesign + 14 sprints corretivas UX-RD-FIX).
+> Antes em 2026-04-29 (brainstorming redesign). Mapeia todas as sprints do projeto: as **antigas em backlog** (pré-plan) versus o **plan ativo `pure-swinging-mitten`** (Ondas 1-6) versus o **plan lazy-noodling-wind** (UX-RD-* + roteiro corretivo UX-RD-FIX-*).
 > Resolve conflitos (sprint antiga e nova endereçando o mesmo problema), absorções (antiga superseded por nova) e complementaridades (ortogonais).
 
 ## Status agregado
@@ -26,7 +26,19 @@ Detalhe completo em `~/.claude/plans/pure-swinging-mitten.md`.
 | 3 | Cobertura documental universal | 20 (DOC-01..20) | Backlog |
 | 4 | Cruzamento micro + IRPF + GAP proativo | 6 (MICRO-01..03 + IRPF-01..02 + GAP-01) | Backlog |
 | 5 | Mobile bridge + fontes adicionais | 7 (MOB-01..03 + FONTE-01..04) | Backlog |
-| 6 | UX/UI + OMEGA + pacote anual de vida | 16 (UX-01..09, UX-10 + OMEGA-94a..d + ADR-23 + MON-01 + DASH-01) | Backlog |
+| 6 | UX/UI + OMEGA + pacote anual de vida | 16 (UX-01..09, UX-10 + OMEGA-94a..d + ADR-23 + MON-01 + DASH-01) -- **DEPRECADAS pelo plan lazy-noodling-wind** | Reabsorvido |
+
+## Plan lazy-noodling-wind (redesign UX/UI 2026-05-04+) e roteiros sucessivos
+
+Plan completo: `~/.claude/plans/lazy-noodling-wind.md`. Auditoria honesta: `docs/auditorias/AUDITORIA_REDESIGN_2026-05-05.md`.
+
+| Fase | Sprints | Status |
+|---|---|---|
+| Onda 0-6 (UX-RD-01..19) | 19 sprints reescrevendo dashboard 1:1 com 29 mockups HTML | **CONCLUÍDAS** em 2026-05-04. Score real (auditoria): 64/100 |
+| Fase Corretiva (UX-RD-FIX-01..14) | 14 sprints transversais corrigindo divergências catalogadas | **EXECUTADAS** em 2026-05-05 (gauntlet verde). Specs **arquivadas** em 2026-05-06 em `docs/sprints/arquivadas/2026-05-tentativa-fix-transversal/` porque a abordagem transversal não fechou a percepção visual integrada |
+| **Fase Tela-a-Tela (UX-U-01..04 + UX-T-01..29 + UX-Q-01..03)** | 36 sprints em 3 ondas (U/T/Q) -- cada sprint entrega peça completa | **VIGENTE** -- ROTEIRO_TELAS_2026-05-06.md |
+
+Plano operacional: `~/.claude/plans/auditoria-honesta-da-magical-lovelace.md`. Garantias: validação humana entre sprints, captura side-by-side mockup × dashboard automática, reversibilidade. Meta: score ≥95/100 após Q-03.
 
 ## Mapeamento das sprints antigas (17 em backlog pré-plan)
 

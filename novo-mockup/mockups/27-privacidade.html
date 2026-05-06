@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Ouroboros — Bem-estar · Privacidade A↔B</title>
+<link rel="stylesheet" href="../_shared/tokens.css">
+<link rel="stylesheet" href="../_shared/components.css">
+<style>
+.pv-grid { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: var(--sp-4); align-items: start; }
+.pv-card { background: var(--bg-surface); border:1px solid var(--border-subtle); border-radius: var(--r-md); padding: var(--sp-5); }
+.pv-card h3 { font-family: var(--ff-mono); font-size: 11px; letter-spacing: 0.10em; text-transform: uppercase; color: var(--text-muted); margin: 0 0 var(--sp-3); }
+
+/* Direção do compartilhamento */
+.dir-tabs { display: flex; gap: 6px; margin-bottom: var(--sp-4); }
+.dir-tab {
+  flex: 1; background: var(--bg-inset); border: 1px solid var(--border-subtle); border-radius: var(--r-sm);
+  padding: var(--sp-3); cursor: pointer; font-family: var(--ff-mono); font-size: 11px; color: var(--text-secondary);
+  display:flex; align-items:center; justify-content: center; gap: 8px; transition: all .12s;
+}
+.dir-tab.active { background: var(--accent-purple); color: var(--text-inverse); border-color: var(--accent-purple); }
+.dir-tab .seta { font-size: 14px; }
+
+/* Tabela de campos × níveis */
+.matriz {
+  display: grid;
+  grid-template-columns: minmax(220px, 1.5fr) repeat(4, 1fr);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-sm);
+  overflow: hidden;
+}
+.matriz-head, .matriz-row { display: contents; }
+.matriz .h, .matriz .c {
+  padding: 10px var(--sp-3);
+  border-bottom: 1px solid var(--border-subtle);
+  font-family: var(--ff-mono);
+  font-size: 11px;
+}
+.matriz .h {
+  background: var(--bg-inset); color: var(--text-muted); letter-spacing: 0.06em; text-transform: uppercase;
+  font-size: 10px; text-align: center; font-weight: 500;
+}
+.matriz .h.label-col { text-align: left; }
+.matriz .c { display: flex; align-items: center; justify-content: center; }
+.matriz .c.label {
+  justify-content: flex-start; flex-direction: column; align-items: flex-start; gap: 2px;
+  background: var(--bg-base);
+}
+.matriz .c.label .nome { font-size: 12px; color: var(--text-primary); font-weight: 500; font-family: var(--ff-sans); }
+.matriz .c.label .src { font-family: var(--ff-mono); font-size: 10px; color: var(--text-muted); }
+.matriz-row:last-child .c { border-bottom: none; }
+.matriz-row.cat-divisor .c.label {
+  background: var(--bg-inset); color: var(--accent-purple); font-family: var(--ff-mono); font-size: 10px;
+  letter-spacing: 0.10em; text-transform: uppercase; padding: 6px var(--sp-3); border-bottom: 1px solid var(--border-subtle);
+}
+.matriz-row.cat-divisor .c { background: var(--bg-inset); border-bottom: 1px solid var(--border-subtle); }
+
+/* Radio circle */
+.r {
+  width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid var(--border-strong);
+  cursor: pointer; transition: all .12s; position: relative;
+}
+.r.sel {
+  border-color: var(--cor); background: var(--cor);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--cor) 18%, transparent);
+}
+.r.sel::after {
+  content: ''; position: absolute; inset: 4px; border-radius: 50%; background: var(--text-inverse);
+}
+.r:hover { border-color: var(--cor); }
+
+/* Legenda dos níveis */
+.legenda {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--sp-3);
+  background: var(--bg-inset); border: 1px solid var(--border-subtle); border-radius: var(--r-sm);
+  padding: var(--sp-3); margin-bottom: var(--sp-4);
+}
+.lvl { font-family: var(--ff-mono); font-size: 11px; color: var(--text-secondary); line-height: 1.5; border-left: 2px solid var(--cor); padding-left: 10px; }
+.lvl .n { color: var(--cor); font-weight: 600; display:block; font-size: 11px; margin-bottom: 2px; letter-spacing: 0.06em; text-transform: uppercase; }
+
+/* Card de pessoa */
+.pessoa-card {
+  background: var(--bg-surface); border:1px solid var(--border-subtle); border-radius: var(--r-md);
+  padding: var(--sp-4); margin-bottom: var(--sp-3);
+}
+.pessoa-card h4 { font-family: var(--ff-mono); font-size: 10px; letter-spacing: 0.10em; text-transform: uppercase; color: var(--text-muted); margin: 0 0 var(--sp-2); }
+.pessoa-id { display:flex; align-items:center; gap: 10px; margin-bottom: var(--sp-3); }
+.pessoa-avatar {
+  width: 40px; height: 40px; border-radius: 50%; background: var(--cor);
+  display:grid; place-items: center; color: var(--text-inverse); font-weight: 600;
+}
+.pessoa-meta { flex: 1; }
+.pessoa-meta .nome { font-size: 14px; color: var(--text-primary); font-weight: 500; }
+.pessoa-meta .e { font-family: var(--ff-mono); font-size: 11px; color: var(--text-muted); }
+
+.kv { display:flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed var(--border-subtle); font-family: var(--ff-mono); font-size: 11px; }
+.kv:last-child { border-bottom: none; }
+.kv .k { color: var(--text-muted); }
+.kv .v { color: var(--text-primary); }
+
+/* Avisos */
+.aviso {
+  background: linear-gradient(135deg, rgba(255,184,108, 0.10), transparent);
+  border: 1px solid rgba(255,184,108, 0.35);
+  border-radius: var(--r-sm); padding: var(--sp-3); display:flex; gap: 10px;
+}
+.aviso .ico { color: var(--accent-orange); flex-shrink: 0; }
+.aviso .t { font-family: var(--ff-mono); font-size: 11px; color: var(--text-secondary); line-height: 1.5; }
+.aviso .t strong { color: var(--text-primary); }
+
+/* Audit log */
+.audit { font-family: var(--ff-mono); font-size: 11px; max-height: 180px; overflow-y: auto; }
+.audit .l { display:flex; gap: 8px; padding: 4px 0; border-bottom: 1px dashed var(--border-subtle); color: var(--text-secondary); }
+.audit .l .ts { color: var(--text-muted); width: 80px; flex-shrink:0; }
+.audit .l .ev { flex: 1; }
+.audit .l .ev strong { color: var(--text-primary); }
+
+/* Toggle de feature */
+.feat-toggle { display:flex; align-items:center; justify-content: space-between; padding: 10px 0; border-bottom: 1px dashed var(--border-subtle); }
+.feat-toggle:last-child { border-bottom: none; }
+.feat-toggle .desc { flex: 1; }
+.feat-toggle .desc .n { font-size: 12px; color: var(--text-primary); }
+.feat-toggle .desc .h { font-family: var(--ff-mono); font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+.toggle {
+  width: 36px; height: 20px; border-radius: 10px; background: var(--border-strong); position: relative; cursor: pointer; transition: background .12s;
+  flex-shrink: 0;
+}
+.toggle::after { content:''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: var(--text-inverse); transition: left .12s; }
+.toggle.on { background: var(--accent-green); }
+.toggle.on::after { left: 18px; }
+</style>
+</head>
+<body>
+<div id="shell-root"></div>
+<script src="../_shared/glyphs.js"></script>
+<script src="../_shared/shell.js"></script>
+<script>
+montarShell({
+  clusterAtivo: 'bem-estar',
+  abaAtiva: 'be-privacidade',
+  breadcrumb: ['Ouroboros', 'Bem-estar', 'Privacidade A↔B'],
+  acoes: [
+    { label: 'Audit log completo', icon: 'list', onClick: "toast('Abrindo .ouroboros/audit/privacidade.log')" },
+    { label: 'Salvar permissões', icon: 'check', primary: true, onClick: "toast(' Permissões gravadas em .ouroboros/permissoes.toml · sync via radicle')" },
+  ],
+});
+
+const NIVEIS = [
+  { id: 'oculto',  nome: 'Oculto',  cor: 'var(--text-muted)',     desc: 'B não vê nem que existe.' },
+  { id: 'agreg',   nome: 'Agregado', cor: 'var(--accent-cyan)',   desc: 'Só média/contagem em janelas (7d, 30d). Não mostra dia específico.' },
+  { id: 'resumo',  nome: 'Resumo',  cor: 'var(--accent-purple)',  desc: 'Vê o dado por dia, sem texto bruto. Ex: humor 3, sem nota.' },
+  { id: 'total',   nome: 'Total',   cor: 'var(--accent-green)',   desc: 'Acesso completo, igual a si mesmo.' },
+];
+
+const CATEGORIAS = [
+  { titulo: 'Humor', campos: [
+    { nome: 'humor base', src: '.ouroboros/humor.json', def: 'resumo' },
+    { nome: 'energia / ansiedade / foco', src: '.ouroboros/humor.json (extras)', def: 'agreg' },
+    { nome: 'tags emocionais', src: 'tags do humor', def: 'oculto' },
+  ]},
+  { titulo: 'Diário emocional', campos: [
+    { nome: 'entradas marcadas como "para B"', src: 'diario/*.md', def: 'total' },
+    { nome: 'entradas privadas', src: 'diario/*.md (private)', def: 'oculto' },
+    { nome: 'gatilhos detectados', src: 'tags de trigger', def: 'agreg' },
+  ]},
+  { titulo: 'Eventos & Memórias', campos: [
+    { nome: 'eventos não-marcados como privados', src: 'eventos/*.json', def: 'total' },
+    { nome: 'memórias com pessoa B taggeada', src: 'memorias/*', def: 'total' },
+    { nome: 'memórias só do A', src: 'memorias/private/*', def: 'oculto' },
+  ]},
+  { titulo: 'Medidas físicas', campos: [
+    { nome: 'peso, sono, batimentos', src: 'medidas/*.json', def: 'agreg' },
+    { nome: 'medicação · aderência', src: 'medidas/medicacao.json', def: 'oculto' },
+  ]},
+  { titulo: 'Ciclo (de B)', campos: [
+    { nome: 'fase do ciclo (sem detalhes)', src: 'ciclo/*.json', def: 'resumo' },
+    { nome: 'sintomas detalhados', src: 'ciclo/sintomas/*', def: 'oculto' },
+  ]},
+  { titulo: 'Cruzamentos & Recap', campos: [
+    { nome: 'recap mensal completo', src: 'recap/*.md', def: 'resumo' },
+    { nome: 'cruzamentos salvos', src: 'cruzamentos/*.json', def: 'total' },
+  ]},
+];
+
+// estado
+const STATE = { direcao: 'a-mostra-b', perms: {} };
+// inicializa com defaults
+CATEGORIAS.forEach(cat => cat.campos.forEach((c, i) => {
+  STATE.perms[`${cat.titulo}::${c.nome}`] = c.def;
+}));
+
+function setNivel(chave, nivel) {
+  STATE.perms[chave] = nivel;
+  render();
+  toast(`${chave.split('::')[1]} → ${nivel}`);
+}
+
+function setDir(d) { STATE.direcao = d; render(); }
+
+function renderMatriz() {
+  let html = '<div class="matriz">';
+  // header
+  html += '<div class="matriz-head">';
+  html += '<div class="h label-col">Campo / fonte</div>';
+  NIVEIS.forEach(n => html += `<div class="h" style="color:${n.cor};">${n.nome}</div>`);
+  html += '</div>';
+
+  CATEGORIAS.forEach(cat => {
+    html += `<div class="matriz-row cat-divisor">
+      <div class="c label" style="grid-column: 1 / -1; padding: 8px var(--sp-3);">${cat.titulo}</div>
+    </div>`;
+    cat.campos.forEach(c => {
+      const chave = `${cat.titulo}::${c.nome}`;
+      const sel = STATE.perms[chave];
+      html += '<div class="matriz-row">';
+      html += `<div class="c label">
+        <span class="nome">${c.nome}</span>
+        <span class="src">${c.src}</span>
+      </div>`;
+      NIVEIS.forEach(n => {
+        const isSel = sel === n.id;
+        html += `<div class="c">
+          <div class="r ${isSel ? 'sel' : ''}" style="--cor:${n.cor};" onclick="setNivel('${chave}','${n.id}')"></div>
+        </div>`;
+      });
+      html += '</div>';
+    });
+  });
+  html += '</div>';
+  return html;
+}
+
+document.getElementById('main-root').innerHTML = `
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">PRIVACIDADE GRANULAR · A ↔ B</h1>
+      <p class="page-subtitle">Controle por campo do que cada pessoa do casal vê do outro. Tudo é local-first em
+      <code style="color:var(--accent-pink);background:var(--bg-inset);padding:1px 6px;border-radius:2px;">.ouroboros/permissoes.toml</code>;
+      o sync entre os dois vaults respeita o nível mais restritivo dos dois lados.</p>
+    </div>
+    <div class="page-meta">
+      <span class="sprint-tag">M28</span>
+      <span class="pill pill-d7-graduado">opt-in por campo</span>
+    </div>
+  </div>
+
+  <div class="pv-grid">
+    <!-- COLUNA PRINCIPAL -->
+    <div>
+      <div class="pv-card">
+        <h3>Direção do compartilhamento</h3>
+        <div class="dir-tabs">
+          <div class="dir-tab ${STATE.direcao === 'a-mostra-b' ? 'active' : ''}" onclick="setDir('a-mostra-b')">
+            <span>A (você)</span><span class="seta">→</span><span>B (parceira)</span>
+          </div>
+          <div class="dir-tab ${STATE.direcao === 'b-mostra-a' ? 'active' : ''}" onclick="setDir('b-mostra-a')">
+            <span>B (parceira)</span><span class="seta">→</span><span>A (você)</span>
+          </div>
+        </div>
+
+        <h3>Legenda dos 4 níveis</h3>
+        <div class="legenda">
+          ${NIVEIS.map(n => `
+            <div class="lvl" style="--cor:${n.cor};">
+              <span class="n">${n.nome}</span>${n.desc}
+            </div>
+          `).join('')}
+        </div>
+
+        <h3>Permissões por campo · ${STATE.direcao === 'a-mostra-b' ? 'B vê de A' : 'A vê de B'}</h3>
+        ${renderMatriz()}
+
+        <div class="aviso" style="margin-top: var(--sp-4);">
+          <span class="ico">${glyph('alert', 16)}</span>
+          <span class="t">
+            <strong>Default conservador:</strong> tudo começa em <em>oculto</em> ao convidar a outra pessoa.
+            Você precisa explicitamente liberar campo a campo. <strong>Nada vaza por configuração padrão.</strong>
+            Mudanças geram entrada no audit log e a outra ponta vê uma notificação no próximo sync.
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- COLUNA LATERAL -->
+    <div>
+      <div class="pessoa-card">
+        <h4>VOCÊ (A)</h4>
+        <div class="pessoa-id">
+          <div class="pessoa-avatar" style="--cor: var(--accent-purple);">A</div>
+          <div class="pessoa-meta">
+            <div class="nome">vault local</div>
+            <div class="e">~/.ouroboros/</div>
+          </div>
+        </div>
+        <div class="kv"><span class="k">vault id</span><span class="v">7f3a…b2c1</span></div>
+        <div class="kv"><span class="k">última escrita</span><span class="v">há 2min</span></div>
+        <div class="kv"><span class="k">tamanho</span><span class="v">142 MB</span></div>
+      </div>
+
+      <div class="pessoa-card">
+        <h4>PARCEIRA (B)</h4>
+        <div class="pessoa-id">
+          <div class="pessoa-avatar" style="--cor: var(--accent-pink);">B</div>
+          <div class="pessoa-meta">
+            <div class="nome">vault remoto via radicle</div>
+            <div class="e">rad:z3k9…</div>
+          </div>
+        </div>
+        <div class="kv"><span class="k">conectado em</span><span class="v">12·set·2025</span></div>
+        <div class="kv"><span class="k">último sync</span><span class="v">há 14min</span></div>
+        <div class="kv"><span class="k">aceitou termos</span><span class="v" style="color:var(--accent-green);">sim</span></div>
+        <div style="margin-top: var(--sp-3); display:flex; gap: 6px;">
+          <button class="btn btn-sm" onclick="toast('Pausando sync com B até você reativar')">${glyph('pause', 11)} pausar sync</button>
+          <button class="btn btn-sm btn-danger" onclick="toast('Atenção · isso revoga TUDO')">${glyph('x', 11)} revogar</button>
+        </div>
+      </div>
+
+      <div class="pessoa-card">
+        <h4>FEATURES OPCIONAIS</h4>
+        <div class="feat-toggle">
+          <div class="desc">
+            <div class="n">Notificar B em mudanças</div>
+            <div class="h">B recebe notif quando você muda permissões</div>
+          </div>
+          <div class="toggle on" onclick="this.classList.toggle('on');toast('toggle')"></div>
+        </div>
+        <div class="feat-toggle">
+          <div class="desc">
+            <div class="n">Modo "férias"</div>
+            <div class="h">Suspende todo sync por janela definida</div>
+          </div>
+          <div class="toggle" onclick="this.classList.toggle('on');toast('toggle')"></div>
+        </div>
+        <div class="feat-toggle">
+          <div class="desc">
+            <div class="n">Recap conjunto</div>
+            <div class="h">Recap mensal usa dados liberados dos dois</div>
+          </div>
+          <div class="toggle on" onclick="this.classList.toggle('on');toast('toggle')"></div>
+        </div>
+      </div>
+
+      <div class="pessoa-card">
+        <h4>AUDIT LOG (últimos 24h)</h4>
+        <div class="audit">
+          <div class="l"><span class="ts">14:32</span><span class="ev"><strong>A</strong> mudou <em>humor base</em> de oculto → resumo</span></div>
+          <div class="l"><span class="ts">11:08</span><span class="ev"><strong>B</strong> autorizou <em>fase do ciclo</em> em resumo</span></div>
+          <div class="l"><span class="ts">09:45</span><span class="ev">sync radicle ok · 12 entradas trocadas</span></div>
+          <div class="l"><span class="ts">ontem</span><span class="ev"><strong>A</strong> revogou <em>medicação · aderência</em></span></div>
+          <div class="l"><span class="ts">ontem</span><span class="ev"><strong>B</strong> ativou <em>recap conjunto</em></span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+`;
+
+hidratarGlyphs(document.getElementById('main-root'));
+</script>
+</body>
+</html>

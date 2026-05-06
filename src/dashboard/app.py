@@ -9,18 +9,18 @@ RAIZ_PROJETO: Path = Path(__file__).resolve().parents[2]
 if str(RAIZ_PROJETO) not in sys.path:
     sys.path.insert(0, str(RAIZ_PROJETO))
 
-from src.dashboard.componentes.busca_global_sidebar import (  # noqa: E402
-    renderizar_input_busca,
-)
 from src.dashboard.componentes.drilldown import (  # noqa: E402
     CHAVE_SESSION_ABA_ATIVA,
     CHAVE_SESSION_CLUSTER_ATIVO,
     CLUSTERS_VALIDOS,
-    gerar_html_ativar_aba,
     ler_filtros_da_url,
 )
+from src.dashboard.componentes.shell import (  # noqa: E402
+    instalar_atalhos_globais,
+    renderizar_sidebar,
+    renderizar_topbar,
+)
 from src.dashboard.dados import (  # noqa: E402
-    CAMINHO_XLSX,
     carregar_dados,
     filtrar_por_periodo,
     filtrar_por_pessoa,
@@ -30,30 +30,50 @@ from src.dashboard.dados import (  # noqa: E402
 )
 from src.dashboard.paginas import (  # noqa: E402
     analise_avancada,
+    be_alarmes,
+    be_ciclo,
+    be_contadores,
+    be_cruzamentos,  # noqa: F401  -- reabilitado por FIX-14 via &secao=
+    be_diario,
+    be_editor_toml,  # noqa: F401  -- reabilitado por FIX-14 via &secao=
+    be_eventos,
+    be_hoje,
+    be_humor,
+    be_marcos,
+    be_medidas,
+    be_memorias,  # noqa: F401  -- reabilitado por FIX-14 via &secao=
+    be_privacidade,  # noqa: F401  -- reabilitado por FIX-14 via &secao=
+    be_recap,
+    be_rotina,  # noqa: F401  -- reabilitado por FIX-14 via &secao=
+    be_tarefas,
+    be_treinos,
     busca,
     catalogacao,
     categorias,
     completude,
     contas,
+    extracao_tripla,
     extrato,
     grafo_obsidian,
-    home_analise,
-    home_dinheiro,
-    home_docs,
-    home_metas,
+    inbox,
     irpf,
     metas,
     pagamentos,
     projecoes,
     revisor,
-    validacao_arquivos,
+    skills_d7,
+    styleguide,
     visao_geral,
 )
+
+# Sprint UX-RD-11: ``validacao_arquivos`` permanece importável como stub
+# de retrocompat (rota ?tab=Validação+por+Arquivo é resolvida via
+# ABA_ALIASES_LEGACY antes de cair no dispatcher). Não é referenciado
+# diretamente neste módulo, mas o pacote ``paginas`` continua exportando-o.
 from src.dashboard.tema import (  # noqa: E402
     CORES,
     card_sidebar_html,
     css_global,
-    logo_sidebar_html,
 )
 
 # Sprint 100: ordem canônica das abas dentro de cada cluster. Replica a ordem
@@ -85,11 +105,53 @@ ABAS_POR_CLUSTER: dict[str, list[str]] = {
         "Catalogação",
         "Completude",
         "Revisor",
-        "Validação por Arquivo",
+        # Sprint UX-RD-11: aba "Validação por Arquivo" foi renomeada para
+        # "Extração Tripla" (layout 3 colunas: lista | viewer | tabela
+        # ETL × Opus × Humano). Retrocompat via alias em CLUSTER_ALIASES.
+        "Extração Tripla",
         "Grafo + Obsidian",
     ],
     "Análise": ["Categorias", "Análise", "IRPF"],
     "Metas": ["Metas"],
+    # Sprint UX-RD-03: clusters novos sem páginas implementadas. Cada
+    # entrada lista as abas que aparecem no mockup; o dispatcher de
+    # ``main()`` renderiza fallback graceful com ponteiro para a sprint
+    # alvo. Mantemos as abas declaradas aqui para que o deep-link da
+    # Sprint 100 (``?cluster=Inbox&tab=...``) seja preservado quando as
+    # páginas vierem (UX-RD-15, UX-RD-16+, UX-RD-05).
+    "Inbox": ["Inbox"],
+    # Sprint UX-RD-17: cluster Bem-estar ganha 12 abas declaradas para o
+    # deep-link (?cluster=Bem-estar&tab=<X>). Apenas "Hoje" e "Humor" têm
+    # páginas reais nesta sprint; as demais caem em fallback graceful no
+    # dispatcher abaixo até que UX-RD-18+ habilite cada uma.
+    "Bem-estar": [
+        "Hoje",
+        "Humor",
+        "Diário",
+        "Eventos",
+        "Medidas",
+        "Treinos",
+        "Marcos",
+        "Alarmes",
+        "Contadores",
+        "Ciclo",
+        "Tarefas",
+        "Recap",
+    ],
+    # Sprint UX-RD-05: cluster Sistema ganha aba "Styleguide" além de
+    # "Skills D7". Páginas implementadas em ``paginas/skills_d7.py`` e
+    # ``paginas/styleguide.py``; dispatcher abaixo monta as abas reais.
+    "Sistema": ["Skills D7", "Styleguide"],
+}
+
+# Sprint UX-RD-03: mapa cluster -> sprint que vai habilitar suas páginas.
+# Usado pelo fallback do dispatcher para mostrar mensagem informativa
+# quando o cluster está em CLUSTERS_VALIDOS mas as páginas ainda não
+# existem.
+SPRINT_ALVO_POR_CLUSTER: dict[str, str] = {
+    "Inbox": "UX-RD-15",
+    "Bem-estar": "UX-RD-16",
+    "Sistema": "UX-RD-05",
 }
 
 
@@ -105,195 +167,152 @@ def _configurar_pagina() -> None:
 
 
 def _selecionar_cluster() -> str:
-    """Renderiza o seletor de clusters na sidebar e devolve o cluster ativo.
+    """Resolve o cluster ativo a partir do session_state.
 
-    Sprint 92b (ADR-22): 5 áreas canônicas (Home / Finanças / Documentos /
-    Análise / Metas). `CHAVE_SESSION_CLUSTER_ATIVO` é populado pela URL via
-    `ler_filtros_da_url` quando aplicável (backward compatibility); caso
-    contrário, default é o primeiro cluster ("Home").
+    Sprint 92b (ADR-22): 5 áreas canônicas. ``CHAVE_SESSION_CLUSTER_ATIVO``
+    é populado pela URL via ``ler_filtros_da_url`` quando aplicável.
 
-    Sprint UX-121: cluster "Hoje" renomeado para "Home". URLs antigas
-    (?cluster=Hoje) continuam funcionando via CLUSTER_ALIASES no leitor
-    de query_params. Sprint UX-125 estende o padrão para
-    ?cluster=Dinheiro -> "Finanças".
+    Sprint UX-121: cluster "Hoje" renomeado para "Home" (alias backward-compat
+    via ``CLUSTER_ALIASES``). Sprint UX-125: ``?cluster=Dinheiro`` -> "Finanças".
 
-    Sprint UX-113: widget mudou de ``st.radio`` para ``st.selectbox``
-    (dropdown). Economiza ~120px de altura vertical na sidebar (5 linhas
-    -> 1 linha colapsada), liberando espaço para o campo Buscar acima.
-    A lógica de cluster permanece N-para-N com ``ABAS_POR_CLUSTER`` e
-    ``MAPA_ABA_PARA_CLUSTER`` -- só a UI mudou.
+    Sprint UX-RD-03: o widget ``st.selectbox`` foi substituído pela sidebar
+    HTML redesenhada (``shell.renderizar_sidebar``). Os 8 clusters são
+    apresentados como links ``<a href="?cluster=X">``; clicar recarrega a
+    página com a query string e ``ler_filtros_da_url`` popula o
+    session_state. Esta função agora apenas resolve o cluster atual lendo
+    o session_state e aplicando default ("Home") quando a URL não
+    especifica nada. Mantida com a mesma assinatura para não quebrar
+    chamadores. A primeira execução (sem cluster na URL) retorna "Home"
+    como ponto de entrada cognitivo padrão.
     """
     cluster_na_url = st.session_state.get(CHAVE_SESSION_CLUSTER_ATIVO, "")
     if cluster_na_url in CLUSTERS_VALIDOS:
-        indice_default = CLUSTERS_VALIDOS.index(cluster_na_url)
-    else:
-        indice_default = 0
-
-    cluster_escolhido: str = st.selectbox(
-        "Área",
-        list(CLUSTERS_VALIDOS),
-        index=indice_default,
-        key=CHAVE_SESSION_CLUSTER_ATIVO,
-    )
-    return cluster_escolhido
+        return cluster_na_url
+    # Default: Home (índice 1 no novo CLUSTERS_VALIDOS, pois Inbox vem antes
+    # mas Home é o ponto de entrada cognitivo do usuário recorrente).
+    return "Home"
 
 
-def _sidebar(dados: dict) -> tuple[str, str, str, str]:
-    """Renderiza sidebar com filtros globais e retorna seleções.
+def _sidebar(dados: dict, aba_ativa: str = "") -> tuple[str, str, str, str]:
+    """UX-U-04: sidebar shell-only (zero widgets Streamlit).
+
+    A sidebar emite APENAS o bloco HTML canônico do redesign
+    (``renderizar_sidebar``: brand SVG, busca placeholder, 8 clusters
+    com badges + footer "D7 cobertura observável").
+
+    Filtros globais (granularidade, período, pessoa, forma de pagamento)
+    foram migrados para ``_filtros_globais_main()``, que renderiza um
+    expander compacto colapsado por default no início do conteúdo
+    principal. Páginas de Onda T podem renderizar filtros próprios
+    inline via ``componentes/filtros_pagina``.
+
+    Args:
+        dados: dicionário de DataFrames (passado para preservar
+            assinatura; cabe a ``_filtros_globais_main`` consumir).
+        aba_ativa: aba atual para destacar no shell HTML.
 
     Returns:
-        Tupla com (período selecionado, pessoa, granularidade, cluster).
+        Tupla compatível ``(periodo, pessoa, granularidade, cluster_ativo)``
+        com valores efetivos lidos de ``st.session_state`` (populados
+        pelo expander de filtros globais ou por defaults seguros).
     """
+    cluster_ativo = _selecionar_cluster()
+
     with st.sidebar:
-        # Sprint UX-126 AC5: largura sobe de 64 para 120px (default da
-        # função). CSS `.ouroboros-logo-img` em `tema.py` força width:
-        # 120px !important, então o atributo HTML "width" deve casar
-        # para evitar reflow visual no carregamento. Sprint UX-118
-        # já havia subido o teto via max-width; UX-126 garante que o
-        # tamanho efetivo é 120px (não 64px sob max-width: 120px).
-        logo_html = logo_sidebar_html(largura_px=120)
-        if logo_html:
-            st.markdown(logo_html, unsafe_allow_html=True)
-        else:
-            st.title("Protocolo Ouroboros")
-
-        if CAMINHO_XLSX.exists():
-            import os
-            from datetime import datetime
-
-            mtime = os.path.getmtime(CAMINHO_XLSX)
-            ultima = datetime.fromtimestamp(mtime)
-            # Sprint UX-126 AC6: caption reformatada em duas linhas
-            # centralizadas. Linha 1: "Dados de DD/MM/YYYY". Linha 2:
-            # "— HH:MM —" com travessões decorativos. Substitui o
-            # `st.caption` (que quebrava em duas linhas pela largura,
-            # mas sem alinhamento central nem travessões).
-            data_str = ultima.strftime("%d/%m/%Y")
-            hora_str = ultima.strftime("%H:%M")
-            st.markdown(
-                "<div class='ouroboros-sidebar-caption' "
-                "style='text-align:center; line-height:1.4;'>"
-                f"<p style='margin:0; font-size:13px; color:var(--color-texto-sec);'>"
-                f"Dados de {data_str}</p>"
-                f"<p style='margin:0; font-size:13px; color:var(--color-texto-sec);'>"
-                f"— {hora_str} —</p>"
-                "</div>",
-                unsafe_allow_html=True,
-            )
-
-        st.markdown("---")
-
-        # Sprint UX-113: campo Buscar é o primeiro elemento abaixo do logo --
-        # ponto de entrada cognitivo da sidebar. Submeter delega para o
-        # roteador da Sprint UX-114 (fallback graceful enquanto UX-114 não
-        # mergeia: salva em session_state apenas).
-        renderizar_input_busca()
-
-        # Sprint UX-119 AC4: separadores `st.markdown("---")` que existiam
-        # entre Buscar / Área / Granularidade / Mês / Pessoa / Forma foram
-        # removidos. Os 6 controles formam agora um bloco visual contínuo;
-        # o respiro entre eles vem do margin-bottom uniforme dos elementos
-        # do Streamlit. Os separadores ANTES (logo+caption) e DEPOIS (cards
-        # Receita/Despesa/Saldo) permanecem porque marcam fronteiras
-        # semânticas distintas (cabeçalho da sidebar / resumo financeiro).
-
-        # Sprint 92b (ADR-22) + UX-113: seletor de cluster como dropdown.
-        # Fica acima dos filtros de período/pessoa para reforçar a hierarquia
-        # (área > filtros), mas abaixo do campo Buscar -- mental model
-        # "buscar primeiro, navegar depois".
-        cluster_ativo = _selecionar_cluster()
-
-        meses = obter_meses_disponiveis(dados)
-
-        if not meses:
-            st.warning("Nenhum dado disponível.")
-            return "", "Todos", "Mês", cluster_ativo
-
-        granularidade: str = st.selectbox(
-            "Granularidade",
-            ["Dia", "Semana", "Mês", "Ano"],
-            index=2,
-            key="seletor_granularidade",
+        st.markdown(
+            renderizar_sidebar(cluster_ativo=cluster_ativo, aba_ativa=aba_ativa),
+            unsafe_allow_html=True,
         )
 
-        if granularidade == "Ano":
-            anos = obter_anos_disponiveis(dados)
-            periodo: str = st.selectbox(
-                "Período",
-                anos,
-                index=0,
-                key="seletor_periodo",
+    # Filtros globais migrados para o main como expander colapsado.
+    periodo, pessoa, granularidade = _filtros_globais_main(dados)
+    return periodo, pessoa, granularidade, cluster_ativo
+
+
+def _filtros_globais_main(dados: dict) -> tuple[str, str, str]:
+    """UX-U-04: filtros globais no main (substituem widgets da sidebar).
+
+    Renderizados num ``st.expander`` colapsado por default, abaixo da
+    topbar e antes do dispatcher. Cada página de Onda T pode optar por
+    filtros inline próprios via ``componentes/filtros_pagina`` — neste
+    caso o expander global continua presente mas cada um opera sobre
+    namespace de session_state distinto.
+
+    Returns:
+        ``(periodo, pessoa, granularidade)`` para o dispatcher.
+    """
+    meses = obter_meses_disponiveis(dados)
+    if not meses:
+        st.warning("Nenhum dado disponível.")
+        return "", "Todos", "Mês"
+
+    from src.utils.pessoas import nome_de
+    nome_a = nome_de("pessoa_a")
+    nome_b = nome_de("pessoa_b")
+    opcoes_pessoa = ["Todos", nome_a, nome_b]
+
+    with st.expander("Filtros globais", expanded=False):
+        col_g, col_p, col_pessoa, col_forma = st.columns([1, 1, 1, 1])
+
+        with col_g:
+            granularidade: str = st.selectbox(
+                "Granularidade",
+                ["Dia", "Semana", "Mês", "Ano"],
+                index=2,
+                key="seletor_granularidade",
             )
-        else:
-            mes_base: str = st.selectbox(
-                "Mês",
-                meses,
-                index=0,
-                key="seletor_mes_base",
-            )
 
-            if granularidade == "Semana":
-                from src.dashboard.dados import obter_semanas_do_mes
-
-                semanas = obter_semanas_do_mes(dados, mes_base)
-                if semanas:
-                    periodo = st.selectbox(
-                        "Semana",
-                        semanas,
-                        index=0,
-                        key="seletor_detalhe",
-                    )
-                else:
-                    periodo = mes_base
-            elif granularidade == "Dia":
-                from src.dashboard.dados import obter_dias_do_mes
-
-                dias = obter_dias_do_mes(dados, mes_base)
-                if dias:
-                    periodo = st.selectbox(
-                        "Dia",
-                        dias,
-                        index=0,
-                        key="seletor_detalhe",
-                    )
-                else:
-                    periodo = mes_base
+        with col_p:
+            if granularidade == "Ano":
+                anos = obter_anos_disponiveis(dados)
+                periodo: str = st.selectbox(
+                    "Período",
+                    anos,
+                    index=0,
+                    key="seletor_periodo",
+                )
             else:
-                periodo = mes_base
+                mes_base: str = st.selectbox(
+                    "Mês",
+                    meses,
+                    index=0,
+                    key="seletor_mes_base",
+                )
+                if granularidade == "Semana":
+                    from src.dashboard.dados import obter_semanas_do_mes
+                    semanas = obter_semanas_do_mes(dados, mes_base)
+                    periodo = (
+                        st.selectbox("Semana", semanas, index=0, key="seletor_detalhe")
+                        if semanas else mes_base
+                    )
+                elif granularidade == "Dia":
+                    from src.dashboard.dados import obter_dias_do_mes
+                    dias = obter_dias_do_mes(dados, mes_base)
+                    periodo = (
+                        st.selectbox("Dia", dias, index=0, key="seletor_detalhe")
+                        if dias else mes_base
+                    )
+                else:
+                    periodo = mes_base
 
-        # Sprint MOB-bridge-1 / ADR-24: o dashboard local-first exibe
-        # ``display_name`` real ao dono (resolvido via ``nome_de`` em
-        # runtime, sem persistência), mas o filtro interno opera sobre
-        # identificador genérico ``pessoa_a`` / ``pessoa_b`` / ``casal``.
-        from src.utils.pessoas import nome_de
+        with col_pessoa:
+            pessoa: str = st.selectbox(
+                "Pessoa",
+                opcoes_pessoa,
+                index=0,
+                key="seletor_pessoa",
+            )
 
-        nome_a = nome_de("pessoa_a")
-        nome_b = nome_de("pessoa_b")
-        opcoes_pessoa = ["Todos", nome_a, nome_b]
-        pessoa: str = st.selectbox(
-            "Pessoa",
-            opcoes_pessoa,
-            index=0,
-            key="seletor_pessoa",
-        )
+        with col_forma:
+            forma_sel: str = st.selectbox(
+                "Forma de pagamento",
+                ["Todas", "Pix", "Débito", "Crédito", "Boleto", "Transferência"],
+                index=0,
+                key="seletor_forma_pagamento",
+            )
+            st.session_state["filtro_forma"] = None if forma_sel == "Todas" else forma_sel
 
-        # Sprint 72: filtro global por forma de pagamento. O valor é
-        # salvo em session_state sob a chave "filtro_forma"; cada página
-        # consulta via dados.filtro_forma_ativo() e aplica via
-        # dados.filtrar_por_forma_pagamento().
-        forma_sel: str = st.selectbox(
-            "Forma de pagamento",
-            ["Todas", "Pix", "Débito", "Crédito", "Boleto", "Transferência"],
-            index=0,
-            key="seletor_forma_pagamento",
-        )
-        st.session_state["filtro_forma"] = None if forma_sel == "Todas" else forma_sel
-
-        st.markdown("---")
-
-        _cards_sidebar(dados, periodo, pessoa, granularidade)
-
-        return periodo, pessoa, granularidade, cluster_ativo
+    return periodo, pessoa, granularidade
 
 
 def _cards_sidebar(dados: dict, periodo: str, pessoa: str, granularidade: str) -> None:
@@ -330,6 +349,43 @@ def _cards_sidebar(dados: dict, periodo: str, pessoa: str, granularidade: str) -
     )
 
 
+def _renderizar_topbar_para(cluster: str, aba_ativa: str):
+    """Cria placeholder st.empty() para o topbar e devolve (placeholder, breadcrumb).
+
+    UX-U-02: o topbar tem slot de ações que cada página preenche via
+    ``componentes/topbar_actions.renderizar_grupo_acoes``. Como o dispatcher
+    de páginas roda DEPOIS do topbar, usamos placeholder reservando posição
+    no DOM e preenchemos no fim (``_finalizar_topbar``) com o slot já populado.
+    """
+    breadcrumb = ["Ouroboros", cluster]
+    if aba_ativa:
+        breadcrumb.append(aba_ativa)
+    placeholder = st.empty()
+    st.session_state["topbar_acoes_html"] = ""
+    return placeholder, breadcrumb
+
+
+def _finalizar_topbar(placeholder, breadcrumb: list[str]) -> None:
+    """Preenche o placeholder do topbar com o slot já populado pela página."""
+    placeholder.markdown(renderizar_topbar(breadcrumb), unsafe_allow_html=True)
+
+
+def _renderizar_fallback_cluster(cluster: str) -> None:
+    """Mensagem informativa para clusters declarados mas sem páginas.
+
+    Sprint UX-RD-03: clusters Inbox, Bem-estar e Sistema entraram em
+    ``CLUSTERS_VALIDOS`` antes das páginas existirem. Em vez de crash,
+    mostramos um ``st.info`` apontando a sprint que vai habilitar as
+    páginas.
+    """
+    sprint_alvo = SPRINT_ALVO_POR_CLUSTER.get(cluster, "futura")
+    st.info(
+        f"Cluster '{cluster}' está reservado pelo redesign mas as páginas ainda "
+        f"não foram implementadas. A sprint {sprint_alvo} habilita o conteúdo. "
+        "Use a sidebar para voltar a um cluster ativo."
+    )
+
+
 def main() -> None:
     """Função principal do dashboard."""
     _configurar_pagina()
@@ -344,10 +400,17 @@ def main() -> None:
         st.error("Nenhum dado encontrado. Verifique se o arquivo XLSX existe em data/output/.")
         st.stop()
 
-    periodo, pessoa, granularidade, cluster = _sidebar(dados)
+    aba_requerida_topbar: str = str(st.session_state.get(CHAVE_SESSION_ABA_ATIVA, ""))
+    periodo, pessoa, granularidade, cluster = _sidebar(dados, aba_ativa=aba_requerida_topbar)
 
     if not periodo:
         st.stop()
+
+    # Sprint UX-RD-03 + UX-U-02: topbar via placeholder (preenchido após
+    # dispatcher para capturar ações injetadas pela página corrente).
+    _topbar_ph, _topbar_bc = _renderizar_topbar_para(cluster, aba_requerida_topbar)
+    # FIX-12: âncora alvo do skip-link (WCAG 2.4.1).
+    st.markdown('<div id="main-root" tabindex="-1"></div>', unsafe_allow_html=True)
 
     ctx = {"granularidade": granularidade, "periodo": periodo}
 
@@ -357,123 +420,146 @@ def main() -> None:
     # ler_filtros_da_url. A ordem de abas dentro de cada cluster segue o hero
     # numbering (01-13) definido na Sprint 92a.
     if cluster == "Home":
-        # Sprint UX-123: 5 abas no Home -- Visao Geral (existente) + 4
-        # mini-views cross-area filtradas pelo dia mais recente do dataset.
-        # Sprint UX-125: labels das tabs espelham clusters-irmãos (sem
-        # sufixo "hoje"). Arquivos físicos (home_dinheiro.py etc.) mantêm
-        # nome interno para evitar git mv massivo.
-        # Ordem casa 1:1 com ABAS_POR_CLUSTER["Home"] (deep-link da Sprint 100).
-        (
-            tab_visao,
-            tab_financas,
-            tab_documentos,
-            tab_analise,
-            tab_metas,
-        ) = st.tabs(
-            [
-                "Visão Geral",
-                "Finanças",
-                "Documentos",
-                "Análise",
-                "Metas",
-            ]
-        )
-        with tab_visao:
-            visao_geral.renderizar(dados, periodo, pessoa, ctx)
-        with tab_financas:
-            home_dinheiro.renderizar(dados, periodo, pessoa, ctx)
-        with tab_documentos:
-            home_docs.renderizar(dados, periodo, pessoa, ctx)
-        with tab_analise:
-            home_analise.renderizar(dados, periodo, pessoa, ctx)
-        with tab_metas:
-            home_metas.renderizar(dados, periodo, pessoa, ctx)
+        # UX-T-01: cluster Home renderiza diretamente a Visão Geral canônica
+        # (mockup 01-visao-geral.html). DEPRECATED-HOME-SUBVIEWS executou —
+        # home_dinheiro/home_docs/home_analise/home_metas/_home_helpers
+        # foram arquivados em ``src/dashboard/paginas/_arquivadas/``.
+        visao_geral.renderizar(dados, periodo, pessoa, ctx)
 
     elif cluster == "Finanças":
-        (
-            tab_extrato,
-            tab_contas,
-            tab_pagamentos,
-            tab_projecoes,
-        ) = st.tabs(["Extrato", "Contas", "Pagamentos", "Projeções"])
-        with tab_extrato:
-            extrato.renderizar(dados, periodo, pessoa, ctx)
-        with tab_contas:
+        # TABS-CLUSTER-CLEANUP: dispatcher direto via aba_requerida_topbar
+        # (populada por ?tab=X em ler_filtros_da_url). st.tabs eliminado
+        # porque mockup canônico (00-shell-navegacao.html) usa apenas
+        # sidebar para navegar entre abas do cluster.
+        aba_fin = aba_requerida_topbar or "Extrato"
+        if aba_fin == "Contas":
             contas.renderizar(dados, periodo, pessoa)
-        with tab_pagamentos:
+        elif aba_fin == "Pagamentos":
             pagamentos.renderizar(dados, periodo, pessoa, ctx)
-        with tab_projecoes:
+        elif aba_fin == "Projeções":
             projecoes.renderizar(dados, periodo, pessoa)
+        else:
+            extrato.renderizar(dados, periodo, pessoa, ctx)
 
     elif cluster == "Documentos":
-        (
-            tab_busca,
-            tab_catalogacao,
-            tab_completude,
-            tab_revisor,
-            tab_validacao_arquivos,
-            tab_grafo_obsidian,
-        ) = st.tabs(
-            [
-                "Busca Global",
-                "Catalogação",
-                "Completude",
-                "Revisor",
-                "Validação por Arquivo",
-                "Grafo + Obsidian",
-            ]
-        )
-        with tab_busca:
-            busca.renderizar(dados, periodo, pessoa, ctx)
-        with tab_catalogacao:
+        # TABS-CLUSTER-CLEANUP: dispatcher direto.
+        aba_doc = aba_requerida_topbar or "Busca Global"
+        if aba_doc == "Catalogação":
             catalogacao.renderizar(dados, periodo, pessoa, ctx)
-        with tab_completude:
+        elif aba_doc == "Completude":
             completude.renderizar(dados, periodo, pessoa, ctx)
-        with tab_revisor:
+        elif aba_doc == "Revisor":
             revisor.renderizar(dados, periodo, pessoa, ctx)
-        with tab_validacao_arquivos:
-            validacao_arquivos.renderizar(dados, periodo, pessoa, ctx)
-        with tab_grafo_obsidian:
+        elif aba_doc == "Extração Tripla":
+            extracao_tripla.renderizar(dados, periodo, pessoa, ctx)
+        elif aba_doc == "Grafo + Obsidian":
             grafo_obsidian.renderizar(dados, periodo, pessoa, ctx)
+        else:
+            busca.renderizar(dados, periodo, pessoa, ctx)
 
     elif cluster == "Análise":
-        (
-            tab_categorias,
-            tab_analise,
-            tab_irpf,
-        ) = st.tabs(["Categorias", "Análise", "IRPF"])
-        with tab_categorias:
-            categorias.renderizar(dados, periodo, pessoa, ctx)
-        with tab_analise:
+        # TABS-CLUSTER-CLEANUP: dispatcher direto.
+        aba_an = aba_requerida_topbar or "Categorias"
+        if aba_an == "Análise":
             analise_avancada.renderizar(dados, periodo, pessoa, ctx)
-        with tab_irpf:
+        elif aba_an == "IRPF":
             irpf.renderizar(dados, periodo, pessoa, ctx)
+        else:
+            categorias.renderizar(dados, periodo, pessoa, ctx)
 
     elif cluster == "Metas":
-        (tab_metas,) = st.tabs(["Metas"])
-        with tab_metas:
-            metas.renderizar(dados, periodo, pessoa)
+        metas.renderizar(dados, periodo, pessoa)
+
+    elif cluster == "Sistema":
+        # TABS-CLUSTER-CLEANUP: dispatcher direto.
+        aba_sis = aba_requerida_topbar or "Skills D7"
+        if aba_sis == "Styleguide":
+            styleguide.renderizar(dados, periodo, pessoa, ctx)
+        else:
+            skills_d7.renderizar(dados, periodo, pessoa, ctx)
+
+    elif cluster == "Inbox":
+        inbox.renderizar(dados, periodo, pessoa, ctx)
+
+    elif cluster == "Bem-estar":
+        # FIX-14: deep-link interno via &secao= reabilita 5 páginas órfãs
+        # (Memórias, Rotina, Cruzamentos, Privacidade, Editor-TOML) que
+        # não têm aba top-level após a decisão A da FIX-10. Quando o
+        # parâmetro está presente e válido, renderiza a página órfã no
+        # lugar do dispatcher das 12 abas e retorna early.
+        _SECOES_ORFAS_BEM_ESTAR = {
+            "Memorias": be_memorias,
+            "Rotina": be_rotina,
+            "Cruzamentos": be_cruzamentos,
+            "Privacidade": be_privacidade,
+            "Editor-TOML": be_editor_toml,
+        }
+        secao_orfa = str(st.query_params.get("secao", ""))
+        if secao_orfa and secao_orfa in _SECOES_ORFAS_BEM_ESTAR:
+            _SECOES_ORFAS_BEM_ESTAR[secao_orfa].renderizar(
+                dados, periodo, pessoa, ctx
+            )
+            st.markdown(
+                '<a class="btn btn-ghost btn-sm" href="?cluster=Bem-estar&tab=Recap" '
+                'style="margin-top:var(--sp-4); display:inline-block; '
+                'text-decoration:none; color:var(--text-muted); '
+                'border:1px solid var(--border-subtle); padding:6px 12px; '
+                'border-radius:var(--r-sm);">'
+                "&larr; Voltar para Recap"
+                "</a>",
+                unsafe_allow_html=True,
+            )
+            st.stop()
+
+        # TABS-CLUSTER-CLEANUP + DEEPLINK-FIX-01: dispatcher direto
+        # Bem-estar com 12 abas declaradas + 5 páginas-irmãs (memorias,
+        # rotina, cruzamentos, privacidade, editor_toml) que antes eram
+        # acessíveis só via &secao=. Agora tudo via ?tab=X.
+        _PAGINAS_BE = {
+            "Hoje": be_hoje,
+            "Humor": be_humor,
+            "Diário": be_diario,
+            "Eventos": be_eventos,
+            "Medidas": be_medidas,
+            "Treinos": be_treinos,
+            "Marcos": be_marcos,
+            "Alarmes": be_alarmes,
+            "Contadores": be_contadores,
+            "Ciclo": be_ciclo,
+            "Tarefas": be_tarefas,
+            "Recap": be_recap,
+            "Memórias": be_memorias,
+            "Rotina": be_rotina,
+            "Cruzamentos": be_cruzamentos,
+            "Privacidade": be_privacidade,
+            "Editor TOML": be_editor_toml,
+        }
+        aba_be = aba_requerida_topbar or "Hoje"
+        modulo_be = _PAGINAS_BE.get(aba_be, be_hoje)
+        modulo_be.renderizar(dados, periodo, pessoa, ctx)
 
     else:
-        # Defensivo: cluster inválido em session_state (não deveria ocorrer
-        # dado que o radio é fechado em CLUSTERS_VALIDOS). Fallback para Hoje.
+        # Defensivo: cluster inválido em session_state. Não deveria ocorrer
+        # porque ler_filtros_da_url só popula valores em CLUSTERS_VALIDOS,
+        # mas mantemos o fallback para evitar tela branca.
         st.warning(f"Cluster desconhecido '{cluster}'. Exibindo Visão Geral.")
         visao_geral.renderizar(dados, periodo, pessoa, ctx)
 
-    # Sprint 100: deep-link `?tab=<X>` ativo. Lê a aba requerida (populada por
-    # `ler_filtros_da_url` quando ?tab=X estava na URL) e injeta o JS que
-    # clica na tab correspondente após o Streamlit montar o DOM. Também
-    # instala write-back: clicar em outra tab atualiza ?tab=<NomeClicado> via
-    # `history.replaceState`, mantendo URL compartilhável e browser back
-    # operando entre cliques semânticos.
-    aba_requerida: str = str(st.session_state.get(CHAVE_SESSION_ABA_ATIVA, ""))
-    abas_do_cluster: list[str] = ABAS_POR_CLUSTER.get(cluster, [])
-    if abas_do_cluster:
-        html_js = gerar_html_ativar_aba(aba_requerida, abas_do_cluster)
-        if html_js:
-            from streamlit.components import v1 as components
+    # TABS-CLUSTER-CLEANUP: dispatcher direto via aba_requerida_topbar
+    # tornou ``gerar_html_ativar_aba`` obsoleto (não há mais st.tabs no
+    # main para acionar via JS). Mantida a constante ``ABAS_POR_CLUSTER``
+    # para o sidebar HTML e tests legados; mas não há mais injeção JS.
 
-            components.html(html_js, height=0)
+    # UX-U-02: depois que o dispatcher rodou, a página corrente já populou
+    # st.session_state['topbar_acoes_html'] (via topbar_actions.renderizar_grupo_acoes).
+    # Agora preenchemos o placeholder do topbar com o slot já correto.
+    _finalizar_topbar(_topbar_ph, _topbar_bc)
+
+    # Sprint UX-RD-03: atalhos globais (g h, g i, g v, g r, g f, g c,
+    # /, ?, Esc) instalados no fim de main(). Idempotente -- guard
+    # ``__ouroborosAtalhosInstalados`` impede empilhamento de listeners
+    # em re-runs do Streamlit.
+    instalar_atalhos_globais()
 
 
 if __name__ == "__main__":

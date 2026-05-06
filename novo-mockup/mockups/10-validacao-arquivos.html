@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Ouroboros — Extração Tripla</title>
+<link rel="stylesheet" href="../_shared/tokens.css">
+<link rel="stylesheet" href="../_shared/components.css">
+<style>
+/* ─────────── Layout: lista esquerda + painel direito ─────────── */
+.extracao-layout {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: var(--sp-4);
+  height: calc(100vh - var(--topbar-h) - var(--page-header-h) - var(--sp-12));
+  min-height: 640px;
+}
+
+/* ─────────── Lista de arquivos (esquerda) ─────────── */
+.extracao-lista {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  overflow-y: auto;
+  padding: var(--sp-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+.arq-grupo { display: flex; flex-direction: column; }
+.arq-grupo-head {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 10px;
+  font-family: var(--ff-mono);
+  font-size: var(--fs-11);
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  border-left: 3px solid var(--cor, var(--border-strong));
+  background: var(--bg-inset);
+  border-radius: var(--r-xs);
+  margin-bottom: 4px;
+}
+.arq-grupo-head svg { color: var(--cor); }
+.arq-grupo-count {
+  margin-left: auto;
+  font-size: 10px;
+  color: var(--text-muted);
+  background: var(--bg-elevated);
+  padding: 0 6px;
+  border-radius: var(--r-full);
+}
+.arq-grupo-body { display: flex; flex-direction: column; gap: 2px; }
+
+.arq-item {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--r-sm);
+  padding: 8px 10px;
+  cursor: pointer;
+  transition: background .12s, border-color .12s;
+}
+.arq-item:hover { background: var(--bg-elevated); border-color: var(--border-subtle); }
+.arq-item.sel {
+  background: rgba(189,147,249,0.08);
+  border-color: var(--accent-purple);
+}
+.arq-top {
+  display: flex; align-items: center; gap: 6px;
+  margin-bottom: 4px;
+}
+.arq-flag {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.arq-name {
+  flex: 1;
+  font-family: var(--ff-mono);
+  font-size: var(--fs-12);
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.arq-dl {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-muted);
+  border-radius: var(--r-xs);
+  padding: 2px;
+  display: inline-flex; align-items: center;
+}
+.arq-dl:hover { color: var(--accent-purple); border-color: var(--border-subtle); }
+
+.arq-meta {
+  display: flex; gap: 8px; align-items: center;
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  padding-left: 12px;
+}
+.arq-tipo {
+  background: var(--bg-elevated);
+  padding: 1px 6px;
+  border-radius: var(--r-xs);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.arq-paridade { font-weight: 500; }
+.arq-bytes { margin-left: auto; }
+
+/* ─────────── Painel direito ─────────── */
+.extracao-painel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  min-height: 0;
+}
+
+/* Cabeçalho do arquivo selecionado */
+.cab-arq {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  padding: var(--sp-4);
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  gap: var(--sp-4);
+  align-items: center;
+}
+.cab-icone {
+  width: 56px; height: 56px;
+  background: var(--bg-inset);
+  border: 1px solid var(--border-subtle);
+  border-left: 3px solid var(--cor, var(--accent-purple));
+  border-radius: var(--r-md);
+  display: grid; place-items: center;
+  color: var(--cor);
+}
+.cab-info { min-width: 0; }
+.cab-titulo {
+  display: flex; align-items: center; gap: var(--sp-2);
+  flex-wrap: wrap;
+  margin-bottom: var(--sp-2);
+}
+.cab-fname {
+  font-family: var(--ff-mono);
+  font-size: var(--fs-16);
+  font-weight: 500;
+  color: var(--text-primary);
+}
+.cab-sha {
+  font-family: var(--ff-mono);
+  font-size: var(--fs-12);
+  color: var(--text-muted);
+  background: var(--bg-inset);
+  padding: 2px 6px;
+  border-radius: var(--r-xs);
+}
+.cab-meta {
+  display: flex; flex-wrap: wrap; gap: var(--sp-3);
+  font-family: var(--ff-mono);
+  font-size: var(--fs-12);
+  color: var(--text-muted);
+}
+.cab-meta strong {
+  color: var(--text-secondary);
+  font-weight: 500;
+  margin-right: 4px;
+}
+.cab-stats {
+  display: flex; gap: var(--sp-4);
+  padding: 0 var(--sp-3);
+  border-left: 1px solid var(--border-subtle);
+}
+.cab-stat { text-align: center; }
+.cab-stat-label {
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+.cab-stat-val {
+  font-family: var(--ff-mono);
+  font-size: var(--fs-24);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.cab-acoes { display: flex; gap: var(--sp-2); }
+
+/* ─────────── Tabela tripla ─────────── */
+.tabelas-host {
+  flex: 1;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  overflow: auto;
+  min-height: 0;
+}
+.tabelas-tripla {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: var(--fs-13);
+}
+.tabelas-tripla colgroup col.col-campo  { width: 200px; }
+.tabelas-tripla colgroup col.col-status { width: 120px; }
+/* etl / opus / user dividem o resto igualmente */
+
+.tabelas-tripla thead th {
+  position: sticky; top: 0;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-strong);
+  padding: var(--sp-3) var(--sp-3);
+  text-align: left;
+  vertical-align: top;
+  z-index: 2;
+}
+.tabelas-tripla th.th-etl  { border-left: 3px solid var(--diff-removed-gutter); background: linear-gradient(180deg, rgba(255,85,85,0.04), transparent); }
+.tabelas-tripla th.th-opus { border-left: 3px solid var(--accent-purple);       background: linear-gradient(180deg, rgba(189,147,249,0.04), transparent); }
+.tabelas-tripla th.th-user { border-left: 3px solid var(--accent-cyan);         background: linear-gradient(180deg, rgba(139,233,253,0.05), transparent); }
+
+.th-fonte {
+  display: flex; align-items: center; gap: 6px;
+  font-family: var(--ff-mono);
+  font-size: var(--fs-12);
+  font-weight: 500;
+  color: var(--text-primary);
+  letter-spacing: 0.02em;
+  text-transform: none;
+  margin-bottom: 4px;
+}
+.th-fonte-sub {
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.th-campo, .th-status {
+  font-family: var(--ff-mono);
+  font-size: var(--fs-11);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding-bottom: 24px !important;
+}
+
+.tabelas-tripla tbody td {
+  padding: var(--sp-2) var(--sp-3);
+  border-bottom: 1px solid var(--border-subtle);
+  vertical-align: middle;
+}
+.tabelas-tripla tbody td.cel-etl  { border-left: 3px solid rgba(255,85,85,0.18); font-family: var(--ff-mono); }
+.tabelas-tripla tbody td.cel-opus { border-left: 3px solid rgba(189,147,249,0.22); font-family: var(--ff-mono); display: flex; gap: 8px; align-items: center; min-height: 36px; }
+.tabelas-tripla tbody td.cel-user { border-left: 3px solid rgba(139,233,253,0.22); }
+
+.tabelas-tripla tbody tr.tr-ok       td { background: transparent; }
+.tabelas-tripla tbody tr.tr-div      td.cel-etl  { background: var(--diff-removed-bg); }
+.tabelas-tripla tbody tr.tr-div      td.cel-opus { background: rgba(189,147,249,0.08); }
+.tabelas-tripla tbody tr.tr-uni-etl  td.cel-etl  { background: rgba(241,250,140,0.08); }
+.tabelas-tripla tbody tr.tr-uni-opus td.cel-opus { background: rgba(241,250,140,0.08); }
+
+.tabelas-tripla tbody td.cel-uni .vazio { color: var(--accent-orange); }
+
+.cel-campo { vertical-align: middle; }
+.campo-nome {
+  font-family: var(--ff-mono);
+  font-size: var(--fs-12);
+  color: var(--text-secondary);
+  letter-spacing: 0.02em;
+}
+.campo-obs {
+  display: flex; align-items: center; gap: 4px;
+  font-size: 10px;
+  color: var(--accent-yellow);
+  margin-top: 2px;
+  font-style: italic;
+  white-space: normal;
+  line-height: 1.4;
+}
+
+.cel-etl .val, .cel-opus .val { color: var(--text-primary); }
+.vazio { color: var(--text-muted); font-style: italic; }
+.cel-opus .conf {
+  font-size: 10px;
+  font-family: var(--ff-mono);
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+  background: var(--bg-inset);
+  padding: 1px 5px;
+  border-radius: var(--r-xs);
+}
+.cel-etl .adotado, .cel-opus .adotado {
+  color: var(--accent-cyan);
+  margin-left: 4px;
+}
+
+/* User cell */
+.user-celula {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+.user-input {
+  flex: 1;
+  background: var(--bg-inset);
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-sm);
+  padding: 5px 8px;
+  font-family: var(--ff-mono);
+  font-size: var(--fs-12);
+  min-width: 0;
+}
+.user-input:focus {
+  border-color: var(--accent-cyan);
+  outline: none;
+}
+.user-input.pendente {
+  border-color: rgba(255,85,85,0.40);
+  background: rgba(255,85,85,0.04);
+}
+.user-input.novo {
+  border-color: var(--accent-cyan);
+  background: rgba(139,233,253,0.06);
+}
+.user-quick {
+  display: flex; gap: 2px;
+}
+.user-quick-btn {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  border-radius: var(--r-xs);
+  padding: 3px 6px;
+  font-family: var(--ff-mono);
+  font-size: 11px;
+  line-height: 1;
+}
+.user-quick-btn:hover {
+  background: var(--accent-cyan);
+  color: var(--text-inverse);
+  border-color: var(--accent-cyan);
+}
+
+.cel-status { text-align: center; }
+
+/* ─────────── Responsivo: empilha cabeçalho em telas estreitas ─────────── */
+@media (max-width: 1280px) {
+  .cab-arq { grid-template-columns: auto 1fr; }
+  .cab-stats, .cab-acoes { grid-column: 1 / -1; border-left: none; padding-left: 0; }
+  .cab-acoes { justify-content: flex-end; }
+}
+@media (max-width: 1024px) {
+  .extracao-layout { grid-template-columns: 1fr; height: auto; }
+  .extracao-lista { max-height: 320px; }
+}
+</style>
+</head>
+<body>
+<div id="shell-root"></div>
+<script src="../_shared/glyphs.js"></script>
+<script src="../_shared/shell.js"></script>
+<script src="./_extracao-data.js"></script>
+<script src="./_extracao-render.js"></script>
+</body>
+</html>

@@ -1,26 +1,39 @@
-"""Página Revisor Visual Semi-Automatizado -- Sprint D2.
+"""Página Revisor Visual Semi-Automatizado — Sprint D2 + redesign UX-RD-10.
 
-Substitui a Sprint AUDITORIA-ARTESANAL-FINAL (revisão CLI 1-a-1 inviável em
-~760 arquivos). Aqui o supervisor humano valida lado-a-lado:
+Reescrita do redesign UX-RD-10 a partir do mockup
+``novo-mockup/mockups/09-revisor.html``. Preserva integralmente:
 
-  - Esquerda: preview do arquivo original (PDF/imagem) via componente Sprint 74.
-  - Direita: JSON estruturado do que o extrator viu (data, valor, itens,
-    fornecedor, pessoa).
-  - Embaixo: checkboxes por dimensão (3 estados: OK / erro / não-aplicável) +
-    campo livre para observação.
+  * Schema SQLite ``revisao(item_id, dimensao, ok, observacao, ts,
+    valor_etl, valor_opus, valor_grafo_real)`` (Sprint D2 + 103 + AUDIT2-*).
+  * Auditoria 4-way ETL × Opus × Grafo × Humano (Sprint D2 + AUDIT2-*).
+  * Função ``listar_pendencias_revisao()``, ``salvar_marcacao()`` e demais
+    re-exports do ``revisor_logic`` (testes importam direto pelo módulo).
+  * Botões "Gerar relatório", "Sugerir patch", "Exportar ground-truth CSV".
 
-Marcações persistem em ``data/output/revisao_humana.sqlite`` (gitignored).
-Botão "Gerar relatório" produz ``docs/revisoes/<data>.md`` com PII mascarada
-e taxa de fidelidade. Botão "Sugerir patch" abre diff em ``mappings/*.yaml``
-quando padrão recorrente é detectado (3+ pendências com mesma dimensão errada).
+Mudanças de UX (UX-RD-10):
 
-Princípios:
-  - Read-only em ``data/raw/`` (revisor não move/deleta arquivos).
-  - SQLite (não JSON/YAML) para alinhamento com ``grafo.sqlite``.
-  - PII mascarada antes de gravar relatório (regex CPF/CNPJ).
-  - ``revisor_*`` é o namespace de session_state (não colide com
-    ``filtro_*`` da Sprint 73 nem ``avancado_*`` da Sprint 77).
-  - Paginação 10 itens por vez (volume real de 760 PDFs esgotaria browser).
+  * ``page-header`` "REVISOR" + ``sprint-tag UX-RD-10`` + pill com contagem
+    de pendências.
+  * Cada pendência vira um **card** com ``data-revisor-card`` (ancorado por
+    JS dos atalhos j/k/a/r) e bloco "fontes" com 4 colunas semânticas:
+    ETL (verde) | Opus (roxo) | Grafo (amarelo) | Humano (rosa). Cada
+    coluna tem ``border-left`` colorida que marca a origem.
+  * Atalhos de teclado j/k/a/r via ``componentes/atalhos_revisor.py``.
+  * Botões aprovar/rejeitar emitem ``data-revisor-aprovar`` /
+    ``data-revisor-rejeitar`` para que o JS clique programaticamente.
+
+Decisão sobre 4 vs 5 colunas (proof-of-work UX-RD-10): mantemos as 4 fontes
+de verdade (ETL/Opus/Grafo/Humano). O **OFX original** (preview do arquivo
+de origem) ocupa o painel "Original" lateral, não compete espaço com as 4
+colunas semânticas — preserva valor da Sprint D2 (Grafo é a fonte de
+verdade dedup) sem quebrar o layout em monitores 1366×768.
+
+Princípios preservados:
+  * Read-only em ``data/raw/`` (revisor não move/deleta arquivos).
+  * SQLite (não JSON/YAML) para alinhamento com ``grafo.sqlite``.
+  * PII mascarada antes de gravar relatório (regex CPF/CNPJ).
+  * ``revisor_*`` é o namespace de session_state.
+  * Paginação 10 itens por vez (volume real de 760 PDFs esgotaria browser).
 """
 
 from __future__ import annotations
@@ -31,7 +44,10 @@ from pathlib import Path
 from typing import Any
 
 import streamlit as st
+import streamlit.components.v1 as components
 
+from src.dashboard.componentes.atalhos_revisor import gerar_html_atalhos_revisor
+from src.dashboard.componentes.html_utils import minificar
 from src.dashboard.componentes.preview_documento import preview_documento
 from src.dashboard.dados import (
     CAMINHO_REVISAO_HUMANA,
@@ -39,7 +55,6 @@ from src.dashboard.dados import (
 )
 from src.dashboard.tema import (
     callout_html,
-    hero_titulo_html,
     subtitulo_secao_html,
 )
 
@@ -93,11 +108,90 @@ from src.dashboard.paginas.revisor_logic import (  # noqa: E402, F401
 )
 
 
+def _page_header_html(total: int, revisados: int, taxa: float) -> str:
+    """HTML do page-header UX-RD-10 (título + sprint-tag + pill pendências)."""
+    aguardando = max(0, total - revisados)
+    if aguardando == 0:
+        pill_classe = "pill-d7-graduado"
+        pill_texto = "0 pendências"
+    elif aguardando <= 10:
+        pill_classe = "pill-d7-calibracao"
+        pill_texto = f"{aguardando} pendências"
+    else:
+        pill_classe = "pill-d7-regredindo"
+        pill_texto = f"{aguardando} pendências"
+    return minificar(
+        f"""
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">REVISOR</h1>
+            <p class="page-subtitle">
+              Validação semi-automatizada com auditoria 4-way
+              (ETL &times; Opus &times; Grafo &times; Humano). Cards
+              comparam fontes lado-a-lado; atalhos
+              <kbd class="kbd">j</kbd>/<kbd class="kbd">k</kbd> navegam,
+              <kbd class="kbd">a</kbd>/<kbd class="kbd">r</kbd>
+              aprovam/rejeitam o card focado.
+            </p>
+          </div>
+          <div class="page-meta">
+            <span class="sprint-tag">UX-RD-10</span>
+            <span class="pill {pill_classe}">{pill_texto}</span>
+            <span class="pill pill-humano-aprovado">fidelidade {taxa * 100:.0f}%</span>
+          </div>
+        </div>
+        """
+    )
+
+
+def _bloco_fontes_html(
+    valor_etl: str,
+    valor_opus: str,
+    valor_grafo: str,
+    valor_humano_label: str,
+    div_etl_opus: bool,
+    div_etl_grafo: bool,
+    div_grafo_opus: bool,
+) -> str:
+    """HTML do bloco 4-fontes (ETL | Opus | Grafo | Humano).
+
+    Cada coluna tem ``border-left`` colorida (verde/roxo/amarelo/rosa) e
+    classe ``revisor-fonte-valor.diverge`` quando há divergência ativa.
+    """
+
+    def _renderizar(valor: str, classe_extra: str, rotulo: str, diverge: bool) -> str:
+        valor_render = valor if valor else "—"
+        if len(valor_render) > 80:
+            valor_render = valor_render[:77] + "..."
+        cls = "revisor-fonte-valor"
+        if diverge:
+            cls += " diverge"
+        return (
+            f'<div class="revisor-fonte {classe_extra}">'
+            f'<div class="revisor-fonte-rotulo">{rotulo}</div>'
+            f'<div class="{cls}">{valor_render}</div>'
+            "</div>"
+        )
+
+    return minificar(
+        f"""
+        <div class="revisor-card-fontes">
+          {_renderizar(valor_etl, "revisor-fonte-etl", "ETL", div_etl_opus or div_etl_grafo)}
+          {_renderizar(valor_opus, "revisor-fonte-opus", "Opus", div_etl_opus or div_grafo_opus)}
+          {_renderizar(valor_grafo, "revisor-fonte-grafo", "Grafo",
+                       div_etl_grafo or div_grafo_opus)}
+          {_renderizar(valor_humano_label, "revisor-fonte-humano", "Humano", False)}
+        </div>
+        """
+    )
+
+
 def _renderizar_painel_item(pendencia: dict, marcacoes_item: list[dict]) -> dict[str, Any]:
     """Renderiza painel de uma pendência e devolve marcações coletadas.
 
-    Retorna dict ``{dimensao: (estado_int_ou_none, observacao_str)}``.
-    Não persiste em disco -- caller decide quando chamar ``salvar_marcacao``.
+    Retorna dict ``{dimensao: (estado_int_ou_none, observacao_str, valor_etl,
+    valor_grafo)}``. Não persiste em disco — caller decide quando chamar
+    ``salvar_marcacao``.
     """
     item_id = pendencia["item_id"]
     caminho_str = pendencia.get("caminho", "")
@@ -124,7 +218,8 @@ def _renderizar_painel_item(pendencia: dict, marcacoes_item: list[dict]) -> dict
                 st.markdown(
                     callout_html(
                         "info",
-                        f"Pendência é um diretório com fallback de supervisor: `{caminho.name}`",
+                        f"Pendência é um diretório com fallback de "
+                        f"supervisor: `{caminho.name}`",
                     ),
                     unsafe_allow_html=True,
                 )
@@ -169,56 +264,63 @@ def _renderizar_painel_item(pendencia: dict, marcacoes_item: list[dict]) -> dict
         st.caption(f"tipo: `{pendencia.get('tipo', '?')}`")
 
     st.markdown("---")
-    st.markdown(subtitulo_secao_html("Avaliação por dimensão"), unsafe_allow_html=True)
+    st.markdown(
+        subtitulo_secao_html("Avaliação por dimensão"),
+        unsafe_allow_html=True,
+    )
 
     estados_existentes: dict[str, dict] = {m["dimensao"]: m for m in marcacoes_item}
-    coletadas: dict[str, tuple[int | None, str]] = {}
+    coletadas: dict[str, tuple[int | None, str, str, str]] = {}
 
-    cols = st.columns(len(DIMENSOES_CANONICAS))
-    for idx, dimensao in enumerate(DIMENSOES_CANONICAS):
-        with cols[idx]:
-            st.markdown(f"**{dimensao}**")
-            # Auditoria 4-way (sessão 2026-04-29): 4 fontes (ETL/Opus/Grafo/Humano).
-            valor_etl = extrair_valor_etl_para_dimensao(pendencia, dimensao)
-            valor_opus = (
-                estados_existentes.get(dimensao, {}).get("valor_opus") or ""
+    for dimensao in DIMENSOES_CANONICAS:
+        # Auditoria 4-way (sessão 2026-04-29): 4 fontes (ETL/Opus/Grafo/Humano).
+        valor_etl = extrair_valor_etl_para_dimensao(pendencia, dimensao)
+        valor_opus = estados_existentes.get(dimensao, {}).get("valor_opus") or ""
+        valor_grafo = estados_existentes.get(dimensao, {}).get("valor_grafo_real") or ""
+
+        # Comparacao canonica (case-insensitive, sem espacos).
+        div_etl_grafo = _comparar_canonico(valor_etl, valor_grafo)  # Tipo B
+        div_etl_opus = _comparar_canonico(valor_etl, valor_opus)  # Tipo A
+        div_grafo_opus = _comparar_canonico(valor_grafo, valor_opus)  # Tipo A pos-norm
+
+        # Estado humano existente (para indicar default do radio + label).
+        valor_humano_existente = estados_existentes.get(dimensao, {}).get("ok")
+        if valor_humano_existente == 1:
+            valor_humano_label = "OK (humano)"
+        elif valor_humano_existente == 0:
+            valor_humano_label = "Erro (humano)"
+        else:
+            valor_humano_label = "—"
+
+        # Card por dimensão com bloco 4-fontes.
+        card_titulo = minificar(
+            f"""
+            <div class="revisor-card-titulo">
+              <span class="revisor-card-dimensao">{dimensao}</span>
+              <span>4-way</span>
+            </div>
+            """
+        )
+        bloco_fontes = _bloco_fontes_html(
+            valor_etl,
+            valor_opus,
+            valor_grafo,
+            valor_humano_label,
+            div_etl_opus,
+            div_etl_grafo,
+            div_grafo_opus,
+        )
+        st.markdown(card_titulo + bloco_fontes, unsafe_allow_html=True)
+
+        col_radio, col_obs = st.columns([1, 2])
+        with col_radio:
+            obs_existente = (
+                estados_existentes.get(dimensao, {}).get("observacao") or ""
             )
-            valor_grafo = (
-                estados_existentes.get(dimensao, {}).get("valor_grafo_real") or ""
-            )
-
-            # Comparacao canonica (case-insensitive, sem espacos).
-            div_etl_grafo = _comparar_canonico(valor_etl, valor_grafo)  # Tipo B
-            div_etl_opus = _comparar_canonico(valor_etl, valor_opus)    # Tipo A
-            div_grafo_opus = _comparar_canonico(valor_grafo, valor_opus)  # Tipo A pos-norm
-
-            # ETL: o que o pipeline extraiu (sempre exibido).
-            marcador_etl = " :red[(diverge)]" if (div_etl_opus or div_etl_grafo) else ""
-            st.caption(f"**ETL:** {valor_etl or '---'}{marcador_etl}")
-
-            # Opus: o que o supervisor Opus marcou.
-            if valor_opus:
-                marcador_opus = " :red[(diverge)]" if (div_etl_opus or div_grafo_opus) else ""
-                opus_render = valor_opus if len(valor_opus) <= 60 else valor_opus[:57] + "..."
-                st.caption(f"**Opus:** {opus_render}{marcador_opus}")
-            else:
-                st.caption("**Opus:** _(sem proposta)_")
-
-            # Grafo: estado canonico apos normalizacao (sintetico Sprint 107 etc).
-            if valor_grafo:
-                marcador_grafo = " :red[(diverge)]" if (div_etl_grafo or div_grafo_opus) else ""
-                grafo_render = valor_grafo if len(valor_grafo) <= 60 else valor_grafo[:57] + "..."
-                st.caption(f"**Grafo:** {grafo_render}{marcador_grafo}")
-            else:
-                st.caption("**Grafo:** _(sem node ou não populado)_")
-
-            # Humano: radio OK/Erro/N-A.
-            valor_existente = estados_existentes.get(dimensao, {}).get("ok")
-            obs_existente = estados_existentes.get(dimensao, {}).get("observacao") or ""
             indice_default = 2  # Não-aplicável
-            if valor_existente == 1:
+            if valor_humano_existente == 1:
                 indice_default = 0
-            elif valor_existente == 0:
+            elif valor_humano_existente == 0:
                 indice_default = 1
             rotulo = st.radio(
                 f"Estado {dimensao}",
@@ -226,7 +328,9 @@ def _renderizar_painel_item(pendencia: dict, marcacoes_item: list[dict]) -> dict
                 index=indice_default,
                 key=f"revisor_estado_{item_id}_{dimensao}",
                 label_visibility="collapsed",
+                horizontal=True,
             )
+        with col_obs:
             obs = st.text_input(
                 f"Observação {dimensao}",
                 value=obs_existente,
@@ -234,11 +338,46 @@ def _renderizar_painel_item(pendencia: dict, marcacoes_item: list[dict]) -> dict
                 label_visibility="collapsed",
                 placeholder="observação opcional",
             )
-            # Persiste valor_etl + valor_grafo_real junto com o estado humano
-            # para permitir export ground-truth a posteriori.
-            coletadas[dimensao] = (ROTULOS_ESTADO[rotulo], obs, valor_etl, valor_grafo)
+        coletadas[dimensao] = (ROTULOS_ESTADO[rotulo], obs, valor_etl, valor_grafo)
 
     return coletadas
+
+
+def _gravar_decisao_global(
+    item_id: str,
+    coletadas: dict[str, tuple[int | None, str, str, str]],
+    decisao: int | None,
+    observacao_global: str,
+) -> None:
+    """Grava uma decisão global (aprovar/rejeitar) replicando-a nas dimensões.
+
+    ``a`` (aprovar) -> grava ``ok=1`` em todas as dimensões cujo estado humano
+    ainda está "Não-aplicável"; preserva marcações já confirmadas.
+    ``r`` (rejeitar) -> mesmo, com ``ok=0``.
+
+    A observação global vai junto de cada gravação (anexada à observação
+    livre se já existe).
+    """
+    for dimensao, (estado_radio, obs, valor_etl, valor_grafo) in coletadas.items():
+        # Preserva o que o humano já marcou explicitamente (OK ou Erro).
+        # Só sobrescreve quando estava em "Não-aplicável" (None).
+        estado_final = estado_radio if estado_radio is not None else decisao
+        obs_final = obs
+        if observacao_global:
+            obs_final = (
+                f"{obs} | {observacao_global}".strip(" |")
+                if obs
+                else observacao_global
+            )
+        salvar_marcacao(
+            CAMINHO_REVISAO_HUMANA,
+            item_id,
+            dimensao,
+            estado_final,
+            obs_final,
+            valor_etl=valor_etl,
+            valor_grafo_real=valor_grafo,
+        )
 
 
 def renderizar(
@@ -247,23 +386,15 @@ def renderizar(
     pessoa: str | None = None,
     ctx: dict | None = None,
 ) -> None:
-    """Ponto de entrada da página Revisor (cluster Documentos).
+    """Ponto de entrada da página Revisor (UX-T-09)."""
+    from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
+    renderizar_grupo_acoes([
+        {"label": "Próxima divergência", "title": "Pular para próxima divergência"},
+        {"label": "Aprovar Opus & avançar", "primary": True,
+         "title": "Aceitar extração Opus para a transação corrente"},
+    ])
 
-    Argumentos não utilizados: a fonte de verdade é o grafo + diretórios
-    raw, não o XLSX. Mantido apenas para casar a assinatura comum das
-    demais páginas (compatibilidade com ``app.py``).
-    """
     _ = dados, periodo, pessoa, ctx
-
-    st.markdown(
-        hero_titulo_html(
-            "",
-            "Revisor Visual",
-            "Validação semi-automatizada de extrações ambíguas. Marcação "
-            "lado-a-lado (foto/PDF + JSON) para alinhar visão humano-máquina.",
-        ),
-        unsafe_allow_html=True,
-    )
 
     pendencias = listar_pendencias_revisao()
     total = len(pendencias)
@@ -274,6 +405,12 @@ def renderizar(
     revisados = sum(1 for p in pendencias if p["item_id"] in item_ids_revisados)
     aguardando = total - revisados
     taxa = _taxa_fidelidade(marcacoes)
+
+    st.markdown(_page_header_html(total, revisados, taxa), unsafe_allow_html=True)
+
+    # Atalhos j/k/a/r — registram listener via JS (idempotente, restrito à
+    # página Revisor por checagem de query string interna).
+    components.html(gerar_html_atalhos_revisor(), height=0)
 
     col_a, col_b, col_c, col_d = st.columns(4)
     col_a.metric("Pendências", total)
@@ -311,8 +448,8 @@ def renderizar(
             st.dataframe(tabela_diff, use_container_width=True, hide_index=True)
             if len(divergentes) > 30:
                 st.caption(
-                    f"... e mais {len(divergentes) - 30} divergências. Use export CSV "
-                    "para ver todas."
+                    f"... e mais {len(divergentes) - 30} divergências. Use "
+                    "export CSV para ver todas."
                 )
 
     if total == 0:
@@ -333,8 +470,8 @@ def renderizar(
     # topo da página Revisor (st.columns([2,1])), NÃO mais na sidebar global.
     # Antes poluíam Hoje/Dinheiro/Análise/Metas que não usam esses filtros.
     # Mês / Pessoa / Forma de pagamento permanecem na sidebar global como
-    # filtros transversais. Session_state keys preservadas (revisor_filtro_tipo,
-    # revisor_pagina) para retrocompatibilidade.
+    # filtros transversais. Session_state keys preservadas
+    # (revisor_filtro_tipo, revisor_pagina) para retrocompatibilidade.
     tipos_disponiveis = sorted({p["tipo"] for p in pendencias})
 
     # total_paginas depende do filtro de tipo. Calcula primeiro o filtro,
@@ -360,7 +497,10 @@ def renderizar(
         return
 
     # Paginação 10 por página (volume real esgotaria browser).
-    total_paginas = max(1, (len(pendencias_filtradas) + ITENS_POR_PAGINA - 1) // ITENS_POR_PAGINA)
+    total_paginas = max(
+        1,
+        (len(pendencias_filtradas) + ITENS_POR_PAGINA - 1) // ITENS_POR_PAGINA,
+    )
     with col_pagina:
         pagina_atual = st.number_input(
             "Página",
@@ -381,6 +521,14 @@ def renderizar(
 
     for idx, pendencia in enumerate(pagina, start=1):
         item_id = pendencia["item_id"]
+        # Wrapper com data-revisor-card para o JS dos atalhos.
+        # st.container devolve um bloco visualmente isolado; encapsulamos
+        # com markdown abrindo/fechando o atributo via classe CSS.
+        st.markdown(
+            f'<div class="revisor-card" data-revisor-card data-revisor-idx="{idx - 1}" '
+            f'data-revisor-item-id="{item_id}">',
+            unsafe_allow_html=True,
+        )
         with st.expander(
             f"[{pendencia['tipo']}] {item_id[:80]}",
             expanded=(idx == 1),
@@ -388,13 +536,18 @@ def renderizar(
             marcacoes_item = [m for m in marcacoes if m["item_id"] == item_id]
             coletadas = _renderizar_painel_item(pendencia, marcacoes_item)
 
-            col_save, col_skip = st.columns([1, 1])
+            col_save, col_aprovar, col_rejeitar = st.columns([1, 1, 1])
             with col_save:
                 if st.button(
                     "Salvar marcações",
                     key=f"revisor_salvar_{item_id}",
                 ):
-                    for dimensao, (estado, obs, valor_etl, valor_grafo) in coletadas.items():
+                    for dimensao, (
+                        estado,
+                        obs,
+                        valor_etl,
+                        valor_grafo,
+                    ) in coletadas.items():
                         salvar_marcacao(
                             CAMINHO_REVISAO_HUMANA,
                             item_id,
@@ -407,15 +560,63 @@ def renderizar(
                     st.markdown(
                         callout_html(
                             "success",
-                            f"Marcações de `{len(coletadas)}` dimensões persistidas.",
+                            f"Marcações de `{len(coletadas)}` dimensões "
+                            "persistidas.",
                         ),
                         unsafe_allow_html=True,
                     )
-            with col_skip:
-                st.caption(
-                    "Pular: feche o expander e abra o próximo. Marcações "
-                    "não salvas são descartadas."
-                )
+            with col_aprovar:
+                # Botão "aprovar" -- atalho `a` clica via JS (data-revisor-aprovar).
+                if st.button(
+                    "Aprovar (a)",
+                    key=f"revisor_aprovar_{item_id}",
+                    help="Marca todas as dimensões 'Não-aplicáveis' como OK.",
+                ):
+                    _gravar_decisao_global(
+                        item_id, coletadas, ESTADO_OK, "aprovado-via-atalho"
+                    )
+                    st.markdown(
+                        callout_html(
+                            "success",
+                            "Item aprovado e persistido em revisao_humana.sqlite.",
+                        ),
+                        unsafe_allow_html=True,
+                    )
+            with col_rejeitar:
+                # Botão "rejeitar" -- atalho `r` clica via JS (data-revisor-rejeitar).
+                if st.button(
+                    "Rejeitar (r)",
+                    key=f"revisor_rejeitar_{item_id}",
+                    help="Marca todas as dimensões 'Não-aplicáveis' como Erro.",
+                ):
+                    _gravar_decisao_global(
+                        item_id, coletadas, ESTADO_ERRO, "rejeitado-via-atalho"
+                    )
+                    st.markdown(
+                        callout_html(
+                            "warning",
+                            "Item rejeitado e persistido em revisao_humana.sqlite.",
+                        ),
+                        unsafe_allow_html=True,
+                    )
+
+            # Tags ocultas para o JS dos atalhos j/k/a/r encontrar os botões.
+            # Streamlit renderiza os botões acima como <button>; injetamos
+            # marcadores invisíveis com seletor estável.
+            st.markdown(
+                minificar(
+                    f"""
+                    <span data-revisor-aprovar-marker
+                          data-revisor-target="revisor_aprovar_{item_id}"
+                          style="display:none"></span>
+                    <span data-revisor-rejeitar-marker
+                          data-revisor-target="revisor_rejeitar_{item_id}"
+                          style="display:none"></span>
+                    """
+                ),
+                unsafe_allow_html=True,
+            )
+        st.markdown("</div>", unsafe_allow_html=True)
 
     st.markdown("---")
 
@@ -432,8 +633,9 @@ def renderizar(
             st.markdown(
                 callout_html(
                     "success",
-                    f"Relatório gravado em `{destino.relative_to(destino_dir.parents[1])}`. "
-                    f"PII mascarada (CPF/CNPJ).",
+                    f"Relatório gravado em "
+                    f"`{destino.relative_to(destino_dir.parents[1])}`. "
+                    "PII mascarada (CPF/CNPJ).",
                     titulo="Relatório pronto",
                 ),
                 unsafe_allow_html=True,
@@ -475,7 +677,7 @@ def renderizar(
             st.code(diff, language="yaml")
         elif not padroes:
             st.caption(
-                f"Sugestor de patch fica disponível ao detectar "
+                "Sugestor de patch fica disponível ao detectar "
                 f">= {LIMITE_PADRAO_RECORRENTE} reprovações na mesma dimensão."
             )
 

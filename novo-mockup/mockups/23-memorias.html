@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Ouroboros — Bem-estar · Memórias</title>
+<link rel="stylesheet" href="../_shared/tokens.css">
+<link rel="stylesheet" href="../_shared/components.css">
+<style>
+.mem-toolbar { display:flex; gap:8px; flex-wrap:wrap; margin-bottom: var(--sp-4); }
+.mem-toolbar button {
+  background: var(--bg-inset); border:1px solid var(--border-subtle); color: var(--text-secondary);
+  padding: 6px 14px; font-family: var(--ff-mono); font-size: 11px; letter-spacing: 0.04em;
+  border-radius: var(--r-sm); cursor: pointer;
+}
+.mem-toolbar button.ativo { background: var(--accent-purple); color: var(--text-inverse); border-color: var(--accent-purple); }
+.mem-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: var(--sp-3); }
+.mem-card {
+  background: var(--bg-surface); border:1px solid var(--border-subtle); border-radius: var(--r-md);
+  overflow: hidden; cursor: pointer; transition: transform .12s, border-color .12s;
+  display:flex; flex-direction:column;
+}
+.mem-card:hover { transform: translateY(-2px); border-color: var(--cor); }
+.mem-thumb {
+  aspect-ratio: 4/3; background: var(--bg-inset);
+  background-image: linear-gradient(135deg, var(--cor1), var(--cor2));
+  position: relative; display:grid; place-items: center;
+}
+.mem-thumb .ico {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: rgba(0,0,0,0.4); color: white; display:grid; place-items:center;
+  backdrop-filter: blur(6px);
+}
+.mem-thumb.tipo-foto .ico    { background: rgba(255,255,255,0.18); }
+.mem-thumb .badge {
+  position:absolute; top: 8px; left: 8px;
+  font-family: var(--ff-mono); font-size: 9px; letter-spacing: 0.10em; text-transform: uppercase;
+  background: rgba(0,0,0,0.55); color: white; padding: 3px 8px; border-radius: var(--r-xs);
+  backdrop-filter: blur(4px);
+}
+.mem-corpo { padding: var(--sp-3); display:flex; flex-direction:column; gap: 4px; }
+.mem-titulo { font-size: var(--fs-13); color: var(--text-primary); font-weight: 500; line-height:1.35; text-wrap: pretty; }
+.mem-meta { display:flex; justify-content:space-between; align-items:center; font-family: var(--ff-mono); font-size: 10px; color: var(--text-muted); }
+.mem-tags { display:flex; gap: 3px; flex-wrap: wrap; padding: 0 var(--sp-3) var(--sp-3); }
+.mem-tags .pill { font-size: 9px; padding: 1px 6px; background: var(--bg-elevated); border-color: var(--border-subtle); color: var(--text-secondary); }
+
+.mem-stats { display:grid; grid-template-columns: repeat(4, 1fr); gap: var(--sp-3); margin-bottom: var(--sp-4); }
+.mem-stat { background: var(--bg-surface); border:1px solid var(--border-subtle); border-radius: var(--r-md); padding: var(--sp-4); }
+.mem-stat .l { font-family: var(--ff-mono); font-size:10px; letter-spacing:0.10em; text-transform:uppercase; color:var(--text-muted); margin-bottom: 6px;}
+.mem-stat .v { font-family: var(--ff-mono); font-size: var(--fs-24); font-weight:500; font-variant-numeric: tabular-nums; line-height:1; }
+.mem-stat .sub { font-family: var(--ff-mono); font-size:10px; color: var(--text-muted); margin-top: 4px;}
+</style>
+</head>
+<body>
+<div id="shell-root"></div>
+<script src="../_shared/glyphs.js"></script>
+<script src="../_shared/shell.js"></script>
+<script>
+montarShell({
+  clusterAtivo: 'bem-estar',
+  abaAtiva: 'be-memorias',
+  breadcrumb: ['Ouroboros', 'Bem-estar', 'Memórias'],
+  acoes: [
+    { label: 'Random', icon: 'sparkle', onClick: "toast('Memória aleatória sorteada · em produção surface no daily')" },
+    { label: 'Capturar', icon: 'plus', primary: true, onClick: "toast('Captura: foto · áudio · texto · vídeo curto')" },
+  ],
+});
+
+const PALETAS = [
+  ['#5e4d80','#bd93f9'], ['#80365a','#ff79c6'], ['#1a4945','#8be9fd'],
+  ['#5a3a1a','#f1a361'], ['#3a4a1f','#a4d063'], ['#3a2a52','#7960c4'],
+  ['#1a2e4a','#5d8fbb'], ['#4a1a2e','#bb5d8f'],
+];
+const MEMS = [
+  { tipo:'foto',  titulo:'Pôr do sol em Trancoso',                  data:'22 mar 26 · sáb 18:42', tags:['viagem','casal'],         vinculo:'evento: viagem 21–23 mar' },
+  { tipo:'voz',   titulo:'Áudio: Pessoa B contando como conheceu meu tio',                data:'29 mar 26 · dom 14:12', tags:['casal','história'],       vinculo:'1m32s' },
+  { tipo:'texto', titulo:'Carta para mim daqui a 1 ano',                                data:'01 mar 26 · sáb 22:30', tags:['mim','reflexão'],         vinculo:'abrir em 01 mar 27' },
+  { tipo:'foto',  titulo:'Mia (gata) dormindo no laptop',                                data:'24 mar 26 · ter 11:08', tags:['casa','rotina'],          vinculo:'foto · 2.4mb' },
+  { tipo:'video', titulo:'Tentativa frustrada de panqueca',                              data:'17 mar 26 · seg 09:15', tags:['casa','casal','humor'],   vinculo:'14s · sem áudio' },
+  { tipo:'foto',  titulo:'Café manhã ibirapuera',                                        data:'08 mar 26 · dom 09:42', tags:['rolezinho','casal'],      vinculo:'evento · caminhada' },
+  { tipo:'texto', titulo:'Ela disse "obrigada por ficar"',                              data:'15 mar 26 · dom 22:50', tags:['casal','momento'],        vinculo:'reflexão tardia' },
+  { tipo:'voz',   titulo:'Áudio: minha voz às 3am — não entrei em loop ansioso',         data:'19 mar 26 · qua 03:14', tags:['mim','vitória'],          vinculo:'46s · vitória' },
+  { tipo:'foto',  titulo:'Rua nova descoberta no centro',                                data:'25 mar 26 · qua 19:00', tags:['casal','descoberta'],     vinculo:'foto + nota' },
+  { tipo:'video', titulo:'Pessoa B aprendendo a andar de bike de marcha',                data:'20 mar 26 · sex 17:30', tags:['casal','rolezinho'],      vinculo:'22s · risada' },
+  { tipo:'texto', titulo:'Pequena lista das coisas que ela gosta',                       data:'06 mar 26 · sex 23:00', tags:['casal','consultar-depois'], vinculo:'27 itens · privado' },
+  { tipo:'foto',  titulo:'Meu treino A · marco do mês',                                  data:'31 mar 26 · ter 17:42', tags:['rotina','mim'],           vinculo:'14º treino do mês' },
+];
+
+const ICOS = { foto: 'eye', voz: 'sparkle', texto: 'list', video: 'mood' };
+const LABEL_TIPO = { foto: 'foto', voz: 'áudio', texto: 'texto', video: 'vídeo' };
+const TIPO_FILTRO = ['todos', 'foto', 'voz', 'texto', 'video'];
+
+let FILTRO = 'todos';
+function renderGrid() {
+  const lista = MEMS.filter(m => FILTRO === 'todos' || m.tipo === FILTRO);
+  const html = lista.map((m, i) => {
+    const cor = PALETAS[i % PALETAS.length];
+    return `
+      <div class="mem-card" style="--cor:${cor[1]};" onclick="toast('Abrir memória: ${m.titulo.replace(/'/g, '')}')">
+        <div class="mem-thumb tipo-${m.tipo}" style="--cor1:${cor[0]};--cor2:${cor[1]};">
+          <span class="badge">${LABEL_TIPO[m.tipo]}</span>
+          <span class="ico">${glyph(ICOS[m.tipo], 16)}</span>
+        </div>
+        <div class="mem-corpo">
+          <span class="mem-titulo">${m.titulo}</span>
+          <div class="mem-meta"><span>${m.data}</span><span>${m.vinculo.split(' · ')[0]}</span></div>
+        </div>
+        <div class="mem-tags">${m.tags.map(t => `<span class="pill">${t}</span>`).join('')}</div>
+      </div>
+    `;
+  }).join('');
+  document.getElementById('mem-grid').innerHTML = html;
+  hidratarGlyphs(document.getElementById('mem-grid'));
+}
+function setFiltro(f) { FILTRO = f; document.querySelectorAll('.mem-toolbar button').forEach(b => b.classList.toggle('ativo', b.dataset.f === f)); renderGrid(); }
+
+document.getElementById('main-root').innerHTML = `
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">MEMÓRIAS</h1>
+      <p class="page-subtitle">Cápsulas vinculáveis a eventos e dias do diário. Foto · áudio · texto · vídeo curto.
+      Re-surfaçam aleatoriamente no daily — pra não esquecer das coisas boas. <strong style="color:var(--accent-purple);">M12</strong></p>
+    </div>
+    <div class="page-meta">
+      <span class="sprint-tag">M12</span>
+      <span class="pill pill-d7-graduado">${MEMS.length} memórias · 30d</span>
+    </div>
+  </div>
+
+  <div class="mem-stats">
+    <div class="mem-stat">
+      <div class="l">total · 30d</div>
+      <div class="v" style="color:var(--accent-purple);">${MEMS.length}</div>
+      <div class="sub">↗ +4 vs mês anterior</div>
+    </div>
+    <div class="mem-stat">
+      <div class="l">por tipo</div>
+      <div style="display:flex;gap:var(--sp-3);">
+        <div><div class="v" style="color:var(--accent-cyan);font-size:18px;">${MEMS.filter(m=>m.tipo==='foto').length}</div><div class="sub">fotos</div></div>
+        <div><div class="v" style="color:var(--accent-pink);font-size:18px;">${MEMS.filter(m=>m.tipo==='voz').length}</div><div class="sub">áudios</div></div>
+        <div><div class="v" style="color:var(--accent-yellow);font-size:18px;">${MEMS.filter(m=>m.tipo==='texto').length}</div><div class="sub">textos</div></div>
+        <div><div class="v" style="color:var(--accent-green);font-size:18px;">${MEMS.filter(m=>m.tipo==='video').length}</div><div class="sub">vídeos</div></div>
+      </div>
+    </div>
+    <div class="mem-stat">
+      <div class="l">vinculadas a eventos</div>
+      <div class="v" style="color:var(--accent-pink);">7<span style="color:var(--text-muted);font-size:14px;">/${MEMS.length}</span></div>
+      <div class="sub">58% têm contexto</div>
+    </div>
+    <div class="mem-stat">
+      <div class="l">capsulas para abrir</div>
+      <div class="v" style="color:var(--accent-yellow);">3</div>
+      <div class="sub">próxima em 11 meses</div>
+    </div>
+  </div>
+
+  <div class="mem-toolbar">
+    ${TIPO_FILTRO.map(t => `<button data-f="${t}" class="${t==='todos'?'ativo':''}" onclick="setFiltro('${t}')">${t}</button>`).join('')}
+  </div>
+
+  <div id="mem-grid" class="mem-grid"></div>
+`;
+
+renderGrid();
+hidratarGlyphs(document.getElementById('main-root'));
+</script>
+</body>
+</html>

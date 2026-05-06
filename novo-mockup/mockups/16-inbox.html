@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Ouroboros — Inbox</title>
+<link rel="stylesheet" href="../_shared/tokens.css">
+<link rel="stylesheet" href="../_shared/components.css">
+<style>
+.inbox-grid { display: grid; gap: var(--sp-4); }
+.dropzone {
+  border: 2px dashed var(--border-strong);
+  border-radius: var(--r-md);
+  padding: var(--sp-8);
+  text-align: center;
+  background: var(--bg-surface);
+  transition: border-color .15s, background .15s;
+  cursor: pointer;
+}
+.dropzone:hover, .dropzone.over {
+  border-color: var(--accent-purple);
+  background: rgba(189,147,249,0.04);
+}
+.dropzone-glyph { color: var(--border-strong); margin-bottom: var(--sp-3); }
+.dropzone h3 { font-family: var(--ff-mono); font-size: var(--fs-18); font-weight: 500; margin: 0 0 var(--sp-2); }
+.dropzone p { color: var(--text-muted); font-size: var(--fs-13); margin: 0; }
+.dropzone .tipos {
+  margin-top: var(--sp-3);
+  display: flex; gap: var(--sp-2); justify-content: center; flex-wrap: wrap;
+}
+.tipo-chip {
+  font-family: var(--ff-mono); font-size: 11px;
+  padding: 2px 8px; border: 1px solid var(--border-subtle);
+  border-radius: var(--r-xs); color: var(--text-secondary);
+  background: var(--bg-inset);
+}
+.fila-head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: var(--sp-3);
+}
+.fila-head h2 { font-family: var(--ff-mono); font-size: var(--fs-18); font-weight: 500; margin: 0; letter-spacing: -0.01em; }
+.thumb-cell { width: 32px; }
+.fila-thumb {
+  width: 32px; height: 32px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-xs);
+  display: grid; place-items: center;
+  color: var(--text-secondary);
+  background: var(--bg-inset);
+}
+.row-novo { animation: chegou .8s ease-out; }
+@keyframes chegou {
+  0% { background: rgba(189,147,249,0.20); }
+  100% { background: transparent; }
+}
+.barra-status {
+  display: flex; gap: var(--sp-2); margin-bottom: var(--sp-4);
+  flex-wrap: wrap;
+}
+.status-tile {
+  flex: 1; min-width: 140px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  padding: var(--sp-3);
+}
+.status-tile .v {
+  font-family: var(--ff-mono); font-size: var(--fs-24); font-weight: 500;
+  font-variant-numeric: tabular-nums; line-height: 1;
+}
+.status-tile .l {
+  font-size: var(--fs-11); letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--text-muted); margin-top: 4px;
+}
+.status-tile.aguardando .v { color: var(--text-secondary); }
+.status-tile.extraido   .v { color: var(--d7-graduado); }
+.status-tile.falhou     .v { color: var(--accent-red); }
+.status-tile.duplicado  .v { color: var(--accent-yellow); }
+</style>
+</head>
+<body>
+<div id="shell-root"></div>
+<script src="../_shared/glyphs.js"></script>
+<script src="../_shared/shell.js"></script>
+<script src="./_inbox-data.js"></script>
+<script src="./_inbox-render.js"></script>
+</body>
+</html>

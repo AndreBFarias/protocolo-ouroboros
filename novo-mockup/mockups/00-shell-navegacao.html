@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>Ouroboros — Shell de navegação</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../_shared/tokens.css">
+  <link rel="stylesheet" href="../_shared/components.css">
+  <style>
+    .doc-grid { display: grid; grid-template-columns: 1fr 320px; gap: var(--sp-6); align-items: start; }
+    @media (max-width: 1100px) { .doc-grid { grid-template-columns: 1fr; } }
+
+    .doc-section { margin-bottom: var(--sp-8); }
+    .doc-section > h2 {
+      font-family: var(--ff-mono); font-size: 13px; font-weight: 500;
+      letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted);
+      margin: 0 0 var(--sp-3); padding-bottom: var(--sp-2);
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex; align-items: baseline; gap: var(--sp-3);
+    }
+    .doc-section > h2 .ct { color: var(--accent-purple); font-size: 11px; }
+
+    .anatomy {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--r-md);
+      padding: var(--sp-5);
+      display: grid; grid-template-columns: 200px 1fr; gap: 0;
+      overflow: hidden;
+      min-height: 320px;
+      position: relative;
+    }
+    .anatomy .mock-side {
+      background: var(--bg-inset); padding: var(--sp-4) var(--sp-3);
+      border-right: 1px solid var(--border-subtle);
+      display: flex; flex-direction: column; gap: var(--sp-3);
+      position: relative;
+    }
+    .anatomy .mock-side .lab {
+      font-family: var(--ff-mono); font-size: 9px; letter-spacing: .12em;
+      text-transform: uppercase; color: var(--text-muted);
+    }
+    .anatomy .mock-side .item {
+      height: 22px; background: var(--bg-elevated); border-radius: var(--r-xs);
+      width: 80%;
+    }
+    .anatomy .mock-side .item.active { background: rgba(189,147,249,0.18); width: 90%; border-left: 2px solid var(--accent-purple); padding-left: 6px; }
+    .anatomy .mock-main { padding: var(--sp-4); display: flex; flex-direction: column; gap: var(--sp-3); }
+    .anatomy .mock-top {
+      height: 36px;
+      background: var(--bg-base);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--r-sm);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 12px;
+      font-family: var(--ff-mono); font-size: 11px;
+      color: var(--text-muted);
+    }
+    .anatomy .mock-top .right { display:flex; gap:6px; }
+    .anatomy .mock-top .btn-mock {
+      background: var(--bg-elevated); border:1px solid var(--border-subtle);
+      border-radius: var(--r-xs); padding: 3px 10px;
+    }
+    .anatomy .mock-top .btn-mock.primary { background: var(--accent-purple); color: var(--bg-base); }
+    .anatomy .mock-content {
+      flex: 1; background: var(--bg-base); border: 1px solid var(--border-subtle);
+      border-radius: var(--r-sm); display: grid; place-items: center;
+      color: var(--text-muted); font-family: var(--ff-mono); font-size: 11px;
+      letter-spacing: .08em; text-transform: uppercase;
+    }
+    /* annotation pins */
+    .pin {
+      position: absolute; width: 22px; height: 22px;
+      border-radius: 50%; background: var(--accent-purple); color: var(--bg-base);
+      display: grid; place-items: center;
+      font-family: var(--ff-mono); font-size: 11px; font-weight: 600;
+      box-shadow: 0 0 0 3px var(--bg-surface), 0 0 0 4px var(--accent-purple);
+      z-index: 2;
+    }
+    .pin-1 { top: 16px; left: 188px; }
+    .pin-2 { top: 60px; left: 188px; }
+    .pin-3 { top: 130px; left: 188px; }
+    .pin-4 { top: 24px; right: 30px; }
+    .pin-5 { bottom: 16px; left: 60%; transform: translateX(-50%); }
+
+    .anno-list {
+      display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--sp-3);
+      margin-top: var(--sp-4);
+    }
+    .anno {
+      display: grid; grid-template-columns: 28px 1fr; gap: var(--sp-3);
+      align-items: start;
+    }
+    .anno .num {
+      width: 22px; height: 22px; border-radius: 50%;
+      background: var(--accent-purple); color: var(--bg-base);
+      display: grid; place-items: center;
+      font-family: var(--ff-mono); font-size: 11px; font-weight: 600;
+    }
+    .anno strong {
+      font-family: var(--ff-mono); font-size: 12px;
+      color: var(--text-primary); display: block; margin-bottom: 2px;
+    }
+    .anno span { font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
+
+    .kbd-table {
+      width: 100%; border-collapse: collapse;
+      font-size: 13px;
+    }
+    .kbd-table th, .kbd-table td {
+      text-align: left; padding: 10px 12px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .kbd-table th {
+      font-family: var(--ff-mono); font-size: 10px; letter-spacing: .08em;
+      text-transform: uppercase; color: var(--text-muted); font-weight: 500;
+      background: var(--bg-inset);
+    }
+    .kbd-table tr:last-child td { border-bottom: 0; }
+    .kbd-table tr:hover td { background: var(--bg-inset); }
+    kbd.k {
+      font-family: var(--ff-mono); font-size: 11px;
+      background: var(--bg-elevated); color: var(--accent-cyan);
+      border: 1px solid var(--border-subtle); border-radius: var(--r-xs);
+      padding: 2px 7px; margin-right: 2px;
+    }
+
+    .map-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-3);
+    }
+    .map-card {
+      background: var(--bg-surface); border: 1px solid var(--border-subtle);
+      border-radius: var(--r-md); padding: var(--sp-4);
+      text-decoration: none; color: inherit;
+      transition: border-color .15s, transform .15s;
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    .map-card:hover { border-color: var(--accent-purple); transform: translateY(-1px); }
+    .map-card .h { display: flex; align-items: center; gap: 8px; font-family: var(--ff-mono); font-size: 14px; font-weight: 500; color: var(--text-primary); }
+    .map-card .h .ic { color: var(--accent-purple); }
+    .map-card .desc { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+    .map-card .abas {
+      margin-top: var(--sp-2); padding-top: var(--sp-2);
+      border-top: 1px dashed var(--border-subtle);
+      font-family: var(--ff-mono); font-size: 11px; color: var(--text-secondary);
+    }
+
+    .aside-card {
+      background: var(--bg-surface); border: 1px solid var(--border-subtle);
+      border-radius: var(--r-md); padding: var(--sp-4);
+    }
+    .aside-card h3 {
+      font-family: var(--ff-mono); font-size: 11px; letter-spacing: .08em;
+      text-transform: uppercase; color: var(--text-muted);
+      margin: 0 0 var(--sp-3); font-weight: 500;
+    }
+    .aside-card .pr {
+      display: flex; align-items: baseline; justify-content: space-between;
+      padding: 6px 0; border-bottom: 1px dashed var(--border-subtle);
+      font-size: 12px;
+    }
+    .aside-card .pr:last-child { border-bottom: 0; }
+    .aside-card .pr strong { font-family: var(--ff-mono); font-weight: 500; }
+    .aside-card .pr .v { color: var(--text-muted); font-family: var(--ff-mono); font-size: 11px; }
+  </style>
+</head>
+<body>
+  <div id="shell-root"></div>
+
+  <script src="../_shared/glyphs.js"></script>
+  <script src="../_shared/shell.js"></script>
+  <script>
+    montarShell({
+      clusterAtivo: 'sistema',
+      abaAtiva: 'indice',
+      breadcrumb: ['Ouroboros', 'Sistema', 'Shell de navegação'],
+      acoes: [
+        { label: 'Lista de atalhos', icon: 'info', onClick: '_toggleAjuda()' },
+        { label: 'Voltar ao índice', icon: 'expand', primary: true, href: '../index.html' },
+      ],
+    });
+
+    document.getElementById('main-root').innerHTML = `
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">SHELL DE NAVEGAÇÃO</h1>
+          <p class="page-subtitle">Layout-mãe usado por todas as páginas do dashboard. Sidebar com clusters à esquerda, topbar com breadcrumb e ações no topo, conteúdo no centro. Atalhos de teclado para saltar entre as páginas mais usadas.</p>
+        </div>
+        <div class="page-meta">
+          <span class="pill pill-d7-graduado">Componente compartilhado</span>
+        </div>
+      </div>
+
+      <div class="doc-grid">
+        <div>
+          <div class="doc-section">
+            <h2>Anatomia <span class="ct">três zonas + ações</span></h2>
+
+            <div class="anatomy">
+              <div class="mock-side">
+                <div class="lab">sidebar</div>
+                <div class="item"></div>
+                <div class="item active"></div>
+                <div class="item"></div>
+                <div class="item"></div>
+              </div>
+              <div class="mock-main">
+                <div class="mock-top">
+                  <span>Ouroboros / Cluster / Aba</span>
+                  <span class="right">
+                    <span class="btn-mock">Ação</span>
+                    <span class="btn-mock primary">Primária</span>
+                  </span>
+                </div>
+                <div class="mock-content">conteúdo · main</div>
+              </div>
+
+              <span class="pin pin-1">1</span>
+              <span class="pin pin-2">2</span>
+              <span class="pin pin-3">3</span>
+              <span class="pin pin-4">4</span>
+              <span class="pin pin-5">5</span>
+            </div>
+
+            <div class="anno-list">
+              <div class="anno"><span class="num">1</span><div><strong>Marca</strong><span>Logo Ouroboros · clica para voltar ao índice geral.</span></div></div>
+              <div class="anno"><span class="num">2</span><div><strong>Busca global</strong><span>Foco com <kbd class="k">/</kbd>. Busca por fornecedor, sha8 ou valor.</span></div></div>
+              <div class="anno"><span class="num">3</span><div><strong>Sidebar de clusters</strong><span>6 clusters (Inbox · Home · Finanças · Documentos · Análise · Metas · Sistema). Item ativo destacado.</span></div></div>
+              <div class="anno"><span class="num">4</span><div><strong>Ações da página</strong><span>Botões secundários (refresh, exportar) e primária (próxima ação esperada).</span></div></div>
+              <div class="anno"><span class="num">5</span><div><strong>Conteúdo · main</strong><span>Cada mockup injeta seu HTML em <code style="font-family:var(--ff-mono);font-size:11px;color:var(--accent-cyan);">#main-root</code>.</span></div></div>
+            </div>
+          </div>
+
+          <div class="doc-section">
+            <h2>Atalhos de teclado <span class="ct">vim-like · gX para navegar</span></h2>
+            <div class="card" style="overflow: hidden;">
+              <table class="kbd-table">
+                <thead>
+                  <tr><th style="width: 110px;">Tecla</th><th>Destino · ação</th><th style="width: 200px;">Caminho</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td><kbd class="k">g</kbd><kbd class="k">h</kbd></td><td>Visão Geral</td><td><code style="font-family:var(--ff-mono);font-size:11px;color:var(--text-muted);">Home · home</code></td></tr>
+                  <tr><td><kbd class="k">g</kbd><kbd class="k">i</kbd></td><td>Inbox</td><td><code style="font-family:var(--ff-mono);font-size:11px;color:var(--text-muted);">Inbox</code></td></tr>
+                  <tr><td><kbd class="k">g</kbd><kbd class="k">v</kbd></td><td>Validação por arquivo</td><td><code style="font-family:var(--ff-mono);font-size:11px;color:var(--text-muted);">Documentos · validacao</code></td></tr>
+                  <tr><td><kbd class="k">g</kbd><kbd class="k">r</kbd></td><td>Revisor</td><td><code style="font-family:var(--ff-mono);font-size:11px;color:var(--text-muted);">Documentos · revisor</code></td></tr>
+                  <tr><td><kbd class="k">g</kbd><kbd class="k">f</kbd></td><td>IRPF</td><td><code style="font-family:var(--ff-mono);font-size:11px;color:var(--text-muted);">Análise · irpf</code></td></tr>
+                  <tr><td><kbd class="k">g</kbd><kbd class="k">c</kbd></td><td>Catalogação</td><td><code style="font-family:var(--ff-mono);font-size:11px;color:var(--text-muted);">Documentos · catalogacao</code></td></tr>
+                  <tr><td><kbd class="k">/</kbd></td><td>Focar busca da sidebar</td><td>—</td></tr>
+                  <tr><td><kbd class="k">?</kbd></td><td>Lista de atalhos (overlay)</td><td>—</td></tr>
+                  <tr><td><kbd class="k">Esc</kbd></td><td>Fechar overlay</td><td>—</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="doc-section">
+            <h2>Mapa dos clusters <span class="ct">6 clusters · 16 mockups</span></h2>
+            <div class="map-grid">
+              <a class="map-card" href="16-inbox.html">
+                <div class="h"><span class="ic">${glyph('inbox',16)}</span>Inbox</div>
+                <div class="desc">Fila de ingestão. Drop de arquivos por sha8.</div>
+                <div class="abas">1 aba · ADR-13</div>
+              </a>
+              <a class="map-card" href="01-visao-geral.html">
+                <div class="h"><span class="ic">${glyph('home',16)}</span>Home</div>
+                <div class="desc">Visão executiva: KPIs, sprint, atividade recente.</div>
+                <div class="abas">5 abas · cluster síntese</div>
+              </a>
+              <a class="map-card" href="02-extrato.html">
+                <div class="h"><span class="ic">${glyph('financas',16)}</span>Finanças</div>
+                <div class="desc">Extrato, contas, pagamentos, projeções.</div>
+                <div class="abas">4 abas · 4 mockups</div>
+              </a>
+              <a class="map-card" href="06-busca-global.html">
+                <div class="h"><span class="ic">${glyph('docs',16)}</span>Documentos</div>
+                <div class="desc">Busca, catálogo, completude, revisor, validação.</div>
+                <div class="abas">5 abas · 5 mockups</div>
+              </a>
+              <a class="map-card" href="12-analise.html">
+                <div class="h"><span class="ic">${glyph('analise',16)}</span>Análise</div>
+                <div class="desc">Categorias, multi-perspectiva, IRPF.</div>
+                <div class="abas">3 abas · 3 mockups</div>
+              </a>
+              <a class="map-card" href="13-metas.html">
+                <div class="h"><span class="ic">${glyph('metas',16)}</span>Metas</div>
+                <div class="desc">Financeiras (objetivos) + operacionais (pipeline).</div>
+                <div class="abas">1 aba · 2 perspectivas</div>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="aside-card" style="margin-bottom: var(--sp-3);">
+            <h3>Especificações</h3>
+            <div class="pr"><strong>Sidebar</strong><span class="v">240px fixo</span></div>
+            <div class="pr"><strong>Topbar</strong><span class="v">56px sticky</span></div>
+            <div class="pr"><strong>Main</strong><span class="v">fluido · max 1440px</span></div>
+            <div class="pr"><strong>Breakpoint mobile</strong><span class="v">≤ 900px</span></div>
+            <div class="pr"><strong>Tema</strong><span class="v">Dracula · dark only</span></div>
+          </div>
+
+          <div class="aside-card" style="margin-bottom: var(--sp-3);">
+            <h3>Como reusar</h3>
+            <div style="font-family: var(--ff-mono); font-size: 11px; color: var(--text-secondary); line-height: 1.7;">
+              <div style="margin-bottom: 8px;">1. Importe <code style="color:var(--accent-cyan);">tokens.css</code> + <code style="color:var(--accent-cyan);">components.css</code></div>
+              <div style="margin-bottom: 8px;">2. Adicione <code style="color:var(--accent-cyan);">&lt;div id="shell-root"&gt;</code></div>
+              <div style="margin-bottom: 8px;">3. Importe <code style="color:var(--accent-cyan);">glyphs.js</code> + <code style="color:var(--accent-cyan);">shell.js</code></div>
+              <div style="margin-bottom: 8px;">4. Chame <code style="color:var(--accent-purple);">montarShell({...})</code></div>
+              <div>5. Injete conteúdo em <code style="color:var(--accent-cyan);">#main-root</code></div>
+            </div>
+          </div>
+
+          <div class="aside-card">
+            <h3>Estado atual</h3>
+            <div class="pr"><strong>Mockups conectados</strong><span class="v" style="color: var(--d7-graduado);">16 / 16</span></div>
+            <div class="pr"><strong>Atalhos ativos</strong><span class="v" style="color: var(--d7-graduado);">9</span></div>
+            <div class="pr"><strong>Glyphs disponíveis</strong><span class="v">22</span></div>
+            <div class="pr"><strong>Componentes</strong><span class="v">12 famílias</span></div>
+          </div>
+        </div>
+      </div>
+    `;
+    hidratarGlyphs(document.getElementById('main-root'));
+  </script>
+</body>
+</html>

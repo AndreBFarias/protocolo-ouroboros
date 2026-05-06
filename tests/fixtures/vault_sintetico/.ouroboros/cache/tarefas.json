@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "schema": "tarefas",
+  "gerado_em": "2026-05-06T00:12:19-03:00",
+  "vault_root": "/home/andrefarias/Desenvolvimento/protocolo-ouroboros/tests/fixtures/vault_sintetico",
+  "items": [
+    {
+      "id": "comprar-fruta",
+      "autor": "casal",
+      "titulo": "Comprar fruta",
+      "prioridade": "media",
+      "prazo": "2026-05-05",
+      "concluida": false
+    },
+    {
+      "id": "declarar-irpf",
+      "autor": "pessoa_a",
+      "titulo": "Declarar IRPF 2026",
+      "prioridade": "alta",
+      "prazo": "2026-04-30",
+      "concluida": true
+    }
+  ]
+}

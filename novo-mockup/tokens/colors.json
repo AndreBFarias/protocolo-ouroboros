@@ -1,0 +1,71 @@
+{
+  "$schema": "https://design-tokens.github.io/community-group/format/",
+  "meta": {
+    "nome": "Ouroboros — Paleta Dracula refinada",
+    "versao": "1.0.0",
+    "principio": "D7 — cobertura observável, não gate. Estados em escala graduado/calibração/regredindo.",
+    "contraste_calculado_contra": ["bg-base", "bg-surface"],
+    "padrao_minimo": "WCAG AA (4.5:1 corpo, 3:1 ui)"
+  },
+
+  "bg": {
+    "base":     { "value": "#0e0f15", "uso": "fundo geral da aplicação, sidebar collapsed" },
+    "surface":  { "value": "#1a1d28", "uso": "cards, painéis, sidebar expanded" },
+    "elevated": { "value": "#232735", "uso": "modais, popovers, painel lateral deslizante" },
+    "inset":    { "value": "#0a0b10", "uso": "código, blocos mono, áreas de input" }
+  },
+
+  "border": {
+    "subtle":  { "value": "#313445", "uso": "divisórias internas, bordas de card" },
+    "strong":  { "value": "#4a4f63", "uso": "bordas de input, focus secundário" },
+    "accent":  { "value": "#6b5a9c", "uso": "borda de elemento ativo, seleção" }
+  },
+
+  "text": {
+    "primary":   { "value": "#f8f8f2", "contraste_bg_base": 16.4, "uso": "títulos, dados monetários" },
+    "secondary": { "value": "#a8a9b8", "contraste_bg_base": 7.9,  "uso": "labels, metadata" },
+    "muted":     { "value": "#6c6f7d", "contraste_bg_base": 4.6,  "uso": "captions, hints, inativo" },
+    "inverse":   { "value": "#0e0f15", "uso": "sobre fundos claros (badges)" }
+  },
+
+  "accent": {
+    "purple": { "value": "#bd93f9", "uso": "marca, focus ring, links" },
+    "pink":   { "value": "#ff79c6", "uso": "highlight raro, sprint-tag em destaque" },
+    "cyan":   { "value": "#8be9fd", "uso": "info, dados secundários" },
+    "green":  { "value": "#50fa7b", "uso": "ações positivas, confirmações" },
+    "yellow": { "value": "#f1fa8c", "uso": "alertas brandos, em calibração" },
+    "orange": { "value": "#ffb86c", "uso": "alertas médios, regredindo" },
+    "red":    { "value": "#ff5555", "uso": "ações destrutivas, falha" }
+  },
+
+  "d7": {
+    "graduado":    { "value": "#6b8e7f", "uso": "estado D7 estável — verde-mate, deliberadamente menos vibrante que accent.green" },
+    "calibracao":  { "value": "#f1fa8c", "uso": "estado D7 em calibração" },
+    "regredindo":  { "value": "#ffb86c", "uso": "estado D7 em regressão de cobertura" },
+    "pendente":    { "value": "#6c6f7d", "uso": "ainda não avaliado" }
+  },
+
+  "humano": {
+    "aprovado":  { "value": "#6b8e7f", "uso": "validação humana — aprovado" },
+    "rejeitado": { "value": "#ff5555", "uso": "validação humana — rejeitado" },
+    "revisar":   { "value": "#f1fa8c", "uso": "validação humana — marcar para revisão" },
+    "pendente":  { "value": "#6c6f7d", "uso": "sem decisão humana ainda" }
+  },
+
+  "diff": {
+    "added_bg":    { "value": "rgba(80, 250, 123, 0.10)", "uso": "linha adicionada no diff-viewer" },
+    "added_gutter":{ "value": "#50fa7b" },
+    "removed_bg":  { "value": "rgba(255, 85, 85, 0.10)" },
+    "removed_gutter": { "value": "#ff5555" },
+    "neutral_gutter": { "value": "#4a4f63" }
+  },
+
+  "syntax": {
+    "key":     { "value": "#ff79c6", "uso": "chave JSON" },
+    "string":  { "value": "#f1fa8c", "uso": "valor string" },
+    "number":  { "value": "#bd93f9", "uso": "valor numérico" },
+    "boolean": { "value": "#ffb86c" },
+    "null":    { "value": "#6c6f7d" },
+    "comment": { "value": "#6c6f7d" }
+  }
+}

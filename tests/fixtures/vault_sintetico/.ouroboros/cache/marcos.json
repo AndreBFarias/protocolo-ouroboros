@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "schema": "marcos",
+  "gerado_em": "2026-05-06T00:12:19-03:00",
+  "vault_root": "/home/andrefarias/Desenvolvimento/protocolo-ouroboros/tests/fixtures/vault_sintetico",
+  "items": [
+    {
+      "data": "2026-04-20",
+      "autor": "pessoa_a",
+      "titulo": "Primeira semana de humor diario",
+      "descricao": "Primeira semana acompanhando humor todos os dias.",
+      "tags": [
+        "humor",
+        "consistencia"
+      ],
+      "auto": false
+    },
+    {
+      "data": "2026-04-29",
+      "autor": "pessoa_a",
+      "titulo": "3 treinos na semana",
+      "descricao": "Bati a meta de 3 treinos em uma semana.",
+      "tags": [
+        "treino"
+      ],
+      "auto": true
+    }
+  ]
+}

@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Ouroboros — Bem-estar · Editor rotina.toml</title>
+<link rel="stylesheet" href="../_shared/tokens.css">
+<link rel="stylesheet" href="../_shared/components.css">
+<style>
+.ed-grid { display: grid; grid-template-columns: 220px minmax(0, 1.3fr) minmax(0, 1fr); gap: var(--sp-4); align-items: start; }
+.ed-card { background: var(--bg-surface); border:1px solid var(--border-subtle); border-radius: var(--r-md); }
+.ed-card h3 {
+  font-family: var(--ff-mono); font-size: 11px; letter-spacing: 0.10em; text-transform: uppercase; color: var(--text-muted);
+  margin: 0; padding: var(--sp-3) var(--sp-4); border-bottom: 1px solid var(--border-subtle);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.ed-card .body { padding: var(--sp-4); }
+
+/* Sidebar arquivos */
+.files-list { list-style: none; padding: 6px; margin: 0; }
+.files-list li {
+  padding: 8px 10px; border-radius: var(--r-xs); cursor: pointer; font-family: var(--ff-mono); font-size: 12px;
+  color: var(--text-secondary); display: flex; align-items: center; gap: 8px; margin-bottom: 2px;
+}
+.files-list li:hover { background: var(--bg-inset); }
+.files-list li.active { background: var(--accent-purple); color: var(--text-inverse); }
+.files-list li .ico { flex-shrink: 0; opacity: 0.8; }
+.files-list li .nome { flex: 1; }
+.files-list li .badge {
+  font-size: 9px; padding: 1px 5px; border-radius: 2px; background: var(--accent-orange); color: var(--text-inverse);
+}
+.files-list li.active .badge { background: var(--text-inverse); color: var(--accent-purple); }
+
+.files-actions { padding: 8px 10px; border-top: 1px solid var(--border-subtle); }
+.files-actions button {
+  width: 100%; background: transparent; border: 1px dashed var(--border-strong); color: var(--text-secondary);
+  border-radius: var(--r-xs); padding: 8px; font-family: var(--ff-mono); font-size: 11px; cursor: pointer;
+}
+.files-actions button:hover { border-color: var(--accent-purple); color: var(--accent-purple); }
+
+/* Editor TOML */
+.editor {
+  font-family: var(--ff-mono); font-size: 13px; line-height: 1.65;
+  background: var(--bg-base); padding: var(--sp-4); min-height: 480px;
+  white-space: pre; overflow-x: auto; color: var(--text-primary);
+  border-radius: 0 0 var(--r-md) var(--r-md);
+  position: relative;
+  counter-reset: linha;
+}
+.editor .ln { display: block; padding-left: 36px; position: relative; min-height: 1.65em; }
+.editor .ln::before {
+  counter-increment: linha; content: counter(linha);
+  position: absolute; left: 0; top: 0; width: 28px; text-align: right;
+  color: var(--text-muted); opacity: 0.5; font-size: 11px; user-select: none;
+}
+.editor .ln.cur { background: rgba(189,147,249, 0.06); }
+.editor .ln.cur::before { color: var(--accent-purple); opacity: 1; }
+.editor .sec { color: var(--accent-purple); font-weight: 600; }
+.editor .key { color: var(--accent-cyan); }
+.editor .str { color: var(--accent-green); }
+.editor .num { color: var(--accent-orange); }
+.editor .bool { color: var(--accent-pink); }
+.editor .com { color: var(--text-muted); font-style: italic; }
+.editor .err { background: rgba(255,85,85, 0.18); border-bottom: 1px wavy var(--accent-red, #ff5555); }
+
+.editor-tools {
+  display: flex; gap: 6px; padding: var(--sp-2) var(--sp-3);
+  background: var(--bg-inset); border-bottom: 1px solid var(--border-subtle);
+  font-family: var(--ff-mono); font-size: 11px;
+}
+.editor-tools .path { color: var(--text-muted); flex: 1; align-self: center; padding-left: 6px; }
+.editor-tools .status {
+  padding: 4px 8px; border-radius: var(--r-xs); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase;
+}
+.status.ok  { background: rgba(80,250,123, 0.15); color: var(--accent-green); }
+.status.err { background: rgba(255,85,85, 0.18); color: var(--accent-red, #ff5555); }
+.status.dirty { background: rgba(255,184,108, 0.15); color: var(--accent-orange); }
+
+/* Preview */
+.preview-tabs { display: flex; gap: 4px; padding: 6px; background: var(--bg-inset); border-bottom: 1px solid var(--border-subtle); }
+.pv-tab {
+  background: transparent; border: 1px solid transparent; padding: 6px 10px; border-radius: var(--r-xs);
+  font-family: var(--ff-mono); font-size: 11px; cursor: pointer; color: var(--text-secondary);
+}
+.pv-tab.active { background: var(--bg-surface); border-color: var(--border-subtle); color: var(--text-primary); }
+
+/* Visualização cards de alarme */
+.alarme-card {
+  background: var(--bg-inset); border:1px solid var(--border-subtle); border-radius: var(--r-sm);
+  padding: var(--sp-3); margin-bottom: 6px; display: grid; grid-template-columns: 60px 1fr auto; gap: 12px; align-items: center;
+}
+.alarme-hr {
+  font-family: var(--ff-mono); font-weight: 600; font-size: 18px; color: var(--accent-purple); letter-spacing: 0.04em;
+}
+.alarme-meta .nome { font-size: 13px; color: var(--text-primary); margin-bottom: 4px; }
+.alarme-meta .dias { display: flex; gap: 4px; }
+.alarme-meta .d {
+  width: 18px; height: 18px; border-radius: 50%; background: var(--bg-base); border: 1px solid var(--border-subtle);
+  font-family: var(--ff-mono); font-size: 9px; display: grid; place-items: center; color: var(--text-muted);
+}
+.alarme-meta .d.on { background: var(--accent-purple); color: var(--text-inverse); border-color: var(--accent-purple); }
+.alarme-tags { display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
+.alarme-tags .t { font-family: var(--ff-mono); font-size: 9px; padding: 2px 6px; border-radius: var(--r-xs); background: var(--bg-base); color: var(--text-muted); }
+
+/* Schema painel */
+.schema {
+  font-family: var(--ff-mono); font-size: 11px; line-height: 1.6;
+}
+.schema .campo { padding: 6px 0; border-bottom: 1px dashed var(--border-subtle); }
+.schema .campo:last-child { border-bottom: none; }
+.schema .campo .k { color: var(--accent-cyan); }
+.schema .campo .tipo { color: var(--accent-pink); margin-left: 6px; }
+.schema .campo .req { color: var(--accent-orange); margin-left: 4px; font-size: 9px; vertical-align: super; }
+.schema .campo .desc { color: var(--text-muted); display: block; margin-top: 2px; padding-left: 8px; }
+
+/* Erros */
+.err-list .err-item {
+  background: rgba(255,85,85, 0.08); border-left: 3px solid #ff5555; border-radius: var(--r-xs);
+  padding: 8px 10px; margin-bottom: 6px; font-family: var(--ff-mono); font-size: 11px;
+}
+.err-list .err-item .ln { color: #ff5555; font-weight: 600; }
+.err-list .err-item .msg { color: var(--text-primary); }
+.err-list .err-item .fix { color: var(--text-muted); margin-top: 2px; font-size: 10px; }
+.err-list .vazio { color: var(--accent-green); font-family: var(--ff-mono); font-size: 11px; padding: var(--sp-2); }
+
+/* Diff */
+.diff { font-family: var(--ff-mono); font-size: 11px; line-height: 1.6; }
+.diff .add { background: rgba(80,250,123, 0.10); color: var(--accent-green); padding: 0 6px; display: block; }
+.diff .rem { background: rgba(255,85,85, 0.10); color: #ff5555; padding: 0 6px; display: block; text-decoration: line-through; }
+.diff .ctx { color: var(--text-muted); padding: 0 6px; display: block; }
+
+/* Affected */
+.affect-card {
+  background: var(--bg-inset); border:1px solid var(--border-subtle); border-radius: var(--r-sm);
+  padding: var(--sp-3); margin-bottom: 6px; display:flex; align-items:center; gap: 10px;
+}
+.affect-card .ico { color: var(--accent-purple); flex-shrink: 0; }
+.affect-card .t { flex: 1; font-family: var(--ff-mono); font-size: 11px; color: var(--text-secondary); line-height: 1.4; }
+.affect-card .t strong { color: var(--text-primary); }
+.affect-card a { font-family: var(--ff-mono); font-size: 10px; color: var(--accent-purple); text-decoration: none; }
+.affect-card a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<div id="shell-root"></div>
+<script src="../_shared/glyphs.js"></script>
+<script src="../_shared/shell.js"></script>
+<script>
+montarShell({
+  clusterAtivo: 'bem-estar',
+  abaAtiva: 'be-rotina-toml',
+  breadcrumb: ['Ouroboros', 'Bem-estar', 'Editor rotina.toml'],
+  acoes: [
+    { label: 'Histórico (git log)', icon: 'list', onClick: "toast('git log .ouroboros/rotina/ — 47 commits')" },
+    { label: 'Salvar (commit)', icon: 'check', primary: true, onClick: "toast(' git commit -m \\'rotina: ajustar manhã\\' · .ouroboros/rotina/manha.toml')" },
+  ],
+});
+
+const ARQUIVOS = [
+  { nome: 'manha.toml',     ativo: true,  dirty: true,  alarmes: 5, path: '.ouroboros/rotina/manha.toml' },
+  { nome: 'tarde.toml',     ativo: false, dirty: false, alarmes: 2, path: '.ouroboros/rotina/tarde.toml' },
+  { nome: 'noite.toml',     ativo: false, dirty: false, alarmes: 4, path: '.ouroboros/rotina/noite.toml' },
+  { nome: 'medicacao.toml', ativo: false, dirty: false, alarmes: 3, path: '.ouroboros/rotina/medicacao.toml' },
+  { nome: 'fim-de-semana.toml', ativo: false, dirty: false, alarmes: 1, path: '.ouroboros/rotina/fim-de-semana.toml' },
+];
+
+// linhas TOML do arquivo atual (manha.toml) com syntax highlighting manual
+const LINHAS = [
+  { html: '<span class="com"># manha.toml — rotina matinal</span>' },
+  { html: '<span class="com"># gerenciado pelo editor; não tem que mexer à mão.</span>' },
+  { html: '' },
+  { html: '<span class="key">versao</span> = <span class="str">"1.0"</span>' },
+  { html: '<span class="key">timezone</span> = <span class="str">"America/Sao_Paulo"</span>' },
+  { html: '' },
+  { html: '<span class="sec">[[alarme]]</span>', cur: true },
+  { html: '<span class="key">id</span>      = <span class="str">"acordar"</span>' },
+  { html: '<span class="key">nome</span>    = <span class="str">"Acordar"</span>' },
+  { html: '<span class="key">hora</span>    = <span class="str">"07:00"</span>' },
+  { html: '<span class="key">dias</span>    = [<span class="str">"seg"</span>, <span class="str">"ter"</span>, <span class="str">"qua"</span>, <span class="str">"qui"</span>, <span class="str">"sex"</span>]' },
+  { html: '<span class="key">som</span>     = <span class="str">"suave-1.mp3"</span>' },
+  { html: '<span class="key">snooze</span>  = <span class="bool">false</span>     <span class="com"># sem snooze, é a regra</span>' },
+  { html: '<span class="key">tags</span>    = [<span class="str">"saude"</span>, <span class="str">"cedo"</span>]' },
+  { html: '' },
+  { html: '<span class="sec">[[alarme]]</span>' },
+  { html: '<span class="key">id</span>      = <span class="str">"medicacao-am"</span>' },
+  { html: '<span class="key">nome</span>    = <span class="str">"Remédio da manhã"</span>' },
+  { html: '<span class="key">hora</span>    = <span class="str">"07:30"</span>' },
+  { html: '<span class="key">dias</span>    = [<span class="str">"seg"</span>, <span class="str">"ter"</span>, <span class="str">"qua"</span>, <span class="str">"qui"</span>, <span class="str">"sex"</span>, <span class="str">"sab"</span>, <span class="str">"dom"</span>]' },
+  { html: '<span class="key">requer_check</span> = <span class="bool">true</span>  <span class="com"># precisa marcar como tomado</span>' },
+  { html: '<span class="key">tags</span>    = [<span class="str">"saude"</span>, <span class="str">"medicacao"</span>]' },
+  { html: '' },
+  { html: '<span class="sec">[[tarefa]]</span>' },
+  { html: '<span class="key">id</span>     = <span class="str">"diario-amanhecer"</span>' },
+  { html: '<span class="key">nome</span>   = <span class="str">"Escrever diário"</span>' },
+  { html: '<span class="key">tipo</span>   = <span class="str">"diario"</span>' },
+  { html: '<span class="key">duracao</span> = <span class="num">5</span>           <span class="com"># minutos sugeridos</span>' },
+  { html: '<span class="key">aparece_em</span> = <span class="str">"hoje"</span>' },
+  { html: '' },
+  { html: '<span class="sec">[[contador]]</span>' },
+  { html: '<span class="key">id</span>      = <span class="str">"agua"</span>' },
+  { html: '<span class="key">nome</span>    = <span class="str">"Copos d\'água"</span>' },
+  { html: '<span class="key">meta</span>    = <span class="num">8</span>' },
+  { html: '<span class="key">unidade</span> = <span class="str">"copo"</span>' },
+  { html: '<span class="key">reset</span>   = <span class="str">"diario"</span>' },
+];
+
+let abaPreview = 'visual';
+
+function setAbaPreview(a) { abaPreview = a; render(); }
+
+function renderPreviewVisual() {
+  return `
+    <div style="margin-bottom: var(--sp-3);">
+      <div style="font-family: var(--ff-mono); font-size: 10px; letter-spacing: 0.10em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px;">2 alarmes · 1 tarefa · 1 contador</div>
+    </div>
+    <div class="alarme-card">
+      <div class="alarme-hr">07:00</div>
+      <div class="alarme-meta">
+        <div class="nome">Acordar</div>
+        <div class="dias">
+          ${['S','T','Q','Q','S','S','D'].map((d,i) => `<div class="d ${i<5?'on':''}">${d}</div>`).join('')}
+        </div>
+      </div>
+      <div class="alarme-tags"><span class="t">saúde</span><span class="t">cedo</span></div>
+    </div>
+    <div class="alarme-card">
+      <div class="alarme-hr">07:30</div>
+      <div class="alarme-meta">
+        <div class="nome">Remédio da manhã <span style="color:var(--accent-orange);font-size:10px;font-family:var(--ff-mono);margin-left:6px;">requer check</span></div>
+        <div class="dias">
+          ${['S','T','Q','Q','S','S','D'].map(d => `<div class="d on">${d}</div>`).join('')}
+        </div>
+      </div>
+      <div class="alarme-tags"><span class="t">saúde</span><span class="t">medicação</span></div>
+    </div>
+    <div style="margin: var(--sp-3) 0 6px; font-family: var(--ff-mono); font-size: 10px; letter-spacing: 0.10em; text-transform: uppercase; color: var(--text-muted);">tarefas geradas em "Hoje"</div>
+    <div style="background: var(--bg-inset); border:1px solid var(--border-subtle); border-radius: var(--r-sm); padding: var(--sp-3); display:flex; align-items:center; gap: 10px;">
+      <div style="width: 16px; height: 16px; border: 1.5px solid var(--accent-purple); border-radius: var(--r-xs);"></div>
+      <div style="flex:1; font-size: 13px;">Escrever diário <span style="font-family:var(--ff-mono); font-size: 10px; color: var(--text-muted); margin-left: 6px;">~5min</span></div>
+      <span style="font-family:var(--ff-mono); font-size: 10px; color: var(--text-muted);">tipo: diário</span>
+    </div>
+    <div style="margin: var(--sp-3) 0 6px; font-family: var(--ff-mono); font-size: 10px; letter-spacing: 0.10em; text-transform: uppercase; color: var(--text-muted);">contadores</div>
+    <div style="background: var(--bg-inset); border:1px solid var(--border-subtle); border-radius: var(--r-sm); padding: var(--sp-3); display:flex; align-items:center; gap: 10px;">
+      <span style="font-size: 22px;">${glyph('water', 22)}</span>
+      <div style="flex:1;">
+        <div style="font-size: 13px;">Copos d'água</div>
+        <div style="font-family: var(--ff-mono); font-size: 10px; color: var(--text-muted);">meta: 8 · reset diário</div>
+      </div>
+    </div>
+  `;
+}
+
+function renderPreviewDiff() {
+  return `
+    <div class="diff">
+      <span class="ctx">[[alarme]]</span>
+      <span class="ctx">id      = "acordar"</span>
+      <span class="ctx">nome    = "Acordar"</span>
+      <span class="rem">hora    = "06:30"</span>
+      <span class="add">hora    = "07:00"</span>
+      <span class="ctx">dias    = ["seg", "ter", "qua", "qui", "sex"]</span>
+      <span class="rem">som     = "alto-2.mp3"</span>
+      <span class="add">som     = "suave-1.mp3"</span>
+      <span class="add">snooze  = false</span>
+      <span class="ctx">tags    = ["saude", "cedo"]</span>
+    </div>
+    <div style="margin-top: var(--sp-3); font-family: var(--ff-mono); font-size: 10px; color: var(--text-muted);">
+      vs HEAD · .ouroboros/rotina/manha.toml · não commitado
+    </div>
+  `;
+}
+
+function renderPreviewSchema() {
+  const campos = [
+    { k: 'id', t: 'string', req: true,  d: 'identificador único do alarme/tarefa, slug-case' },
+    { k: 'nome', t: 'string', req: true,  d: 'rótulo legível em "Hoje" e nas notificações' },
+    { k: 'hora', t: 'string "HH:MM"', req: true, d: 'hora local (timezone do arquivo)' },
+    { k: 'dias', t: 'array<dia>', req: true,  d: 'sub-conjunto de seg/ter/qua/qui/sex/sab/dom' },
+    { k: 'som', t: 'string (path em assets/sons/)', req: false, d: 'default: padrão.mp3' },
+    { k: 'snooze', t: 'bool', req: false, d: 'permite adiar 5min · default true' },
+    { k: 'requer_check', t: 'bool', req: false, d: 'tarefa só "concluída" se marcada (ex: medicação)' },
+    { k: 'tags', t: 'array<string>', req: false, d: 'usadas em filtros e cruzamentos' },
+  ];
+  return `<div class="schema">
+    <div style="font-family:var(--ff-mono);font-size:10px;color:var(--text-muted);margin-bottom:8px;letter-spacing:0.06em;text-transform:uppercase;">[[alarme]] · campos</div>
+    ${campos.map(c => `
+      <div class="campo">
+        <span class="k">${c.k}</span><span class="tipo">: ${c.t}</span>${c.req ? '<span class="req">obrigatório</span>' : ''}
+        <span class="desc">${c.d}</span>
+      </div>
+    `).join('')}
+  </div>`;
+}
+
+function render() {
+  document.getElementById('preview-content').innerHTML =
+    abaPreview === 'visual' ? renderPreviewVisual() :
+    abaPreview === 'diff'   ? renderPreviewDiff() :
+    abaPreview === 'schema' ? renderPreviewSchema() :
+    '';
+  document.querySelectorAll('.pv-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === abaPreview));
+  hidratarGlyphs(document.getElementById('preview-content'));
+}
+
+document.getElementById('main-root').innerHTML = `
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">EDITOR · rotina/*.toml</h1>
+      <p class="page-subtitle">Sua rotina é texto. Cada arquivo é um TOML versionado em git, validado por schema, com preview ao vivo
+      do que isso vira em <a href="17-bem-estar-hoje.html" style="color:var(--accent-purple);">Hoje</a> e <a href="20-rotina.html" style="color:var(--accent-purple);">Rotina</a>.</p>
+    </div>
+    <div class="page-meta">
+      <span class="sprint-tag">M04</span>
+      <span class="pill pill-d7-graduado">5 arquivos · 15 alarmes</span>
+    </div>
+  </div>
+
+  <div class="ed-grid">
+    <!-- COL 1: arquivos -->
+    <div class="ed-card">
+      <h3>Arquivos</h3>
+      <ul class="files-list">
+        ${ARQUIVOS.map(a => `
+          <li class="${a.ativo ? 'active' : ''}" onclick="toast('Trocaria para ${a.nome}')">
+            ${glyph('file', 13)}
+            <span class="nome">${a.nome}</span>
+            ${a.dirty ? '<span class="badge"></span>' : ''}
+            <span style="font-family:var(--ff-mono);font-size:10px;opacity:0.6;">${a.alarmes}</span>
+          </li>
+        `).join('')}
+      </ul>
+      <div class="files-actions">
+        <button onclick="toast('+ novo arquivo TOML')">+ novo arquivo</button>
+      </div>
+    </div>
+
+    <!-- COL 2: editor -->
+    <div class="ed-card">
+      <div class="editor-tools">
+        <span>${glyph('file', 13)}</span>
+        <span class="path">.ouroboros/rotina/manha.toml</span>
+        <span class="status dirty"> modificado</span>
+        <span class="status ok">${glyph('check', 11)} schema ok</span>
+      </div>
+      <div class="editor">
+        ${LINHAS.map(l => `<span class="ln ${l.cur ? 'cur' : ''}">${l.html || ' '}</span>`).join('')}
+      </div>
+    </div>
+
+    <!-- COL 3: preview/schema/erros/affected -->
+    <div>
+      <div class="ed-card">
+        <h3>Preview ao vivo</h3>
+        <div class="preview-tabs">
+          <button class="pv-tab active" data-tab="visual" onclick="setAbaPreview('visual')">Visual</button>
+          <button class="pv-tab" data-tab="diff" onclick="setAbaPreview('diff')">Diff vs HEAD</button>
+          <button class="pv-tab" data-tab="schema" onclick="setAbaPreview('schema')">Schema</button>
+        </div>
+        <div class="body" id="preview-content"></div>
+      </div>
+
+      <div class="ed-card" style="margin-top: var(--sp-3);">
+        <h3>Validação · 0 erros, 1 aviso</h3>
+        <div class="body err-list">
+          <div class="err-item" style="background:rgba(255,184,108,0.08); border-left-color:var(--accent-orange);">
+            <span class="ln" style="color:var(--accent-orange);">linha 13</span>
+            <span class="msg"> · <code>snooze = false</code> mas alarme <strong>"acordar"</strong> não tem som de fallback</span>
+            <div class="fix">sugestão: adicionar <code>som_alt = "vibrar.mp3"</code> ou aceitar default</div>
+          </div>
+          <div class="vazio">${glyph('check', 12)} 5 blocos · 22 chaves · todos os tipos batem com o schema</div>
+        </div>
+      </div>
+
+      <div class="ed-card" style="margin-top: var(--sp-3);">
+        <h3>Vai afetar</h3>
+        <div class="body">
+          <div class="affect-card">
+            <span class="ico">${glyph('list', 16)}</span>
+            <div class="t">tela <strong>Hoje</strong> · 2 alarmes + 1 tarefa + 1 contador na coluna manhã</div>
+            <a href="17-bem-estar-hoje.html">abrir →</a>
+          </div>
+          <div class="affect-card">
+            <span class="ico">${glyph('clock', 16)}</span>
+            <div class="t">tela <strong>Rotina</strong> · seção 'manhã' do calendário semanal</div>
+            <a href="20-rotina.html">abrir →</a>
+          </div>
+          <div class="affect-card">
+            <span class="ico">${glyph('sparkle', 16)}</span>
+            <div class="t">prompt do <strong>Recap</strong> · adesão a alarmes vira métrica</div>
+            <a href="21-recap.html">abrir →</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+`;
+
+render();
+hidratarGlyphs(document.getElementById('main-root'));
+</script>
+</body>
+</html>

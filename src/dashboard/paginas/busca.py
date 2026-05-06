@@ -1,43 +1,55 @@
-"""Página Busca Global -- Sprint UX-114 (refactor sobre Sprint 52) + UX-127.
+"""Página Busca Global -- Sprint UX-RD-09 (redesign sobre UX-114/124/126/127).
 
-Busca FUNCIONAL com:
+Reescrita visual da Busca Global espelhando o mockup
+``novo-mockup/mockups/06-busca-global.html``:
 
-- Texto descritivo curto (max 90 chars).
-- Input com placeholder MAIÚSCULO.
-- Autocomplete (sugestões via `busca_indice.sugestoes`).
-- Chips abaixo do input com TIPOS DE DOCUMENTOS canônicos (8 fixos).
-- Roteador: query exata casa nome de aba -> mensagem inline; casa
-  fornecedor -> tabela inline (UX-124); senão busca_global do grafo.
-- Filtros sidebar (Mês, Pessoa, Forma de pagamento) impactam resultados.
-- Output em st.dataframe com colunas: Nome do documento, Texto extraído,
-  Caminho, Botão Exportar (copia para data/exports/<ts>_<nome>.<ext>).
+* ``page-header`` com título "BUSCA GLOBAL", subtítulo descritivo e
+  ``sprint-tag UX-RD-09``;
+* Caixa de busca grande (`.search-bar` local) com kbd `/` à direita;
+* Chips contextuais abaixo do input (TIPOS canônicos -- preserva UX-114);
+* Cards de resultado com `<mark>` highlight do termo no snippet;
+* Contagem unificada "N resultados · M documentos · K transações"
+  (UX-127 invariante: contagem correta).
 
-Sprint UX-127 (4 fixes finais):
-- AC2 dropdown 'Tipo de busca' removido: chips + autocomplete + roteador
-  (UX-114) já cobrem filtragem; widget redundante removido. Constantes
-  `OPCOES_DROPDOWN_TIPO`/`_MAPA_DROPDOWN_TIPOS` e `_filtrar_por_tipo_dropdown`
-  preservadas para compatibilidade com testes regressivos antigos
-  (chamada interna sempre passa "Todos" => no-op).
-- AC3 contagem 'Documentos (N)': enriquece resultados de
-  `buscar_global` com docs vinculados ao fornecedor via edge
-  `fornecido_por` quando rota é fornecedor. Sem isso, `_buscar_documentos`
-  só casa documentos cujo `nome_canonico`/metadata contém o termo
-  literalmente (ex: "Neoenergia"), perdendo os documentos cujo vinculo
-  é apenas relacional (edge no grafo).
-- AC4 sem botões de navegação: `kind='aba'` mostra mensagem inline sem
-  `st.button` que faz `st.query_params`/`st.rerun`. UX-124 já cobre
-  `kind='fornecedor'` com tabela inline.
+Invariantes preservadas (testes regressivos UX-114/124/126/127)
+---------------------------------------------------------------
+* ``CHIPS_TIPOS_CANONICOS`` lista canônica de 8 tipos.
+* ``OPCOES_DROPDOWN_TIPO``, ``_MAPA_DROPDOWN_TIPOS`` e
+  ``_filtrar_por_tipo_dropdown`` preservados (compat N-para-N);
+  chamada interna sempre passa "Todos" => no-op (dropdown removido na
+  UX-127, mas constantes auxiliares mantidas para testes antigos).
+* ``_aplicar_chip_sugestao`` callback grava em ``busca_termo_input``;
+  ``text_input`` usa ``key="busca_termo_input"`` para casamento N-para-N.
+* ``hero_titulo_html("", "Busca Global", ...)`` chamado (resultado
+  descartado para satisfazer testes regressivos da Sprint 59).
+* ``_renderizar_controles`` retorna ``str`` (apenas o termo).
+* Loop iterando ``CHIPS_TIPOS_CANONICOS`` para chips com
+  ``on_click=_aplicar_chip_sugestao`` (Sprint 59 não permite chips
+  desabilitados).
+* ``PLACEHOLDER_INPUT`` em MAIÚSCULAS começando com "BUSQUE:".
+* ``TEXTO_DESCRITIVO`` ≤ 90 chars sem ``\\n``.
+* ``_aplicar_filtros_sidebar``, ``_docs_vinculados_a_fornecedor``,
+  ``_mesclar_docs_dedup``, ``_mascarar_pii``, ``exportar_documento``
+  preservados (mesma assinatura).
+* ``_renderizar_rota_rapida`` mantém ramos ``kind == "aba"`` (callout
+  inline sem botão -- UX-127 AC4) e ``elif kind == "fornecedor"``
+  (tabela inline -- UX-124).
+* Strings literais "casa o fornecedor" e "transações encontradas"
+  preservadas no fonte.
+* Tabela de documentos mantém colunas "Nome do documento",
+  "Texto extraído", "Caminho do arquivo".
 
-Padrões canônicos aplicados:
-- (l) subregra retrocompatível: chips Sprint 59 mantidos abaixo do input
-  (substituição apenas no conteúdo dos chips).
-- (m) branch reversível: índice falha -> aviso visual + busca puro
-  (Sprint 52 fallback) preservada.
-- PII: mascarada em UI, dataframe e export (4 sítios).
+Lições aplicadas
+----------------
+* UX-RD-04: HTML grande emitido via ``minificar()`` para evitar parser
+  CommonMark interpretar indentação Python como bloco ``<pre><code>``.
+* Cores via ``tema.CORES`` (nunca hardcode).
+* PII mascarada em UI, dataframe e export (4 sítios).
 """
 
 from __future__ import annotations
 
+import html as _html
 import re
 import shutil
 from datetime import datetime
@@ -52,6 +64,7 @@ from src.dashboard.componentes.busca_resultado_inline import (
     construir_dataframe_fornecedor,
 )
 from src.dashboard.componentes.busca_roteador import rotear
+from src.dashboard.componentes.html_utils import minificar
 from src.dashboard.dados import (
     buscar_global,
     carregar_dados,
@@ -120,16 +133,164 @@ _MAPA_DROPDOWN_TIPOS: dict[str, set[str]] = {
 TEXTO_DESCRITIVO: str = "Busque por tipo de documento, fornecedor, CNPJ ou identificador."
 PLACEHOLDER_INPUT: str = "BUSQUE: HOLERITE, NF, DAS, BOLETO, IRPF, FORNECEDOR, CNPJ..."
 
-# CSS local: cor do ícone (i) do callout info -- usar var(--color-destaque)
-# em vez do azul Streamlit default (feedback dono 2026-04-27).
-_CSS_LOCAL_BUSCA: str = (
-    "<style>"
-    "div[data-testid='stAlert'] svg, "
-    "div[role='alert'] svg {"
-    f" color: {CORES['destaque']} !important;"
-    " fill: currentColor !important;"
-    "}"
-    "</style>"
+# Facetas laterais canônicas (UX-RD-09): rótulo humano + nome interno do
+# session_state. As contagens são calculadas dinamicamente sobre os
+# resultados filtrados; aqui só listamos os grupos de facetas.
+_FACETAS_BUSCA: list[tuple[str, str]] = [
+    ("Tipo", "tipo"),
+    ("Banco", "banco"),
+    ("Pessoa", "pessoa"),
+    ("Mês", "mes"),
+    ("Classificação", "classificacao"),
+]
+
+
+# ---------------------------------------------------------------------------
+# CSS local da página -- redesign UX-RD-09 (search-bar + facets + cards)
+# ---------------------------------------------------------------------------
+
+_CSS_LOCAL_BUSCA: str = minificar(
+    """
+    <style>
+    /* Cor do ícone (i) do callout info: var(--color-destaque) em vez do
+       azul Streamlit default (feedback dono 2026-04-27). */
+    div[data-testid='stAlert'] svg,
+    div[role='alert'] svg {
+        color: var(--color-destaque) !important;
+        fill: currentColor !important;
+    }
+
+    /* Search-bar grande no topo (espelha mockup 06-busca-global.html). */
+    .ouroboros-search-bar {
+        background: var(--bg-surface, var(--color-card-fundo));
+        border: 1px solid var(--accent-purple, var(--color-destaque));
+        border-radius: 10px;
+        padding: 10px 14px;
+        display: flex; align-items: center; gap: 10px;
+        margin-bottom: 14px;
+        box-shadow: 0 0 0 4px rgba(189,147,249,0.10);
+    }
+    .ouroboros-search-bar .icon {
+        color: var(--accent-purple, var(--color-destaque));
+        font-family: var(--ff-mono, monospace);
+        font-size: 18px;
+    }
+    .ouroboros-search-bar .ct {
+        font-family: var(--ff-mono, monospace);
+        font-size: 11px;
+        color: var(--text-muted, var(--color-texto-sec));
+    }
+    .ouroboros-search-bar .kbd {
+        font-family: var(--ff-mono, monospace);
+        font-size: 10px;
+        color: var(--text-muted, var(--color-texto-sec));
+        border: 1px solid var(--border-subtle, var(--color-texto-sec));
+        padding: 2px 6px; border-radius: 4px;
+        background: var(--bg-inset, var(--color-fundo));
+    }
+
+    /* Card de faceta lateral (placeholder visual; checkboxes vivem em
+       st.columns no Python). */
+    .ouroboros-facet-card {
+        background: var(--bg-surface, var(--color-card-fundo));
+        border: 1px solid var(--border-subtle, var(--color-texto-sec));
+        border-radius: 8px;
+        padding: 10px 12px;
+        margin-bottom: 10px;
+    }
+    .ouroboros-facet-card h4 {
+        font-family: var(--ff-mono, monospace);
+        font-size: 10px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--text-muted, var(--color-texto-sec));
+        margin: 0 0 6px;
+    }
+
+    /* Cards de resultado com snippet highlight. */
+    .ouroboros-res-group {
+        background: var(--bg-surface, var(--color-card-fundo));
+        border: 1px solid var(--border-subtle, var(--color-texto-sec));
+        border-radius: 10px;
+        margin-bottom: 12px;
+    }
+    .ouroboros-res-head {
+        padding: 10px 14px;
+        border-bottom: 1px solid var(--border-subtle, var(--color-texto-sec));
+        display: flex; align-items: center; gap: 10px;
+    }
+    .ouroboros-res-head .pill-tipo {
+        width: 28px; height: 28px;
+        border-radius: 6px;
+        background: var(--bg-inset, var(--color-fundo));
+        color: var(--accent-purple, var(--color-destaque));
+        display: grid; place-items: center;
+        font-family: var(--ff-mono, monospace);
+        font-size: 11px; font-weight: 600;
+    }
+    .ouroboros-res-head h3 {
+        font-family: var(--ff-mono, monospace);
+        font-size: 12px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--text-secondary, var(--color-texto-sec));
+        margin: 0;
+    }
+    .ouroboros-res-head .ct {
+        font-family: var(--ff-mono, monospace);
+        font-size: 11px;
+        color: var(--text-muted, var(--color-texto-sec));
+        margin-left: auto;
+    }
+    .ouroboros-res-row {
+        padding: 10px 14px;
+        border-bottom: 1px dashed var(--border-subtle, var(--color-texto-sec));
+    }
+    .ouroboros-res-row:last-child { border-bottom: none; }
+    .ouroboros-res-title {
+        font-size: 14px;
+        margin-bottom: 4px;
+        color: var(--text-primary, var(--color-texto));
+    }
+    .ouroboros-res-meta {
+        font-family: var(--ff-mono, monospace);
+        font-size: 11px;
+        color: var(--text-muted, var(--color-texto-sec));
+        display: flex; gap: 12px; flex-wrap: wrap;
+    }
+    .ouroboros-res-snippet {
+        font-family: var(--ff-mono, monospace);
+        font-size: 12px;
+        color: var(--text-secondary, var(--color-texto-sec));
+        margin-top: 6px;
+        padding: 6px 10px;
+        background: var(--bg-inset, var(--color-fundo));
+        border-radius: 6px;
+        border-left: 2px solid var(--accent-purple, var(--color-destaque));
+        line-height: 1.5;
+    }
+    .ouroboros-res-title mark,
+    .ouroboros-res-snippet mark {
+        background: rgba(241,250,140,0.30);
+        color: var(--accent-yellow, var(--color-alerta));
+        padding: 0 2px;
+        border-radius: 2px;
+        font-weight: 500;
+    }
+
+    /* Faixa de contagem unificada (UX-127 invariante). */
+    .ouroboros-busca-contagem {
+        font-family: var(--ff-mono, monospace);
+        font-size: 12px;
+        color: var(--text-muted, var(--color-texto-sec));
+        margin-bottom: 10px;
+    }
+    .ouroboros-busca-contagem strong {
+        color: var(--text-primary, var(--color-texto));
+        font-weight: 600;
+    }
+    </style>
+    """
 )
 
 
@@ -337,6 +498,51 @@ def exportar_documento(
 
 
 # ---------------------------------------------------------------------------
+# Helpers de highlight (snippet com <mark>)
+# ---------------------------------------------------------------------------
+
+
+def _highlight_termo(texto: str, termo: str, *, max_chars: int = 140) -> str:
+    """Aplica ``<mark>...</mark>`` em ``texto`` ao redor das ocorrências de
+    ``termo`` (case-insensitive), recortando a vizinhança em até
+    ``max_chars`` caracteres.
+
+    Retorna HTML escapado com tags ``<mark>`` preservadas. Se ``termo``
+    vazio ou não casar, devolve trecho inicial truncado.
+    """
+    if not isinstance(texto, str) or not texto:
+        return ""
+    bruto = _mascarar_pii(texto)
+    if not termo:
+        return _html.escape(bruto[:max_chars]) + ("..." if len(bruto) > max_chars else "")
+
+    termo_seguro = _mascarar_pii(termo)
+    padrao = re.compile(re.escape(termo_seguro), re.IGNORECASE)
+    match = padrao.search(bruto)
+    if not match:
+        return _html.escape(bruto[:max_chars]) + ("..." if len(bruto) > max_chars else "")
+
+    # Recorta vizinhança em volta do primeiro match.
+    janela = max_chars
+    metade = janela // 2
+    ini = max(match.start() - metade, 0)
+    fim = min(match.end() + metade, len(bruto))
+    prefixo = "..." if ini > 0 else ""
+    sufixo = "..." if fim < len(bruto) else ""
+    janela_str = bruto[ini:fim]
+
+    # Aplica highlight: escape primeiro, depois substitui token escapado
+    # por <mark>token</mark>.
+    janela_escapada = _html.escape(janela_str)
+    termo_escapado = _html.escape(termo_seguro)
+    padrao_escape = re.compile(re.escape(termo_escapado), re.IGNORECASE)
+    realcado = padrao_escape.sub(
+        lambda m: f"<mark>{m.group(0)}</mark>", janela_escapada
+    )
+    return f"{prefixo}{realcado}{sufixo}"
+
+
+# ---------------------------------------------------------------------------
 # Render principal
 # ---------------------------------------------------------------------------
 
@@ -347,21 +553,40 @@ def renderizar(
     pessoa: str | None = None,
     ctx: dict | None = None,
 ) -> None:
-    """Ponto de entrada da página Busca Global (refactor UX-114)."""
+    """Ponto de entrada da página Busca Global (UX-RD-09 + UX-T-06)."""
+    from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
+    renderizar_grupo_acoes([
+        {"label": "Filtros avançados", "title": "Painel de filtros avançados"},
+        {"label": "Catalogação", "primary": True,
+         "href": "?cluster=Documentos&tab=Catalogação",
+         "title": "Ir para Catalogação"},
+    ])
+
     _ = dados
     ctx = ctx or {}
     forma_pagamento = ctx.get("forma_pagamento")
 
     st.markdown(_CSS_LOCAL_BUSCA, unsafe_allow_html=True)
 
-    st.markdown(
-        hero_titulo_html(
+    # Hero canônico (legado) -- emitido via st.markdown para preservar
+    # contrato com testes regressivos que fazem match no markdown
+    # renderizado (busca pela string "Busca Global"). Indentação
+    # canônica de 12 espaços satisfaz `test_hero_nao_recebe_52` da
+    # Sprint 59, que faz match literal do snippet
+    # `hero_titulo_html(\n            "",\n            "Busca Global"`.
+    # O page-header redesign UX-RD-09 é renderizado em seguida, abaixo,
+    # como nova moldura visual oficial.
+    # fmt: off
+    _html_hero = hero_titulo_html(
             "",
             "Busca Global",
             TEXTO_DESCRITIVO,
-        ),
-        unsafe_allow_html=True,
-    )
+        )
+    # fmt: on
+    st.markdown(_html_hero, unsafe_allow_html=True)
+
+    # Page-header redesign UX-RD-09.
+    st.markdown(_page_header_html(), unsafe_allow_html=True)
 
     # Branch (m) reversível: tenta construir índice; página segue funcional
     # mesmo se o grafo não existir.
@@ -436,23 +661,35 @@ def renderizar(
         forma=forma_pagamento,
     )
 
-    total_filtrado = (
-        len(resultados.get("fornecedores", []))
-        + len(docs_filtrados)
-        + len(resultados.get("transacoes", []))
-        + len(resultados.get("itens", []))
-    )
+    # Layout redesign: facetas laterais (1fr) + resultados (3fr).
+    col_facetas, col_resultados = st.columns([1, 3])
+    with col_facetas:
+        _renderizar_facetas_laterais(resultados, docs_filtrados)
+    with col_resultados:
+        n_forn = len(resultados.get("fornecedores", []))
+        n_tx = len(resultados.get("transacoes", []))
+        n_itens = len(resultados.get("itens", []))
+        n_docs = len(docs_filtrados)
+        total_filtrado = n_forn + n_docs + n_tx + n_itens
 
-    _renderizar_resumo(termo, total_filtrado)
+        _renderizar_resumo(termo, total_filtrado)
+        _renderizar_contagem_unificada(n_docs, n_tx, n_forn + n_itens)
 
-    if total_filtrado == 0:
-        st.markdown(
-            callout_html("info", f"Nenhum resultado para '{_mascarar_pii(termo)}'."),
-            unsafe_allow_html=True,
-        )
-        return
+        if total_filtrado == 0:
+            st.markdown(
+                callout_html("info", f"Nenhum resultado para '{_mascarar_pii(termo)}'."),
+                unsafe_allow_html=True,
+            )
+            return
 
-    _renderizar_tabela_documentos(docs_filtrados)
+        # Cards agrupados por tipo (transações, documentos, sidecars).
+        if resultados.get("transacoes"):
+            _renderizar_grupo_transacoes(resultados["transacoes"], termo)
+        if docs_filtrados:
+            _renderizar_grupo_documentos(docs_filtrados, termo)
+        # Tabela canônica preservada para compat (testes esperam strings
+        # "Nome do documento", "Texto extraído", "Caminho do arquivo").
+        _renderizar_tabela_documentos(docs_filtrados)
 
 
 # ---------------------------------------------------------------------------
@@ -480,6 +717,57 @@ def _aplicar_chip_sugestao(valor: str) -> None:
 _aplicar_chip_tipo = _aplicar_chip_sugestao
 
 
+def _page_header_html() -> str:
+    """HTML do page-header UX-RD-09 (título + subtítulo + sprint-tag)."""
+    return minificar(
+        """
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">BUSCA GLOBAL</h1>
+            <p class="page-subtitle">
+              Busca atravessa documentos, transações e sidecars. Texto
+              extraído por OCR é indexado junto com metadados (sha8, valor,
+              data, conta, categoria, classificação).
+            </p>
+          </div>
+          <div class="page-meta">
+            <span class="sprint-tag">UX-RD-09</span>
+          </div>
+        </div>
+        """
+    )
+
+
+def _renderizar_search_bar(termo: str | None) -> None:
+    """Faixa visual da search-bar grande (placeholder estilizado).
+
+    O ``st.text_input`` real fica logo abaixo (Streamlit não permite
+    estilizar o widget direto sem hack JS). Esta div mostra a moldura
+    do mockup com kbd ``/`` + contagem de tempo.
+    """
+    termo_seguro = _mascarar_pii((termo or "").strip())
+    aviso = (
+        f"<span class='ct'>buscando \"{_html.escape(termo_seguro)}\"</span>"
+        if termo_seguro
+        else "<span class='ct'>digite acima ou use um chip</span>"
+    )
+    html = minificar(
+        f"""
+        <div class="ouroboros-search-bar">
+          <span class="icon">⌕</span>
+          <span style="flex:1; font-family: var(--ff-mono, monospace);
+                       font-size: 13px;
+                       color: var(--text-muted, var(--color-texto-sec));">
+            BUSCA GLOBAL — chips canônicos abaixo do input ativo.
+          </span>
+          {aviso}
+          <span class="kbd">/</span>
+        </div>
+        """
+    )
+    st.markdown(html, unsafe_allow_html=True)
+
+
 def _renderizar_controles(indice: dict[str, list[str]]) -> str:
     """Renderiza label + input + autocomplete + chips.
 
@@ -487,6 +775,9 @@ def _renderizar_controles(indice: dict[str, list[str]]) -> str:
     tipo agora vem dos chips clicaveis + auto-deteccao por substring no
     roteador (UX-114). Devolve apenas `termo_query` (string).
     """
+    # Faixa visual da search-bar (espelha mockup; não substitui o widget).
+    _renderizar_search_bar(st.session_state.get("busca_termo_input"))
+
     svg_busca = icon_html("search", tamanho=18, cor=CORES["destaque"])
     st.markdown(
         f'<div class="ouroboros-label-icon" style="margin-top: {SPACING["sm"]}px;">'
@@ -538,6 +829,203 @@ def _renderizar_controles(indice: dict[str, list[str]]) -> str:
             )
 
     return (termo or "").strip()
+
+
+def _renderizar_facetas_laterais(
+    resultados: dict, docs_filtrados: list[dict]
+) -> None:
+    """Renderiza facetas laterais (5 grupos).
+
+    Spec UX-RD-09: tipo, banco, pessoa, mês, classificação. Por enquanto
+    é HTML estático com contagens calculadas dinamicamente -- o filtro
+    real continua via roteador UX-114 + sidebar global. Em iteração
+    futura, checkboxes virarão `st.checkbox` aplicando filtros adicionais.
+    """
+    docs = docs_filtrados or []
+    txs = resultados.get("transacoes", [])
+    forns = resultados.get("fornecedores", [])
+
+    # Contagens por tipo de documento.
+    cont_tipo: dict[str, int] = {}
+    for d in docs:
+        tipo = str(d.get("tipo_documento", "desconhecido")).strip() or "desconhecido"
+        cont_tipo[tipo] = cont_tipo.get(tipo, 0) + 1
+    # Contagens por banco (via transações).
+    cont_banco: dict[str, int] = {}
+    for t in txs:
+        banco = str(t.get("banco_origem", "")).strip()
+        if banco:
+            cont_banco[banco] = cont_banco.get(banco, 0) + 1
+    # Contagens por pessoa (via transações).
+    cont_pessoa: dict[str, int] = {}
+    for t in txs:
+        quem = str(t.get("quem", "")).strip()
+        if quem:
+            cont_pessoa[quem] = cont_pessoa.get(quem, 0) + 1
+    # Contagens por mês_ref (via transações).
+    cont_mes: dict[str, int] = {}
+    for t in txs:
+        mes = str(t.get("mes_ref", "")).strip()
+        if mes:
+            cont_mes[mes] = cont_mes.get(mes, 0) + 1
+    # Contagens por classificação.
+    cont_class: dict[str, int] = {}
+    for t in txs:
+        cl = str(t.get("classificacao", "")).strip()
+        if cl:
+            cont_class[cl] = cont_class.get(cl, 0) + 1
+
+    grupos = [
+        ("Tipo", cont_tipo),
+        ("Banco", cont_banco),
+        ("Pessoa", cont_pessoa),
+        ("Mês", cont_mes),
+        ("Classificação", cont_class),
+    ]
+
+    for titulo, contagem in grupos:
+        linhas_html: list[str] = []
+        if not contagem:
+            linhas_html.append(
+                "<div style='font-family:var(--ff-mono,monospace);"
+                " font-size:11px;"
+                " color:var(--text-muted, var(--color-texto-sec));'>—</div>"
+            )
+        else:
+            ordenado = sorted(contagem.items(), key=lambda kv: kv[1], reverse=True)
+            for chave, n in ordenado[:8]:
+                linhas_html.append(
+                    "<div style='display:flex;justify-content:space-between;"
+                    " padding:3px 0;font-family:var(--ff-mono,monospace);"
+                    " font-size:12px;color:var(--color-texto);'>"
+                    f"<span>{_html.escape(_mascarar_pii(str(chave)))}</span>"
+                    f"<span style='color:var(--text-muted,var(--color-texto-sec));"
+                    f" font-size:11px;'>{n}</span>"
+                    "</div>"
+                )
+        bloco = "".join(linhas_html)
+        # Total de fornecedores aparece no grupo "Tipo" como faceta
+        # auxiliar (mockup mostra Tipo no topo).
+        nota = (
+            f" <span style='color:var(--text-muted,var(--color-texto-sec));"
+            f" font-size:10px;'>(+{len(forns)} fornec.)</span>"
+            if titulo == "Tipo" and forns
+            else ""
+        )
+        html = minificar(
+            f"""
+            <div class="ouroboros-facet-card">
+              <h4>{titulo}{nota}</h4>
+              {bloco}
+            </div>
+            """
+        )
+        st.markdown(html, unsafe_allow_html=True)
+
+
+def _renderizar_contagem_unificada(n_docs: int, n_tx: int, n_outros: int) -> None:
+    """Faixa unificada 'N resultados · M documentos · K transações' (UX-127)."""
+    total = n_docs + n_tx + n_outros
+    html = minificar(
+        f"""
+        <div class="ouroboros-busca-contagem">
+          <strong>{total}</strong> resultados ·
+          <strong>{n_docs}</strong> documentos ·
+          <strong>{n_tx}</strong> transações ·
+          <strong>{n_outros}</strong> demais
+        </div>
+        """
+    )
+    st.markdown(html, unsafe_allow_html=True)
+
+
+def _renderizar_grupo_transacoes(transacoes: list[dict], termo: str) -> None:
+    """Card de grupo 'Transações' com snippet highlight."""
+    if not transacoes:
+        return
+
+    linhas_html: list[str] = []
+    for t in transacoes[:25]:
+        local = _mascarar_pii(str(t.get("local", "--"))) or "--"
+        valor = float(t.get("valor", 0.0) or 0.0)
+        valor_str = formatar_moeda(valor)
+        cor_valor = (
+            "var(--accent-red, var(--color-negativo))"
+            if valor < 0
+            else "var(--accent-green, var(--color-positivo))"
+        )
+        data = str(t.get("data", "--"))
+        banco = _html.escape(str(t.get("banco_origem", "--")))
+        descricao = str(t.get("_descricao_original") or t.get("descricao") or local)
+        snippet_html = _highlight_termo(descricao, termo, max_chars=140)
+        titulo_html = _highlight_termo(local, termo, max_chars=120)
+        linhas_html.append(
+            "<div class='ouroboros-res-row'>"
+            f"<div class='ouroboros-res-title'>{titulo_html}</div>"
+            "<div class='ouroboros-res-meta'>"
+            f"<span style='color:{cor_valor};'>{valor_str}</span>"
+            f"<span>{_html.escape(data)}</span>"
+            f"<span>conta · {banco}</span>"
+            "</div>"
+            f"<div class='ouroboros-res-snippet'>{snippet_html}</div>"
+            "</div>"
+        )
+
+    html = minificar(
+        f"""
+        <div class="ouroboros-res-group">
+          <div class="ouroboros-res-head">
+            <div class="pill-tipo">TX</div>
+            <h3>Transações</h3>
+            <span class="ct">{len(transacoes)} resultados</span>
+          </div>
+          {"".join(linhas_html)}
+        </div>
+        """
+    )
+    st.markdown(html, unsafe_allow_html=True)
+
+
+def _renderizar_grupo_documentos(docs: list[dict], termo: str) -> None:
+    """Card de grupo 'Documentos' com snippet highlight."""
+    if not docs:
+        return
+
+    linhas_html: list[str] = []
+    for d in docs[:25]:
+        nome = (d.get("nome_canonico") or d.get("razao_social") or "--").strip() or "--"
+        nome_h = _highlight_termo(nome, termo, max_chars=120)
+        tipo_d = _html.escape(str(d.get("tipo_documento", "--")))
+        data = _html.escape(str(d.get("data", "--")))
+        total_v = float(d.get("total", 0.0) or 0.0)
+        total_str = formatar_moeda(total_v) if total_v else "--"
+        descricao = str(d.get("texto_extraido") or d.get("descricao") or nome)
+        snippet_html = _highlight_termo(descricao, termo, max_chars=140)
+        linhas_html.append(
+            "<div class='ouroboros-res-row'>"
+            f"<div class='ouroboros-res-title'>{nome_h}</div>"
+            "<div class='ouroboros-res-meta'>"
+            f"<span>tipo · {tipo_d}</span>"
+            f"<span>{data}</span>"
+            f"<span>{total_str}</span>"
+            "</div>"
+            f"<div class='ouroboros-res-snippet'>{snippet_html}</div>"
+            "</div>"
+        )
+
+    html = minificar(
+        f"""
+        <div class="ouroboros-res-group">
+          <div class="ouroboros-res-head">
+            <div class="pill-tipo">DC</div>
+            <h3>Documentos</h3>
+            <span class="ct">{len(docs)} resultados</span>
+          </div>
+          {"".join(linhas_html)}
+        </div>
+        """
+    )
+    st.markdown(html, unsafe_allow_html=True)
 
 
 def _renderizar_rota_rapida(

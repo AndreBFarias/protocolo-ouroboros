@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><title>Ouroboros — Extrato</title>
+<link rel="stylesheet" href="../_shared/tokens.css">
+<link rel="stylesheet" href="../_shared/components.css">
+<style>
+.ext-grid { display:grid; grid-template-columns: 1.7fr 1fr; gap: var(--sp-3); }
+.kpi-row { display:grid; grid-template-columns: repeat(4,1fr); gap: var(--sp-3); margin-bottom: var(--sp-4); }
+.k { background: var(--bg-surface); border:1px solid var(--border-subtle); border-radius: var(--r-md); padding: var(--sp-3) var(--sp-4); }
+.k .l { font-family: var(--ff-mono); font-size:10px; letter-spacing:.08em; text-transform:uppercase; color: var(--text-muted); }
+.k .v { font-family: var(--ff-mono); font-size:26px; font-weight:500; line-height:1.1; font-variant-numeric: tabular-nums; }
+.k .d { font-family: var(--ff-mono); font-size:11px; color: var(--text-muted); }
+.dot { width:8px; height:8px; border-radius:2px; display:inline-block; margin-right:6px; vertical-align:middle; }
+.day-group { background: var(--bg-surface); border:1px solid var(--border-subtle); border-radius: var(--r-md); margin-bottom: var(--sp-3); overflow:hidden; }
+.day-head { padding: 8px 16px; background: var(--bg-elevated); border-bottom: 1px solid var(--border-subtle); display:flex; align-items:center; gap:var(--sp-3); font-family: var(--ff-mono); font-size:12px; }
+.day-head .when { color: var(--text-muted); letter-spacing:.06em; text-transform:uppercase; font-size:10px; }
+.day-head .total { margin-left:auto; font-variant-numeric: tabular-nums; }
+.txn { display:grid; grid-template-columns: 56px 1fr 100px 80px 100px; gap: var(--sp-3); align-items:center; padding: 8px 16px; border-bottom: 1px dashed var(--border-subtle); font-size:13px; cursor:pointer; }
+.txn:last-child { border-bottom:none; }
+.txn:hover { background: var(--bg-elevated); }
+.txn .ic { width:32px; height:32px; border-radius: var(--r-sm); background: var(--bg-inset); display:grid; place-items:center; font-family: var(--ff-mono); font-size:11px; color: var(--text-secondary); }
+.txn .desc strong { display:block; font-weight:500; }
+.txn .desc .meta { font-family: var(--ff-mono); font-size:11px; color: var(--text-muted); margin-top:2px; }
+.txn .cat { font-family: var(--ff-mono); font-size:11px; padding: 2px 6px; border-radius: var(--r-xs); background: var(--bg-inset); color: var(--text-secondary); border:1px solid var(--border-subtle); width:fit-content; }
+.txn .conta { font-family: var(--ff-mono); font-size:11px; color: var(--text-muted); }
+.txn .val { font-family: var(--ff-mono); font-size:14px; text-align:right; font-variant-numeric: tabular-nums; }
+.txn .val.neg { color: var(--accent-red); }
+.txn .val.pos { color: var(--d7-graduado); }
+.right-card { background: var(--bg-surface); border:1px solid var(--border-subtle); border-radius: var(--r-md); padding: var(--sp-4); margin-bottom: var(--sp-3); }
+.right-card h3 { font-family: var(--ff-mono); font-size:11px; letter-spacing:.08em; text-transform:uppercase; color: var(--text-secondary); margin: 0 0 var(--sp-3); }
+.cat-bar { display:grid; grid-template-columns: 1fr auto; gap:var(--sp-2); align-items:center; margin-bottom:6px; font-size:12px; }
+.cat-bar .name { font-family: var(--ff-mono); }
+.cat-bar .v { font-family: var(--ff-mono); font-variant-numeric: tabular-nums; color: var(--text-secondary); }
+.cat-bar .track { grid-column: 1/-1; height: 4px; background: var(--bg-inset); border-radius: var(--r-full); overflow:hidden; }
+.cat-bar .track > span { display:block; height:100%; }
+.filt-bar { display:flex; gap: var(--sp-2); align-items:center; flex-wrap:wrap; background: var(--bg-surface); border:1px solid var(--border-subtle); padding: var(--sp-2) var(--sp-3); border-radius: var(--r-md); margin-bottom: var(--sp-3); }
+.filt-bar select, .filt-bar input { background: var(--bg-inset); color: var(--text-primary); border:1px solid var(--border-subtle); border-radius: var(--r-sm); padding: 4px 8px; font-size:12px; }
+.filt-bar label { font-family: var(--ff-mono); font-size:10px; letter-spacing:.06em; text-transform:uppercase; color: var(--text-muted); }
+.chip { font-family: var(--ff-mono); font-size:11px; padding: 3px 8px; border:1px solid var(--border-subtle); border-radius: var(--r-full); background: var(--bg-inset); color: var(--text-secondary); cursor:pointer; }
+.chip.on { background: rgba(189,147,249,0.10); color: var(--accent-purple); border-color: rgba(189,147,249,0.30); }
+</style>
+</head>
+<body>
+<div id="shell-root"></div>
+<script src="../_shared/glyphs.js"></script>
+<script src="../_shared/shell.js"></script>
+<script>
+montarShell({clusterAtivo:'financas', abaAtiva:'extrato', breadcrumb:['Ouroboros','Finanças','Extrato'], acoes:[{label:'Importar OFX',icon:'upload',href:'16-inbox.html'},{label:'Exportar',icon:'download',primary:true,onClick:"toast('Extrato exportado · extrato_2026-03.csv')"}]});
+
+const fmt = v => 'R$ ' + Math.abs(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+
+// linha de saldo (90d)
+const SALDO = Array.from({length:90}, (_,i) => 24800 + Math.sin(i/8)*900 + i*42 + (i%7===0?-1800:0));
+function saldoSvg(arr, w=540, h=160) {
+  const min = Math.min(...arr), max = Math.max(...arr), span = max-min;
+  const xs = i => (i/(arr.length-1))*w;
+  const ys = v => h - ((v-min)/span)*h*0.85 - 6;
+  const pts = arr.map((v,i)=>`${xs(i)},${ys(v)}`).join(' ');
+  const area = `${xs(0)},${h} ${pts} ${xs(arr.length-1)},${h}`;
+  return `<svg viewBox="0 0 ${w} ${h+18}" style="width:100%;height:auto;display:block;">
+    <defs><linearGradient id="sg" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stop-color="#bd93f9" stop-opacity="0.4"/><stop offset="100%" stop-color="#bd93f9" stop-opacity="0.02"/></linearGradient></defs>
+    <polygon points="${area}" fill="url(#sg)"/>
+    <polyline points="${pts}" fill="none" stroke="var(--accent-purple)" stroke-width="1.4"/>
+    <text x="0" y="${h+14}" font-family="JetBrains Mono" font-size="10" fill="var(--text-muted)">90 dias atrás</text>
+    <text x="${w}" y="${h+14}" text-anchor="end" font-family="JetBrains Mono" font-size="10" fill="var(--text-muted)">hoje</text>
+  </svg>`;
+}
+
+const CATS = [
+  {n:'Mercado',          v:1842, c:'var(--accent-purple)'},
+  {n:'Restaurantes',     v:1410, c:'var(--accent-pink)'},
+  {n:'Transporte',       v:680,  c:'var(--accent-cyan)'},
+  {n:'Saúde',            v:520,  c:'var(--accent-green)'},
+  {n:'Lazer',            v:412,  c:'var(--accent-yellow)'},
+  {n:'Casa · contas',    v:1280, c:'var(--accent-orange)'},
+  {n:'Investimento',     v:3200, c:'var(--d7-graduado)'},
+];
+const totalCat = CATS.reduce((a,c)=>a+c.v,0);
+
+const DIAS = [
+  { data:'2026-04-30 · QUI', total:-2832.40, txns:[
+    {ic:'NB', desc:'Nubank · cartão', meta:'crédito · vencimento 10/05', cat:'Mercado', conta:'C6', val:-846.21, sha:'a3f9c1e2'},
+    {ic:'IF', desc:'Investimento IVVB11', meta:'B3 · 12 cotas @ 266,67', cat:'Investimento', conta:'Inter', val:-3200.04, sha:'2bdd91aa'},
+    {ic:'PX', desc:'Pix recebido · cliente J. Mota', meta:'serviço consultoria', cat:'Receita PJ', conta:'Bradesco', val:1213.85, sha:'9e44218c'},
+  ]},
+  { data:'2026-04-29 · QUA', total:-512.20, txns:[
+    {ic:'IF', desc:'iFood · Sushi Yamamoto', meta:'cartão · 1x', cat:'Restaurantes', conta:'C6', val:-127.40, sha:'7745bbef'},
+    {ic:'UB', desc:'Uber · 4 corridas', meta:'app · agregado', cat:'Transporte', conta:'C6', val:-94.80, sha:'33aa1100'},
+    {ic:'EX', desc:'Extra · Mercado Mooca', meta:'débito · 1 compra', cat:'Mercado', conta:'Bradesco', val:-290.00, sha:'b4d0c73f'},
+  ]},
+  { data:'2026-04-28 · TER', total:-1430.00, txns:[
+    {ic:'AL', desc:'Aluguel · transferência', meta:'TED · agendado', cat:'Casa · contas', conta:'Bradesco', val:-1280.00, sha:'fe8a01dd'},
+    {ic:'AC', desc:'Academia BlueFit', meta:'mensalidade', cat:'Saúde', conta:'C6', val:-150.00, sha:'aa1bbe45'},
+  ]},
+];
+
+const txnsHtml = DIAS.map(d => `
+  <div class="day-group">
+    <div class="day-head">
+      <span class="when">${d.data}</span>
+      <span class="total" style="color:${d.total<0?'var(--accent-red)':'var(--d7-graduado)'};">${d.total<0?'-':'+'} ${fmt(d.total)}</span>
+    </div>
+    ${d.txns.map(t => `
+      <div class="txn">
+        <div class="ic">${t.ic}</div>
+        <div class="desc"><strong>${t.desc}</strong><span class="meta">${t.meta} · sha8 <code style="color:var(--accent-purple);">${t.sha}</code></span></div>
+        <div><span class="cat">${t.cat}</span></div>
+        <div class="conta">${t.conta}</div>
+        <div class="val ${t.val<0?'neg':'pos'}">${t.val<0?'-':'+'} ${fmt(t.val)}</div>
+      </div>
+    `).join('')}
+  </div>
+`).join('');
+
+const catsHtml = CATS.map(c => `
+  <div class="cat-bar">
+    <span class="name"><span class="dot" style="background:${c.c};"></span>${c.n}</span>
+    <span class="v">${fmt(c.v)} · ${Math.round(c.v/totalCat*100)}%</span>
+    <div class="track"><span style="width:${c.v/totalCat*100}%;background:${c.c};"></span></div>
+  </div>
+`).join('');
+
+document.getElementById('main-root').innerHTML = `
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">EXTRATO</h1>
+      <p class="page-subtitle">Transações normalizadas dos OFX, faturas, comprovantes Pix. Cada linha tem <code style="color:var(--accent-purple);">sha8</code> de origem rastreável até o arquivo bruto.</p>
+    </div>
+    <div class="page-meta">
+      <span class="sprint-tag">Sprint 4</span>
+      <span class="pill pill-d7-graduado">439 arquivos · 2.847 transações</span>
+    </div>
+  </div>
+
+  <div class="kpi-row">
+    <div class="k"><div class="l">Saldo consolidado</div><div class="v">${fmt(31420.85)}</div><div class="d">3 contas ·  R$ 1.842 (30d)</div></div>
+    <div class="k"><div class="l">Entrada · 30d</div><div class="v" style="color:var(--d7-graduado);">${fmt(14280)}</div><div class="d">PJ + salário + dividendos</div></div>
+    <div class="k"><div class="l">Saída · 30d</div><div class="v" style="color:var(--accent-red);">${fmt(9344)}</div><div class="d">7 categorias · 142 txns</div></div>
+    <div class="k"><div class="l">Investido · 30d</div><div class="v" style="color:var(--accent-purple);">${fmt(3200)}</div><div class="d">22% da receita</div></div>
+  </div>
+
+  <div class="filt-bar">
+    <label>Conta</label>
+    <select><option>todas (3)</option><option>C6</option><option>Bradesco</option><option>Inter</option></select>
+    <label>Categoria</label>
+    <select><option>todas</option><option>Mercado</option><option>Restaurantes</option></select>
+    <label>Período</label>
+    <select><option>30 dias</option><option>90 dias</option><option>YTD</option></select>
+    <label>Busca</label>
+    <input type="text" placeholder="descrição, sha8, valor" style="width:200px;">
+    <span class="chip on">só saídas</span>
+    <span class="chip">com sidecar</span>
+    <span class="chip">não-categorizadas</span>
+    <span style="margin-left:auto;font-family:var(--ff-mono);font-size:11px;color:var(--text-muted);">142 transações</span>
+  </div>
+
+  <div class="ext-grid">
+    <div>${txnsHtml}</div>
+    <div>
+      <div class="right-card">
+        <h3>Saldo · 90 dias</h3>
+        ${saldoSvg(SALDO)}
+        <div style="display:flex;gap:var(--sp-3);margin-top:var(--sp-3);font-family:var(--ff-mono);font-size:11px;">
+          <div><span style="color:var(--text-muted);">mín</span> ${fmt(Math.min(...SALDO))}</div>
+          <div><span style="color:var(--text-muted);">máx</span> ${fmt(Math.max(...SALDO))}</div>
+          <div style="margin-left:auto;color:var(--accent-green);"> +R$ ${Math.round(SALDO[SALDO.length-1]-SALDO[0]).toLocaleString('pt-BR')}</div>
+        </div>
+      </div>
+      <div class="right-card">
+        <h3>Breakdown · saída 30d</h3>
+        ${catsHtml}
+      </div>
+      <div class="right-card">
+        <h3>Origens dos dados · 30d</h3>
+        <div style="display:flex;flex-direction:column;gap:8px;font-size:12px;">
+          <div style="display:flex;align-items:center;gap:8px;"><span style="font-family:var(--ff-mono);width:50px;color:var(--accent-green);">OFX</span><div style="flex:1;height:4px;background:var(--bg-inset);border-radius:2px;overflow:hidden;"><span style="display:block;height:100%;width:64%;background:var(--accent-green);"></span></div><span style="font-family:var(--ff-mono);color:var(--text-muted);">91 txns</span></div>
+          <div style="display:flex;align-items:center;gap:8px;"><span style="font-family:var(--ff-mono);width:50px;color:var(--accent-purple);">Opus</span><div style="flex:1;height:4px;background:var(--bg-inset);border-radius:2px;overflow:hidden;"><span style="display:block;height:100%;width:24%;background:var(--accent-purple);"></span></div><span style="font-family:var(--ff-mono);color:var(--text-muted);">34 txns</span></div>
+          <div style="display:flex;align-items:center;gap:8px;"><span style="font-family:var(--ff-mono);width:50px;color:var(--accent-pink);">Humano</span><div style="flex:1;height:4px;background:var(--bg-inset);border-radius:2px;overflow:hidden;"><span style="display:block;height:100%;width:12%;background:var(--accent-pink);"></span></div><span style="font-family:var(--ff-mono);color:var(--text-muted);">17 txns</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+`;
+hidratarGlyphs(document.getElementById('main-root'));
+</script>
+</body>
+</html>

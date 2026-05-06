@@ -1,0 +1,543 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Ouroboros — Bem-estar · Rotina</title>
+<link rel="stylesheet" href="../_shared/tokens.css">
+<link rel="stylesheet" href="../_shared/components.css">
+<style>
+.rotina-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: var(--sp-4);
+}
+
+.rot-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  padding: var(--sp-5);
+  display: flex; flex-direction: column;
+}
+.rot-head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: var(--sp-4);
+  padding-bottom: var(--sp-3);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.rot-titulo {
+  font-family: var(--ff-mono);
+  font-size: var(--fs-12);
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--cor);
+  font-weight: 600;
+  display: flex; align-items: center; gap: 8px;
+}
+.rot-add {
+  background: var(--bg-inset);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  width: 28px; height: 28px;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  display: grid; place-items: center;
+}
+.rot-add:hover { color: var(--cor); border-color: var(--cor); }
+
+.rot-lista { display: flex; flex-direction: column; gap: 6px; }
+
+/* Alarme */
+.alarme-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: var(--sp-3);
+  align-items: center;
+  padding: var(--sp-3);
+  background: var(--bg-inset);
+  border: 1px solid var(--border-subtle);
+  border-left: 3px solid var(--cor);
+  border-radius: var(--r-sm);
+}
+.alarme-hora {
+  font-family: var(--ff-mono);
+  font-size: var(--fs-24);
+  font-weight: 500;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.alarme-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.alarme-titulo {
+  font-size: var(--fs-13);
+  color: var(--text-primary);
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.alarme-meta {
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+}
+.alarme-toggle {
+  position: relative;
+  width: 36px; height: 20px;
+  background: var(--bg-elevated);
+  border-radius: var(--r-full);
+  cursor: pointer;
+  border: 1px solid var(--border-subtle);
+}
+.alarme-toggle::after {
+  content: '';
+  position: absolute; top: 2px; left: 2px;
+  width: 14px; height: 14px;
+  background: var(--text-muted);
+  border-radius: 50%;
+  transition: transform .15s, background .15s;
+}
+.alarme-toggle.on { background: var(--cor); border-color: var(--cor); }
+.alarme-toggle.on::after { transform: translateX(16px); background: var(--bg-base); }
+
+/* Tarefas */
+.tarefa-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: var(--sp-3);
+  align-items: center;
+  padding: var(--sp-3);
+  background: var(--bg-inset);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  transition: background .12s;
+}
+.tarefa-row:hover { background: var(--bg-elevated); }
+.tarefa-row.feita { opacity: 0.55; }
+.tarefa-row.feita .tarefa-titulo { text-decoration: line-through; color: var(--text-muted); }
+
+.checkbox {
+  width: 18px; height: 18px;
+  border: 1.5px solid var(--border-strong);
+  border-radius: 3px;
+  display: grid; place-items: center;
+  background: var(--bg-base);
+  flex-shrink: 0;
+}
+.checkbox.on {
+  background: var(--cor);
+  border-color: var(--cor);
+}
+.checkbox.on svg { color: var(--bg-base); }
+.tarefa-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.tarefa-titulo {
+  font-size: var(--fs-13);
+  color: var(--text-primary);
+}
+.tarefa-meta {
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  display: flex; gap: 8px;
+}
+.tarefa-meta .prio-h { color: var(--accent-red); }
+.tarefa-meta .prio-m { color: var(--accent-yellow); }
+.tarefa-meta .prio-l { color: var(--text-muted); }
+
+.subgrupo {
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  padding: var(--sp-3) 0 var(--sp-2);
+}
+
+/* Contadores */
+.contador-row {
+  padding: var(--sp-4);
+  background: var(--bg-inset);
+  border: 1px solid var(--border-subtle);
+  border-left: 3px solid var(--cor);
+  border-radius: var(--r-sm);
+  display: flex; flex-direction: column; gap: 8px;
+}
+.contador-head {
+  display: flex; align-items: baseline; justify-content: space-between;
+}
+.contador-titulo {
+  font-size: var(--fs-13);
+  color: var(--text-primary);
+  font-weight: 500;
+}
+.contador-tipo {
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  color: var(--cor);
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+}
+.contador-valor {
+  font-family: var(--ff-mono);
+  font-size: var(--fs-32);
+  font-weight: 500;
+  color: var(--cor);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.contador-valor small {
+  font-size: 13px;
+  color: var(--text-muted);
+  font-weight: 400;
+}
+.contador-progresso {
+  height: 6px;
+  background: var(--bg-elevated);
+  border-radius: var(--r-full);
+  overflow: hidden;
+  position: relative;
+}
+.contador-progresso > span {
+  position: absolute; left: 0; top: 0; bottom: 0;
+  background: var(--cor);
+  border-radius: var(--r-full);
+}
+.contador-meta {
+  display: flex; justify-content: space-between;
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+}
+.contador-marcos {
+  display: flex; gap: 4px; flex-wrap: wrap;
+  margin-top: 4px;
+}
+.marco {
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: var(--r-xs);
+  background: var(--bg-elevated);
+  color: var(--text-muted);
+  border: 1px solid var(--border-subtle);
+}
+.marco.bati {
+  background: rgba(80,250,123,0.10);
+  color: var(--accent-green);
+  border-color: rgba(80,250,123,0.25);
+}
+
+/* Resumo do topo */
+.rotina-resumo {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-4);
+}
+.resumo-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  padding: var(--sp-4);
+}
+.resumo-card .l {
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.resumo-card .v {
+  font-family: var(--ff-mono);
+  font-size: var(--fs-24);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.resumo-card .sub {
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+@media (max-width: 1100px) {
+  .rotina-grid { grid-template-columns: 1fr; }
+  .rotina-resumo { grid-template-columns: 1fr 1fr; }
+}
+</style>
+</head>
+<body>
+<div id="shell-root"></div>
+<script src="../_shared/glyphs.js"></script>
+<script src="../_shared/shell.js"></script>
+<script>
+montarShell({
+  clusterAtivo: 'bem-estar',
+  abaAtiva: 'be-rotina',
+  breadcrumb: ['Ouroboros', 'Bem-estar', 'Rotina'],
+  acoes: [
+    { label: 'Hoje', icon: 'sparkle', href: '17-bem-estar-hoje.html' },
+    { label: 'Novo', icon: 'plus', primary: true, onClick: "toast('Wizard: alarme · tarefa · contador?')" },
+  ],
+});
+
+document.getElementById('main-root').innerHTML = `
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">ROTINA</h1>
+      <p class="page-subtitle">Alarmes recorrentes · tarefas · contadores. Tudo persiste em
+      <a href="28-rotina-toml.html" style="color:var(--accent-pink);background:var(--bg-inset);padding:1px 6px;border-radius:2px;font-family:var(--ff-mono);font-size:12px;text-decoration:none;">.ouroboros/rotina/*.toml</a>
+      (clique p/ editor).
+      Notificações nativas via app desktop. <strong style="color:var(--accent-purple);">M04, M07, M14</strong></p>
+    </div>
+    <div class="page-meta">
+      <span class="sprint-tag">M04 · M07 · M14</span>
+      <span class="pill pill-d7-graduado">8 alarmes ativos</span>
+    </div>
+  </div>
+
+  <div class="rotina-resumo">
+    <div class="resumo-card">
+      <div class="l">tarefas hoje</div>
+      <div class="v" style="color:var(--accent-cyan);">3<span style="color:var(--text-muted);font-size:14px;">/7</span></div>
+      <div class="sub">↗ 4 a fazer</div>
+    </div>
+    <div class="resumo-card">
+      <div class="l">próximo alarme</div>
+      <div class="v" style="color:var(--accent-orange);">22:00</div>
+      <div class="sub">bupropiona · 7h21 a partir de agora</div>
+    </div>
+    <div class="resumo-card">
+      <div class="l">streak ativo</div>
+      <div class="v" style="color:var(--accent-green);">47<span style="color:var(--text-muted);font-size:14px;"> dias</span></div>
+      <div class="sub">sem fumar · próximo marco em 13d</div>
+    </div>
+    <div class="resumo-card">
+      <div class="l">conclusão semanal</div>
+      <div class="v" style="color:var(--accent-yellow);">82%</div>
+      <div class="sub">↗ +6pp vs semana passada</div>
+    </div>
+  </div>
+
+  <div class="rotina-grid">
+    <!-- ALARMES -->
+    <div class="rot-card" style="--cor: var(--accent-orange);">
+      <div class="rot-head">
+        <span class="rot-titulo">${glyph('alarm', 14)} Alarmes — 8</span>
+        <button class="rot-add" onclick="toast('Novo alarme')">${glyph('plus', 12)}</button>
+      </div>
+      <div class="rot-lista">
+        <div class="subgrupo">medicação · 3</div>
+        <div class="alarme-row" style="--cor: var(--accent-orange);">
+          <div class="alarme-hora">08:00</div>
+          <div class="alarme-info">
+            <span class="alarme-titulo">Bupropiona 150mg</span>
+            <span class="alarme-meta">diário · com água · não pular</span>
+          </div>
+          <div class="alarme-toggle on" style="--cor: var(--accent-orange);"></div>
+        </div>
+        <div class="alarme-row" style="--cor: var(--accent-orange);">
+          <div class="alarme-hora">14:00</div>
+          <div class="alarme-info">
+            <span class="alarme-titulo">Vitamina D + ômega 3</span>
+            <span class="alarme-meta">diário · após almoço</span>
+          </div>
+          <div class="alarme-toggle on" style="--cor: var(--accent-orange);"></div>
+        </div>
+        <div class="alarme-row" style="--cor: var(--accent-orange);">
+          <div class="alarme-hora">22:00</div>
+          <div class="alarme-info">
+            <span class="alarme-titulo">Bupropiona 150mg</span>
+            <span class="alarme-meta">diário · 2h antes de dormir</span>
+          </div>
+          <div class="alarme-toggle on" style="--cor: var(--accent-orange);"></div>
+        </div>
+
+        <div class="subgrupo">rotina · 4</div>
+        <div class="alarme-row" style="--cor: var(--accent-cyan);">
+          <div class="alarme-hora">07:00</div>
+          <div class="alarme-info">
+            <span class="alarme-titulo">Acordar — bom dia</span>
+            <span class="alarme-meta">seg-sex · som calmo</span>
+          </div>
+          <div class="alarme-toggle on" style="--cor: var(--accent-cyan);"></div>
+        </div>
+        <div class="alarme-row" style="--cor: var(--accent-cyan);">
+          <div class="alarme-hora">12:30</div>
+          <div class="alarme-info">
+            <span class="alarme-titulo">Hora de almoçar — sem tela</span>
+            <span class="alarme-meta">diário</span>
+          </div>
+          <div class="alarme-toggle on" style="--cor: var(--accent-cyan);"></div>
+        </div>
+        <div class="alarme-row" style="--cor: var(--accent-cyan);">
+          <div class="alarme-hora">18:00</div>
+          <div class="alarme-info">
+            <span class="alarme-titulo">Encerrar trabalho</span>
+            <span class="alarme-meta">seg-sex · sair do laptop</span>
+          </div>
+          <div class="alarme-toggle on" style="--cor: var(--accent-cyan);"></div>
+        </div>
+        <div class="alarme-row" style="--cor: var(--accent-cyan);">
+          <div class="alarme-hora">23:00</div>
+          <div class="alarme-info">
+            <span class="alarme-titulo">Hora de dormir — celular fora</span>
+            <span class="alarme-meta">diário</span>
+          </div>
+          <div class="alarme-toggle" style="--cor: var(--accent-cyan);"></div>
+        </div>
+
+        <div class="subgrupo">casal · 1</div>
+        <div class="alarme-row" style="--cor: var(--accent-pink);">
+          <div class="alarme-hora">19:00</div>
+          <div class="alarme-info">
+            <span class="alarme-titulo">Check-in com Pessoa B</span>
+            <span class="alarme-meta">qua · 15min · "como foi seu dia?"</span>
+          </div>
+          <div class="alarme-toggle on" style="--cor: var(--accent-pink);"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAREFAS -->
+    <div class="rot-card" style="--cor: var(--accent-cyan);">
+      <div class="rot-head">
+        <span class="rot-titulo">${glyph('list', 14)} Tarefas — hoje</span>
+        <button class="rot-add" onclick="toast('Nova tarefa')">${glyph('plus', 12)}</button>
+      </div>
+      <div class="rot-lista">
+        <div class="subgrupo">prioridade alta · 2</div>
+        <div class="tarefa-row" style="--cor: var(--accent-red);">
+          <div class="checkbox" style="--cor: var(--accent-red);"></div>
+          <div class="tarefa-info">
+            <span class="tarefa-titulo">Pagar fatura C6 antes do vencimento</span>
+            <span class="tarefa-meta"><span class="prio-h"> alta</span><span>finanças · mim</span><span>vence hoje</span></span>
+          </div>
+          <span style="font-family:var(--ff-mono);font-size:10px;color:var(--accent-red);">!</span>
+        </div>
+        <div class="tarefa-row" style="--cor: var(--accent-red);">
+          <div class="checkbox" style="--cor: var(--accent-red);"></div>
+          <div class="tarefa-info">
+            <span class="tarefa-titulo">Renovar receita de bupropiona com Dra. Lima</span>
+            <span class="tarefa-meta"><span class="prio-h"> alta</span><span>saúde · mim</span><span>restam 8 comprimidos</span></span>
+          </div>
+        </div>
+
+        <div class="subgrupo">prioridade média · 3</div>
+        <div class="tarefa-row" style="--cor: var(--accent-yellow);">
+          <div class="checkbox" style="--cor: var(--accent-yellow);"></div>
+          <div class="tarefa-info">
+            <span class="tarefa-titulo">Responder e-mails da caixa prioridade</span>
+            <span class="tarefa-meta"><span class="prio-m"> média</span><span>trabalho</span></span>
+          </div>
+        </div>
+        <div class="tarefa-row feita" style="--cor: var(--accent-yellow);">
+          <div class="checkbox on" style="--cor: var(--accent-green);">${glyph('check', 12)}</div>
+          <div class="tarefa-info">
+            <span class="tarefa-titulo">Treino A · peito + tríceps</span>
+            <span class="tarefa-meta"><span class="prio-m"> média</span><span>rotina · mim</span><span>concluído 17:42</span></span>
+          </div>
+        </div>
+        <div class="tarefa-row" style="--cor: var(--accent-yellow);">
+          <div class="checkbox" style="--cor: var(--accent-yellow);"></div>
+          <div class="tarefa-info">
+            <span class="tarefa-titulo">Comprar comida para Mia (gata)</span>
+            <span class="tarefa-meta"><span class="prio-m"> média</span><span>casa</span><span>resta 2 dias</span></span>
+          </div>
+        </div>
+
+        <div class="subgrupo">prioridade baixa · 2</div>
+        <div class="tarefa-row feita" style="--cor: var(--text-muted);">
+          <div class="checkbox on" style="--cor: var(--accent-green);">${glyph('check', 12)}</div>
+          <div class="tarefa-info">
+            <span class="tarefa-titulo">Listar livros para a próxima viagem</span>
+            <span class="tarefa-meta"><span class="prio-l"> baixa</span><span>casal</span><span>concluído 11:08</span></span>
+          </div>
+        </div>
+        <div class="tarefa-row" style="--cor: var(--text-muted);">
+          <div class="checkbox" style="--cor: var(--text-muted);"></div>
+          <div class="tarefa-info">
+            <span class="tarefa-titulo">Organizar fotos do mês passado</span>
+            <span class="tarefa-meta"><span class="prio-l"> baixa</span><span>casal · memórias</span></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTADORES -->
+    <div class="rot-card" style="--cor: var(--accent-green);">
+      <div class="rot-head">
+        <span class="rot-titulo">${glyph('repeat', 14)} Contadores — 5</span>
+        <button class="rot-add" onclick="toast('Novo contador')">${glyph('plus', 12)}</button>
+      </div>
+      <div class="rot-lista">
+        <div class="contador-row" style="--cor: var(--accent-green);">
+          <div class="contador-head">
+            <span class="contador-titulo">Dias sem fumar</span>
+            <span class="contador-tipo">streak ↑</span>
+          </div>
+          <div class="contador-valor">47<small> dias</small></div>
+          <div class="contador-progresso"><span style="width:78%;"></span></div>
+          <div class="contador-meta"><span>desde 12 fev</span><span>próximo marco: 60d</span></div>
+          <div class="contador-marcos">
+            <span class="marco bati">7d </span>
+            <span class="marco bati">14d </span>
+            <span class="marco bati">30d </span>
+            <span class="marco">60d</span>
+            <span class="marco">90d</span>
+            <span class="marco">180d</span>
+          </div>
+        </div>
+
+        <div class="contador-row" style="--cor: var(--accent-cyan);">
+          <div class="contador-head">
+            <span class="contador-titulo">Treinos no mês</span>
+            <span class="contador-tipo">meta · mensal</span>
+          </div>
+          <div class="contador-valor">14<small>/16 dias</small></div>
+          <div class="contador-progresso"><span style="width:87.5%;"></span></div>
+          <div class="contador-meta"><span>mar/26</span><span>↗ +2 vs mês passado</span></div>
+        </div>
+
+        <div class="contador-row" style="--cor: var(--accent-purple);">
+          <div class="contador-head">
+            <span class="contador-titulo">Dias de meditação</span>
+            <span class="contador-tipo">streak ↑</span>
+          </div>
+          <div class="contador-valor">12<small> dias</small></div>
+          <div class="contador-progresso"><span style="width:60%;"></span></div>
+          <div class="contador-meta"><span>desde 19 mar</span><span>próximo marco: 21d</span></div>
+        </div>
+
+        <div class="contador-row" style="--cor: var(--accent-pink);">
+          <div class="contador-head">
+            <span class="contador-titulo">Rolezinhos a dois</span>
+            <span class="contador-tipo">meta · mensal</span>
+          </div>
+          <div class="contador-valor">3<small>/4 esperados</small></div>
+          <div class="contador-progresso"><span style="width:75%;"></span></div>
+          <div class="contador-meta"><span>mar/26</span><span>1 agendado pra sábado</span></div>
+        </div>
+
+        <div class="contador-row" style="--cor: var(--accent-red);">
+          <div class="contador-head">
+            <span class="contador-titulo">Crises de ansiedade</span>
+            <span class="contador-tipo">desejado ↓</span>
+          </div>
+          <div class="contador-valor">2<small> em 30d</small></div>
+          <div class="contador-progresso"><span style="width:33%;background:var(--accent-green);"></span></div>
+          <div class="contador-meta"><span>↘ −3 vs 30d anteriores</span><span>última: 28 mar (sáb)</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+`;
+
+hidratarGlyphs(document.getElementById('main-root'));
+</script>
+</body>
+</html>

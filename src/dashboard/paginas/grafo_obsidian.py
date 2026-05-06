@@ -41,11 +41,11 @@ from src.dashboard.tema import (
     aplicar_locale_ptbr,
     callout_html,
     chip_html,
-    hero_titulo_html,
     rgba_cor,
     rgba_cor_inline,
     subtitulo_secao_html,
 )
+from src.dashboard.tema_plotly import st_plotly_chart_dracula
 from src.graph.queries import label_humano
 
 CORES_TIPO: dict[str, str] = {
@@ -73,13 +73,16 @@ def renderizar(
     """Ponto de entrada da página Grafo + Obsidian."""
     _ = pessoa, ctx
 
+    # UX-U-03: page-header canônico via helper.
+    from src.dashboard.componentes.page_header import renderizar_page_header
     st.markdown(
-        hero_titulo_html(
-            "",
-            "Grafo Visual + Obsidian",
-            "Subgrafo interativo de um fornecedor, preview do MOC "
-            "mensal sincronizado com Obsidian e fluxo "
-            "receita-categoria-fornecedor em bar charts.",
+        renderizar_page_header(
+            titulo="GRAFO VISUAL + OBSIDIAN",
+            subtitulo=(
+                "Subgrafo interativo de um fornecedor, preview do MOC mensal "
+                "sincronizado com Obsidian e fluxo receita-categoria-fornecedor."
+            ),
+            sprint_tag="UX-RD-13",
         ),
         unsafe_allow_html=True,
     )
@@ -233,7 +236,7 @@ def _renderizar_subgrafo() -> None:
         return
 
     fig = _construir_figura_grafo(nodes, edges, int(id_selecionado))
-    st.plotly_chart(fig, use_container_width=True, key="grafo_subgrafo")
+    st_plotly_chart_dracula(fig, key="grafo_subgrafo")
 
     _renderizar_legenda_tipos(nodes)
 
@@ -521,7 +524,7 @@ def _bar_chart(
             key_grafico=key,
         )
     else:
-        st.plotly_chart(fig, use_container_width=True, key=key)
+        st_plotly_chart_dracula(fig, key=key)
 
 
 def _divisor() -> str:

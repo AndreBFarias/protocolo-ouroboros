@@ -53,6 +53,11 @@ CABECALHO: list[str] = [
     "campo",
     "valor_etl",
     "valor_opus",
+    # Sprint UX-RD-11: confianca_opus (float 0..1) registra o quanto a
+    # extração agentic Opus está segura. Default 0.0; preenchido pela skill
+    # /validar-arquivo. Inserido aqui após `valor_opus` para preservar a
+    # ordem semântica "valor + confiança" antes do `valor_humano`.
+    "confianca_opus",
     "valor_humano",
     "status_etl",
     "status_opus",
@@ -78,6 +83,8 @@ class LinhaValidacao:
     valor_etl: str = ""
     ts_processado: str = field(default_factory=lambda: datetime.now().isoformat(timespec="seconds"))
     valor_opus: str = ""
+    # Sprint UX-RD-11: confiança 0..1 da extração agentic Opus
+    confianca_opus: str = "0.0"
     valor_humano: str = ""
     status_etl: str = "pendente"
     status_opus: str = "pendente"
@@ -135,6 +142,10 @@ def ler_csv(caminho_csv: Path | None = None) -> list[LinhaValidacao]:
         reader = csv.DictReader(fh)
         for row in reader:
             kwargs = {nome: (row.get(nome) or "") for nome in CABECALHO}
+            # Sprint UX-RD-11: confianca_opus default 0.0 quando ausente em
+            # CSV antigo (pré-migração) ou quando humano deixou em branco.
+            if not kwargs.get("confianca_opus"):
+                kwargs["confianca_opus"] = "0.0"
             try:
                 linhas.append(LinhaValidacao(**kwargs))
             except TypeError as erro:
@@ -204,6 +215,7 @@ def _mesclar_preservando_humano(
         campo=existente.campo,
         valor_etl=nova.valor_etl or existente.valor_etl,
         valor_opus=existente.valor_opus,
+        confianca_opus=existente.confianca_opus,
         valor_humano=existente.valor_humano,
         status_etl=nova.status_etl or existente.status_etl,
         status_opus=existente.status_opus,
@@ -279,11 +291,15 @@ def atualizar_validacao_opus(
     valor_opus: str,
     status_opus: str = "ok",
     caminho_csv: Path | None = None,
+    *,
+    confianca_opus: float | str | None = None,
 ) -> bool:
-    """Atualiza colunas valor_opus + status_opus de uma linha existente.
+    """Atualiza valor_opus + status_opus + (opcional) confianca_opus.
 
-    Retorna ``True`` se a linha foi encontrada e atualizada. Não cria linha
-    nova se a chave (sha8, campo) não existir -- o ETL é fonte primária.
+    Sprint UX-RD-11: parâmetro ``confianca_opus`` opcional **keyword-only**
+    (preserva assinatura posicional histórica: ``(sha8, campo, valor_opus,
+    status_opus, caminho_csv)``). Se omitido, preserva valor anterior.
+    Retorna ``True`` se a linha foi encontrada.
     """
     if status_opus not in STATUS_VALIDOS:
         raise ValueError(f"status_opus inválido: {status_opus}")
@@ -293,6 +309,8 @@ def atualizar_validacao_opus(
         if linha.sha8_arquivo == sha8 and linha.campo == campo:
             linha.valor_opus = valor_opus
             linha.status_opus = status_opus
+            if confianca_opus is not None:
+                linha.confianca_opus = str(confianca_opus)
             gravar_csv(linhas, caminho_csv)
             return True
     return False

@@ -1,9 +1,34 @@
-"""CSS global do dashboard Dracula (extraído de tema.py).
+"""CSS global do dashboard (extraído de tema.py).
 
 Sprint ANTI-MIGUE-08: o bloco ``css_global()`` ficou com >500 linhas
 e dominava ``tema.py``. Movido para módulo dedicado, re-exportado pelo
 módulo ``tema`` para preservar contratos públicos
 (``from src.dashboard.tema import css_global``).
+
+Sprint UX-RD-02: o ``css_global()`` foi estendido (não reescrito) com
+duas camadas novas vindas de ``novo-mockup/_shared/{tokens.css,
+components.css}``:
+
+  1. Bloco ``:root`` adicional publica os tokens hifenizados do redesign
+     (``--bg-base``, ``--accent-purple``, ``--sp-*``, ``--r-*``, ``--ff-*``,
+     ``--fs-*``, ``--sh-*``, ``--d7-*``, ``--humano-*``, ``--syn-*``,
+     ``--diff-*``). Convive lado a lado com o ``:root`` legado
+     (``--color-fundo``, ``--spacing-*``, ``--font-*``) que ainda alimenta
+     14 páginas e 81 testes regressivos.
+
+  2. Classes utilitárias do redesign (``.shell``, ``.sidebar``,
+     ``.page-header``, ``.kpi``, ``.pill-d7-*``, ``.pill-humano-*``,
+     ``.table`` densa, ``.drawer``, ``.skill-instr``, ``.btn-*``,
+     ``.card.interactive``, ``.sprint-tag``, ``.confidence``) injetadas
+     em sequência. Páginas redesenhadas (UX-RD-03+) consomem essas
+     classes; páginas legadas continuam renderizando exatamente como
+     antes pois nenhum seletor antigo foi tocado.
+
+Decisão sobre fontes (ADR-07 Local First): a Sprint UX-RD-02 usa
+fallback nativo (``ui-sans-serif``, ``ui-monospace``) declarado na
+cascata dos tokens ``--ff-sans`` e ``--ff-mono``. Self-host em
+``assets/fonts/`` está documentado em ``assets/fonts/README.md`` para
+sprint futura UX-RD-02b. Sem requisição externa em runtime.
 
 Tokens (CORES, SPACING, fontes, paddings, breakpoints) continuam
 declarados em ``tema.py`` e são consumidos aqui via import explícito.
@@ -31,19 +56,798 @@ from src.dashboard.tema import (
 )
 
 
-def css_global() -> str:
-    """Retorna bloco CSS global para o dashboard Dracula.
+def _root_redesign() -> str:
+    """Bloco ``:root`` da Sprint UX-RD-02 com tokens hifenizados.
 
-    Sprint 92c: publica CSS custom properties em ``:root`` a partir dos tokens
-    Python já existentes (``CORES``, ``SPACING``, fontes). Helpers HTML novos
-    (callout, progress_inline, metric_semantic, breadcrumb) referenciam esses
-    tokens via ``var(--color-*)`` em vez de interpolar hex, permitindo que
-    temas futuros sobrescrevam apenas o bloco ``:root`` sem tocar em helper
-    algum. Componentes Plotly continuam usando hex direto pois JSON inline
-    não resolve ``var()``.
+    Espelha 1:1 ``novo-mockup/_shared/tokens.css``. Lê os hex literais de
+    ``CORES`` (Sprint UX-RD-01 já migrou) para evitar duplicação. Tokens
+    sem correspondência direta em ``CORES`` (--syn-*, --diff-*, dimensões
+    de shell, sombras) carregam o hex do mockup como fonte canônica
+    via fallback dentro de ``var()``. Auditoria (≤3 hex literais fora
+    de ``var()`` ou comentário) limita-se a esses fallbacks
+    inevitáveis.
     """
     return f"""
+    :root {{
+        /* ─── Fundo (escala de profundidade UX-RD-01) ─── */
+        --bg-base:     {CORES["fundo"]};
+        --bg-surface:  {CORES["card_fundo"]};
+        --bg-elevated: {CORES["card_elevado"]};
+        --bg-inset:    {CORES["fundo_inset"]};
+
+        /* ─── Bordas ─── */
+        --border-subtle: #313445;  /* noqa: accent (literal canônico tokens.css) */
+        --border-strong: #4a4f63;  /* noqa: accent */
+        --border-accent: #6b5a9c;  /* noqa: accent */
+
+        /* ─── Texto ─── */
+        --text-primary:   {CORES["texto"]};
+        --text-secondary: {CORES["texto_sec"]};
+        --text-muted:     {CORES["texto_muted"]};
+        --text-inverse:   {CORES["fundo"]};
+
+        /* ─── Acentos Dracula ─── */
+        --accent-purple: {CORES["destaque"]};
+        --accent-pink:   {CORES["superfluo"]};
+        --accent-cyan:   {CORES["neutro"]};
+        --accent-green:  {CORES["positivo"]};
+        --accent-yellow: {CORES["info"]};
+        --accent-orange: {CORES["alerta"]};
+        --accent-red:    {CORES["negativo"]};
+
+        /* ─── Estados D7 (cobertura observável) ─── */
+        --d7-graduado:   {CORES["d7_graduado"]};
+        --d7-calibracao: {CORES["d7_calibracao"]};
+        --d7-regredindo: {CORES["d7_regredindo"]};
+        --d7-pendente:   {CORES["d7_pendente"]};
+
+        /* ─── Estados de validação humana ─── */
+        --humano-aprovado:  {CORES["humano_aprovado"]};
+        --humano-rejeitado: {CORES["humano_rejeitado"]};
+        --humano-revisar:   {CORES["humano_revisar"]};
+        --humano-pendente:  {CORES["humano_pendente"]};
+
+        /* ─── Diff viewer ─── */
+        --diff-added-bg:       rgba(80, 250, 123, 0.10);
+        --diff-added-gutter:   {CORES["positivo"]};
+        --diff-removed-bg:     rgba(255, 85, 85, 0.10);
+        --diff-removed-gutter: {CORES["negativo"]};
+        --diff-neutral-gutter: var(--border-strong);
+
+        /* ─── Syntax highlight JSON ─── */
+        --syn-key:    {CORES["superfluo"]};
+        --syn-string: {CORES["info"]};
+        --syn-number: {CORES["destaque"]};
+        --syn-bool:   {CORES["alerta"]};
+        --syn-null:   {CORES["texto_muted"]};
+
+        /* ─── Espaçamento (4px base) ─── */
+        --sp-1:  4px;
+        --sp-2:  8px;
+        --sp-3:  12px;
+        --sp-4:  16px;
+        --sp-5:  20px;
+        --sp-6:  24px;
+        --sp-8:  32px;
+        --sp-10: 40px;
+        --sp-12: 48px;
+        --sp-16: 64px;
+
+        /* ─── Raio ─── */
+        --r-xs:   2px;
+        --r-sm:   4px;
+        --r-md:   6px;
+        --r-lg:   8px;
+        --r-full: 999px;
+
+        /* ─── Dimensões de shell ─── */
+        --sidebar-w:         240px;
+        --sidebar-collapsed: 56px;
+        --topbar-h:          56px;
+        --page-header-h:     72px;
+        --row-h:             32px;
+        --row-h-compact:     28px;
+        --kpi-w:             180px;
+        --kpi-h:             96px;
+        --drawer-w:          480px;
+
+        /* ─── Sombras ─── */
+        --sh-sm: 0 1px 2px rgba(0,0,0,0.40);
+        --sh-md: 0 4px 12px rgba(0,0,0,0.50), inset 0 1px 0 rgba(255,255,255,0.02);
+        --sh-lg: 0 12px 32px rgba(0,0,0,0.60), inset 0 1px 0 rgba(255,255,255,0.03);
+        --sh-xl: 0 24px 64px rgba(0,0,0,0.70), inset 0 1px 0 rgba(255,255,255,0.04);
+        --sh-focus: 0 0 0 2px var(--bg-base), 0 0 0 4px var(--accent-purple);
+
+        /* ─── Tipografia ─── */
+        --ff-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+        --ff-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+        --fs-11: 11px;
+        --fs-12: 12px;
+        --fs-13: 13px;
+        --fs-14: 14px;
+        --fs-16: 16px;
+        --fs-18: 18px;
+        --fs-20: 20px;
+        --fs-24: 24px;
+        --fs-32: 32px;
+        --fs-40: 40px;
+    }}
+    """
+
+
+def _classes_redesign() -> str:
+    """Classes utilitárias UX-RD-02 espelhando ``components.css``.
+
+    Cada bloco corresponde a uma seção do components.css dos mockups.
+    Páginas legadas (até UX-RD-03 ser entregue) ignoram essas classes
+    pois não as referenciam. Páginas redesenhadas começam a consumi-las
+    a partir de UX-RD-03.
+    """
+    return """
+    /* ============================================================
+       UX-RD-02: Classes utilitárias do redesign
+       Fonte canônica: novo-mockup/_shared/components.css
+       ============================================================ */
+
+    /* ─── SHELL: sidebar + topbar + main ─── */
+    .shell {
+        display: grid;
+        grid-template-columns: var(--sidebar-w) 1fr;
+        grid-template-rows: var(--topbar-h) 1fr;
+        grid-template-areas:
+            "sidebar topbar"
+            "sidebar main";
+        min-height: 100vh;
+    }
+    .shell.sidebar-collapsed { grid-template-columns: var(--sidebar-collapsed) 1fr; }
+
+    .sidebar {
+        grid-area: sidebar;
+        background: var(--bg-surface);
+        border-right: 1px solid var(--border-subtle);
+        padding: var(--sp-3) 0;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: var(--sp-2);
+    }
+    /* UX-U-04 followup: !important nas propriedades da sidebar canônica
+       para vencer a cascata do Streamlit (que aplica Inter/Source Sans
+       em ``[data-testid="stSidebar"] a`` e font-size base via stRoot). */
+    .sidebar-brand,
+    [data-testid="stSidebar"] a.sidebar-brand,
+    [data-testid="stSidebar"] .sidebar-brand {
+        display: flex;
+        align-items: center;
+        gap: var(--sp-2);
+        padding: var(--sp-2) var(--sp-4);
+        font-family: var(--ff-mono) !important;
+        font-weight: 500 !important;
+        font-size: var(--fs-14) !important;
+        letter-spacing: 0.04em !important;
+        text-transform: uppercase !important;
+    }
+    .sidebar-brand-glyph { width: 20px; height: 20px; color: var(--accent-purple); }
+    .sidebar-search { margin: 0 var(--sp-3) var(--sp-2); position: relative; }
+    .sidebar-search input {
+        width: 100%;
+        background: var(--bg-inset);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--r-sm);
+        padding: 6px var(--sp-2) 6px 28px;
+        font-size: var(--fs-12);
+        color: var(--text-primary);
+    }
+    .sidebar-search-icon {
+        position: absolute; left: var(--sp-2); top: 50%; transform: translateY(-50%);
+        width: 14px; height: 14px; color: var(--text-muted);
+    }
+    .sidebar-search kbd {
+        position: absolute; right: var(--sp-2); top: 50%; transform: translateY(-50%);
+        font-family: var(--ff-mono); font-size: 10px;
+        background: var(--bg-elevated); color: var(--text-muted);
+        border: 1px solid var(--border-subtle); border-radius: var(--r-xs);
+        padding: 1px 4px;
+    }
+
+    .sidebar-cluster { margin-top: var(--sp-1); }
+    /* UX-U-04 followup: tipografia canônica do mockup (11px mono) precisa
+       !important porque ancestrais Streamlit reinjetam font-size de 15px. */
+    .sidebar-cluster-header,
+    [data-testid="stSidebar"] .sidebar-cluster-header {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: var(--sp-2) var(--sp-4);
+        font-family: var(--ff-mono) !important;
+        font-size: var(--fs-11) !important;
+        font-weight: 400 !important;
+        letter-spacing: 0.10em !important;
+        text-transform: uppercase !important;
+        color: var(--text-muted) !important;
+    }
+    .sidebar-cluster-header .badge {
+        font-family: var(--ff-mono);
+        font-size: 10px;
+        background: var(--accent-purple);
+        color: var(--text-inverse);
+        border-radius: var(--r-full);
+        padding: 1px 6px;
+        font-weight: 500;
+        letter-spacing: 0;
+    }
+    /* UX-U-04 followup: Streamlit aplica CSS agressivo em
+       [data-testid="stSidebar"] a (cor azul de link, sublinhado).
+       Forçar !important + reset text-decoration para a sidebar item
+       respeitar o token canônico do mockup (var(--text-secondary),
+       sem sublinhado, sem cor de link). */
+    [data-testid="stSidebar"] a.sidebar-item,
+    .sidebar-item {
+        display: flex !important; align-items: center; gap: var(--sp-2);
+        padding: 6px var(--sp-4) 6px 32px !important;
+        font-family: var(--ff-sans) !important;
+        font-size: var(--fs-13) !important;
+        font-weight: 400 !important;
+        letter-spacing: normal !important;
+        text-transform: none !important;
+        color: var(--text-secondary) !important;
+        text-decoration: none !important;
+        border-left: 2px solid transparent;
+        cursor: pointer;
+        user-select: none;
+        transition: background .15s, color .15s, border-color .15s;
+    }
+    [data-testid="stSidebar"] a.sidebar-item:hover,
+    .sidebar-item:hover {
+        background: var(--bg-elevated);
+        color: var(--text-primary) !important;
+        text-decoration: none !important;
+    }
+    [data-testid="stSidebar"] a.sidebar-item.active,
+    .sidebar-item.active {
+        background: linear-gradient(90deg, rgba(189,147,249,0.12), transparent 60%);
+        color: var(--text-primary) !important;
+        border-left-color: var(--accent-purple);
+    }
+    .sidebar-item .count {
+        margin-left: auto;
+        font-family: var(--ff-mono); font-size: 10px;
+        color: var(--text-muted) !important;
+    }
+    /* Brand glyph link: também precisa reset de text-decoration. */
+    [data-testid="stSidebar"] a.sidebar-brand,
+    .sidebar-brand {
+        text-decoration: none !important;
+        color: var(--text-primary) !important;
+    }
+
+    /* UX-U-04 followup: topbar canônica do mockup tem 56px de altura
+       (00-shell-navegacao.html mede 56px). Sem min-height, o header
+       colapsa para a altura do breadcrumb (~22px) que não acomoda
+       botões da topbar-actions (T-01 vai preencher). */
+    .topbar {
+        grid-area: topbar;
+        background: var(--bg-surface);
+        border-bottom: 1px solid var(--border-subtle);
+        display: flex; align-items: center;
+        padding: 0 var(--sp-6);
+        gap: var(--sp-4);
+        min-height: 56px;
+    }
+    .breadcrumb {
+        display: flex; align-items: center; gap: var(--sp-2);
+        font-family: var(--ff-mono); font-size: var(--fs-12);
+        color: var(--text-muted); letter-spacing: 0.04em; text-transform: uppercase;
+    }
+    .breadcrumb .seg { color: var(--text-secondary); }
+    .breadcrumb .seg.current { color: var(--text-primary); }
+    .breadcrumb .sep { color: var(--border-strong); }
+    .topbar-actions { margin-left: auto; display: flex; align-items: center; gap: var(--sp-2); }
+
+    .main { grid-area: main; padding: var(--sp-6); overflow-y: auto; }
+
+    /* ─── PAGE HEADER ─── */
+    .page-header {
+        display: flex; align-items: flex-end; justify-content: space-between;
+        gap: var(--sp-4);
+        padding-bottom: var(--sp-4);
+        border-bottom: 1px solid var(--border-subtle);
+        margin-bottom: var(--sp-6);
+    }
+    /* UX-U-04 followup: !important para vencer h1 { font-size: 28px !important }
+       global do tema (linha 1059) e p,div,span { font-size: FONTE_CORPO } que
+       deformam page-title (40 -> 28) e page-subtitle (13 -> 15). */
+    .page-title,
+    h1.page-title {
+        font-family: var(--ff-mono) !important;
+        font-size: var(--fs-40) !important;
+        font-weight: 500 !important;
+        letter-spacing: -0.02em !important;
+        text-transform: uppercase !important;
+        margin: 0 !important;
+        line-height: 1 !important;
+        padding: 0 !important;
+        background: linear-gradient(
+            180deg,
+            var(--text-primary) 0%,
+            color-mix(in oklch, var(--text-primary) 80%, var(--accent-purple)) 100%
+        );
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    .page-subtitle,
+    p.page-subtitle {
+        font-family: var(--ff-sans) !important;
+        font-size: var(--fs-13) !important;
+        font-weight: 400 !important;
+        color: var(--text-secondary) !important;
+        margin: var(--sp-2) 0 0 !important;
+        max-width: 720px;
+    }
+    .page-meta {
+        display: flex; gap: var(--sp-2); align-items: center; flex-wrap: wrap;
+    }
+
+    /* ─── BOTÕES ─── */
+    .btn {
+        display: inline-flex; align-items: center; gap: var(--sp-2);
+        background: var(--bg-elevated);
+        color: var(--text-primary);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--r-sm);
+        padding: 6px 12px;
+        font-size: var(--fs-13); font-weight: 500;
+        transition: border-color .15s, background .15s, transform .12s;
+    }
+    .btn:active { transform: translateY(1px); }
+    .btn:hover { border-color: var(--border-strong); background: var(--bg-surface); }
+    .btn-primary {
+        background: var(--accent-purple);
+        color: var(--text-inverse);
+        border-color: var(--accent-purple);
+    }
+    .btn-primary:hover { filter: brightness(1.08); }
+    .btn-ghost { background: transparent; }
+    .btn-danger {
+        background: transparent;
+        color: var(--accent-red);
+        border-color: rgba(255,85,85,0.30);
+    }
+    .btn-sm { padding: 4px 8px; font-size: var(--fs-12); }
+    .btn-icon { padding: 6px; }
+    .btn-icon svg { width: 14px; height: 14px; }
+
+    /* ─── CARDS ─── */
+    .card {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--r-md);
+        padding: var(--sp-4);
+        transition: border-color .18s, transform .18s, box-shadow .18s;
+    }
+    .card.interactive { cursor: pointer; }
+    .card.interactive:hover {
+        border-color: var(--accent-purple);
+        transform: translateY(-1px);
+        box-shadow: 0 6px 20px -10px rgba(189,147,249,0.30);
+    }
+    .card-compact { padding: var(--sp-3); }
+    .card-head {
+        display: flex; align-items: center; justify-content: space-between;
+        margin-bottom: var(--sp-3);
+    }
+    .card-title {
+        font-size: var(--fs-11);
+        font-weight: 500;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--text-secondary);
+        margin: 0;
+    }
+
+    /* ─── KPI tile ─── */
+    .kpi {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--r-md);
+        padding: var(--sp-3) var(--sp-4);
+        min-width: var(--kpi-w);
+        height: var(--kpi-h);
+        display: flex; flex-direction: column; justify-content: space-between;
+        transition: border-color .18s, transform .18s;
+        position: relative; overflow: hidden;
+    }
+    .kpi::after {
+        content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+        background: linear-gradient(90deg, transparent, var(--accent-purple), transparent);
+        opacity: 0; transition: opacity .18s;
+    }
+    .kpi:hover { border-color: var(--border-strong); transform: translateY(-1px); }
+    .kpi:hover::after { opacity: 0.5; }
+    .kpi-label {
+        font-size: var(--fs-11); font-weight: 500;
+        letter-spacing: 0.08em; text-transform: uppercase;
+        color: var(--text-muted);
+    }
+    .kpi-value {
+        font-family: var(--ff-mono);
+        font-size: var(--fs-32); font-weight: 500;
+        letter-spacing: -0.02em;
+        font-variant-numeric: tabular-nums;
+        line-height: 1;
+    }
+    .kpi-delta {
+        font-family: var(--ff-mono); font-size: var(--fs-12);
+        display: inline-flex; align-items: center; gap: 4px;
+    }
+    .kpi-delta.up    { color: var(--accent-green); }
+    .kpi-delta.down  { color: var(--accent-red); }
+    .kpi-delta.flat  { color: var(--text-muted); }
+
+    /* ─── PILLS / BADGES ─── */
+    /* UX-U-04 followup: !important para vencer p,div,span { font-size: 15px }
+       global (FONTE_CORPO). Pills canônicas ficam em 11px JetBrains Mono. */
+    .pill,
+    span.pill {
+        display: inline-flex !important; align-items: center; gap: 4px;
+        font-family: var(--ff-mono) !important;
+        font-size: var(--fs-11) !important;
+        font-weight: 500 !important;
+        letter-spacing: 0.04em !important;
+        text-transform: uppercase !important;
+        padding: 2px 8px !important;
+        border-radius: var(--r-full);
+        border: 1px solid transparent;
+        white-space: nowrap;
+    }
+    .pill-d7-graduado {
+        background: rgba(107,142,127,0.15);
+        color: var(--d7-graduado);
+        border-color: rgba(107,142,127,0.30);
+    }
+    .pill-d7-calibracao {
+        background: rgba(241,250,140,0.10);
+        color: var(--d7-calibracao);
+        border-color: rgba(241,250,140,0.25);
+    }
+    .pill-d7-regredindo {
+        background: rgba(255,184,108,0.10);
+        color: var(--d7-regredindo);
+        border-color: rgba(255,184,108,0.30);
+    }
+    .pill-d7-pendente {
+        background: rgba(108,111,125,0.15);
+        color: var(--d7-pendente);
+        border-color: rgba(108,111,125,0.30);
+    }
+
+    .pill-humano-aprovado {
+        background: rgba(107,142,127,0.15);
+        color: var(--humano-aprovado);
+        border-color: rgba(107,142,127,0.30);
+    }
+    .pill-humano-rejeitado {
+        background: rgba(255,85,85,0.10);
+        color: var(--humano-rejeitado);
+        border-color: rgba(255,85,85,0.30);
+    }
+    .pill-humano-revisar {
+        background: rgba(241,250,140,0.10);
+        color: var(--humano-revisar);
+        border-color: rgba(241,250,140,0.25);
+    }
+    .pill-humano-pendente {
+        background: rgba(108,111,125,0.15);
+        color: var(--humano-pendente);
+        border-color: rgba(108,111,125,0.30);
+    }
+
+    /* UX-U-04 followup: !important para vencer cascata global. */
+    .sprint-tag,
+    span.sprint-tag {
+        display: inline-flex !important; align-items: center; gap: 4px;
+        font-family: var(--ff-mono) !important;
+        font-size: var(--fs-11) !important;
+        font-weight: 500 !important;
+        letter-spacing: 0.04em !important;
+        text-transform: uppercase !important;
+        color: var(--text-muted) !important;
+        padding: 2px 6px !important;
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--r-xs);
+        background: var(--bg-inset);
+    }
+    .sprint-tag::before { content: ""; font-size: 8px; color: var(--accent-purple); }
+
+    .confidence {
+        display: inline-flex; align-items: center; gap: 4px;
+        font-family: var(--ff-mono);
+        font-size: var(--fs-11);
+        padding: 2px 6px;
+        border-radius: var(--r-xs);
+        font-variant-numeric: tabular-nums;
+    }
+    .confidence-bar {
+        display: inline-block;
+        width: 36px; height: 4px;
+        background: var(--bg-inset);
+        border-radius: var(--r-full);
+        overflow: hidden;
+        position: relative;
+    }
+    .confidence-bar > span {
+        position: absolute; left: 0; top: 0; bottom: 0;
+        background: var(--d7-graduado);
+    }
+
+    /* ─── TABELA DENSA ─── */
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: var(--fs-13);
+    }
+    .table th, .table td {
+        height: var(--row-h);
+        padding: 0 var(--sp-3);
+        text-align: left;
+        border-bottom: 1px solid var(--border-subtle);
+        vertical-align: middle;
+        white-space: nowrap;
+    }
+    .table thead th {
+        position: sticky; top: 0;
+        background: var(--bg-surface);
+        font-family: var(--ff-mono);
+        font-size: var(--fs-11);
+        font-weight: 500;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        border-bottom: 1px solid var(--border-strong);
+    }
+    .table tbody tr:hover { background: var(--bg-elevated); }
+    .table tbody tr.selected { background: rgba(189,147,249,0.08); }
+    .table .col-num {
+        text-align: right;
+        font-family: var(--ff-mono);
+        font-variant-numeric: tabular-nums;
+    }
+    .table .col-mono { font-family: var(--ff-mono); }
+
+    /* ─── DRAWER (painel lateral deslizante) ─── */
+    .drawer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.40); z-index: 39; }
+    .drawer {
+        position: fixed; top: 0; right: 0; bottom: 0;
+        width: var(--drawer-w);
+        background: var(--bg-elevated);
+        border-left: 1px solid var(--border-subtle);
+        box-shadow: var(--sh-xl);
+        z-index: 40;
+        display: flex; flex-direction: column;
+    }
+    .drawer-head {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: var(--sp-4);
+        border-bottom: 1px solid var(--border-subtle);
+    }
+    .drawer-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border-subtle); }
+    .drawer-tab {
+        padding: var(--sp-3) var(--sp-4);
+        font-size: var(--fs-12); font-weight: 500;
+        color: var(--text-secondary);
+        border-bottom: 2px solid transparent;
+        cursor: pointer;
+        background: transparent; border-top: none; border-left: none; border-right: none;
+    }
+    .drawer-tab.active { color: var(--text-primary); border-bottom-color: var(--accent-purple); }
+    .drawer-body { padding: var(--sp-4); overflow-y: auto; flex: 1; }
+
+    /* ─── INSTRUÇÃO SKILL (Inbox) ─── */
+    .skill-instr {
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--r-md);
+        background: var(--bg-inset);
+        padding: var(--sp-4);
+        font-family: var(--ff-mono);
+        font-size: var(--fs-13);
+        line-height: 1.6;
+    }
+    .skill-instr h4 {
+        margin: 0 0 var(--sp-3);
+        font-size: var(--fs-11);
+        letter-spacing: 0.10em;
+        text-transform: uppercase;
+        color: var(--accent-purple);
+    }
+    .skill-instr code {
+        background: var(--bg-elevated);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--r-xs);
+        padding: 2px 6px;
+        color: var(--accent-pink);
+    }
+    .skill-instr ol { margin: 0; padding-left: var(--sp-5); }
+    .skill-instr .why {
+        margin-top: var(--sp-3);
+        padding-top: var(--sp-3);
+        border-top: 1px dashed var(--border-subtle);
+        color: var(--text-muted);
+        font-size: var(--fs-12);
+    }
+
+    /* ─── COMPLETUDE (UX-RD-10) — matriz tipo × mês ─── */
+    .completude-matriz-card {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--r-md);
+        padding: var(--sp-4);
+        margin-bottom: var(--sp-4);
+    }
+    .completude-matriz-grid {
+        display: grid;
+        gap: 3px;
+        font-family: var(--ff-mono);
+        font-size: 10px;
+    }
+    .completude-matriz-h {
+        color: var(--text-muted);
+        padding: 4px;
+        text-align: center;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+    }
+    .completude-matriz-rotulo {
+        color: var(--text-muted);
+        padding: 8px 4px;
+        text-align: right;
+        font-size: 11px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .completude-cell {
+        aspect-ratio: 1.5;
+        border-radius: var(--r-xs);
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+        position: relative;
+        font-size: 10px;
+        color: var(--bg-base);
+        font-weight: 500;
+        text-decoration: none;
+        transition: transform 90ms ease;
+    }
+    .completude-cell-full    { background: var(--d7-graduado); }
+    .completude-cell-partial { background: var(--accent-yellow); color: var(--bg-base); }
+    .completude-cell-missing { background: var(--accent-red); color: var(--bg-base); }
+    .completude-cell-empty   {
+        background: var(--bg-inset); color: var(--text-muted); cursor: default;
+    }
+    .completude-cell:hover:not(.completude-cell-empty) {
+        transform: scale(1.08);
+        z-index: 1;
+        box-shadow: 0 0 0 2px var(--accent-purple);
+    }
+    .completude-matriz-legenda {
+        display: flex;
+        gap: var(--sp-3);
+        font-family: var(--ff-mono);
+        font-size: 11px;
+        color: var(--text-muted);
+        margin-top: var(--sp-3);
+    }
+    .completude-matriz-legenda .dot {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 2px;
+        vertical-align: middle;
+        margin-right: 4px;
+    }
+    .completude-secao-titulo {
+        font-family: var(--ff-mono);
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--text-secondary);
+        margin: var(--sp-4) 0 var(--sp-3);
+    }
+
+    /* ─── REVISOR (UX-RD-10) — cards de divergência 4-way ─── */
+    .revisor-card {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--r-md);
+        padding: var(--sp-3) var(--sp-4);
+        margin-bottom: var(--sp-3);
+        position: relative;
+        transition: box-shadow 120ms ease;
+    }
+    .revisor-card[data-revisor-foco="1"] {
+        box-shadow: 0 0 0 2px var(--accent-purple);
+    }
+    .revisor-card-fontes {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: var(--sp-3);
+        margin-top: var(--sp-3);
+    }
+    .revisor-fonte {
+        background: var(--bg-inset);
+        border-left: 3px solid var(--border-subtle);
+        border-radius: var(--r-sm);
+        padding: var(--sp-2) var(--sp-3);
+        min-height: 64px;
+        font-family: var(--ff-mono);
+        font-size: var(--fs-12);
+    }
+    .revisor-fonte-etl    { border-left-color: var(--accent-green); }
+    .revisor-fonte-opus   { border-left-color: var(--accent-purple); }
+    .revisor-fonte-grafo  { border-left-color: var(--accent-yellow); }
+    .revisor-fonte-humano { border-left-color: var(--accent-pink); }
+    .revisor-fonte-rotulo {
+        font-size: 10px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        margin-bottom: 4px;
+    }
+    .revisor-fonte-valor {
+        color: var(--text-primary);
+        word-break: break-word;
+    }
+    .revisor-fonte-valor.diverge {
+        background: var(--diff-added-bg, rgba(255, 121, 198, 0.08));
+        padding: 2px 4px;
+        border-radius: var(--r-xs);
+    }
+    .revisor-card-titulo {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--sp-3);
+        font-family: var(--ff-mono);
+        font-size: var(--fs-12);
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--text-secondary);
+    }
+    .revisor-card-dimensao {
+        font-weight: 500;
+        color: var(--text-primary);
+    }
+    """
+
+
+def css_global() -> str:
+    """Retorna bloco CSS global para o dashboard.
+
+    Sprint UX-RD-02: estende o ``css_global()`` original com (1) bloco
+    ``:root`` adicional dos tokens hifenizados (``--bg-base``,
+    ``--accent-*``, ``--sp-*``, ``--r-*``, ``--ff-*``, ``--fs-*``,
+    ``--sh-*``, ``--d7-*``, ``--humano-*``) e (2) classes utilitárias do
+    redesign (``.shell``, ``.sidebar``, ``.kpi``, ``.pill-*``,
+    ``.table`` densa, ``.drawer``, ``.skill-instr``, ``.btn-*``,
+    ``.card.interactive``, ``.page-header``, ``.sprint-tag``,
+    ``.confidence``). Tokens e regras legados (``--color-*``,
+    ``--spacing-*``, regras [data-testid=*]) preservados intactos para
+    zero regressão nas 14 páginas legadas e nos 81 testes existentes
+    em ``test_dashboard_tema.py``, ``test_ux_tokens.py``,
+    ``test_dashboard_components.py``.
+
+    Sprint 92c (legado): publica CSS custom properties em ``:root`` a
+    partir dos tokens Python já existentes (``CORES``, ``SPACING``,
+    fontes). Helpers HTML (callout, progress_inline, metric_semantic,
+    breadcrumb) referenciam esses tokens via ``var(--color-*)`` em vez
+    de interpolar hex, permitindo que temas futuros sobrescrevam apenas
+    o bloco ``:root`` sem tocar em helper algum. Componentes Plotly
+    continuam usando hex direto pois JSON inline não resolve ``var()``.
+    """
+    bloco_redesign_root = _root_redesign()
+    bloco_redesign_classes = _classes_redesign()
+    return f"""
     <style>
+    {bloco_redesign_root}
     :root {{
         --color-fundo: {CORES["fundo"]};
         --color-card-fundo: {CORES["card_fundo"]};
@@ -75,6 +879,7 @@ def css_global() -> str:
         --borda-raio: {BORDA_RAIO}px;
         --borda-ativa-px: {BORDA_ATIVA_PX}px;
     }}
+    {bloco_redesign_classes}
     html, body, .stApp, [data-testid="stAppViewContainer"] {{
         font-size: {FONTE_CORPO}px;
     }}
@@ -248,7 +1053,21 @@ def css_global() -> str:
         margin-top: {SPACING["md"]}px;
         margin-bottom: {SPACING["md"]}px;
     }}
-    [data-testid="stSidebar"] {{ background-color: {CORES["card_fundo"]}; }}
+    /* UX-U-04 followup: sidebar canônica mede 240px (mockup
+       00-shell-navegacao.html). Streamlit usa width default ~300px;
+       forçamos 240 com !important. Border-right canônico é 1px solid
+       border-subtle (rgb(49,52,69)), NÃO 2px purple. */
+    [data-testid="stSidebar"] {{
+        background-color: {CORES["card_fundo"]};
+        width: 240px !important;
+        min-width: 240px !important;
+        max-width: 240px !important;
+        border-right: 1px solid var(--border-subtle) !important;
+    }}
+    [data-testid="stSidebar"] > div {{
+        width: 240px !important;
+        min-width: 240px !important;
+    }}
     /* Sprint UX-116: sidebar interna ganha padding 4 direções com PADDING_CHIP
        (16px). O retângulo interno [data-testid="stSidebar"] > div:first-child
        abriga logo + radio de cluster + filtros; sem padding explícito,
@@ -404,7 +1223,7 @@ def css_global() -> str:
        bloco HTML custom via kpi_grid_html(). */
     .kpi-grid {{
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
         gap: {SPACING["md"]}px;
         width: 100%;
     }}
@@ -561,6 +1380,134 @@ def css_global() -> str:
     .ouroboros-timeline-evento {{
         position: relative;
         margin-bottom: var(--spacing-lg);
+    }}
+
+    /* UX-U-01: Sidebar canônica.
+       Garante scroll interno (8 clusters acessíveis em qualquer viewport)
+       + scrollbar discreta do mockup (tokens.css linhas 134-137: 10px,
+       track bg-base, thumb border-subtle, hover border-strong). */
+    [data-testid="stSidebar"] {{
+        overflow-y: auto !important;
+        height: 100vh !important;
+        max-height: 100vh !important;
+    }}
+    [data-testid="stSidebar"]::-webkit-scrollbar {{ width: 10px; }}
+    [data-testid="stSidebar"]::-webkit-scrollbar-track {{ background: var(--bg-base); }}
+    [data-testid="stSidebar"]::-webkit-scrollbar-thumb {{
+        background: var(--border-subtle);
+        border-radius: var(--r-sm);
+    }}
+    [data-testid="stSidebar"]::-webkit-scrollbar-thumb:hover {{
+        background: var(--border-strong);
+    }}
+
+    /* FIX-12: skip-link + sr-only-focusable (WCAG 2.4.1).
+       Invisível por padrão; aparece como CTA accent-purple quando focado
+       pela tecla Tab. Ancora #main-root no início do conteúdo principal. */
+    .sr-only,
+    .sr-only-focusable:not(:focus):not(:focus-within) {{
+        position: absolute !important;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+    }}
+    .skip-link:focus {{
+        position: fixed;
+        top: 8px;
+        left: 8px;
+        background: var(--accent-purple);
+        color: var(--text-inverse);
+        padding: 8px 16px;
+        border-radius: var(--r-sm);
+        z-index: 99999;
+        text-decoration: none;
+        font-family: var(--ff-mono);
+        font-size: var(--fs-12);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }}
+
+    /* FIX-04 + FIX-08: importar fontes web canônicas. Inter (sans) é a
+       família padrão do mockup; JetBrains Mono é usada em números, headings
+       técnicos, breadcrumb, pills, sprint-tags e tabela. Material Symbols
+       carrega os ícones do Streamlit (sem ela vazam como texto). */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap');
+
+    /* FIX-08: aplicar Inter (sans) globalmente em corpo, parágrafo,
+       sidebar items, KPI label, botão. Antes config.toml font="monospace"
+       fazia Streamlit aplicar "Source Code Pro" em tudo, perdendo a
+       hierarquia tipográfica do mockup (sans no corpo, mono em UI técnica). */
+    html, body, .stApp,
+    [data-testid="stAppViewContainer"],
+    [data-testid="stMarkdownContainer"],
+    [data-testid="stMarkdown"] p,
+    [data-testid="stMarkdown"] li,
+    [data-testid="stSidebar"] a,
+    [data-testid="stSidebar"] label,
+    button,
+    input,
+    textarea,
+    select {{
+        font-family: var(--ff-sans) !important;
+    }}
+
+    /* FIX-08: elementos canônicos em JetBrains Mono. Mockup pede mono em:
+       page-title (40px UPPERCASE com gradient), breadcrumb, pill, sprint-tag,
+       kpi-value, .table thead th, code, pre, kbd, .col-mono, st.metric value. */
+    .page-title,
+    .breadcrumb,
+    .breadcrumb .seg,
+    .kpi-value,
+    .kpi-delta,
+    .pill,
+    .sprint-tag,
+    .col-mono,
+    .col-num,
+    .table thead th,
+    .mono,
+    .num,
+    code,
+    pre,
+    kbd,
+    [data-testid="stMetricValue"],
+    [data-testid="stCodeBlock"] {{
+        font-family: var(--ff-mono) !important;
+        font-variant-numeric: tabular-nums;
+    }}
+
+    /* FIX-04 + UX-U-04 followup: Streamlit nativo carrega
+       "Material Symbols Rounded" (não Outlined). Ainda assim páginas
+       referenciam classes como ``material-symbols-outlined`` cujo CSS
+       solicita a família Outlined. Como Streamlit só fornece Rounded,
+       o nome do ícone vaza como texto literal (ex.: "keyboard_arrow_right",
+       "wait", "open"). Fix: aplicar a família REAL que Streamlit
+       carrega (Rounded) com fallback para Outlined caso uma página
+       opt-in importe via @import próprio. As ligatures (nomes dos
+       ícones) são idênticas entre Outlined/Rounded/Sharp. */
+    [data-testid="stIconMaterial"],
+    span[class*="material-symbols"],
+    .stMaterialIcon,
+    .material-symbols-outlined,
+    .material-symbols-rounded {{
+        font-family: "Material Symbols Rounded",
+                     "Material Symbols Outlined",
+                     "Material Icons" !important;
+        font-weight: normal !important;
+        font-style: normal !important;
+        line-height: 1;
+        letter-spacing: normal;
+        text-transform: none;
+        display: inline-block;
+        white-space: nowrap;
+        word-wrap: normal;
+        direction: ltr;
+        font-feature-settings: "liga";
+        -webkit-font-smoothing: antialiased;
     }}
     </style>
     """

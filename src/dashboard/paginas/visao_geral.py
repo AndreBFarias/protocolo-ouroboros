@@ -1,31 +1,53 @@
-"""Página de visão geral do dashboard financeiro."""
+"""Página de visão geral do dashboard financeiro -- redesign UX-RD-04.
+
+Reescrita inspirada em ``novo-mockup/mockups/01-visao-geral.html`` +
+``_visao-render.js``: hero com glyph Ω animado, KPI grid de 4 colunas
+(Receita, Despesa, Saldo, Reserva), bloco dual (gráfico Plotly à esquerda
++ timeline à direita) e cluster cards 3-col com links para os 6 clusters
+principais do shell global.
+
+Contrato preservado (Sprint MOB-bridge-1, KAPPA-08): assinatura de
+``renderizar(dados, mes_selecionado, pessoa, ctx)`` continua intocada;
+``app.py`` chama essa função para o cluster Home.
+
+Tokens consumidos via ``CORES`` (Sprint UX-RD-01) e classes utilitárias
+``.kpi``, ``.pill-d7-*``, ``.card.interactive`` injetadas em UX-RD-02.
+Classes específicas desta página (``.hero``, ``.cluster-grid``,
+``.cluster-card``, ``.timeline``, ``.tl-item``, ``.dual``,
+``.kpi.up``/``.warn``/``.bad``) são emitidas via ``<style>`` local
+neste arquivo -- ``tema_css.py`` permanece intocado para evitar
+regressão das outras 14 páginas.
+
+Animação Ω: keyframes ``ob-rotate`` e ``ob-halo`` também ficam no
+``<style>`` local. Nenhuma dependência externa.
+"""
+
+from __future__ import annotations
+
+import re
+from pathlib import Path
 
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
 from src.dashboard import tema
-from src.dashboard.componentes import kpi_grid_html
 from src.dashboard.componentes.drilldown import aplicar_drilldown
 from src.dashboard.dados import (
-    filtrar_por_forma_pagamento,
     filtrar_por_mes,
-    filtrar_por_periodo,
-    filtrar_por_pessoa,
-    filtro_forma_ativo,
     formatar_moeda,
 )
 from src.dashboard.tema import (
     CORES,
-    FONTE_MINIMA,
     FONTE_SUBTITULO,
     LAYOUT_PLOTLY,
-    MAPA_CLASSIFICACAO,
     aplicar_locale_ptbr,
     callout_html,
-    hero_titulo_html,
-    progress_inline_html,
 )
+
+# Meta padrão da reserva de emergência (espelha o template
+# ``mappings/metas_default.yaml`` quando o usuário não personalizou).
+RESERVA_META_PADRAO = 44_019.78
 
 
 def renderizar(
@@ -34,16 +56,47 @@ def renderizar(
     pessoa: str,
     ctx: dict | None = None,
 ) -> None:
-    """Renderiza a página de visão geral."""
-    st.markdown(
-        hero_titulo_html(
-            "",
-            "Visão Geral",
-            "Panorama do período: receitas, despesas, saldo, taxa de poupança "
-            "e maior gasto por categoria.",
-        ),
-        unsafe_allow_html=True,
+    """Renderiza a Visão Geral canônica (UX-T-01).
+
+    Mockup-fonte: ``novo-mockup/mockups/01-visao-geral.html``.
+    Layout:
+      - Topbar-actions: ``Atualizar`` + ``Ir para Validação`` (primary).
+      - Hero: marca + título + subtítulo (com linha ``Sprint atual: <ID>``)
+        + anel ouroboros animado.
+      - KPIs agentic-first (4 cards): Arquivos catalogados / Paridade ETL ↔
+        Opus / Aguardando humano / Skills regredindo.
+      - Bloco dual: ``OS 5 CLUSTERS`` (6 cards) à esquerda; ``Atividade
+        recente`` + ``Sprint atual`` à direita.
+    """
+    del mes_selecionado, pessoa, ctx  # filtros migraram para U-04 expander
+
+    # UX-U-02: topbar-actions canônicas.
+    from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
+    from src.dashboard.componentes.visao_geral_widgets import (
+        calcular_kpis_agentic,
+        ler_atividade_recente,
+        ler_sprint_atual,
+        montar_clusters_canonicos,
     )
+
+    renderizar_grupo_acoes(
+        [
+            {"label": "Atualizar", "kbd": "r", "title": "Recarregar a página"},
+            {
+                "label": "Ir para Validação",
+                "primary": True,
+                "href": "?cluster=Documentos&tab=Extra%C3%A7%C3%A3o+Tripla",
+                "title": "Abrir página de Extração Tripla",
+            },
+        ]
+    )
+
+    st.markdown(_estilos_locais(), unsafe_allow_html=True)
+    st.markdown(_estilos_t01_canonicos(), unsafe_allow_html=True)
+
+    sprint_meta = ler_sprint_atual()
+    sprint_titulo_no_hero = (sprint_meta or {}).get("sprint_numero", "") if sprint_meta else ""
+    st.markdown(_hero_html(sprint_titulo_no_hero), unsafe_allow_html=True)
 
     if "extrato" not in dados:
         st.markdown(
@@ -52,115 +105,525 @@ def renderizar(
         )
         return
 
-    gran = ctx.get("granularidade", "Mês") if ctx else "Mês"
-    periodo = ctx.get("periodo", mes_selecionado) if ctx else mes_selecionado
+    kpis = calcular_kpis_agentic()
+    st.markdown(_kpis_agentic_html(kpis), unsafe_allow_html=True)
 
-    extrato = dados["extrato"]
-    extrato_filtrado = filtrar_por_forma_pagamento(
-        filtrar_por_pessoa(extrato, pessoa), filtro_forma_ativo()
-    )
-    extrato_mes = filtrar_por_periodo(extrato_filtrado, gran, periodo)
-
-    receitas = extrato_mes[extrato_mes["tipo"] == "Receita"]["valor"].sum()
-    despesas = extrato_mes[extrato_mes["tipo"].isin(["Despesa", "Imposto"])]["valor"].sum()
-    saldo = receitas - despesas
-
-    superfluo = extrato_mes[
-        (extrato_mes["classificacao"] == "Supérfluo")
-        & (extrato_mes["tipo"].isin(["Despesa", "Imposto"]))
-    ]["valor"].sum()
-
-    taxa_poupanca = (saldo / receitas * 100) if receitas > 0 else 0.0
-
-    top_cat = (
-        extrato_mes[extrato_mes["tipo"].isin(["Despesa", "Imposto"])]
-        .groupby("categoria")["valor"]
-        .sum()
-    )
-    maior_gasto_cat = top_cat.idxmax() if not top_cat.empty else "---"
-    maior_gasto_val = top_cat.max() if not top_cat.empty else 0.0
-
-    cor_taxa = (
-        CORES["positivo"]
-        if taxa_poupanca > 10
-        else (CORES["alerta"] if taxa_poupanca > 0 else CORES["negativo"])
-    )
-    cor_sup = CORES["superfluo"] if superfluo > 500 else CORES["texto_sec"]
-
-    cards_kpi = [
-        ("Taxa de poupança", f"{taxa_poupanca:.1f}%", cor_taxa),
-        ("Gastos supérfluos", formatar_moeda(superfluo), cor_sup),
-        (
-            f"Maior gasto: {maior_gasto_cat}",
-            formatar_moeda(maior_gasto_val),
-            CORES["alerta"],
-        ),
-    ]
-    st.markdown(kpi_grid_html(cards_kpi), unsafe_allow_html=True)
-
-    _indicador_saude(receitas, saldo, superfluo)
-
-    col_esq, col_dir = st.columns(2)
-
+    col_esq, col_dir = st.columns([1.4, 1.0])
     with col_esq:
-        _grafico_barras_historico(extrato_filtrado, mes_selecionado)
-
+        st.markdown(_clusters_canonicos_html(montar_clusters_canonicos()), unsafe_allow_html=True)
     with col_dir:
-        _grafico_classificacao(extrato_mes)
+        st.markdown(_atividade_recente_html(ler_atividade_recente(n=6)), unsafe_allow_html=True)
+        st.markdown(_sprint_atual_html(sprint_meta), unsafe_allow_html=True)
 
 
-def _indicador_saude(receita: float, saldo: float, superfluo: float) -> None:
-    """Exibe indicador de saúde financeira com orientação.
+# ---------------------------------------------------------------------------
+# Helpers de cálculo
+# ---------------------------------------------------------------------------
 
-    Sprint 92c: o card visual passou a compor ``callout_html`` com o rótulo +
-    orientação (padrão tipo "info" quando saudável, "warning" em atenção,
-    "error" em crítico) + uma barra de progresso inline do % de poupança
-    (``progress_inline_html``) abaixo da mensagem. Mantém acessibilidade
-    visual (cor por severidade) e reaproveita a fonte única de cores.
+
+def _calcular_deltas(
+    extrato_filtrado: pd.DataFrame,
+    mes_atual: str,
+    gran: str,
+) -> tuple[float, float, float]:
+    """Retorna delta percentual (período atual vs anterior) para receita,
+    despesa e saldo. Quando não há período anterior comparável, retorna 0.0.
     """
-    if receita <= 0:
-        return
+    if gran != "Mês" or "mes_ref" not in extrato_filtrado.columns:
+        return 0.0, 0.0, 0.0
 
-    percentual = (saldo / receita) * 100
+    meses = sorted(extrato_filtrado["mes_ref"].dropna().unique().tolist())
+    if mes_atual not in meses:
+        return 0.0, 0.0, 0.0
 
-    if percentual > 30:
-        nivel = "Saudável"
-        tipo_callout = "success"
-        cor_barra = CORES["positivo"]
-        orientacao = f"Poupança de {percentual:.0f}% da receita"
-    elif percentual > 10:
-        nivel = "Atenção"
-        tipo_callout = "warning"
-        cor_barra = CORES["alerta"]
-        orientacao = f"Poupança de {percentual:.0f}%. Ideal: acima de 30%"
+    idx = meses.index(mes_atual)
+    if idx == 0:
+        return 0.0, 0.0, 0.0
+
+    mes_anterior = meses[idx - 1]
+    df_ant = filtrar_por_mes(extrato_filtrado, mes_anterior)
+    df_atu = filtrar_por_mes(extrato_filtrado, mes_atual)
+
+    rec_ant = float(df_ant[df_ant["tipo"] == "Receita"]["valor"].sum())
+    rec_atu = float(df_atu[df_atu["tipo"] == "Receita"]["valor"].sum())
+    desp_ant = float(df_ant[df_ant["tipo"].isin(["Despesa", "Imposto"])]["valor"].sum())
+    desp_atu = float(df_atu[df_atu["tipo"].isin(["Despesa", "Imposto"])]["valor"].sum())
+    sal_ant = rec_ant - desp_ant
+    sal_atu = rec_atu - desp_atu
+
+    def _pct(atual: float, anterior: float) -> float:
+        if anterior == 0:
+            return 0.0
+        return (atual - anterior) / abs(anterior) * 100.0
+
+    return _pct(rec_atu, rec_ant), _pct(desp_atu, desp_ant), _pct(sal_atu, sal_ant)
+
+
+def _ultimos_eventos(extrato: pd.DataFrame, n: int = 5) -> list[dict[str, str]]:
+    """Extrai últimos N eventos do extrato, ordenado por data desc."""
+    if extrato.empty or "data" not in extrato.columns:
+        return []
+
+    df = extrato.copy()
+    df = df.sort_values("data", ascending=False).head(n)
+
+    eventos: list[dict[str, str]] = []
+    for _, row in df.iterrows():
+        data = row.get("data")
+        when_str = ""
+        if pd.notna(data):
+            try:
+                when_str = pd.to_datetime(data).strftime("%d/%m")
+            except (ValueError, TypeError):
+                when_str = str(data)[:10]
+
+        tipo_t = str(row.get("tipo", ""))
+        local = str(row.get("local", ""))[:32] or "---"
+        valor = formatar_moeda(float(row.get("valor", 0.0)))
+        categoria = str(row.get("categoria", ""))[:18] or "---"
+
+        ic = "upload" if tipo_t == "Receita" else ("warn" if tipo_t == "Imposto" else "diff")
+        what = (
+            f"<strong>{local}</strong> · "
+            f"<code>{categoria}</code> · {valor}"
+        )
+
+        eventos.append({"when": when_str, "ic": ic, "what": what})
+
+    return eventos
+
+
+# ---------------------------------------------------------------------------
+# Helpers de HTML
+# ---------------------------------------------------------------------------
+
+
+def _estilos_locais() -> str:
+    """Estilos específicos do redesign Visão Geral (hero, kpi modifiers,
+    cluster cards, timeline, animações Ω). Isolados aqui para não tocar
+    ``tema_css.py`` -- contrato preservado para as outras 14 páginas.
+    """
+    fundo = CORES["card_fundo"]
+    inset = CORES["fundo_inset"]
+    texto_pri = CORES["texto"]
+    texto_sec = CORES["texto_sec"]
+    texto_muted = CORES["texto_muted"]
+    accent_purple = CORES["destaque"]
+    accent_pink = CORES["superfluo"]
+    accent_yellow = CORES["info"]
+    accent_red = CORES["negativo"]
+    d7_grad = CORES["d7_graduado"]
+    border_subtle = "#2a2d3a"
+
+    return f"""
+    <style>
+      @keyframes ob-rotate {{
+        from {{ transform: rotate(0deg); }}
+        to   {{ transform: rotate(360deg); }}
+      }}
+      @keyframes ob-halo {{
+        0%, 100% {{ opacity: 0.55; transform: scale(1); }}
+        50%      {{ opacity: 0.85; transform: scale(1.04); }}
+      }}
+      .ob-ring   {{
+        transform-origin: 160px 160px;
+        animation: ob-rotate 80s linear infinite;
+      }}
+      .ob-halo   {{
+        transform-origin: 160px 160px;
+        animation: ob-halo 6s ease-in-out infinite;
+      }}
+      .ob-dotted {{
+        transform-origin: 160px 160px;
+        animation: ob-rotate 200s linear infinite reverse;
+        opacity: .28;
+      }}
+
+      .vg-hero {{
+        background: {fundo};
+        border: 1px solid {border_subtle};
+        border-radius: 12px;
+        padding: 32px;
+        margin-bottom: 24px;
+        display: grid;
+        grid-template-columns: 1.6fr 1fr;
+        gap: 32px;
+        align-items: center;
+      }}
+      .vg-hero h1 {{
+        font-family: ui-monospace, 'JetBrains Mono', monospace;
+        font-size: 32px;
+        font-weight: 500;
+        letter-spacing: -0.02em;
+        margin: 0 0 8px;
+        color: {texto_pri};
+      }}
+      .vg-hero p {{
+        color: {texto_sec};
+        font-size: 15px;
+        line-height: 1.6;
+        margin: 0;
+        max-width: 56ch;
+      }}
+      .vg-hero .marca {{
+        font-family: ui-monospace, 'JetBrains Mono', monospace;
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        color: {accent_purple};
+        text-transform: uppercase;
+        margin-bottom: 12px;
+        display: block;
+      }}
+      .vg-hero .marca-cluster {{
+        font-family: ui-monospace, 'JetBrains Mono', monospace;
+        font-size: 11px;
+        color: {accent_pink};
+      }}
+      .vg-hero .ouroboros {{
+        width: 220px;
+        height: 220px;
+        margin-left: auto;
+        display: grid;
+        place-items: center;
+      }}
+
+      .vg-kpi-grid {{
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+        margin-bottom: 24px;
+      }}
+      .vg-kpi {{
+        background: {fundo};
+        border: 1px solid {border_subtle};
+        border-radius: 12px;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }}
+      .vg-kpi .l {{
+        font-family: ui-monospace, 'JetBrains Mono', monospace;
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: {texto_muted};
+      }}
+      .vg-kpi .v {{
+        font-family: ui-monospace, 'JetBrains Mono', monospace;
+        font-size: 32px;
+        font-weight: 500;
+        line-height: 1.1;
+        font-variant-numeric: tabular-nums;
+        color: {texto_pri};
+      }}
+      .vg-kpi .d {{
+        font-family: ui-monospace, 'JetBrains Mono', monospace;
+        font-size: 12px;
+        color: {texto_muted};
+      }}
+      .vg-kpi.up   .v {{ color: {d7_grad}; }}
+      .vg-kpi.warn .v {{ color: {accent_yellow}; }}
+      .vg-kpi.bad  .v {{ color: {accent_red}; }}
+
+      .vg-section-title {{
+        font-family: ui-monospace, 'JetBrains Mono', monospace;
+        font-size: 13px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: {texto_muted};
+        margin: 16px 0 12px;
+      }}
+
+      .vg-timeline {{
+        background: {fundo};
+        border: 1px solid {border_subtle};
+        border-radius: 12px;
+        padding: 16px;
+      }}
+      .vg-tl-item {{
+        display: grid;
+        grid-template-columns: 70px 1fr;
+        gap: 12px;
+        padding: 8px 0;
+        border-bottom: 1px dashed {border_subtle};
+      }}
+      .vg-tl-item:last-child {{ border-bottom: none; }}
+      .vg-tl-item .when {{
+        font-family: ui-monospace, 'JetBrains Mono', monospace;
+        font-size: 11px;
+        color: {texto_muted};
+        padding-top: 2px;
+      }}
+      .vg-tl-item .what {{
+        font-size: 13px;
+        color: {texto_sec};
+        line-height: 1.45;
+      }}
+      .vg-tl-item .what strong {{
+        color: {texto_pri};
+        font-family: ui-monospace, 'JetBrains Mono', monospace;
+      }}
+      .vg-tl-item .what code {{
+        color: {accent_purple};
+        background: {inset};
+        padding: 1px 5px;
+        border-radius: 4px;
+        font-size: 11px;
+      }}
+
+      .vg-cluster-grid {{
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin-top: 16px;
+      }}
+      .vg-cluster-card {{
+        background: {fundo};
+        border: 1px solid {border_subtle};
+        border-radius: 12px;
+        padding: 16px;
+        text-decoration: none;
+        color: inherit;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        transition: border-color .15s, transform .15s;
+      }}
+      .vg-cluster-card:hover {{
+        border-color: {accent_purple};
+        transform: translateY(-2px);
+      }}
+      .vg-cluster-card h3 {{
+        font-family: ui-monospace, 'JetBrains Mono', monospace;
+        font-size: 15px;
+        font-weight: 500;
+        margin: 0;
+        letter-spacing: -0.01em;
+        color: {texto_pri};
+      }}
+      .vg-cluster-card .desc {{
+        font-size: 13px;
+        color: {texto_muted};
+        line-height: 1.5;
+      }}
+      .vg-cluster-card .stats {{
+        display: flex;
+        gap: 12px;
+        margin-top: auto;
+        padding-top: 8px;
+        border-top: 1px solid {border_subtle};
+      }}
+      .vg-cluster-card .stats span {{
+        font-family: ui-monospace, 'JetBrains Mono', monospace;
+        font-size: 11px;
+        color: {texto_sec};
+      }}
+      .vg-cluster-card .stats strong {{
+        color: {texto_pri};
+        margin-right: 4px;
+      }}
+
+      @media (max-width: 1199px) {{
+        .vg-kpi-grid {{ grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }}
+        .vg-cluster-grid {{ grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }}
+        .vg-hero {{ grid-template-columns: 1fr; }}
+        .vg-hero .ouroboros {{ margin: 0 auto; }}
+      }}
+    </style>
+    """
+
+
+def _hero_html(sprint_atual_titulo: str = "") -> str:
+    """Hero com marca, título, subtítulo (com linha Sprint atual) e Ω animado.
+
+    UX-T-01: subtítulo passa a incluir a linha "Sprint atual: <ID>" — espelha
+    o mockup canônico ``01-visao-geral.html`` que destaca a sprint vigente
+    no parágrafo do hero.
+    """
+    svg = _ler_svg_ouroboros()
+    marca = (
+        '<span class="marca">Sistema agentic-first '
+        '<span class="marca-cluster">· cluster Home</span></span>'
+    )
+    titulo = "<h1>Os arquivos da sua vida financeira, normalizados.</h1>"
+    sprint_html = ""
+    if sprint_atual_titulo:
+        sprint_html = (
+            " Sprint atual: <code style=\"color:var(--accent-purple);\">"
+            f"{sprint_atual_titulo}</code> — medindo paridade entre as duas extrações."
+        )
+    subt = (
+        "<p>Pipeline auto-referente. Cada arquivo é registrado pelo "
+        "sha256, extraído em duas vias (ETL determinística + Opus "
+        "agentic), validado por humano-no-loop, e catalogado para "
+        f"análise.{sprint_html}</p>"
+    )
+    return (
+        '<div class="vg-hero">'
+        f"<div>{marca}{titulo}{subt}</div>"
+        f'<div class="ouroboros">{svg}</div>'
+        "</div>"
+    )
+
+
+def _ler_svg_ouroboros() -> str:
+    """Lê ``assets/ouroboros.svg`` e retorna o conteúdo inline minificado.
+
+    Inserir o SVG inline (em vez de ``<img src=>``) preserva a animação
+    CSS controlada pelas keyframes ``ob-rotate``/``ob-halo`` definidas
+    em ``_estilos_locais``.
+
+    **Fix UX-RD-04 patch (2026-05-04):** Streamlit roteia ``st.markdown``
+    pelo parser CommonMark **antes** de honrar ``unsafe_allow_html=True``.
+    Linhas com 4+ espaços de indentação interna do SVG (típicas em
+    ``<path d="M ...">`` multi-linha) são interpretadas como bloco de
+    código e o conteúdo bruto vaza como texto na página. Solução: colapsar
+    todo whitespace inter-tag para uma única linha antes de injetar.
+    """
+    caminho = Path(__file__).resolve().parents[3] / "assets" / "ouroboros.svg"
+    if not caminho.exists():
+        return ""
+    bruto = caminho.read_text(encoding="utf-8")
+    # Colapsa whitespace entre tags e dentro de atributos multi-linha:
+    #   - "\n " entre tags vira " "
+    #   - múltiplos espaços viram um só
+    # Resultado: SVG numa linha única, sem indentação que o markdown
+    # interprete como code block.
+    sem_quebras = re.sub(r"\s+", " ", bruto)
+    return sem_quebras.strip()
+
+
+def _kpi_grid_html(
+    *,
+    receitas: float,
+    despesas: float,
+    saldo: float,
+    reserva_atual: float,
+    reserva_meta: float,
+    reserva_pct: float,
+    delta_receita: float,
+    delta_despesa: float,
+    delta_saldo: float,
+) -> str:
+    """Renderiza o KPI grid de 4 colunas: Receita, Despesa, Saldo, Reserva."""
+    classe_receita = "up" if delta_receita >= 0 else "bad"
+    classe_despesa = "warn" if delta_despesa <= 0 else "bad"
+    classe_saldo = "up" if saldo >= 0 else "bad"
+    classe_reserva = "up" if reserva_pct >= 100 else ("warn" if reserva_pct >= 50 else "bad")
+
+    delta_rec_txt = _fmt_delta(delta_receita)
+    delta_desp_txt = _fmt_delta(delta_despesa)
+    delta_sal_txt = _fmt_delta(delta_saldo)
+
+    return f"""
+    <div class="vg-kpi-grid">
+      <div class="vg-kpi {classe_receita}">
+        <span class="l">Receita</span>
+        <span class="v">{formatar_moeda(receitas)}</span>
+        <span class="d">{delta_rec_txt} vs período anterior</span>
+      </div>
+      <div class="vg-kpi {classe_despesa}">
+        <span class="l">Despesa</span>
+        <span class="v">{formatar_moeda(despesas)}</span>
+        <span class="d">{delta_desp_txt} vs período anterior</span>
+      </div>
+      <div class="vg-kpi {classe_saldo}">
+        <span class="l">Saldo</span>
+        <span class="v">{formatar_moeda(saldo)}</span>
+        <span class="d">{delta_sal_txt} vs período anterior</span>
+      </div>
+      <div class="vg-kpi {classe_reserva}">
+        <span class="l">Reserva</span>
+        <span class="v">{formatar_moeda(reserva_atual)}</span>
+        <span class="d">Meta {formatar_moeda(reserva_meta)} · {reserva_pct:.0f}%</span>
+      </div>
+    </div>
+    """
+
+
+def _fmt_delta(pct: float) -> str:
+    """Formata delta percentual com sinal e símbolo."""
+    if pct == 0.0:
+        return "—"
+    sinal = "+" if pct > 0 else ""
+    return f"{sinal}{pct:.1f}%"
+
+
+def _timeline_html(eventos: list[dict[str, str]]) -> str:
+    """Timeline com até 5 últimos eventos do período ativo."""
+    if not eventos:
+        body = (
+            '<div class="vg-tl-item"><span class="when">—</span>'
+            '<span class="what">Sem eventos no período selecionado.</span></div>'
+        )
     else:
-        nivel = "Crítico"
-        tipo_callout = "error"
-        cor_barra = CORES["negativo"]
-        if superfluo > 0:
-            economia_necessaria = receita * 0.1 - saldo
-            orientacao = (
-                f"Poupança de apenas {percentual:.0f}%. "
-                f"Cortar {formatar_moeda(min(economia_necessaria, superfluo))} "
-                f"em supérfluos equilibra o orçamento"
-            )
-        else:
-            orientacao = f"Poupança de apenas {percentual:.0f}%. Revisar despesas obrigatórias"
+        body = "".join(
+            f'<div class="vg-tl-item"><span class="when">{ev["when"]}</span>'
+            f'<span class="what">{ev["what"]}</span></div>'
+            for ev in eventos
+        )
 
-    st.markdown(
-        callout_html(
-            tipo_callout,
-            orientacao,
-            titulo=f"Saúde financeira: {nivel}",
-        ),
-        unsafe_allow_html=True,
+    return f"""
+    <div class="vg-section-title">Atividade recente</div>
+    <div class="vg-timeline">{body}</div>
+    """
+
+
+def _cluster_grid_html(dados: dict[str, pd.DataFrame]) -> str:
+    """Cluster cards: 6 atalhos para os subsistemas principais."""
+    extrato = dados.get("extrato", pd.DataFrame())
+    contas = dados.get("contas", pd.DataFrame())
+    metas_df = dados.get("metas", pd.DataFrame())
+
+    n_txns = len(extrato) if not extrato.empty else 0
+    n_contas = len(contas) if not contas.empty else 0
+    n_metas = len(metas_df) if not metas_df.empty else 0
+
+    # Cluster slug coincide com o roteador do shell global (UX-RD-03).
+    cards = [
+        ("Inbox", "?cluster=Inbox", "Entrada de dados. Drop por sha8.",
+         ("aguardando", "0"), ("na fila", "0")),
+        ("Finanças", "?cluster=Finanças", "Extrato, contas, pagamentos, projeções.",
+         ("contas", str(n_contas)), ("txns", _fmt_compact(n_txns))),
+        ("Documentos", "?cluster=Documentos", "Busca, catálogo, completude, revisor.",
+         ("arquivos", _fmt_compact(n_txns)), ("revisor", "ativo")),
+        ("Análise", "?cluster=Análise", "Categorias, multi-perspectiva, IRPF.",
+         ("categorias", "24"), ("IRPF", "ativo")),
+        ("Metas", "?cluster=Metas", "Financeiras + operacionais (skills D7).",
+         ("financeiras", str(n_metas)), ("operacionais", "—")),
+        ("Sistema", "?cluster=Sistema", "Skills D7, runs, ADRs, configuração.",
+         ("skills", "—"), ("ADRs", "20")),
+    ]
+
+    body = "".join(
+        f'<a class="vg-cluster-card" href="{href}">'
+        f'<h3>{nome}</h3>'
+        f'<div class="desc">{desc}</div>'
+        f'<div class="stats">'
+        f'<span><strong>{s1[1]}</strong>{s1[0]}</span>'
+        f'<span><strong>{s2[1]}</strong>{s2[0]}</span>'
+        f'</div>'
+        f'</a>'
+        for nome, href, desc, s1, s2 in cards
     )
-    # Barra inline do % de poupança (0..30% = range visível; acima vira 100%).
-    pct_visivel = max(0.0, min(percentual / 30.0, 1.0))
-    st.markdown(
-        progress_inline_html(pct_visivel, cor=cor_barra),
-        unsafe_allow_html=True,
-    )
+
+    return f"""
+    <div class="vg-section-title">Os 6 clusters</div>
+    <div class="vg-cluster-grid">{body}</div>
+    """
+
+
+def _fmt_compact(n: int) -> str:
+    """Formata inteiros grandes em estilo 2.8k / 12k."""
+    if n >= 1000:
+        return f"{n / 1000:.1f}k".replace(".", ",")
+    return str(n)
+
+
+# ---------------------------------------------------------------------------
+# Gráfico Receita vs Despesa (preservado da versão anterior, paleta tokens)
+# ---------------------------------------------------------------------------
 
 
 def _grafico_barras_historico(
@@ -168,6 +631,13 @@ def _grafico_barras_historico(
     mes_atual: str,
 ) -> None:
     """Gráfico de barras com linha de saldo: receita vs despesa últimos 6 meses."""
+    if extrato.empty or "mes_ref" not in extrato.columns:
+        st.markdown(
+            callout_html("info", "Sem dados suficientes para o histórico mensal."),
+            unsafe_allow_html=True,
+        )
+        return
+
     meses_ordenados = sorted(extrato["mes_ref"].dropna().unique().tolist())
 
     if mes_atual in meses_ordenados:
@@ -183,8 +653,8 @@ def _grafico_barras_historico(
 
     for m in meses_sel:
         ext_m = filtrar_por_mes(extrato, m)
-        rec = ext_m[ext_m["tipo"] == "Receita"]["valor"].sum()
-        desp = ext_m[ext_m["tipo"].isin(["Despesa", "Imposto"])]["valor"].sum()
+        rec = float(ext_m[ext_m["tipo"] == "Receita"]["valor"].sum())
+        desp = float(ext_m[ext_m["tipo"].isin(["Despesa", "Imposto"])]["valor"].sum())
         receitas_list.append(rec)
         despesas_list.append(desp)
         saldos_list.append(rec - desp)
@@ -240,11 +710,8 @@ def _grafico_barras_historico(
         ),
     )
 
-    # Sprint 87.8 (R77-1): legenda padronizada abaixo do gráfico.
     tema.legenda_abaixo(fig)
     aplicar_locale_ptbr(fig, valores_eixo_x=meses_sel)
-    # Sprint 87.1 (R73-1): clique em barra Receita/Despesa navega para aba
-    # Extrato filtrada pelo mês. Scatter de saldo (trace 2) fica sem drill.
     aplicar_drilldown(
         fig,
         campo_customdata="mes_ref",
@@ -253,46 +720,227 @@ def _grafico_barras_historico(
     )
 
 
-def _grafico_classificacao(extrato_mes: pd.DataFrame) -> None:
-    """Barras horizontais: distribuição por classificação."""
-    df = extrato_mes[extrato_mes["tipo"].isin(["Despesa", "Imposto"])]
+# ---------------------------------------------------------------------------
+# UX-T-01 — blocos canônicos (mockup 01-visao-geral.html)
+# ---------------------------------------------------------------------------
 
-    if df.empty:
-        st.markdown(
-            callout_html("info", "Sem despesas para exibir a distribuição."),
-            unsafe_allow_html=True,
+
+def _estilos_t01_canonicos() -> str:
+    """CSS local UX-T-01 — espelha estilo inline do mockup canônico."""
+    return """
+    <style>
+      .vg-t01 { font-family: var(--ff-sans); }
+      .vg-t01-kpis {
+        display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+        margin: 0 0 16px;
+      }
+      .vg-t01-kpi {
+        background: var(--bg-surface); border: 1px solid var(--border-subtle);
+        border-radius: var(--r-md); padding: 16px;
+        display: flex; flex-direction: column; gap: 6px;
+        text-decoration: none; color: inherit;
+        transition: border-color .15s, transform .15s;
+      }
+      .vg-t01-kpi:hover { border-color: var(--accent-purple); transform: translateY(-2px); }
+      .vg-t01-kpi .l {
+        font-family: var(--ff-mono); font-size: var(--fs-11);
+        letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted);
+      }
+      .vg-t01-kpi .v {
+        font-family: var(--ff-mono); font-size: 32px; font-weight: 500;
+        line-height: 1; font-variant-numeric: tabular-nums;
+      }
+      .vg-t01-kpi .d {
+        font-family: var(--ff-mono); font-size: var(--fs-12); color: var(--text-muted);
+      }
+      .vg-t01-kpi.up   .v { color: var(--d7-graduado); }
+      .vg-t01-kpi.warn .v { color: var(--accent-yellow); }
+      .vg-t01-kpi.bad  .v { color: var(--accent-red); }
+
+      .vg-t01-section-label {
+        font-family: var(--ff-mono); font-size: var(--fs-13);
+        letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted);
+        margin: 0 0 8px;
+      }
+      .vg-t01-cluster-grid {
+        display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+      }
+      .vg-t01-cluster-card {
+        background: var(--bg-surface); border: 1px solid var(--border-subtle);
+        border-radius: var(--r-md); padding: 16px;
+        text-decoration: none; color: inherit;
+        display: flex; flex-direction: column; gap: 8px;
+        transition: border-color .15s, transform .15s;
+      }
+      .vg-t01-cluster-card:hover {
+        border-color: var(--accent-purple);
+        transform: translateY(-2px);
+      }
+      .vg-t01-cluster-card h3 {
+        font-family: var(--ff-mono); font-size: var(--fs-15); font-weight: 500;
+        margin: 0; letter-spacing: -0.01em;
+      }
+      .vg-t01-cluster-card .desc {
+        font-size: var(--fs-13); color: var(--text-muted); line-height: 1.5;
+      }
+      .vg-t01-cluster-card .stats {
+        display: flex; gap: 12px; margin-top: auto; padding-top: 8px;
+        border-top: 1px solid var(--border-subtle);
+      }
+      .vg-t01-cluster-card .stats span {
+        font-family: var(--ff-mono); font-size: var(--fs-11); color: var(--text-secondary);
+      }
+      .vg-t01-cluster-card .stats strong {
+        color: var(--text-primary); margin-right: 4px;
+      }
+
+      .vg-t01-card { background: var(--bg-surface); border: 1px solid var(--border-subtle);
+                     border-radius: var(--r-md); padding: 16px; }
+      .vg-t01-tl-item {
+        display: grid; grid-template-columns: 90px 24px 1fr; gap: 8px;
+        padding: 8px 0; border-bottom: 1px dashed var(--border-subtle);
+      }
+      .vg-t01-tl-item:last-child { border-bottom: 0; }
+      .vg-t01-tl-item .when {
+        font-family: var(--ff-mono); font-size: var(--fs-11); color: var(--text-muted);
+        padding-top: 2px;
+      }
+      .vg-t01-tl-item .ic { color: var(--accent-purple); padding-top: 2px; }
+      .vg-t01-tl-item .what {
+        font-size: var(--fs-13);
+        color: var(--text-secondary);
+        line-height: 1.45;
+      }
+      .vg-t01-tl-item .what strong { color: var(--text-primary); font-family: var(--ff-mono); }
+      .vg-t01-tl-item .what code { color: var(--accent-purple); }
+
+      .vg-t01-sprint-card { margin-top: 16px; }
+      .vg-t01-sprint-head {
+        display: flex; align-items: baseline; justify-content: space-between;
+        margin-bottom: 12px;
+      }
+      .vg-t01-sprint-head .meta {
+        font-family: var(--ff-mono); font-size: 11px; letter-spacing: 0.06em;
+        text-transform: uppercase; color: var(--text-muted);
+      }
+      .vg-t01-sprint-head .titulo {
+        font-family: var(--ff-mono); font-size: 18px; font-weight: 500; margin-top: 4px;
+      }
+      .vg-t01-sprint-card .desc {
+        font-size: 13px; color: var(--text-secondary); line-height: 1.5;
+      }
+      .vg-t01-sprint-card .desc strong { color: var(--text-primary); }
+    </style>
+    """
+
+
+def _kpis_agentic_html(kpis: dict) -> str:
+    """KPIs agentic-first canônicos do mockup."""
+    from src.dashboard.componentes.html_utils import minificar
+
+    def _card(modifier: str, href: str, label: str, valor: str, delta: str) -> str:
+        return (
+            f'<a class="vg-t01-kpi {modifier}" href="{href}" '
+            f'style="text-decoration:none;color:inherit;">'
+            f'<span class="l">{label}</span>'
+            f'<span class="v">{valor}</span>'
+            f'<span class="d">{delta}</span>'
+            f"</a>"
         )
-        return
 
-    agrupado = df.groupby("classificacao")["valor"].sum().reset_index()
-    agrupado = agrupado.sort_values("valor", ascending=True)
-
-    cores = [MAPA_CLASSIFICACAO.get(c, CORES["na"]) for c in agrupado["classificacao"]]
-
-    fig = go.Figure(
-        data=[
-            go.Bar(
-                x=agrupado["valor"],
-                y=agrupado["classificacao"],
-                orientation="h",
-                marker_color=cores,
-                text=[formatar_moeda(v) for v in agrupado["valor"]],
-                textposition="auto",
-                textfont=dict(size=FONTE_MINIMA),
-            )
-        ]
+    return minificar(
+        '<div class="vg-t01-kpis">'
+        + _card("up", "?cluster=Documentos&tab=Catalogação",
+                "Arquivos catalogados", kpis["arquivos_catalogados"], kpis["arquivos_delta"])
+        + _card("", "?cluster=Documentos&tab=Extra%C3%A7%C3%A3o+Tripla",
+                "Paridade ETL ↔ Opus", kpis["paridade_pct"], kpis["paridade_meta"])
+        + _card("warn", "?cluster=Documentos&tab=Revisor",
+                "Aguardando humano", kpis["aguardando_humano"], kpis["aguardando_breakdown"])
+        + _card("bad", "?cluster=Sistema&tab=Skills+D7",
+                "Skills regredindo", kpis["skills_regredindo"], kpis["skills_nomes"])
+        + "</div>"
     )
 
-    layout = {**LAYOUT_PLOTLY, "margin": dict(l=120, r=20, t=50, b=30)}
-    fig.update_layout(
-        **layout,
-        title=dict(text="Despesas por Classificação", font=dict(size=FONTE_SUBTITULO)),
-        xaxis_title="Valor (R$)",
-        showlegend=False,
+
+def _clusters_canonicos_html(cards: list[dict]) -> str:
+    """Bloco "OS 5 CLUSTERS" do mockup com 6 cards descritivos."""
+    from src.dashboard.componentes.html_utils import minificar
+
+    cards_html = []
+    for c in cards:
+        cards_html.append(
+            f'<a class="vg-t01-cluster-card" href="{c["href"]}">'
+            f'<h3>{c["nome"]}</h3>'
+            f'<div class="desc">{c["descricao"]}</div>'
+            f'<div class="stats">'
+            f'<span><strong>{c["stat1_value"]}</strong>{c["stat1_label"]}</span>'
+            f'<span><strong>{c["stat2_value"]}</strong>{c["stat2_label"]}</span>'
+            f"</div>"
+            f"</a>"
+        )
+    return minificar(
+        '<h2 class="vg-t01-section-label">Os 5 clusters</h2>'
+        '<div class="vg-t01-cluster-grid">'
+        f'{"".join(cards_html)}'
+        "</div>"
     )
 
-    aplicar_locale_ptbr(fig)
-    st.plotly_chart(fig, width="stretch")
+
+def _atividade_recente_html(entries: list[dict]) -> str:
+    """Timeline de eventos recentes."""
+    from src.dashboard.componentes.html_utils import minificar
+
+    if not entries:
+        body = (
+            '<div class="vg-t01-tl-item"><span class="when">—</span>'
+            '<span class="ic">·</span>'
+            '<span class="what">Sem atividade recente registrada.</span></div>'
+        )
+    else:
+        body = "".join(
+            '<div class="vg-t01-tl-item">'
+            f'<span class="when">{e["when"]}</span>'
+            '<span class="ic">·</span>'
+            f'<span class="what">{e["what_html"]}</span>'
+            "</div>"
+            for e in entries
+        )
+    return minificar(
+        '<h2 class="vg-t01-section-label">Atividade recente</h2>'
+        '<div class="vg-t01-card">'
+        f'<div class="vg-t01-timeline">{body}</div>'
+        "</div>"
+    )
 
 
+def _sprint_atual_html(meta: dict | None) -> str:
+    """Card 'SPRINT ATUAL' canônico."""
+    from src.dashboard.componentes.html_utils import minificar
+
+    if not meta:
+        return minificar(
+            '<h2 class="vg-t01-section-label" style="margin-top:20px;">Sprint atual</h2>'
+            '<div class="vg-t01-card vg-t01-sprint-card">'
+            '<div style="font-size:13px;color:var(--text-muted);">'
+            "Nenhuma sprint registrada."
+            "</div>"
+            "</div>"
+        )
+    pill_classe = f"pill pill-{meta.get('pill_tipo', 'd7-pendente')}"
+    return minificar(
+        '<h2 class="vg-t01-section-label" style="margin-top:20px;">Sprint atual</h2>'
+        '<div class="vg-t01-card vg-t01-sprint-card">'
+        '<div class="vg-t01-sprint-head">'
+        "<div>"
+        f'<div class="meta">{meta["sprint_numero"]} · {meta["periodo"]}</div>'
+        f'<div class="titulo">{meta["titulo"]}</div>'
+        "</div>"
+        f'<span class="{pill_classe}">{meta["pill_texto"]}</span>'
+        "</div>"
+        f'<div class="desc">{meta["descricao"]}</div>'
+        "</div>"
+    )
+
+
+# "Comece pelo todo, depois detalhe." -- princípio do design top-down
 # "A riqueza não consiste em ter grandes posses, mas em ter poucas necessidades." -- Epicteto

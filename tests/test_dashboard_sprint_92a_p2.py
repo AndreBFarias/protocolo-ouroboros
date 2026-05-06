@@ -35,10 +35,15 @@ def test_rotulos_tipo_documento_inclui_novos_tipos_sprint_87_4() -> None:
 
 
 def test_sankey_injeta_hovertemplate_com_valor_formatado_em_reais() -> None:
-    """Item 12: `link=` do Sankey carrega hovertemplate PT-BR com moeda."""
+    """Item 12: `link=` do Sankey carrega hovertemplate PT-BR com moeda.
+
+    Sprint UX-RD-13: `_renderizar_sankey` foi consolidado em
+    `_renderizar_aba_fluxo` (renderiza KPIs + Sankey de 3 níveis). A
+    invariante semântica permanece: hovertemplate PT-BR com R$.
+    """
     from src.dashboard.paginas import analise_avancada
 
-    source = inspect.getsource(analise_avancada._renderizar_sankey)
+    source = inspect.getsource(analise_avancada._renderizar_aba_fluxo)
 
     assert "hovertemplate" in source, (
         "Sankey precisa de hovertemplate (item 12 Sprint 92a P2): sem ele, "

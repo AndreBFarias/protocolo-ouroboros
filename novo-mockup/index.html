@@ -1,0 +1,425 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><title>Ouroboros — Redesign UI/UX (índice)</title>
+<link rel="stylesheet" href="_shared/tokens.css">
+<style>
+@keyframes rot-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+@keyframes rot-rev  { from { transform: rotate(360deg); } to { transform: rotate(0deg); } }
+@keyframes pulse-soft { 0%,100% { opacity: 0.35; } 50% { opacity: 0.8; } }
+@keyframes flow { from { stroke-dashoffset: 0; } to { stroke-dashoffset: -200; } }
+
+body { padding: 0; margin: 0; background: var(--bg-base); }
+.wrap { padding: 56px 48px 80px; max-width: 1240px; margin: 0 auto; }
+h1 { font-family: var(--ff-mono); font-size: 36px; letter-spacing: -0.025em; margin: 0 0 8px; line-height: 1.1; }
+
+/* HERO */
+.hero {
+  display: grid; grid-template-columns: 1fr 320px; gap: 48px;
+  align-items: center; padding: 40px 0 48px;
+  border-bottom: 1px solid var(--border-subtle); margin-bottom: 8px;
+}
+.hero .eyebrow {
+  font-family: var(--ff-mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--accent-purple); margin-bottom: 14px; display: inline-flex; gap: 10px; align-items: center;
+}
+.hero .eyebrow .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent-purple); box-shadow: 0 0 12px var(--accent-purple); animation: pulse-soft 2.4s ease-in-out infinite; }
+.lead { color: var(--text-secondary); font-size: 16px; line-height: 1.65; max-width: 58ch; margin: 0 0 24px; }
+.lead strong { color: var(--text-primary); font-weight: 500; }
+
+.hero-stats { display: flex; gap: 28px; margin-top: 8px; flex-wrap: wrap; }
+.hero-stats .s { font-family: var(--ff-mono); }
+.hero-stats .s .n { font-size: 24px; color: var(--text-primary); font-variant-numeric: tabular-nums; line-height: 1; }
+.hero-stats .s .l { font-size: 10px; color: var(--text-muted); letter-spacing: .08em; text-transform: uppercase; margin-top: 6px; }
+.hero-stats .s.purple .n { color: var(--accent-purple); }
+.hero-stats .s.pink .n { color: var(--accent-pink); }
+
+.glyph-stage { width: 320px; height: 320px; position: relative; display: grid; place-items: center; }
+.glyph-stage svg { position: absolute; inset: 0; }
+.gs-1 { animation: rot-slow 90s linear infinite; transform-origin: 50% 50%; }
+.gs-2 { animation: rot-rev  60s linear infinite; transform-origin: 50% 50%; }
+.gs-3 { animation: rot-slow 30s linear infinite; transform-origin: 50% 50%; }
+.gs-flow { stroke-dasharray: 4 6; animation: flow 6s linear infinite; }
+
+/* SECTIONS */
+.section-h {
+  font-family: var(--ff-mono); font-size: 11px; letter-spacing:.12em; text-transform: uppercase;
+  color: var(--accent-purple); margin: 44px 0 16px; padding-bottom: 10px;
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex; justify-content: space-between; align-items: baseline; gap: 16px;
+}
+.section-h .left { display: flex; align-items: baseline; gap: 14px; }
+.section-h .left .marker { color: var(--text-muted); font-weight: 400; }
+.section-h .ct { color: var(--text-muted); font-size: 10px; letter-spacing: .06em; text-transform: none; }
+
+/* TILES */
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+.tile {
+  background: var(--bg-surface); border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md); padding: 18px 20px; text-decoration: none; color: inherit;
+  display: flex; flex-direction: column; gap: 8px;
+  transition: border-color .18s, transform .18s, box-shadow .18s;
+  position: relative; overflow: hidden;
+}
+.tile::before {
+  content: ''; position: absolute; inset: 0; border-radius: var(--r-md);
+  background: linear-gradient(135deg, transparent 60%, color-mix(in oklch, var(--accent-purple) 7%, transparent) 100%);
+  opacity: 0; transition: opacity .18s; pointer-events: none;
+}
+.tile:hover { border-color: var(--accent-purple); transform: translateY(-2px); box-shadow: 0 8px 24px -12px rgba(189,147,249,0.30); }
+.tile:hover::before { opacity: 1; }
+.tile .num { font-family: var(--ff-mono); font-size: 10px; color: var(--accent-purple); letter-spacing: .10em; text-transform: uppercase; display: flex; align-items: center; gap: 6px; }
+.tile .num::after { content: '→'; opacity: 0; transition: opacity .18s, transform .18s; margin-left: auto; color: var(--text-muted); }
+.tile:hover .num::after { opacity: 1; transform: translateX(2px); }
+.tile .ttl { font-family: var(--ff-mono); font-size: 16px; font-weight: 500; letter-spacing: -0.01em; }
+.tile .sub { color: var(--text-muted); font-size: 12.5px; line-height: 1.55; }
+.tile .meta { font-family: var(--ff-mono); font-size: 10px; color: var(--text-secondary); margin-top: auto; padding-top: 10px; border-top: 1px dashed var(--border-subtle); display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.tile.feat { border-color: color-mix(in oklch, var(--accent-purple) 50%, var(--border-subtle)); background: linear-gradient(180deg, color-mix(in oklch, var(--accent-purple) 6%, var(--bg-surface)) 0%, var(--bg-surface) 100%); }
+.tile.feat .num { color: var(--accent-pink); }
+
+.kbd { font-family: var(--ff-mono); font-size: 10px; background: var(--bg-elevated); border:1px solid var(--border-subtle); border-radius: 3px; padding: 1px 5px; color: var(--accent-cyan); }
+
+.legend { display: flex; gap: 18px; flex-wrap: wrap; padding: 14px 18px; background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--r-md); margin-bottom: 24px; font-family: var(--ff-mono); font-size: 11px; }
+.legend .item { display: inline-flex; gap: 8px; align-items: center; color: var(--text-muted); }
+.legend .item .sw { width: 8px; height: 8px; border-radius: 2px; }
+.legend .item code { color: var(--accent-cyan); background: var(--bg-elevated); padding: 1px 5px; border-radius: 3px; font-size: 10px; }
+
+.foot { margin-top: 72px; padding-top: 28px; border-top: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: baseline; font-family: var(--ff-mono); font-size: 11px; color: var(--text-muted); letter-spacing: .04em; gap: 24px; flex-wrap: wrap; }
+.foot .quote { max-width: 60ch; line-height: 1.6; }
+.foot .quote .ob { color: var(--accent-purple); font-size: 14px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <section class="hero">
+    <div>
+      <div class="eyebrow"><span class="dot"></span>Protocolo Ouroboros</div>
+      <h1>Os arquivos da sua vida<br>financeira, normalizados.</h1>
+      <p class="lead">
+        Redesign completo do pipeline auto-referente que <strong>extrai</strong>, <strong>valida</strong> e <strong>cataloga</strong> documentos financeiros pessoais. Esta entrega contém <strong>16 telas navegáveis</strong>, styleguide com 12 famílias de componentes, tokens em JSON e tema Streamlit alinhado.
+      </p>
+      <div class="hero-stats">
+        <div class="s purple"><div class="n">25</div><div class="l">mockups</div></div>
+        <div class="s"><div class="n">7</div><div class="l">clusters</div></div>
+        <div class="s pink"><div class="n">12</div><div class="l">famílias de componente</div></div>
+        <div class="s"><div class="n">439</div><div class="l">arquivos catalogados</div></div>
+      </div>
+    </div>
+
+    <div class="glyph-stage" aria-hidden="true">
+      <svg viewBox="0 0 320 320">
+        <defs>
+          <linearGradient id="og1" x1="0" x2="1" y1="0" y2="1">
+            <stop offset="0%" stop-color="#bd93f9"/><stop offset="100%" stop-color="#ff79c6"/>
+          </linearGradient>
+          <radialGradient id="og-glow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#bd93f9" stop-opacity="0.22"/>
+            <stop offset="70%" stop-color="#bd93f9" stop-opacity="0"/>
+          </radialGradient>
+        </defs>
+
+        <!-- ambient glow -->
+        <circle cx="160" cy="160" r="150" fill="url(#og-glow)"/>
+
+        <!-- outer dotted orbit -->
+        <g class="gs-2">
+          <circle cx="160" cy="160" r="142" fill="none" stroke="#bd93f9" stroke-width="0.6" stroke-dasharray="1 8" opacity="0.35"/>
+        </g>
+
+        <!-- inner flow ring -->
+        <g class="gs-3">
+          <circle cx="160" cy="160" r="78" fill="none" stroke="#8be9fd" stroke-width="1"
+                  stroke-dasharray="3 7" opacity="0.35" class="gs-flow"/>
+        </g>
+
+        <!-- main snake: full ring with head meeting tail at top -->
+        <g class="gs-1">
+          <!-- body: 4 arcs forming a near-full circle, ~14° gap at top center -->
+          <path d="M 155 40
+                   A 120 120 0 0 0 40 160
+                   A 120 120 0 0 0 160 280
+                   A 120 120 0 0 0 280 160
+                   A 120 120 0 0 0 175 40"
+                fill="none" stroke="url(#og1)" stroke-width="11" stroke-linecap="round"/>
+          <!-- darker scales overlay -->
+          <path d="M 155 40
+                   A 120 120 0 0 0 40 160
+                   A 120 120 0 0 0 160 280
+                   A 120 120 0 0 0 280 160
+                   A 120 120 0 0 0 175 40"
+                fill="none" stroke="#0e0f15" stroke-width="11" stroke-linecap="round"
+                stroke-dasharray="1.5 13" opacity="0.55"/>
+
+          <!-- tail tip (slightly tapered, on the left of the gap) -->
+          <circle cx="155" cy="40" r="6" fill="#bd93f9"/>
+
+          <!-- HEAD: side-profile, jaw wrapping the tail. positioned at right side of gap, facing left. -->
+          <g transform="translate(175,40)">
+            <!-- upper jaw — curves over and bites down on tail to the left -->
+            <path d="M 0 -2
+                     C -4 -10, -16 -12, -24 -8
+                     C -28 -6, -30 -2, -28 0
+                     L -8 -1 Z"
+                  fill="#ff79c6" stroke="#bd93f9" stroke-width="0.8" stroke-linejoin="round"/>
+            <!-- lower jaw — curves under -->
+            <path d="M 0 2
+                     C -4 8, -14 10, -22 7
+                     C -26 5, -28 2, -26 0
+                     L -8 1 Z"
+                  fill="#c77ab0" stroke="#bd93f9" stroke-width="0.8" stroke-linejoin="round"/>
+            <!-- head dome (top of skull) -->
+            <ellipse cx="-4" cy="-3" rx="9" ry="5" fill="#ff79c6" opacity="0.9"/>
+            <!-- eye -->
+            <circle cx="-6" cy="-4" r="1.8" fill="#0e0f15"/>
+            <circle cx="-5.5" cy="-4.6" r="0.6" fill="#f8f8f2"/>
+            <!-- forked tongue flicking out toward tail -->
+            <path d="M -28 0 L -34 -2 M -28 0 L -34 2"
+                  stroke="#ff79c6" stroke-width="0.8" stroke-linecap="round" fill="none"/>
+          </g>
+        </g>
+
+        <!-- center wordmark -->
+        <g>
+          <text x="160" y="158" text-anchor="middle"
+                font-family="ui-monospace, 'JetBrains Mono', monospace"
+                font-size="18" font-weight="500" letter-spacing="6" fill="#bd93f9">
+            OUROBOROS
+          </text>
+          <text x="160" y="176" text-anchor="middle"
+                font-family="ui-monospace, 'JetBrains Mono', monospace"
+                font-size="9" letter-spacing="3" fill="#7c7e8c">
+            PROTOCOLO
+          </text>
+        </g>
+      </svg>
+    </div>
+  </section>
+
+  <div class="legend">
+    <span class="item"><span class="sw" style="background:var(--accent-purple);"></span>Tema dark Dracula adaptado</span>
+    <span class="item"><span class="sw" style="background:var(--d7-graduado);"></span>Estados D7</span>
+    <span class="item">Atalhos globais <code>g h</code> <code>g i</code> <code>g v</code> <code>/</code> <code>?</code></span>
+  </div>
+
+  <div class="section-h"><span class="left"><span class="marker"></span><span>Sistema</span></span><span class="ct">tokens · navegação · referência</span></div>
+  <div class="grid">
+    <a class="tile feat" href="styleguide.html">
+      <span class="num"> Styleguide</span>
+      <span class="ttl">Tokens & componentes</span>
+      <span class="sub">Cores, tipografia, espaçamento, botões, pills, KPIs, diff, glyphs — tudo num só lugar.</span>
+      <span class="meta">12 seções · referência viva</span>
+    </a>
+    <a class="tile" href="mockups/00-shell-navegacao.html">
+      <span class="num">00 · Shell</span>
+      <span class="ttl">Navegação principal</span>
+      <span class="sub">Sidebar com 5 clusters, topbar com breadcrumb, atalhos globais.</span>
+      <span class="meta"><span class="kbd">g h</span> <span class="kbd">g i</span> <span class="kbd">/</span> <span class="kbd">?</span></span>
+    </a>
+  </div>
+
+  <div class="section-h"><span class="left"><span class="marker">01</span><span>Inbox</span></span><span class="ct">cluster próprio · ADR-13</span></div>
+  <div class="grid">
+    <a class="tile" href="mockups/16-inbox.html">
+      <span class="num">16 · Inbox</span>
+      <span class="ttl">Fila de ingestão</span>
+      <span class="sub">Drop, sha8, drawer com sidecar JSON, instrução skill em LLM call live.</span>
+      <span class="meta">drag-drop · live status</span>
+    </a>
+  </div>
+
+  <div class="section-h"><span class="left"><span class="marker">02</span><span>Home</span></span><span class="ct">visão executiva</span></div>
+  <div class="grid">
+    <a class="tile" href="mockups/01-visao-geral.html">
+      <span class="num">01 · Home</span>
+      <span class="ttl">Visão Geral</span>
+      <span class="sub">Hero com Ω animado, 4 KPIs, mapa dos 5 clusters, atividade recente.</span>
+      <span class="meta">SVG anim · sprint · timeline</span>
+    </a>
+  </div>
+
+  <div class="section-h"><span class="left"><span class="marker">03</span><span>Finanças</span></span><span class="ct">extrato · contas · pagamentos · projeções</span></div>
+  <div class="grid">
+    <a class="tile" href="mockups/02-extrato.html">
+      <span class="num">02 · Finanças</span>
+      <span class="ttl">Extrato consolidado</span>
+      <span class="sub">Saldo histórico, breakdown por categoria, tabela densa de transações.</span>
+      <span class="meta">12 meses · 6 contas</span>
+    </a>
+    <a class="tile" href="mockups/03-contas.html">
+      <span class="num">03 · Finanças</span>
+      <span class="ttl">Contas & Cartões</span>
+      <span class="sub">Cards de conta, utilização de cartão, limites, próximas faturas.</span>
+      <span class="meta">utilização visual</span>
+    </a>
+    <a class="tile" href="mockups/04-pagamentos.html">
+      <span class="num">04 · Finanças</span>
+      <span class="ttl">Pagamentos & Calendário</span>
+      <span class="sub">Calendário 30d, próximas 14 dias, recorrências, alertas de vencimento.</span>
+      <span class="meta">grid mensal</span>
+    </a>
+    <a class="tile" href="mockups/05-projecoes.html">
+      <span class="num">05 · Finanças</span>
+      <span class="ttl">Projeções & cenários</span>
+      <span class="sub">3 cenários (conservador / base / agressivo) em 5 anos, marcos, sensibilidade.</span>
+      <span class="meta">5 anos · 3 cenários</span>
+    </a>
+  </div>
+
+  <div class="section-h"><span class="left"><span class="marker">04</span><span>Documentos</span></span><span class="ct">busca · catálogo · completude · revisão · validação</span></div>
+  <div class="grid">
+    <a class="tile" href="mockups/06-busca-global.html">
+      <span class="num">06 · Documentos</span>
+      <span class="ttl">Busca global</span>
+      <span class="sub">Facetas (tipo · período · fonte) + snippets com highlight de query.</span>
+      <span class="meta">439 docs · sub-100ms</span>
+    </a>
+    <a class="tile" href="mockups/07-catalogacao.html">
+      <span class="num">07 · Documentos</span>
+      <span class="ttl">Catalogação</span>
+      <span class="sub">Banco normalizado com facetas + grade visual de documentos.</span>
+      <span class="meta">439 arquivos · 7 tipos</span>
+    </a>
+    <a class="tile" href="mockups/08-completude.html">
+      <span class="num">08 · Documentos</span>
+      <span class="ttl">Cobertura & gaps</span>
+      <span class="sub">Matriz tipo × mês com células de calor, lista priorizada de gaps.</span>
+      <span class="meta">heatmap 7×12</span>
+    </a>
+    <a class="tile" href="mockups/09-revisor.html">
+      <span class="num">09 · Documentos</span>
+      <span class="ttl">Revisor 4-way</span>
+      <span class="sub">OFX × ETL × Opus × Humano em 4 colunas, atalhos j/k/a, fila priorizada.</span>
+      <span class="meta">divergências · keyboard-first</span>
+    </a>
+    <a class="tile" href="mockups/10-validacao-arquivos.html">
+      <span class="num">10 · Documentos</span>
+      <span class="ttl">Validação por arquivo</span>
+      <span class="sub">4 zonas: paridade global, filtros, lista densa, diff ETL ↔ Opus lado-a-lado.</span>
+      <span class="meta">VALIDAÇÃO-CSV-01</span>
+    </a>
+  </div>
+
+  <div class="section-h"><span class="left"><span class="marker">05</span><span>Análise</span></span><span class="ct">categorias · multi-perspectiva · IRPF</span></div>
+  <div class="grid">
+    <a class="tile" href="mockups/11-categorias.html">
+      <span class="num">11 · Análise</span>
+      <span class="ttl">Árvore de categorias</span>
+      <span class="sub">Tree expansível + treemap proporcional + regras de classificação.</span>
+      <span class="meta">3 níveis · 47 cat</span>
+    </a>
+    <a class="tile" href="mockups/12-analise.html">
+      <span class="num">12 · Análise</span>
+      <span class="ttl">Análise multi-ângulo</span>
+      <span class="sub">3 abas: Sankey de fluxo, comparativo M/M, heatmap calendário.</span>
+      <span class="meta">tabs internas</span>
+    </a>
+    <a class="tile feat" href="mockups/15-irpf.html">
+      <span class="num">15 · Análise</span>
+      <span class="ttl">IRPF — feature-killer</span>
+      <span class="sub">Tags fiscais com completude, confiança e pacote final (PDF+XLSX+JSON).</span>
+      <span class="meta"> a serpente engole a cauda</span>
+    </a>
+  </div>
+
+  <div class="section-h"><span class="left"><span class="marker">06</span><span>Metas</span></span><span class="ct">financeiras + operacionais</span></div>
+  <div class="grid">
+    <a class="tile" href="mockups/13-metas.html">
+      <span class="num">13 · Metas</span>
+      <span class="ttl">Metas & OKRs</span>
+      <span class="sub">Donuts financeiros + gauges de pipeline + tracking semanal.</span>
+      <span class="meta">2 perspectivas</span>
+    </a>
+  </div>
+
+  <div class="section-h"><span class="left"><span class="marker">07</span><span>Bem-estar</span></span><span class="ct">humor · diário · rotina · recap · eventos · memórias · medidas · ciclo · cruzamentos · privacidade · editor toml</span></div>
+  <div class="grid">
+    <a class="tile feat" href="mockups/17-bem-estar-hoje.html">
+      <span class="num">17 · Bem-estar</span>
+      <span class="ttl">Hoje — captura de humor</span>
+      <span class="sub">4 sliders, tags, nota, status do casal, próximos alarmes/tarefas. Meta &lt; 30s. M02→M40.</span>
+      <span class="meta"> entrada principal · &lt; 30s</span>
+    </a>
+    <a class="tile" href="mockups/18-humor-heatmap.html">
+      <span class="num">18 · Bem-estar</span>
+      <span class="ttl">Humor · 91 dias</span>
+      <span class="sub">Heatmap 13×7 com modo A / B / sobreposto, stats 30d, distribuição de tags. M10.</span>
+      <span class="meta">heatmap 13×7</span>
+    </a>
+    <a class="tile" href="mockups/19-diario-emocional.html">
+      <span class="num">19 · Bem-estar</span>
+      <span class="ttl">Diário emocional</span>
+      <span class="sub">Trigger · vitória · reflexão · observação. Filtra por para-quem e período. Timeline anotada.</span>
+      <span class="meta">M03 → M40</span>
+    </a>
+    <a class="tile" href="mockups/20-rotina.html">
+      <span class="num">20 · Bem-estar</span>
+      <span class="ttl">Rotina</span>
+      <span class="sub">3 colunas: alarmes recorrentes, tarefas com prioridade, contadores (streak / meta / desejado↓).</span>
+      <span class="meta">M04 · M07 · M14</span>
+    </a>
+    <a class="tile" href="mockups/21-recap.html">
+      <span class="num">21 · Bem-estar</span>
+      <span class="ttl">Recap 7 / 30 / 90 dias</span>
+      <span class="sub">Narrativa LLM com destaques, métricas comparativas e padrões detectados. M30.</span>
+      <span class="meta">narrativa Sonnet</span>
+    </a>
+    <a class="tile" href="mockups/22-eventos.html">
+      <span class="num">22 · Bem-estar</span>
+      <span class="ttl">Eventos · timeline</span>
+      <span class="sub">Trabalho · saúde · casal · viagem · família · social. Cruzamento futuro com humor. M11.</span>
+      <span class="meta">timeline + mini-cal</span>
+    </a>
+    <a class="tile" href="mockups/23-memorias.html">
+      <span class="num">23 · Bem-estar</span>
+      <span class="ttl">Memórias</span>
+      <span class="sub">Foto · áudio · texto · vídeo. Cápsulas re-surface no daily, vinculáveis a eventos. M12.</span>
+      <span class="meta">cápsulas multi-mídia</span>
+    </a>
+    <a class="tile" href="mockups/24-medidas.html">
+      <span class="num">24 · Bem-estar</span>
+      <span class="ttl">Medidas · corpo</span>
+      <span class="sub">Peso, BF%, cintura, pressão, FC repouso, sono. Pessoa A/B independentes, sparklines + histórico.</span>
+      <span class="meta">M14 · A/B</span>
+    </a>
+    <a class="tile" href="mockups/25-ciclo.html">
+      <span class="num">25 · Bem-estar</span>
+      <span class="ttl">Ciclo menstrual</span>
+      <span class="sub">Anel de 28 dias com fases, sintomas, cruzamento com humor. Opt-in, privado por padrão. M14.</span>
+      <span class="meta">M14 (opcional)</span>
+    </a>
+    <a class="tile feat" href="mockups/26-cruzamentos.html">
+      <span class="num">26 · Bem-estar</span>
+      <span class="ttl">Cruzamentos · humor × eventos × ciclo</span>
+      <span class="sub">Builder de queries entre métricas e contexto. Scatter + linha de tendência + insights salvos viram blocos automáticos no Recap. M30.</span>
+      <span class="meta">M30 · alimenta Recap</span>
+    </a>
+    <a class="tile" href="mockups/27-privacidade.html">
+      <span class="num">27 · Bem-estar</span>
+      <span class="ttl">Privacidade granular A↔B</span>
+      <span class="sub">Matriz por campo × 4 níveis (oculto/agregado/resumo/total), direção A→B / B→A, audit log. Default conservador.</span>
+      <span class="meta">M28 · opt-in por campo</span>
+    </a>
+    <a class="tile" href="mockups/28-rotina-toml.html">
+      <span class="num">28 · Bem-estar</span>
+      <span class="ttl">Editor rotina/*.toml</span>
+      <span class="sub">3 colunas: arquivos · TOML com syntax highlight + validação de schema · preview visual + diff vs HEAD + impacto em Hoje/Rotina/Recap.</span>
+      <span class="meta">M04 · text-as-truth</span>
+    </a>
+  </div>
+
+  <div class="section-h"><span class="left"><span class="marker">08</span><span>Sistema · D7</span></span><span class="ct">observabilidade do pipeline</span></div>
+  <div class="grid">
+    <a class="tile" href="mockups/14-skills-d7.html">
+      <span class="num">14 · Sistema</span>
+      <span class="ttl">Skills D7 dashboard</span>
+      <span class="sub">18 skills, estados graduado/calibrando/regredido, runs, drift, regras dispatcher.</span>
+      <span class="meta">analítico denso</span>
+    </a>
+  </div>
+
+  <div class="foot">
+    <div class="quote">Auto-referência: este índice é a porta. A serpente engole a cauda no IRPF — onde o pipeline se justifica. <span class="ob">Ω</span></div>
+  </div>
+</div>
+</body>
+</html>

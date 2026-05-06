@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Ouroboros — Bem-estar · Medidas</title>
+<link rel="stylesheet" href="../_shared/tokens.css">
+<link rel="stylesheet" href="../_shared/components.css">
+<style>
+.med-pessoa-tabs { display:inline-flex; background: var(--bg-inset); border:1px solid var(--border-subtle); border-radius: var(--r-sm); padding: 3px; gap: 2px; margin-bottom: var(--sp-4); }
+.med-pessoa-tabs button { background: transparent; border: none; color: var(--text-secondary); padding: 6px 16px; font-family: var(--ff-mono); font-size: 12px; cursor: pointer; border-radius: 4px; letter-spacing: 0.04em; }
+.med-pessoa-tabs button.ativo { background: var(--cor); color: var(--text-inverse); font-weight: 500; }
+
+.med-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--sp-3); }
+.med-card {
+  background: var(--bg-surface); border:1px solid var(--border-subtle); border-radius: var(--r-md);
+  padding: var(--sp-4); border-left: 3px solid var(--cor);
+}
+.med-card .head { display:flex; align-items:baseline; justify-content:space-between; margin-bottom: var(--sp-2); }
+.med-card .nome { font-family: var(--ff-mono); font-size: 11px; letter-spacing: 0.10em; text-transform: uppercase; color: var(--cor); }
+.med-card .data { font-family: var(--ff-mono); font-size: 10px; color: var(--text-muted); }
+.med-card .v {
+  font-family: var(--ff-mono); font-size: 36px; font-weight: 500; line-height: 1;
+  font-variant-numeric: tabular-nums; color: var(--text-primary);
+}
+.med-card .v small { font-size: 14px; color: var(--text-muted); margin-left: 4px; }
+.med-card .delta { font-family: var(--ff-mono); font-size: 11px; margin-top: 4px; }
+.med-card .delta.up { color: var(--accent-green); }
+.med-card .delta.down { color: var(--accent-red); }
+.med-card .delta.flat { color: var(--text-muted); }
+
+/* Sparkline */
+.med-card svg { width: 100%; height: 36px; margin-top: var(--sp-2); }
+
+/* Histórico */
+.hist-card {
+  background: var(--bg-surface); border:1px solid var(--border-subtle); border-radius: var(--r-md);
+  padding: var(--sp-5); margin-top: var(--sp-4);
+}
+.hist-card h3 { font-family: var(--ff-mono); font-size: 11px; letter-spacing: 0.10em; text-transform: uppercase; color: var(--text-muted); margin: 0 0 var(--sp-3); }
+table.tbl { width: 100%; border-collapse: collapse; font-size: 12px; }
+table.tbl th, table.tbl td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--border-subtle); font-family: var(--ff-mono); }
+table.tbl th { color: var(--text-muted); font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; font-size: 10px; }
+table.tbl td { color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+table.tbl td:nth-child(1) { color: var(--text-muted); }
+table.tbl td .v { color: var(--text-primary); font-weight: 500; }
+table.tbl tr:hover { background: var(--bg-inset); }
+</style>
+</head>
+<body>
+<div id="shell-root"></div>
+<script src="../_shared/glyphs.js"></script>
+<script src="../_shared/shell.js"></script>
+<script>
+montarShell({
+  clusterAtivo: 'bem-estar',
+  abaAtiva: 'be-medidas',
+  breadcrumb: ['Ouroboros', 'Bem-estar', 'Medidas'],
+  acoes: [
+    { label: 'Importar Mi Fit', icon: 'upload', onClick: "toast('Importar dados de balança Xiaomi · em produção')" },
+    { label: 'Registrar', icon: 'plus', primary: true, onClick: "toast('Registro manual: peso · BF% · cintura · pressão · etc')" },
+  ],
+});
+
+let PESSOA = 'A';
+function setPessoa(p) {
+  PESSOA = p;
+  document.querySelectorAll('.med-pessoa-tabs button').forEach(b => {
+    b.classList.toggle('ativo', b.dataset.p === p);
+    b.style.setProperty('--cor', p === 'A' ? 'var(--accent-purple)' : 'var(--accent-pink)');
+  });
+  toast('Mock: troca pessoa A ↔ B');
+}
+
+function spark(pts, cor) {
+  const w = 260, h = 36, pad = 2;
+  const min = Math.min(...pts), max = Math.max(...pts);
+  const range = max - min || 1;
+  const coords = pts.map((v, i) => `${pad + (i / (pts.length - 1)) * (w - pad * 2)},${h - pad - ((v - min) / range) * (h - pad * 2)}`);
+  return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+    <polyline points="${coords.join(' ')}" fill="none" stroke="${cor}" stroke-width="1.5" />
+    <circle cx="${coords[coords.length-1].split(',')[0]}" cy="${coords[coords.length-1].split(',')[1]}" r="2.5" fill="${cor}" />
+  </svg>`;
+}
+
+const MEDIDAS = [
+  { nome: 'peso',           v: '78.4', un: 'kg',    delta: '↘ −1.2kg / 30d',  deltaTipo: 'up',   cor: 'var(--accent-purple)', spark: [80.1, 79.8, 79.4, 79.7, 79.0, 78.8, 78.4] },
+  { nome: 'gordura corp.',  v: '17.8', un: '%',     delta: '↘ −0.6pp / 30d',  deltaTipo: 'up',   cor: 'var(--accent-orange)', spark: [18.6, 18.4, 18.3, 18.1, 18.0, 17.9, 17.8] },
+  { nome: 'cintura',        v: '82',   un: 'cm',    delta: '↘ −1cm / 30d',    deltaTipo: 'up',   cor: 'var(--accent-yellow)', spark: [83, 83, 82.5, 82.5, 82, 82, 82] },
+  { nome: 'pressão',        v: '12/8', un: 'mmHg',  delta: 'estável',          deltaTipo: 'flat', cor: 'var(--accent-cyan)',   spark: [12,12,11.8,12,12,12,12] },
+  { nome: 'frequência rep.',v: '64',   un: 'bpm',   delta: '↘ −2bpm / 30d',   deltaTipo: 'up',   cor: 'var(--accent-green)',  spark: [66, 65, 65, 64, 64, 64, 64] },
+  { nome: 'sono médio',     v: '6h48', un: '/noite',delta: '↗ +18min / 30d',  deltaTipo: 'up',   cor: 'var(--accent-pink)',   spark: [6.3, 6.4, 6.6, 6.7, 6.7, 6.8, 6.8] },
+];
+
+const HIST = [
+  { data: '31 mar 26', peso: '78.4', bf: '17.8%', cint: '82', press: '12/8', sono: '6h48' },
+  { data: '24 mar 26', peso: '78.8', bf: '17.9%', cint: '82', press: '12/8', sono: '6h36' },
+  { data: '17 mar 26', peso: '79.0', bf: '18.0%', cint: '82.5', press: '12/8', sono: '6h28' },
+  { data: '10 mar 26', peso: '79.4', bf: '18.3%', cint: '82.5', press: '12/8', sono: '6h22' },
+  { data: '03 mar 26', peso: '79.8', bf: '18.4%', cint: '83', press: '12/8', sono: '6h18' },
+  { data: '24 fev 26', peso: '80.1', bf: '18.6%', cint: '83', press: '12/8', sono: '6h12' },
+];
+
+document.getElementById('main-root').innerHTML = `
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">MEDIDAS · CORPO</h1>
+      <p class="page-subtitle">Métricas físicas e fisiológicas · pessoa A e B independentes. Importação automática
+      de Mi Fit (Xiaomi) e Garmin · entrada manual sempre disponível. <strong style="color:var(--accent-purple);">M14</strong></p>
+    </div>
+    <div class="page-meta">
+      <span class="sprint-tag">M14</span>
+      <span class="pill pill-d7-graduado">7 medidas · 6 meses</span>
+    </div>
+  </div>
+
+  <div class="med-pessoa-tabs">
+    <button class="ativo" data-p="A" style="--cor: var(--accent-purple);" onclick="setPessoa('A')">PESSOA A · você</button>
+    <button data-p="B" style="--cor: var(--accent-pink);" onclick="setPessoa('B')">PESSOA B</button>
+  </div>
+
+  <div class="med-grid">
+    ${MEDIDAS.map(m => `
+      <div class="med-card" style="--cor: ${m.cor};">
+        <div class="head">
+          <span class="nome">${m.nome}</span>
+          <span class="data">31 mar · 06:42</span>
+        </div>
+        <div class="v">${m.v}<small>${m.un}</small></div>
+        <div class="delta ${m.deltaTipo}">${m.delta}</div>
+        ${spark(m.spark, m.cor.replace('var(--accent-','').replace(')',''))}
+      </div>
+    `).join('').replace(/var\(--accent-(\w+)\)/g, (_, c) => `var(--accent-${c})`)}
+  </div>
+
+  <div class="hist-card">
+    <h3>Histórico semanal · últimas 6 semanas · pessoa A</h3>
+    <table class="tbl">
+      <thead>
+        <tr><th>data</th><th>peso</th><th>bf%</th><th>cintura</th><th>pressão</th><th>sono médio</th></tr>
+      </thead>
+      <tbody>
+        ${HIST.map(h => `
+          <tr>
+            <td>${h.data}</td>
+            <td><span class="v">${h.peso}</span> kg</td>
+            <td><span class="v">${h.bf}</span></td>
+            <td><span class="v">${h.cint}</span> cm</td>
+            <td><span class="v">${h.press}</span> mmHg</td>
+            <td><span class="v">${h.sono}</span></td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  </div>
+`;
+hidratarGlyphs(document.getElementById('main-root'));
+</script>
+</body>
+</html>

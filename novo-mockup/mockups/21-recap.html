@@ -1,0 +1,415 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Ouroboros — Bem-estar · Recap</title>
+<link rel="stylesheet" href="../_shared/tokens.css">
+<link rel="stylesheet" href="../_shared/components.css">
+<style>
+.recap-tabs {
+  display: inline-flex;
+  background: var(--bg-inset);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-sm);
+  padding: 3px;
+  gap: 2px;
+}
+.recap-tabs button {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  padding: 6px 18px;
+  font-family: var(--ff-mono);
+  font-size: var(--fs-12);
+  cursor: pointer;
+  border-radius: 4px;
+  letter-spacing: 0.04em;
+}
+.recap-tabs button.ativo {
+  background: var(--accent-purple);
+  color: var(--text-inverse);
+  font-weight: 500;
+}
+
+.recap-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: var(--sp-4);
+  margin-top: var(--sp-4);
+}
+
+/* Hero — narrativa do período */
+.narrativa-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  padding: var(--sp-6);
+  position: relative;
+  overflow: hidden;
+}
+.narrativa-card::before {
+  content: '';
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 50% 30% at 90% 10%, rgba(189,147,249,0.10), transparent 70%),
+    radial-gradient(ellipse 40% 25% at 10% 90%, rgba(255,121,198,0.08), transparent 70%);
+  pointer-events: none;
+}
+.narrativa-head {
+  font-family: var(--ff-mono);
+  font-size: var(--fs-11);
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: var(--sp-3);
+  position: relative;
+}
+.narrativa-titulo {
+  font-size: 28px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin: 0 0 var(--sp-4);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  position: relative;
+  text-wrap: pretty;
+}
+.narrativa-titulo strong {
+  font-weight: 600;
+  color: var(--accent-purple);
+  font-style: italic;
+}
+.narrativa-corpo {
+  font-size: var(--fs-15);
+  line-height: 1.7;
+  color: var(--text-secondary);
+  position: relative;
+  text-wrap: pretty;
+}
+.narrativa-corpo p { margin: 0 0 var(--sp-3); }
+.narrativa-corpo p:last-child { margin-bottom: 0; }
+.narrativa-corpo strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+.narrativa-corpo .destaque-pos { color: var(--accent-green); font-weight: 500; }
+.narrativa-corpo .destaque-neg { color: var(--accent-orange); font-weight: 500; }
+.narrativa-corpo .destaque-padrao { color: var(--accent-purple); font-weight: 500; }
+
+.narrativa-fonte {
+  margin-top: var(--sp-4);
+  padding-top: var(--sp-3);
+  border-top: 1px dashed var(--border-subtle);
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  display: flex; justify-content: space-between;
+  position: relative;
+}
+.narrativa-fonte code {
+  color: var(--accent-pink);
+  background: var(--bg-inset);
+  padding: 1px 6px; border-radius: 2px;
+}
+
+/* Coluna direita — métricas */
+.met-coluna { display: flex; flex-direction: column; gap: var(--sp-3); }
+.met-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  padding: var(--sp-4);
+}
+.met-card h4 {
+  font-family: var(--ff-mono);
+  font-size: var(--fs-11);
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 0 0 var(--sp-3);
+}
+.met-comp {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: var(--sp-2);
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.met-comp:last-child { border-bottom: none; }
+.met-comp .nome {
+  font-family: var(--ff-mono);
+  font-size: var(--fs-12);
+  color: var(--text-secondary);
+}
+.met-comp .valor {
+  font-family: var(--ff-mono);
+  font-size: var(--fs-14);
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+.met-comp .delta {
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: var(--r-xs);
+}
+.met-comp .delta.up { color: var(--accent-green); background: rgba(80,250,123,0.10); }
+.met-comp .delta.down { color: var(--accent-red); background: rgba(255,85,85,0.10); }
+.met-comp .delta.flat { color: var(--text-muted); background: var(--bg-elevated); }
+
+/* Bullets de destaque */
+.destaques {
+  display: flex; flex-direction: column;
+  gap: 6px;
+}
+.destaque-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: var(--sp-3);
+  align-items: center;
+  padding: 8px 10px;
+  background: var(--bg-inset);
+  border: 1px solid var(--border-subtle);
+  border-left: 3px solid var(--cor);
+  border-radius: var(--r-sm);
+}
+.destaque-row .icone {
+  width: 24px; height: 24px;
+  background: var(--bg-elevated);
+  color: var(--cor);
+  border-radius: var(--r-sm);
+  display: grid; place-items: center;
+}
+.destaque-row .texto {
+  font-size: var(--fs-13);
+  color: var(--text-primary);
+  line-height: 1.4;
+}
+.destaque-row .data {
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+/* Padrões */
+.padrao-row {
+  background: var(--bg-inset);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-sm);
+  padding: var(--sp-3);
+  display: flex; flex-direction: column; gap: 4px;
+}
+.padrao-row .head {
+  display: flex; align-items: center; justify-content: space-between;
+}
+.padrao-row .titulo {
+  font-size: var(--fs-13);
+  color: var(--text-primary);
+  font-weight: 500;
+}
+.padrao-row .conf {
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: var(--r-xs);
+  background: rgba(189,147,249, 0.12);
+  color: var(--accent-purple);
+}
+.padrao-row .corpo {
+  font-family: var(--ff-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+@media (max-width: 1100px) {
+  .recap-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div id="shell-root"></div>
+<script src="../_shared/glyphs.js"></script>
+<script src="../_shared/shell.js"></script>
+<script>
+montarShell({
+  clusterAtivo: 'bem-estar',
+  abaAtiva: 'be-recap',
+  breadcrumb: ['Ouroboros', 'Bem-estar', 'Recap'],
+  acoes: [
+    { label: 'Re-gerar agora', icon: 'refresh', onClick: "toast('claude --recap 30d · 38s estimados')" },
+    { label: 'Cruzamentos', icon: 'sparkle', href: '26-cruzamentos.html' },
+    { label: 'Compartilhar com Pessoa B', icon: 'users', primary: true, onClick: "toast('Compartilhamento mock — em produção: gera vista resumida sem trechos íntimos')" },
+  ],
+});
+
+document.getElementById('main-root').innerHTML = `
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">RECAP</h1>
+      <p class="page-subtitle">Resumo narrativo gerado por LLM a partir do diário, humor e eventos do período.
+      Roda local · Claude Sonnet via API. <strong style="color:var(--accent-purple);">M30</strong></p>
+    </div>
+    <div class="page-meta">
+      <div class="recap-tabs">
+        <button data-p="7d">7 DIAS</button>
+        <button data-p="30d" class="ativo">30 DIAS</button>
+        <button data-p="90d">90 DIAS</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="recap-grid">
+    <!-- ESQUERDA: Narrativa -->
+    <div class="narrativa-card">
+      <div class="narrativa-head">${glyph('sparkle', 11)}  Narrativa · 30 dias · gerado em 31 mar 14:42</div>
+      <h2 class="narrativa-titulo">março foi um mês de <strong>recuperação consistente</strong> — humor médio subiu, ansiedade caiu pela metade.</h2>
+      <div class="narrativa-corpo">
+        <p>O mês começou ruim. Nas primeiras duas semanas você teve <span class="destaque-neg">2 crises de ansiedade</span> (sábado 7 e sábado 14), ambas no fim de semana, ambas precedidas por noites com menos de 5h de sono. A partir do dia 16 algo muda: você começa a caminhar 40min depois do trabalho, e nas suas próprias palavras, <em>"a sensação no peito sumiu"</em> — uma reflexão registrada três vezes em contextos diferentes.</p>
+        <p><strong>Humor médio</strong> subiu de <span class="destaque-neg">3.2</span> nos primeiros 15 dias para <span class="destaque-pos">4.1</span> nos últimos 15. <strong>Foco</strong> acompanhou. <strong>Ansiedade média</strong> caiu de 3.4 para 1.8 — e essa queda parece estar conectada a três fatores que aparecem repetidamente nas suas notas: <span class="destaque-padrao">caminhada à tarde</span>, <span class="destaque-padrao">medicação no horário</span> (você só pulou 2 doses no mês, ambas no início), e <span class="destaque-padrao">noites com 7h+ de sono</span>.</p>
+        <p>No relacionamento, o sinal mais forte é positivo: <strong>3 rolezinhos a dois</strong> e <strong>1 viagem de fim de semana</strong> a Trancoso (21–23 mar). Pessoa B teve uma semana difícil entre 23 e 27, com humor médio caindo a 2.8 — você anotou observações cuidadosas sobre ela em 4 dias seguidos, o que parece ter contribuído para um diálogo bom no domingo 29.</p>
+        <p>Padrão que vale registrar: <strong>brigas tendem a acontecer quando ambos estão com sono ruim</strong>. 3 das 4 desavenças do mês caíram em manhãs depois de noites com menos de 6h, em ambos os lados.</p>
+        <p>Finanças: gasto do mês <strong>R$ 7.842</strong> — dentro do orçamento (limite R$ 8.500). Maior categoria foi alimentação (R$ 2.310) com aumento de 12% por causa da viagem.</p>
+      </div>
+      <div class="narrativa-fonte">
+        <span>baseado em <code>30 dailies · 64 entradas de diário · 28 humores · 22 eventos</code></span>
+        <span>tokens: 14.382 in · 1.847 out · custo: $0.04</span>
+      </div>
+    </div>
+
+    <!-- DIREITA: métricas + destaques + padrões -->
+    <div class="met-coluna">
+      <div class="met-card">
+        <h4>Comparativo · vs 30d anteriores</h4>
+        <div class="met-comp">
+          <span class="nome">humor médio</span>
+          <span class="valor">3.65</span>
+          <span class="delta up">↗ +0.42</span>
+        </div>
+        <div class="met-comp">
+          <span class="nome">ansiedade média</span>
+          <span class="valor">2.60</span>
+          <span class="delta up">↘ −1.10</span>
+        </div>
+        <div class="met-comp">
+          <span class="nome">foco médio</span>
+          <span class="valor">3.81</span>
+          <span class="delta up">↗ +0.28</span>
+        </div>
+        <div class="met-comp">
+          <span class="nome">crises</span>
+          <span class="valor">2</span>
+          <span class="delta up">↘ −3</span>
+        </div>
+        <div class="met-comp">
+          <span class="nome">aderência medicação</span>
+          <span class="valor">93%</span>
+          <span class="delta up">↗ +12pp</span>
+        </div>
+        <div class="met-comp">
+          <span class="nome">tarefas concluídas</span>
+          <span class="valor">82%</span>
+          <span class="delta up">↗ +6pp</span>
+        </div>
+        <div class="met-comp">
+          <span class="nome">noites &lt; 6h sono</span>
+          <span class="valor">5</span>
+          <span class="delta up">↘ −4</span>
+        </div>
+        <div class="met-comp">
+          <span class="nome">treinos</span>
+          <span class="valor">14</span>
+          <span class="delta up">↗ +2</span>
+        </div>
+        <div class="met-comp">
+          <span class="nome">rolezinhos casal</span>
+          <span class="valor">3</span>
+          <span class="delta flat">= mesmo</span>
+        </div>
+      </div>
+
+      <div class="met-card">
+        <h4>Destaques do mês — 5</h4>
+        <div class="destaques">
+          <div class="destaque-row" style="--cor: var(--accent-green);">
+            <div class="icone">${glyph('check', 12)}</div>
+            <span class="texto"><strong>47 dias</strong> sem fumar — bati o marco de 30d</span>
+            <span class="data">12 mar</span>
+          </div>
+          <div class="destaque-row" style="--cor: var(--accent-pink);">
+            <div class="icone">${glyph('heart', 12)}</div>
+            <span class="texto">Viagem a Trancoso com Pessoa B — 3 dias</span>
+            <span class="data">21–23 mar</span>
+          </div>
+          <div class="destaque-row" style="--cor: var(--accent-purple);">
+            <div class="icone">${glyph('sparkle', 12)}</div>
+            <span class="texto">Padrão descoberto: caminhada → ansiedade ↓</span>
+            <span class="data">desde 16 mar</span>
+          </div>
+          <div class="destaque-row" style="--cor: var(--accent-cyan);">
+            <div class="icone">${glyph('check', 12)}</div>
+            <span class="texto">Streak de 12 dias seguidos com humor ≥ 4</span>
+            <span class="data">19–30 mar</span>
+          </div>
+          <div class="destaque-row" style="--cor: var(--accent-orange);">
+            <div class="icone">${glyph('alarm', 12)}</div>
+            <span class="texto">Crise de ansiedade no shopping — recuperação rápida</span>
+            <span class="data">28 mar</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="met-card">
+        <h4>Padrões detectados — confiança ≥ 60%</h4>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <div class="padrao-row">
+            <div class="head">
+              <span class="titulo">sono &lt; 6h → ansiedade ≥ 4 no dia seguinte</span>
+              <span class="conf">conf. 87%</span>
+            </div>
+            <div class="corpo">5 ocorrências em 30d · 4 confirmaram · base: humor.json + sono.json</div>
+          </div>
+          <div class="padrao-row">
+            <div class="head">
+              <span class="titulo">caminhada vespertina → humor ↑ no mesmo dia</span>
+              <span class="conf">conf. 78%</span>
+            </div>
+            <div class="corpo">11 ocorrências em 30d · diff médio +0.8 · base: rotina + humor</div>
+          </div>
+          <div class="padrao-row">
+            <div class="head">
+              <span class="titulo">ambos &lt; 6h sono → briga no casal</span>
+              <span class="conf">conf. 75%</span>
+            </div>
+            <div class="corpo">4 brigas em 30d · 3 com sobreposição · base: humor + diário</div>
+          </div>
+          <div class="padrao-row">
+            <div class="head">
+              <span class="titulo">domingo à noite → ansiedade antecipatória trabalho</span>
+              <span class="conf">conf. 68%</span>
+            </div>
+            <div class="corpo">3 dos 4 domingos · pico ansiedade entre 19–22h</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+`;
+
+// Tabs (mock — apenas troca a label, não regenera narrativa)
+document.querySelectorAll('.recap-tabs button').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('.recap-tabs button').forEach(x => x.classList.remove('ativo'));
+    b.classList.add('ativo');
+    toast(`Recap ${b.dataset.p} · em produção, regeneraria via Claude Sonnet`);
+  });
+});
+
+hidratarGlyphs(document.getElementById('main-root'));
+</script>
+</body>
+</html>

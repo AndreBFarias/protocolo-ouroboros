@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Ouroboros — Bem-estar · Eventos</title>
+<link rel="stylesheet" href="../_shared/tokens.css">
+<link rel="stylesheet" href="../_shared/components.css">
+<style>
+.ev-layout { display: grid; grid-template-columns: 1fr 320px; gap: var(--sp-4); }
+.ev-card { background: var(--bg-surface); border:1px solid var(--border-subtle); border-radius: var(--r-md); padding: var(--sp-5); }
+.ev-card h3 { font-family: var(--ff-mono); font-size: var(--fs-11); letter-spacing:0.10em; text-transform:uppercase; color:var(--text-muted); margin:0 0 var(--sp-3); }
+
+.ev-row {
+  display: grid; grid-template-columns: 86px auto 1fr auto; gap: var(--sp-3);
+  align-items: center; padding: var(--sp-3); border-radius: var(--r-sm);
+  background: var(--bg-inset); border: 1px solid var(--border-subtle); border-left: 3px solid var(--cor);
+  margin-bottom: 6px;
+}
+.ev-data { font-family: var(--ff-mono); font-size: var(--fs-12); color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+.ev-data .dia { font-size: var(--fs-18); font-weight: 600; color: var(--text-primary); display:block; }
+.ev-tipo { font-family: var(--ff-mono); font-size:10px; letter-spacing:0.10em; text-transform:uppercase; color: var(--cor); background: var(--bg-elevated); padding: 3px 8px; border-radius: var(--r-xs); }
+.ev-info { min-width:0; }
+.ev-info .titulo { font-size: var(--fs-14); color: var(--text-primary); font-weight: 500; margin-bottom: 2px; }
+.ev-info .meta { font-family: var(--ff-mono); font-size:11px; color: var(--text-muted); }
+.ev-side { display:flex; flex-direction:column; gap: var(--sp-3); }
+.ev-stat { background: var(--bg-surface); border:1px solid var(--border-subtle); border-radius: var(--r-md); padding: var(--sp-4); }
+.ev-stat .l { font-family: var(--ff-mono); font-size:10px; letter-spacing:0.10em; text-transform:uppercase; color:var(--text-muted); margin-bottom: 6px;}
+.ev-stat .v { font-family: var(--ff-mono); font-size: var(--fs-24); font-weight:500; font-variant-numeric: tabular-nums; line-height:1;}
+.ev-stat .sub { font-family: var(--ff-mono); font-size:10px; color: var(--text-muted); margin-top: 4px;}
+
+.cal-mini { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; margin-top: 8px; }
+.cal-mini .dlabel { font-family: var(--ff-mono); font-size: 9px; color: var(--text-muted); text-align:center; letter-spacing: 0.08em; text-transform: uppercase; }
+.cal-mini .ddia { aspect-ratio: 1; background: var(--bg-inset); border-radius: 2px; font-family: var(--ff-mono); font-size: 10px; display:grid; place-items: center; color: var(--text-muted); }
+.cal-mini .ddia.tem-evento { background: rgba(189,147,249,0.25); color: var(--text-primary); font-weight: 600; }
+.cal-mini .ddia.hoje { box-shadow: 0 0 0 1.5px var(--accent-cyan); color: var(--accent-cyan); }
+.cal-mini .ddia.fora { opacity: .25; }
+
+.tipos-bars { display:flex; flex-direction:column; gap: 6px; }
+.tb-row { display: grid; grid-template-columns: 90px 1fr 30px; align-items: center; gap: var(--sp-2); }
+.tb-row .nome { font-family: var(--ff-mono); font-size: 11px; color: var(--text-secondary); }
+.tb-row .barra { height: 6px; background: var(--bg-inset); border-radius: var(--r-full); overflow: hidden; }
+.tb-row .barra > span { display:block; height:100%; background: var(--cor); border-radius: var(--r-full); }
+.tb-row .qtd { font-family: var(--ff-mono); font-size: 10px; color: var(--text-muted); text-align:right; font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+<div id="shell-root"></div>
+<script src="../_shared/glyphs.js"></script>
+<script src="../_shared/shell.js"></script>
+<script>
+montarShell({
+  clusterAtivo: 'bem-estar',
+  abaAtiva: 'be-eventos',
+  breadcrumb: ['Ouroboros', 'Bem-estar', 'Eventos'],
+  acoes: [
+    { label: 'Calendário', icon: 'calendar', onClick: "toast('Vista mensal cheia · em produção')" },
+    { label: 'Novo evento', icon: 'plus', primary: true, onClick: "toast('Wizard de evento · trabalho · saúde · casal · viagem · outro')" },
+  ],
+});
+
+const TIPOS_EV = {
+  'trabalho': 'var(--accent-cyan)',
+  'saude':    'var(--accent-orange)',
+  'casal':    'var(--accent-pink)',
+  'viagem':   'var(--accent-purple)',
+  'familia':  'var(--accent-yellow)',
+  'social':   'var(--accent-green)',
+};
+
+const EVENTOS = [
+  { dia:'31', mes:'mar', ano:'26', diaSemana:'ter', hora: '20:00', tipo: 'casal',  titulo: 'Jantar com Pessoa B', meta: 'rolezinho · 2h · pinheiros' },
+  { dia:'30', mes:'mar', ano:'26', diaSemana:'seg', hora: '14:30', tipo: 'trabalho', titulo: 'Reunião de planejamento Q2', meta: 'sala 3 · 1h · com Diego e Marina' },
+  { dia:'28', mes:'mar', ano:'26', diaSemana:'sáb', hora: '09:00', tipo: 'saude',    titulo: 'Consulta com Dra. Lima', meta: 'psiquiatra · renovação receita · 50min' },
+  { dia:'25', mes:'mar', ano:'26', diaSemana:'qua', hora: '19:30', tipo: 'social',   titulo: 'Aniversário do João', meta: 'churrasco · vila madalena' },
+  { dia:'21', mes:'mar', ano:'26', diaSemana:'sáb', hora: '06:00', tipo: 'viagem',   titulo: 'Viagem a Trancoso · 3 dias', meta: 'casal · voo TAM 3411 · até 23/03' },
+  { dia:'18', mes:'mar', ano:'26', diaSemana:'qua', hora: '15:00', tipo: 'trabalho', titulo: 'Apresentação trimestral', meta: 'gravada · cliente Bahia · 45min' },
+  { dia:'15', mes:'mar', ano:'26', diaSemana:'dom', hora: '13:00', tipo: 'familia',  titulo: 'Almoço na casa da mãe', meta: 'rotina · com irmã · 3h' },
+  { dia:'12', mes:'mar', ano:'26', diaSemana:'qui', hora: '08:30', tipo: 'saude',    titulo: 'Exames de sangue', meta: 'rotina · jejum 12h · lab Sérgio Franco' },
+  { dia:'08', mes:'mar', ano:'26', diaSemana:'dom', hora: '11:00', tipo: 'casal',    titulo: 'Caminhada parque Ibirapuera', meta: 'rolezinho · 2h · café da manhã depois' },
+  { dia:'05', mes:'mar', ano:'26', diaSemana:'qui', hora: '20:00', tipo: 'social',   titulo: 'Cinema com a Lara', meta: 'amizade · filme novo Anderson' },
+];
+
+// mini calendário março/26 — 31 dias, começa em domingo (1 mar = dom)
+const dias_evento = new Set(EVENTOS.map(e => parseInt(e.dia, 10)));
+let calCells = '';
+const inicio_seg = 0; // dom = 0
+for (let i = 0; i < inicio_seg; i++) calCells += `<div class="ddia fora"></div>`;
+for (let d = 1; d <= 31; d++) {
+  const cls = ['ddia', dias_evento.has(d) ? 'tem-evento' : '', d === 31 ? 'hoje' : ''].join(' ');
+  calCells += `<div class="${cls}">${d}</div>`;
+}
+
+const TIPOS_DIST = [
+  { nome:'trabalho', qtd: 12, cor: 'var(--accent-cyan)' },
+  { nome:'casal',    qtd: 9,  cor: 'var(--accent-pink)' },
+  { nome:'social',   qtd: 6,  cor: 'var(--accent-green)' },
+  { nome:'saúde',    qtd: 5,  cor: 'var(--accent-orange)' },
+  { nome:'família',  qtd: 4,  cor: 'var(--accent-yellow)' },
+  { nome:'viagem',   qtd: 1,  cor: 'var(--accent-purple)' },
+];
+const maxQtd = Math.max(...TIPOS_DIST.map(t => t.qtd));
+
+document.getElementById('main-root').innerHTML = `
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">EVENTOS · TIMELINE</h1>
+      <p class="page-subtitle">Eventos relevantes do casal e individuais. Cada um pode levar memórias (fotos, voz, texto) e
+      eventualmente cruzar com humor pra responder <em>"viagens nos fazem bem?"</em>. <strong style="color:var(--accent-purple);">M11 · M12</strong></p>
+    </div>
+    <div class="page-meta">
+      <span class="sprint-tag">M11</span>
+      <span class="pill pill-d7-graduado">${EVENTOS.length} eventos · 30d</span>
+    </div>
+  </div>
+
+  <div class="ev-layout">
+    <div class="ev-card">
+      <h3>Timeline · março 2026</h3>
+      ${EVENTOS.map(e => `
+        <div class="ev-row" style="--cor:${TIPOS_EV[e.tipo]};">
+          <div class="ev-data"><span class="dia">${e.dia}</span>${e.diaSemana} · ${e.hora}</div>
+          <span class="ev-tipo" style="--cor:${TIPOS_EV[e.tipo]};">${e.tipo}</span>
+          <div class="ev-info">
+            <div class="titulo">${e.titulo}</div>
+            <div class="meta">${e.meta}</div>
+          </div>
+          <button class="btn btn-sm">${glyph('eye', 12)} ver</button>
+        </div>
+      `).join('')}
+    </div>
+
+    <div class="ev-side">
+      <div class="ev-stat">
+        <div class="l">março · visão</div>
+        <div style="display:flex;gap:var(--sp-3);">
+          <div>
+            <div class="v" style="color:var(--accent-purple);">${EVENTOS.length}</div>
+            <div class="sub">eventos</div>
+          </div>
+          <div>
+            <div class="v" style="color:var(--accent-pink);">9</div>
+            <div class="sub">com pessoa B</div>
+          </div>
+        </div>
+        <div class="cal-mini">
+          <span class="dlabel">D</span><span class="dlabel">S</span><span class="dlabel">T</span><span class="dlabel">Q</span><span class="dlabel">Q</span><span class="dlabel">S</span><span class="dlabel">S</span>
+          ${calCells}
+        </div>
+      </div>
+
+      <div class="ev-stat">
+        <div class="l">distribuição por tipo</div>
+        <div class="tipos-bars" style="margin-top: 8px;">
+          ${TIPOS_DIST.map(t => `
+            <div class="tb-row">
+              <span class="nome">${t.nome}</span>
+              <div class="barra"><span style="width:${(t.qtd/maxQtd)*100}%;background:${t.cor};"></span></div>
+              <span class="qtd">${t.qtd}</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+      <div class="ev-stat">
+        <div class="l">cruzamento com humor</div>
+        <div style="font-family:var(--ff-mono);font-size:11px;color:var(--text-secondary);line-height:1.5;margin-top:6px;">
+          Em produção: o backend cruza eventos × humor para responder perguntas do tipo:
+          <ul style="margin: 8px 0 0; padding-left: 16px; color: var(--text-muted);">
+            <li>"viagens elevam meu humor?"</li>
+            <li>"reuniões de trabalho aumentam ansiedade?"</li>
+            <li>"rolezinhos ajudam o casal?"</li>
+          </ul>
+        </div>
+        <button class="btn btn-sm" style="margin-top: 10px; width: 100%;" onclick="toast('Em produção · cruzamento × humor')">${glyph('sparkle', 12)} explorar cruzamentos</button>
+      </div>
+    </div>
+  </div>
+`;
+hidratarGlyphs(document.getElementById('main-root'));
+</script>
+</body>
+</html>

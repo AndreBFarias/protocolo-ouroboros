@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><title>Ouroboros — Styleguide</title>
+<link rel="stylesheet" href="_shared/tokens.css">
+<link rel="stylesheet" href="_shared/components.css">
+<style>
+.sg-section { margin-bottom: var(--sp-8); scroll-margin-top: 80px; }
+.sg-section h2 {
+  font-family: var(--ff-mono); font-size: 18px; letter-spacing: -.01em;
+  color: var(--text-primary); margin: 0 0 var(--sp-2);
+  padding-bottom: var(--sp-3); border-bottom: 1px solid var(--border-subtle);
+  display: flex; align-items: baseline; gap: 14px;
+}
+.sg-section h2 .num {
+  font-family: var(--ff-mono); font-size: 11px; color: var(--accent-purple);
+  letter-spacing: .14em; text-transform: uppercase; font-weight: 400;
+  padding: 3px 8px; background: color-mix(in oklch, var(--accent-purple) 12%, transparent);
+  border-radius: var(--r-xs);
+}
+.sg-section .lead { color: var(--text-secondary); font-size: 13px; margin: 0 0 var(--sp-4); max-width: 64ch; line-height: 1.6; }
+.sg-section h3.sub { font-family: var(--ff-mono); font-size: 10px; color: var(--text-muted); letter-spacing: .10em; text-transform: uppercase; margin: var(--sp-5) 0 var(--sp-2); }
+
+.sg-grid { display: grid; gap: var(--sp-3); }
+.sw {
+  background: var(--bg-surface); border:1px solid var(--border-subtle);
+  border-radius: var(--r-md); overflow: hidden;
+  transition: border-color .18s, transform .18s;
+}
+.sw:hover { border-color: var(--accent-purple); transform: translateY(-1px); }
+.sw .chip { height: 72px; position: relative; }
+.sw .chip::after {
+  content: attr(data-hex); position: absolute; bottom: 6px; right: 8px;
+  font-family: var(--ff-mono); font-size: 9px; color: rgba(0,0,0,0.55);
+  background: rgba(255,255,255,0.85); padding: 1px 5px; border-radius: 2px;
+  opacity: 0; transition: opacity .18s;
+}
+.sw:hover .chip::after { opacity: 1; }
+.sw .meta { padding: 10px 12px; font-family: var(--ff-mono); font-size: 11px; }
+.sw .meta strong { display: block; color: var(--text-primary); font-size: 12px; margin-bottom: 2px; }
+.sw .meta span { color: var(--text-muted); }
+
+.type-row { background: var(--bg-surface); border:1px solid var(--border-subtle); border-radius: var(--r-md); padding: var(--sp-4); display:grid; grid-template-columns: 220px 1fr; gap: var(--sp-4); align-items: center; margin-bottom: 8px; transition: border-color .18s; }
+.type-row:hover { border-color: var(--border-strong); }
+.type-row .meta { font-family: var(--ff-mono); font-size: 11px; color: var(--text-muted); }
+.type-row .meta strong { display:block; color: var(--text-primary); font-size: 13px; margin-bottom: 4px; }
+
+.demo { background: var(--bg-surface); border:1px solid var(--border-subtle); border-radius: var(--r-md); padding: var(--sp-4); margin-bottom: var(--sp-3); }
+.demo .label { font-family: var(--ff-mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); margin-bottom: var(--sp-3); display: flex; justify-content: space-between; align-items: center; }
+.demo .label .tk { color: var(--accent-cyan); background: var(--bg-inset); padding: 2px 6px; border-radius: var(--r-xs); text-transform: none; letter-spacing: 0; font-size: 10px; }
+
+.spacer-grid { display: flex; gap: var(--sp-3); align-items: flex-end; }
+.spacer-block { background: linear-gradient(135deg, var(--accent-purple), var(--accent-pink)); border-radius: 2px; }
+.spacer-grid .meta { font-family: var(--ff-mono); font-size: 10px; color: var(--text-muted); margin-top: 6px; text-align: center; }
+
+code.tk { background: var(--bg-inset); padding: 2px 6px; border-radius: var(--r-xs); font-family: var(--ff-mono); font-size: 11px; color: var(--accent-cyan); border: 1px solid var(--border-subtle); }
+
+.toc {
+  position: sticky; top: 16px; display:flex; flex-direction: column; gap: 2px;
+  padding: var(--sp-4); background: var(--bg-surface);
+  border:1px solid var(--border-subtle); border-radius: var(--r-md);
+  max-height: calc(100vh - 32px); overflow-y: auto;
+}
+.toc a { font-family: var(--ff-mono); font-size: 12px; color: var(--text-secondary); text-decoration: none; padding: 5px 10px; border-radius: var(--r-xs); display: flex; gap: 8px; align-items: baseline; transition: background .15s, color .15s; }
+.toc a:hover { background: var(--bg-elevated); color: var(--text-primary); }
+.toc a .n { color: var(--text-muted); font-size: 10px; min-width: 14px; }
+.toc a:hover .n { color: var(--accent-purple); }
+.toc h4 { font-family: var(--ff-mono); font-size: 10px; letter-spacing: .10em; text-transform: uppercase; color: var(--accent-purple); margin: 0 0 var(--sp-2); padding: 0 10px; }
+.toc .div { height: 1px; background: var(--border-subtle); margin: 8px 10px; }
+</style>
+</head>
+<body>
+<div id="shell-root"></div>
+<script src="_shared/glyphs.js"></script>
+<script src="_shared/shell.js"></script>
+<script>
+montarShell({clusterAtivo:'sistema',abaAtiva:'styleguide',breadcrumb:['Ouroboros','Sistema','Styleguide'],acoes:[]});
+
+const COLORS = {
+  base:[
+    {n:'bg-base', t:'#1a1b26', d:'fundo principal'},
+    {n:'bg-surface', t:'#21222c', d:'cards e containers'},
+    {n:'bg-elevated', t:'#282a36', d:'hover, popovers'},
+    {n:'bg-inset', t:'#1d1e26', d:'inputs, código'},
+  ],
+  text:[
+    {n:'text-primary', t:'#f8f8f2', d:'texto principal'},
+    {n:'text-secondary', t:'#bdc1c6', d:'texto descritivo'},
+    {n:'text-muted', t:'#7c7e8c', d:'metadados, hints'},
+  ],
+  accent:[
+    {n:'accent-purple', t:'#bd93f9', d:'ação primária, marca'},
+    {n:'accent-pink', t:'#ff79c6', d:'destaque secundário'},
+    {n:'accent-cyan', t:'#8be9fd', d:'links, info'},
+    {n:'accent-green', t:'#50fa7b', d:'sucesso'},
+    {n:'accent-yellow', t:'#f1fa8c', d:'atenção'},
+    {n:'accent-orange', t:'#ffb86c', d:'aviso médio'},
+    {n:'accent-red', t:'#ff5555', d:'erro, crítico'},
+  ],
+  d7:[
+    {n:'d7-graduado', t:'#50fa7b', d:'≥87% conf · estável'},
+    {n:'d7-calibracao', t:'#f1fa8c', d:'em ajuste'},
+    {n:'d7-regredido', t:'#ff5555', d:'caiu de graduado'},
+    {n:'d7-bloqueado', t:'#7c7e8c', d:'sem amostras'},
+  ],
+};
+
+function colorBlock(arr, cols=4) {
+  return `<div class="sg-grid" style="grid-template-columns:repeat(${cols},1fr);">${arr.map(c=>`
+    <div class="sw"><div class="chip" data-hex="${c.t}" style="background:${c.t};"></div>
+      <div class="meta"><strong>--${c.n}</strong><span>${c.t} · ${c.d}</span></div></div>
+  `).join('')}</div>`;
+}
+
+document.getElementById('main-root').innerHTML = `
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">STYLEGUIDE</h1>
+      <p class="page-subtitle">Tokens, tipografia, espaçamento e componentes do sistema. Toda regra usada nos 16 mockups está aqui — se algo aparece em uma tela e não está aqui, é débito técnico.</p>
+    </div>
+    <div class="page-meta"><span class="pill pill-d7-graduado">Tema · Dracula adaptado</span></div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:200px 1fr;gap:var(--sp-4);">
+    <div class="toc">
+      <h4>Navegação</h4>
+      <a href="#cores"><span class="n">01</span>Cores</a>
+      <a href="#tipo"><span class="n">02</span>Tipografia</a>
+      <a href="#espaco"><span class="n">03</span>Espaçamento & raio</a>
+      <div class="div"></div>
+      <a href="#botoes"><span class="n">04</span>Botões</a>
+      <a href="#pills"><span class="n">05</span>Pills & badges</a>
+      <a href="#kpi"><span class="n">06</span>KPI & métricas</a>
+      <a href="#diff"><span class="n">07</span>Diff viewer</a>
+      <a href="#timeline"><span class="n">08</span>Timeline</a>
+      <a href="#tabela"><span class="n">09</span>Tabelas</a>
+      <a href="#form"><span class="n">10</span>Formulários</a>
+      <a href="#progresso"><span class="n">11</span>Progresso</a>
+      <a href="#glyphs"><span class="n">12</span>Glyphs</a>
+    </div>
+
+    <div>
+      <div class="sg-section" id="cores">
+        <h2><span class="num">01</span>Cores</h2>
+        <p class="lead">Paleta dark-first inspirada em Dracula. Acentos têm contraste WCAG AA sobre <code class="tk">--bg-base</code>. D7 mapeia estado de graduação 1→1 em cor.</p>
+        <h3 class="sub">Superfícies</h3>
+        ${colorBlock(COLORS.base)}
+        <h3 class="sub">Texto</h3>
+        ${colorBlock(COLORS.text, 3)}
+        <h3 class="sub">Acentos</h3>
+        ${colorBlock(COLORS.accent, 4)}
+        <h3 class="sub">Estado D7</h3>
+        ${colorBlock(COLORS.d7, 4)}
+      </div>
+
+      <div class="sg-section" id="tipo">
+        <h2><span class="num">02</span>Tipografia</h2>
+        <p class="lead">Mono para tudo que é dado (números, sha, ids, código). Sans (Inter) só para texto longo. Hierarquia por <em>peso</em> e <em>letter-spacing</em>, não por família.</p>
+        <div class="type-row"><div class="meta"><strong>display · 32px / 500</strong><span>page-title · uppercase tracking</span></div><div style="font-family:var(--ff-mono);font-size:32px;font-weight:500;letter-spacing:-0.02em;">VALIDAÇÃO POR ARQUIVO</div></div>
+        <div class="type-row"><div class="meta"><strong>section · 14px / 500 / .08em uc</strong><span>card-title</span></div><div style="font-family:var(--ff-mono);font-size:14px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-secondary);">Próximas 14 dias</div></div>
+        <div class="type-row"><div class="meta"><strong>body · 13px</strong><span>texto descritivo</span></div><div style="font-size:13px;line-height:1.5;color:var(--text-secondary);">Pipeline auto-referente que extrai, valida e cataloga arquivos.</div></div>
+        <div class="type-row"><div class="meta"><strong>mono-data · 13px tabular</strong><span>números, valores</span></div><div style="font-family:var(--ff-mono);font-size:13px;font-variant-numeric:tabular-nums;">R$ 31.420,85 · sha8 a3f9c1e2</div></div>
+        <div class="type-row"><div class="meta"><strong>caption · 11px / .08em uc</strong><span>labels de KPI</span></div><div style="font-family:var(--ff-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);">Cobertura D7</div></div>
+      </div>
+
+      <div class="sg-section" id="espaco">
+        <h2><span class="num">03</span>Espaçamento & raio</h2>
+        <p class="lead">Escala base 4. Tudo encaixa em múltiplos. Bordas pequenas (4px) em controles, 8px em cards.</p>
+        <div class="demo">
+          <div class="label">spacing scale</div>
+          <div class="spacer-grid">
+            ${[1,2,3,4,5,6,7].map(n=>{const px=n*4; return `<div><div class="spacer-block" style="width:${px}px;height:${px}px;"></div><div class="meta">--sp-${n} · ${px}px</div></div>`;}).join('')}
+          </div>
+        </div>
+        <div class="demo">
+          <div class="label">border-radius</div>
+          <div style="display:flex;gap:var(--sp-3);align-items:flex-end;">
+            ${[['xs',2],['sm',4],['md',8],['lg',12],['full','9999']].map(([n,v])=>`<div><div style="width:60px;height:60px;background:var(--accent-purple);border-radius:${typeof v==='number'?v+'px':'9999px'};"></div><div style="font-family:var(--ff-mono);font-size:10px;color:var(--text-muted);margin-top:6px;">--r-${n}</div></div>`).join('')}
+          </div>
+        </div>
+      </div>
+
+      <div class="sg-section" id="botoes">
+        <h2><span class="num">04</span>Botões</h2>
+        <div class="demo">
+          <div class="label">variantes</div>
+          <div style="display:flex;gap:var(--sp-2);align-items:center;flex-wrap:wrap;">
+            <button class="btn btn-primary">Primário</button>
+            <button class="btn">Secundário</button>
+            <button class="btn btn-ghost">Ghost</button>
+            <button class="btn btn-primary btn-sm">small</button>
+            <button class="btn btn-icon">${glyph('refresh',14)}</button>
+            <button class="btn btn-primary" disabled style="opacity:0.5;cursor:not-allowed;">disabled</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="sg-section" id="pills">
+        <h2><span class="num">05</span>Pills & badges</h2>
+        <div class="demo">
+          <div class="label">D7 estados</div>
+          <div style="display:flex;gap:var(--sp-2);flex-wrap:wrap;">
+            <span class="pill pill-d7-graduado">graduado</span>
+            <span class="pill pill-d7-calibracao">calibrando</span>
+            <span class="pill pill-d7-regredido">regredido</span>
+            <span class="pill pill-d7-bloqueado">bloqueado</span>
+          </div>
+        </div>
+        <div class="demo">
+          <div class="label">sprint tag · meta</div>
+          <div style="display:flex;gap:var(--sp-2);flex-wrap:wrap;align-items:center;">
+            <span class="sprint-tag">Sprint 4</span>
+            <span class="pill pill-d7-graduado">no alvo</span>
+            <span class="pill pill-d7-calibracao">em ajuste</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="sg-section" id="kpi">
+        <h2><span class="num">06</span>KPI cards</h2>
+        <div class="demo">
+          <div class="label">3 estilos · básico, com delta, com sparkline</div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-3);">
+            <div style="background:var(--bg-elevated);border:1px solid var(--border-subtle);border-radius:var(--r-md);padding:var(--sp-4);">
+              <div style="font-family:var(--ff-mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);">Cobertura D7</div>
+              <div style="font-family:var(--ff-mono);font-size:32px;font-weight:500;line-height:1;margin-top:6px;">78%</div>
+              <div style="font-family:var(--ff-mono);font-size:11px;color:var(--text-muted);margin-top:6px;">14 / 18 graduadas</div>
+            </div>
+            <div style="background:var(--bg-elevated);border:1px solid var(--border-subtle);border-radius:var(--r-md);padding:var(--sp-4);">
+              <div style="font-family:var(--ff-mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);">Saldo</div>
+              <div style="font-family:var(--ff-mono);font-size:32px;font-weight:500;line-height:1;margin-top:6px;color:var(--d7-graduado);">R$ 31.420</div>
+              <div style="font-family:var(--ff-mono);font-size:11px;color:var(--d7-graduado);margin-top:6px;"> +R$ 1.842 · 30d</div>
+            </div>
+            <div style="background:var(--bg-elevated);border:1px solid var(--border-subtle);border-radius:var(--r-md);padding:var(--sp-4);">
+              <div style="font-family:var(--ff-mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);">Execuções 30d</div>
+              <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-top:6px;">
+                <div style="font-family:var(--ff-mono);font-size:32px;font-weight:500;line-height:1;">3.836</div>
+                <svg viewBox="0 0 80 24" width="80" height="24"><polyline points="0,18 12,16 24,12 36,15 48,8 60,10 72,4 80,6" fill="none" stroke="var(--accent-purple)" stroke-width="1.5"/></svg>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sg-section" id="diff">
+        <h2><span class="num">07</span>Diff viewer</h2>
+        <div class="demo">
+          <div class="label">comparação ETL ↔ Opus</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--border-subtle);border-radius:var(--r-md);overflow:hidden;font-family:var(--ff-mono);font-size:12px;">
+            <div style="padding:var(--sp-3);background:var(--bg-inset);border-right:1px solid var(--border-subtle);">
+              <div style="color:var(--text-muted);font-size:10px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">ETL</div>
+              <div>2026-04-30 · -<span style="background:rgba(255,85,85,0.15);">846,21</span></div>
+              <div>desc: <span style="background:rgba(255,85,85,0.15);">"NUBANK CC"</span></div>
+            </div>
+            <div style="padding:var(--sp-3);">
+              <div style="color:var(--text-muted);font-size:10px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">Opus</div>
+              <div>2026-04-30 · -<span style="background:rgba(80,250,123,0.15);">846,20</span></div>
+              <div>desc: <span style="background:rgba(80,250,123,0.15);">"Nubank · cartão · fatura abr"</span></div>
+            </div>
+          </div>
+          <div style="font-family:var(--ff-mono);font-size:10px;color:var(--text-muted);margin-top:6px;">divergência centavos · texto · resolver no revisor →</div>
+        </div>
+      </div>
+
+      <div class="sg-section" id="timeline">
+        <h2><span class="num">08</span>Timeline</h2>
+        <div class="demo">
+          <div class="label">eventos do pipeline</div>
+          <div style="display:flex;flex-direction:column;">
+            ${[
+              {w:'14:32',c:'var(--accent-cyan)',t:'<strong>extrato_nubank.pdf</strong> registrado · <code style="color:var(--accent-purple);">a3f9c1e2</code>'},
+              {w:'14:35',c:'var(--accent-yellow)',t:'Opus extraiu com confiança 71% · <strong style="color:var(--accent-yellow);">divergência</strong>'},
+              {w:'13:52',c:'var(--d7-graduado)',t:'Sprint 4: paridade 73% → 76%'},
+            ].map(i=>`<div style="display:grid;grid-template-columns:60px 1fr;gap:var(--sp-3);padding:8px 0;border-bottom:1px dashed var(--border-subtle);">
+              <span style="font-family:var(--ff-mono);font-size:11px;color:${i.c};">${i.w}</span>
+              <span style="font-size:13px;color:var(--text-secondary);">${i.t}</span></div>`).join('')}
+          </div>
+        </div>
+      </div>
+
+      <div class="sg-section" id="tabela">
+        <h2><span class="num">09</span>Tabelas</h2>
+        <div class="demo">
+          <div class="label">linha densa · txn</div>
+          <div style="border:1px solid var(--border-subtle);border-radius:var(--r-md);overflow:hidden;">
+            <div style="display:grid;grid-template-columns:80px 1fr 100px 100px;gap:var(--sp-3);padding:8px var(--sp-3);background:var(--bg-elevated);font-family:var(--ff-mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);border-bottom:1px solid var(--border-subtle);">
+              <span>data</span><span>descrição</span><span style="text-align:right;">valor</span><span>conta</span>
+            </div>
+            ${[['30/04','Nubank · cartão',-846.21,'C6'],['28/04','Aluguel',-1280,'Bradesco'],['27/04','Pix recebido',1213.85,'Bradesco']].map(r=>`
+              <div style="display:grid;grid-template-columns:80px 1fr 100px 100px;gap:var(--sp-3);padding:8px var(--sp-3);font-family:var(--ff-mono);font-size:12px;border-bottom:1px dashed var(--border-subtle);">
+                <span style="color:var(--text-muted);">${r[0]}</span><span>${r[1]}</span>
+                <span style="text-align:right;color:${r[2]<0?'var(--accent-red)':'var(--d7-graduado)'};font-variant-numeric:tabular-nums;">${r[2]<0?'-':'+'}R$ ${Math.abs(r[2]).toFixed(2)}</span>
+                <span style="color:var(--text-muted);">${r[3]}</span>
+              </div>`).join('')}
+          </div>
+        </div>
+      </div>
+
+      <div class="sg-section" id="form">
+        <h2><span class="num">10</span>Formulários</h2>
+        <div class="demo">
+          <div class="label">inputs · select · checkbox</div>
+          <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:var(--sp-3);">
+            <div><label style="font-family:var(--ff-mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);display:block;margin-bottom:6px;">descrição</label>
+              <input type="text" value="Aluguel · imobiliária" style="width:100%;background:var(--bg-inset);border:1px solid var(--border-subtle);border-radius:var(--r-sm);color:var(--text-primary);padding:8px 10px;font-size:13px;font-family:var(--ff-mono);"></div>
+            <div><label style="font-family:var(--ff-mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);display:block;margin-bottom:6px;">categoria</label>
+              <select style="width:100%;background:var(--bg-inset);border:1px solid var(--border-subtle);border-radius:var(--r-sm);color:var(--text-primary);padding:8px 10px;font-size:13px;font-family:var(--ff-mono);"><option>Casa · Aluguel</option><option>Casa · Condomínio</option></select></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sg-section" id="progresso">
+        <h2><span class="num">11</span>Progresso & barras</h2>
+        <div class="demo">
+          <div class="label">progress · gauge · meta</div>
+          ${[
+            {n:'Cobertura D7',pct:0.78,c:'var(--d7-graduado)'},
+            {n:'Reserva emergência',pct:0.71,c:'var(--accent-purple)'},
+            {n:'Cobertura documentos',pct:0.84,c:'var(--accent-cyan)'},
+          ].map(p=>`<div style="margin-bottom:var(--sp-3);">
+            <div style="display:flex;justify-content:space-between;font-family:var(--ff-mono);font-size:12px;margin-bottom:4px;">
+              <span>${p.n}</span><span style="color:${p.c};">${Math.round(p.pct*100)}%</span></div>
+            <div style="height:8px;background:var(--bg-inset);border-radius:var(--r-full);overflow:hidden;"><div style="height:100%;width:${p.pct*100}%;background:${p.c};"></div></div></div>`).join('')}
+        </div>
+      </div>
+
+      <div class="sg-section" id="glyphs">
+        <h2><span class="num">12</span>Glyphs</h2>
+        <p class="lead">Mono-linha 1.5px, traço quadrado, viewBox 24×24. Sem dependências externas.</p>
+        <div class="demo">
+          <div style="display:grid;grid-template-columns:repeat(8,1fr);gap:var(--sp-3);">
+            ${['ouroboros','inbox','home','financas','docs','analise','metas','terminal','search','refresh','upload','download','check','close','plus','expand','diff','folder','warn','info'].map(g=>`<div style="text-align:center;padding:var(--sp-3);background:var(--bg-elevated);border-radius:var(--r-sm);"><div style="color:var(--accent-purple);">${glyph(g,24)}</div><div style="font-family:var(--ff-mono);font-size:10px;color:var(--text-muted);margin-top:6px;">${g}</div></div>`).join('')}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+`;
+hidratarGlyphs(document.getElementById('main-root'));
+</script></body></html>

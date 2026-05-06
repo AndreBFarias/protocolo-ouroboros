@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Ouroboros — Bem-estar · Ciclo</title>
+<link rel="stylesheet" href="../_shared/tokens.css">
+<link rel="stylesheet" href="../_shared/components.css">
+<style>
+.ciclo-grid { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: var(--sp-4); }
+.ciclo-card { background: var(--bg-surface); border:1px solid var(--border-subtle); border-radius: var(--r-md); padding: var(--sp-5); }
+
+/* anel das fases */
+.anel-wrap {
+  display:flex; align-items:center; justify-content:center;
+  padding: var(--sp-3) 0;
+  position: relative;
+}
+.anel-svg { width: 100%; max-width: 460px; height: auto; }
+.anel-centro {
+  position: absolute; inset: 0;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  pointer-events: none;
+}
+.anel-centro .fase-titulo {
+  font-family: var(--ff-mono);
+  font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--accent-pink); font-weight: 600;
+}
+.anel-centro .dia {
+  font-family: var(--ff-mono);
+  font-size: 56px; font-weight: 500; line-height: 1; color: var(--text-primary);
+  font-variant-numeric: tabular-nums; margin-top: 2px;
+}
+.anel-centro .total { font-family: var(--ff-mono); font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+.anel-centro .pred { font-family: var(--ff-mono); font-size: 11px; color: var(--text-muted); margin-top: var(--sp-2); }
+
+/* legenda das fases */
+.fases-legenda { display:grid; grid-template-columns: repeat(4, 1fr); gap: var(--sp-2); margin-top: var(--sp-4); }
+.fase-leg {
+  background: var(--bg-inset); border:1px solid var(--border-subtle); border-left: 3px solid var(--cor);
+  border-radius: var(--r-sm); padding: var(--sp-3);
+}
+.fase-leg.ativa { box-shadow: 0 0 0 1px var(--cor); background: var(--bg-elevated); }
+.fase-leg .nome { font-family: var(--ff-mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--cor); margin-bottom: 2px; }
+.fase-leg .janela { font-family: var(--ff-mono); font-size: 10px; color: var(--text-muted); }
+.fase-leg .nota { font-size: 11px; color: var(--text-secondary); margin-top: 6px; line-height:1.4; }
+
+/* sintomas */
+.sint-card { background: var(--bg-surface); border:1px solid var(--border-subtle); border-radius: var(--r-md); padding: var(--sp-4); }
+.sint-card h3 { font-family: var(--ff-mono); font-size: 11px; letter-spacing: 0.10em; text-transform: uppercase; color: var(--text-muted); margin: 0 0 var(--sp-3); }
+.sint-row { display: grid; grid-template-columns: 1fr auto; gap: var(--sp-2); align-items:center; padding: 6px 0; border-bottom: 1px solid var(--border-subtle); }
+.sint-row:last-child { border-bottom: none; }
+.sint-row .nome { font-size: 12px; color: var(--text-secondary); }
+.sint-row .intens { display: flex; gap: 2px; }
+.sint-row .intens span { width: 8px; height: 8px; border-radius: 50%; background: var(--bg-elevated); }
+.sint-row .intens span.on { background: var(--accent-pink); }
+
+.coluna-direita { display:flex; flex-direction:column; gap: var(--sp-3); }
+.crc-card { background: var(--bg-surface); border:1px solid var(--border-subtle); border-radius: var(--r-md); padding: var(--sp-4); }
+.crc-card h3 { font-family: var(--ff-mono); font-size: 11px; letter-spacing: 0.10em; text-transform: uppercase; color: var(--text-muted); margin: 0 0 var(--sp-3); }
+.cruz-row { display:grid; grid-template-columns: 1fr auto; gap: var(--sp-2); padding: 6px 0; border-bottom: 1px dashed var(--border-subtle); font-size: 12px; color: var(--text-secondary); }
+.cruz-row:last-child { border-bottom: none; }
+.cruz-row .v { font-family: var(--ff-mono); color: var(--text-primary); font-variant-numeric: tabular-nums; }
+
+/* pequena timeline mensal */
+.mes-strip { display: grid; grid-template-columns: repeat(28, 1fr); gap: 2px; }
+.mes-strip .d {
+  aspect-ratio: 1; border-radius: 2px; background: var(--bg-inset);
+  font-family: var(--ff-mono); font-size: 8px; display:grid; place-items:center; color: var(--text-muted);
+}
+.mes-strip .d.menstr { background: rgba(255,85,85, 0.45); color: white; }
+.mes-strip .d.fol    { background: rgba(241,250,140, 0.18); color: var(--text-secondary); }
+.mes-strip .d.fert   { background: rgba(189,147,249, 0.45); color: white; }
+.mes-strip .d.lut    { background: rgba(255,121,198, 0.18); color: var(--text-secondary); }
+.mes-strip .d.hoje   { box-shadow: 0 0 0 1.5px var(--accent-cyan); color: var(--accent-cyan); }
+.legenda-strip { display:flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+.legenda-strip span { font-family: var(--ff-mono); font-size: 10px; color: var(--text-muted); display:flex; align-items:center; gap: 4px; }
+.legenda-strip span::before { content:''; width:8px; height:8px; border-radius:2px; background: var(--bg-elevated); }
+.legenda-strip .menstr::before { background: rgba(255,85,85, 0.45); }
+.legenda-strip .fol::before    { background: rgba(241,250,140, 0.45); }
+.legenda-strip .fert::before   { background: rgba(189,147,249, 0.45); }
+.legenda-strip .lut::before    { background: rgba(255,121,198, 0.35); }
+
+@media (max-width: 1100px) { .ciclo-grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div id="shell-root"></div>
+<script src="../_shared/glyphs.js"></script>
+<script src="../_shared/shell.js"></script>
+<script>
+montarShell({
+  clusterAtivo: 'bem-estar',
+  abaAtiva: 'be-ciclo',
+  breadcrumb: ['Ouroboros', 'Bem-estar', 'Ciclo'],
+  acoes: [
+    { label: 'Histórico', icon: 'list', onClick: "toast('Histórico de 12 ciclos · em produção')" },
+    { label: 'Registrar dia', icon: 'plus', primary: true, onClick: "toast('Registrar fluxo · sintomas · humor · energia')" },
+  ],
+});
+
+// 28 dias: 1-5 menstr, 6-13 folicular, 14-16 fértil, 17-28 lútea
+function fase(d) {
+  if (d <= 5) return 'menstr';
+  if (d <= 13) return 'fol';
+  if (d <= 16) return 'fert';
+  return 'lut';
+}
+const HOJE = 18; // dia 18 do ciclo · fase lútea inicial
+
+// SVG anel
+function gerarAnel() {
+  const cx = 230, cy = 230, r = 170, sw = 28;
+  const cores = { menstr: '#ff5555', fol: '#f1fa8c', fert: '#bd93f9', lut: '#ff79c6' };
+  let arcs = '';
+  for (let d = 1; d <= 28; d++) {
+    const a0 = ((d - 1) / 28) * Math.PI * 2 - Math.PI / 2 + 0.005;
+    const a1 = (d / 28) * Math.PI * 2 - Math.PI / 2 - 0.005;
+    const x0 = cx + r * Math.cos(a0), y0 = cy + r * Math.sin(a0);
+    const x1 = cx + r * Math.cos(a1), y1 = cy + r * Math.sin(a1);
+    const cor = cores[fase(d)];
+    const isHoje = d === HOJE;
+    arcs += `<path d="M ${x0} ${y0} A ${r} ${r} 0 0 1 ${x1} ${y1}"
+      stroke="${cor}" stroke-width="${isHoje ? sw + 8 : sw}"
+      fill="none" stroke-linecap="butt" opacity="${isHoje ? 1 : 0.7}" />`;
+    // label de dia
+    const al = (a0 + a1) / 2;
+    const lx = cx + (r + sw / 2 + 16) * Math.cos(al);
+    const ly = cy + (r + sw / 2 + 16) * Math.sin(al);
+    if (d % 7 === 0 || d === 1 || d === HOJE) {
+      arcs += `<text x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="middle"
+        fill="${isHoje ? 'var(--accent-cyan)' : 'var(--text-muted)'}"
+        font-family="JetBrains Mono, monospace" font-size="11"
+        font-weight="${isHoje ? 600 : 400}">${d}</text>`;
+    }
+  }
+  // Marcador hoje
+  const aH = ((HOJE - 0.5) / 28) * Math.PI * 2 - Math.PI / 2;
+  const mx = cx + (r - sw / 2 - 6) * Math.cos(aH);
+  const my = cy + (r - sw / 2 - 6) * Math.sin(aH);
+  arcs += `<circle cx="${mx}" cy="${my}" r="6" fill="var(--accent-cyan)" stroke="var(--bg-base)" stroke-width="2" />`;
+
+  return `<svg class="anel-svg" viewBox="0 0 460 460">
+    ${arcs}
+  </svg>`;
+}
+
+// Mes strip
+let stripCells = '';
+for (let d = 1; d <= 28; d++) {
+  const f = fase(d);
+  const isHoje = d === HOJE;
+  stripCells += `<div class="d ${f} ${isHoje ? 'hoje' : ''}">${d}</div>`;
+}
+
+const FASES = [
+  { k: 'menstr', nome: 'menstrual',  janela: 'd 1–5',   cor: '#ff5555', nota: 'fluxo · descanso · cuidados' },
+  { k: 'fol',    nome: 'folicular', janela: 'd 6–13',  cor: '#f1fa8c', nota: 'energia ↑ · foco ↑ · social' },
+  { k: 'fert',   nome: 'fértil',    janela: 'd 14–16', cor: '#bd93f9', nota: 'libido pico · ovulação' },
+  { k: 'lut',    nome: 'lútea',     janela: 'd 17–28', cor: '#ff79c6', nota: 'TPM possível · sensibilidade ↑' },
+];
+const FASE_ATUAL = FASES.find(f => f.k === fase(HOJE));
+
+const SINTOMAS = [
+  { nome: 'cólica',          int: 1 },
+  { nome: 'inchaço',         int: 2 },
+  { nome: 'dor de cabeça',   int: 1 },
+  { nome: 'sensibilidade mamária', int: 2 },
+  { nome: 'fadiga',          int: 3 },
+  { nome: 'mudança de apetite', int: 2 },
+  { nome: 'mudança de humor', int: 3 },
+  { nome: 'acne',            int: 1 },
+];
+
+document.getElementById('main-root').innerHTML = `
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">CICLO MENSTRUAL · PESSOA B</h1>
+      <p class="page-subtitle">Track de fluxo, fase, sintomas e cruzamento com humor — opcional, opt-in, e visível só para Pessoa B
+      por padrão. <strong style="color:var(--accent-purple);">M14 (opcional)</strong></p>
+    </div>
+    <div class="page-meta">
+      <span class="sprint-tag">M14</span>
+      <span class="pill pill-d7-graduado">ciclo 12 · iniciado 14 mar</span>
+    </div>
+  </div>
+
+  <div class="ciclo-grid">
+    <div>
+      <div class="ciclo-card">
+        <div class="anel-wrap">
+          ${gerarAnel()}
+          <div class="anel-centro">
+            <div class="fase-titulo" style="color:${FASE_ATUAL.cor};">${FASE_ATUAL.nome}</div>
+            <div class="dia">d${HOJE}</div>
+            <div class="total">de 28</div>
+            <div class="pred">próxima menstruação · 24 abr · em 10 dias</div>
+          </div>
+        </div>
+
+        <div class="fases-legenda">
+          ${FASES.map(f => `
+            <div class="fase-leg ${f.k === FASE_ATUAL.k ? 'ativa' : ''}" style="--cor:${f.cor};">
+              <div class="nome">${f.nome}</div>
+              <div class="janela">${f.janela}</div>
+              <div class="nota">${f.nota}</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+      <div class="ciclo-card" style="margin-top: var(--sp-4);">
+        <h3 style="font-family:var(--ff-mono);font-size:11px;letter-spacing:0.10em;text-transform:uppercase;color:var(--text-muted);margin:0 0 var(--sp-3);">Strip do mês · ciclo 12</h3>
+        <div class="mes-strip">${stripCells}</div>
+        <div class="legenda-strip">
+          <span class="menstr">menstrual</span>
+          <span class="fol">folicular</span>
+          <span class="fert">fértil</span>
+          <span class="lut">lútea</span>
+          <span style="margin-left:auto;color:var(--accent-cyan);"> hoje</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="coluna-direita">
+      <div class="sint-card">
+        <h3>Sintomas hoje · escala 0–3</h3>
+        ${SINTOMAS.map(s => `
+          <div class="sint-row">
+            <span class="nome">${s.nome}</span>
+            <div class="intens">
+              ${[0,1,2].map(i => `<span class="${i < s.int ? 'on' : ''}"></span>`).join('')}
+            </div>
+          </div>
+        `).join('')}
+      </div>
+
+      <div class="crc-card">
+        <h3>Cruzamento · ciclo × humor (12 ciclos)</h3>
+        <div class="cruz-row"><span>humor médio · folicular</span><span class="v" style="color:var(--accent-green);">4.1</span></div>
+        <div class="cruz-row"><span>humor médio · fértil</span><span class="v" style="color:var(--accent-green);">4.2</span></div>
+        <div class="cruz-row"><span>humor médio · lútea (TPM)</span><span class="v" style="color:var(--accent-orange);">2.9</span></div>
+        <div class="cruz-row"><span>humor médio · menstrual</span><span class="v" style="color:var(--accent-yellow);">3.4</span></div>
+        <div class="cruz-row"><span>brigas · 80% caem na lútea</span><span class="v" style="color:var(--accent-red);">8/10</span></div>
+        <div style="margin-top:10px;padding-top:10px;border-top:1px dashed var(--border-subtle);font-family:var(--ff-mono);font-size:11px;color:var(--text-muted);line-height:1.5;">
+          Em produção, isso ajuda a antecipar contexto — sem usar como muleta para evitar conversa difícil.
+        </div>
+      </div>
+
+      <div class="crc-card" style="background:var(--bg-inset);">
+        <h3 style="color: var(--accent-purple);">Privacidade</h3>
+        <div style="font-family:var(--ff-mono);font-size:11px;color:var(--text-secondary);line-height:1.6;">
+          • visível só para <strong>Pessoa B</strong> por padrão<br>
+          • Pessoa A vê apenas <em>"fase aproximada"</em> se autorizado<br>
+          • dados não saem do dispositivo · zero analytics<br>
+          • exportável a qualquer momento em CSV
+        </div>
+      </div>
+    </div>
+  </div>
+`;
+hidratarGlyphs(document.getElementById('main-root'));
+</script>
+</body>
+</html>

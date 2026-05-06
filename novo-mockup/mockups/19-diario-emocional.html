@@ -1,0 +1,511 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Ouroboros — Bem-estar · Diário</title>
+<link rel="stylesheet" href="../_shared/tokens.css">
+<link rel="stylesheet" href="../_shared/components.css">
+<style>
+.diario-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 280px) minmax(0, 1fr);
+  gap: var(--sp-4);
+}
+
+/* ─── Esquerda: filtros + timeline ─── */
+.coluna-filtros {
+  display: flex; flex-direction: column;
+  gap: var(--sp-3);
+}
+.filtro-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  padding: var(--sp-4);
+}
+.filtro-card h3 {
+  font-family: var(--ff-mono);
+  font-size: var(--fs-11);
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 0 0 var(--sp-3);
+}
+.filtro-row { display: flex; flex-direction: column; gap: 4px; }
+.filtro-row button {
+  text-align: left;
+  background: var(--bg-inset);
+  border: 1px solid var(--border-subtle);
+  border-left: 3px solid var(--cor, transparent);
+  border-radius: var(--r-sm);
+  padding: 8px 10px;
+  font-family: var(--ff-mono);
+  font-size: var(--fs-12);
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: space-between;
+  transition: background .12s;
+}
+.filtro-row button:hover { background: var(--bg-elevated); }
+.filtro-row button.ativo {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+}
+.filtro-row .qtd {
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  background: var(--bg-elevated);
+  padding: 1px 6px;
+  border-radius: var(--r-xs);
+}
+
+/* ─── Direita: form + lista ─── */
+.coluna-conteudo { display: flex; flex-direction: column; gap: var(--sp-4); }
+
+.novo-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  padding: var(--sp-5);
+}
+.novo-tabs { display: flex; gap: 4px; margin-bottom: var(--sp-4); }
+.novo-tab {
+  background: var(--bg-inset);
+  border: 1px solid var(--border-subtle);
+  border-bottom: 3px solid transparent;
+  color: var(--text-secondary);
+  padding: 10px 16px;
+  font-family: var(--ff-mono);
+  font-size: var(--fs-12);
+  cursor: pointer;
+  border-radius: var(--r-sm) var(--r-sm) 0 0;
+  display: flex; align-items: center; gap: 6px;
+}
+.novo-tab.ativo {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  border-bottom-color: var(--cor);
+}
+.novo-tab:hover { color: var(--text-primary); }
+
+.novo-form {
+  display: flex; flex-direction: column;
+  gap: var(--sp-3);
+}
+.novo-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-3);
+}
+.novo-form label {
+  display: block;
+  font-family: var(--ff-mono);
+  font-size: var(--fs-11);
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+.novo-form input, .novo-form select, .novo-form textarea {
+  width: 100%;
+  background: var(--bg-inset);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-sm);
+  padding: 10px 12px;
+  font-family: var(--ff-mono);
+  font-size: var(--fs-13);
+  color: var(--text-primary);
+}
+.novo-form textarea { resize: vertical; min-height: 100px; line-height: 1.5; }
+.novo-form input:focus, .novo-form select:focus, .novo-form textarea:focus {
+  border-color: var(--cor); outline: none;
+}
+
+.intensidade-slider { display: flex; gap: 4px; }
+.intensidade-slider button {
+  flex: 1;
+  background: var(--bg-inset);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-sm);
+  padding: 8px;
+  font-family: var(--ff-mono);
+  font-size: var(--fs-12);
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.intensidade-slider button.ativo {
+  background: var(--cor);
+  border-color: var(--cor);
+  color: var(--text-inverse);
+}
+
+.novo-actions {
+  display: flex; align-items: center; justify-content: space-between;
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--border-subtle);
+}
+.novo-actions .destino {
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+}
+.novo-actions .destino code {
+  color: var(--accent-pink);
+  background: var(--bg-inset);
+  padding: 1px 6px; border-radius: 2px;
+}
+
+/* ─── Timeline ─── */
+.timeline-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  padding: var(--sp-4) var(--sp-5);
+}
+.timeline-head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: var(--sp-3);
+}
+.timeline-head h3 {
+  font-family: var(--ff-mono);
+  font-size: var(--fs-11);
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 0;
+}
+.timeline {
+  display: flex; flex-direction: column;
+  position: relative;
+}
+.tl-grupo-data {
+  font-family: var(--ff-mono);
+  font-size: var(--fs-11);
+  color: var(--text-muted);
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  padding: var(--sp-3) 0 var(--sp-2) 32px;
+  position: sticky;
+  top: 0;
+  background: var(--bg-surface);
+  z-index: 1;
+}
+.tl-item {
+  display: grid;
+  grid-template-columns: 24px 1fr;
+  gap: var(--sp-3);
+  padding: var(--sp-3) 0;
+  position: relative;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.tl-item:last-child { border-bottom: none; }
+.tl-bullet {
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  background: var(--bg-inset);
+  border: 2px solid var(--cor);
+  display: grid; place-items: center;
+  margin-top: 2px;
+}
+.tl-bullet svg { width: 12px; height: 12px; color: var(--cor); }
+.tl-corpo {
+  display: flex; flex-direction: column; gap: 6px;
+}
+.tl-meta {
+  display: flex; align-items: center; gap: var(--sp-2);
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.tl-meta .tipo { color: var(--cor); font-weight: 600; }
+.tl-meta .para {
+  background: var(--bg-elevated);
+  padding: 1px 6px;
+  border-radius: var(--r-xs);
+}
+.tl-meta .intensidade {
+  display: inline-flex; gap: 2px;
+}
+.tl-meta .intensidade span {
+  width: 6px; height: 6px;
+  background: var(--cor);
+  border-radius: 50%;
+  opacity: 0.3;
+}
+.tl-meta .intensidade span.on { opacity: 1; }
+.tl-titulo {
+  font-size: var(--fs-14);
+  color: var(--text-primary);
+  font-weight: 500;
+  line-height: 1.4;
+}
+.tl-corpo-text {
+  font-size: var(--fs-13);
+  color: var(--text-secondary);
+  line-height: 1.6;
+  border-left: 2px solid var(--border-subtle);
+  padding-left: var(--sp-3);
+  font-style: italic;
+}
+.tl-tags {
+  display: flex; flex-wrap: wrap; gap: 4px;
+}
+.tl-tags .pill {
+  font-size: 10px;
+  background: var(--bg-elevated);
+  border-color: var(--border-subtle);
+  color: var(--text-secondary);
+}
+
+@media (max-width: 1100px) {
+  .diario-layout { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div id="shell-root"></div>
+<script src="../_shared/glyphs.js"></script>
+<script src="../_shared/shell.js"></script>
+<script>
+montarShell({
+  clusterAtivo: 'bem-estar',
+  abaAtiva: 'be-diario',
+  breadcrumb: ['Ouroboros', 'Bem-estar', 'Diário'],
+  acoes: [
+    { label: 'Heatmap', icon: 'mood', href: '18-humor-heatmap.html' },
+    { label: 'Hoje', icon: 'sparkle', primary: true, href: '17-bem-estar-hoje.html' },
+  ],
+});
+
+const TIPOS = {
+  trigger:   { cor: 'var(--accent-orange)', icon: 'alarm',  label: 'Trigger',   sub: 'Algo que disparou ansiedade, raiva, tristeza' },
+  vitoria:   { cor: 'var(--accent-green)',  icon: 'check',  label: 'Vitória',   sub: 'Algo bom — pequeno ou grande' },
+  reflexao:  { cor: 'var(--accent-purple)', icon: 'sparkle',label: 'Reflexão',  sub: 'Pensamento, observação, padrão notado' },
+  observacao:{ cor: 'var(--accent-cyan)',   icon: 'eye',    label: 'Observação',sub: 'Sobre Pessoa B ou sobre o casal' },
+};
+let TIPO_ATIVO = 'trigger';
+let INTENSIDADE = 3;
+let PARA = 'mim';
+
+function setTipo(t) {
+  TIPO_ATIVO = t;
+  renderForm();
+  renderTabs();
+}
+function setIntensidade(v) { INTENSIDADE = v; renderForm(); }
+function setPara(p) { PARA = p; renderForm(); }
+
+function renderTabs() {
+  const tabs = Object.entries(TIPOS).map(([k, t]) => `
+    <button class="novo-tab ${k === TIPO_ATIVO ? 'ativo' : ''}" style="--cor:${t.cor};" onclick="setTipo('${k}')">
+      ${glyph(t.icon, 12)} ${t.label}
+    </button>`).join('');
+  document.getElementById('novo-tabs').innerHTML = tabs;
+  hidratarGlyphs(document.getElementById('novo-tabs'));
+}
+
+function renderForm() {
+  const t = TIPOS[TIPO_ATIVO];
+  const intBtns = [1,2,3,4,5].map(v =>
+    `<button class="${v <= INTENSIDADE ? 'ativo' : ''}" style="--cor:${t.cor};" onclick="setIntensidade(${v})">${v}</button>`
+  ).join('');
+  document.getElementById('novo-form').innerHTML = `
+    <div class="novo-form-row">
+      <div>
+        <label>Título — uma frase</label>
+        <input type="text" placeholder="ex.: ${TIPO_ATIVO === 'trigger' ? 'reunião com o chefe me deixou ansioso' : TIPO_ATIVO === 'vitoria' ? 'consegui terminar o relatório sem travar' : TIPO_ATIVO === 'reflexao' ? 'percebi que ansiedade some quando ando' : 'pessoa B parecia mais leve hoje'}" style="--cor:${t.cor};" />
+      </div>
+      <div>
+        <label>Intensidade</label>
+        <div class="intensidade-slider">${intBtns}</div>
+      </div>
+    </div>
+    <div class="novo-form-row">
+      <div>
+        <label>Esse registro é para</label>
+        <select style="--cor:${t.cor};" onchange="setPara(this.value)">
+          <option value="mim" ${PARA==='mim'?'selected':''}>para mim</option>
+          <option value="pessoa-b" ${PARA==='pessoa-b'?'selected':''}>para Pessoa B</option>
+          <option value="casal" ${PARA==='casal'?'selected':''}>para o casal</option>
+        </select>
+      </div>
+      <div>
+        <label>Tags (separe por vírgula)</label>
+        <input type="text" placeholder="trabalho, ansiedade, manhã" style="--cor:${t.cor};" value="${TIPO_ATIVO === 'trigger' ? 'trabalho, ansiedade' : TIPO_ATIVO === 'vitoria' ? 'foco, trabalho' : TIPO_ATIVO === 'reflexao' ? 'corpo, padrão' : 'pessoa-b, observação'}" />
+      </div>
+    </div>
+    <div>
+      <label>Corpo — sem julgamento, escreva como vier</label>
+      <textarea placeholder="${t.sub}…" style="--cor:${t.cor};">${TIPO_ATIVO === 'trigger' ? 'a sensação começou na barriga umas duas horas antes da reunião. tentei respirar mas não passou. durante a reunião foi ok mas depois tive que sentar 10 min sozinho.' : ''}</textarea>
+    </div>
+    <div class="novo-actions">
+      <span class="destino">salvar em <code>daily/2026-03-31.md</code> · seção: <code>${t.label.toLowerCase()}</code> · para: <code>${PARA}</code></span>
+      <button class="btn btn-sm btn-primary" onclick="toast(' ${t.label} salvo · daily/2026-03-31.md · intensidade ${INTENSIDADE}/5')">${glyph('check',14)} Salvar ${t.label.toLowerCase()}</button>
+    </div>
+  `;
+  hidratarGlyphs(document.getElementById('novo-form'));
+}
+
+// ─── Filtros ───
+const FILTROS_TIPO = [
+  { k: 'todos', l: 'todos os tipos', qtd: 142, cor: 'transparent', ativo: true },
+  { k: 'trigger', l: 'triggers', qtd: 38, cor: 'var(--accent-orange)' },
+  { k: 'vitoria', l: 'vitórias', qtd: 47, cor: 'var(--accent-green)' },
+  { k: 'reflexao', l: 'reflexões', qtd: 42, cor: 'var(--accent-purple)' },
+  { k: 'observacao', l: 'observações', qtd: 15, cor: 'var(--accent-cyan)' },
+];
+const FILTROS_PARA = [
+  { k: 'todos', l: 'todos', qtd: 142, ativo: true },
+  { k: 'mim', l: 'para mim', qtd: 89 },
+  { k: 'pessoa-b', l: 'para Pessoa B', qtd: 31 },
+  { k: 'casal', l: 'para o casal', qtd: 22 },
+];
+const FILTROS_PERIODO = [
+  { k: '7d', l: 'últimos 7 dias', qtd: 18 },
+  { k: '30d', l: 'últimos 30 dias', qtd: 64, ativo: true },
+  { k: '90d', l: 'últimos 90 dias', qtd: 142 },
+  { k: 'todo', l: 'desde o início', qtd: 287 },
+];
+
+// ─── Timeline mock ───
+const ENTRADAS = [
+  { data: 'hoje · ter 31 mar', itens: [
+    { tipo: 'vitoria', hora: '14:12', para: 'mim', intensidade: 4, titulo: 'Consegui terminar o relatório sem travar de ansiedade', corpo: 'O peito apertou no começo mas eu lembrei de respirar 4-7-8 e foi cedendo. Entreguei no horário.', tags: ['foco', 'trabalho', 'ansiedade'] },
+    { tipo: 'trigger', hora: '08:42', para: 'mim', intensidade: 3, titulo: 'Briga estúpida sobre a louça da pia', corpo: 'Acordei de mau humor por causa do sono ruim, ela falou alguma coisa e eu já reagi mal. Identifiquei depois que era cansaço.', tags: ['casal', 'sono', 'manhã'] },
+  ]},
+  { data: 'ontem · seg 30 mar', itens: [
+    { tipo: 'reflexao', hora: '21:15', para: 'mim', intensidade: 3, titulo: 'Notei que a ansiedade some completamente quando ando', corpo: 'Andei 40 minutos depois do trabalho e a sensação no peito sumiu. Vou tentar tornar isso uma rotina.', tags: ['corpo', 'padrão', 'caminhada'] },
+    { tipo: 'observacao', hora: '19:30', para: 'pessoa-b', intensidade: 2, titulo: 'Pessoa B chegou mais leve do trabalho hoje', corpo: 'Veio falar coisa boa do dia, contou uma piada do colega novo. Achei legal anotar pra lembrar quando ela tiver outro dia ruim.', tags: ['pessoa-b', 'casal'] },
+    { tipo: 'vitoria', hora: '17:00', para: 'casal', intensidade: 5, titulo: 'Cozinhamos juntos sem brigar', corpo: 'Foi a primeira vez em semanas que conseguimos. Talvez tenha sido por estar mais descansados, talvez pelo treino que ambos fizemos antes.', tags: ['casal', 'rolezinho'] },
+  ]},
+  { data: 'sábado · 28 mar', itens: [
+    { tipo: 'trigger', hora: '15:00', para: 'mim', intensidade: 5, titulo: 'Crise de ansiedade no shopping', corpo: 'Multidão, barulho, calor. Tive que sair, sentar no banco do estacionamento por uns 20 minutos. Liguei pra ela e ela soube me acalmar sem julgar.', tags: ['ansiedade', 'crise', 'casal'] },
+    { tipo: 'reflexao', hora: '22:00', para: 'mim', intensidade: 2, titulo: 'Padrão: crises sempre depois de pouco sono', corpo: 'Dormi 5h na sexta. Parece óbvio mas escrever ajuda a fixar.', tags: ['padrão', 'sono'] },
+  ]},
+];
+
+function renderTimeline() {
+  const html = ENTRADAS.map(g => `
+    <div class="tl-grupo-data">${g.data}</div>
+    ${g.itens.map(it => {
+      const t = TIPOS[it.tipo];
+      const intDots = [1,2,3,4,5].map(v => `<span class="${v <= it.intensidade ? 'on' : ''}"></span>`).join('');
+      return `
+        <div class="tl-item">
+          <div class="tl-bullet" style="--cor:${t.cor};">${glyph(t.icon, 12)}</div>
+          <div class="tl-corpo">
+            <div class="tl-meta">
+              <span class="tipo" style="--cor:${t.cor};color:${t.cor};">${t.label}</span>
+              <span>·</span>
+              <span>${it.hora}</span>
+              <span>·</span>
+              <span class="para">para ${it.para}</span>
+              <span>·</span>
+              <span class="intensidade" style="--cor:${t.cor};">${intDots}</span>
+            </div>
+            <div class="tl-titulo">${it.titulo}</div>
+            <div class="tl-corpo-text">"${it.corpo}"</div>
+            <div class="tl-tags">${it.tags.map(tg => `<span class="pill">${tg}</span>`).join('')}</div>
+          </div>
+        </div>
+      `;
+    }).join('')}
+  `).join('');
+  document.getElementById('timeline-host').innerHTML = html;
+  hidratarGlyphs(document.getElementById('timeline-host'));
+}
+
+document.getElementById('main-root').innerHTML = `
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">DIÁRIO EMOCIONAL</h1>
+      <p class="page-subtitle">Triggers · vitórias · reflexões · observações. Cada entrada vai pro markdown do dia, indexada por tag.
+      Filtra por tipo, por <strong style="color:var(--accent-purple);">para quem</strong>, e por período.</p>
+    </div>
+    <div class="page-meta">
+      <span class="sprint-tag">M03 → M40</span>
+      <span class="pill pill-d7-graduado">142 entradas · 90d</span>
+    </div>
+  </div>
+
+  <div class="diario-layout">
+    <aside class="coluna-filtros">
+      <div class="filtro-card">
+        <h3>Tipo</h3>
+        <div class="filtro-row">
+          ${FILTROS_TIPO.map(f => `
+            <button class="${f.ativo ? 'ativo' : ''}" style="--cor:${f.cor};">
+              <span>${f.l}</span><span class="qtd">${f.qtd}</span>
+            </button>
+          `).join('')}
+        </div>
+      </div>
+
+      <div class="filtro-card">
+        <h3>Para quem</h3>
+        <div class="filtro-row">
+          ${FILTROS_PARA.map(f => `
+            <button class="${f.ativo ? 'ativo' : ''}">
+              <span>${f.l}</span><span class="qtd">${f.qtd}</span>
+            </button>
+          `).join('')}
+        </div>
+      </div>
+
+      <div class="filtro-card">
+        <h3>Período</h3>
+        <div class="filtro-row">
+          ${FILTROS_PERIODO.map(f => `
+            <button class="${f.ativo ? 'ativo' : ''}">
+              <span>${f.l}</span><span class="qtd">${f.qtd}</span>
+            </button>
+          `).join('')}
+        </div>
+      </div>
+
+      <div class="filtro-card" style="background:var(--bg-inset);">
+        <h3>Tags populares</h3>
+        <div style="display:flex;flex-wrap:wrap;gap:4px;">
+          <span class="pill">trabalho · 28</span>
+          <span class="pill">ansiedade · 24</span>
+          <span class="pill">casal · 22</span>
+          <span class="pill">sono · 18</span>
+          <span class="pill">corpo · 14</span>
+          <span class="pill">padrão · 12</span>
+          <span class="pill">crise · 8</span>
+          <span class="pill">manhã · 7</span>
+        </div>
+      </div>
+    </aside>
+
+    <div class="coluna-conteudo">
+      <div class="novo-card">
+        <h3 style="font-family:var(--ff-mono);font-size:var(--fs-11);letter-spacing:0.10em;text-transform:uppercase;color:var(--text-muted);margin:0 0 var(--sp-3);">Nova entrada</h3>
+        <div class="novo-tabs" id="novo-tabs"></div>
+        <div class="novo-form" id="novo-form"></div>
+      </div>
+
+      <div class="timeline-card">
+        <div class="timeline-head">
+          <h3>Timeline · todos os tipos · 30 dias</h3>
+          <div style="display:flex;gap:6px;">
+            <button class="btn btn-sm">${glyph('search', 12)} buscar</button>
+            <button class="btn btn-sm">${glyph('download', 12)} exportar</button>
+          </div>
+        </div>
+        <div class="timeline" id="timeline-host"></div>
+      </div>
+    </div>
+  </div>
+`;
+
+renderTabs();
+renderForm();
+renderTimeline();
+hidratarGlyphs(document.getElementById('main-root'));
+</script>
+</body>
+</html>

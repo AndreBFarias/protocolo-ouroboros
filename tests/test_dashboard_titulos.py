@@ -150,18 +150,34 @@ def test_listagem_de_paginas_nao_vazia() -> None:
 # ruído visual arbitrário; o helper continua obrigatório, mas com badge
 # vazio. Lista mantida para garantir que todas as páginas seguem chamando
 # o helper canônico.
+# Sprint UX-RD-04: ``visao_geral.py`` foi reescrita com hero próprio
+# (HTML inline com glyph Ω animado), substituindo o helper
+# ``hero_titulo_html``. Removida desta lista para que o invariante
+# Sprint UX-122 continue valendo nas demais páginas.
+# Sprint UX-RD-07: ``pagamentos.py`` foi reescrita com page-header
+# redesigned (calendário 14d + lista lateral), abandonando o
+# ``hero_titulo_html`` em favor da composição UX-RD-XX padrão. Removida
+# desta lista pelo mesmo critério de visao_geral.py / extrato.py.
+# Sprint UX-RD-10: ``completude.py`` foi reescrita com matriz tipo × mês +
+# page-header próprio (espelhando o mockup ``08-completude.html``). Removida
+# desta lista pelo mesmo critério das anteriores.
+# Sprint UX-RD-12: ``categorias.py`` foi reescrita com árvore + treemap +
+# painel de regras YAML (mockup ``11-categorias.html``). Usa ``page-header``
+# canônico em vez de ``hero_titulo_html``. Removida desta lista pelo mesmo
+# critério das anteriores.
+# Sprint UX-RD-14: ``irpf.py`` (mockup ``15-irpf.html``) e ``metas.py``
+# (mockup ``13-metas.html``) foram reescritas com ``page-header`` +
+# donuts/gauges Plotly. Ambas abandonaram ``hero_titulo_html`` em favor
+# da composição UX-RD-XX padrão e saem desta lista pelo mesmo critério
+# das anteriores.
+# Sprint UX-U-03: ``extrato.py`` e ``analise_avancada.py`` migraram para
+# ``renderizar_page_header`` (helper canônico Onda U). ``hero_titulo_html``
+# está em deprecação progressiva. ``contas.py`` e ``projecoes.py``
+# permanecem na lista até serem refatoradas em sprint formal (Onda T).
 PAGINAS_COM_HERO: frozenset[str] = frozenset(
     {
-        "visao_geral.py",
-        "categorias.py",
-        "extrato.py",
         "contas.py",
-        "pagamentos.py",
         "projecoes.py",
-        "metas.py",
-        "analise_avancada.py",
-        "irpf.py",
-        "completude.py",
     }
 )
 

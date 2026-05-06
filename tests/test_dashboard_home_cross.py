@@ -20,7 +20,7 @@ import pytest
 
 from src.dashboard import app as app_mod
 from src.dashboard.componentes import drilldown
-from src.dashboard.paginas._home_helpers import (
+from src.dashboard.paginas._arquivadas._home_helpers import (
     data_referencia_hoje,
     filtrar_para_hoje,
     renderizar_kpi_compacto,
@@ -230,14 +230,15 @@ class TestIntegracaoAppPy:
         assert '"Dinheiro hoje"' not in texto
         assert '"Docs hoje"' not in texto
 
+    @pytest.mark.skip(
+        reason="UX-T-01: cluster Home renderiza Visão Geral diretamente. As "
+        "mini-views (home_dinheiro/home_docs/home_analise/home_metas) saíram "
+        "do dispatcher mas continuam exportadas para retrocompat. Sprint "
+        "DEPRECATED-HOME-SUBVIEWS vai limpar."
+    )
     def test_app_py_chama_renderizar_das_4_mini_views(self) -> None:
         """Sprint UX-125: arquivos físicos (home_dinheiro.py etc.) mantêm
         nome interno; só os labels mudaram. Nomes dos módulos persistem."""
-        texto = (RAIZ / "src" / "dashboard" / "app.py").read_text(encoding="utf-8")
-        assert "home_dinheiro.renderizar" in texto
-        assert "home_docs.renderizar" in texto
-        assert "home_analise.renderizar" in texto
-        assert "home_metas.renderizar" in texto
 
 
 # ============================================================================
@@ -270,7 +271,7 @@ extrato = pd.DataFrame({{
 }})
 dados = {{"extrato": extrato}}
 
-from src.dashboard.paginas import home_dinheiro
+from src.dashboard.paginas._arquivadas import home_dinheiro
 home_dinheiro.renderizar(dados, "2026-04", "Todos", None)
 """
 
@@ -289,7 +290,7 @@ from src.dashboard import dados as d
 d.CAMINHO_GRAFO = Path({str(caminho_grafo)!r})
 d.carregar_documentos_grafo.clear()
 
-from src.dashboard.paginas import home_docs
+from src.dashboard.paginas._arquivadas import home_docs
 home_docs.renderizar()
 """
 
@@ -318,7 +319,7 @@ extrato = pd.DataFrame({{
 }})
 dados = {{"extrato": extrato}}
 
-from src.dashboard.paginas import home_analise
+from src.dashboard.paginas._arquivadas import home_analise
 home_analise.renderizar(dados, "2026-04", "Todos", None)
 """
 
@@ -338,7 +339,7 @@ metas_mod.CAMINHO_METAS = Path({str(caminho_metas)!r})
 
 dados = {{"extrato": pd.DataFrame()}}
 
-from src.dashboard.paginas import home_metas
+from src.dashboard.paginas._arquivadas import home_metas
 home_metas.renderizar(dados, "2026-04", "Todos", None)
 """
 
