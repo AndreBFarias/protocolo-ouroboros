@@ -18,7 +18,7 @@ from src.dashboard.dados import (
     filtro_forma_ativo,
     formatar_moeda,
 )
-from src.dashboard.paginas._home_helpers import (
+from src.dashboard.paginas._arquivadas._home_helpers import (
     data_referencia_hoje,
     filtrar_para_hoje,
     renderizar_kpi_compacto,

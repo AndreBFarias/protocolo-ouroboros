@@ -13,7 +13,6 @@ from src.dashboard.componentes.drilldown import (  # noqa: E402
     CHAVE_SESSION_ABA_ATIVA,
     CHAVE_SESSION_CLUSTER_ATIVO,
     CLUSTERS_VALIDOS,
-    gerar_html_ativar_aba,
     ler_filtros_da_url,
 )
 from src.dashboard.componentes.shell import (  # noqa: E402
@@ -422,100 +421,65 @@ def main() -> None:
     # numbering (01-13) definido na Sprint 92a.
     if cluster == "Home":
         # UX-T-01: cluster Home renderiza diretamente a Visão Geral canônica
-        # (mockup 01-visao-geral.html). As 5 tabs internas (Visão Geral /
-        # Finanças / Documentos / Análise / Metas) que duplicavam a sidebar
-        # foram eliminadas — clusters próprios já oferecem essas vistas.
-        # As páginas home_dinheiro/home_docs/home_analise/home_metas
-        # continuam exportadas para retrocompat de deep-links externos
-        # (será removido em sprint dedicada DEPRECATED-HOME-SUBVIEWS).
+        # (mockup 01-visao-geral.html). DEPRECATED-HOME-SUBVIEWS executou —
+        # home_dinheiro/home_docs/home_analise/home_metas/_home_helpers
+        # foram arquivados em ``src/dashboard/paginas/_arquivadas/``.
         visao_geral.renderizar(dados, periodo, pessoa, ctx)
 
     elif cluster == "Finanças":
-        (
-            tab_extrato,
-            tab_contas,
-            tab_pagamentos,
-            tab_projecoes,
-        ) = st.tabs(["Extrato", "Contas", "Pagamentos", "Projeções"])
-        with tab_extrato:
-            extrato.renderizar(dados, periodo, pessoa, ctx)
-        with tab_contas:
+        # TABS-CLUSTER-CLEANUP: dispatcher direto via aba_requerida_topbar
+        # (populada por ?tab=X em ler_filtros_da_url). st.tabs eliminado
+        # porque mockup canônico (00-shell-navegacao.html) usa apenas
+        # sidebar para navegar entre abas do cluster.
+        aba_fin = aba_requerida_topbar or "Extrato"
+        if aba_fin == "Contas":
             contas.renderizar(dados, periodo, pessoa)
-        with tab_pagamentos:
+        elif aba_fin == "Pagamentos":
             pagamentos.renderizar(dados, periodo, pessoa, ctx)
-        with tab_projecoes:
+        elif aba_fin == "Projeções":
             projecoes.renderizar(dados, periodo, pessoa)
+        else:
+            extrato.renderizar(dados, periodo, pessoa, ctx)
 
     elif cluster == "Documentos":
-        # Sprint UX-RD-11: aba "Validação por Arquivo" -> "Extração Tripla".
-        # ``validacao_arquivos.py`` virou stub de retrocompat (visualizado
-        # apenas se rota antiga for explicitada em código futuro).
-        (
-            tab_busca,
-            tab_catalogacao,
-            tab_completude,
-            tab_revisor,
-            tab_extracao_tripla,
-            tab_grafo_obsidian,
-        ) = st.tabs(
-            [
-                "Busca Global",
-                "Catalogação",
-                "Completude",
-                "Revisor",
-                "Extração Tripla",
-                "Grafo + Obsidian",
-            ]
-        )
-        with tab_busca:
-            busca.renderizar(dados, periodo, pessoa, ctx)
-        with tab_catalogacao:
+        # TABS-CLUSTER-CLEANUP: dispatcher direto.
+        aba_doc = aba_requerida_topbar or "Busca Global"
+        if aba_doc == "Catalogação":
             catalogacao.renderizar(dados, periodo, pessoa, ctx)
-        with tab_completude:
+        elif aba_doc == "Completude":
             completude.renderizar(dados, periodo, pessoa, ctx)
-        with tab_revisor:
+        elif aba_doc == "Revisor":
             revisor.renderizar(dados, periodo, pessoa, ctx)
-        with tab_extracao_tripla:
+        elif aba_doc == "Extração Tripla":
             extracao_tripla.renderizar(dados, periodo, pessoa, ctx)
-        with tab_grafo_obsidian:
+        elif aba_doc == "Grafo + Obsidian":
             grafo_obsidian.renderizar(dados, periodo, pessoa, ctx)
+        else:
+            busca.renderizar(dados, periodo, pessoa, ctx)
 
     elif cluster == "Análise":
-        (
-            tab_categorias,
-            tab_analise,
-            tab_irpf,
-        ) = st.tabs(["Categorias", "Análise", "IRPF"])
-        with tab_categorias:
-            categorias.renderizar(dados, periodo, pessoa, ctx)
-        with tab_analise:
+        # TABS-CLUSTER-CLEANUP: dispatcher direto.
+        aba_an = aba_requerida_topbar or "Categorias"
+        if aba_an == "Análise":
             analise_avancada.renderizar(dados, periodo, pessoa, ctx)
-        with tab_irpf:
+        elif aba_an == "IRPF":
             irpf.renderizar(dados, periodo, pessoa, ctx)
+        else:
+            categorias.renderizar(dados, periodo, pessoa, ctx)
 
     elif cluster == "Metas":
-        (tab_metas,) = st.tabs(["Metas"])
-        with tab_metas:
-            metas.renderizar(dados, periodo, pessoa)
+        metas.renderizar(dados, periodo, pessoa)
 
     elif cluster == "Sistema":
-        # Sprint UX-RD-05: cluster Sistema com 2 abas reais.
-        # Skills D7 = painel analítico do classificador; Styleguide = QA
-        # visual dos tokens/classes do redesign.
-        tab_skills, tab_styleguide = st.tabs(["Skills D7", "Styleguide"])
-        with tab_skills:
-            skills_d7.renderizar(dados, periodo, pessoa, ctx)
-        with tab_styleguide:
+        # TABS-CLUSTER-CLEANUP: dispatcher direto.
+        aba_sis = aba_requerida_topbar or "Skills D7"
+        if aba_sis == "Styleguide":
             styleguide.renderizar(dados, periodo, pessoa, ctx)
+        else:
+            skills_d7.renderizar(dados, periodo, pessoa, ctx)
 
     elif cluster == "Inbox":
-        # Sprint UX-RD-15: cluster Inbox tem página real -- dropzone, fila
-        # de arquivos lida de <raiz>/inbox/, drawer sidecar e bloco
-        # skill-instr apontando para o CLI. Fallback graceful era apenas
-        # placeholder até esta sprint.
-        (tab_inbox,) = st.tabs(["Inbox"])
-        with tab_inbox:
-            inbox.renderizar(dados, periodo, pessoa, ctx)
+        inbox.renderizar(dados, periodo, pessoa, ctx)
 
     elif cluster == "Bem-estar":
         # FIX-14: deep-link interno via &secao= reabilita 5 páginas órfãs
@@ -547,77 +511,32 @@ def main() -> None:
             )
             st.stop()
 
-        # Sprint UX-RD-17: dispatcher real do cluster Bem-estar com 12
-        # abas declaradas (deep-link). Apenas "Hoje" e "Humor" têm
-        # páginas reais nesta sprint; demais ficam em fallback graceful
-        # apontando a sprint que vai habilitá-las (UX-RD-18+).
-        (
-            tab_be_hoje,
-            tab_be_humor,
-            tab_be_diario,
-            tab_be_eventos,
-            tab_be_medidas,
-            tab_be_treinos,
-            tab_be_marcos,
-            tab_be_alarmes,
-            tab_be_contadores,
-            tab_be_ciclo,
-            tab_be_tarefas,
-            tab_be_recap,
-        ) = st.tabs(
-            [
-                "Hoje",
-                "Humor",
-                "Diário",
-                "Eventos",
-                "Medidas",
-                "Treinos",
-                "Marcos",
-                "Alarmes",
-                "Contadores",
-                "Ciclo",
-                "Tarefas",
-                "Recap",
-            ]
-        )
-        with tab_be_hoje:
-            be_hoje.renderizar(dados, periodo, pessoa, ctx)
-        with tab_be_humor:
-            be_humor.renderizar(dados, periodo, pessoa, ctx)
-        with tab_be_diario:
-            # Sprint UX-RD-18: aba "Diário" agora é página real --
-            # lista cronológica DESC com border-left semântica, chips
-            # emoção, slider intensidade e form modal "Registrar diário".
-            be_diario.renderizar(dados, periodo, pessoa, ctx)
-        with tab_be_eventos:
-            # Sprint UX-RD-18: aba "Eventos" agora é página real --
-            # timeline cronológica DESC + sidebar lateral "Bairros
-            # frequentes" agregada do cache (NUNCA hardcoded).
-            be_eventos.renderizar(dados, periodo, pessoa, ctx)
-        # FIX-10: dispatcher 1:1 -- cada aba chama UMA página real.
-        # Antes (UX-RD-19) Treinos+Marcos -> be_memorias e
-        # Alarmes+Contadores+Tarefas -> be_rotina (5 abas-fantasma).
-        # FIX-10 cria 5 páginas reais (be_treinos, be_marcos, be_alarmes,
-        # be_contadores, be_tarefas). FIX-14 reabilita rota interna para
-        # Memórias/Rotina/Cruzamentos/Privacidade/Editor TOML via &secao=.
-        with tab_be_medidas:
-            be_medidas.renderizar(dados, periodo, pessoa, ctx)
-        with tab_be_treinos:
-            be_treinos.renderizar(dados, periodo, pessoa, ctx)
-        with tab_be_marcos:
-            be_marcos.renderizar(dados, periodo, pessoa, ctx)
-        with tab_be_alarmes:
-            be_alarmes.renderizar(dados, periodo, pessoa, ctx)
-        with tab_be_contadores:
-            be_contadores.renderizar(dados, periodo, pessoa, ctx)
-        with tab_be_ciclo:
-            be_ciclo.renderizar(dados, periodo, pessoa, ctx)
-        with tab_be_tarefas:
-            be_tarefas.renderizar(dados, periodo, pessoa, ctx)
-        with tab_be_recap:
-            be_recap.renderizar(dados, periodo, pessoa, ctx)
-            # FIX-14: expanders Cruzamentos/Privacidade/Editor TOML removidos
-            # daqui. Acessíveis via &secao= URL param (a sprint FIX-14 reabilita).
+        # TABS-CLUSTER-CLEANUP + DEEPLINK-FIX-01: dispatcher direto
+        # Bem-estar com 12 abas declaradas + 5 páginas-irmãs (memorias,
+        # rotina, cruzamentos, privacidade, editor_toml) que antes eram
+        # acessíveis só via &secao=. Agora tudo via ?tab=X.
+        _PAGINAS_BE = {
+            "Hoje": be_hoje,
+            "Humor": be_humor,
+            "Diário": be_diario,
+            "Eventos": be_eventos,
+            "Medidas": be_medidas,
+            "Treinos": be_treinos,
+            "Marcos": be_marcos,
+            "Alarmes": be_alarmes,
+            "Contadores": be_contadores,
+            "Ciclo": be_ciclo,
+            "Tarefas": be_tarefas,
+            "Recap": be_recap,
+            "Memórias": be_memorias,
+            "Rotina": be_rotina,
+            "Cruzamentos": be_cruzamentos,
+            "Privacidade": be_privacidade,
+            "Editor TOML": be_editor_toml,
+        }
+        aba_be = aba_requerida_topbar or "Hoje"
+        modulo_be = _PAGINAS_BE.get(aba_be, be_hoje)
+        modulo_be.renderizar(dados, periodo, pessoa, ctx)
 
     else:
         # Defensivo: cluster inválido em session_state. Não deveria ocorrer
@@ -626,20 +545,10 @@ def main() -> None:
         st.warning(f"Cluster desconhecido '{cluster}'. Exibindo Visão Geral.")
         visao_geral.renderizar(dados, periodo, pessoa, ctx)
 
-    # Sprint 100: deep-link `?tab=<X>` ativo. Lê a aba requerida (populada por
-    # `ler_filtros_da_url` quando ?tab=X estava na URL) e injeta o JS que
-    # clica na tab correspondente após o Streamlit montar o DOM. Também
-    # instala write-back: clicar em outra tab atualiza ?tab=<NomeClicado> via
-    # `history.replaceState`, mantendo URL compartilhável e browser back
-    # operando entre cliques semânticos.
-    aba_requerida: str = str(st.session_state.get(CHAVE_SESSION_ABA_ATIVA, ""))
-    abas_do_cluster: list[str] = ABAS_POR_CLUSTER.get(cluster, [])
-    if abas_do_cluster:
-        html_js = gerar_html_ativar_aba(aba_requerida, abas_do_cluster)
-        if html_js:
-            from streamlit.components import v1 as components
-
-            components.html(html_js, height=0)
+    # TABS-CLUSTER-CLEANUP: dispatcher direto via aba_requerida_topbar
+    # tornou ``gerar_html_ativar_aba`` obsoleto (não há mais st.tabs no
+    # main para acionar via JS). Mantida a constante ``ABAS_POR_CLUSTER``
+    # para o sidebar HTML e tests legados; mas não há mais injeção JS.
 
     # UX-U-02: depois que o dispatcher rodou, a página corrente já populou
     # st.session_state['topbar_acoes_html'] (via topbar_actions.renderizar_grupo_acoes).

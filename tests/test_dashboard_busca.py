@@ -313,10 +313,12 @@ class TestRenderizacaoStreamlit:
 
 class TestMenuLateral:
     def test_menu_lista_busca_global(self):
-        """O módulo app.py deve declarar a tab 'Busca Global' no st.tabs."""
+        """TABS-CLUSTER-CLEANUP: app.py declara 'Busca Global' em
+        ABAS_POR_CLUSTER e dispatcha via aba_doc; ``tab_busca`` removido
+        com a eliminação de st.tabs.
+        """
         texto = (RAIZ / "src" / "dashboard" / "app.py").read_text(encoding="utf-8")
         assert '"Busca Global"' in texto
-        assert "tab_busca" in texto
         assert "busca.renderizar" in texto
 
 

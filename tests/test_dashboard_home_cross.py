@@ -20,7 +20,7 @@ import pytest
 
 from src.dashboard import app as app_mod
 from src.dashboard.componentes import drilldown
-from src.dashboard.paginas._home_helpers import (
+from src.dashboard.paginas._arquivadas._home_helpers import (
     data_referencia_hoje,
     filtrar_para_hoje,
     renderizar_kpi_compacto,
@@ -271,7 +271,7 @@ extrato = pd.DataFrame({{
 }})
 dados = {{"extrato": extrato}}
 
-from src.dashboard.paginas import home_dinheiro
+from src.dashboard.paginas._arquivadas import home_dinheiro
 home_dinheiro.renderizar(dados, "2026-04", "Todos", None)
 """
 
@@ -290,7 +290,7 @@ from src.dashboard import dados as d
 d.CAMINHO_GRAFO = Path({str(caminho_grafo)!r})
 d.carregar_documentos_grafo.clear()
 
-from src.dashboard.paginas import home_docs
+from src.dashboard.paginas._arquivadas import home_docs
 home_docs.renderizar()
 """
 
@@ -319,7 +319,7 @@ extrato = pd.DataFrame({{
 }})
 dados = {{"extrato": extrato}}
 
-from src.dashboard.paginas import home_analise
+from src.dashboard.paginas._arquivadas import home_analise
 home_analise.renderizar(dados, "2026-04", "Todos", None)
 """
 
@@ -339,7 +339,7 @@ metas_mod.CAMINHO_METAS = Path({str(caminho_metas)!r})
 
 dados = {{"extrato": pd.DataFrame()}}
 
-from src.dashboard.paginas import home_metas
+from src.dashboard.paginas._arquivadas import home_metas
 home_metas.renderizar(dados, "2026-04", "Todos", None)
 """
 

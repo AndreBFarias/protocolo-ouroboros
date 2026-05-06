@@ -260,10 +260,9 @@ class TestRenderizacaoPagina:
 
 class TestIntegracaoDashboard:
     def test_menu_lista_grafo_obsidian(self):
-        """O módulo app.py deve declarar a tab 'Grafo + Obsidian'."""
+        """TABS-CLUSTER-CLEANUP: app.py declara 'Grafo + Obsidian' via dispatcher."""
         texto = (RAIZ / "src" / "dashboard" / "app.py").read_text(encoding="utf-8")
         assert '"Grafo + Obsidian"' in texto
-        assert "tab_grafo_obsidian" in texto
         assert "grafo_obsidian.renderizar" in texto
 
     def test_nao_usa_sankey_apenas_bar_charts(self):

@@ -296,10 +296,9 @@ class TestRenderizacaoStreamlit:
 
 class TestMenuLateral:
     def test_menu_lateral_lista_catalogacao(self):
-        """O módulo app.py deve declarar a tab 'Catalogação' no st.tabs."""
+        """TABS-CLUSTER-CLEANUP: app.py declara 'Catalogação' via dispatcher."""
         texto = (RAIZ / "src" / "dashboard" / "app.py").read_text(encoding="utf-8")
         assert '"Catalogação"' in texto
-        assert "tab_catalogacao" in texto
         assert "catalogacao.renderizar" in texto
 
 

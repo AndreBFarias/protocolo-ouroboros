@@ -13,7 +13,7 @@ import pandas as pd
 import streamlit as st
 
 from src.dashboard.dados import formatar_moeda
-from src.dashboard.paginas._home_helpers import renderizar_kpi_compacto
+from src.dashboard.paginas._arquivadas._home_helpers import renderizar_kpi_compacto
 from src.dashboard.paginas.metas import (
     _atualizar_valor_atual,
     _calcular_progresso,
