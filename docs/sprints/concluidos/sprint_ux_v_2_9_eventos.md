@@ -1,7 +1,7 @@
 ---
 id: UX-V-2.9
 titulo: Bem-estar / Eventos com timeline rica + calendário visual + cruzamento humor
-status: concluida
+status: concluída
 concluida_em: 2026-05-07
 prioridade: alta
 data_criacao: 2026-05-07

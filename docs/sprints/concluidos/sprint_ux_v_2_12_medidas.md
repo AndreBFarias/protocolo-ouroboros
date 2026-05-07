@@ -1,7 +1,7 @@
 ---
 id: UX-V-2.12
 titulo: Bem-estar / Medidas com 6 cards corporais (sparkline + variação 30d) + tabela 6 semanas
-status: concluida
+status: concluída
 prioridade: alta
 data_criacao: 2026-05-07
 concluida_em: 2026-05-07

@@ -1,7 +1,7 @@
 ---
 id: UX-V-2.15
 titulo: Privacidade granular A↔B com 4 níveis × bidirecional × 6 campos (24 radios)
-status: concluida
+status: concluída
 prioridade: altissima
 data_criacao: 2026-05-07
 concluida_em: 2026-05-07
