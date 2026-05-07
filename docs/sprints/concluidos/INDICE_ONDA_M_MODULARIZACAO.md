@@ -2,7 +2,8 @@
 titulo: Índice da Onda M — Modularização Real do Dashboard
 data_criacao: 2026-05-06
 data_revisao: 2026-05-06
-status: backlog
+status: concluída
+concluida_em: 2026-05-06
 ---
 
 # Onda M — Modularização Real do Dashboard
@@ -46,20 +47,41 @@ Onda M é principalmente sobre **importar a fonte canônica** em vez de manter c
 - `ui.py` criado com 14 funções (9 migradas + 3 novas + 2 re-exports)
 - Pytest baseline: 2555 passed
 
-## Sub-sprints de migração de páginas (após M-02 + M-03)
+## Sub-sprints de migração de páginas (após M-02 + M-03) — CONCLUÍDAS 2026-05-06
 
-UX-M-02 entrega `ui.py` mas não migra páginas. M-03 entrega CSS canônico. Migração de páginas vira sub-sprints:
+UX-M-02 entrega `ui.py` mas não migra páginas. M-03 entrega CSS canônico. Migração de páginas virou sub-sprints, executadas em paralelo via 4 subagents `executor-sprint` em worktrees isolados:
 
-| Sub-sprint | Cluster | Páginas | Esforço |
+| Sub-sprint | Cluster | Páginas | Esforço estimado | Esforço real | Commit |
+|---|---|---|---|---|---|
+| UX-M-02.A | Documentos | busca, catalogacao, completude, revisor, validacao_arquivos, extracao_tripla, grafo_obsidian | 4h | **17m** | `e1ccd55` |
+| UX-M-02.B | Finanças | extrato, contas, pagamentos, projecoes | 3h | **41m** | `c564b92` |
+| UX-M-02.C | Análise + Metas + Inbox + Sistema | categorias, analise_avancada, irpf, metas, inbox, skills_d7 | 3h | **29m** | `6d36249` |
+| UX-M-02.D | Bem-estar | 17 páginas be_* (4 com CSS local) | 6h | **65m** | `b413ac7` |
+
+**Total sub-sprints**: 16h estimado → ~2h25min real (paralelos via subagents).
+
+## Fixes residuais (zero débito) — 2026-05-06
+
+Achados-bloqueio (padrão `(k)` empírico) reportados por A/B/C/D durante execução foram corrigidos pelo supervisor pessoalmente em 2 commits adicionais:
+
+| Fix | Origem | Commit | Métrica |
 |---|---|---|---|
-| UX-M-02.A | Documentos | busca, catalogacao, completude, revisor, validacao_arquivos, extracao_tripla, grafo_obsidian | 4h |
-| UX-M-02.B | Finanças | extrato, contas, pagamentos, projecoes | 3h |
-| UX-M-02.C | Análise + Metas + Inbox + Sistema | categorias, analise_avancada, irpf, metas, inbox, skills_d7 | 3h |
-| UX-M-02.D | Bem-estar | 12 páginas be_* | 6h |
+| Extrair 6 CSS locais para `css/paginas/` (busca, catalogacao, extrato, categorias, inbox, skills_d7) + helper `carregar_css_pagina` em ui.py + bug "undefined" no Plotly title | A-RESIDUAL + B.1 + C overrides + B undefined | `9309ff8` | -971L em 6 paginas |
+| Extrair 4 overrides de Bem-estar (be_hoje/humor/diario/eventos) para `css/paginas/be_*.css` | D overrides | `2a28aee` | -381L em 4 paginas |
 
-**Total migração:** 16h.
+**Total Onda M completa**: 36-44h estimado → ~3h real (subagents + supervisor pessoal).
 
-**Total Onda M completa (4 specs principais + 4 sub-sprints):** 36-44h.
+## Métricas finais consolidadas (2026-05-06 fechamento)
+
+- 30 páginas migradas para `ui.py` + classes canônicas.
+- 10 arquivos CSS dedicados criados em `src/dashboard/css/paginas/`.
+- Helper `carregar_css_pagina(nome)` adicionado em `ui.py` (segue padrão `tema_css.py:65` de `Path.read_text`).
+- `_CSS_LOCAL_*` / `_estilos_locais()` removidos de TODAS as 10 páginas afetadas.
+- `tema_plotly.py`: bug "undefined" do title corrigido (sub-objeto `title.font` removido — definir font sem text gerava placeholder visível).
+- Cores migradas de `CORES[Python]` para tokens CSS canônicos (`var(--bg-surface)`, `var(--text-primary)`, etc.) em todos os CSS extraídos.
+- **Redução total em linhas Python**: -1352L (-971L primeiro commit + -381L segundo).
+- **pytest baseline**: 2555 passed + 14 skipped + 1 xfailed = 2570 total (mantida e os 22 fails preexistentes flaky resolvidos no caminho).
+- **Validação visual side-by-side**: 9 páginas-amostra confrontadas mockup vs dashboard real via `claude-in-chrome`. Zero regressão.
 
 ## Ordem de execução (definitiva)
 

@@ -209,8 +209,8 @@ def test_html_minificado_sem_indentacao_perigosa(df_categorias: pd.DataFrame) ->
     kpis = pagina.calcular_kpis_categoria(df_categorias)
     kpi_html = pagina._kpis_html(kpis)
     regras_html = pagina._regras_yaml_html([], None)
-    # CSS dedicado da pagina (UX-M-02.C residual): valida que apos minificar
-    # nao ha indentacao perigosa quando injetado via st.markdown.
+    # CSS dedicado da página (UX-M-02.C residual): valida que após minificar
+    # não há indentação perigosa quando injetado via st.markdown.
     css_minificado = minificar(carregar_css_pagina("categorias"))
     for html in (arv, kpi_html, regras_html, css_minificado):
         # após minificar não há quebra de linha em sequência indentada

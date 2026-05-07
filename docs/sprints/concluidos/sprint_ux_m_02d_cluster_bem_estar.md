@@ -1,7 +1,7 @@
 ---
 id: UX-M-02.D
 titulo: Migração cluster Bem-estar para ui.py canônico
-status: concluida
+status: concluída
 prioridade: alta
 data_criacao: 2026-05-06
 concluida_em: 2026-05-06

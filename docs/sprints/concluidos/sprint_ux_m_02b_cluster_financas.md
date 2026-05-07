@@ -1,7 +1,7 @@
 ---
 id: UX-M-02.B
 titulo: Migração cluster Finanças para ui.py canônico
-status: concluida
+status: concluída
 concluida_em: 2026-05-06
 prioridade: alta
 data_criacao: 2026-05-06

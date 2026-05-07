@@ -1,7 +1,7 @@
 ---
 id: UX-M-02.C
 titulo: Migração clusters Análise + Metas + Inbox + Sistema para ui.py
-status: concluida
+status: concluída
 prioridade: alta
 data_criacao: 2026-05-06
 concluida_em: 2026-05-06
