@@ -1,9 +1,10 @@
 ---
 id: UX-V-2.1
 titulo: Página Contas com sparkline + barras de uso + separação Contas/Cartões
-status: backlog
+status: concluida
 prioridade: alta
 data_criacao: 2026-05-07
+concluida_em: 2026-05-07
 fase: PARIDADE_VISUAL
 depende_de: [UX-V-02]
 co_executavel_com: [UX-V-2.2, UX-V-2.3, UX-V-2.7]
