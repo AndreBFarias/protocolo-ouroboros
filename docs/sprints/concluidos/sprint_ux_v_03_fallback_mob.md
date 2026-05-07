@@ -11,7 +11,7 @@ co_executavel_com: [UX-V-01, UX-V-04, UX-V-05]
 esforco_estimado_horas: 5
 esforco_real_horas: 4
 origem: docs/auditorias/AUDITORIA_PARIDADE_VISUAL_2026-05-07.md (P3)
-commit: TBD
+commit: 3439be6
 ressalvas:
   - V-02 (insight_card_html, sparkline_html) ainda nao fechada -- skeletons usam apenas .skel-bloco + .kpi (componentes ja presentes), sem dependencia em micro-componentes V-02.
   - ui.py cresceu para 836 linhas (>800 de convencao h). ui.py e fronteira publica canonica; tema crescimento aceito por UX-M-02. Backlog: sprint REFAC-ui-modulo dividir por dominio.
