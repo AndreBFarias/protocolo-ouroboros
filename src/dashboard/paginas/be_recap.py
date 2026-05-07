@@ -156,6 +156,317 @@ def _agregados_medidas(items: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
+def _periodo_anterior(dias: int, hoje: date) -> tuple[date, date]:
+    """Retorna ``(inicio, fim)`` da janela de ``dias`` imediatamente anterior.
+
+    Exemplo: para ``dias=30`` e ``hoje=2026-05-07`` o periodo atual e
+    ``[2026-04-08, 2026-05-07]``; o anterior e ``[2026-03-09, 2026-04-07]``.
+    """
+    fim_atual = hoje
+    inicio_atual = fim_atual - timedelta(days=dias - 1)
+    fim_ant = inicio_atual - timedelta(days=1)
+    inicio_ant = fim_ant - timedelta(days=dias - 1)
+    return inicio_ant, fim_ant
+
+
+def _filtrar_intervalo(
+    items: list[dict[str, Any]], inicio: date, fim: date
+) -> list[dict[str, Any]]:
+    """Filtra items por ``data`` ISO no intervalo fechado ``[inicio, fim]``."""
+    saida: list[dict[str, Any]] = []
+    for it in items:
+        ds = str(it.get("data") or "")
+        try:
+            d = date.fromisoformat(ds)
+        except ValueError:
+            continue
+        if inicio <= d <= fim:
+            saida.append(it)
+    return saida
+
+
+def _humor_intervalo(
+    vault_root: Path | None, inicio: date, fim: date
+) -> dict[str, Any]:
+    """Variante de :func:`_agregados_humor` para janela ``[inicio, fim]``."""
+    if vault_root is None:
+        return {"media": None, "qtd": 0}
+    arquivo = vault_root / ".ouroboros" / "cache" / "humor-heatmap.json"
+    if not arquivo.exists():
+        return {"media": None, "qtd": 0}
+    try:
+        payload = json.loads(arquivo.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {"media": None, "qtd": 0}
+    celulas = payload.get("celulas") or []
+    if not isinstance(celulas, list):
+        return {"media": None, "qtd": 0}
+    valores: list[float] = []
+    for c in celulas:
+        ds = str(c.get("data") or "")
+        try:
+            d = date.fromisoformat(ds)
+        except ValueError:
+            continue
+        if not (inicio <= d <= fim):
+            continue
+        v = c.get("humor")
+        if isinstance(v, (int, float)):
+            valores.append(float(v))
+    if not valores:
+        return {"media": None, "qtd": 0}
+    return {"media": round(mean(valores), 2), "qtd": len(valores)}
+
+
+def _metricas_janela(
+    vault_root: Path | None,
+    inicio: date,
+    fim: date,
+) -> dict[str, float]:
+    """Calcula metricas comparaveis para a janela ``[inicio, fim]``.
+
+    Devolve apenas chaves que tem dado real (``None`` filtrado em
+    :func:`_comparativo_html`). Conformidade ADR-13: tudo deterministico
+    sobre caches do vault, zero LLM.
+    """
+    eventos_full = _carregar_cache(vault_root, "eventos")
+    treinos_full = _carregar_cache(vault_root, "treinos")
+    medidas_full = _carregar_cache(vault_root, "medidas")
+
+    eventos = _filtrar_intervalo(eventos_full, inicio, fim)
+    treinos = _filtrar_intervalo(treinos_full, inicio, fim)
+    medidas = _filtrar_intervalo(medidas_full, inicio, fim)
+
+    h = _humor_intervalo(vault_root, inicio, fim)
+    e = _agregados_eventos(eventos)
+    t = _agregados_treinos(treinos)
+    m = _agregados_medidas(medidas)
+
+    out: dict[str, float] = {
+        "registros": float(h["qtd"]),
+        "eventos": float(e["qtd"]),
+        "treinos": float(t["qtd"]),
+    }
+    if h["media"] is not None:
+        out["humor_medio"] = float(h["media"])
+    if m["delta_peso"] is not None:
+        out["peso_var"] = float(m["delta_peso"])
+    return out
+
+
+def _comparativo_html(
+    metricas_atual: dict[str, float], metricas_ant: dict[str, float]
+) -> str:
+    """Tabela rica de comparacao com delta sinalizado por metrica.
+
+    Apenas chaves presentes nos dois lados sao exibidas; faltantes ficam
+    fora do bloco para nao mentir 0 quando dado nao existe.
+    """
+    chaves_legiveis = {
+        "humor_medio": "humor médio",
+        "registros": "registros · humor",
+        "eventos": "eventos",
+        "treinos": "treinos",
+        "peso_var": "peso (variação kg)",
+        "ansiedade_media": "ansiedade média",
+        "tarefas_concluidas": "tarefas concluídas",
+        "noites_curtas": "noites &lt; 6h sono",
+    }
+    linhas: list[str] = []
+    for chave, label in chaves_legiveis.items():
+        atual = metricas_atual.get(chave)
+        ant = metricas_ant.get(chave)
+        if atual is None or ant is None:
+            continue
+        delta = atual - ant
+        if delta > 0.01:
+            sinal = f'<span class="delta-pos">↗ {delta:+.2f}</span>'
+        elif delta < -0.01:
+            sinal = f'<span class="delta-neg">↘ {delta:+.2f}</span>'
+        else:
+            sinal = '<span class="delta-zero">= mesmo</span>'
+        linhas.append(
+            '<div class="comparativo-linha">'
+            f'<span class="comp-label">{label}</span>'
+            f'<span class="comp-valor">{atual:.2f}</span>'
+            f'{sinal}'
+            "</div>"
+        )
+    if not linhas:
+        return minificar(
+            '<div class="comparativo-bloco">'
+            '<h3 class="comp-titulo">COMPARATIVO · vs 30D ANTERIORES</h3>'
+            '<p class="destaques-vazio">Sem dado suficiente para comparar.</p>'
+            '</div>'
+        )
+    return minificar(
+        '<div class="comparativo-bloco">'
+        '<h3 class="comp-titulo">COMPARATIVO · vs 30D ANTERIORES</h3>'
+        + "".join(linhas)
+        + '</div>'
+    )
+
+
+def _gerar_destaques(
+    vault_root: Path | None, inicio: date, fim: date
+) -> list[dict[str, str]]:
+    """Gera ate 5 destaques deterministicos da janela ``[inicio, fim]``.
+
+    Heuristicas (todas sobre caches reais):
+    - viagens: eventos com categoria contendo "viagem"
+    - top bairro: bairro mais frequente em eventos do periodo
+    - rotina dominante: rotina de treino mais frequente (>=3 ocorrencias)
+    - melhora de humor: media da janela atual > media da anterior em >=0.5
+    - perda de peso saudavel: variacao negativa entre -2.0kg e -0.1kg
+    """
+    if vault_root is None:
+        return []
+
+    destaques: list[dict[str, str]] = []
+    eventos = _filtrar_intervalo(_carregar_cache(vault_root, "eventos"), inicio, fim)
+    treinos = _filtrar_intervalo(_carregar_cache(vault_root, "treinos"), inicio, fim)
+    medidas = _filtrar_intervalo(_carregar_cache(vault_root, "medidas"), inicio, fim)
+
+    # Viagens
+    viagens = [
+        e for e in eventos
+        if "viagem" in str(e.get("categoria") or "").lower()
+    ]
+    if viagens:
+        primeiro = viagens[0]
+        lugar = (
+            primeiro.get("lugar")
+            or primeiro.get("bairro")
+            or primeiro.get("titulo")
+            or "destino"
+        )
+        destaques.append({
+            "tipo": "social",
+            "rotulo": f"Viagem · {lugar}",
+            "data": str(primeiro.get("data") or ""),
+        })
+
+    # Top bairro
+    agg_eventos = _agregados_eventos(eventos)
+    if agg_eventos["top_bairros"]:
+        bairro, qtd = agg_eventos["top_bairros"][0]
+        if qtd >= 3:
+            destaques.append({
+                "tipo": "social",
+                "rotulo": f"{bairro} · {qtd} eventos",
+                "data": "",
+            })
+
+    # Rotina dominante
+    agg_treinos = _agregados_treinos(treinos)
+    if agg_treinos["qtd"] >= 3 and agg_treinos["rotina_dominante"] != "--":
+        destaques.append({
+            "tipo": "vitoria",
+            "rotulo": (
+                f"{agg_treinos['rotina_dominante']} · "
+                f"{agg_treinos['qtd']} treinos"
+            ),
+            "data": "",
+        })
+
+    # Melhora de humor entre janela anterior e atual
+    dias = (fim - inicio).days + 1
+    inicio_ant, fim_ant = _periodo_anterior(dias, fim)
+    h_atual = _humor_intervalo(vault_root, inicio, fim)
+    h_ant = _humor_intervalo(vault_root, inicio_ant, fim_ant)
+    if (
+        h_atual["media"] is not None
+        and h_ant["media"] is not None
+        and h_atual["media"] - h_ant["media"] >= 0.5
+    ):
+        destaques.append({
+            "tipo": "conquista",
+            "rotulo": (
+                f"humor melhorou +{h_atual['media'] - h_ant['media']:.1f} "
+                "vs janela anterior"
+            ),
+            "data": "",
+        })
+
+    # Perda de peso saudavel
+    agg_medidas = _agregados_medidas(medidas)
+    delta_peso = agg_medidas.get("delta_peso")
+    if delta_peso is not None and -2.0 <= delta_peso <= -0.1:
+        destaques.append({
+            "tipo": "vitoria",
+            "rotulo": f"peso · {delta_peso:+.1f} kg na janela",
+            "data": "",
+        })
+
+    return destaques[:5]
+
+
+def _destaques_html(destaques: list[dict[str, str]]) -> str:
+    """Renderiza grid de destaques. Fallback claro quando vazio."""
+    if not destaques:
+        return minificar(
+            '<div class="destaques-bloco">'
+            '<h3 class="destaques-titulo">DESTAQUES DO MÊS</h3>'
+            '<p class="destaques-vazio">Sem destaques no período.</p>'
+            '</div>'
+        )
+
+    cards: list[str] = []
+    for d in destaques:
+        tipo = d.get("tipo") or "vitoria"
+        rotulo = d.get("rotulo") or "(sem rótulo)"
+        data_str = d.get("data") or ""
+        cards.append(
+            f'<div class="destaque-card destaque-{tipo}">'
+            f'<span class="destaque-rotulo">{rotulo}</span>'
+            f'<span class="destaque-data">{data_str}</span>'
+            "</div>"
+        )
+    return minificar(
+        '<div class="destaques-bloco">'
+        f'<h3 class="destaques-titulo">DESTAQUES DO MÊS · {len(destaques)}</h3>'
+        '<div class="destaques-grid">'
+        + "".join(cards)
+        + '</div>'
+        '</div>'
+    )
+
+
+def _narrativa_manual_html(periodo: str) -> str:
+    """Le ``docs/recaps/<periodo>.md`` se existir; senao renderiza CTA.
+
+    Conformidade ADR-13: nenhum LLM via API. Conteudo gerado por humano
+    (Opus interativo via skill ``/gerar-recap``) e gravado a mao no
+    arquivo Markdown. Aqui apenas exibimos.
+    """
+    raiz = Path(__file__).resolve().parents[3]
+    recap_path = raiz / "docs" / "recaps" / f"{periodo}.md"
+
+    if recap_path.exists():
+        try:
+            md = recap_path.read_text(encoding="utf-8")
+        except OSError:
+            md = ""
+        if md.strip():
+            return minificar(
+                '<div class="narrativa-bloco">'
+                f'<h3 class="narrativa-titulo">NARRATIVA · {periodo}</h3>'
+                f'<div class="narrativa-corpo">{md}</div>'
+                '</div>'
+            )
+
+    return minificar(
+        '<div class="narrativa-bloco narrativa-vazia">'
+        f'<h3 class="narrativa-titulo">NARRATIVA · {periodo}</h3>'
+        '<p>Nenhuma narrativa gerada para este período. Use a skill canônica '
+        f'<code>/gerar-recap {periodo}</code> no Claude Code interativo '
+        '(Opus principal) para registrar a narrativa do mês em '
+        f'<code>docs/recaps/{periodo}.md</code>. ADR-13: nenhum LLM via '
+        'API é chamado pelo dashboard.</p>'
+        '</div>'
+    )
+
+
 def _kpi_card_html(titulo: str, valor: str, subtitulo: str) -> str:
     return (
         f'<div style="background:{CORES["card_fundo"]};'
@@ -212,6 +523,12 @@ def renderizar(
         key="be_recap_periodo",
     )
     dias = _PERIODOS_LABEL[periodo_label]
+
+    # CSS dedicado dos blocos UX-V-2.17 (comparativo/destaques/narrativa).
+    from src.dashboard.componentes.ui import carregar_css_pagina
+    css_recap = carregar_css_pagina("be_recap")
+    if css_recap:
+        st.markdown(minificar(css_recap), unsafe_allow_html=True)
 
     st.markdown(_page_header_html(periodo_label), unsafe_allow_html=True)
 
@@ -357,6 +674,27 @@ def renderizar(
                     ),
                     unsafe_allow_html=True,
                 )
+
+    # ------------------------------------------------------------------
+    # UX-V-2.17 -- Comparativo + Destaques + Narrativa manual (ADR-13).
+    # ------------------------------------------------------------------
+    inicio_atual = hoje - timedelta(days=dias - 1)
+    inicio_ant, fim_ant = _periodo_anterior(dias, hoje)
+    metricas_atual = _metricas_janela(vault_root, inicio_atual, hoje)
+    metricas_ant = _metricas_janela(vault_root, inicio_ant, fim_ant)
+    destaques = _gerar_destaques(vault_root, inicio_atual, hoje)
+    periodo_recap = hoje.strftime("%Y-%m")
+
+    st.markdown("###### ")
+    col_narr, col_comp = st.columns([2, 1], gap="large")
+    with col_narr:
+        st.markdown(_narrativa_manual_html(periodo_recap), unsafe_allow_html=True)
+        st.markdown(_destaques_html(destaques), unsafe_allow_html=True)
+    with col_comp:
+        st.markdown(
+            _comparativo_html(metricas_atual, metricas_ant),
+            unsafe_allow_html=True,
+        )
 
 
 # "Lembrar é a única forma de continuar." -- adágio popular brasileiro

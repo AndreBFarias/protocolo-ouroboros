@@ -1,0 +1,129 @@
+/* be_recap.css -- Recap UX-V-2.17 (Comparativo + Destaques + Narrativa manual)
+ *
+ * Estende a pagina Bem-estar/Recap com tres blocos deterministicos sem LLM:
+ * 1. NARRATIVA -- le docs/recaps/<YYYY-MM>.md ou exibe CTA para skill /gerar-recap.
+ * 2. DESTAQUES DO MES -- ate 5 cards categorizados (vitoria/social/conquista/risco).
+ * 3. COMPARATIVO vs 30D ANTERIORES -- 5-8 metricas com delta sinalizado.
+ *
+ * Tokens via tokens.css (Onda M). Zero hex literal aqui. ADR-13: nada de LLM.
+ */
+
+.comparativo-bloco {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--r-md);
+    padding: var(--sp-4);
+}
+
+.comp-titulo,
+.destaques-titulo,
+.narrativa-titulo {
+    font-family: var(--ff-mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.10em;
+    color: var(--text-muted);
+    margin: 0 0 var(--sp-3);
+}
+
+.comparativo-linha {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: var(--sp-3);
+    align-items: baseline;
+    padding: 4px 0;
+    border-bottom: 1px dashed var(--border-subtle);
+}
+.comparativo-linha:last-child { border-bottom: none; }
+
+.comp-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+.comp-valor {
+    font-family: var(--ff-mono);
+    font-size: 13px;
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+}
+.delta-pos {
+    color: var(--accent-green);
+    font-family: var(--ff-mono);
+    font-size: 11px;
+}
+.delta-neg {
+    color: var(--accent-red);
+    font-family: var(--ff-mono);
+    font-size: 11px;
+}
+.delta-zero {
+    color: var(--text-muted);
+    font-family: var(--ff-mono);
+    font-size: 11px;
+}
+
+.destaques-bloco {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--r-md);
+    padding: var(--sp-4);
+    margin-top: var(--sp-3);
+}
+.destaques-grid {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2);
+}
+.destaque-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--sp-2) var(--sp-3);
+    border-radius: var(--r-sm);
+    border-left: 3px solid var(--accent-purple);
+    background: var(--bg-inset);
+}
+.destaque-card.destaque-vitoria { border-left-color: var(--accent-green); }
+.destaque-card.destaque-social { border-left-color: var(--accent-cyan); }
+.destaque-card.destaque-conquista { border-left-color: var(--accent-yellow); }
+.destaque-card.destaque-risco { border-left-color: var(--accent-red); }
+.destaque-rotulo {
+    font-size: 12px;
+    color: var(--text-primary);
+}
+.destaque-data {
+    font-family: var(--ff-mono);
+    font-size: 10px;
+    color: var(--text-muted);
+}
+.destaques-vazio {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-style: italic;
+    margin: 0;
+}
+
+.narrativa-bloco {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--r-md);
+    padding: var(--sp-4);
+    margin-bottom: var(--sp-3);
+}
+.narrativa-corpo {
+    font-size: 13px;
+    color: var(--text-primary);
+    line-height: 1.6;
+}
+.narrativa-vazia {
+    border-style: dashed;
+    color: var(--text-muted);
+}
+.narrativa-vazia code {
+    background: var(--bg-inset);
+    border: 1px solid var(--border-subtle);
+    padding: 2px 6px;
+    border-radius: var(--r-xs);
+    font-size: 11px;
+    color: var(--accent-cyan);
+}
