@@ -39,7 +39,11 @@ import streamlit as st
 
 from src.dashboard.componentes.html_utils import minificar
 from src.dashboard.componentes.page_header import renderizar_page_header
-from src.dashboard.componentes.ui import callout_html, carregar_css_pagina
+from src.dashboard.componentes.ui import (
+    callout_html,
+    carregar_css_pagina,
+    sync_indicator_html,
+)
 from src.dashboard.tema import CORES
 from src.mobile_cache.diario_emocional import gerar_cache as gerar_cache_diario
 from src.mobile_cache.escrever_diario import escrever_diario
@@ -138,6 +142,11 @@ def renderizar(
     with col_lista:
         st.markdown(
             _page_header_canonico(len(items_filtrados)),
+            unsafe_allow_html=True,
+        )
+        # UX-V-04: indicador de observabilidade sync vault -> cache -> dashboard.
+        st.markdown(
+            f'<div class="sync-indicator-wrapper">{sync_indicator_html()}</div>',
             unsafe_allow_html=True,
         )
 

@@ -521,3 +521,39 @@
 
 .insight-previsao { border-left-color: var(--accent-cyan); }
 .insight-previsao .insight-card-tipo { color: var(--accent-cyan); }
+
+/* ===== Sync indicator (UX-V-04) ===== */
+/*
+ * Chip discreto exibindo idade da última sync vault -> cache -> dashboard.
+ * Renderizado por src.dashboard.componentes.ui.sync_indicator_html().
+ * Verde (default): sync recente (< 1h). Amarelo (.sync-indicator-stale):
+ * sync antiga (>= 1h) ou ausente.
+ */
+.sync-indicator {
+  display: inline-block;
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 2px 8px;
+  border-radius: var(--r-full);
+  background: rgba(80, 250, 123, 0.12);
+  color: var(--accent-green);
+  border: 1px solid rgba(80, 250, 123, 0.30);
+  cursor: help;
+  user-select: none;
+}
+
+.sync-indicator-stale {
+  background: rgba(255, 184, 108, 0.10);
+  color: var(--accent-orange);
+  border-color: rgba(255, 184, 108, 0.30);
+}
+
+/* Wrapper opcional para alinhar o chip a direita do page-header. */
+.sync-indicator-wrapper {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: calc(-1 * var(--sp-2));
+  margin-bottom: var(--sp-2);
+}

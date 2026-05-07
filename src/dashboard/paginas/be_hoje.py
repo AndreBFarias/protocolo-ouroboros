@@ -40,7 +40,12 @@ import streamlit as st
 
 from src.dashboard.componentes.html_utils import minificar
 from src.dashboard.componentes.page_header import renderizar_page_header
-from src.dashboard.componentes.ui import callout_html, carregar_css_pagina, kpi_card
+from src.dashboard.componentes.ui import (
+    callout_html,
+    carregar_css_pagina,
+    kpi_card,
+    sync_indicator_html,
+)
 from src.dashboard.tema import CORES
 from src.mobile_cache.escrever_humor import TAGS_CANONICAS, escrever_registro
 from src.mobile_cache.varrer_vault import descobrir_vault_root
@@ -95,6 +100,11 @@ def renderizar(
     vault_root = descobrir_vault_root()
 
     st.markdown(_page_header_canonico(hoje), unsafe_allow_html=True)
+    # UX-V-04: indicador de observabilidade sync vault -> cache -> dashboard.
+    st.markdown(
+        f'<div class="sync-indicator-wrapper">{sync_indicator_html()}</div>',
+        unsafe_allow_html=True,
+    )
 
     if vault_root is None:
         _renderizar_fallback_vault()
