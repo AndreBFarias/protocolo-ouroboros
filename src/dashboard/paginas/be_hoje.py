@@ -40,7 +40,7 @@ import streamlit as st
 
 from src.dashboard.componentes.html_utils import minificar
 from src.dashboard.componentes.page_header import renderizar_page_header
-from src.dashboard.componentes.ui import callout_html, carregar_css_pagina, kpi_card
+from src.dashboard.componentes.ui import carregar_css_pagina, kpi_card
 from src.dashboard.tema import CORES
 from src.mobile_cache.escrever_humor import TAGS_CANONICAS, escrever_registro
 from src.mobile_cache.varrer_vault import descobrir_vault_root
@@ -134,18 +134,46 @@ def _page_header_canonico(hoje: date) -> str:
 
 
 def _renderizar_fallback_vault() -> None:
-    """Callout visível quando o vault Bem-estar não é encontrado."""
+    """Estado inicial atrativo (UX-V-03) quando o vault Bem-estar não é encontrado."""
+    from src.dashboard.componentes.ui import (
+        fallback_estado_inicial_html,
+        ler_sync_info,
+    )
+    skeleton = (
+        '<div style="display:grid;grid-template-columns:1.4fr 1fr;gap:14px;">'
+        '<div style="display:flex;flex-direction:column;gap:8px;">'
+        '<span class="skel-bloco" style="width:40%;height:0.8em;"></span>'
+        '<div style="display:flex;gap:6px;flex-wrap:wrap;">'
+        + ''.join(
+            '<span class="skel-bloco" style="width:38px;height:38px;'
+            'border-radius:6px;"></span>'
+            for _ in range(7)
+        )
+        + '</div>'
+        '<span class="skel-bloco" style="width:80%;height:60px;"></span>'
+        '</div>'
+        '<div style="display:flex;flex-direction:column;gap:8px;">'
+        '<div class="kpi"><span class="kpi-label">EVENTOS HOJE</span>'
+        '<span class="kpi-value">--</span></div>'
+        '<div class="kpi"><span class="kpi-label">DIÁRIO</span>'
+        '<span class="kpi-value">--</span></div>'
+        '<div class="kpi"><span class="kpi-label">STREAK</span>'
+        '<span class="kpi-value">--</span></div>'
+        '</div></div>'
+    )
     st.markdown(
-        callout_html(
-            "warning",
-            (
-                "Vault Bem-estar não encontrado. Configure a variável de "
-                "ambiente OUROBOROS_VAULT apontando para a raiz do vault "
-                "Obsidian, ou crie um dos diretórios candidatos canônicos. "
-                "Sem o vault, a captura de humor e os mini-cards do dia "
-                "ficam indisponíveis."
+        fallback_estado_inicial_html(
+            titulo="HOJE · vault Bem-estar não configurado",
+            descricao=(
+                "Configure a variável <code>OUROBOROS_VAULT</code> apontando "
+                "para a raiz do vault Obsidian compartilhado com o app mobile, "
+                "ou crie um dos diretórios candidatos canônicos. Sem o vault, "
+                "a captura rápida de humor e os mini-cards do dia ficam "
+                "indisponíveis."
             ),
-            titulo="Vault indisponível",
+            skeleton_html=skeleton,
+            cta_secao="hoje",
+            sync_info=ler_sync_info(),
         ),
         unsafe_allow_html=True,
     )

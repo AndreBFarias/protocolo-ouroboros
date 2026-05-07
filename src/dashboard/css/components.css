@@ -396,3 +396,108 @@
   color: var(--text-muted);
   font-size: var(--fs-12);
 }
+
+/* ===== Fallback estado-inicial-atrativo (UX-V-03) ===== */
+
+/* Bloco principal: container do estado vazio rico (skeleton + CTA mob).
+ * Substitui callouts pobres em paginas Bem-estar com cache vazio.
+ * Origem: app companion Protocolo-Mob-Ouroboros -> vault Obsidian -> sync. */
+.fallback-estado {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  padding: var(--sp-5);
+  background: var(--bg-surface);
+  border: 1px dashed var(--border-subtle);
+  border-radius: var(--r-md);
+  margin: var(--sp-4) 0;
+}
+
+/* Skeleton: placeholder visual opaco do layout final. Mockup-like, sem
+ * dados reais (regra 6 do CLAUDE.md). Pointer-events bloqueados para
+ * evitar clique acidental em elementos placeholder. */
+.fallback-skeleton {
+  opacity: 0.35;
+  pointer-events: none;
+  user-select: none;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: var(--sp-4);
+  filter: grayscale(0.5);
+}
+
+/* CTA: bloco de chamada para usar o app mobile. */
+.fallback-cta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.fallback-titulo {
+  font-family: var(--ff-mono);
+  font-size: var(--fs-14);
+  font-weight: 500;
+  color: var(--accent-purple);
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.fallback-descricao {
+  font-size: var(--fs-13);
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.fallback-acao {
+  font-size: var(--fs-13);
+  color: var(--text-primary);
+  margin: var(--sp-2) 0 0;
+  line-height: 1.5;
+}
+.fallback-acao code {
+  background: var(--bg-inset);
+  padding: 1px 6px;
+  border-radius: var(--r-xs);
+  font-size: var(--fs-12);
+}
+
+/* Sync info: rodape com data da ultima sincronizacao do vault. */
+.fallback-sync-info {
+  font-family: var(--ff-mono);
+  font-size: var(--fs-11);
+  color: var(--text-muted);
+  margin: var(--sp-2) 0 0;
+  padding-top: var(--sp-2);
+  border-top: 1px solid var(--border-subtle);
+}
+.fallback-sync-info code {
+  background: var(--bg-elevated);
+  padding: 1px 4px;
+  border-radius: var(--r-xs);
+}
+.fallback-sync-info strong {
+  color: var(--text-secondary);
+}
+
+/* Skeleton helper: bloco animado generico para placeholders dentro do
+ * .fallback-skeleton. Usado por paginas Bem-estar com layouts variados. */
+.skel-bloco {
+  background: linear-gradient(
+    90deg,
+    var(--bg-surface) 0%,
+    var(--bg-elevated) 50%,
+    var(--bg-surface) 100%
+  );
+  background-size: 200% 100%;
+  animation: skel-pulse 1.5s ease-in-out infinite;
+  border-radius: var(--r-sm);
+  height: 1.2em;
+  min-width: 60px;
+  display: inline-block;
+}
+
+@keyframes skel-pulse {
+  0%, 100% { background-position: 0% 0%; }
+  50% { background-position: 100% 0%; }
+}

@@ -68,12 +68,12 @@ def renderizar(
 
     snapshot = _carregar_snapshot()
     if snapshot is None:
-        st.markdown(_fallback_graceful_html(), unsafe_allow_html=True)
+        st.markdown(_fallback_estado_inicial_html(), unsafe_allow_html=True)
         return
 
     skills: list[dict] = snapshot.get("skills", [])
     if not skills:
-        st.markdown(_fallback_graceful_html(), unsafe_allow_html=True)
+        st.markdown(_fallback_estado_inicial_html(), unsafe_allow_html=True)
         return
 
     contagens = _contar_estados(skills)
@@ -160,6 +160,46 @@ def _page_header_html() -> str:
           </div>
         </div>
         """
+    )
+
+
+def _fallback_estado_inicial_html() -> str:
+    """Fallback estado-inicial-atrativo (UX-V-03) para skills D7 sem log."""
+    from src.dashboard.componentes.ui import (
+        fallback_estado_inicial_html,
+        ler_sync_info,
+    )
+    skeleton = (
+        '<div style="display:grid;grid-template-columns:repeat(4,1fr);'
+        'gap:10px;margin-bottom:14px;">'
+        '<div class="kpi"><span class="kpi-label">GRADUADAS</span>'
+        '<span class="kpi-value">--</span></div>'
+        '<div class="kpi"><span class="kpi-label">CALIBRANDO</span>'
+        '<span class="kpi-value">--</span></div>'
+        '<div class="kpi"><span class="kpi-label">REGREDINDO</span>'
+        '<span class="kpi-value">--</span></div>'
+        '<div class="kpi"><span class="kpi-label">PENDENTES</span>'
+        '<span class="kpi-value">--</span></div>'
+        '</div>'
+        '<div style="display:flex;flex-direction:column;gap:6px;">'
+        + ''.join(
+            '<span class="skel-bloco" style="width:100%;height:1.6em;"></span>'
+            for _ in range(6)
+        )
+        + '</div>'
+    )
+    return fallback_estado_inicial_html(
+        titulo="SKILLS · D7 ainda não inicializado",
+        descricao=(
+            "Snapshot estruturado em "
+            "<code>data/output/skill_d7_log.json</code> ainda não foi "
+            "emitido nesta máquina. Rode <code>./run.sh --tudo</code> para "
+            "popular o painel após o classificador D7 acumular execuções."
+        ),
+        skeleton_html=skeleton,
+        cta_label="Rode ./run.sh --tudo para popular o log D7",
+        cta_secao="skills-d7",
+        sync_info=ler_sync_info(),
     )
 
 

@@ -56,6 +56,7 @@ from pathlib import Path
 # ---------------------------------------------------------------------------
 # Imports internos -- componentes já modulares (re-exports)
 # ---------------------------------------------------------------------------
+from src.dashboard.componentes.html_utils import minificar
 from src.dashboard.componentes.page_header import (
     renderizar_page_header as page_header,
 )
@@ -702,6 +703,134 @@ def group_card(
         f'<div class="group-card__body">{linhas_html}</div>'
         f"</div>"
     )
+
+
+# ===========================================================================
+# Fallback estado-inicial-atrativo (UX-V-03)
+# ===========================================================================
+#
+# Origem dos dados de Bem-estar: app companion ``Protocolo-Mob-Ouroboros``
+# (Expo + React Native, em refundação golden-zebra) escreve ``.md`` no vault
+# Obsidian compartilhado. Desktop lê via ``obsidian/sync_rico.py`` -> caches
+# em ``.ouroboros/cache/*.json`` -> dashboard renderiza.
+#
+# Quando o cache está vazio, os antigos callouts pobres do tipo "Arquivo X
+# não encontrado" davam zero contexto ao usuário. UX-V-03 substitui por um
+# estado inicial atrativo: skeleton mockup-like opaco + CTA explicando o
+# pipeline mob -> vault -> cache -> dashboard. Sem semear demo (violaria
+# regra 6 do CLAUDE.md "nunca inventar dados").
+# ===========================================================================
+
+
+def fallback_estado_inicial_html(
+    *,
+    titulo: str,
+    descricao: str,
+    skeleton_html: str = "",
+    cta_label: str = "Use o app Ouroboros Mobile",
+    cta_secao: str = "geral",
+    sync_info: dict | None = None,
+) -> str:
+    """Fallback estado-inicial-atrativo para páginas com dado vazio.
+
+    Substitui callouts pobres (``"Arquivo X não encontrado"``,
+    ``"Nenhum registro de Y"``) por um bloco rico que combina:
+
+    1. **Skeleton opaco** do layout final (placeholder visual do mockup).
+    2. **Heading** ``"<TITULO> · sem registros ainda"``.
+    3. **Descrição** explicando origem dos dados (mob -> vault -> cache).
+    4. **CTA** apontando para o app companion ``Protocolo-Mob-Ouroboros``.
+    5. **Linha sync-info** lida de ``.ouroboros/cache/last_sync.json`` (UX-V-04
+       será responsável por escrever esse arquivo). Se ausente, exibe
+       ``"Sincronização: nunca"``.
+
+    Padrões aplicados: VALIDATOR_BRIEF (b) acentuação PT-BR completa,
+    (o) subregra retrocompatível -- ``sync_info=None`` mantém estado pré
+    UX-V-04 sem quebrar nada.
+
+    Args:
+        titulo: Heading do bloco em UPPERCASE (ex: ``"HUMOR · sem registros
+            ainda"``).
+        descricao: Parágrafo explicando como popular (ex: ``"Registre seu
+            humor no app Ouroboros Mobile..."``). HTML inline permitido
+            (``<code>``, ``<strong>``).
+        skeleton_html: HTML opcional do skeleton mockup-like. Se vazio, omite
+            o bloco visual de placeholder. Geralmente combina ``.skel-bloco``
+            com KPI cards / grid placeholders.
+        cta_label: Texto principal do CTA. Default ``"Use o app Ouroboros
+            Mobile"``.
+        cta_secao: Identificador da seção (ex: ``"humor"``, ``"medidas"``).
+            Vai para ``data-secao`` para tracking visual / QA.
+        sync_info: Dict opcional ``{"data": "2026-05-07T14:32",
+            "n_arquivos": 12}`` lido por :func:`ler_sync_info`. Se ``None``
+            ou sem chave ``"data"``, mostra ``"Sincronização: nunca"``.
+
+    Returns:
+        Bloco HTML minificado, pronto para ``st.markdown(...,
+        unsafe_allow_html=True)``.
+    """
+    skeleton = (
+        f'<div class="fallback-skeleton">{skeleton_html}</div>'
+        if skeleton_html
+        else ""
+    )
+    if sync_info and "data" in sync_info:
+        sync_str = (
+            f'Última sync: <strong>{sync_info["data"]}</strong>'
+            f' · {sync_info.get("n_arquivos", "?")} arquivos lidos do vault'
+        )
+    else:
+        sync_str = (
+            "Sincronização: <strong>nunca</strong> -- rode "
+            "<code>./run.sh --sync</code> após registrar no app."
+        )
+
+    return minificar(
+        f"""
+        <div class="fallback-estado" data-secao="{cta_secao}">
+          {skeleton}
+          <div class="fallback-cta">
+            <h3 class="fallback-titulo">{titulo}</h3>
+            <p class="fallback-descricao">{descricao}</p>
+            <p class="fallback-acao">
+              <strong>{cta_label}</strong> (Android) para começar a
+              registrar. O app escreve <code>.md</code> no vault Obsidian
+              compartilhado; o dashboard lê via sync.
+            </p>
+            <p class="fallback-sync-info">{sync_str}</p>
+          </div>
+        </div>
+        """
+    )
+
+
+def ler_sync_info() -> dict | None:
+    """Lê ``.ouroboros/cache/last_sync.json`` quando existe.
+
+    Formato esperado (a ser criado por UX-V-04 quando ``./run.sh --sync``
+    completar)::
+
+        {
+          "data": "2026-05-07T14:32",
+          "n_arquivos": 12,
+          "fonte": "vault_obsidian"
+        }
+
+    Returns:
+        Dict com payload do JSON quando presente e válido. ``None`` se o
+        arquivo está ausente ou JSON malformado (degradação graciosa
+        ADR-10 -- Resiliência a Dados Incompletos).
+    """
+    import json as _json
+
+    raiz = Path(__file__).resolve().parents[3]
+    path = raiz / ".ouroboros" / "cache" / "last_sync.json"
+    if not path.exists():
+        return None
+    try:
+        return _json.loads(path.read_text(encoding="utf-8"))
+    except (_json.JSONDecodeError, OSError):
+        return None
 
 
 # "A unidade é a forma da multiplicidade." -- Plotino

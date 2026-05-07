@@ -150,11 +150,44 @@ def renderizar(
             return
 
         if not items:
-            msg = (
-                "Nenhum registro de diário emocional no vault. "
-                "Use o botão acima para criar o primeiro."
+            from src.dashboard.componentes.ui import (
+                fallback_estado_inicial_html,
+                ler_sync_info,
             )
-            st.markdown(callout_html("info", msg), unsafe_allow_html=True)
+            skeleton = (
+                '<div style="display:flex;flex-direction:column;gap:10px;">'
+                '<div style="display:flex;align-items:center;gap:10px;">'
+                '<span class="skel-bloco" style="width:40px;height:40px;'
+                'border-radius:50%;"></span>'
+                '<div style="flex:1;display:flex;flex-direction:column;gap:6px;">'
+                '<span class="skel-bloco" style="width:60%;"></span>'
+                '<span class="skel-bloco" style="width:90%;height:0.9em;"></span>'
+                '</div></div>'
+                '<div style="display:flex;align-items:center;gap:10px;">'
+                '<span class="skel-bloco" style="width:40px;height:40px;'
+                'border-radius:50%;"></span>'
+                '<div style="flex:1;display:flex;flex-direction:column;gap:6px;">'
+                '<span class="skel-bloco" style="width:50%;"></span>'
+                '<span class="skel-bloco" style="width:80%;height:0.9em;"></span>'
+                '</div></div>'
+                '</div>'
+            )
+            st.markdown(
+                fallback_estado_inicial_html(
+                    titulo="DIÁRIO EMOCIONAL · sem registros ainda",
+                    descricao=(
+                        "Entradas longas de diário (ânimo, contexto, gatilhos) "
+                        "são escritas no app mobile e viram cards emocionais "
+                        "aqui. Cada arquivo <code>.md</code> em "
+                        "<code>vault/diario/&lt;data&gt;.md</code> aparece como "
+                        "card individual após o sync."
+                    ),
+                    skeleton_html=skeleton,
+                    cta_secao="diario",
+                    sync_info=ler_sync_info(),
+                ),
+                unsafe_allow_html=True,
+            )
         elif not items_filtrados:
             st.markdown(
                 callout_html("info", "Nenhum registro casa com os filtros atuais."),
