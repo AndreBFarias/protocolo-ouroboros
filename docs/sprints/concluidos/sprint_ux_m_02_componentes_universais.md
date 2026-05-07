@@ -1,7 +1,7 @@
 ---
 id: UX-M-02
 titulo: Componentes universais HTML em ui.py (consolidação)
-status: concluida
+status: concluída
 prioridade: alta
 data_criacao: 2026-05-06
 data_revisao: 2026-05-06

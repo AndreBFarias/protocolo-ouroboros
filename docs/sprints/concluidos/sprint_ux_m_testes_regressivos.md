@@ -1,7 +1,7 @@
 ---
 id: UX-M-TESTES-REGRESSIVOS
 titulo: Atualizar 4 testes regressivos pre-Onda M (debito historico)
-status: concluida
+status: concluída
 concluida_em: 2026-05-06
 prioridade: media
 data_criacao: 2026-05-06
