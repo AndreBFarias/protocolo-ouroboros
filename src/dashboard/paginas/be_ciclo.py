@@ -435,7 +435,7 @@ def renderizar(
     """Renderiza Bem-estar / Ciclo (UX-V-2.13)."""
     from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
     renderizar_grupo_acoes([
-        {"label": "Historico", "glyph": "list", "title": "12 ciclos anteriores"},
+        {"label": "Histórico", "glyph": "list", "title": "12 ciclos anteriores"},
         {"label": "Registrar dia", "primary": True, "glyph": "plus",
          "title": "Fluxo, sintomas, humor, energia"},
     ])
@@ -489,9 +489,9 @@ def renderizar(
             '<span class="kpi-value">--</span></div>'
             '<div class="kpi"><span class="kpi-label">DIA DO CICLO</span>'
             '<span class="kpi-value">--</span></div>'
-            '<div class="kpi"><span class="kpi-label">DURACAO MEDIA</span>'
+            '<div class="kpi"><span class="kpi-label">DURAÇÃO MÉDIA</span>'
             '<span class="kpi-value">--</span></div>'
-            '<div class="kpi"><span class="kpi-label">PROXIMO</span>'
+            '<div class="kpi"><span class="kpi-label">PRÓXIMO</span>'
             '<span class="kpi-value">--</span></div>'
             '</div>'
         )
