@@ -1,7 +1,7 @@
 ---
 id: UX-V-2.2
 titulo: Página Pagamentos com calendário mês inteiro + lista lateral acionável
-status: concluida
+status: concluída
 concluida_em: 2026-05-07
 prioridade: alta
 data_criacao: 2026-05-07

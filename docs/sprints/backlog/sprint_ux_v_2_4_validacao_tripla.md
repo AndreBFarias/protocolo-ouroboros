@@ -9,7 +9,7 @@ depende_de: [UX-V-02]
 co_executavel_com: [UX-V-2.5, UX-V-2.6, UX-V-2.17]
 esforco_estimado_horas: 8
 origem: docs/auditorias/AUDITORIA_PARIDADE_VISUAL_2026-05-07.md (página 10 -- divergência ESTRUTURAL CRÍTICA)
-mockup: novo-mockup/mockups/10-validacao-arquivos.html
+mockup: novo-mockup/mockups/10-validacao-arquivos.html <!-- noqa: accent -->
 ---
 
 # Sprint UX-V-2.4 — Validação Tripla (estrutural)
@@ -437,7 +437,7 @@ make lint && make smoke
 
 ## Proof-of-work runtime-real
 
-Validação visual side-by-side em `cluster=Documentos&tab=Validação+por+Arquivo` vs `mockups/10-validacao-arquivos.html`. Screenshot deve mostrar:
+Validação visual side-by-side em `cluster=Documentos&tab=Validação+por+Arquivo` vs `mockups/10-validacao-arquivos.html <!-- noqa: accent -->`. Screenshot deve mostrar:
 1. Header com 4 KPIs (PARIDADE %, DIVERGÊNCIAS N, EM REVISÃO N, N ARQUIVOS)
 2. Lista de arquivos esquerda agrupada por TIPO (PDF, IMG, CSV, XLSX, OFX) com paridade %
 3. Tabela central com colunas Campo | ETL | Opus | Humano | Status
@@ -464,7 +464,7 @@ Validação visual side-by-side em `cluster=Documentos&tab=Validação+por+Arqui
 
 ## Referência
 
-- Mockup: `novo-mockup/mockups/10-validacao-arquivos.html`.
+- Mockup: `novo-mockup/mockups/10-validacao-arquivos.html <!-- noqa: accent -->`.
 - Auditoria: linha 10 (estrutural crítica).
 - ADR-08 (supervisor-aprovador) + ADR-13 (supervisor artesanal).
 - Sprint VALIDAÇÃO-CSV-01 (CLAUDE.md regra 11): `data/output/validacao_arquivos.csv`.

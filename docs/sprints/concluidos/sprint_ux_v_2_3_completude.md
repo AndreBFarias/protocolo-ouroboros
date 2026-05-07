@@ -1,7 +1,7 @@
 ---
 id: UX-V-2.3
 titulo: Página Completude com 4 KPIs no topo + heatmap por tipo de doc
-status: concluida
+status: concluída
 concluida_em: 2026-05-07
 prioridade: alta
 data_criacao: 2026-05-07
