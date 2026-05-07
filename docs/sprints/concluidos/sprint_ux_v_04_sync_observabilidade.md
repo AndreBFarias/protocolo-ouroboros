@@ -1,9 +1,10 @@
 ---
 id: UX-V-04
 titulo: Observabilidade do pipeline vault → cache → dashboard
-status: backlog
+status: concluida
 prioridade: alta
 data_criacao: 2026-05-07
+concluida_em: 2026-05-07
 fase: PARIDADE_VISUAL
 depende_de: [UX-V-02]
 co_executavel_com: [UX-V-01, UX-V-03, UX-V-05]

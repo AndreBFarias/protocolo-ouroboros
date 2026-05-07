@@ -103,6 +103,9 @@ __all__ = [
     "group_card",
     # Helper de carregamento de CSS por página
     "carregar_css_pagina",
+    # Sync observabilidade (UX-V-04)
+    "ler_sync_info",
+    "sync_indicator_html",
 ]
 
 
@@ -701,6 +704,97 @@ def group_card(
         f"</div>"
         f'<div class="group-card__body">{linhas_html}</div>'
         f"</div>"
+    )
+
+
+# === Sync indicator (UX-V-04) ===============================================
+#
+# Componente discreto que expõe quando o pipeline vault → cache → dashboard
+# rodou pela última vez. Fallback resiliente (ADR-10): se o cache não existe
+# ou está corrompido, renderiza "sync: nunca" sem quebrar a página.
+#
+# Pareado com ``src.obsidian.sync_rico._gravar_last_sync`` (escritor) e
+# planejado para ser substituído pela versão canônica de UX-V-03 quando
+# aquela sprint mergear (mesma assinatura -- subregra retrocompatível,
+# padrão (o)).
+
+
+def ler_sync_info() -> dict | None:
+    """Lê ``.ouroboros/cache/last_sync.json`` da raiz do projeto.
+
+    Retorna o payload (dict) quando o arquivo existe e é JSON válido.
+    Retorna ``None`` quando ausente, ilegível ou malformado -- chamadores
+    devem tratar ambos os casos como "nunca sincronizado" (graceful, ADR-10).
+
+    Resolve a raiz do projeto via ``Path(__file__).resolve().parents[3]``:
+    ``src/dashboard/componentes/ui.py`` → 3 níveis acima = raiz do repo.
+    """
+    import json
+    try:
+        raiz = Path(__file__).resolve().parents[3]
+        arquivo = raiz / ".ouroboros" / "cache" / "last_sync.json"
+        if not arquivo.exists():
+            return None
+        return json.loads(arquivo.read_text(encoding="utf-8"))
+    except (OSError, ValueError, json.JSONDecodeError):
+        return None
+
+
+def sync_indicator_html(sync_info: dict | None = None) -> str:
+    """Chip pequeno mostrando idade da última sync vault → cache.
+
+    - Verde (default): sync < 1h.
+    - Amarelo (``sync-indicator-stale``): sync entre 1h e 24h.
+    - Amarelo + "rode --sync": sync > 24h ou nunca.
+
+    Args:
+        sync_info: payload retornado por ``ler_sync_info()``. Se ``None``,
+            chama ``ler_sync_info()`` implicitamente -- útil para invocação
+            direta em página sem orquestrar leitura.
+
+    Returns:
+        ``<span class="sync-indicator ...">...</span>`` minificado para
+        inserção via ``st.markdown(..., unsafe_allow_html=True)``.
+    """
+    from datetime import datetime, timezone
+
+    if sync_info is None:
+        sync_info = ler_sync_info()
+
+    if not sync_info or "data" not in sync_info:
+        return (
+            '<span class="sync-indicator sync-indicator-stale" '
+            'title="Nunca sincronizado">sync: nunca</span>'
+        )
+
+    try:
+        ts = datetime.fromisoformat(sync_info["data"])
+    except (ValueError, TypeError):
+        return (
+            '<span class="sync-indicator sync-indicator-stale" '
+            'title="Timestamp inválido">sync: ?</span>'
+        )
+
+    agora = datetime.now(tz=ts.tzinfo or timezone.utc)
+    delta_horas = (agora - ts).total_seconds() / 3600
+
+    if delta_horas < 1:
+        classe = ""
+        minutos = max(0, int(delta_horas * 60))
+        rotulo = f"sync agora ({minutos}min atrás)"
+    elif delta_horas < 24:
+        classe = "sync-indicator-stale"
+        rotulo = f"sync {int(delta_horas)}h atrás"
+    else:
+        classe = "sync-indicator-stale"
+        dias = int(delta_horas / 24)
+        rotulo = f"sync {dias}d atrás (rode --sync)"
+
+    n = sync_info.get("n_arquivos", "?")
+    titulo = f"Última sync: {sync_info['data']} · {n} arquivos"
+    classe_final = f"sync-indicator {classe}".strip()
+    return (
+        f'<span class="{classe_final}" title="{titulo}">{rotulo}</span>'
     )
 
 

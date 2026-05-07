@@ -446,6 +446,45 @@ def _escrever_nota(
 # ============================================================================
 
 
+def _gravar_last_sync(
+    raiz_projeto: Path,
+    *,
+    n_arquivos: int,
+    duracao_segundos: float,
+    vault_path: str,
+    erros: list[str] | None = None,
+) -> None:
+    """Grava ``.ouroboros/cache/last_sync.json`` para observabilidade UI.
+
+    Lido por ``src.dashboard.componentes.ui.ler_sync_info`` (UX-V-03)
+    e renderizado como sync-indicator pelo dashboard (UX-V-04).
+
+    Resiliente a falhas (ADR-10): qualquer exceção é capturada e logada,
+    nunca propaga — observabilidade não pode quebrar o sync.
+    """
+    import json
+    from datetime import datetime
+    try:
+        cache_dir = raiz_projeto / ".ouroboros" / "cache"
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        payload = {
+            "data": datetime.now().astimezone().isoformat(timespec="seconds"),
+            "n_arquivos": int(n_arquivos),
+            "fonte": "vault_obsidian",
+            "vault_path": str(vault_path),
+            "duracao_segundos": round(float(duracao_segundos), 2),
+            "erros": list(erros or []),
+        }
+        target = cache_dir / "last_sync.json"
+        target.write_text(
+            json.dumps(payload, indent=2, ensure_ascii=False),
+            encoding="utf-8",
+        )
+        logger.info("last_sync.json gravado: %s", target)
+    except Exception as exc:  # noqa: BLE001 -- ADR-10 resiliência
+        logger.warning("falha ao gravar last_sync.json: %s", exc)
+
+
 def sincronizar_rico(
     vault_root: Path,
     grafo_path: Path | None = None,
@@ -460,6 +499,8 @@ def sincronizar_rico(
     - min_docs_por_fornecedor: fornecedores com menos que isso são pulados
       (reduz ruído quando grafo tem muito fornecedor isolado).
     """
+    import time as _time
+    _inicio = _time.monotonic()
     grafo = grafo_path or caminho_padrao()
     report = SyncReport()
 
@@ -525,6 +566,17 @@ def sincronizar_rico(
             except Exception as exc:  # noqa: BLE001
                 logger.error("erro ao escrever %s: %s", destino, exc)
                 report.erros.append(f"forn:{forn.nome_canonico}:{exc}")
+
+    # Observabilidade UX-V-04: grava last_sync.json apenas em execução real
+    # (dry_run pula para não poluir cache em testes/inspeções).
+    if not dry_run:
+        _gravar_last_sync(
+            _RAIZ_REPO,
+            n_arquivos=report.total_escritas(),
+            duracao_segundos=_time.monotonic() - _inicio,
+            vault_path=str(vault_root),
+            erros=report.erros,
+        )
 
     return report
 
