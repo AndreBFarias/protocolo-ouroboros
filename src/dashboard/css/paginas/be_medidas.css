@@ -1,0 +1,183 @@
+/* ===========================================================================
+ * be_medidas.css -- página Bem-estar / Medidas (UX-V-2.12).
+ *
+ * Cards corporais com sparkline + variação 30d + tabela histórico semanal.
+ * Mockup-fonte: novo-mockup/mockups/24-medidas.html.
+ *
+ * Convenções:
+ *   - Tokens via tokens.css (--accent-*, --text-*, --bg-*, --border-*).
+ *   - Classes prefixadas com `med-` para escopo claro.
+ *   - Nada de !important aqui (UX-M-04: anti-padrão (w)).
+ * =========================================================================== */
+
+.med-pessoa-tabs {
+  display: inline-flex;
+  background: var(--bg-inset, #1a1c25);
+  border: 1px solid var(--border-subtle, #2a2d3a);
+  border-radius: var(--r-sm, 4px);
+  padding: 3px;
+  gap: 2px;
+  margin-bottom: var(--sp-4, 12px);
+}
+
+.med-pessoa-tabs .med-tab {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary, #c9c9cc);
+  padding: 6px 16px;
+  font-family: var(--ff-mono, ui-monospace, monospace);
+  font-size: 12px;
+  cursor: pointer;
+  border-radius: 4px;
+  letter-spacing: 0.04em;
+}
+
+.med-pessoa-tabs .med-tab.ativo {
+  background: var(--med-cor-pessoa, var(--accent-purple));
+  color: var(--text-inverse, #0d0e14);
+  font-weight: 500;
+}
+
+.med-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--sp-3, 10px);
+}
+
+.med-card {
+  background: var(--bg-surface, #14161e);
+  border: 1px solid var(--border-subtle, #2a2d3a);
+  border-radius: var(--r-md, 6px);
+  padding: var(--sp-4, 14px);
+  border-left: 3px solid var(--med-cor, var(--accent-purple));
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.med-card .med-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: var(--sp-2, 6px);
+}
+
+.med-label {
+  font-family: var(--ff-mono, ui-monospace, monospace);
+  font-size: 11px;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--med-cor, var(--accent-purple));
+}
+
+.med-data {
+  font-family: var(--ff-mono, ui-monospace, monospace);
+  font-size: 10px;
+  color: var(--text-muted, #6b6f80);
+}
+
+.med-valor {
+  font-family: var(--ff-mono, ui-monospace, monospace);
+  font-size: 32px;
+  font-weight: 500;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary, #e6e6ea);
+}
+
+.med-unid {
+  font-size: 13px;
+  color: var(--text-muted, #6b6f80);
+  margin-left: 4px;
+  font-weight: 400;
+}
+
+.med-delta {
+  font-family: var(--ff-mono, ui-monospace, monospace);
+  font-size: 11px;
+  margin-top: 4px;
+}
+
+.med-delta-up { color: var(--accent-green, #50fa7b); }
+.med-delta-down { color: var(--accent-red, #ff5555); }
+.med-delta-flat { color: var(--text-muted, #6b6f80); }
+
+.med-sparkline {
+  margin-top: var(--sp-2, 6px);
+  width: 100%;
+  display: block;
+}
+
+.med-sparkline svg,
+.med-sparkline .sparkline svg {
+  width: 100%;
+  height: 32px;
+}
+
+.med-vazio {
+  font-family: var(--ff-mono, ui-monospace, monospace);
+  font-size: 18px;
+  color: var(--text-muted, #6b6f80);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Tabela histórico 6 semanas */
+
+.med-hist-card {
+  background: var(--bg-surface, #14161e);
+  border: 1px solid var(--border-subtle, #2a2d3a);
+  border-radius: var(--r-md, 6px);
+  padding: var(--sp-5, 18px);
+  margin-top: var(--sp-4, 14px);
+}
+
+.med-hist-card h3 {
+  font-family: var(--ff-mono, ui-monospace, monospace);
+  font-size: 11px;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--text-muted, #6b6f80);
+  margin: 0 0 var(--sp-3, 10px);
+}
+
+.med-tbl {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.med-tbl th,
+.med-tbl td {
+  text-align: left;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border-subtle, #2a2d3a);
+  font-family: var(--ff-mono, ui-monospace, monospace);
+}
+
+.med-tbl th {
+  color: var(--text-muted, #6b6f80);
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: 10px;
+}
+
+.med-tbl td {
+  color: var(--text-secondary, #c9c9cc);
+  font-variant-numeric: tabular-nums;
+}
+
+.med-tbl td:nth-child(1) {
+  color: var(--text-muted, #6b6f80);
+}
+
+.med-tbl td .v {
+  color: var(--text-primary, #e6e6ea);
+  font-weight: 500;
+}
+
+.med-tbl tr:hover {
+  background: var(--bg-inset, #1a1c25);
+}
+
+/* "Corpo medido é corpo cuidado." -- princípio V-2.12 */

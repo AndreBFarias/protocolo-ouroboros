@@ -1,9 +1,10 @@
 ---
 id: UX-V-2.12
 titulo: Bem-estar / Medidas com 6 cards corporais (sparkline + variação 30d) + tabela 6 semanas
-status: backlog
+status: concluida
 prioridade: alta
 data_criacao: 2026-05-07
+concluida_em: 2026-05-07
 fase: PARIDADE_VISUAL
 depende_de: [UX-V-02, UX-V-03]
 co_executavel_com: [UX-V-2.9, UX-V-2.11, UX-V-2.13, UX-V-2.15]
