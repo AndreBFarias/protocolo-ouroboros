@@ -14,11 +14,14 @@ pode popular o arquivo via skill autônoma.
 Contrato: ``renderizar(dados, periodo, pessoa, ctx)`` espelhando as outras
 páginas para que o dispatcher de ``app.py`` chame uniformemente.
 
-Tokens consumidos via ``CORES`` (UX-RD-01) e classes utilitárias UX-RD-02
-(``.kpi``, ``.pill-d7-*``, ``.confidence-bar``, ``.skill-instr``,
-``.page-header``, ``.btn``). Estilos específicos desta página
-(``.s7-row``, ``.s7-grid``, ``.s7-tl-row``) são emitidos via ``<style>``
-local para não tocar ``tema_css.py``.
+Tokens consumidos via ``CORES`` (UX-RD-01) e classes canônicas
+``components.css`` (``.kpi-grid``, ``.kpi``, ``.kpi-label``, ``.kpi-value``,
+``.pill-d7-*``, ``.confidence-bar``, ``.skill-instr``, ``.page-header``,
+``.btn``). Estruturas específicas desta página (``.s7-row``, ``.s7-grid``,
+``.s7-evo``) permanecem como override mínimo justificado em ``<style>``
+local: grid de 5 colunas das skills + moldura + SVG de evolução semanal
+não têm equivalente universal. Sprint UX-M-02.C consolidou KPIs no
+canônico (``.s7-kpi-row`` removido).
 
 Lição UX-RD-04 herdada: HTML emitido em uma única linha quando contém
 SVG/elementos que o parser CommonMark do Streamlit possa interpretar
@@ -214,7 +217,7 @@ def _kpi_grid_html(contagens: dict[str, int], total: int) -> str:
         )
 
     return _minificar(
-        '<div class="s7-kpi-row">' + "".join(pieces) + "</div>"
+        '<div class="kpi-grid" style="margin-bottom:24px;">' + "".join(pieces) + "</div>"
     )
 
 
@@ -350,7 +353,12 @@ def _evolucao_html(pontos: list[dict]) -> str:
 
 
 def _estilos_locais() -> str:
-    """CSS específico desta página -- isolado de ``tema_css.py``."""
+    """CSS específico desta página -- override mínimo (UX-M-02.C).
+
+    KPIs migrados para ``.kpi-grid``/``.kpi`` canônicos (components.css).
+    Mantidos aqui apenas estruturas únicas: grid de 5 colunas das skills
+    (``.s7-row``), moldura ``.s7-grid`` e gráfico SVG ``.s7-evo``.
+    """
     fundo = CORES["card_fundo"]
     inset = CORES["fundo_inset"]
     texto_pri = CORES["texto"]
@@ -360,12 +368,6 @@ def _estilos_locais() -> str:
 
     return f"""
     <style>
-      .s7-kpi-row {{
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 12px;
-        margin-bottom: 24px;
-      }}
       .s7-grid {{
         background: {fundo};
         border: 1px solid {border_subtle};

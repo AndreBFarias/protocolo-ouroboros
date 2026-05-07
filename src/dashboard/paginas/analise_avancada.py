@@ -47,6 +47,7 @@ import streamlit as st
 from src.dashboard import tema
 from src.dashboard.componentes.drilldown import aplicar_drilldown
 from src.dashboard.componentes.html_utils import minificar
+from src.dashboard.componentes.ui import callout_html
 from src.dashboard.dados import (
     filtrar_por_forma_pagamento,
     filtrar_por_periodo,
@@ -58,7 +59,6 @@ from src.dashboard.tema import (
     FONTE_MINIMA,
     FONTE_SUBTITULO,
     LAYOUT_PLOTLY,
-    callout_html,
     rgba_cor,
 )
 from src.dashboard.tema_plotly import st_plotly_chart_dracula

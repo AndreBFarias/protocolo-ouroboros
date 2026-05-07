@@ -33,8 +33,9 @@ import streamlit as st
 import yaml
 
 from src.dashboard.componentes.html_utils import minificar
+from src.dashboard.componentes.ui import progress_inline_html
 from src.dashboard.dados import calcular_saldo_acumulado, formatar_moeda
-from src.dashboard.tema import CORES, LAYOUT_PLOTLY, progress_inline_html
+from src.dashboard.tema import CORES, LAYOUT_PLOTLY
 from src.dashboard.tema_plotly import st_plotly_chart_dracula
 
 CAMINHO_METAS: Path = Path(__file__).resolve().parents[3] / "mappings" / "metas.yaml"

@@ -266,26 +266,26 @@ def _barra_status_html(contagens: dict[str, int], total: int) -> str:
 
     return minificar(
         f"""
-        <div class="inbox-barra-status">
-          <div class="inbox-status-tile aguardando">
-            <div class="v" style="color:{cor_aguardando};">{aguardando}</div>
-            <div class="l">Aguardando</div>
+        <div class="kpi-grid" style="margin-bottom:16px;">
+          <div class="kpi">
+            <div class="kpi-label">Aguardando</div>
+            <div class="kpi-value" style="color:{cor_aguardando};">{aguardando}</div>
           </div>
-          <div class="inbox-status-tile extraido">
-            <div class="v" style="color:{cor_extraido};">{extraido}</div>
-            <div class="l">Extraído</div>
+          <div class="kpi">
+            <div class="kpi-label">Extraído</div>
+            <div class="kpi-value" style="color:{cor_extraido};">{extraido}</div>
           </div>
-          <div class="inbox-status-tile falhou">
-            <div class="v" style="color:{cor_falhou};">{falhou}</div>
-            <div class="l">Falhou</div>
+          <div class="kpi">
+            <div class="kpi-label">Falhou</div>
+            <div class="kpi-value" style="color:{cor_falhou};">{falhou}</div>
           </div>
-          <div class="inbox-status-tile duplicado">
-            <div class="v" style="color:{cor_duplicado};">{duplicado}</div>
-            <div class="l">Pulado (duplicado)</div>
+          <div class="kpi">
+            <div class="kpi-label">Pulado (duplicado)</div>
+            <div class="kpi-value" style="color:{cor_duplicado};">{duplicado}</div>
           </div>
-          <div class="inbox-status-tile total">
-            <div class="v" style="color:{cor_total};">{total}</div>
-            <div class="l">Total na fila</div>
+          <div class="kpi">
+            <div class="kpi-label">Total na fila</div>
+            <div class="kpi-value" style="color:{cor_total};">{total}</div>
           </div>
         </div>
         """
@@ -536,6 +536,14 @@ def _skill_instr_html() -> str:
 
 
 def _estilos_locais() -> str:
+    """CSS local (override mínimo justificado -- UX-M-02.C).
+
+    Status migrado para ``.kpi-grid``/``.kpi`` canônicos (components.css).
+    Mantidos aqui: dropzone (sem equivalente universal -- card pontilhado
+    customizado), tabela densa específica da fila com colunas thumb/sha8/ts,
+    drawer embarcado (não fixed como ``.drawer`` canônico) e syntax-highlight
+    do sidecar JSON.
+    """
     fundo = CORES["card_fundo"]
     inset = CORES["fundo_inset"]
     texto = CORES["texto"]
@@ -546,36 +554,6 @@ def _estilos_locais() -> str:
 
     return f"""
     <style>
-      .inbox-barra-status {{
-        display: flex;
-        gap: 8px;
-        margin-bottom: 16px;
-        flex-wrap: wrap;
-      }}
-      .inbox-status-tile {{
-        flex: 1;
-        min-width: 140px;
-        background: {fundo};
-        border: 1px solid {border_subtle};
-        border-radius: 8px;
-        padding: 12px 14px;
-      }}
-      .inbox-status-tile .v {{
-        font-family: ui-monospace, 'JetBrains Mono', monospace;
-        font-size: 24px;
-        font-weight: 500;
-        font-variant-numeric: tabular-nums;
-        line-height: 1;
-      }}
-      .inbox-status-tile .l {{
-        font-size: 11px;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        color: {texto_muted};
-        margin-top: 4px;
-      }}
-      .inbox-status-tile.total {{ flex: 0 0 200px; }}
-
       .inbox-dropzone-marker {{
         border: 2px dashed {border_subtle};
         border-radius: 12px;
