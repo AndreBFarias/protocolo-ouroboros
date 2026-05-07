@@ -11,7 +11,7 @@ bloqueia: [UX-V-2.*]
 co_executavel_com: [UX-V-01, UX-V-03, UX-V-04, UX-V-05]
 esforco_estimado_horas: 5
 origem: docs/auditorias/AUDITORIA_PARIDADE_VISUAL_2026-05-07.md (P2)
-commit: a-preencher-pos-commit
+commit: e04a2a1410d51f854966f320152b7feb7b37f6cf
 ---
 
 # Sprint UX-V-02 — Micro-componentes visuais canônicos
