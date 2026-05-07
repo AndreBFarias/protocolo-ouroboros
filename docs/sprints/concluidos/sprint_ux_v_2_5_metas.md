@@ -1,9 +1,11 @@
 ---
 id: UX-V-2.5
 titulo: Página Metas com 6 cards (donut + valor + barra + 3 colunas PRAZO/RITMO/FALTA)
-status: backlog
+status: concluída
 prioridade: alta
 data_criacao: 2026-05-07
+concluida_em: 2026-05-07
+commit: 1d518f3
 fase: PARIDADE_VISUAL
 depende_de: [UX-V-02]
 co_executavel_com: [UX-V-2.4, UX-V-2.6, UX-V-2.17]
