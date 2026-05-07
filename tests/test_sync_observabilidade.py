@@ -107,7 +107,7 @@ def test_ler_sync_info_json_corrompido_retorna_none(
     # Cria arquivo corrompido em raiz simulada e patcha __file__.
     cache = tmp_path / ".ouroboros" / "cache"
     cache.mkdir(parents=True)
-    (cache / "last_sync.json").write_text("{ nao e json valido", encoding="utf-8")
+    (cache / "last_sync.json").write_text("{ não é JSON válido", encoding="utf-8")
 
     # Monkeypatch para apontar a raiz do projeto = tmp_path.
     # ler_sync_info() usa parents[3] de __file__; injetar via patch direto.
