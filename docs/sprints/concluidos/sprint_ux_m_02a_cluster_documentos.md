@@ -1,13 +1,24 @@
 ---
 id: UX-M-02.A
 titulo: Migração cluster Documentos para ui.py canônico
-status: backlog
+status: concluida_parcial
 prioridade: alta
 data_criacao: 2026-05-06
+concluida_em: 2026-05-06
 fase: MODULARIZAÇÃO
 depende_de: [UX-M-02, UX-M-03]
 co_executavel_com: [UX-M-02.B, UX-M-02.C, UX-M-02.D]
 esforco_estimado_horas: 4
+sprint_filha: UX-M-02.A-RESIDUAL
+ressalva: |
+  Critérios 1, 3 e 4 (remoção de _CSS_LOCAL_* e redução ≥40% das páginas)
+  bloqueados por achado empírico (padrão (k)): as classes `.ouroboros-*`
+  definidas em busca.py e catalogacao.py NÃO são duplicatas de
+  components.css, são genuinamente específicas. Restrições invioláveis
+  da sub-sprint proíbem promovê-las para components.css ou criar
+  componentes em ui.py. Trabalho restante migrado para UX-M-02.A-RESIDUAL.
+  Critérios 2, 5 e 6 entregues (imports de tema -> ui em 7 páginas;
+  19/19 testes regressivos verdes; validação visual sem regressão).
 ---
 
 # Sprint UX-M-02.A — Migração cluster Documentos

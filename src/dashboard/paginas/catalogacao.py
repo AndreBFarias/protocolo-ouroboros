@@ -43,6 +43,11 @@ import streamlit as st
 from src.dashboard import dados as _dados
 from src.dashboard.componentes.html_utils import minificar
 from src.dashboard.componentes.humanizar_tipos import humanizar
+from src.dashboard.componentes.ui import (
+    callout_html,
+    card_html,
+    subtitulo_secao_html,
+)
 from src.dashboard.dados import (
     carregar_documentos_grafo,
     contar_propostas_linking,
@@ -54,10 +59,7 @@ from src.dashboard.tema import (
     FONTE_LABEL,
     FONTE_SUBTITULO,
     SPACING,
-    callout_html,
-    card_html,
     rgba_cor_inline,
-    subtitulo_secao_html,
 )
 
 COLUNAS_TABELA: list[str] = ["Data", "Fornecedor", "Total", "Status"]

@@ -38,7 +38,8 @@ import streamlit as st
 from src.dashboard.componentes.html_utils import minificar
 from src.dashboard.componentes.preview_documento import preview_documento
 from src.dashboard.componentes.preview_documento import tipo_arquivo as _tipo_preview
-from src.dashboard.tema import CORES, callout_html
+from src.dashboard.componentes.ui import callout_html
+from src.dashboard.tema import CORES
 from src.load import validacao_csv as vc
 
 _PADRAO_CPF = re.compile(r"\b\d{3}\.\d{3}\.\d{3}-\d{2}\b")

@@ -66,6 +66,10 @@ from src.dashboard.componentes.busca_resultado_inline import (
 )
 from src.dashboard.componentes.busca_roteador import rotear
 from src.dashboard.componentes.html_utils import minificar
+from src.dashboard.componentes.ui import (
+    callout_html,
+    subtitulo_secao_html,
+)
 from src.dashboard.dados import (
     buscar_global,
     carregar_dados,
@@ -77,10 +81,8 @@ from src.dashboard.tema import (
     CORES,
     FONTE_LABEL,
     SPACING,
-    callout_html,
     icon_html,
     rgba_cor_inline,
-    subtitulo_secao_html,
 )
 
 RAIZ = Path(__file__).resolve().parents[3]
