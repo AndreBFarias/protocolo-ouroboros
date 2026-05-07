@@ -1,14 +1,23 @@
 ---
 id: UX-V-05
 titulo: Glyphs prefixados em todos os botões de topbar-actions conforme mockup
-status: backlog
+status: concluida
 prioridade: media
 data_criacao: 2026-05-07
+concluida_em: 2026-05-07
 fase: PARIDADE_VISUAL
 depende_de: [UX-M-04]
 co_executavel_com: [UX-V-01, UX-V-02, UX-V-03, UX-V-04]
 esforco_estimado_horas: 2
 origem: docs/auditorias/AUDITORIA_PARIDADE_VISUAL_2026-05-07.md (P5)
+ressalva: |
+  Spec original propunha catálogo ASCII (+/^/v/~). Hipótese refutada pelo grep
+  (padrão (k)): sistema JÁ usa SVG inline canônico desde UX-RD-FIX-07/UX-U-02
+  (52 glyphs em componentes/glyphs.py com paridade 1:1 com novo-mockup/_shared
+  /glyphs.js). Sprint adotou catálogo SVG como fonte canônica e formalizou:
+  GLYPHS_CANONICOS (subconjunto curado de 27 IDs validados) + ACOES_PARA_GLYPH
+  (54 mapeamentos label->id). Regredir SVG para ASCII violaria padrão (a) (não
+  apagar código funcional).
 ---
 
 # Sprint UX-V-05 — Glyphs em topbar-actions

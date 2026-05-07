@@ -56,8 +56,9 @@ def renderizar(
     """Renderiza a página Skills D7 (UX-RD-05 + UX-T-14)."""
     from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
     renderizar_grupo_acoes([
-        {"label": "Recalibrar", "title": "Recalibrar 18 skills"},
-        {"label": "Logs", "primary": True,
+        {"label": "Recalibrar", "glyph": "refresh",
+         "title": "Recalibrar 18 skills"},
+        {"label": "Logs", "primary": True, "glyph": "list",
          "title": "Abrir terminal de logs"},
     ])
 

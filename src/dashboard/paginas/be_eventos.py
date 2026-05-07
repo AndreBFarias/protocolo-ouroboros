@@ -70,8 +70,8 @@ def renderizar(
     """Renderiza Bem-estar / Eventos (UX-T-22)."""
     from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
     renderizar_grupo_acoes([
-        {"label": "Calendário", "title": "Vista mensal"},
-        {"label": "Novo evento", "primary": True,
+        {"label": "Calendário", "glyph": "calendar", "title": "Vista mensal"},
+        {"label": "Novo evento", "primary": True, "glyph": "plus",
          "title": "Wizard de evento"},
     ])
 

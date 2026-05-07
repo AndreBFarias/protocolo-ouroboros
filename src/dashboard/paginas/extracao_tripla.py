@@ -517,8 +517,9 @@ def renderizar(
     """Entry point da aba Extração Tripla (UX-T-10)."""
     from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
     renderizar_grupo_acoes([
-        {"label": "Baixar lote", "title": "ZIP com 10 arquivos"},
-        {"label": "Salvar validações", "primary": True,
+        {"label": "Baixar lote", "glyph": "download",
+         "title": "ZIP com 10 arquivos"},
+        {"label": "Salvar validações", "primary": True, "glyph": "validar",
          "title": "Persistir flags humanas"},
     ])
 

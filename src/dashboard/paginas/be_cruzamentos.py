@@ -167,7 +167,7 @@ def renderizar(
     """Renderiza Bem-estar / Cruzamentos (UX-T-26)."""
     from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
     renderizar_grupo_acoes([
-        {"label": "Salvar como bloco do Recap",
+        {"label": "Salvar como bloco do Recap", "glyph": "validar",
          "title": "Padrão vai aparecer no Recap mensal"},
         {"label": "Voltar ao Recap", "primary": True,
          "href": "?cluster=Bem-estar&tab=Recap"},

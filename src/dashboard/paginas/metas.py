@@ -443,9 +443,10 @@ def renderizar(dados: dict, mes_selecionado: str, pessoa: str) -> None:
     """Renderiza a página Metas (UX-RD-14 + UX-T-13)."""
     from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
     renderizar_grupo_acoes([
-        {"label": "Skills D7", "href": "?cluster=Sistema&tab=Skills+D7",
+        {"label": "Skills D7", "glyph": "list",
+         "href": "?cluster=Sistema&tab=Skills+D7",
          "title": "Ver skills operacionais"},
-        {"label": "Nova meta", "primary": True,
+        {"label": "Nova meta", "primary": True, "glyph": "plus",
          "title": "Wizard de nova meta"},
     ])
 
