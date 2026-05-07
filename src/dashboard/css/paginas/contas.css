@@ -1,0 +1,73 @@
+/* ===========================================================================
+ * contas.css -- página Contas (UX-V-2.1)
+ *
+ * Paridade visual com `novo-mockup/mockups/03-contas.html`:
+ * - Sparkline de saldo (~180x32) embutida nos cards de conta corrente.
+ * - Barra de uso (componente `bar_uso_html`) nos cards de cartão.
+ * - Separação visual de blocos "Contas correntes" vs "Cartões de crédito".
+ *
+ * Não duplica regras de `components.css` (pré-Onda M). Apenas ajusta
+ * o que é específico da página Contas. Carregado por
+ * `carregar_css_pagina("contas")` no início de `renderizar`.
+ * =========================================================================== */
+
+/* Cards: garante altura uniforme em grid de 3 colunas (mockup) ------------- */
+
+.acc.conta-card,
+.cc-card.cartao-card {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Sparkline embutida no card de conta corrente ----------------------------- */
+
+.conta-card .conta-sparkline {
+    margin: 8px 0 4px 0;
+    line-height: 0;
+}
+
+.conta-card .conta-sparkline .sparkline {
+    display: block;
+    width: 100%;
+}
+
+.conta-card .conta-sparkline .sparkline svg {
+    width: 100%;
+    height: 32px;
+}
+
+/* Barra de uso embutida no card de cartão ---------------------------------- */
+
+.cartao-card .cartao-bar-uso {
+    margin-top: 14px;
+}
+
+.cartao-card .cartao-bar-uso .bar-uso-label {
+    font-family: var(--ff-mono, ui-monospace, "SFMono-Regular", monospace);
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    color: var(--text-muted, #9aa0b5);
+    display: block;
+    margin-bottom: 4px;
+}
+
+.cartao-card .cartao-bar-uso .bar-uso-track {
+    height: 6px;
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+/* Títulos das seções "Contas correntes" / "Cartões de crédito" ------------- */
+
+.contas-secao-titulo {
+    font-family: var(--ff-mono, ui-monospace, "SFMono-Regular", monospace);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.10em;
+    color: var(--text-muted, #9aa0b5);
+    margin: 24px 0 12px 0;
+}
+
+/* "O preço de qualquer coisa é a quantidade de vida que você troca por ela."
+   -- Henry David Thoreau */
