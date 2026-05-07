@@ -33,10 +33,16 @@ import streamlit as st
 import yaml
 
 from src.dashboard.componentes.html_utils import minificar
-from src.dashboard.componentes.ui import progress_inline_html
+from src.dashboard.componentes.ui import (
+    bar_uso_html,
+    callout_html,
+    carregar_css_pagina,
+    donut_inline_html,
+    prazo_ritmo_falta_html,
+    progress_inline_html,
+)
 from src.dashboard.dados import calcular_saldo_acumulado, formatar_moeda
 from src.dashboard.tema import CORES, LAYOUT_PLOTLY
-from src.dashboard.tema_plotly import st_plotly_chart_dracula
 
 CAMINHO_METAS: Path = Path(__file__).resolve().parents[3] / "mappings" / "metas.yaml"
 
@@ -435,6 +441,189 @@ def _card_metrica_op_html(metrica: dict[str, Any]) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Helpers UX-V-2.5 -- card completo (donut + valor + barra + 3 colunas)
+# ---------------------------------------------------------------------------
+
+
+_PT_BR_MES_ABREV: dict[int, str] = {
+    1: "jan", 2: "fev", 3: "mar", 4: "abr", 5: "mai", 6: "jun",
+    7: "jul", 8: "ago", 9: "set", 10: "out", 11: "nov", 12: "dez",
+}
+
+
+def _formatar_prazo_humano(prazo: str) -> str:
+    """Converte ``YYYY-MM`` em ``mes/AAAA`` (ex.: ``2026-09`` -> ``set/2026``).
+
+    Quando o prazo só contém ano (``2042``) retorna como veio.
+    """
+    if not prazo:
+        return "sem prazo"
+    partes = prazo.split("-")
+    if len(partes) >= 2:
+        try:
+            ano = int(partes[0])
+            mes = int(partes[1])
+            if 1 <= mes <= 12:
+                return f"{_PT_BR_MES_ABREV[mes]}/{ano}"
+        except ValueError:
+            return prazo
+    return prazo
+
+
+def _formatar_falta_humano(meses: int) -> str:
+    """Converte meses absolutos em ``X meses`` ou ``Y anos`` quando >= 24."""
+    if meses < 0:
+        return "atrasado"
+    if meses == 0:
+        return "este mês"
+    if meses < 24:
+        return f"{meses} meses"
+    anos = meses // 12
+    return f"{anos} anos"
+
+
+def _ritmo_sugerido(meta: dict[str, Any]) -> str:
+    """Calcula ritmo (R$/mês) necessário para atingir a meta no prazo.
+
+    Falha graciosamente quando dados ausentes -- retorna ``"--"``.
+    """
+    valor_alvo = meta.get("valor_alvo", 0) or 0
+    valor_atual = meta.get("valor_atual", 0) or 0
+    falta = max(0.0, float(valor_alvo) - float(valor_atual))
+    prazo = meta.get("prazo", "")
+    if not prazo or valor_alvo <= 0:
+        return "--"
+    meses = _meses_restantes(prazo)
+    if meses <= 0:
+        return "atingir agora"
+    ritmo_mensal = falta / meses
+    return f"+{formatar_moeda(ritmo_mensal)}/mês"
+
+
+def _card_meta_v25_html(meta: dict[str, Any]) -> str:
+    """Card completo de meta financeira (UX-V-2.5).
+
+    Estrutura: head com título/subtítulo + donut canto direito; linha
+    de valor atual/total; barra horizontal de progresso; rodapé com
+    PRAZO/RITMO/FALTA. Consome micro-componentes V-02:
+    ``donut_inline_html``, ``bar_uso_html`` e ``prazo_ritmo_falta_html``.
+    """
+    nome = meta.get("nome", "Sem nome")
+    descricao = meta.get("nota", "") or meta.get("descricao", "") or ""
+    valor_alvo = float(meta.get("valor_alvo", 0) or 0)
+    valor_atual = float(meta.get("valor_atual", 0) or 0)
+    pct = (valor_atual / valor_alvo * 100.0) if valor_alvo > 0 else 0.0
+
+    donut = donut_inline_html(pct, tamanho=70)
+    bar = bar_uso_html(valor_atual, valor_alvo)
+
+    prazo_yaml = meta.get("prazo", "")
+    prazo_humano = _formatar_prazo_humano(prazo_yaml).upper()
+    if prazo_yaml:
+        meses = _meses_restantes(prazo_yaml)
+        falta_humano = _formatar_falta_humano(meses).upper()
+    else:
+        falta_humano = "SEM PRAZO"
+    ritmo_humano = _ritmo_sugerido(meta).upper()
+    prf = prazo_ritmo_falta_html(prazo_humano, ritmo_humano, falta_humano)
+
+    valor_atual_fmt = formatar_moeda(valor_atual)
+    valor_alvo_fmt = formatar_moeda(valor_alvo)
+    sub_html = f'<p class="meta-card-sub">{descricao}</p>' if descricao else ""
+
+    return minificar(
+        f"""
+        <div class="meta-card">
+          <div class="meta-card-head">
+            <div class="meta-card-info">
+              <h3 class="meta-card-titulo">{nome}</h3>
+              {sub_html}
+            </div>
+            <div class="meta-card-donut">{donut}</div>
+          </div>
+          <div class="meta-card-valores">
+            <span class="meta-valor-atual">{valor_atual_fmt}</span>
+            <span class="meta-valor-total">/ {valor_alvo_fmt}</span>
+          </div>
+          {bar}
+          {prf}
+        </div>
+        """
+    )
+
+
+def _carregar_metas_operacionais(dados: dict) -> list[dict[str, Any]]:
+    """Reúne metas operacionais a partir de ``_calcular_metricas_operacionais``.
+
+    Mapeia o dicionário existente para o formato esperado pelo card V-2.5
+    (nome, descrição, valor_atual, valor_alvo). Quando ``dados`` está
+    ausente ou vazio, retorna lista vazia (fallback graceful).
+    """
+    metricas = _calcular_metricas_operacionais(dados or {})
+    operacionais: list[dict[str, Any]] = []
+    for m in metricas:
+        pct = float(m.get("valor_pct") or 0.0)
+        operacionais.append(
+            {
+                "nome": m.get("label", "Sem rótulo"),
+                "descricao": m.get("meta", ""),
+                "valor_pct": pct,
+                "valor_str": m.get("valor_str", f"{pct * 100:.0f}%"),
+                "stats": m.get("stats", []),
+                "cor": m.get("cor"),
+            }
+        )
+    return operacionais
+
+
+def _card_meta_operacional_v25_html(metrica: dict[str, Any]) -> str:
+    """Card compacto de meta operacional (UX-V-2.5).
+
+    Layout: nome + sub à esquerda, percentual textual à direita; barra
+    horizontal de progresso (0..1) e linha de stats em mono. Sem
+    PRAZO/RITMO/FALTA porque metas operacionais não têm prazo absoluto.
+    """
+    nome = metrica.get("nome", "Sem rótulo")
+    descricao = metrica.get("descricao", "") or ""
+    pct = float(metrica.get("valor_pct") or 0.0)  # 0..1
+    valor_str = metrica.get("valor_str", f"{pct * 100:.0f}%")
+
+    # bar_uso_html quer total > 0 para renderizar; usamos 1.0 como
+    # denominador (pct já é 0..1).
+    bar = bar_uso_html(pct, 1.0)
+    sub_html = f'<p class="meta-op-sub">{descricao}</p>' if descricao else ""
+
+    stats = metrica.get("stats") or []
+    stats_html = ""
+    if stats:
+        chips = "".join(
+            f'<span class="meta-valor-total">{label}: '
+            f'<strong style="color: var(--text-primary);">{valor}</strong></span>'
+            for (label, valor, _cor) in stats
+        )
+        stats_html = (
+            '<div class="meta-card-valores" style="gap: var(--sp-3);">'
+            f'{chips}</div>'
+        )
+
+    return minificar(
+        f"""
+        <div class="meta-op-card">
+          <div class="meta-op-head">
+            <div class="meta-op-info">
+              <h3 class="meta-op-titulo">{nome}</h3>
+              {sub_html}
+            </div>
+            <span class="meta-op-pct">{valor_str}</span>
+          </div>
+          {bar}
+          {stats_html}
+        </div>
+        """
+    )
+
+
+# ---------------------------------------------------------------------------
 # Função pública (entrypoint do dispatcher)
 # ---------------------------------------------------------------------------
 
@@ -450,12 +639,17 @@ def renderizar(dados: dict, mes_selecionado: str, pessoa: str) -> None:
          "title": "Wizard de nova meta"},
     ])
 
+    # CSS dedicado da página (UX-V-2.5)
+    st.markdown(
+        minificar(carregar_css_pagina("metas")), unsafe_allow_html=True
+    )
+
     metas = _carregar_metas()
     metas = _atualizar_valor_atual(metas, dados, mes_selecionado, pessoa)
 
     metas_valor = [m for m in metas if m.get("tipo") != "binario"]
     metas_binarias = [m for m in metas if m.get("tipo") == "binario"]
-    metricas_op = _calcular_metricas_operacionais(dados)
+    metricas_op = _carregar_metas_operacionais(dados)
 
     st.markdown(
         _page_header_html(len(metas_valor), len(metas_binarias), len(metricas_op)),
@@ -463,80 +657,65 @@ def renderizar(dados: dict, mes_selecionado: str, pessoa: str) -> None:
     )
 
     if not metas:
-        st.warning("Nenhuma meta encontrada. Verifique mappings/metas.yaml.")
+        st.markdown(
+            callout_html("info", "Nenhuma meta configurada em mappings/metas.yaml."),
+            unsafe_allow_html=True,
+        )
         return
 
-    st.markdown("### Metas financeiras")
-
+    # ----- Metas financeiras (cards V-2.5: donut + valor + barra + 3 colunas)
+    st.markdown(
+        '<h2 class="metas-secao">METAS FINANCEIRAS'
+        '<span class="metas-secao-sub">objetivos com prazo e valor</span></h2>',
+        unsafe_allow_html=True,
+    )
     if metas_valor:
-        # 3 colunas com donuts proporcionais.
         for i in range(0, len(metas_valor), 3):
             colunas = st.columns(3)
             grupo = metas_valor[i : i + 3]
             for col, meta in zip(colunas, grupo):
                 with col:
-                    st.markdown(
-                        _card_meta_financeira_header_html(meta),
-                        unsafe_allow_html=True,
-                    )
-                    st_plotly_chart_dracula(
-                        _donut_meta(meta),
-                        key=f"metas_donut_{meta.get('nome', 'sn')}_{i}",
-                    )
+                    st.markdown(_card_meta_v25_html(meta), unsafe_allow_html=True)
     else:
-        st.info("Sem metas monetárias cadastradas.")
+        st.markdown(
+            callout_html("info", "Sem metas monetárias cadastradas."),
+            unsafe_allow_html=True,
+        )
 
+    # ----- Metas binárias (sim/não) -- preservadas como bloco simples
     if metas_binarias:
-        st.markdown("### Metas binárias (Sim/Não)")
+        st.markdown(
+            '<h2 class="metas-secao">METAS BINÁRIAS'
+            '<span class="metas-secao-sub">objetivos sim/não</span></h2>',
+            unsafe_allow_html=True,
+        )
         for meta in sorted(metas_binarias, key=lambda m: m.get("prioridade", 99)):
             st.markdown(_card_meta_binaria_html(meta), unsafe_allow_html=True)
 
-    st.markdown("---")
-    st.markdown("### Metas operacionais (pipeline)")
-
-    # Gauges em colunas pareadas (2 por linha como no mockup).
-    for i in range(0, len(metricas_op), 2):
-        colunas = st.columns(2)
-        grupo = metricas_op[i : i + 2]
-        for col, metrica in zip(colunas, grupo):
-            with col:
-                st.markdown(_card_metrica_op_html(metrica), unsafe_allow_html=True)
-                st_plotly_chart_dracula(
-                    _gauge_metrica(metrica),
-                    key=f"metas_gauge_{metrica['label']}_{i}",
-                )
-                # Stats por baixo do gauge (chips compactos).
-                stats = metrica.get("stats", [])
-                if stats:
-                    chips = "".join(
-                        (
-                            f'<div style="background:{CORES["fundo"]};'
-                            f"border:1px solid {CORES['texto_sec']}22;"
-                            "border-radius:4px;padding:6px 10px;"
-                            "font-family: ui-monospace, monospace;"
-                            'font-size: 11px;">'
-                            f'<span style="color:{CORES["texto_sec"]};'
-                            'text-transform:uppercase;letter-spacing:0.06em;">'
-                            f"{label}</span><br/>"
-                            f'<span style="color:{cor};font-size:14px;'
-                            'font-weight:500;">'
-                            f"{valor}</span></div>"
-                        )
-                        for label, valor, cor in stats
-                    )
+    # ----- Metas operacionais (pipeline) -- cards compactos V-2.5
+    st.markdown(
+        '<h2 class="metas-secao">METAS OPERACIONAIS · PIPELINE'
+        '<span class="metas-secao-sub">indicadores do sistema</span></h2>',
+        unsafe_allow_html=True,
+    )
+    if metricas_op:
+        for i in range(0, len(metricas_op), 2):
+            colunas = st.columns(2)
+            grupo = metricas_op[i : i + 2]
+            for col, metrica in zip(colunas, grupo):
+                with col:
                     st.markdown(
-                        minificar(
-                            f"""
-                            <div style="
-                                display: grid;
-                                grid-template-columns: 1fr 1fr;
-                                gap: 8px;
-                                margin-top: 8px;
-                            ">{chips}</div>
-                            """
-                        ),
+                        _card_meta_operacional_v25_html(metrica),
                         unsafe_allow_html=True,
                     )
+    else:
+        st.markdown(
+            callout_html(
+                "info",
+                "Métricas operacionais indisponíveis (extrato vazio).",
+            ),
+            unsafe_allow_html=True,
+        )
 
 
 # ---------------------------------------------------------------------------

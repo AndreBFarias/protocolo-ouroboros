@@ -202,6 +202,95 @@ class TestSkillsD7ComSnapshot:
         assert "pill-d7-graduado" in html
         assert "pill-d7-calibracao" in html
 
+    def test_kpis_d7_html_emite_cinco_cards(self) -> None:
+        """UX-V-2.8: caminho com snapshot deve renderizar 5 KPIs."""
+        from src.dashboard.paginas import skills_d7
+
+        snapshot = {
+            "skills": [
+                {"estado": "graduado", "confianca": 0.97, "runs": 184},
+                {"estado": "graduado", "confianca": 0.94, "runs": 128},
+                {"estado": "calibrando", "confianca": 0.74, "runs": 38},
+                {"estado": "regredindo", "confianca": 0.62, "runs": 14},
+            ],
+            "execucoes_30d": 3836,
+            "p95_segundos": 2.4,
+        }
+        contagens = skills_d7._contar_estados(snapshot["skills"])
+        html = skills_d7._kpis_d7_html(snapshot, contagens, total=4)
+        assert html.count('class="kpi"') == 5
+        assert "COBERTURA D7" in html
+        assert "TAXA DE GRADUAÇÃO" in html
+        assert "REGRESSÕES 30D" in html
+        assert "CONFIANÇA MÉDIA" in html
+        assert "EXECUÇÕES 30D" in html
+        assert "3,836" in html  # execuções formatadas
+
+    def test_distribuicao_estados_html_emite_quatro_celulas(self) -> None:
+        """UX-V-2.8: 4 grandes números (graduado/calibrando/regredindo/pendente)."""
+        from src.dashboard.paginas import skills_d7
+
+        contagens = {"graduado": 14, "calibrando": 3, "regredindo": 1, "pendente": 0}
+        html = skills_d7._distribuicao_estados_html(contagens)
+        assert html.count('class="s7-dist-cell"') == 4
+        assert "Graduado" in html
+        assert "Calibrando" in html
+        assert "Regredindo" in html
+        assert "Pendente" in html
+        assert ">14<" in html
+        assert ">3<" in html
+
+    def test_cobertura_cluster_html_lista_clusters(self) -> None:
+        """UX-V-2.8: bar chart por cluster quando snapshot fornece."""
+        from src.dashboard.paginas import skills_d7
+
+        snapshot = {
+            "cobertura_cluster": [
+                {"nome": "Finanças", "total": 8, "graduado": 7, "calibrando": 1, "regredindo": 0},
+                {"nome": "Documentos", "total": 5, "graduado": 3, "calibrando": 2, "regredindo": 0},
+                {"nome": "Análise", "total": 3, "graduado": 2, "calibrando": 0, "regredindo": 1},
+                {"nome": "Sistema", "total": 2, "graduado": 2, "calibrando": 0, "regredindo": 0},
+            ]
+        }
+        html = skills_d7._cobertura_cluster_html(snapshot)
+        assert html.count('class="s7-cluster-row"') == 4
+        assert "Finanças" in html
+        assert "Documentos" in html
+        assert "Análise" in html
+        assert "Sistema" in html
+        assert "Cobertura por cluster" in html
+        assert "graduado" in html
+        assert "calibrando" in html
+        assert "regredindo" in html
+
+    def test_cobertura_cluster_html_omite_quando_ausente(self) -> None:
+        """Sem ``cobertura_cluster`` e sem campo ``cluster`` nas skills,
+        função retorna string vazia (degradação graceful)."""
+        from src.dashboard.paginas import skills_d7
+
+        snapshot = {"skills": [{"nome": "x", "estado": "graduado"}]}
+        html = skills_d7._cobertura_cluster_html(snapshot)
+        assert html == ""
+
+    def test_cobertura_cluster_deriva_de_skills_quando_pre_agregado_ausente(
+        self,
+    ) -> None:
+        """Quando snapshot não traz ``cobertura_cluster`` mas as skills têm
+        campo ``cluster``, deriva agregação."""
+        from src.dashboard.paginas import skills_d7
+
+        snapshot = {
+            "skills": [
+                {"nome": "a", "estado": "graduado", "cluster": "Finanças"},
+                {"nome": "b", "estado": "graduado", "cluster": "Finanças"},
+                {"nome": "c", "estado": "calibrando", "cluster": "Documentos"},
+            ]
+        }
+        html = skills_d7._cobertura_cluster_html(snapshot)
+        assert "Finanças" in html
+        assert "Documentos" in html
+        assert html.count('class="s7-cluster-row"') == 2
+
     def test_minificar_colapsa_whitespace(self) -> None:
         """Lição UX-RD-04: HTML com indentação >= 4 espaços vira ``<pre>``
         no parser CommonMark do Streamlit. ``_minificar`` previne."""

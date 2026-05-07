@@ -1,0 +1,322 @@
+/* Validação Tripla -- UX-V-2.4 (paridade visual com mockup 10) */
+
+/* ─────────── Header com KPIs ─────────── */
+.tripla-header {
+    display: flex;
+    gap: var(--sp-4);
+    align-items: center;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--r-md);
+    padding: var(--sp-3) var(--sp-4);
+    margin-bottom: var(--sp-4);
+    flex-wrap: wrap;
+}
+.tripla-kpi {
+    font-family: var(--ff-mono);
+    font-size: var(--fs-11);
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+.tripla-kpi strong {
+    font-size: var(--fs-16);
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+    margin-left: 4px;
+    font-weight: 500;
+}
+.tripla-kpi-paridade strong {
+    color: var(--d7-graduado);
+}
+.tripla-kpi-divergencias strong {
+    color: var(--accent-yellow);
+}
+.tripla-kpi-revisao strong {
+    color: var(--accent-orange);
+}
+
+/* ─────────── Lista de arquivos esquerda agrupada por tipo ─────────── */
+.lista-arquivos {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--r-md);
+    padding: var(--sp-2);
+    overflow-y: auto;
+    max-height: 720px;
+}
+.lista-grupo-tipo {
+    margin-bottom: var(--sp-3);
+    display: flex;
+    flex-direction: column;
+}
+.lista-grupo-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    font-family: var(--ff-mono);
+    font-size: var(--fs-11);
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    border-left: 3px solid var(--border-strong);
+    background: var(--bg-inset);
+    border-radius: var(--r-xs);
+    margin-bottom: 4px;
+}
+.lista-grupo-head.tipo-pdf { border-left-color: var(--accent-orange); }
+.lista-grupo-head.tipo-imagem { border-left-color: var(--accent-cyan); }
+.lista-grupo-head.tipo-csv { border-left-color: var(--d7-graduado); }
+.lista-grupo-head.tipo-xlsx { border-left-color: var(--accent-yellow); }
+.lista-grupo-head.tipo-ofx { border-left-color: var(--accent-purple); }
+.lista-grupo-head.tipo-html { border-left-color: var(--text-muted); }
+
+.lista-grupo-count {
+    margin-left: auto;
+    font-size: 10px;
+    color: var(--text-muted);
+    background: var(--bg-elevated);
+    padding: 0 6px;
+    border-radius: var(--r-full);
+}
+.lista-grupo-body {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.arquivo-linha {
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: var(--r-sm);
+    padding: 8px 10px;
+    cursor: pointer;
+    transition: background .12s, border-color .12s;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.arquivo-linha:hover {
+    background: var(--bg-elevated);
+    border-color: var(--border-subtle);
+}
+.arquivo-linha.selecionado {
+    background: rgba(189, 147, 249, 0.08);
+    border-color: var(--accent-purple);
+}
+.arq-top {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.arq-flag {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: var(--humano-pendente);
+}
+.arq-flag.flag-aprovado { background: var(--humano-aprovado); }
+.arq-flag.flag-revisar { background: var(--humano-revisar); }
+.arq-flag.flag-pendente { background: var(--humano-pendente); }
+
+.arq-nome {
+    flex: 1;
+    font-family: var(--ff-mono);
+    font-size: var(--fs-12);
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.arq-meta {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    font-family: var(--ff-mono);
+    font-size: 10px;
+    color: var(--text-muted);
+    padding-left: 12px;
+}
+.arq-tipo-badge {
+    background: var(--bg-elevated);
+    padding: 1px 6px;
+    border-radius: var(--r-xs);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+.arq-paridade {
+    font-weight: 500;
+}
+.arq-paridade.paridade-alta { color: var(--d7-graduado); }
+.arq-paridade.paridade-media { color: var(--d7-calibracao); }
+.arq-paridade.paridade-baixa { color: var(--d7-regredindo); }
+
+/* ─────────── Tabela tripla central (ETL × Opus × Humano) ─────────── */
+.tabela-tripla-host {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--r-md);
+    overflow: auto;
+    min-height: 0;
+}
+.tabela-tripla {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: var(--fs-13);
+}
+.tabela-tripla thead th {
+    position: sticky;
+    top: 0;
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border-strong);
+    padding: var(--sp-3);
+    text-align: left;
+    vertical-align: top;
+    z-index: 2;
+}
+.tabela-tripla th.th-etl {
+    border-left: 3px solid var(--diff-removed-gutter);
+    background: linear-gradient(180deg, rgba(255,85,85,0.04), transparent);
+}
+.tabela-tripla th.th-opus {
+    border-left: 3px solid var(--accent-purple);
+    background: linear-gradient(180deg, rgba(189,147,249,0.04), transparent);
+}
+.tabela-tripla th.th-humano {
+    border-left: 3px solid var(--accent-cyan);
+    background: linear-gradient(180deg, rgba(139,233,253,0.05), transparent);
+}
+.th-fonte {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--ff-mono);
+    font-size: var(--fs-12);
+    font-weight: 500;
+    color: var(--text-primary);
+    letter-spacing: 0.02em;
+    margin-bottom: 4px;
+}
+.th-fonte-sub {
+    font-family: var(--ff-mono);
+    font-size: 10px;
+    color: var(--text-muted);
+    font-weight: 400;
+    letter-spacing: 0;
+}
+.th-campo,
+.th-status {
+    font-family: var(--ff-mono);
+    font-size: var(--fs-11);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    padding-bottom: 24px !important;
+}
+
+.tabela-tripla tbody td {
+    padding: var(--sp-2) var(--sp-3);
+    border-bottom: 1px solid var(--border-subtle);
+    vertical-align: middle;
+}
+.tabela-tripla tbody td.cel-etl {
+    border-left: 3px solid rgba(255, 85, 85, 0.18);
+    font-family: var(--ff-mono);
+}
+.tabela-tripla tbody td.cel-opus {
+    border-left: 3px solid rgba(189, 147, 249, 0.22);
+    font-family: var(--ff-mono);
+}
+.tabela-tripla tbody td.cel-humano {
+    border-left: 3px solid rgba(139, 233, 253, 0.22);
+}
+
+.tabela-tripla tbody tr.linha-divergente td.cel-etl {
+    background: var(--diff-removed-bg);
+}
+.tabela-tripla tbody tr.linha-divergente td.cel-opus {
+    background: rgba(189, 147, 249, 0.08);
+}
+.tabela-tripla tbody tr.linha-uni-etl td.cel-etl {
+    background: rgba(241, 250, 140, 0.08);
+}
+.tabela-tripla tbody tr.linha-uni-opus td.cel-opus {
+    background: rgba(241, 250, 140, 0.08);
+}
+
+.cel-campo .campo-nome {
+    font-family: var(--ff-mono);
+    font-size: var(--fs-12);
+    color: var(--text-secondary);
+    letter-spacing: 0.02em;
+}
+.cel-etl .val,
+.cel-opus .val {
+    color: var(--text-primary);
+}
+.cel-vazio {
+    color: var(--text-muted);
+    font-style: italic;
+}
+.cel-opus .conf {
+    font-size: 10px;
+    font-family: var(--ff-mono);
+    margin-left: 8px;
+    font-variant-numeric: tabular-nums;
+    background: var(--bg-inset);
+    padding: 1px 5px;
+    border-radius: var(--r-xs);
+    color: var(--text-muted);
+}
+.cel-opus .conf.conf-alta { color: var(--d7-graduado); }
+.cel-opus .conf.conf-media { color: var(--d7-calibracao); }
+.cel-opus .conf.conf-baixa { color: var(--d7-regredindo); }
+
+/* Status badges */
+.cel-status {
+    text-align: center;
+}
+.badge-consenso {
+    background: rgba(107, 142, 127, 0.18);
+    color: var(--humano-aprovado);
+    padding: 2px 8px;
+    border-radius: var(--r-full);
+    font-family: var(--ff-mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+.badge-divergente {
+    background: rgba(255, 184, 108, 0.15);
+    color: var(--accent-orange);
+    padding: 2px 8px;
+    border-radius: var(--r-full);
+    font-family: var(--ff-mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+.badge-uni-etl,
+.badge-uni-opus {
+    background: rgba(241, 250, 140, 0.12);
+    color: var(--d7-calibracao);
+    padding: 2px 8px;
+    border-radius: var(--r-full);
+    font-family: var(--ff-mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+/* Tabela vazia / lista vazia */
+.tabela-vazia,
+.lista-vazia {
+    color: var(--text-muted);
+    padding: var(--sp-4);
+    text-align: center;
+    font-size: var(--fs-12);
+    font-style: italic;
+}

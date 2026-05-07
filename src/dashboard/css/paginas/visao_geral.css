@@ -1,0 +1,96 @@
+/* Página Visão Geral -- UX-V-2.7 paridade mockup 01-visao-geral.html.
+   Classes adicionais para timeline com ícone SVG e cards de cluster
+   alinhados ao components.css canônico. Convive com o CSS inline em
+   visao_geral.py (vg-t01-*) sem regressão das páginas vizinhas. */
+
+.secao-titulo {
+    font-family: var(--ff-mono); font-size: 11px;
+    text-transform: uppercase; letter-spacing: 0.10em;
+    color: var(--text-muted);
+    margin: var(--sp-4) 0 var(--sp-2);
+}
+
+.cluster-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--sp-3);
+}
+
+.cluster-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--r-md);
+    padding: var(--sp-4);
+    transition: border-color 0.15s, transform 0.15s;
+}
+.cluster-card:hover {
+    border-color: var(--accent-purple);
+    transform: translateY(-1px);
+}
+.cluster-card-link {
+    text-decoration: none; color: inherit; display: block;
+}
+.cluster-card-titulo {
+    font-family: var(--ff-mono); font-size: 14px;
+    color: var(--text-primary); font-weight: 500;
+    margin: 0 0 var(--sp-1);
+}
+.cluster-card-desc {
+    font-size: 12px; color: var(--text-secondary);
+    margin: 0 0 var(--sp-2);
+}
+.cluster-card-metric {
+    font-family: var(--ff-mono); font-size: 11px;
+    color: var(--text-muted);
+    margin: 0;
+}
+.cluster-card-metric strong {
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Atividade Recente -- ícone SVG inline (UX-V-2.7) substitui o "·"
+   literal anterior. O glyph vem de componentes/glyphs.GLYPHS via
+   função glyph(nome, tamanho_px). */
+.atividade-lista {
+    display: flex; flex-direction: column; gap: var(--sp-2);
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--r-md);
+    padding: var(--sp-3);
+}
+.atividade-linha {
+    display: grid;
+    grid-template-columns: auto 18px 1fr;
+    gap: var(--sp-2);
+    align-items: center;
+    padding: 4px 0;
+    border-bottom: 1px solid var(--border-subtle);
+}
+.atividade-linha:last-child { border-bottom: none; }
+.atividade-ts {
+    font-family: var(--ff-mono); font-size: 10px;
+    color: var(--text-muted);
+}
+.atividade-icone {
+    color: var(--accent-purple);
+    display: grid; place-items: center;
+}
+.atividade-icone svg { width: 14px; height: 14px; }
+.atividade-desc {
+    font-size: 12px; color: var(--text-secondary);
+}
+.atividade-vazio {
+    font-family: var(--ff-mono); font-size: 12px;
+    color: var(--text-muted); padding: var(--sp-3);
+}
+
+/* Refinamento da timeline canônica vg-t01 (UX-V-2.7): ícone vira
+   container SVG (14x14) para receber o glyph renderizado, em vez do
+   caractere "·" literal anterior. */
+.vg-t01-tl-item .ic svg {
+    width: 14px;
+    height: 14px;
+    color: var(--accent-purple);
+    vertical-align: middle;
+}

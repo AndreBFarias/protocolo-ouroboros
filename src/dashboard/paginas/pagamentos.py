@@ -18,6 +18,7 @@ mantém a assinatura legada (com ``ctx`` opcional) usada por ``app.py``.
 
 from __future__ import annotations
 
+from calendar import monthrange
 from datetime import date, timedelta
 from typing import Iterable
 
@@ -36,6 +37,7 @@ from src.analysis.pagamentos import (
 from src.dashboard.componentes.html_utils import minificar
 from src.dashboard.componentes.ui import (
     callout_html,
+    carregar_css_pagina,
 )
 from src.dashboard.dados import (
     filtrar_por_forma_pagamento,
@@ -320,211 +322,257 @@ def _cor_tipo(tipo: str) -> str:
     }.get(tipo, CORES["texto_sec"])
 
 
-def _calendario_html(celulas: list[dict[str, object]]) -> str:
-    """Grid 7×2 com 14 cells; cada cell traz dia + chips por tipo."""
-    cells_html: list[str] = []
-    for cel in celulas:
-        d: date = cel["data"]  # type: ignore[assignment]
-        is_today = bool(cel["is_today"])
-        eventos: list[dict[str, object]] = cel["eventos"]  # type: ignore[assignment]
+# ---------------------------------------------------------------------------
+# UX-V-2.2 -- Calendário do mês inteiro + lista lateral acionável
+# ---------------------------------------------------------------------------
 
-        borda = (
-            CORES["destaque"] if is_today else rgba_cor(CORES["texto_sec"], 0.20)
-        )
-        fundo = (
-            rgba_cor(CORES["destaque"], 0.08)
-            if is_today
-            else CORES["card_fundo"]
-        )
-        cor_dia = CORES["destaque"] if is_today else CORES["texto_sec"]
+NOMES_MESES: tuple[str, ...] = (
+    "",
+    "JANEIRO",
+    "FEVEREIRO",
+    "MARÇO",
+    "ABRIL",
+    "MAIO",
+    "JUNHO",
+    "JULHO",
+    "AGOSTO",
+    "SETEMBRO",
+    "OUTUBRO",
+    "NOVEMBRO",
+    "DEZEMBRO",
+)
 
-        chips_html: list[str] = []
-        for ev in eventos[:3]:  # cap visual; >3 sumarizamos
-            tipo = str(ev.get("tipo", "var"))
-            cor = _cor_tipo(tipo)
-            conta = str(ev.get("conta", ""))[:18]
-            chips_html.append(
-                f'<span class="pay {tipo}" '
-                f'style="display:block;margin-top:3px;'
-                f'padding:1px 4px;border-radius:3px;'
-                f'font-size:9px;letter-spacing:0.04em;'
-                f'text-transform:uppercase;'
-                f'overflow:hidden;text-overflow:ellipsis;'
-                f'white-space:nowrap;'
-                f'background:{rgba_cor(cor, 0.18)};color:{cor};'
-                f'">{conta}</span>'
+ABREV_MESES: tuple[str, ...] = (
+    "JAN",
+    "FEV",
+    "MAR",
+    "ABR",
+    "MAI",
+    "JUN",
+    "JUL",
+    "AGO",
+    "SET",
+    "OUT",
+    "NOV",
+    "DEZ",
+)
+
+
+def _gerar_calendario_mes(ano: int, mes: int) -> list[list[date | None]]:
+    """Retorna matriz NxM (semanas x dias) com datas do mês.
+
+    Células fora do mês = ``None``. Primeira semana começa Seg, última Dom.
+    Garante mínimo de 5 semanas para layout estável (mockup 04-pagamentos).
+    """
+    primeiro_dia = date(ano, mes, 1)
+    _, total_dias = monthrange(ano, mes)
+    weekday_inicio = primeiro_dia.weekday()  # Seg=0, Dom=6
+
+    dias: list[date | None] = []
+    for _ in range(weekday_inicio):
+        dias.append(None)
+    for d in range(1, total_dias + 1):
+        dias.append(date(ano, mes, d))
+    while len(dias) % 7 != 0:
+        dias.append(None)
+    while len(dias) // 7 < 5:
+        dias.extend([None] * 7)
+
+    return [dias[i : i + 7] for i in range(0, len(dias), 7)]
+
+
+def _pagamentos_por_data(
+    df_prazos: pd.DataFrame, ano: int, mes: int
+) -> dict[date, list[dict[str, object]]]:
+    """Agrupa pagamentos do mês por data de vencimento.
+
+    Retorna ``{date(2026, 5, 10): [{"label", "tipo", "valor"}, ...], ...}``.
+    Tipos canônicos: ``fixo`` (recorrente futuro), ``em_atraso`` (data
+    passada), ``cartao`` (conta com palavra "fatura"/"cartao"/"nubank"/etc),
+    ``variavel`` (boleto sem regra recorrente).
+
+    Quando ``df_prazos`` está vazio, retorna ``{}`` (fallback graceful).
+    """
+    if df_prazos is None or df_prazos.empty:
+        return {}
+    if "dia_vencimento" not in df_prazos.columns:
+        return {}
+
+    pgs: dict[date, list[dict[str, object]]] = {}
+    hoje = date.today()
+    palavras_cartao = ("fatura", "cartao", "cartão", "nubank", "c6 cartao")
+
+    for _, row in df_prazos.iterrows():
+        try:
+            dia_raw = row.get("dia_vencimento", 0)
+            if pd.isna(dia_raw):
+                continue
+            dia = int(dia_raw)
+        except (ValueError, TypeError):
+            continue
+        if dia < 1 or dia > 31:
+            continue
+        try:
+            d = date(ano, mes, dia)
+        except ValueError:
+            continue
+
+        try:
+            valor = float(row.get("valor", 0) or 0)
+        except (ValueError, TypeError):
+            valor = 0.0
+
+        conta_raw = row.get("conta", row.get("nome", "?"))
+        if pd.isna(conta_raw):
+            conta_raw = "?"
+        label = str(conta_raw).strip()
+
+        label_lower = label.lower()
+        if d < hoje:
+            tipo = "em_atraso"
+        elif any(p in label_lower for p in palavras_cartao):
+            tipo = "cartao"
+        else:
+            tipo = "fixo"
+
+        pgs.setdefault(d, []).append(
+            {
+                "label": label[:14],
+                "tipo": tipo,
+                "valor": valor,
+            }
+        )
+    return pgs
+
+
+def _calendario_html(
+    ano: int, mes: int, pagamentos_por_data: dict[date, list[dict[str, object]]]
+) -> str:
+    """Renderiza calendário do mês inteiro (Seg-Dom) com pílulas coloridas.
+
+    Cabeçalho ``<mês> · <ano>`` + grid 7 colunas + legenda no rodapé com
+    contadores e total mensal.
+    """
+    semanas = _gerar_calendario_mes(ano, mes)
+    cabecalho = ("SEG", "TER", "QUA", "QUI", "SEX", "SÁB", "DOM")
+    hoje = date.today()
+
+    head_dias = "".join(f'<div class="cal-head-dia">{d}</div>' for d in cabecalho)
+
+    celulas: list[str] = []
+    total_pgs = 0
+    total_valor = 0.0
+    for semana in semanas:
+        for d in semana:
+            if d is None:
+                celulas.append('<div class="cal-celula cal-empty"></div>')
+                continue
+            pg_dia = pagamentos_por_data.get(d, [])
+            classes = ["cal-celula"]
+            if pg_dia:
+                classes.append("cal-tem-pg")
+                total_pgs += len(pg_dia)
+                total_valor += sum(float(p.get("valor", 0) or 0) for p in pg_dia)
+            if d == hoje:
+                classes.append("cal-hoje")
+            pills = "".join(
+                f'<span class="cal-pill cal-pill-{p["tipo"]}" '
+                f'title="{p["label"]}">{str(p["label"]).upper()}</span>'
+                for p in pg_dia
             )
-        if len(eventos) > 3:
-            chips_html.append(
-                f'<span style="display:block;font-size:9px;'
-                f'color:{CORES["texto_sec"]};margin-top:2px;">'
-                f'+{len(eventos) - 3} mais</span>'
+            celulas.append(
+                f'<div class="{" ".join(classes)}">'
+                f'<span class="cal-num">{d.day:02d}</span>'
+                f"{pills}"
+                f"</div>"
             )
 
-        cells_html.append(
-            f'<div class="cal-day" data-today="{str(is_today).lower()}" '
-            f'style="background:{fundo};'
-            f'border:1px solid {borda};'
-            f'border-radius:6px;'
-            f'padding:6px;min-height:64px;'
-            f'font-size:11px;">'
-            f'<span class="num" style="color:{cor_dia};font-size:12px;'
-            f'font-weight:{500 if is_today else 400};">'
-            f'{d.day:02d}/{d.month:02d}</span>'
-            f'{"".join(chips_html)}'
-            f'</div>'
-        )
-
-    legenda_html = minificar(
-        f"""
-        <div style="display:flex;
-                    gap:14px;
-                    padding:10px 0 0 0;
-                    font-size:11px;
-                    color:{CORES["texto_sec"]};
-                    flex-wrap:wrap;">
-          <span><span style="display:inline-block;width:10px;height:10px;
-                             border-radius:2px;background:{CORES["destaque"]};"></span>
-                fixo</span>
-          <span><span style="display:inline-block;width:10px;height:10px;
-                             border-radius:2px;background:{CORES["superfluo"]};"></span>
-                variável</span>
-          <span><span style="display:inline-block;width:10px;height:10px;
-                             border-radius:2px;background:{CORES["alerta"]};"></span>
-                cartão</span>
-          <span><span style="display:inline-block;width:10px;height:10px;
-                             border-radius:2px;background:{CORES["negativo"]};"></span>
-                em atraso</span>
-        </div>
-        """
-    )
+    grid = head_dias + "".join(celulas)
 
     return minificar(
         f"""
-        <div class="calendar"
-             style="background:{CORES["card_fundo"]};
-                    border:1px solid {rgba_cor(CORES["texto_sec"], 0.20)};
-                    border-radius:8px;padding:16px 18px;">
-          <div style="display:flex;
-                      justify-content:space-between;
-                      align-items:center;
-                      margin-bottom:12px;">
-            <h3 style="font-size:14px;
-                       margin:0;
-                       font-weight:500;
-                       color:{CORES["texto"]};">próximos {CAL_DIAS} dias</h3>
-            <span style="font-size:11px;color:{CORES["texto_sec"]};">
-              hoje · {date.today().strftime("%d/%m/%Y")}
-            </span>
-          </div>
-          <div class="cal-grid7"
-               style="display:grid;
-                      grid-template-columns:repeat(7, minmax(0,1fr));
-                      gap:4px;">
-            {''.join(cells_html)}
-          </div>
-          {legenda_html}
-        </div>
-        """
-    )
-
-
-def _lista_lateral_html(eventos: list[dict[str, object]]) -> str:
-    """Lista detalhada de vencimentos: data | conta | banco | valor | auto."""
-    if not eventos:
-        return minificar(
-            f"""
-            <div style="background:{CORES["card_fundo"]};
-                        border:1px solid {rgba_cor(CORES["texto_sec"], 0.20)};
-                        border-radius:8px;padding:16px 18px;
-                        font-size:13px;color:{CORES["texto_sec"]};">
-              Sem vencimentos identificados nos próximos {CAL_DIAS} dias.
-              Adicione prazos recorrentes na aba ``prazos`` do XLSX legado
-              ou aguarde extratos com boletos pendentes.
+        <div class="pagamentos-calendario">
+          <div class="cal-header">
+            <span class="cal-titulo">{NOMES_MESES[mes].lower()} · {ano}</span>
+            <div class="cal-nav">
+              <span class="cal-nav-btn">SEG-DOM</span>
             </div>
-            """
-        )
+          </div>
+          <div class="cal-grid">{grid}</div>
+          <div class="cal-legenda">
+            <span class="cal-legenda-item">
+              <span class="cal-pill cal-pill-fixo"></span> fixo
+            </span>
+            <span class="cal-legenda-item">
+              <span class="cal-pill cal-pill-variavel"></span> variável
+            </span>
+            <span class="cal-legenda-item">
+              <span class="cal-pill cal-pill-cartao"></span> cartão
+            </span>
+            <span class="cal-legenda-item">
+              <span class="cal-pill cal-pill-em_atraso"></span> em atraso
+            </span>
+            <span class="cal-legenda-total">
+              {total_pgs} pagamentos no mês · R$ {total_valor:,.2f}
+            </span>
+          </div>
+        </div>
+        """
+    )
 
-    rows: list[str] = []
-    for ev in eventos:
-        d: date = ev["data"]  # type: ignore[assignment]
-        conta_raw = ev.get("conta", "")
-        conta = str(conta_raw) if conta_raw and str(conta_raw).lower() != "nan" else "—"
-        banco_raw = ev.get("banco_pagamento", "")
-        banco = (
-            str(banco_raw)
-            if banco_raw and str(banco_raw).lower() != "nan"
-            else "—"
-        )
-        valor = float(ev.get("valor", 0.0))  # type: ignore[arg-type]
-        auto = bool(ev.get("auto_debito"))
-        atraso = bool(ev.get("atraso"))
 
-        cor_data = CORES["negativo"] if atraso else CORES["texto_sec"]
-        cor_valor = (
-            CORES["negativo"]
-            if atraso
-            else CORES["d7_graduado"]
-            if valor < 0
-            else CORES["texto"]
-        )
+def _lista_proximos_html(
+    pagamentos_por_data: dict[date, list[dict[str, object]]],
+    janela_dias: int = CAL_DIAS,
+) -> str:
+    """Lista lateral PRÓXIMOS N DIAS com botão "agendar" inline.
 
-        chip_auto = (
-            f'<span style="display:inline-block;'
-            f'padding:2px 8px;'
-            f'border-radius:999px;'
-            f'background:{rgba_cor(CORES["d7_graduado"], 0.15)};'
-            f'color:{CORES["d7_graduado"]};'
-            f'font-size:10px;'
-            f'letter-spacing:0.04em;">auto</span>'
-            if auto
-            else f'<span style="font-size:10px;color:{CORES["texto_sec"]};">manual</span>'
-        )
+    Inclui datas em atraso (até 14 dias antes de hoje) e próximas
+    (hoje + janela_dias). Cap em 10 itens.
+    """
+    hoje = date.today()
+    inicio = hoje - timedelta(days=janela_dias)
+    fim = hoje + timedelta(days=janela_dias)
+    candidatos = sorted(
+        (d, pgs)
+        for d, pgs in pagamentos_por_data.items()
+        if inicio <= d <= fim
+    )
 
-        valor_str = formatar_moeda(abs(valor)) if valor else "—"
+    linhas: list[str] = []
+    for d, pgs in candidatos:
+        for p in pgs:
+            classe = "linha-em-atraso" if d < hoje else ""
+            label = str(p.get("label", "?"))
+            tipo = str(p.get("tipo", "fixo"))
+            valor = float(p.get("valor", 0) or 0)
+            mes_abrev = ABREV_MESES[d.month - 1]
+            linhas.append(
+                f'<div class="proximo-linha {classe}">'
+                f'<div class="prox-data">'
+                f'<span class="prox-dia">{d.day:02d}</span>'
+                f'<span class="prox-mes">{mes_abrev}</span>'
+                f"</div>"
+                f'<div class="prox-detalhes">'
+                f'<span class="prox-label">{label}</span>'
+                f'<span class="prox-meta">{tipo.replace("_", " ")}</span>'
+                f"</div>"
+                f'<span class="prox-valor">R$ {valor:,.2f}</span>'
+                f'<button class="prox-btn">agendar</button>'
+                f"</div>"
+            )
+            if len(linhas) >= 10:
+                break
+        if len(linhas) >= 10:
+            break
 
-        rows.append(
-            f'<div style="display:grid;'
-            f'grid-template-columns:60px 1fr 90px auto 80px;'
-            f'gap:12px;padding:10px 14px;'
-            f'border-bottom:1px dashed {rgba_cor(CORES["texto_sec"], 0.20)};'
-            f'align-items:center;font-size:13px;'
-            f'color:{CORES["texto"]};">'
-            f'<div style="font-size:11px;color:{cor_data};'
-            f'letter-spacing:0.04em;text-transform:uppercase;">'
-            f'{d.day:02d}/{d.month:02d}</div>'
-            f'<div><strong style="display:block;color:{CORES["texto"]};">{conta}</strong>'
-            f'<span style="font-size:11px;color:{CORES["texto_sec"]};margin-top:2px;">'
-            f'pagar via {banco}</span></div>'
-            f'<div style="font-size:11px;color:{CORES["texto_sec"]};">{banco}</div>'
-            f'<div style="font-size:14px;text-align:right;'
-            f'font-variant-numeric:tabular-nums;color:{cor_valor};">'
-            f'{valor_str}</div>'
-            f'<div style="text-align:right;">{chip_auto}</div>'
-            f'</div>'
+    if not linhas:
+        return minificar(
+            '<div class="proximos-vazio">Sem vencimentos no período.</div>'
         )
 
     return minificar(
-        f"""
-        <div class="upcoming"
-             style="background:{CORES["card_fundo"]};
-                    border:1px solid {rgba_cor(CORES["texto_sec"], 0.20)};
-                    border-radius:8px;">
-          <div style="padding:12px 18px;
-                      border-bottom:1px solid {rgba_cor(CORES["texto_sec"], 0.20)};
-                      display:flex;align-items:center;justify-content:space-between;">
-            <h3 style="font-size:11px;
-                       letter-spacing:0.08em;
-                       text-transform:uppercase;
-                       color:{CORES["texto_sec"]};
-                       margin:0;">Vencimentos detalhados</h3>
-            <span style="font-size:11px;color:{CORES["texto_sec"]};">
-              {len(eventos)} eventos
-            </span>
-          </div>
-          {''.join(rows)}
-        </div>
-        """
+        '<div class="proximos-lista">' + "".join(linhas) + "</div>"
     )
 
 
@@ -539,8 +587,13 @@ def renderizar(
     pessoa: str,
     ctx: dict | None = None,
 ) -> None:
-    """Renderiza Pagamentos (UX-RD-07 + UX-T-04)."""
-    del mes_selecionado, ctx
+    """Renderiza Pagamentos (UX-V-2.2 paridade com mockup 04-pagamentos.html).
+
+    Layout: KPIs no topo, calendário do mês inteiro à esquerda (5 semanas
+    Seg-Dom com pílulas coloridas) + lista lateral PRÓXIMOS 14 DIAS com
+    botão "agendar" inline. Sub-abas Boletos · Pix · Crédito preservadas.
+    """
+    del ctx
 
     from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
     renderizar_grupo_acoes([
@@ -556,6 +609,11 @@ def renderizar(
             unsafe_allow_html=True,
         )
         return
+
+    # CSS dedicado da página (UX-V-2.2)
+    st.markdown(
+        minificar(carregar_css_pagina("pagamentos")), unsafe_allow_html=True
+    )
 
     extrato = filtrar_por_forma_pagamento(
         filtrar_por_pessoa(dados["extrato"], pessoa),
@@ -575,9 +633,24 @@ def renderizar(
 
     eventos = construir_eventos_calendario(prazos, boletos)
     kpis = calcular_kpis_pagamentos(eventos)
-    celulas = gerar_celulas_calendario(eventos)
 
     em_atraso_qtd = sum(1 for e in eventos if e.get("atraso"))
+
+    # Mês/ano: deriva do filtro global; default = mês corrente.
+    hoje = date.today()
+    ano, mes = hoje.year, hoje.month
+    if isinstance(mes_selecionado, str) and "-" in mes_selecionado:
+        partes = mes_selecionado.split("-")
+        if len(partes) >= 2:
+            try:
+                ano = int(partes[0])
+                mes_candidato = int(partes[1])
+                if 1 <= mes_candidato <= 12:
+                    mes = mes_candidato
+            except ValueError:
+                pass
+
+    pgs_por_data = _pagamentos_por_data(prazos, ano, mes)
 
     st.markdown(
         _page_header_html(len(eventos), em_atraso_qtd),
@@ -585,11 +658,21 @@ def renderizar(
     )
     st.markdown(_kpi_row_html(kpis), unsafe_allow_html=True)
 
-    col_cal, col_lista = st.columns([1.6, 1.0])
+    col_cal, col_lista = st.columns([2, 1])
     with col_cal:
-        st.markdown(_calendario_html(celulas), unsafe_allow_html=True)
+        st.markdown(
+            _calendario_html(ano, mes, pgs_por_data),
+            unsafe_allow_html=True,
+        )
     with col_lista:
-        st.markdown(_lista_lateral_html(eventos), unsafe_allow_html=True)
+        st.markdown(
+            '<h3 class="proximos-titulo">PRÓXIMOS 14 DIAS</h3>',
+            unsafe_allow_html=True,
+        )
+        st.markdown(
+            _lista_proximos_html(pgs_por_data),
+            unsafe_allow_html=True,
+        )
 
     # ---------------------------------------------------------------
     # Sub-abas legadas (Boletos · Pix · Crédito) — preservadas

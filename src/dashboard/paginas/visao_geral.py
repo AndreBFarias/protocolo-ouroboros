@@ -96,8 +96,13 @@ def renderizar(
         ]
     )
 
+    from src.dashboard.componentes.html_utils import minificar
+    from src.dashboard.componentes.ui import carregar_css_pagina
+
     st.markdown(_estilos_locais(), unsafe_allow_html=True)
     st.markdown(_estilos_t01_canonicos(), unsafe_allow_html=True)
+    # UX-V-2.7: CSS canônico em arquivo (paridade com mockup 01-visao-geral.html).
+    st.markdown(minificar(carregar_css_pagina("visao_geral")), unsafe_allow_html=True)
 
     sprint_meta = ler_sprint_atual()
     # VG-FIDELIDADE-FIX: usa o titulo canonico (ex.: VALIDAÇÃO-CSV-01)
@@ -915,20 +920,37 @@ def _clusters_canonicos_html(cards: list[dict]) -> str:
 
 
 def _atividade_recente_html(entries: list[dict]) -> str:
-    """Timeline de eventos recentes."""
+    """Timeline de eventos recentes com ícones SVG canônicos.
+
+    UX-V-2.7: cada linha recebe glyph SVG do mapeamento ``GLYPHS``
+    (em ``componentes/glyphs.py``) conforme campo ``glyph`` do
+    ``TimelineEntry`` — espelha o mockup ``_visao-render.js`` que
+    chama ``glyph(ic, 16)`` em cada ``tlItem``. Antes vazava o
+    caractere ``·`` literal sem informação visual.
+
+    Fallback (entrada sem ``glyph`` ou glyph inexistente): mantém o
+    container vazio ``<span class="ic"></span>`` para preservar o
+    grid; a Atividade Recente continua legível.
+    """
+    from src.dashboard.componentes.glyphs import GLYPHS, glyph
     from src.dashboard.componentes.html_utils import minificar
+
+    def _icone(nome: str) -> str:
+        if nome and nome in GLYPHS:
+            return glyph(nome, tamanho_px=14)
+        return ""
 
     if not entries:
         body = (
             '<div class="vg-t01-tl-item"><span class="when">—</span>'
-            '<span class="ic">·</span>'
+            '<span class="ic"></span>'
             '<span class="what">Sem atividade recente registrada.</span></div>'
         )
     else:
         body = "".join(
             '<div class="vg-t01-tl-item">'
             f'<span class="when">{e["when"]}</span>'
-            '<span class="ic">·</span>'
+            f'<span class="ic">{_icone(e.get("glyph", ""))}</span>'
             f'<span class="what">{e["what_html"]}</span>'
             "</div>"
             for e in entries

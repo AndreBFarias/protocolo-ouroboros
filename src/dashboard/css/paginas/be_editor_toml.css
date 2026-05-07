@@ -1,0 +1,240 @@
+/* be_editor_toml.css -- estilos da página Bem-estar / Editor TOML (UX-V-2.16).
+ *
+ * 3 colunas: lista arquivos | editor | preview ao vivo.
+ * Mockup-fonte: novo-mockup/mockups/28-rotina-toml.html.
+ */
+
+/* ----------------------------------------------------------------------- */
+/* Coluna 1 -- lista de arquivos .toml                                      */
+/* ----------------------------------------------------------------------- */
+
+.toml-files-titulo {
+    font-family: var(--ff-mono);
+    font-size: 11px;
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin: 0 0 var(--sp-2) 0;
+    padding-bottom: var(--sp-2);
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.lista-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    padding: 6px var(--sp-2);
+    font-family: var(--ff-mono);
+    font-size: 12px;
+    color: var(--text-secondary);
+    border-radius: var(--r-xs);
+    margin-bottom: 2px;
+}
+
+.lista-item:hover {
+    background: var(--bg-inset);
+}
+
+.lista-item.ativo {
+    background: var(--accent-purple);
+    color: var(--text-inverse);
+}
+
+.lista-item .nome {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.lista-item .count {
+    font-size: 10px;
+    color: var(--text-muted);
+    padding: 1px 6px;
+    border-radius: 2px;
+    background: var(--bg-base);
+}
+
+.lista-item.ativo .count {
+    background: var(--text-inverse);
+    color: var(--accent-purple);
+}
+
+.lista-vazia {
+    font-family: var(--ff-mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    padding: var(--sp-2);
+    font-style: italic;
+}
+
+/* ----------------------------------------------------------------------- */
+/* Coluna 2 -- validação inline do editor                                   */
+/* ----------------------------------------------------------------------- */
+
+.validacao-inline {
+    font-family: var(--ff-mono);
+    font-size: 11px;
+    padding: 6px var(--sp-2);
+    margin-top: var(--sp-2);
+    background: var(--bg-inset);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--r-xs);
+    display: flex;
+    gap: var(--sp-3);
+    align-items: center;
+}
+
+.validacao-inline .ok {
+    color: var(--accent-green);
+    font-weight: 600;
+}
+
+.validacao-inline .erro {
+    color: var(--accent-red);
+    font-weight: 600;
+}
+
+.validacao-inline .aviso {
+    color: var(--accent-orange);
+}
+
+.validacao-msgs {
+    margin-top: var(--sp-2);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.validacao-msgs .msg {
+    font-family: var(--ff-mono);
+    font-size: 11px;
+    padding: 4px 8px;
+    border-left: 3px solid var(--accent-orange);
+    background: var(--bg-inset);
+    color: var(--text-secondary);
+    border-radius: var(--r-xs);
+}
+
+.validacao-msgs .msg.erro {
+    border-left-color: var(--accent-red);
+    color: var(--accent-red);
+}
+
+/* ----------------------------------------------------------------------- */
+/* Coluna 3 -- preview ao vivo                                              */
+/* ----------------------------------------------------------------------- */
+
+.preview-titulo {
+    font-family: var(--ff-mono);
+    font-size: 11px;
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin: 0 0 var(--sp-2) 0;
+    padding-bottom: var(--sp-2);
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.preview-bloco {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--r-md);
+    padding: var(--sp-3);
+    font-family: var(--ff-mono);
+    font-size: 12px;
+    line-height: 1.6;
+    max-height: 520px;
+    overflow-y: auto;
+}
+
+.preview-resumo {
+    font-family: var(--ff-mono);
+    font-size: 10px;
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: var(--sp-2);
+    padding-bottom: var(--sp-2);
+    border-bottom: 1px dashed var(--border-subtle);
+}
+
+.prev-alarme {
+    color: var(--accent-purple);
+    padding: 4px 0;
+    display: flex;
+    gap: 8px;
+    align-items: baseline;
+}
+
+.prev-alarme .hora {
+    font-weight: 600;
+    min-width: 48px;
+    color: var(--accent-purple);
+}
+
+.prev-alarme .nome {
+    color: var(--text-primary);
+    flex: 1;
+}
+
+.prev-tarefa {
+    color: var(--text-secondary);
+    padding: 4px 0;
+    display: flex;
+    gap: 8px;
+    align-items: baseline;
+}
+
+.prev-tarefa .marcador {
+    color: var(--accent-cyan);
+    min-width: 20px;
+}
+
+.prev-contador {
+    color: var(--accent-cyan);
+    padding: 4px 0;
+    display: flex;
+    gap: 8px;
+    align-items: baseline;
+}
+
+.prev-contador .nome {
+    color: var(--text-primary);
+    flex: 1;
+}
+
+.prev-contador .meta {
+    color: var(--text-muted);
+    font-size: 11px;
+}
+
+.preview-secao {
+    font-family: var(--ff-mono);
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin: var(--sp-3) 0 var(--sp-2) 0;
+}
+
+.preview-secao:first-child {
+    margin-top: 0;
+}
+
+.preview-vazio,
+.preview-erro {
+    font-family: var(--ff-mono);
+    font-size: 12px;
+    color: var(--text-muted);
+    padding: var(--sp-3);
+    text-align: center;
+    background: var(--bg-inset);
+    border-radius: var(--r-xs);
+}
+
+.preview-erro {
+    color: var(--accent-red);
+    border-left: 3px solid var(--accent-red);
+    text-align: left;
+}

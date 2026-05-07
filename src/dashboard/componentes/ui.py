@@ -734,6 +734,15 @@ def group_card(
 
 _INSIGHT_TIPOS_VALIDOS = {"positivo", "atencao", "descoberta", "previsao"}
 
+# Labels canônicos PT-BR (UX-V-2.6 fix: tipo.upper() resultava em ASCII --
+# "ATENCAO" / "PREVISAO" sem acento; rótulo correto vem deste mapa).
+_INSIGHT_TIPO_LABEL = {
+    "positivo": "POSITIVO",
+    "atencao": "ATENÇÃO",
+    "descoberta": "DESCOBERTA",
+    "previsao": "PREVISÃO",
+}
+
 
 def sparkline_html(
     valores: list[float],
@@ -945,7 +954,7 @@ def insight_card_html(tipo: str, titulo: str, corpo: str) -> str:
     return minificar(
         f"""
         <div class="insight-card insight-{tipo}">
-          <span class="insight-card-tipo">{tipo.upper()}</span>
+          <span class="insight-card-tipo">{_INSIGHT_TIPO_LABEL[tipo]}</span>
           <h4 class="insight-card-titulo">{titulo}</h4>
           <p class="insight-card-corpo">{corpo}</p>
         </div>

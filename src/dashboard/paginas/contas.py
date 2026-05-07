@@ -30,8 +30,11 @@ import streamlit as st
 
 from src.dashboard.componentes.html_utils import minificar
 from src.dashboard.componentes.ui import (
+    bar_uso_html,
     callout_html,
     card_html,
+    carregar_css_pagina,
+    sparkline_html,
     subtitulo_secao_html,
 )
 from src.dashboard.dados import (
@@ -218,6 +221,41 @@ def calcular_utilizacao_cartoes(
 
 
 # ---------------------------------------------------------------------------
+# Sparkline de saldo (UX-V-2.1)
+# ---------------------------------------------------------------------------
+
+
+def _sparkline_saldo_30d(
+    extrato, banco: str, *, cor=None
+) -> str:
+    """Sparkline com saldo cumulativo dos últimos 30 dias para um banco.
+
+    UX-V-2.1: agrupa por dia, ``cumsum`` e tail(30). Retorna string vazia
+    quando há menos de 2 pontos disponíveis (ADR-10 graceful). Consome
+    ``sparkline_html`` da fronteira ``componentes.ui`` (UX-V-02).
+    """
+    import pandas as _pd  # local para evitar reorg do header
+    if extrato.empty or "banco_origem" not in extrato.columns:
+        return ""
+    df_banco = extrato[extrato["banco_origem"] == banco].copy()
+    if df_banco.empty or len(df_banco) < 2:
+        return ""
+    df_banco["data"] = _pd.to_datetime(df_banco["data"], errors="coerce")
+    df_banco = df_banco.dropna(subset=["data"]).sort_values("data")
+    if len(df_banco) < 2:
+        return ""
+    saldo_diario = (
+        df_banco.groupby(df_banco["data"].dt.date)["valor"].sum().cumsum()
+    )
+    if len(saldo_diario) < 2:
+        return ""
+    valores = [float(v) for v in saldo_diario.tail(30).tolist()]
+    if len(valores) < 2:
+        return ""
+    return sparkline_html(valores, cor=cor, largura=180, altura=32)
+
+
+# ---------------------------------------------------------------------------
 # HTML helpers
 # ---------------------------------------------------------------------------
 
@@ -316,8 +354,19 @@ def _section_bar_html(titulo: str, contagem: str) -> str:
 
 
 def _card_banco_html(
-    banco: str, sigla: str, cor_token: str, tipo: str, info: dict[str, float]
+    banco: str,
+    sigla: str,
+    cor_token: str,
+    tipo: str,
+    info: dict[str, float],
+    sparkline_svg: str = "",
 ) -> str:
+    """Card de conta corrente com sparkline opcional dos últimos 30 dias.
+
+    UX-V-2.1: ``sparkline_svg`` é o HTML pré-renderizado por
+    ``_sparkline_saldo_30d`` (consumindo ``sparkline_html`` da fronteira
+    ``componentes.ui``). Quando vazio, degrada graciosamente.
+    """
     cor_acento = CORES.get(cor_token, CORES["destaque"])
     saldo = float(info["saldo"])
     delta = float(info["delta_30d"])
@@ -329,9 +378,14 @@ def _card_banco_html(
     )
     delta_sinal = "+" if delta >= 0 else "−"
     delta_str = f"{delta_sinal} {formatar_moeda(abs(delta))} · 30d"
+    bloco_sparkline = (
+        f'<div class="conta-sparkline">{sparkline_svg}</div>'
+        if sparkline_svg
+        else ""
+    )
     return minificar(
         f"""
-        <div class="acc"
+        <div class="acc conta-card"
              style="background:{CORES["card_fundo"]};
                     border:1px solid {rgba_cor(CORES["texto_sec"], 0.20)};
                     border-top:3px solid {cor_acento};
@@ -362,6 +416,7 @@ def _card_banco_html(
                       color:{CORES["texto"]};
                       margin-bottom:4px;">{formatar_moeda(saldo)}</div>
           <div style="font-size:11px;color:{delta_cor};">{delta_str}</div>
+          {bloco_sparkline}
           <div style="display:grid;
                       grid-template-columns:repeat(2,1fr);
                       gap:8px;
@@ -397,10 +452,11 @@ def _card_cartao_html(cartao: dict[str, object]) -> str:
     classe_d7 = str(cartao["classe_d7"])
     cor = cor_utilizacao_d7(percentual)
     pct_int = int(round(percentual * 100))
+    barra = bar_uso_html(usado=usado, total=limite, label=f"{pct_int}% usado")
 
     return minificar(
         f"""
-        <div class="cc-card pill-{classe_d7}"
+        <div class="cc-card cartao-card pill-{classe_d7}"
              data-utilizacao="{classe_d7}"
              style="background:{CORES["card_fundo"]};
                     border:1px solid {rgba_cor(CORES["texto_sec"], 0.20)};
@@ -449,22 +505,13 @@ def _card_cartao_html(cartao: dict[str, object]) -> str:
                           color:{CORES["d7_graduado"]};">{formatar_moeda(disponivel)}</div>
             </div>
           </div>
-          <div style="height:6px;
-                      background:{rgba_cor(CORES["texto_sec"], 0.15)};
-                      border-radius:999px;
-                      overflow:hidden;
-                      margin-top:14px;">
-            <span style="display:block;
-                         height:100%;
-                         width:{min(percentual * 100, 100):.1f}%;
-                         background:{cor};"></span>
-          </div>
+          <div class="cartao-bar-uso" style="margin-top:14px;">{barra}</div>
           <div style="display:flex;
                       justify-content:space-between;
                       font-size:11px;
                       color:{CORES["texto_sec"]};
                       margin-top:6px;">
-            <span>{pct_int}% usado · classe {classe_d7}</span>
+            <span>classe D7: {classe_d7}</span>
             <span>limite estimado (1.5× pico histórico)</span>
           </div>
         </div>
@@ -490,6 +537,12 @@ def renderizar(dados: dict[str, pd.DataFrame], mes_selecionado: str, pessoa: str
         {"label": "Sincronizar OFX", "primary": True, "glyph": "refresh",
          "title": "Reprocessar OFX e atualizar saldos"},
     ])
+
+    # UX-V-2.1: CSS dedicado da página. ``carregar_css_pagina`` retorna
+    # string vazia (no-op) quando o arquivo não existe.
+    css_pagina = carregar_css_pagina("contas")
+    if css_pagina:
+        st.markdown(minificar(css_pagina), unsafe_allow_html=True)
 
     extrato = dados.get("extrato", pd.DataFrame())
     extrato_pessoa = (
@@ -524,7 +577,18 @@ def renderizar(dados: dict[str, pd.DataFrame], mes_selecionado: str, pessoa: str
             unsafe_allow_html=True,
         )
         cards = [
-            _card_banco_html(banco, sigla, cor, tipo, contas_info[banco])
+            _card_banco_html(
+                banco,
+                sigla,
+                cor,
+                tipo,
+                contas_info[banco],
+                _sparkline_saldo_30d(
+                    extrato_pessoa,
+                    banco,
+                    cor=CORES.get(cor, CORES["destaque"]),
+                ),
+            )
             for banco, sigla, cor, tipo in BANCOS_CONTAS
             if banco in contas_info
         ]

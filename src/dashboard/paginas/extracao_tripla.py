@@ -1,16 +1,16 @@
-"""Aba "Extração Tripla" -- Sprint UX-RD-11.
+"""Aba "Extração Tripla" -- Sprint UX-RD-11 + paridade visual UX-V-2.4.
 
-Layout 3 colunas que junta no mesmo lugar:
+Layout 2 colunas alinhado ao mockup canônico de validação por arquivo:
 
-  - Coluna 1 (lista): arquivos por tipo, badge formato, status pill
-  - Coluna 2 (viewer): preview do arquivo selecionado (PDF / imagem / CSV / XLSX)
-  - Coluna 3 (tabela tripla): linhas = campos extraídos; colunas =
-    ETL | Opus | Humano. Divergência ETL ≠ Opus pinta cell laranja.
-    Consenso ETL ∩ Opus pré-popula valor_humano. Botão "Validar" grava
-    valor_humano + status_humano=ok no CSV via ``validacao_csv``.
+  - Header com 4 KPIs (PARIDADE, DIVERGÊNCIAS, EM REVISÃO, total ARQUIVOS).
+  - Coluna esquerda: lista de arquivos agrupada por TIPO/formato com badge,
+    flag de status humano e paridade %.
+  - Coluna direita: tabela ETL × Opus × Humano para o arquivo selecionado.
+    Linhas divergentes destacadas com fundo laranja/vermelho, linhas
+    consenso pré-populam o input humano. Badges DIVERGENTE / CONSENSO.
 
-Substitui ``paginas/validacao_arquivos.py`` (que vira stub redirecionador
-por 1 sprint para retrocompat).
+Sprint VALIDAÇÃO-CSV-01 (regra 11 do CLAUDE.md): alimenta
+``data/output/validacao_arquivos.csv``.
 
 Princípios:
 
@@ -18,11 +18,13 @@ Princípios:
     esta aba opera sobre (arquivo, campo). Sem fusão.
   - Cobertura total: lista todos os arquivos pendentes, sem filtro de
     inclusão por valor (Decisão D5/D7 do dono em 2026-04-29).
-  - Tema dark Dracula via ``CORES`` -- divergência usa ``CORES['alerta']``
-    (laranja).
+  - Tema dark Dracula via tokens em ``css/tokens.css``. Divergência usa
+    ``var(--accent-orange)``.
   - PII mascarada antes de exibir, conforme padrão do Revisor.
   - HTML grande passa por ``html_utils.minificar`` para evitar bloco
     ``<pre><code>`` indesejado do CommonMark do Streamlit (UX-RD-04).
+  - CSS dedicado em ``src/dashboard/css/paginas/extracao_tripla.css``
+    (padrão Onda M).
 
 API pública: ``renderizar(dados, mes_selecionado, pessoa, ctx)``.
 """
@@ -30,16 +32,14 @@ API pública: ``renderizar(dados, mes_selecionado, pessoa, ctx)``.
 from __future__ import annotations
 
 import re
+from html import escape
 from pathlib import Path
 
 import pandas as pd
 import streamlit as st
 
 from src.dashboard.componentes.html_utils import minificar
-from src.dashboard.componentes.preview_documento import preview_documento
-from src.dashboard.componentes.preview_documento import tipo_arquivo as _tipo_preview
-from src.dashboard.componentes.ui import callout_html
-from src.dashboard.tema import CORES
+from src.dashboard.componentes.ui import callout_html, carregar_css_pagina
 from src.load import validacao_csv as vc
 
 _PADRAO_CPF = re.compile(r"\b\d{3}\.\d{3}\.\d{3}-\d{2}\b")
@@ -62,17 +62,16 @@ _BADGE_FORMATO: dict[str, str] = {
     ".xml": "XML",
 }
 
-# Mapa status -> token de cor (humano_*). Espelha tokens.css do redesign.
-_COR_STATUS: dict[str, str] = {
-    "ok": CORES["humano_aprovado"],
-    "aprovado": CORES["humano_aprovado"],
-    "erro": CORES["humano_rejeitado"],
-    "lacuna": CORES["humano_revisar"],
-    "pendente": CORES["humano_pendente"],
-    "conflito": CORES["alerta"],
-    "validado": CORES["humano_aprovado"],
-    "extraido": CORES["d7_calibracao"],
-    "aguardando": CORES["humano_pendente"],
+# Mapa formato -> token de classe CSS para cor de borda no grupo da lista.
+_GRUPO_CLASSE: dict[str, str] = {
+    "PDF": "tipo-pdf",
+    "IMG": "tipo-imagem",
+    "CSV": "tipo-csv",
+    "XLSX": "tipo-xlsx",
+    "OFX": "tipo-ofx",
+    "HTML": "tipo-html",
+    "XML": "tipo-html",
+    "???": "tipo-html",
 }
 
 CHAVE_SESSION_ARQUIVO_SELECIONADO: str = "extracao_tripla_arquivo_selecionado"
@@ -102,66 +101,26 @@ def _badge_formato(caminho_relativo: str) -> str:
     return _BADGE_FORMATO.get(suf, "???")
 
 
-def _agrupar_por_arquivo(df: pd.DataFrame) -> pd.DataFrame:
-    """Agrupa por (sha8_arquivo, caminho_relativo) e resume status global.
+def _classificar_status_campo(linha: pd.Series) -> str:
+    """Classifica status do campo: ``ok`` (consenso), ``divergente``,
+    ``apenas_etl``, ``apenas_opus`` ou ``so_humano``.
 
-    Status agregado:
-      - "validado" se todas as linhas têm status_humano in {ok, aprovado}
-      - "conflito" se existe alguma divergência ETL≠Opus
-      - "extraido" se há valor_etl ou valor_opus em alguma linha
-      - "aguardando" caso contrário
+    Espelha a lógica do mockup ``_extracao-render.js::statusCampo``.
     """
-    if df.empty:
-        return pd.DataFrame(
-            columns=[
-                "sha8_arquivo",
-                "tipo_arquivo",
-                "caminho_relativo",
-                "total_campos",
-                "status_global",
-            ]
-        )
-
-    grupos = []
-    for (sha8, caminho), grupo in df.groupby(["sha8_arquivo", "caminho_relativo"]):
-        tipo = str(grupo["tipo_arquivo"].iloc[0])
-        total = len(grupo)
-        status_humanos = set(grupo["status_humano"].astype(str).str.lower())
-        status = "aguardando"
-        if status_humanos and status_humanos.issubset({"ok", "aprovado"}):
-            status = "validado"
-        else:
-            divergencias = (
-                (grupo["valor_etl"].astype(str) != "")
-                & (grupo["valor_opus"].astype(str) != "")
-                & (grupo["valor_etl"].astype(str) != grupo["valor_opus"].astype(str))
-            )
-            if bool(divergencias.any()):
-                status = "conflito"
-            elif (
-                (grupo["valor_etl"].astype(str) != "").any()
-                or (grupo["valor_opus"].astype(str) != "").any()
-            ):
-                status = "extraido"
-        grupos.append(
-            {
-                "sha8_arquivo": sha8,
-                "tipo_arquivo": tipo,
-                "caminho_relativo": caminho,
-                "total_campos": total,
-                "status_global": status,
-            }
-        )
-    return pd.DataFrame(grupos)
+    etl = str(linha.get("valor_etl") or "").strip()
+    opus = str(linha.get("valor_opus") or "").strip()
+    if etl and opus:
+        return "ok" if etl == opus else "divergente"
+    if etl and not opus:
+        return "apenas_etl"
+    if opus and not etl:
+        return "apenas_opus"
+    return "so_humano"
 
 
 def _detectar_divergencia(linha: pd.Series) -> bool:
     """True se ETL e Opus discordam (ambos não-vazios e diferentes)."""
-    etl = str(linha.get("valor_etl") or "").strip()
-    opus = str(linha.get("valor_opus") or "").strip()
-    if not etl or not opus:
-        return False
-    return etl != opus
+    return _classificar_status_campo(linha) == "divergente"
 
 
 def _consenso(linha: pd.Series) -> str:
@@ -173,339 +132,426 @@ def _consenso(linha: pd.Series) -> str:
     return ""
 
 
-def _renderizar_lista(
-    df_grupos: pd.DataFrame,
-    arquivo_selecionado: str | None,
-) -> None:
-    """Renderiza a coluna 1: lista de arquivos com badge + status pill."""
-    st.markdown(
-        f"<div style='font-size:13px; color:{CORES['texto_sec']}; "
-        f"text-transform:uppercase; letter-spacing:0.05em; "
-        f"margin-bottom:0.4rem;'>Arquivos ({len(df_grupos)})</div>",
-        unsafe_allow_html=True,
+def _calcular_paridade(df_arquivo: pd.DataFrame) -> float:
+    """% de campos onde ETL e Opus concordam (ambos não-vazios e iguais).
+
+    Retorna 0.0 se DataFrame vazio. Considera o universo como total de
+    linhas (cada linha = um campo) para casar com a leitura do mockup.
+    """
+    if df_arquivo.empty:
+        return 0.0
+    iguais = sum(
+        1 for _, linha in df_arquivo.iterrows()
+        if _classificar_status_campo(linha) == "ok"
+    )
+    return iguais / len(df_arquivo) * 100
+
+
+def _agrupar_por_arquivo(df: pd.DataFrame) -> pd.DataFrame:
+    """Agrupa por (sha8_arquivo, caminho_relativo) e calcula paridade global.
+
+    Colunas devolvidas:
+      - sha8_arquivo, tipo_arquivo, caminho_relativo, total_campos
+      - paridade_pct (0..100)
+      - status_humano (aprovado / em_revisao / pendente) -- novo UX-V-2.4
+      - status_global (validado / conflito / extraido / aguardando) -- legado
+      - n_divergencias, n_unilaterais
+
+    A coluna ``status_global`` preserva o contrato da Sprint UX-RD-11 para
+    retrocompat de testes; ``status_humano`` é o agregado novo alinhado ao
+    mockup (paridade visual com lista esquerda e flag de cor).
+    """
+    colunas_padrao = [
+        "sha8_arquivo",
+        "tipo_arquivo",
+        "caminho_relativo",
+        "total_campos",
+        "paridade_pct",
+        "status_humano",
+        "status_global",
+        "n_divergencias",
+        "n_unilaterais",
+    ]
+    if df.empty:
+        return pd.DataFrame(columns=colunas_padrao)
+
+    grupos = []
+    for (sha8, caminho), grupo in df.groupby(["sha8_arquivo", "caminho_relativo"]):
+        tipo = str(grupo["tipo_arquivo"].iloc[0])
+        total = len(grupo)
+        paridade = _calcular_paridade(grupo)
+
+        # status_humano: agregado por status_humano da linha (UX-V-2.4)
+        status_humanos_raw = set(grupo["status_humano"].astype(str).str.lower())
+        if status_humanos_raw and status_humanos_raw.issubset({"ok", "aprovado"}):
+            status_h = "aprovado"
+        elif "ok" in status_humanos_raw or "aprovado" in status_humanos_raw:
+            status_h = "em_revisao"
+        else:
+            status_h = "pendente"
+
+        # status_global: contrato legado UX-RD-11 (validado / conflito / extraido / aguardando)
+        if status_humanos_raw and status_humanos_raw.issubset({"ok", "aprovado"}):
+            status_g = "validado"
+        else:
+            divergencias = (
+                (grupo["valor_etl"].astype(str) != "")
+                & (grupo["valor_opus"].astype(str) != "")
+                & (grupo["valor_etl"].astype(str) != grupo["valor_opus"].astype(str))
+            )
+            if bool(divergencias.any()):
+                status_g = "conflito"
+            elif (
+                (grupo["valor_etl"].astype(str) != "").any()
+                or (grupo["valor_opus"].astype(str) != "").any()
+            ):
+                status_g = "extraido"
+            else:
+                status_g = "aguardando"
+
+        n_div = sum(
+            1 for _, linha in grupo.iterrows()
+            if _classificar_status_campo(linha) == "divergente"
+        )
+        n_uni = sum(
+            1 for _, linha in grupo.iterrows()
+            if _classificar_status_campo(linha) in {"apenas_etl", "apenas_opus"}
+        )
+
+        grupos.append(
+            {
+                "sha8_arquivo": sha8,
+                "tipo_arquivo": tipo,
+                "caminho_relativo": caminho,
+                "total_campos": total,
+                "paridade_pct": paridade,
+                "status_humano": status_h,
+                "status_global": status_g,
+                "n_divergencias": n_div,
+                "n_unilaterais": n_uni,
+            }
+        )
+    return pd.DataFrame(grupos)
+
+
+# ---------------------------------------------------------------------------
+# Helpers de render HTML
+# ---------------------------------------------------------------------------
+
+
+def _classe_paridade(paridade_pct: float) -> str:
+    """Retorna classe CSS conforme faixa de paridade (alta/media/baixa)."""
+    if paridade_pct >= 90:
+        return "paridade-alta"
+    if paridade_pct >= 70:
+        return "paridade-media"
+    return "paridade-baixa"
+
+
+def _classe_confianca(confianca: float) -> str:
+    """Retorna classe CSS conforme faixa de confiança Opus."""
+    if confianca >= 0.85:
+        return "conf-alta"
+    if confianca >= 0.65:
+        return "conf-media"
+    return "conf-baixa"
+
+
+def _flag_status_humano(status: str) -> str:
+    """Retorna classe CSS da flag (círculo) por status humano."""
+    if status == "aprovado":
+        return "flag-aprovado"
+    if status == "em_revisao":
+        return "flag-revisar"
+    return "flag-pendente"
+
+
+def _kpis_header_html(
+    media_paridade: float,
+    n_divergencias: int,
+    n_revisao: int,
+    n_total: int,
+) -> str:
+    """KPIs do topo: PARIDADE %, DIVERGÊNCIAS N, EM REVISÃO N, total ARQUIVOS."""
+    return minificar(
+        f"""
+        <div class="tripla-header">
+          <div class="tripla-kpi tripla-kpi-paridade">
+            PARIDADE <strong>{media_paridade:.0f}%</strong>
+          </div>
+          <div class="tripla-kpi tripla-kpi-divergencias">
+            DIVERGÊNCIAS <strong>{n_divergencias}</strong>
+          </div>
+          <div class="tripla-kpi tripla-kpi-revisao">
+            EM REVISÃO <strong>{n_revisao}</strong>
+          </div>
+          <div class="tripla-kpi">
+            <strong>{n_total}</strong> ARQUIVOS
+          </div>
+        </div>
+        """
     )
 
+
+def _lista_arquivos_html(
+    df_grupos: pd.DataFrame,
+    caminho_selecionado: str | None,
+) -> str:
+    """Renderiza lista esquerda agrupada por TIPO de formato (PDF/IMG/...)."""
     if df_grupos.empty:
-        st.markdown(
-            callout_html("info", "Sem arquivos catalogados ainda."),
-            unsafe_allow_html=True,
+        return (
+            '<div class="lista-arquivos">'
+            '<p class="lista-vazia">Sem arquivos catalogados ainda.</p>'
+            "</div>"
         )
-        return
 
+    # Agrupar por badge formato (PDF, IMG, CSV, ...) — ordem fixa.
+    ordem_formato = ["PDF", "IMG", "CSV", "XLSX", "OFX", "HTML", "XML", "???"]
+    por_formato: dict[str, list[dict]] = {}
     for _, grupo in df_grupos.iterrows():
-        caminho = str(grupo["caminho_relativo"])
-        nome = Path(caminho).name
-        badge = _badge_formato(caminho)
-        tipo_sem = str(grupo["tipo_arquivo"]) or "—"
-        status = str(grupo["status_global"])
-        cor_status = _COR_STATUS.get(status, CORES["texto_muted"])
+        badge = _badge_formato(str(grupo["caminho_relativo"]))
+        por_formato.setdefault(badge, []).append(grupo.to_dict())
 
-        ativo = arquivo_selecionado == caminho
-        cor_borda = CORES["destaque"] if ativo else CORES["texto_muted"]
-        cor_fundo = CORES["card_elevado"] if ativo else CORES["card_fundo"]
+    grupos_html: list[str] = []
+    for fmt in ordem_formato:
+        if fmt not in por_formato:
+            continue
+        arquivos = por_formato[fmt]
+        classe_grupo = _GRUPO_CLASSE.get(fmt, "tipo-html")
 
-        html = minificar(
+        items_html: list[str] = []
+        for arq in arquivos:
+            caminho = str(arq["caminho_relativo"])
+            nome = Path(caminho).name
+            tipo_sem = str(arq.get("tipo_arquivo") or "—")
+            paridade_pct = float(arq.get("paridade_pct") or 0.0)
+            classe_par = _classe_paridade(paridade_pct)
+            status = str(arq.get("status_humano") or "pendente")
+            classe_flag = _flag_status_humano(status)
+            classe_sel = "selecionado" if caminho == caminho_selecionado else ""
+
+            items_html.append(
+                f"""
+                <div class="arquivo-linha {classe_sel}">
+                  <div class="arq-top">
+                    <span class="arq-flag {classe_flag}"
+                          title="status humano: {escape(status)}"></span>
+                    <span class="arq-nome" title="{escape(nome)}">{escape(nome)}</span>
+                  </div>
+                  <div class="arq-meta">
+                    <span class="arq-tipo-badge">{escape(tipo_sem)}</span>
+                    <span class="arq-paridade {classe_par}">
+                      {paridade_pct:.0f}% ok
+                    </span>
+                  </div>
+                </div>
+                """
+            )
+
+        grupos_html.append(
             f"""
-            <div class='extracao-item' style='
-                border:1px solid {cor_borda};
-                background:{cor_fundo};
-                border-radius:6px;
-                padding:0.5rem 0.6rem;
-                margin-bottom:0.45rem;
-                font-size:13px;
-            '>
-                <div style='display:flex; gap:0.4rem; align-items:center;
-                    margin-bottom:0.2rem;'>
-                    <span style='
-                        background:{CORES["fundo_inset"]};
-                        color:{CORES["destaque"]};
-                        font-size:11px;
-                        font-weight:600;
-                        padding:0.1rem 0.4rem;
-                        border-radius:3px;
-                        letter-spacing:0.04em;
-                    '>{badge}</span>
-                    <span style='color:{CORES["texto"]};
-                        overflow:hidden;
-                        text-overflow:ellipsis;
-                        white-space:nowrap;
-                        flex:1;
-                    ' title='{nome}'>{nome}</span>
-                </div>
-                <div style='display:flex; justify-content:space-between;
-                    align-items:center; gap:0.3rem;'>
-                    <span style='color:{CORES["texto_muted"]};
-                        font-size:11px;
-                    '>{tipo_sem}</span>
-                    <span class='pill-status' style='
-                        background:{cor_status}22;
-                        color:{cor_status};
-                        font-size:11px;
-                        padding:0.05rem 0.45rem;
-                        border-radius:10px;
-                        border:1px solid {cor_status}66;
-                    '>{status}</span>
-                </div>
+            <div class="lista-grupo-tipo">
+              <div class="lista-grupo-head {classe_grupo}">
+                <span>{fmt}</span>
+                <span class="lista-grupo-count">{len(arquivos)}</span>
+              </div>
+              <div class="lista-grupo-body">{''.join(items_html)}</div>
             </div>
             """
         )
-        st.markdown(html, unsafe_allow_html=True)
 
-        # Botão minimal para selecionar (Streamlit não suporta click em <div>)
-        if st.button(
-            f"Abrir {nome[:22]}",
-            key=f"sel_{grupo['sha8_arquivo']}",
-            use_container_width=True,
-        ):
-            st.session_state[CHAVE_SESSION_ARQUIVO_SELECIONADO] = caminho
-            st.rerun()
-
-
-def _renderizar_viewer(arquivo_selecionado: str | None, raiz_repo: Path) -> None:
-    """Renderiza a coluna 2: viewer do arquivo selecionado."""
-    st.markdown(
-        f"<div style='font-size:13px; color:{CORES['texto_sec']}; "
-        f"text-transform:uppercase; letter-spacing:0.05em; "
-        f"margin-bottom:0.4rem;'>Visualização</div>",
-        unsafe_allow_html=True,
+    return minificar(
+        '<div class="lista-arquivos">' + "".join(grupos_html) + "</div>"
     )
 
-    if not arquivo_selecionado:
-        st.markdown(
-            callout_html(
-                "info",
-                "Selecione um arquivo na lista à esquerda para abrir o "
-                "preview e a tabela tripla.",
-            ),
-            unsafe_allow_html=True,
+
+def _tabela_tripla_html(
+    df_arquivo: pd.DataFrame,
+    extractor_versao: str = "ETL",
+) -> str:
+    """Tabela ETL × Opus × Humano para 1 arquivo selecionado.
+
+    Usa apenas inputs visuais (read-only HTML); persistência continua via
+    botão Streamlit fora do HTML (ver ``renderizar``).
+    """
+    if df_arquivo.empty:
+        return '<p class="tabela-vazia">Selecione um arquivo na lista esquerda.</p>'
+
+    n_campos = len(df_arquivo)
+
+    linhas_html: list[str] = []
+    for _, linha in df_arquivo.iterrows():
+        campo = str(linha.get("campo") or "")
+        etl_v = _mascarar_pii(str(linha.get("valor_etl") or ""))
+        opus_v = _mascarar_pii(str(linha.get("valor_opus") or ""))
+        humano_v = _mascarar_pii(str(linha.get("valor_humano") or ""))
+
+        try:
+            confianca = float(linha.get("confianca_opus") or 0.0)
+        except (TypeError, ValueError):
+            confianca = 0.0
+
+        status = _classificar_status_campo(linha)
+
+        # Pré-preenchimento humano: se consenso, usa o valor; se divergente
+        # ou unilateral, deixa input vazio para humano resolver.
+        if not humano_v:
+            humano_v = _consenso(linha)
+
+        # Classes de linha por status
+        if status == "divergente":
+            tr_classe = "linha-divergente"
+            badge_html = '<span class="badge-divergente">DIVERGENTE</span>'
+        elif status == "apenas_etl":
+            tr_classe = "linha-uni-etl"
+            badge_html = '<span class="badge-uni-etl">só ETL</span>'
+        elif status == "apenas_opus":
+            tr_classe = "linha-uni-opus"
+            badge_html = '<span class="badge-uni-opus">só Opus</span>'
+        elif status == "ok":
+            tr_classe = "linha-consenso"
+            badge_html = '<span class="badge-consenso">CONSENSO</span>'
+        else:
+            tr_classe = "linha-so-humano"
+            badge_html = '<span class="badge-uni-etl">só humano</span>'
+
+        # Cell ETL
+        if etl_v:
+            etl_html = f'<span class="val">{escape(etl_v)}</span>'
+        else:
+            etl_html = '<span class="cel-vazio">—</span>'
+
+        # Cell Opus + confiança
+        classe_conf = _classificar_confianca = _classe_confianca(confianca)
+        if opus_v:
+            opus_html = (
+                f'<span class="val">{escape(opus_v)}</span>'
+                f'<span class="conf {classe_conf}">{confianca:.0%}</span>'
+            )
+        else:
+            opus_html = '<span class="cel-vazio">—</span>'
+
+        # Cell Humano (input visual; Streamlit form fora cuida da persistência)
+        humano_input = (
+            f'<input type="text" class="user-input" '
+            f'value="{escape(humano_v)}" '
+            f'placeholder="preencher..." '
+            f'data-campo="{escape(campo)}" readonly />'
         )
-        return
 
-    caminho_abs = raiz_repo / arquivo_selecionado
-    if not caminho_abs.exists():
-        st.markdown(
-            callout_html(
-                "warning",
-                f"Arquivo não encontrado em disco: `{arquivo_selecionado}`",
-            ),
-            unsafe_allow_html=True,
+        linhas_html.append(
+            f"""
+            <tr class="{tr_classe}">
+              <td class="cel-campo">
+                <div class="campo-nome">{escape(campo)}</div>
+              </td>
+              <td class="cel-etl">{etl_html}</td>
+              <td class="cel-opus">{opus_html}</td>
+              <td class="cel-humano">{humano_input}</td>
+              <td class="cel-status">{badge_html}</td>
+            </tr>
+            """
         )
-        return
 
-    suf = caminho_abs.suffix.lower()
-
-    # PDF / imagem -- delega ao componente canônico
-    if _tipo_preview(caminho_abs) in {"pdf", "imagem"}:
-        preview_documento(caminho_abs, altura=520)
-        return
-
-    # CSV
-    if suf == ".csv":
-        try:
-            df_csv = pd.read_csv(caminho_abs, nrows=20)
-            st.dataframe(df_csv, use_container_width=True, hide_index=True)
-        except Exception as erro:
-            st.markdown(
-                callout_html("error", f"Erro lendo CSV: {erro}"),
-                unsafe_allow_html=True,
-            )
-        return
-
-    # XLSX -- primeira aba, 20 linhas
-    if suf in {".xlsx", ".xls"}:
-        try:
-            df_x = pd.read_excel(caminho_abs, nrows=20)
-            st.dataframe(df_x, use_container_width=True, hide_index=True)
-        except Exception as erro:
-            st.markdown(
-                callout_html("error", f"Erro lendo XLSX: {erro}"),
-                unsafe_allow_html=True,
-            )
-        return
-
-    # HTML -- iframe sandboxed
-    if suf in {".html", ".htm"}:
-        try:
-            from streamlit.components import v1 as components
-
-            html = caminho_abs.read_text(encoding="utf-8", errors="ignore")
-            components.html(html, height=520, scrolling=True)
-        except Exception as erro:
-            st.markdown(
-                callout_html("error", f"Erro lendo HTML: {erro}"),
-                unsafe_allow_html=True,
-            )
-        return
-
-    # Fallback: download
-    st.markdown(
-        callout_html(
-            "info",
-            f"Preview não suportado para `{suf}`. Baixe para inspecionar.",
-        ),
-        unsafe_allow_html=True,
+    return minificar(
+        f"""
+        <div class="tabela-tripla-host">
+          <table class="tabela-tripla">
+            <thead>
+              <tr>
+                <th class="th-campo">CAMPO</th>
+                <th class="th-etl">
+                  <div class="th-fonte">
+                    <span>ETL determinístico</span>
+                  </div>
+                  <div class="th-fonte-sub">{escape(extractor_versao)}</div>
+                </th>
+                <th class="th-opus">
+                  <div class="th-fonte">
+                    <span>Claude Opus agentic</span>
+                  </div>
+                  <div class="th-fonte-sub">opus_v1 · {n_campos} campos</div>
+                </th>
+                <th class="th-humano">
+                  <div class="th-fonte">
+                    <span>Validação humana</span>
+                  </div>
+                  <div class="th-fonte-sub">consenso pré-preenchido</div>
+                </th>
+                <th class="th-status">STATUS</th>
+              </tr>
+            </thead>
+            <tbody>{''.join(linhas_html)}</tbody>
+          </table>
+        </div>
+        """
     )
-    try:
-        st.download_button(
-            f"Baixar {caminho_abs.name}",
-            data=caminho_abs.read_bytes(),
-            file_name=caminho_abs.name,
-        )
-    except Exception:
-        pass
 
 
-def _renderizar_tabela_tripla(
+# ---------------------------------------------------------------------------
+# Persistência (form Streamlit fora do HTML estático)
+# ---------------------------------------------------------------------------
+
+
+def _form_validar_arquivo(
     df_arquivo: pd.DataFrame,
     sha8: str,
     caminho_csv: Path,
 ) -> None:
-    """Renderiza a coluna 3: tabela tripla ETL × Opus × Humano editável."""
-    st.markdown(
-        f"<div style='font-size:13px; color:{CORES['texto_sec']}; "
-        f"text-transform:uppercase; letter-spacing:0.05em; "
-        f"margin-bottom:0.4rem;'>Tabela ETL × Opus × Humano</div>",
-        unsafe_allow_html=True,
-    )
+    """Form Streamlit nativo para coletar valor_humano editável + persistir.
 
+    O HTML da tabela mostra o overview visual. Para garantir persistência
+    real (sem JS custom), usamos st.text_input em expander discreto abaixo
+    da tabela, alinhado ao princípio "HTML para visual, Streamlit para
+    interatividade" (ADR-19).
+    """
     if df_arquivo.empty:
-        st.markdown(
-            callout_html("info", "Sem campos extraídos para este arquivo."),
-            unsafe_allow_html=True,
-        )
         return
 
-    # Mascarar PII em cada coluna de valor antes de exibir
-    df = df_arquivo.copy()
-    for coluna in ("valor_etl", "valor_opus", "valor_humano"):
-        df[coluna] = df[coluna].astype(str).apply(_mascarar_pii)
+    with st.expander("Editar campos humanos e enviar validação", expanded=False):
+        valores_humanos: dict[str, str] = {}
+        for _, linha in df_arquivo.iterrows():
+            campo = str(linha.get("campo") or "")
+            humano_inicial = _mascarar_pii(str(linha.get("valor_humano") or ""))
+            if not humano_inicial:
+                humano_inicial = _consenso(linha)
 
-    # Pré-popular valor_humano com consenso quando vazio
-    pre_populados = 0
-    for idx, linha in df.iterrows():
-        if not str(linha.get("valor_humano") or "").strip():
-            consenso = _consenso(linha)
-            if consenso:
-                df.at[idx, "valor_humano"] = consenso
-                pre_populados += 1
-    if pre_populados:
-        st.caption(
-            f"{pre_populados} campo(s) pré-populados com consenso ETL ∩ Opus."
-        )
-
-    # Detectar divergências e renderizar tabela visual + form de edição
-    cabecalho = minificar(
-        f"""
-        <div class='tabela-tripla-header' style='
-            display:grid;
-            grid-template-columns: 1.2fr 1fr 1fr 1fr;
-            gap:0.4rem;
-            padding:0.4rem 0.5rem;
-            background:{CORES["fundo_inset"]};
-            border:1px solid {CORES["texto_muted"]};
-            border-radius:6px 6px 0 0;
-            font-size:11px;
-            text-transform:uppercase;
-            letter-spacing:0.05em;
-            color:{CORES["texto_sec"]};
-        '>
-            <span>Campo</span><span>ETL</span><span>Opus</span><span>Humano</span>
-        </div>
-        """
-    )
-    st.markdown(cabecalho, unsafe_allow_html=True)
-
-    valores_humanos: dict[str, str] = {}
-
-    for _, linha in df.iterrows():
-        campo = str(linha["campo"])
-        etl = str(linha.get("valor_etl") or "")
-        opus = str(linha.get("valor_opus") or "")
-        humano_inicial = str(linha.get("valor_humano") or "")
-
-        diverge = _detectar_divergencia(linha)
-        cor_celula_etl = (
-            CORES["alerta"] if diverge else CORES["texto"]
-        )
-        cor_celula_opus = (
-            CORES["alerta"] if diverge else CORES["texto"]
-        )
-        # classe CSS dedicada (extracao-divergente) para teste por seletor
-        classe_div = "extracao-divergente" if diverge else "extracao-consenso"
-
-        col_a, col_b, col_c, col_d = st.columns([1.2, 1, 1, 1])
-        with col_a:
-            st.markdown(
-                f"<div style='padding:0.4rem 0.2rem; "
-                f"font-size:13px; color:{CORES['texto']};'>"
-                f"<code>{campo}</code></div>",
-                unsafe_allow_html=True,
-            )
-        with col_b:
-            st.markdown(
-                minificar(
-                    f"""
-                    <div class='{classe_div}' style='
-                        padding:0.4rem 0.5rem;
-                        background:{cor_celula_etl}11;
-                        border:1px solid {cor_celula_etl}44;
-                        border-radius:4px;
-                        font-size:13px;
-                        color:{cor_celula_etl};
-                        word-break:break-word;
-                    '>{etl or "—"}</div>
-                    """
-                ),
-                unsafe_allow_html=True,
-            )
-        with col_c:
-            st.markdown(
-                minificar(
-                    f"""
-                    <div class='{classe_div}' style='
-                        padding:0.4rem 0.5rem;
-                        background:{cor_celula_opus}11;
-                        border:1px solid {cor_celula_opus}44;
-                        border-radius:4px;
-                        font-size:13px;
-                        color:{cor_celula_opus};
-                        word-break:break-word;
-                    '>{opus or "—"}</div>
-                    """
-                ),
-                unsafe_allow_html=True,
-            )
-        with col_d:
             valores_humanos[campo] = st.text_input(
-                f"valor_humano_{campo}",
+                campo,
                 value=humano_inicial,
                 key=f"vh_{sha8}_{campo}",
-                label_visibility="collapsed",
             )
 
-    st.markdown("<div style='margin-top:0.6rem;'></div>", unsafe_allow_html=True)
-
-    if st.button("Validar arquivo", type="primary", key=f"validar_{sha8}"):
-        atualizadas = 0
-        for _, linha in df_arquivo.iterrows():
-            campo = str(linha["campo"])
-            valor_humano = str(valores_humanos.get(campo, "")).strip()
-            if not valor_humano:
-                # mantém pendente quando humano deixou vazio
-                continue
-            ok = vc.atualizar_validacao_humana(
-                sha8=sha8,
-                campo=campo,
-                valor_humano=valor_humano,
-                status_humano="ok",
-                observacoes="validado via Extração Tripla",
-                caminho_csv=caminho_csv,
+        if st.button(
+            "Enviar validação",
+            type="primary",
+            key=f"validar_{sha8}",
+            help="Persiste valor_humano + status_humano=ok no CSV.",
+        ):
+            atualizadas = 0
+            for _, linha in df_arquivo.iterrows():
+                campo = str(linha.get("campo") or "")
+                valor_humano = str(valores_humanos.get(campo, "")).strip()
+                if not valor_humano:
+                    continue
+                ok = vc.atualizar_validacao_humana(
+                    sha8=sha8,
+                    campo=campo,
+                    valor_humano=valor_humano,
+                    status_humano="ok",
+                    observacoes="validado via Extração Tripla",
+                    caminho_csv=caminho_csv,
+                )
+                if ok:
+                    atualizadas += 1
+            st.success(
+                f"{atualizadas} campo(s) marcado(s) como aprovado(s) por humano."
             )
-            if ok:
-                atualizadas += 1
-        st.success(
-            f"{atualizadas} campo(s) marcado(s) como aprovado(s) por humano."
-        )
+
+
+# ---------------------------------------------------------------------------
+# Entry point
+# ---------------------------------------------------------------------------
 
 
 def renderizar(
@@ -514,7 +560,7 @@ def renderizar(
     pessoa: str,
     ctx: dict | None = None,
 ) -> None:
-    """Entry point da aba Extração Tripla (UX-T-10)."""
+    """Entry point da aba Extração Tripla (UX-V-2.4)."""
     from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
     renderizar_grupo_acoes([
         {"label": "Baixar lote", "glyph": "download",
@@ -525,16 +571,23 @@ def renderizar(
 
     del dados, mes_selecionado, pessoa, ctx
 
+    # CSS dedicado da página (padrão Onda M).
+    st.markdown(
+        minificar(carregar_css_pagina("extracao_tripla")),
+        unsafe_allow_html=True,
+    )
+
     # UX-U-03: page-header canônico via helper.
     from src.dashboard.componentes.page_header import renderizar_page_header
     st.markdown(
         renderizar_page_header(
             titulo="EXTRAÇÃO TRIPLA",
             subtitulo=(
-                "Lista de arquivos · viewer · tabela ETL × Opus × Humano. "
-                "Divergências em laranja; consenso pré-popula a coluna humana."
+                "Cada arquivo passa por dois extratores -- ETL determinístico e "
+                "Claude Opus agentic. A coluna humana chega pré-preenchida com o "
+                "consenso; você só edita as divergências e envia."
             ),
-            sprint_tag="UX-RD-11",
+            sprint_tag="UX-V-2.4",
         ),
         unsafe_allow_html=True,
     )
@@ -548,7 +601,11 @@ def renderizar(
             callout_html(
                 "info",
                 "CSV ainda vazio. Rode o pipeline para extratores começarem a "
-                "popular `data/output/validacao_arquivos.csv`.",
+                "popular `data/output/validacao_arquivos.csv`. "
+                "Quando o pipeline de inbox processa um novo arquivo, ele é "
+                "extraído por **ETL determinístico** e por "
+                "**Claude Opus agentic**. Divergências aparecem aqui para "
+                "validação humana.",
             ),
             unsafe_allow_html=True,
         )
@@ -556,6 +613,7 @@ def renderizar(
 
     df_grupos = _agrupar_por_arquivo(df)
 
+    # Estado de seleção (default: primeiro arquivo)
     arquivo_selecionado = st.session_state.get(
         CHAVE_SESSION_ARQUIVO_SELECIONADO, None
     )
@@ -563,44 +621,64 @@ def renderizar(
         arquivo_selecionado = str(df_grupos.iloc[0]["caminho_relativo"])
         st.session_state[CHAVE_SESSION_ARQUIVO_SELECIONADO] = arquivo_selecionado
 
-    # Sumário em pills
-    total_arq = len(df_grupos)
-    total_campos = len(df)
-    aprovados = int((df["status_humano"].astype(str) == "ok").sum())
-    divergentes = int(
-        sum(_detectar_divergencia(linha) for _, linha in df.iterrows())
+    # KPIs no topo
+    n_total = len(df_grupos)
+    n_aprovado = int((df_grupos["status_humano"] == "aprovado").sum())
+    n_revisao = max(0, n_total - n_aprovado)
+    media_paridade = (
+        float(df_grupos["paridade_pct"].mean()) if not df_grupos.empty else 0.0
+    )
+    n_divergencias = int(df_grupos["n_divergencias"].sum())
+
+    st.markdown(
+        _kpis_header_html(media_paridade, n_divergencias, n_revisao, n_total),
+        unsafe_allow_html=True,
     )
 
-    col_a, col_b, col_c, col_d = st.columns(4)
-    col_a.metric("Arquivos", total_arq)
-    col_b.metric("Campos extraídos", total_campos)
-    col_c.metric("Aprovados humano", aprovados)
-    col_d.metric("Divergências ETL≠Opus", divergentes)
-
-    # 3 colunas: lista | viewer | tabela
-    col_lista, col_viewer, col_tabela = st.columns([1, 1.4, 1.6])
+    # Layout 2-col: lista esquerda | painel direito (cabeçalho + tabela tripla)
+    col_lista, col_painel = st.columns([1, 3])
 
     with col_lista:
-        _renderizar_lista(df_grupos, arquivo_selecionado)
+        # Selectbox Streamlit nativo para seleção real (a lista HTML é visual)
+        rotulos = [
+            f"{Path(str(g['caminho_relativo'])).name} ({g['paridade_pct']:.0f}%)"
+            for _, g in df_grupos.iterrows()
+        ]
+        caminhos = [str(g["caminho_relativo"]) for _, g in df_grupos.iterrows()]
+        idx_default = 0
+        if arquivo_selecionado in caminhos:
+            idx_default = caminhos.index(arquivo_selecionado)
+        idx = st.selectbox(
+            "Arquivo",
+            range(len(rotulos)),
+            index=idx_default,
+            format_func=lambda i: rotulos[i],
+            label_visibility="collapsed",
+        )
+        arquivo_selecionado = caminhos[idx]
+        st.session_state[CHAVE_SESSION_ARQUIVO_SELECIONADO] = arquivo_selecionado
 
-    with col_viewer:
-        _renderizar_viewer(arquivo_selecionado, raiz_repo)
+        st.markdown(
+            _lista_arquivos_html(df_grupos, arquivo_selecionado),
+            unsafe_allow_html=True,
+        )
 
-    with col_tabela:
-        if arquivo_selecionado:
-            df_arquivo = df[df["caminho_relativo"] == arquivo_selecionado]
-            sha8 = (
-                str(df_arquivo["sha8_arquivo"].iloc[0])
-                if not df_arquivo.empty
-                else ""
-            )
-            _renderizar_tabela_tripla(df_arquivo, sha8, caminho_csv)
-        else:
-            st.markdown(
-                callout_html("info", "Selecione um arquivo para ver os campos."),
-                unsafe_allow_html=True,
-            )
+    with col_painel:
+        df_arquivo = df[df["caminho_relativo"] == arquivo_selecionado]
+        sha8 = (
+            str(df_arquivo["sha8_arquivo"].iloc[0])
+            if not df_arquivo.empty
+            else ""
+        )
+
+        st.markdown(
+            _tabela_tripla_html(df_arquivo, extractor_versao=f"sha8 {sha8}"),
+            unsafe_allow_html=True,
+        )
+
+        # Form de persistência abaixo da tabela visual
+        _form_validar_arquivo(df_arquivo, sha8, caminho_csv)
 
 
-# "Três fontes independentes que concordam: aproximação da verdade."
-#  -- princípio da triangulação
+# "Onde dois extratores divergem, o humano decide."
+#  -- princípio V-2.4 da triangulação

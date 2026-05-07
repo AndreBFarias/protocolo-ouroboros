@@ -1,18 +1,23 @@
-"""Cluster Bem-estar -- página "Memórias" (UX-RD-19).
+"""Cluster Bem-estar -- página "Memórias" (UX-RD-19 + UX-V-2.11).
 
-Três sub-abas dentro de uma página única:
+Estrutura híbrida:
 
-* **Treinos** -- heatmap 91 dias colorido por sessão registrada
-  (reutiliza padrão do heatmap de humor mas com paleta neutra).
-* **Fotos** -- galeria das fotos referenciadas em ``eventos.json``.
-* **Marcos** -- lista cronológica DESC dos marcos registrados.
+* Quando o vault tem ``memorias.json`` populado, renderiza KPIs no topo
+  e um grid de cápsulas multimídia (foto/áudio/texto/vídeo) com badges,
+  gradientes coloridos por paleta e meta -- paridade com mockup
+  ``23-memorias.html``. Mídia real não é renderizada (só badges + meta).
+* Quando o vault não tem cápsulas, mantém as três sub-abas históricas:
+  **Treinos** (heatmap 91 dias), **Fotos** (eventos com fotos) e
+  **Marcos** (cronologia DESC).
+* Quando o vault está completamente ausente, fallback V-03 (estado inicial).
 
 Mockup-fonte: ``novo-mockup/mockups/23-memorias.html``.
 
-Lições UX-RD aplicadas:
+Lições UX-RD/UX-V aplicadas:
 
 * HTML emitido via :func:`minificar` (UX-RD-04).
 * Cores via ``CORES`` em :mod:`src.dashboard.tema` -- nunca hex literal.
+* CSS dedicado em ``css/paginas/be_memorias.css`` (UX-M-02.D residual).
 * Fallback graceful: caches ausentes viram placeholders, sem crash.
 * Contrato uniforme ``renderizar(dados, periodo, pessoa, ctx)``.
 """
@@ -32,6 +37,39 @@ from src.dashboard.tema import CORES
 from src.mobile_cache.varrer_vault import descobrir_vault_root
 
 PERIODO_HEATMAP_DIAS: int = 91
+
+# Paletas (cor escura, cor clara) para gradiente das cápsulas.
+# Espelha PALETAS de novo-mockup/mockups/23-memorias.html (UX-V-2.11).
+PALETAS_CAPSULA: list[tuple[str, str]] = [
+    ("#5e4d80", "#bd93f9"),
+    ("#80365a", "#ff79c6"),
+    ("#1a4945", "#8be9fd"),
+    ("#5a3a1a", "#f1a361"),
+    ("#3a4a1f", "#a4d063"),
+    ("#3a2a52", "#7960c4"),
+    ("#1a2e4a", "#5d8fbb"),
+    ("#4a1a2e", "#bb5d8f"),
+]
+
+# Tradução tipo do payload -> rótulo curto exibido no badge.
+_LABEL_TIPO: dict[str, str] = {
+    "foto": "foto",
+    "voz": "áudio",
+    "audio": "áudio",
+    "texto": "texto",
+    "video": "vídeo",
+    "vídeo": "vídeo",
+}
+
+# Glyph compacto por tipo (apenas texto monoespaçado dentro do círculo).
+_ICO_TIPO: dict[str, str] = {
+    "foto": "FT",
+    "voz": "AU",
+    "audio": "AU",
+    "texto": "TX",
+    "video": "VD",
+    "vídeo": "VD",
+}
 
 
 def _carregar_cache(vault_root: Path | None, nome: str) -> list[dict[str, Any]]:
@@ -136,6 +174,126 @@ def _marco_card_html(marco: dict[str, Any]) -> str:
     )
 
 
+def _capsula_html(memoria: dict[str, Any], idx: int) -> str:
+    """HTML de uma cápsula multimídia (UX-V-2.11).
+
+    Não renderiza mídia real -- apenas badge de tipo, gradiente colorido
+    como fundo, título, meta e tags. ``idx`` indexa ``PALETAS_CAPSULA`` em
+    rotação. Sanitização básica via ``str.replace`` para impedir injeção
+    em ``onclick`` (não usado aqui, mas titulos podem conter aspas).
+    """
+    tipo = str(memoria.get("tipo", "texto")).lower().strip()
+    label = _LABEL_TIPO.get(tipo, tipo or "?")
+    ico = _ICO_TIPO.get(tipo, "?")
+
+    cor1, cor2 = PALETAS_CAPSULA[idx % len(PALETAS_CAPSULA)]
+    titulo = str(memoria.get("titulo") or "(sem título)").strip()[:80]
+    data = str(memoria.get("data") or "").strip()
+    vinculo = str(memoria.get("vinculo") or memoria.get("duracao") or "").strip()
+    # Mostra apenas o primeiro segmento antes do " · " (mockup faz idem).
+    vinculo_curto = vinculo.split(" · ")[0] if vinculo else ""
+
+    tags_raw = memoria.get("tags") or []
+    if not isinstance(tags_raw, list):
+        tags_raw = []
+    tags_html = "".join(
+        f'<span class="pill">{str(t)[:18]}</span>'
+        for t in tags_raw[:4]
+    )
+
+    return (
+        f'<div class="mem-card" style="--cor:{cor2};">'
+        f'<div class="mem-thumb tipo-{tipo}" '
+        f'style="--cor1:{cor1};--cor2:{cor2};">'
+        f'<span class="badge">{label}</span>'
+        f'<span class="ico">{ico}</span>'
+        f"</div>"
+        f'<div class="mem-corpo">'
+        f'<span class="mem-titulo">{titulo}</span>'
+        f'<div class="mem-meta">'
+        f"<span>{data}</span><span>{vinculo_curto}</span>"
+        f"</div>"
+        f"</div>"
+        f'<div class="mem-tags">{tags_html}</div>'
+        f"</div>"
+    )
+
+
+def _grid_memorias_html(memorias: list[dict[str, Any]], limite: int = 12) -> str:
+    """Grid de cápsulas (até ``limite`` itens, mockup mostra 12 = 4×3)."""
+    cartoes = "".join(
+        _capsula_html(m, i)
+        for i, m in enumerate(memorias[:limite])
+        if isinstance(m, dict)
+    )
+    return f'<div class="mem-grid">{cartoes}</div>'
+
+
+def _kpis_memorias_html(memorias: list[dict[str, Any]]) -> str:
+    """4 KPIs do mockup: total, por tipo, vinculadas a eventos, capsulas."""
+    from collections import Counter
+
+    n = len(memorias)
+    tipos = Counter(
+        str(m.get("tipo", "?")).lower().strip()
+        for m in memorias
+        if isinstance(m, dict)
+    )
+    n_fotos = tipos.get("foto", 0)
+    n_audios = tipos.get("voz", 0) + tipos.get("audio", 0)
+    n_textos = tipos.get("texto", 0)
+    n_videos = tipos.get("video", 0) + tipos.get("vídeo", 0)
+    n_vinculadas = sum(
+        1 for m in memorias
+        if isinstance(m, dict) and (m.get("evento_id") or m.get("vinculo"))
+    )
+    pct_contexto = (n_vinculadas * 100 // n) if n else 0
+    n_para_abrir = max(0, n - n_vinculadas)
+
+    return (
+        '<div class="mem-stats">'
+        '<div class="mem-stat">'
+        '<div class="l">total · 30d</div>'
+        f'<div class="v" style="color:var(--accent-purple);">{n}</div>'
+        f'<div class="sub">{n} cápsulas no período</div>'
+        "</div>"
+        '<div class="mem-stat">'
+        '<div class="l">por tipo</div>'
+        '<div class="mem-stat-tipos">'
+        '<div>'
+        f'<div class="v" style="color:var(--accent-cyan);">{n_fotos}</div>'
+        '<div class="sub">fotos</div>'
+        '</div>'
+        '<div>'
+        f'<div class="v" style="color:var(--accent-pink);">{n_audios}</div>'
+        '<div class="sub">áudios</div>'
+        '</div>'
+        '<div>'
+        f'<div class="v" style="color:var(--accent-yellow);">{n_textos}</div>'
+        '<div class="sub">textos</div>'
+        '</div>'
+        '<div>'
+        f'<div class="v" style="color:var(--accent-green);">{n_videos}</div>'
+        '<div class="sub">vídeos</div>'
+        '</div>'
+        '</div>'
+        "</div>"
+        '<div class="mem-stat">'
+        '<div class="l">vinculadas a eventos</div>'
+        f'<div class="v" style="color:var(--accent-pink);">{n_vinculadas}'
+        f'<span style="color:var(--text-muted);font-size:14px;">/{n}</span>'
+        "</div>"
+        f'<div class="sub">{pct_contexto}% têm contexto</div>'
+        "</div>"
+        '<div class="mem-stat">'
+        '<div class="l">cápsulas para abrir</div>'
+        f'<div class="v" style="color:var(--accent-yellow);">{n_para_abrir}</div>'
+        '<div class="sub">aguardando contexto</div>'
+        "</div>"
+        "</div>"
+    )
+
+
 def _page_header_html() -> str:
     """UX-U-03: usa helper canônico ``componentes/page_header``."""
     from src.dashboard.componentes.page_header import renderizar_page_header
@@ -213,10 +371,28 @@ def renderizar(
         )
         return
 
+    # CSS dedicado da página (UX-V-2.11).
+    from src.dashboard.componentes.ui import carregar_css_pagina
+    st.markdown(
+        minificar(carregar_css_pagina("be_memorias")),
+        unsafe_allow_html=True,
+    )
+
+    memorias = _carregar_cache(vault_root, "memorias")
     treinos = _carregar_cache(vault_root, "treinos")
     eventos = _carregar_cache(vault_root, "eventos")
     marcos = _carregar_cache(vault_root, "marcos")
 
+    # Caminho UX-V-2.11: vault tem cápsulas multimídia -> grid + KPIs.
+    if memorias:
+        st.markdown(_kpis_memorias_html(memorias), unsafe_allow_html=True)
+        st.markdown(
+            minificar(_grid_memorias_html(memorias)),
+            unsafe_allow_html=True,
+        )
+        return
+
+    # Caminho histórico UX-RD-19: sem cápsulas, mostra Treinos/Fotos/Marcos.
     aba_treinos, aba_fotos, aba_marcos = st.tabs(["Treinos", "Fotos", "Marcos"])
 
     with aba_treinos:

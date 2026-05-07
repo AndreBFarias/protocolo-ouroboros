@@ -11,7 +11,10 @@ import pandas as pd
 
 from src.dashboard.paginas.completude import (
     LIMIAR_MIN_TX_FILTRO_RUIDO,
+    _calcular_kpis_completude,
     _heatmap,
+    _kpis_html,
+    _legenda_html,
     filtrar_categorias_por_volume,
 )
 
@@ -121,5 +124,95 @@ def test_heatmap_usa_colorscale_laranja_amarelo_verde() -> None:
     # Paleta antiga usava negativo (vermelho) -- NÃO deve aparecer.
     assert CORES["negativo"].lower() not in cores_paleta
 
+
+# ---------------------------------------------------------------------------
+# Sprint UX-V-2.3 -- 4 KPIs no topo + legenda do heatmap
+# ---------------------------------------------------------------------------
+
+
+def test_calcular_kpis_completude_resumo_vazio_devolve_fallback() -> None:
+    """Resumo vazio deve resultar em KPIs zerados (fallback graceful)."""
+    kpis = _calcular_kpis_completude({})
+    assert kpis == {
+        "cobertura": 0.0,
+        "tipos_completos": 0,
+        "tipos_total": 0,
+        "lacunas_criticas": 0,
+        "lacunas_medias": 0,
+    }
+
+
+def test_calcular_kpis_completude_calcula_cobertura_global() -> None:
+    """Cobertura = com_doc / total agregado, em percentual."""
+    resumo = {
+        "2026-01": {
+            "Aluguel": {"com_doc": 1, "total": 1, "sem_doc": 0, "orfas": []},
+            "Energia": {"com_doc": 0, "total": 1, "sem_doc": 1, "orfas": []},
+        },
+        "2026-02": {
+            "Aluguel": {"com_doc": 1, "total": 1, "sem_doc": 0, "orfas": []},
+            "Energia": {"com_doc": 0, "total": 1, "sem_doc": 1, "orfas": []},
+        },
+    }
+    kpis = _calcular_kpis_completude(resumo)
+    # 2 com_doc / 4 total = 50%.
+    assert kpis["cobertura"] == 50.0
+    # Aluguel 100% (completo); Energia 0% (crítico).
+    assert kpis["tipos_completos"] == 1
+    assert kpis["tipos_total"] == 2
+    # Energia tem 2 lacunas, < 50% cobertas -> críticas.
+    assert kpis["lacunas_criticas"] == 2
+    assert kpis["lacunas_medias"] == 0
+
+
+def test_calcular_kpis_completude_separa_lacunas_criticas_e_medias() -> None:
+    """Categorias >=50% cobertas viram médias; <50% viram críticas."""
+    resumo = {
+        "2026-01": {
+            # 75% cobertura -> média (1 lacuna)
+            "Aluguel": {"com_doc": 3, "total": 4, "sem_doc": 1, "orfas": []},
+            # 25% cobertura -> crítica (3 lacunas)
+            "Energia": {"com_doc": 1, "total": 4, "sem_doc": 3, "orfas": []},
+        },
+    }
+    kpis = _calcular_kpis_completude(resumo)
+    assert kpis["lacunas_medias"] == 1
+    assert kpis["lacunas_criticas"] == 3
+
+
+def test_kpis_html_renderiza_4_cards_com_classes_canonicas() -> None:
+    """HTML deve usar `.kpi-grid` + 4 `.kpi` (UX-M-03 components.css)."""
+    html = _kpis_html(
+        {
+            "cobertura": 84.3,
+            "tipos_completos": 2,
+            "tipos_total": 5,
+            "lacunas_criticas": 3,
+            "lacunas_medias": 14,
+        }
+    )
+    assert 'class="kpi-grid"' in html
+    assert html.count('class="kpi"') == 4
+    assert "84%" in html
+    assert "2 / 5" in html
+    assert ">3<" in html  # lacunas_criticas
+    assert ">14<" in html  # lacunas_medias
+    # Labels obrigatórios
+    assert "COBERTURA GLOBAL" in html
+    assert "TIPOS COMPLETOS" in html
+    assert "LACUNAS CRÍTICAS" in html
+    assert "LACUNAS MÉDIAS" in html
+
+
+def test_legenda_html_tem_3_estados_com_cores_d7() -> None:
+    """Legenda deve listar completo / parcial / ausente com cores D7."""
+    html = _legenda_html()
+    assert 'class="completude-legenda"' in html
+    assert "completo" in html
+    assert "parcial" in html
+    assert "ausente" in html
+    assert "accent-green" in html
+    assert "accent-yellow" in html
+    assert "accent-red" in html
 
 # "Um heatmap honesto mostra o que falta -- não grita." -- princípio UX

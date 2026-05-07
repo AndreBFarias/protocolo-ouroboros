@@ -27,6 +27,7 @@ Lições UX-RD herdadas:
 from __future__ import annotations
 
 import json
+from calendar import monthrange
 from collections import Counter
 from datetime import date, timedelta
 from pathlib import Path
@@ -200,6 +201,20 @@ def renderizar(
                 st.markdown(_card_html(item), unsafe_allow_html=True)
 
     with col_lateral:
+        if items:
+            hoje = date.today()
+            st.markdown(
+                _visao_mes_html(items, ano=hoje.year, mes=hoje.month),
+                unsafe_allow_html=True,
+            )
+            st.markdown(
+                _distribuicao_html(items),
+                unsafe_allow_html=True,
+            )
+            st.markdown(
+                _cruzamento_humor_html(),
+                unsafe_allow_html=True,
+            )
         st.markdown(
             _bairros_html(_top_bairros(items, top_n=10)),
             unsafe_allow_html=True,
@@ -360,6 +375,174 @@ def _card_html(item: dict[str, Any]) -> str:
           </div>
           {thumbs_html}
           {com_html}
+        </div>
+        """
+    )
+
+
+_MESES_PT = (
+    "janeiro", "fevereiro", "março", "abril", "maio", "junho",
+    "julho", "agosto", "setembro", "outubro", "novembro", "dezembro",
+)
+
+
+def _calendario_visual_html(
+    eventos: list[dict[str, Any]], ano: int, mes: int,
+) -> str:
+    """Calendário 5x7 com pontos coloridos em datas com eventos.
+
+    Layout espelha ``.cal-mini`` do mockup ``22-eventos.html`` (linha
+    de cabeçalho D/S/T/Q/Q/S/S + grid de células com classes
+    ``tem-evento`` e ``hoje``).
+    """
+    weekday_inicio = (date(ano, mes, 1).weekday() + 1) % 7
+    _, total_dias = monthrange(ano, mes)
+    dias: list[date | None] = [None] * weekday_inicio
+    dias.extend(date(ano, mes, d) for d in range(1, total_dias + 1))
+    while len(dias) % 7 != 0:
+        dias.append(None)
+
+    dias_evento: set[int] = set()
+    for ev in eventos:
+        try:
+            d = date.fromisoformat(str(ev.get("data", ""))[:10])
+        except ValueError:
+            continue
+        if d.year == ano and d.month == mes:
+            dias_evento.add(d.day)
+
+    hoje = date.today()
+    celulas: list[str] = []
+    for d in dias:
+        if d is None:
+            celulas.append('<div class="ddia fora"></div>')
+            continue
+        classes = ["ddia"]
+        if d.day in dias_evento:
+            classes.append("tem-evento")
+        if d == hoje:
+            classes.append("hoje")
+        celulas.append(
+            f'<div class="{" ".join(classes)}">{d.day}</div>'
+        )
+
+    cabec = "".join(
+        f'<span class="dlabel">{d}</span>'
+        for d in ("D", "S", "T", "Q", "Q", "S", "S")
+    )
+    return minificar(
+        f'<div class="calendario-visual">'
+        f'<div class="cal-mini">{cabec}{"".join(celulas)}</div>'
+        f"</div>"
+    )
+
+
+def _visao_mes_html(
+    eventos: list[dict[str, Any]], ano: int, mes: int,
+) -> str:
+    """Card com KPIs do mês corrente + calendário 5x7 embutido."""
+    eventos_no_mes = []
+    com_pessoa_b = 0
+    for ev in eventos:
+        try:
+            d = date.fromisoformat(str(ev.get("data", ""))[:10])
+        except ValueError:
+            continue
+        if d.year == ano and d.month == mes:
+            eventos_no_mes.append(ev)
+            com = ev.get("com") or []
+            autor = str(ev.get("autor", ""))
+            if autor == "pessoa_b" or "pessoa_b" in com:
+                com_pessoa_b += 1
+
+    nome_mes = _MESES_PT[mes - 1]
+    cal_html = _calendario_visual_html(eventos, ano, mes)
+    return minificar(
+        f"""
+        <div class="ev-stat">
+          <div class="l">{nome_mes} · visão</div>
+          <div class="ev-stat-numeros">
+            <div class="ev-stat-bloco">
+              <div class="v" style="color:var(--accent-purple, #bd93f9);">
+                {len(eventos_no_mes)}
+              </div>
+              <div class="sub">eventos</div>
+            </div>
+            <div class="ev-stat-bloco">
+              <div class="v" style="color:var(--accent-pink, #ff79c6);">
+                {com_pessoa_b}
+              </div>
+              <div class="sub">com pessoa B</div>
+            </div>
+          </div>
+          {cal_html}
+        </div>
+        """
+    )
+
+
+_CAT_CORES = {
+    "trabalho": "var(--accent-cyan, #8be9fd)",
+    "saude": "var(--accent-orange, #ffb86c)",
+    "saúde": "var(--accent-orange, #ffb86c)",
+    "casal": "var(--accent-pink, #ff79c6)",
+    "viagem": "var(--accent-purple, #bd93f9)",
+    "familia": "var(--accent-yellow, #f1fa8c)",
+    "família": "var(--accent-yellow, #f1fa8c)",
+    "social": "var(--accent-green, #50fa7b)",
+}
+
+
+def _distribuicao_html(eventos: list[dict[str, Any]]) -> str:
+    """Bar chart simples por categoria, ordenado DESC por contagem."""
+    cats: Counter[str] = Counter(
+        str(e.get("categoria") or "").strip().lower()
+        for e in eventos
+        if str(e.get("categoria") or "").strip()
+    )
+    if not cats:
+        return ""
+    max_v = max(cats.values())
+    linhas: list[str] = []
+    for cat, n in cats.most_common():
+        pct = (n / max_v) * 100 if max_v else 0
+        cor = _CAT_CORES.get(cat, "var(--accent-purple, #bd93f9)")
+        linhas.append(
+            f"""
+            <div class="tb-row">
+              <span class="nome">{_escape(cat)}</span>
+              <div class="barra">
+                <span style="width:{pct:.1f}%;background:{cor};"></span>
+              </div>
+              <span class="qtd">{n}</span>
+            </div>
+            """
+        )
+    return minificar(
+        f"""
+        <div class="ev-stat">
+          <div class="l">distribuição por tipo</div>
+          <div class="tipos-bars">{"".join(linhas)}</div>
+        </div>
+        """
+    )
+
+
+def _cruzamento_humor_html() -> str:
+    """Placeholder do cruzamento eventos x humor (escopo V-2.14)."""
+    return minificar(
+        """
+        <div class="ev-stat">
+          <div class="l">cruzamento com humor</div>
+          <div class="cruzamento-texto">
+            Em produção: o backend cruza eventos x humor para responder
+            perguntas como
+            <ul class="cruzamento-perguntas">
+              <li>"viagens elevam meu humor?"</li>
+              <li>"reuniões aumentam ansiedade?"</li>
+              <li>"rolezinhos ajudam o casal?"</li>
+            </ul>
+          </div>
         </div>
         """
     )
