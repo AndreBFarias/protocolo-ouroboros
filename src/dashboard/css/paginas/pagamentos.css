@@ -1,0 +1,247 @@
+/* Página Pagamentos -- UX-V-2.2 paridade com mockup 04-pagamentos.html */
+
+.pagamentos-calendario {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--r-md);
+    padding: var(--sp-4);
+}
+
+.cal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--sp-3);
+}
+.cal-titulo {
+    font-family: var(--ff-mono);
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-secondary);
+}
+.cal-nav {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    font-family: var(--ff-mono);
+    font-size: 11px;
+}
+.cal-nav-btn {
+    font-family: var(--ff-mono);
+    font-size: 10px;
+    background: var(--bg-elevated);
+    color: var(--text-muted);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--r-sm);
+    padding: 2px 8px;
+    cursor: default;
+}
+
+.cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+}
+.cal-head-dia {
+    font-family: var(--ff-mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.10em;
+    color: var(--text-muted);
+    text-align: center;
+    padding: 4px 0;
+}
+.cal-celula {
+    background: var(--bg-inset);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--r-sm);
+    min-height: 60px;
+    padding: 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.cal-celula.cal-empty {
+    background: transparent;
+    border: none;
+}
+.cal-num {
+    font-family: var(--ff-mono);
+    font-size: 11px;
+    color: var(--text-muted);
+}
+.cal-celula.cal-tem-pg .cal-num {
+    color: var(--text-primary);
+}
+.cal-celula.cal-hoje {
+    border-color: var(--accent-purple);
+    background: rgba(189, 147, 249, 0.08);
+}
+.cal-celula.cal-hoje .cal-num {
+    color: var(--accent-purple);
+    font-weight: 500;
+}
+
+.cal-pill {
+    display: block;
+    font-family: var(--ff-mono);
+    font-size: 9px;
+    padding: 1px 4px;
+    border-radius: var(--r-xs);
+    background: rgba(189, 147, 249, 0.20);
+    color: var(--accent-purple);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.cal-pill-fixo {
+    background: rgba(189, 147, 249, 0.20);
+    color: var(--accent-purple);
+}
+.cal-pill-variavel {
+    background: rgba(255, 121, 198, 0.20);
+    color: var(--accent-pink);
+}
+.cal-pill-cartao {
+    background: rgba(255, 184, 108, 0.20);
+    color: var(--accent-orange);
+}
+.cal-pill-em_atraso {
+    background: rgba(255, 85, 85, 0.20);
+    color: var(--accent-red);
+}
+
+.cal-legenda {
+    display: flex;
+    gap: var(--sp-3);
+    align-items: center;
+    margin-top: var(--sp-3);
+    padding-top: var(--sp-3);
+    border-top: 1px solid var(--border-subtle);
+    font-family: var(--ff-mono);
+    font-size: 10px;
+    color: var(--text-muted);
+    flex-wrap: wrap;
+}
+.cal-legenda-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+.cal-legenda-item .cal-pill {
+    width: 10px;
+    height: 10px;
+    padding: 0;
+    display: inline-block;
+}
+.cal-legenda-total {
+    margin-left: auto;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Lista lateral PRÓXIMOS 14 DIAS */
+.proximos-titulo {
+    font-family: var(--ff-mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.10em;
+    color: var(--text-secondary);
+    margin: 0 0 var(--sp-3);
+}
+.proximos-lista {
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--r-md);
+    overflow: hidden;
+}
+.proximos-vazio {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--r-md);
+    padding: var(--sp-4);
+    font-family: var(--ff-mono);
+    font-size: 12px;
+    color: var(--text-muted);
+}
+.proximo-linha {
+    display: grid;
+    grid-template-columns: 50px 1fr auto auto;
+    gap: var(--sp-2);
+    padding: var(--sp-2) var(--sp-3);
+    border-bottom: 1px dashed var(--border-subtle);
+    align-items: center;
+}
+.proximo-linha:last-child {
+    border-bottom: none;
+}
+.proximo-linha.linha-em-atraso {
+    background: rgba(255, 85, 85, 0.05);
+}
+
+.prox-data {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.1;
+}
+.prox-dia {
+    font-family: var(--ff-mono);
+    font-size: 16px;
+    color: var(--text-primary);
+    display: block;
+}
+.prox-mes {
+    font-family: var(--ff-mono);
+    font-size: 10px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+}
+.proximo-linha.linha-em-atraso .prox-dia,
+.proximo-linha.linha-em-atraso .prox-mes {
+    color: var(--accent-red);
+}
+.prox-detalhes {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+    overflow: hidden;
+}
+.prox-label {
+    font-family: var(--ff-mono);
+    font-size: 12px;
+    color: var(--text-primary);
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.prox-meta {
+    font-family: var(--ff-mono);
+    font-size: 10px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.prox-valor {
+    font-family: var(--ff-mono);
+    font-size: 12px;
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+}
+.proximo-linha.linha-em-atraso .prox-valor {
+    color: var(--accent-red);
+}
+.prox-btn {
+    font-family: var(--ff-mono);
+    font-size: 10px;
+    background: var(--bg-elevated);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--r-sm);
+    padding: 2px 8px;
+    cursor: default;
+    text-transform: lowercase;
+}
