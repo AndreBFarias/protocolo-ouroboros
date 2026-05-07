@@ -173,8 +173,9 @@ def renderizar(
     """Renderiza Bem-estar / Rotina (UX-T-20)."""
     from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
     renderizar_grupo_acoes([
-        {"label": "Hoje", "href": "?cluster=Bem-estar&tab=Hoje"},
-        {"label": "Novo", "primary": True,
+        {"label": "Hoje", "glyph": "calendar",
+         "href": "?cluster=Bem-estar&tab=Hoje"},
+        {"label": "Novo", "primary": True, "glyph": "plus",
          "title": "Wizard alarme/tarefa/contador"},
     ])
 

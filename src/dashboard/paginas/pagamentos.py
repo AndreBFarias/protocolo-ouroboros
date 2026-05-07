@@ -544,8 +544,10 @@ def renderizar(
 
     from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
     renderizar_grupo_acoes([
-        {"label": "Marcar pago", "title": "Marcar pagamentos selecionados"},
-        {"label": "Adicionar", "primary": True, "title": "Novo pagamento"},
+        {"label": "Marcar pago", "glyph": "check",
+         "title": "Marcar pagamentos selecionados"},
+        {"label": "Adicionar", "primary": True, "glyph": "plus",
+         "title": "Novo pagamento"},
     ])
 
     if "extrato" not in dados:

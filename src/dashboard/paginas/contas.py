@@ -485,7 +485,7 @@ def renderizar(dados: dict[str, pd.DataFrame], mes_selecionado: str, pessoa: str
     """
     from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
     renderizar_grupo_acoes([
-        {"label": "Adicionar conta", "glyph": "upload",
+        {"label": "Adicionar conta", "glyph": "plus",
          "title": "Cadastrar nova conta bancária"},
         {"label": "Sincronizar OFX", "primary": True, "glyph": "refresh",
          "title": "Reprocessar OFX e atualizar saldos"},

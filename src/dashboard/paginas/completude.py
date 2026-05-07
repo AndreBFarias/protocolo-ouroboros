@@ -312,8 +312,9 @@ def renderizar(
     """Entry point da aba Completude (UX-RD-10 + UX-T-08)."""
     from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
     renderizar_grupo_acoes([
-        {"label": "Reprocessar", "title": "Reanalisar completude"},
-        {"label": "Exportar gaps", "primary": True,
+        {"label": "Reprocessar", "glyph": "refresh",
+         "title": "Reanalisar completude"},
+        {"label": "Exportar gaps", "primary": True, "glyph": "download",
          "title": "Exportar lista de lacunas"},
     ])
 

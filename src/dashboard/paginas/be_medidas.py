@@ -145,8 +145,10 @@ def renderizar(
     """Renderiza Bem-estar / Medidas (UX-T-24)."""
     from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
     renderizar_grupo_acoes([
-        {"label": "Importar Mi Fit", "title": "Balança Xiaomi"},
-        {"label": "Registrar", "primary": True, "title": "Peso, BF%, cintura"},
+        {"label": "Importar Mi Fit", "glyph": "upload",
+         "title": "Balança Xiaomi"},
+        {"label": "Registrar", "primary": True, "glyph": "plus",
+         "title": "Peso, BF%, cintura"},
     ])
 
     del dados, periodo, ctx

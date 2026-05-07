@@ -46,9 +46,23 @@ def _renderizar_acao(acao: Acao) -> str:
     glyph_nome = acao.get("glyph")
     glyph_html = ""
     if glyph_nome:
+        # UX-V-05: validação contra catálogo curado (warning graceful;
+        # não quebra renderização quando ID novo aparece em runtime).
+        try:
+            from src.dashboard.componentes.glyphs_canonicos import GLYPHS_CANONICOS
+            if glyph_nome not in GLYPHS_CANONICOS:
+                import logging
+                logging.getLogger(__name__).warning(
+                    "Glyph fora do catálogo canônico: %s. IDs válidos: %s",
+                    glyph_nome, sorted(GLYPHS_CANONICOS),
+                )
+        except Exception:
+            pass
         try:
             from src.dashboard.componentes.glyphs import glyph as _glyph
-            glyph_html = _glyph(glyph_nome, tamanho_px=14)
+            glyph_html = (
+                f'<span class="btn-glyph">{_glyph(glyph_nome, tamanho_px=14)}</span>'
+            )
         except Exception:
             glyph_html = ""
     title_attr = ""

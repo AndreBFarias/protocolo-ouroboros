@@ -56,8 +56,9 @@ def renderizar(
     """Renderiza Bem-estar / Humor (UX-T-18)."""
     from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
     renderizar_grupo_acoes([
-        {"label": "Exportar 90d", "title": "CSV de humor 91 dias"},
-        {"label": "Registrar agora", "primary": True,
+        {"label": "Exportar 90d", "glyph": "download",
+         "title": "CSV de humor 91 dias"},
+        {"label": "Registrar agora", "primary": True, "glyph": "plus",
          "href": "?cluster=Bem-estar&tab=Hoje",
          "title": "Voltar para Hoje e registrar humor"},
     ])

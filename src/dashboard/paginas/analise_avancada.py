@@ -636,9 +636,10 @@ def renderizar(
     """Renderiza página Análise (UX-RD-12 + UX-T-12)."""
     from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
     renderizar_grupo_acoes([
-        {"label": "Categorias", "href": "?cluster=Análise&tab=Categorias",
+        {"label": "Categorias", "glyph": "list",
+         "href": "?cluster=Análise&tab=Categorias",
          "title": "Ir para regras de categorias"},
-        {"label": "Exportar relatório", "primary": True,
+        {"label": "Exportar relatório", "primary": True, "glyph": "download",
          "title": "Gerar PDF do relatório"},
     ])
 

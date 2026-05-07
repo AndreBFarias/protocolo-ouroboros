@@ -127,8 +127,9 @@ def renderizar(
     """Renderiza Bem-estar / Editor TOML (UX-T-28)."""
     from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
     renderizar_grupo_acoes([
-        {"label": "Histórico (git log)", "title": "git log .ouroboros/rotina/"},
-        {"label": "Salvar (commit)", "primary": True,
+        {"label": "Histórico (git log)", "glyph": "list",
+         "title": "git log .ouroboros/rotina/"},
+        {"label": "Salvar (commit)", "primary": True, "glyph": "validar",
          "title": "git commit -m 'rotina: ...'"},
     ])
 

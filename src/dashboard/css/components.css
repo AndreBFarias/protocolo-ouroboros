@@ -397,7 +397,6 @@
   font-size: var(--fs-12);
 }
 
-
 /* ===== Micro-componentes UX-V-02 ===== */
 
 /* Sparkline */
@@ -663,3 +662,19 @@
   50% { background-position: 100% 0%; }
 }
 
+=======
+/* ===== Topbar glyphs (UX-V-05) ===== */
+/* Wrapper inline do glyph SVG dentro de botões/links da topbar.
+   O SVG inline já carrega width/height/viewBox; este span apenas
+   garante alinhamento vertical, espaçamento à direita do label e
+   leve atenuação cromática para hierarquia visual (glyph < label). */
+.btn-glyph {
+  display: inline-flex;
+  align-items: center;
+  margin-right: var(--sp-1, 4px);
+  opacity: 0.85;
+  line-height: 1;
+}
+.btn-glyph svg {
+  display: block;
+}

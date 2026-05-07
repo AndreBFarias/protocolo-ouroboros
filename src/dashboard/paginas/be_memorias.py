@@ -159,8 +159,8 @@ def renderizar(
     """Renderiza Bem-estar / Memórias (UX-T-23)."""
     from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
     renderizar_grupo_acoes([
-        {"label": "Random", "title": "Memória aleatória"},
-        {"label": "Capturar", "primary": True,
+        {"label": "Random", "glyph": "refresh", "title": "Memória aleatória"},
+        {"label": "Capturar", "primary": True, "glyph": "plus",
          "title": "Foto/áudio/texto/vídeo"},
     ])
 

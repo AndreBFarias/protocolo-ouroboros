@@ -157,8 +157,8 @@ def renderizar(
     """Renderiza Bem-estar / Ciclo (UX-T-25)."""
     from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
     renderizar_grupo_acoes([
-        {"label": "Histórico", "title": "12 ciclos anteriores"},
-        {"label": "Registrar dia", "primary": True,
+        {"label": "Histórico", "glyph": "list", "title": "12 ciclos anteriores"},
+        {"label": "Registrar dia", "primary": True, "glyph": "plus",
          "title": "Fluxo, sintomas, humor, energia"},
     ])
 

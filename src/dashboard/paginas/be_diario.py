@@ -78,9 +78,10 @@ def renderizar(
     """Renderiza Bem-estar / Diário emocional (UX-T-19)."""
     from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
     renderizar_grupo_acoes([
-        {"label": "Heatmap", "href": "?cluster=Bem-estar&tab=Humor",
+        {"label": "Heatmap", "glyph": "analise",
+         "href": "?cluster=Bem-estar&tab=Humor",
          "title": "Ver humor 91 dias"},
-        {"label": "Hoje", "primary": True,
+        {"label": "Hoje", "primary": True, "glyph": "calendar",
          "href": "?cluster=Bem-estar&tab=Hoje",
          "title": "Registrar humor de hoje"},
     ])
