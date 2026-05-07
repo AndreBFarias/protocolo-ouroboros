@@ -1,0 +1,67 @@
+/* Chip-bar fina de filtros globais (UX-V-01).
+   Renderizada entre breadcrumb e page-header em TODAS páginas
+   orquestradas por main() em src/dashboard/app.py.
+
+   Substitui visual do st.expander("Filtros globais") legado mas
+   preserva os mesmos selectboxes Streamlit abaixo via
+   label_visibility=collapsed. */
+
+.chip-bar-globais {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    padding: var(--sp-2) var(--sp-3);
+    margin-bottom: var(--sp-2);
+    background: var(--bg-inset);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--r-md);
+    font-family: var(--ff-mono, monospace);
+    font-size: 11px;
+    flex-wrap: wrap;
+}
+
+.chip-bar-rotulo {
+    text-transform: uppercase;
+    letter-spacing: 0.10em;
+    color: var(--text-muted);
+    margin-right: var(--sp-2);
+}
+
+.chip-filtro {
+    padding: 2px 10px;
+    border-radius: var(--r-full);
+    background: var(--bg-surface);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-subtle);
+    cursor: default;
+    transition: border-color 0.15s, color 0.15s;
+}
+
+.chip-filtro strong {
+    color: var(--text-primary);
+    font-weight: 600;
+    margin-left: 4px;
+}
+
+.chip-filtro:hover {
+    border-color: var(--accent-purple);
+    color: var(--text-primary);
+}
+
+.chip-filtro-ativo {
+    background: rgba(189, 147, 249, 0.10);
+    border-color: var(--accent-purple);
+    color: var(--accent-purple);
+}
+
+/* Selectboxes invisíveis abaixo da chip-bar -- Streamlit ainda
+   renderiza altura/padding mesmo com label_visibility=collapsed.
+   Compactar via top negativo para que o conjunto chip-bar + 4
+   selectboxes ocupe altura mínima. */
+div[data-testid="stSelectbox"] > label[aria-hidden="true"] {
+    display: none !important;
+}
+div[data-testid="stHorizontalBlock"]:has(div[data-testid="stSelectbox"] > label[aria-hidden="true"]) {
+    margin-top: -8px;
+    margin-bottom: var(--sp-2);
+}

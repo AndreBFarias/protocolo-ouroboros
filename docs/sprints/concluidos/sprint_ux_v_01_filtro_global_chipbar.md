@@ -1,14 +1,18 @@
 ---
 id: UX-V-01
 titulo: Filtro global como chip-bar fina canônica entre breadcrumb e header
-status: backlog
+status: concluida
 prioridade: altissima
 data_criacao: 2026-05-07
+data_revisao: 2026-05-07
+concluida_em: 2026-05-07
 fase: PARIDADE_VISUAL
 depende_de: [UX-M-02, UX-M-03, UX-M-04]
 bloqueia: [UX-V-2.*, UX-V-3.*]
 esforco_estimado_horas: 4
 origem: docs/auditorias/AUDITORIA_PARIDADE_VISUAL_2026-05-07.md (P1)
+revisao_2026_05_07: spec corrigida após executor-sprint reportar achado-bloqueio (k) — código real tem 4 filtros + chaves seletor_* + contrato 3-tuple
+commit: 4e66dcb
 ---
 
 # Sprint UX-V-01 — Filtro global como chip-bar fina canônica
