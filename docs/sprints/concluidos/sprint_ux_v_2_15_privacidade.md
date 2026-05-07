@@ -1,9 +1,11 @@
 ---
 id: UX-V-2.15
 titulo: Privacidade granular A↔B com 4 níveis × bidirecional × 6 campos (24 radios)
-status: backlog
+status: concluida
 prioridade: altissima
 data_criacao: 2026-05-07
+concluida_em: 2026-05-07
+commit: 7e6b113
 fase: PARIDADE_VISUAL
 depende_de: [UX-V-02, UX-V-03]
 co_executavel_com: [UX-V-2.9, UX-V-2.11, UX-V-2.12, UX-V-2.13]
