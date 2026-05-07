@@ -36,6 +36,8 @@ import pandas as pd
 import streamlit as st
 
 from src.dashboard.componentes.html_utils import minificar
+from src.dashboard.componentes.page_header import renderizar_page_header
+from src.dashboard.componentes.ui import callout_html
 from src.dashboard.tema import CORES
 from src.mobile_cache.escrever_evento import escrever_evento
 from src.mobile_cache.eventos import gerar_cache as gerar_cache_eventos
@@ -136,22 +138,27 @@ def renderizar(
 
     with col_lista:
         st.markdown(
-            _page_header_html(len(items_filtrados)),
+            _page_header_canonico(len(items_filtrados)),
             unsafe_allow_html=True,
         )
 
         if vault_root is None:
-            st.warning(
-                "Vault Bem-estar não encontrado. Configure `OUROBOROS_VAULT` "
+            msg = (
+                "Vault Bem-estar não encontrado. Configure OUROBOROS_VAULT "
                 "para visualizar a timeline de eventos."
             )
+            st.markdown(callout_html("warning", msg), unsafe_allow_html=True)
         elif not items:
-            st.info(
+            msg = (
                 "Nenhum evento registrado no vault. "
                 "Use o botão à esquerda para criar o primeiro."
             )
+            st.markdown(callout_html("info", msg), unsafe_allow_html=True)
         elif not items_filtrados:
-            st.info("Nenhum evento casa com os filtros atuais.")
+            st.markdown(
+                callout_html("info", "Nenhum evento casa com os filtros atuais."),
+                unsafe_allow_html=True,
+            )
         else:
             for item in items_filtrados:
                 st.markdown(_card_html(item), unsafe_allow_html=True)
@@ -237,29 +244,16 @@ def _top_bairros(items: list[dict[str, Any]], *, top_n: int = 10) -> list[tuple[
 # ---------------------------------------------------------------------------
 
 
-def _page_header_html(qtd: int) -> str:
-    return minificar(
-        f"""
-        <div class="page-header">
-          <div>
-            <h1 class="page-title">BEM-ESTAR · EVENTOS</h1>
-            <p class="page-subtitle">
-              Timeline cronológica de eventos
-              <code style="color:{CORES['superfluo']};
-              background:{CORES['fundo_inset']};padding:1px 6px;
-              border-radius:2px;">positivo</code> ou
-              <code style="color:{CORES['superfluo']};
-              background:{CORES['fundo_inset']};padding:1px 6px;
-              border-radius:2px;">negativo</code> com lugar, bairro e
-              fotos anexadas.
-            </p>
-          </div>
-          <div class="page-meta">
-            <span class="sprint-tag">UX-RD-18</span>
-            <span class="pill pill-d7-graduado">{qtd} eventos</span>
-          </div>
-        </div>
-        """
+def _page_header_canonico(qtd: int) -> str:
+    """Page-header canônico via UX-M-02 (substitui markup local)."""
+    return renderizar_page_header(
+        titulo="BEM-ESTAR · EVENTOS",
+        subtitulo=(
+            "Timeline cronológica de eventos positivo ou negativo "
+            "com lugar, bairro e fotos anexadas."
+        ),
+        sprint_tag="UX-RD-18",
+        pills=[{"texto": f"{qtd} eventos", "tipo": "d7-graduado"}],
     )
 
 

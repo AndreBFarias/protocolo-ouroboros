@@ -38,6 +38,8 @@ import pandas as pd
 import streamlit as st
 
 from src.dashboard.componentes.html_utils import minificar
+from src.dashboard.componentes.page_header import renderizar_page_header
+from src.dashboard.componentes.ui import callout_html
 from src.dashboard.tema import CORES
 from src.mobile_cache.diario_emocional import gerar_cache as gerar_cache_diario
 from src.mobile_cache.escrever_diario import escrever_diario
@@ -135,24 +137,29 @@ def renderizar(
 
     with col_lista:
         st.markdown(
-            _page_header_html(len(items_filtrados)),
+            _page_header_canonico(len(items_filtrados)),
             unsafe_allow_html=True,
         )
 
         if vault_root is None:
-            st.warning(
-                "Vault Bem-estar não encontrado. Configure `OUROBOROS_VAULT` "
+            msg = (
+                "Vault Bem-estar não encontrado. Configure OUROBOROS_VAULT "
                 "para visualizar registros do diário emocional."
             )
+            st.markdown(callout_html("warning", msg), unsafe_allow_html=True)
             return
 
         if not items:
-            st.info(
+            msg = (
                 "Nenhum registro de diário emocional no vault. "
                 "Use o botão acima para criar o primeiro."
             )
+            st.markdown(callout_html("info", msg), unsafe_allow_html=True)
         elif not items_filtrados:
-            st.info("Nenhum registro casa com os filtros atuais.")
+            st.markdown(
+                callout_html("info", "Nenhum registro casa com os filtros atuais."),
+                unsafe_allow_html=True,
+            )
         else:
             for item in items_filtrados:
                 st.markdown(_card_html(item), unsafe_allow_html=True)
@@ -223,32 +230,16 @@ def _filtrar(
 # ---------------------------------------------------------------------------
 
 
-def _page_header_html(qtd: int) -> str:
-    return minificar(
-        f"""
-        <div class="page-header">
-          <div>
-            <h1 class="page-title">BEM-ESTAR · DIÁRIO</h1>
-            <p class="page-subtitle">
-              Lista cronológica de registros do tipo
-              <code style="color:{CORES['superfluo']};
-              background:{CORES['fundo_inset']};padding:1px 6px;
-              border-radius:2px;">trigger</code> ou
-              <code style="color:{CORES['superfluo']};
-              background:{CORES['fundo_inset']};padding:1px 6px;
-              border-radius:2px;">vitória</code>.
-              Cache lido de
-              <code style="color:{CORES['superfluo']};
-              background:{CORES['fundo_inset']};padding:1px 6px;
-              border-radius:2px;">.ouroboros/cache/diario-emocional.json</code>.
-            </p>
-          </div>
-          <div class="page-meta">
-            <span class="sprint-tag">UX-RD-18</span>
-            <span class="pill pill-d7-graduado">{qtd} registros</span>
-          </div>
-        </div>
-        """
+def _page_header_canonico(qtd: int) -> str:
+    """Page-header canônico via UX-M-02 (substitui markup local)."""
+    return renderizar_page_header(
+        titulo="BEM-ESTAR · DIÁRIO",
+        subtitulo=(
+            "Lista cronológica de registros do tipo trigger ou vitória. "
+            "Cache lido de .ouroboros/cache/diario-emocional.json."
+        ),
+        sprint_tag="UX-RD-18",
+        pills=[{"texto": f"{qtd} registros", "tipo": "d7-graduado"}],
     )
 
 
