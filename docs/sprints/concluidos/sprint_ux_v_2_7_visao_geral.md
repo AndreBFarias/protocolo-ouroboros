@@ -1,7 +1,8 @@
 ---
 id: UX-V-2.7
 titulo: Página Visão Geral com 6 cards de cluster + Atividade Recente com ícones
-status: backlog
+status: concluída
+concluida_em: 2026-05-07  # noqa: accent
 prioridade: alta
 data_criacao: 2026-05-07
 fase: PARIDADE_VISUAL
