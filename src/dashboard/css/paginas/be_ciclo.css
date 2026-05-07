@@ -1,0 +1,231 @@
+/* CSS dedicado da pagina Bem-estar / Ciclo (UX-V-2.13).
+   Origem: novo-mockup/mockups/25-ciclo.html.
+   Inspirado nos blocos .anel-svg, .ciclo-card, .fase-leg, .sint-card. */
+
+.ciclo-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 360px;
+    gap: var(--sp-4);
+}
+@media (max-width: 1100px) {
+    .ciclo-grid { grid-template-columns: 1fr; }
+}
+
+.ciclo-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--r-md);
+    padding: var(--sp-5);
+    margin-bottom: var(--sp-4);
+}
+
+/* Anel circular SVG */
+.anel-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--sp-3) 0;
+    position: relative;
+}
+.anel-svg {
+    width: 100%;
+    max-width: 460px;
+    height: auto;
+    display: block;
+}
+.anel-centro {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+}
+.anel-centro .fase-titulo {
+    font-family: var(--ff-mono);
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+.anel-centro .dia {
+    font-family: var(--ff-mono);
+    font-size: 56px;
+    font-weight: 500;
+    line-height: 1;
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+    margin-top: 2px;
+}
+.anel-centro .total {
+    font-family: var(--ff-mono);
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+.anel-centro .pred {
+    font-family: var(--ff-mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: var(--sp-2);
+}
+
+/* Cards de fase (4 fases canonicas) */
+.fases-legenda {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--sp-2);
+    margin-top: var(--sp-4);
+}
+.fase-leg {
+    background: var(--bg-inset);
+    border: 1px solid var(--border-subtle);
+    border-left: 3px solid var(--cor);
+    border-radius: var(--r-sm);
+    padding: var(--sp-3);
+}
+.fase-leg.ativa {
+    box-shadow: 0 0 0 1px var(--cor);
+    background: var(--bg-elevated);
+}
+.fase-leg .nome {
+    font-family: var(--ff-mono);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--cor);
+    margin-bottom: 2px;
+}
+.fase-leg .janela {
+    font-family: var(--ff-mono);
+    font-size: 10px;
+    color: var(--text-muted);
+}
+.fase-leg .nota {
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-top: 6px;
+    line-height: 1.4;
+}
+
+/* Card de sintomas (escala 0-3) */
+.sint-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--r-md);
+    padding: var(--sp-4);
+    margin-bottom: var(--sp-3);
+}
+.sint-card h3 {
+    font-family: var(--ff-mono);
+    font-size: 11px;
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin: 0 0 var(--sp-3);
+}
+.sint-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: var(--sp-2);
+    align-items: center;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border-subtle);
+}
+.sint-row:last-child { border-bottom: none; }
+.sint-row .nome {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+.sint-row .intens {
+    display: flex;
+    gap: 2px;
+}
+.sint-row .intens span {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--bg-elevated);
+}
+.sint-row .intens span.on { background: var(--accent-pink); }
+
+/* Strip mensal 28 dias */
+.mes-strip {
+    display: grid;
+    grid-template-columns: repeat(28, 1fr);
+    gap: 2px;
+}
+.mes-strip .d {
+    aspect-ratio: 1;
+    border-radius: 2px;
+    background: var(--bg-inset);
+    font-family: var(--ff-mono);
+    font-size: 8px;
+    display: grid;
+    place-items: center;
+    color: var(--text-muted);
+}
+.mes-strip .d.menstr { background: rgba(255, 85, 85, 0.45); color: white; }
+.mes-strip .d.fol    { background: rgba(241, 250, 140, 0.18); color: var(--text-secondary); }
+.mes-strip .d.fert   { background: rgba(189, 147, 249, 0.45); color: white; }
+.mes-strip .d.lut    { background: rgba(255, 121, 198, 0.18); color: var(--text-secondary); }
+.mes-strip .d.hoje   { box-shadow: 0 0 0 1.5px var(--accent-cyan); color: var(--accent-cyan); }
+
+.legenda-strip {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+}
+.legenda-strip span {
+    font-family: var(--ff-mono);
+    font-size: 10px;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.legenda-strip span::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    background: var(--bg-elevated);
+}
+.legenda-strip .menstr::before { background: rgba(255, 85, 85, 0.45); }
+.legenda-strip .fol::before    { background: rgba(241, 250, 140, 0.45); }
+.legenda-strip .fert::before   { background: rgba(189, 147, 249, 0.45); }
+.legenda-strip .lut::before    { background: rgba(255, 121, 198, 0.35); }
+
+/* Cruzamento humor x ciclo */
+.crc-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--r-md);
+    padding: var(--sp-4);
+    margin-bottom: var(--sp-3);
+}
+.crc-card h3 {
+    font-family: var(--ff-mono);
+    font-size: 11px;
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin: 0 0 var(--sp-3);
+}
+.cruz-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: var(--sp-2);
+    padding: 6px 0;
+    border-bottom: 1px dashed var(--border-subtle);
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+.cruz-row:last-child { border-bottom: none; }
+.cruz-row .v {
+    font-family: var(--ff-mono);
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+}
