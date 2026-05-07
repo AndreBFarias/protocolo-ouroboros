@@ -35,8 +35,7 @@ from src.dashboard.componentes.heatmap_humor import (
 )
 from src.dashboard.componentes.html_utils import minificar
 from src.dashboard.componentes.page_header import renderizar_page_header
-from src.dashboard.componentes.ui import callout_html, kpi_card
-from src.dashboard.tema import CORES
+from src.dashboard.componentes.ui import callout_html, carregar_css_pagina, kpi_card
 from src.mobile_cache.humor_heatmap import gerar_humor_heatmap
 from src.mobile_cache.varrer_vault import descobrir_vault_root
 
@@ -61,7 +60,7 @@ def renderizar(
     del dados, periodo, ctx
 
     st.markdown(gerar_estilos_heatmap(), unsafe_allow_html=True)
-    st.markdown(_estilos_locais(), unsafe_allow_html=True)
+    st.markdown(minificar(carregar_css_pagina("be_humor")), unsafe_allow_html=True)
 
     hoje = date.today()
     vault_root = descobrir_vault_root()
@@ -335,61 +334,5 @@ def _renderizar_detalhe_dia(
 # ---------------------------------------------------------------------------
 
 
-def _estilos_locais() -> str:
-    """Override mínimo: detalhe-pessoa-card específico do heatmap.
-
-    Stats (média/registros/melhor/pior) usam kpi_card canônico via ui.py
-    desde UX-M-02.D. CSS abaixo é genuinamente da página Humor (visualização
-    detalhada por pessoa A/B no expander do dia selecionado).
-    """
-    return minificar(
-        f"""
-        <style>
-          .detalhe-pessoa-card {{
-            background: {CORES['card_fundo']};
-            border: 1px solid {CORES['card_elevado']};
-            border-left: 3px solid {CORES['destaque']};
-            border-radius: 6px;
-            padding: 12px 14px;
-            margin-bottom: 8px;
-          }}
-          .detalhe-pessoa-head {{
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline;
-            margin-bottom: 6px;
-          }}
-          .detalhe-pessoa-nome {{
-            font-family: monospace;
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            color: {CORES['texto_sec']};
-          }}
-          .detalhe-pessoa-dia {{
-            font-family: monospace;
-            font-size: 11px;
-            color: {CORES['texto_muted']};
-          }}
-          .detalhe-pessoa-grid {{
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 8px;
-          }}
-          .detalhe-pessoa-grid .l {{
-            font-size: 10px;
-            color: {CORES['texto_muted']};
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
-          }}
-          .detalhe-pessoa-grid .v {{
-            font-family: monospace;
-            font-size: 16px;
-            color: {CORES['texto']};
-          }}
-        </style>
-        """
-    )
-
-
+# CSS dedicado: src/dashboard/css/paginas/be_humor.css (UX-M-02.D residual).
 # "Conhece-te a ti mesmo." -- Sócrates

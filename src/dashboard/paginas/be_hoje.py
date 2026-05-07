@@ -40,7 +40,7 @@ import streamlit as st
 
 from src.dashboard.componentes.html_utils import minificar
 from src.dashboard.componentes.page_header import renderizar_page_header
-from src.dashboard.componentes.ui import callout_html, kpi_card
+from src.dashboard.componentes.ui import callout_html, carregar_css_pagina, kpi_card
 from src.dashboard.tema import CORES
 from src.mobile_cache.escrever_humor import TAGS_CANONICAS, escrever_registro
 from src.mobile_cache.varrer_vault import descobrir_vault_root
@@ -85,7 +85,7 @@ def renderizar(
 
     del dados, periodo, ctx
 
-    st.markdown(_estilos_locais(), unsafe_allow_html=True)
+    st.markdown(minificar(carregar_css_pagina("be_hoje")), unsafe_allow_html=True)
 
     pessoa_default = pessoa if pessoa in {"pessoa_a", "pessoa_b", "casal"} else "pessoa_a"
     if pessoa_default == "casal":
@@ -404,73 +404,5 @@ def _vazio_html(texto: str) -> str:
 # ---------------------------------------------------------------------------
 
 
-def _estilos_locais() -> str:
-    """Override mínimo: hero-humor (marker form) + listas mini específicas.
-
-    Não duplica componentes canônicos (kpi_card, callout_html já usados via
-    ui.py). Mantém apenas marcações específicas da página Hoje (hero do
-    formulário, listas dos resultados do dia, vazio).
-    """
-    return minificar(
-        f"""
-        <style>
-          .hero-humor-marker {{
-            background: {CORES['card_fundo']};
-            border: 1px solid {CORES['card_elevado']};
-            border-radius: 8px;
-            padding: 16px 20px;
-            margin-bottom: 12px;
-          }}
-          .hero-humor-marker .hero-head {{
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 8px;
-          }}
-          .hero-humor-marker .hero-titulo {{
-            font-family: monospace;
-            font-size: 13px;
-            letter-spacing: 0.10em;
-            text-transform: uppercase;
-            color: {CORES['texto_muted']};
-            margin: 0;
-          }}
-          .hero-humor-marker .hero-data {{
-            font-family: monospace;
-            font-size: 12px;
-            color: {CORES['texto_sec']};
-          }}
-          .hero-humor-marker .hero-legend {{
-            font-size: 11px;
-            color: {CORES['texto_muted']};
-            font-family: monospace;
-          }}
-          .slider-cor-tag {{
-            font-family: monospace;
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-          }}
-          .mini-lista {{
-            list-style: none;
-            padding: 0;
-            margin: 4px 0 12px 0;
-          }}
-          .mini-lista .mini-item {{
-            font-size: 12px;
-            color: {CORES['texto']};
-            padding: 4px 8px;
-            border-left: 2px solid {CORES['card_elevado']};
-            margin-bottom: 4px;
-          }}
-          .mini-vazio {{
-            font-size: 11px;
-            font-style: italic;
-            margin: 4px 0 12px 4px;
-          }}
-        </style>
-        """
-    )
-
-
+# CSS dedicado: src/dashboard/css/paginas/be_hoje.css (UX-M-02.D residual).
 # "O dia bem registrado é o dia bem vivido." -- princípio do diarismo

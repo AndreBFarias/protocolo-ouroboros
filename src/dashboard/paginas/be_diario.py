@@ -39,7 +39,7 @@ import streamlit as st
 
 from src.dashboard.componentes.html_utils import minificar
 from src.dashboard.componentes.page_header import renderizar_page_header
-from src.dashboard.componentes.ui import callout_html
+from src.dashboard.componentes.ui import callout_html, carregar_css_pagina
 from src.dashboard.tema import CORES
 from src.mobile_cache.diario_emocional import gerar_cache as gerar_cache_diario
 from src.mobile_cache.escrever_diario import escrever_diario
@@ -83,7 +83,7 @@ def renderizar(
 
     del dados, periodo, ctx
 
-    st.markdown(_estilos_locais(), unsafe_allow_html=True)
+    st.markdown(minificar(carregar_css_pagina("be_diario")), unsafe_allow_html=True)
 
     vault_root = descobrir_vault_root()
     items = _carregar_items(vault_root)
@@ -317,109 +317,7 @@ def _escape(texto: str) -> str:
     )
 
 
-def _estilos_locais() -> str:
-    return minificar(
-        f"""
-        <style>
-          .diario-card {{
-            background: {CORES['card_fundo']};
-            border: 1px solid {CORES['card_elevado']};
-            border-radius: 6px;
-            padding: 12px 14px;
-            margin-bottom: 10px;
-          }}
-          .diario-card-head {{
-            display: flex;
-            gap: 12px;
-            align-items: center;
-            margin-bottom: 8px;
-            flex-wrap: wrap;
-          }}
-          .diario-data {{
-            font-family: monospace;
-            font-size: 13px;
-            color: {CORES['texto']};
-          }}
-          .diario-modo-pill {{
-            font-family: monospace;
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            padding: 2px 8px;
-            border-radius: 12px;
-          }}
-          .diario-autor {{
-            font-family: monospace;
-            font-size: 11px;
-            color: {CORES['texto_muted']};
-            margin-left: auto;
-          }}
-          .diario-emocoes {{
-            display: flex;
-            gap: 6px;
-            flex-wrap: wrap;
-            margin-bottom: 8px;
-          }}
-          .chip-emo {{
-            font-family: monospace;
-            font-size: 11px;
-            background: {CORES['fundo_inset']};
-            color: {CORES['texto_sec']};
-            padding: 2px 8px;
-            border-radius: 4px;
-          }}
-          .chip-emo.chip-vazio {{
-            color: {CORES['texto_muted']};
-            font-style: italic;
-          }}
-          .diario-intens {{
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            margin-bottom: 8px;
-          }}
-          .diario-intens-label {{
-            font-family: monospace;
-            font-size: 10px;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: {CORES['texto_muted']};
-          }}
-          .diario-intens .dot {{
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            display: inline-block;
-          }}
-          .diario-intens .dot.on {{
-            background: {CORES['destaque']};
-          }}
-          .diario-intens .dot.off {{
-            background: {CORES['card_elevado']};
-          }}
-          .diario-intens-num {{
-            font-family: monospace;
-            font-size: 11px;
-            color: {CORES['texto_muted']};
-            margin-left: 4px;
-          }}
-          .diario-frase {{
-            font-size: 13px;
-            color: {CORES['texto']};
-            line-height: 1.5;
-          }}
-          .diario-com {{
-            display: inline-block;
-            margin-top: 6px;
-            font-family: monospace;
-            font-size: 11px;
-            color: {CORES['texto_muted']};
-          }}
-        </style>
-        """
-    )
-
-
+# CSS dedicado: src/dashboard/css/paginas/be_diario.css (UX-M-02.D residual).
 # ---------------------------------------------------------------------------
 # Form modal
 # ---------------------------------------------------------------------------
