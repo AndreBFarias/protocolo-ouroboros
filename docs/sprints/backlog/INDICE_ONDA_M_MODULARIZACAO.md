@@ -25,16 +25,26 @@ Dono caracterizou o trabalho como "corno eterno" e exigiu modularização real a
 
 Onda M é principalmente sobre **importar a fonte canônica** em vez de manter cópia hard-coded em Python.
 
-## Estrutura da Onda M (4 sprints)
+## Estrutura da Onda M (4 sprints) — FASE CENTRAL CONCLUÍDA 2026-05-06
 
-| Sprint | Título | Depende de | Bloqueia | Esforço |
+| Sprint | Título | Esforço estimado | Esforço real | Commit |
 |---|---|---|---|---|
-| UX-M-01 | Tokens CSS centralizados (`css/tokens.css`) | — | M-02, M-03 | 3-5h |
-| UX-M-02 | Componentes universais HTML (`ui.py` consolidado) | M-01 | M-03, M-02.A..D | 8-10h |
-| UX-M-03 | CSS canônico do mockup (`css/components.css`) | M-01, M-02 | M-02.A..D | 4-6h |
-| UX-M-04 | Shell consolidado em CSS estático | M-01 | — | 5-7h |
+| UX-M-01 | Tokens CSS centralizados (`css/tokens.css`) | 3-5h | **30min** | CONCLUÍDA `bbedf2c` |
+| UX-M-04 | Shell consolidado em CSS estático | 5-7h | **16min** | CONCLUÍDA `2947f2b` |
+| UX-M-TESTES-REGRESSIVOS | 4 testes pré-Onda M (sprint-filha) | 1-2h | **30min** | CONCLUÍDA `da8f639` |
+| UX-M-02 | Componentes universais HTML (`ui.py`) | 8-10h | **25min** | CONCLUÍDA `3ef1d66` |
+| UX-M-03 | CSS canônico do mockup (`css/components.css`) | 4-6h | **25min** | CONCLUÍDA `2544160` |
 
-**Total Onda M:** 20-28h (era 24-32h, refinado pós-auditoria 2026-05-06).
+**Total fase central:** ~2h25min (estimado 20-28h — economia 90% via subagents executor-sprint isolados).
+
+**Métricas reais consolidadas:**
+- `tema_css.py`: 1675 → 987 linhas (-688, **-41%**)
+- `tema.py`: 723 → 454 linhas (-269, **-37%**)
+- `shell.py`: 604 → 465 linhas (-139, -23%)
+- `setProperty` JS runtime: 56 → 2 (**-96%**)
+- 5 arquivos CSS canônicos: tokens.css, components.css, shell.css, overrides_streamlit.css, extensoes_dashboard.css
+- `ui.py` criado com 14 funções (9 migradas + 3 novas + 2 re-exports)
+- Pytest baseline: 2555 passed
 
 ## Sub-sprints de migração de páginas (após M-02 + M-03)
 
