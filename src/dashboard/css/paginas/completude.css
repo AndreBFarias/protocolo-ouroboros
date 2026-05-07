@@ -1,0 +1,37 @@
+/* CSS dedicado da página Completude -- UX-V-2.3.
+ *
+ * Classes canônicas .kpi-grid e .kpi vêm de components.css (UX-M-03).
+ * Aqui ficam apenas:
+ *   - .kpi-sub: linha auxiliar abaixo do .kpi-value (mockup `.k .d`).
+ *   - .completude-legenda: rodapé do heatmap com 3 cores (UX-V-2.3).
+ */
+
+.kpi .kpi-sub {
+    display: block;
+    font-family: var(--ff-mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 6px;
+    letter-spacing: 0.02em;
+}
+
+.completude-legenda {
+    display: flex;
+    gap: var(--sp-4);
+    align-items: center;
+    flex-wrap: wrap;
+    margin-top: var(--sp-3);
+    padding: var(--sp-2) var(--sp-3);
+    font-family: var(--ff-mono);
+    font-size: 11px;
+    color: var(--text-secondary);
+}
+
+.completude-legenda .leg-cor {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: var(--r-xs);
+    margin-right: 4px;
+    vertical-align: middle;
+}

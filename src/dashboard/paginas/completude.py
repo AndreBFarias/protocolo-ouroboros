@@ -1,4 +1,4 @@
-"""Aba Completude — gap analysis documental, redesign UX-RD-10.
+"""Aba Completude — gap analysis documental, redesign UX-RD-10 + UX-V-2.3.
 
 Reescrita a partir da Sprint 75 (heatmap Plotly) seguindo o mockup
 ``novo-mockup/mockups/08-completude.html``:
@@ -35,7 +35,7 @@ from src.analysis.gap_documental import (
     orfas_para_csv,
 )
 from src.dashboard.componentes.html_utils import minificar
-from src.dashboard.componentes.ui import callout_html
+from src.dashboard.componentes.ui import callout_html, carregar_css_pagina
 from src.dashboard.dados import (
     filtrar_por_forma_pagamento,
     filtrar_por_pessoa,
@@ -303,13 +303,156 @@ def _calcular_metricas_globais(
     return pct, lacunas, len(cats_completas)
 
 
+def _calcular_kpis_completude(
+    resumo: dict[str, dict[str, dict[str, Any]]],
+) -> dict[str, Any]:
+    """Calcula 4 KPIs canônicos da Completude (UX-V-2.3).
+
+    Fonte de dados: ``resumo`` produzido por ``calcular_completude`` (real,
+    derivado do extrato + grafo). Sem invenção: se ``resumo`` é vazio, KPIs
+    caem em fallback graceful (0%/0).
+
+    KPIs:
+      * Cobertura global (%): com_doc / total agregado.
+      * Tipos completos: categorias com cobertura 100% no período / total
+        de categorias com transações no período.
+      * Lacunas críticas: lacunas em categorias com cobertura global < 50%.
+      * Lacunas médias: lacunas remanescentes (>=50% mas <100%).
+    """
+    fallback = {
+        "cobertura": 0.0,
+        "tipos_completos": 0,
+        "tipos_total": 0,
+        "lacunas_criticas": 0,
+        "lacunas_medias": 0,
+    }
+    if not resumo:
+        return fallback
+
+    total_geral = 0
+    com_doc_geral = 0
+    cats_todas: set[str] = set()
+    for cats in resumo.values():
+        for cat, info in cats.items():
+            cats_todas.add(cat)
+            total_geral += info.get("total", 0)
+            com_doc_geral += info.get("com_doc", 0)
+
+    cobertura = (
+        (com_doc_geral / total_geral) * 100.0 if total_geral else 0.0
+    )
+
+    cobertura_por_cat: dict[str, tuple[int, int]] = {}
+    for cat in cats_todas:
+        com_doc_cat = 0
+        total_cat = 0
+        for mes_cats in resumo.values():
+            info = mes_cats.get(cat)
+            if info is None:
+                continue
+            com_doc_cat += info.get("com_doc", 0)
+            total_cat += info.get("total", 0)
+        cobertura_por_cat[cat] = (com_doc_cat, total_cat)
+
+    tipos_completos = sum(
+        1 for com, tot in cobertura_por_cat.values() if tot > 0 and com == tot
+    )
+    tipos_total = sum(1 for _com, tot in cobertura_por_cat.values() if tot > 0)
+
+    lacunas_criticas = 0
+    lacunas_medias = 0
+    for com, tot in cobertura_por_cat.values():
+        if tot == 0:
+            continue
+        sem_doc = tot - com
+        if sem_doc == 0:
+            continue
+        pct = (com / tot) * 100.0
+        if pct < 50.0:
+            lacunas_criticas += sem_doc
+        else:
+            lacunas_medias += sem_doc
+
+    return {
+        "cobertura": cobertura,
+        "tipos_completos": tipos_completos,
+        "tipos_total": tipos_total,
+        "lacunas_criticas": lacunas_criticas,
+        "lacunas_medias": lacunas_medias,
+    }
+
+
+def _kpis_html(kpis: dict[str, Any]) -> str:
+    """4 KPIs no topo da Completude (UX-V-2.3) -- mockup `08-completude.html`.
+
+    Reusa as classes canônicas ``.kpi-grid`` e ``.kpi`` de ``components.css``
+    (UX-M-03). ``.kpi-sub`` é definida em ``css/paginas/completude.css``.
+    """
+    cob = f"{kpis['cobertura']:.0f}%"
+    tipos = f"{kpis['tipos_completos']} / {kpis['tipos_total']}"
+    return minificar(
+        f"""
+        <div class="kpi-grid">
+          <div class="kpi">
+            <span class="kpi-label">COBERTURA GLOBAL &middot; 12M</span>
+            <span class="kpi-value"
+                  style="color: var(--accent-purple);">{cob}</span>
+            <span class="kpi-sub">meta &middot; 90%</span>
+          </div>
+          <div class="kpi">
+            <span class="kpi-label">TIPOS COMPLETOS</span>
+            <span class="kpi-value">{tipos}</span>
+            <span class="kpi-sub">cobertura 100% no período</span>
+          </div>
+          <div class="kpi">
+            <span class="kpi-label">LACUNAS CRÍTICAS</span>
+            <span class="kpi-value"
+                  style="color: var(--accent-red);">{kpis['lacunas_criticas']}</span>
+            <span class="kpi-sub">categorias &lt; 50% cobertas</span>
+          </div>
+          <div class="kpi">
+            <span class="kpi-label">LACUNAS MÉDIAS</span>
+            <span class="kpi-value"
+                  style="color: var(--accent-yellow);">{kpis['lacunas_medias']}</span>
+            <span class="kpi-sub">tolerável &middot; sem bloquear</span>
+          </div>
+        </div>
+        """
+    )
+
+
+def _legenda_html() -> str:
+    """Legenda do heatmap completo/parcial/ausente (UX-V-2.3)."""
+    return minificar(
+        """
+        <div class="completude-legenda">
+          <span>
+            <span class="leg-cor"
+                  style="background: var(--accent-green);"></span>
+            completo (100%)
+          </span>
+          <span>
+            <span class="leg-cor"
+                  style="background: var(--accent-yellow);"></span>
+            parcial (&ge;50%)
+          </span>
+          <span>
+            <span class="leg-cor"
+                  style="background: var(--accent-red);"></span>
+            ausente (&lt;50%)
+          </span>
+        </div>
+        """
+    )
+
+
 def renderizar(
     dados: dict[str, pd.DataFrame],
     mes_selecionado: str,
     pessoa: str,
     ctx: dict | None = None,
 ) -> None:
-    """Entry point da aba Completude (UX-RD-10 + UX-T-08)."""
+    """Entry point da aba Completude (UX-RD-10 + UX-T-08 + UX-V-2.3)."""
     from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
     renderizar_grupo_acoes([
         {"label": "Reprocessar", "glyph": "refresh",
@@ -317,6 +460,11 @@ def renderizar(
         {"label": "Exportar gaps", "primary": True, "glyph": "download",
          "title": "Exportar lista de lacunas"},
     ])
+
+    # CSS dedicado da página (kpi-sub + legenda) -- UX-V-2.3.
+    st.markdown(
+        minificar(carregar_css_pagina("completude")), unsafe_allow_html=True
+    )
 
     del mes_selecionado, ctx
 
@@ -348,12 +496,19 @@ def renderizar(
 
     # Sprint 92a item 3: toggle para filtrar ruído. Renderizado APÓS o header
     # mas ANTES da matriz para o usuário ver o efeito imediato.
-    pct_inicial, lacunas_inicial, _ = _calcular_metricas_globais(
-        calcular_completude(extrato, categorias_obrigatorias=frozenset(categorias))
+    resumo_completo = calcular_completude(
+        extrato, categorias_obrigatorias=frozenset(categorias)
     )
+    pct_inicial, lacunas_inicial, _ = _calcular_metricas_globais(resumo_completo)
     st.markdown(
         _page_header_html(pct_inicial, lacunas_inicial), unsafe_allow_html=True
     )
+
+    # 4 KPIs no topo (UX-V-2.3) -- antes do toggle de filtro para que o
+    # usuário veja métricas globais imediatas, independente do recorte da
+    # matriz pelo filtro de ruído.
+    kpis = _calcular_kpis_completude(resumo_completo)
+    st.markdown(_kpis_html(kpis), unsafe_allow_html=True)
 
     filtrar_ruido = st.checkbox(
         "Mostrar só categorias com >=2 transações",
@@ -402,6 +557,9 @@ def renderizar(
         _matriz_html(resumo, categorias_ordenadas, meses_ordenados),
         unsafe_allow_html=True,
     )
+
+    # Legenda do heatmap (UX-V-2.3) -- 3 cores para os estados D7.
+    st.markdown(_legenda_html(), unsafe_allow_html=True)
 
     # Alertas
     st.markdown(
