@@ -41,7 +41,6 @@ import streamlit as st
 from src.dashboard.componentes.html_utils import minificar
 from src.dashboard.componentes.page_header import renderizar_page_header
 from src.dashboard.componentes.ui import (
-    callout_html,
     carregar_css_pagina,
     kpi_card,
     sync_indicator_html,
