@@ -1,7 +1,7 @@
 ---
 id: UX-V-01
 titulo: Filtro global como chip-bar fina canônica entre breadcrumb e header
-status: concluida
+status: concluída
 prioridade: altissima
 data_criacao: 2026-05-07
 data_revisao: 2026-05-07

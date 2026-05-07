@@ -1,7 +1,7 @@
 ---
 id: UX-V-04
 titulo: Observabilidade do pipeline vault → cache → dashboard
-status: concluida
+status: concluída
 prioridade: alta
 data_criacao: 2026-05-07
 concluida_em: 2026-05-07

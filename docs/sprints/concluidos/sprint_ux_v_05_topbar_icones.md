@@ -1,7 +1,7 @@
 ---
 id: UX-V-05
 titulo: Glyphs prefixados em todos os botões de topbar-actions conforme mockup
-status: concluida
+status: concluída
 prioridade: media
 data_criacao: 2026-05-07
 concluida_em: 2026-05-07

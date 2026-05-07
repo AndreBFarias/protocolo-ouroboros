@@ -1260,7 +1260,7 @@ def fallback_estado_inicial_html(
     Args:
         titulo: Heading do bloco em UPPERCASE (ex: ``"HUMOR · sem registros
             ainda"``).
-        descricao: Parágrafo explicando como popular (ex: ``"Registre seu
+        descricao: Parágrafo explicando como popular (ex: ``"Registre seu  # noqa: accent
             humor no app Ouroboros Mobile..."``). HTML inline permitido
             (``<code>``, ``<strong>``).
         skeleton_html: HTML opcional do skeleton mockup-like. Se vazio, omite
