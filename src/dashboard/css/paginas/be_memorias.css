@@ -1,0 +1,133 @@
+/* CSS dedicado da página Bem-estar / Memórias (UX-V-2.11).
+   Origem: paridade visual com novo-mockup/mockups/23-memorias.html.
+   Estruturas únicas: grid de cápsulas multimídia (foto/áudio/texto/vídeo),
+   KPIs específicos da página, sem renderização de mídia real (badges + meta).
+   Cores via tokens canônicos (tokens.css / components.css). */
+
+.mem-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--sp-3);
+    margin-bottom: var(--sp-4);
+}
+.mem-stat {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--r-md);
+    padding: var(--sp-4);
+}
+.mem-stat .l {
+    font-family: var(--ff-mono);
+    font-size: 10px;
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+}
+.mem-stat .v {
+    font-family: var(--ff-mono);
+    font-size: var(--fs-24);
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+}
+.mem-stat .sub {
+    font-family: var(--ff-mono);
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-top: 4px;
+}
+.mem-stat-tipos {
+    display: flex;
+    gap: var(--sp-3);
+}
+.mem-stat-tipos .v {
+    font-size: 18px;
+}
+
+.mem-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: var(--sp-3);
+}
+.mem-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--r-md);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.12s, border-color 0.12s;
+}
+.mem-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--cor, var(--accent-purple));
+}
+.mem-thumb {
+    aspect-ratio: 4 / 3;
+    background-image: linear-gradient(135deg, var(--cor1), var(--cor2));
+    position: relative;
+    display: grid;
+    place-items: center;
+}
+.mem-thumb .badge {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    font-family: var(--ff-mono);
+    font-size: 9px;
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+    background: rgba(0, 0, 0, 0.55);
+    color: white;
+    padding: 3px 8px;
+    border-radius: var(--r-xs);
+    backdrop-filter: blur(4px);
+}
+.mem-thumb .ico {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.40);
+    color: white;
+    display: grid;
+    place-items: center;
+    font-family: var(--ff-mono);
+    font-size: 11px;
+    letter-spacing: 0.10em;
+    backdrop-filter: blur(6px);
+}
+.mem-corpo {
+    padding: var(--sp-3);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.mem-titulo {
+    font-size: var(--fs-13);
+    color: var(--text-primary);
+    font-weight: 500;
+    line-height: 1.35;
+}
+.mem-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: var(--ff-mono);
+    font-size: 10px;
+    color: var(--text-muted);
+}
+.mem-tags {
+    display: flex;
+    gap: 3px;
+    flex-wrap: wrap;
+    padding: 0 var(--sp-3) var(--sp-3);
+}
+.mem-tags .pill {
+    font-size: 9px;
+    padding: 1px 6px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    border-radius: var(--r-xs);
+}
