@@ -49,13 +49,13 @@ import streamlit.components.v1 as components
 from src.dashboard.componentes.atalhos_revisor import gerar_html_atalhos_revisor
 from src.dashboard.componentes.html_utils import minificar
 from src.dashboard.componentes.preview_documento import preview_documento
+from src.dashboard.componentes.ui import (
+    callout_html,
+    subtitulo_secao_html,
+)
 from src.dashboard.dados import (
     CAMINHO_REVISAO_HUMANA,
     listar_pendencias_revisao,
-)
-from src.dashboard.tema import (
-    callout_html,
-    subtitulo_secao_html,
 )
 
 # Dimensões canônicas que o supervisor avalia. A ordem reflete a importância

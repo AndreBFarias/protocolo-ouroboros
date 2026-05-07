@@ -26,6 +26,11 @@ import streamlit as st
 
 from src.dashboard import dados as _dados
 from src.dashboard.componentes.drilldown import aplicar_drilldown
+from src.dashboard.componentes.ui import (
+    callout_html,
+    chip_html,
+    subtitulo_secao_html,
+)
 from src.dashboard.dados import (
     carregar_subgrafo,
     formatar_moeda,
@@ -39,11 +44,8 @@ from src.dashboard.tema import (
     LAYOUT_PLOTLY,
     SPACING,
     aplicar_locale_ptbr,
-    callout_html,
-    chip_html,
     rgba_cor,
     rgba_cor_inline,
-    subtitulo_secao_html,
 )
 from src.dashboard.tema_plotly import st_plotly_chart_dracula
 from src.graph.queries import label_humano
