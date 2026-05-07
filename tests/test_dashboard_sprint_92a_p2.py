@@ -38,12 +38,20 @@ def test_sankey_injeta_hovertemplate_com_valor_formatado_em_reais() -> None:
     """Item 12: `link=` do Sankey carrega hovertemplate PT-BR com moeda.
 
     Sprint UX-RD-13: `_renderizar_sankey` foi consolidado em
-    `_renderizar_aba_fluxo` (renderiza KPIs + Sankey de 3 níveis). A
-    invariante semântica permanece: hovertemplate PT-BR com R$.
+    `_renderizar_aba_fluxo` (KPIs + Sankey). Sprint UX-V-2.6 extraiu o
+    Sankey para `_renderizar_sankey_inline` para suportar layout em
+    colunas. A invariante semântica permanece: hovertemplate PT-BR com R$.
     """
     from src.dashboard.paginas import analise_avancada
 
-    source = inspect.getsource(analise_avancada._renderizar_aba_fluxo)
+    # Inspeciona o helper canônico do Sankey (extraído por UX-V-2.6) com
+    # fallback para o entrypoint da aba (compat com versões anteriores).
+    fonte_sankey = getattr(
+        analise_avancada,
+        "_renderizar_sankey_inline",
+        analise_avancada._renderizar_aba_fluxo,
+    )
+    source = inspect.getsource(fonte_sankey)
 
     assert "hovertemplate" in source, (
         "Sankey precisa de hovertemplate (item 12 Sprint 92a P2): sem ele, "
