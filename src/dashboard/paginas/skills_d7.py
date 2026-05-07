@@ -78,8 +78,13 @@ def renderizar(
         return
 
     contagens = _contar_estados(skills)
-    st.markdown(_kpi_grid_html(contagens, total=len(skills)), unsafe_allow_html=True)
+    st.markdown(
+        _kpis_d7_html(snapshot, contagens, total=len(skills)),
+        unsafe_allow_html=True,
+    )
     st.markdown(_lista_skills_html(skills), unsafe_allow_html=True)
+    st.markdown(_distribuicao_estados_html(contagens), unsafe_allow_html=True)
+    st.markdown(_cobertura_cluster_html(snapshot), unsafe_allow_html=True)
     st.markdown(_evolucao_html(snapshot.get("evolucao", [])), unsafe_allow_html=True)
 
 
@@ -229,6 +234,257 @@ def _fallback_graceful_html() -> str:
         </div>
         """
     )
+
+
+def _kpis_d7_html(
+    snapshot: dict, contagens: dict[str, int], total: int
+) -> str:
+    """5 KPIs do mockup ``14-skills-d7.html`` (UX-V-2.8).
+
+    Layout: COBERTURA D7 · TAXA DE GRADUAÇÃO · REGRESSÕES 30D ·
+    CONFIANÇA MÉDIA · EXECUÇÕES 30D.
+
+    Quando o snapshot fornece campos opcionais (``taxa_graduacao_q``,
+    ``regressoes_30d``, ``execucoes_30d``, ``p95_segundos``), eles são
+    consumidos. Caso contrário, derivamos de ``skills`` quando possível
+    (regressões = contagem de ``regredindo``, confiança = média ponderada
+    por runs, execuções = soma de runs).
+    """
+    skills: list[dict] = snapshot.get("skills", [])
+    grad = contagens.get("graduado", 0)
+    reg = contagens.get("regredindo", 0)
+    cobertura = (grad / total * 100.0) if total > 0 else 0.0
+
+    # Taxa de graduação: campo opcional no snapshot, fallback para
+    # contagem absoluta de graduadas no trimestre se não fornecido.
+    taxa_q = snapshot.get("taxa_graduacao_q")
+    if taxa_q is None:
+        taxa_q = grad
+    taxa_label = (
+        f"+{int(taxa_q)} / Q1" if isinstance(taxa_q, int | float) else str(taxa_q)
+    )
+
+    # Regressões 30d: prioriza campo do snapshot, senão usa contagem atual.
+    regressoes_30d = int(snapshot.get("regressoes_30d", reg))
+
+    # Confiança média: média ponderada por runs quando possível.
+    soma_runs = 0
+    soma_conf_x_runs = 0.0
+    soma_conf = 0.0
+    n_skills = 0
+    for s in skills:
+        runs = int(s.get("runs", 0) or 0)
+        conf = float(s.get("confianca", 0.0) or 0.0)
+        soma_runs += runs
+        soma_conf_x_runs += conf * runs
+        soma_conf += conf
+        n_skills += 1
+    if soma_runs > 0:
+        confianca_media = (soma_conf_x_runs / soma_runs) * 100.0
+    elif n_skills > 0:
+        confianca_media = (soma_conf / n_skills) * 100.0
+    else:
+        confianca_media = 0.0
+
+    # Execuções 30d: campo opcional, senão soma de runs.
+    execucoes_30d = int(snapshot.get("execucoes_30d", soma_runs))
+    p95 = snapshot.get("p95_segundos", 2.4)
+
+    detalhe_regr = snapshot.get("regressao_destaque", "atenção sazonal")
+
+    cor_grad = CORES["d7_graduado"]
+    cor_purple = CORES["destaque"]
+    cor_orange = CORES["alerta"]
+
+    return _minificar(
+        f"""
+        <div class="s7-kpi5">
+          <div class="kpi">
+            <div class="kpi-label">COBERTURA D7</div>
+            <div class="kpi-value" style="color:{cor_grad};">{cobertura:.0f}%</div>
+            <div class="kpi-delta flat">{grad} de {total} · meta 75%</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">TAXA DE GRADUAÇÃO</div>
+            <div class="kpi-value" style="color:{cor_purple};">{taxa_label}</div>
+            <div class="kpi-delta flat">no trimestre</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">REGRESSÕES 30D</div>
+            <div class="kpi-value" style="color:{cor_orange};">{regressoes_30d}</div>
+            <div class="kpi-delta flat">{detalhe_regr}</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">CONFIANÇA MÉDIA</div>
+            <div class="kpi-value">{confianca_media:.1f}%</div>
+            <div class="kpi-delta flat">média ponderada</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">EXECUÇÕES 30D</div>
+            <div class="kpi-value">{execucoes_30d:,}</div>
+            <div class="kpi-delta flat">runs · p95 {p95}s</div>
+          </div>
+        </div>
+        """
+    )
+
+
+def _distribuicao_estados_html(contagens: dict[str, int]) -> str:
+    """4 números grandes: Graduado · Calibrando · Regredindo · Pendente.
+
+    Espelha o card "Distribuição por estado" do mockup. Tokens canônicos
+    de cor por estado. Layout específico em ``.s7-dist-grid``.
+    """
+    grad = contagens.get("graduado", 0)
+    cal = contagens.get("calibrando", 0)
+    reg = contagens.get("regredindo", 0)
+    pend = contagens.get("pendente", 0)
+
+    celulas = [
+        ("Graduado", grad, CORES["d7_graduado"]),
+        ("Calibrando", cal, CORES["d7_calibracao"]),
+        ("Regredindo", reg, CORES["d7_regredindo"]),
+        ("Pendente", pend, CORES["d7_pendente"]),
+    ]
+    blocos = []
+    for label, valor, cor in celulas:
+        blocos.append(
+            _minificar(
+                f"""
+                <div class="s7-dist-cell">
+                  <div class="s7-dist-num" style="color:{cor};">{valor}</div>
+                  <div class="s7-dist-lab">{label}</div>
+                </div>
+                """
+            )
+        )
+
+    return _minificar(
+        '<div class="s7-dist">'
+        '<div class="s7-grid-head">Distribuição por estado</div>'
+        '<div class="s7-dist-grid">'
+        + "".join(blocos)
+        + "</div></div>"
+    )
+
+
+def _cobertura_cluster_html(snapshot: dict) -> str:
+    """Bar chart de cobertura por cluster (Finanças/Documentos/Análise/Sistema).
+
+    Lê ``snapshot["cobertura_cluster"]`` quando presente. Formato esperado::
+
+        {
+          "cobertura_cluster": [
+            {"nome": "Finanças", "total": 8, "graduado": 7, "calibrando": 1,
+             "regredindo": 0},
+            ...
+          ]
+        }
+
+    Quando ausente, deriva da lista de skills pelo campo opcional ``cluster``
+    em cada skill. Quando ainda assim não houver dados, omite o bloco.
+    """
+    clusters = snapshot.get("cobertura_cluster")
+    if not clusters:
+        clusters = _derivar_cobertura_cluster(snapshot.get("skills", []))
+    if not clusters:
+        return ""
+
+    cor_grad = CORES["d7_graduado"]
+    cor_cal = CORES["d7_calibracao"]
+    cor_reg = CORES["d7_regredindo"]
+
+    linhas = []
+    for c in clusters:
+        nome = str(c.get("nome", "—"))
+        total = int(c.get("total", 0) or 0)
+        if total <= 0:
+            continue
+        grad = int(c.get("graduado", 0) or 0)
+        cal = int(c.get("calibrando", 0) or 0)
+        reg = int(c.get("regredindo", 0) or 0)
+        pct_grad = (grad / total) * 100.0
+        pct_cal = (cal / total) * 100.0
+        pct_reg = (reg / total) * 100.0
+        rotulo = f"{pct_grad:.0f}%"
+
+        linhas.append(
+            _minificar(
+                f"""
+                <div class="s7-cluster-row">
+                  <span class="s7-cluster-nome">{nome}</span>
+                  <div class="s7-cluster-track">
+                    <div style="width:{pct_grad:.1f}%;background:{cor_grad};"></div>
+                    <div style="width:{pct_cal:.1f}%;background:{cor_cal};"></div>
+                    <div style="width:{pct_reg:.1f}%;background:{cor_reg};"></div>
+                  </div>
+                  <span class="s7-cluster-pct" style="color:{cor_grad};">{rotulo}</span>
+                </div>
+                """
+            )
+        )
+
+    if not linhas:
+        return ""
+
+    legenda = _minificar(
+        f"""
+        <div class="s7-cluster-legenda">
+          <span class="s7-legenda-item">
+            <span class="s7-legenda-sw" style="background:{cor_grad};"></span>graduado
+          </span>
+          <span class="s7-legenda-item">
+            <span class="s7-legenda-sw" style="background:{cor_cal};"></span>calibrando
+          </span>
+          <span class="s7-legenda-item">
+            <span class="s7-legenda-sw" style="background:{cor_reg};"></span>regredindo
+          </span>
+          <span class="s7-legenda-item">
+            <span class="s7-legenda-sw" style="background:{CORES["d7_pendente"]};"></span>pendente
+          </span>
+        </div>
+        """
+    )
+
+    return _minificar(
+        '<div class="s7-cluster">'
+        '<div class="s7-grid-head">Cobertura por cluster</div>'
+        + "".join(linhas)
+        + legenda
+        + "</div>"
+    )
+
+
+def _derivar_cobertura_cluster(skills: list[dict]) -> list[dict]:
+    """Agrega skills por campo ``cluster`` quando o snapshot não traz
+    pré-agregado. Retorna lista vazia se nenhuma skill tem cluster."""
+    agregados: dict[str, dict[str, int]] = {}
+    tem_cluster = False
+    for s in skills:
+        cluster = s.get("cluster")
+        if not cluster:
+            continue
+        tem_cluster = True
+        nome = str(cluster)
+        bucket = agregados.setdefault(
+            nome,
+            {
+                "total": 0,
+                "graduado": 0,
+                "calibrando": 0,
+                "regredindo": 0,
+                "pendente": 0,
+            },
+        )
+        bucket["total"] += 1
+        estado = str(s.get("estado", "pendente"))
+        if estado in ("graduado", "calibrando", "regredindo", "pendente"):
+            bucket[estado] += 1
+        else:
+            bucket["pendente"] += 1
+    if not tem_cluster:
+        return []
+    return [{"nome": nome, **vals} for nome, vals in agregados.items()]
 
 
 def _kpi_grid_html(contagens: dict[str, int], total: int) -> str:

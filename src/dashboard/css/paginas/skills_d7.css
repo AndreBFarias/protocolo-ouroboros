@@ -70,3 +70,100 @@
 }
 .s7-evo-empty p { margin: 0; padding: 16px 0; text-align: center; }
 .s7-evo svg { background: var(--bg-inset); border-radius: 8px; padding: 8px; }
+
+/* === UX-V-2.8: 5 KPIs · distribuição · cobertura por cluster === */
+
+.s7-kpi5 {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+}
+.s7-kpi5 .kpi {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    padding: 12px 14px;
+}
+
+.s7-dist {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+.s7-dist-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    padding-top: 8px;
+}
+.s7-dist-cell { text-align: center; }
+.s7-dist-num {
+    font-family: ui-monospace, 'JetBrains Mono', monospace;
+    font-size: 32px;
+    font-weight: 500;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+}
+.s7-dist-lab {
+    font-family: ui-monospace, 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-top: 6px;
+}
+
+.s7-cluster {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+.s7-cluster-row {
+    display: grid;
+    grid-template-columns: 100px 1fr 60px;
+    gap: 12px;
+    align-items: center;
+    font-family: ui-monospace, 'JetBrains Mono', monospace;
+    font-size: 12px;
+    padding: 6px 0;
+}
+.s7-cluster-nome { color: var(--text-secondary); }
+.s7-cluster-track {
+    height: 14px;
+    background: var(--bg-inset);
+    border-radius: 4px;
+    display: flex;
+    overflow: hidden;
+}
+.s7-cluster-track > div { display: block; height: 100%; }
+.s7-cluster-pct {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+.s7-cluster-legenda {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding-top: 10px;
+    border-top: 1px solid var(--border-subtle);
+    margin-top: 8px;
+    font-family: ui-monospace, 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+}
+.s7-legenda-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+.s7-legenda-sw {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    display: inline-block;
+}

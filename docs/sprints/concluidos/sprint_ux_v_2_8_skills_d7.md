@@ -1,9 +1,10 @@
 ---
 id: UX-V-2.8
 titulo: Página Skills D7 com 5 KPIs + inventário 18 skills + cobertura por cluster
-status: backlog
+status: concluida
 prioridade: alta
 data_criacao: 2026-05-07
+concluida_em: 2026-05-07
 fase: PARIDADE_VISUAL
 depende_de: [UX-V-02, UX-V-03]
 co_executavel_com: [UX-V-2.10, UX-V-2.14, UX-V-2.16]
