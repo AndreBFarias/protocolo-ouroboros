@@ -34,6 +34,9 @@ from src.analysis.pagamentos import (
     top_beneficiarios_pix,
 )
 from src.dashboard.componentes.html_utils import minificar
+from src.dashboard.componentes.ui import (
+    callout_html,
+)
 from src.dashboard.dados import (
     filtrar_por_forma_pagamento,
     filtrar_por_pessoa,
@@ -43,7 +46,6 @@ from src.dashboard.dados import (
 from src.dashboard.tema import (
     CORES,
     FONTE_CORPO,
-    callout_html,
     rgba_cor,
 )
 
