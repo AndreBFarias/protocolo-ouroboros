@@ -1,7 +1,8 @@
 ---
 id: UX-V-2.2
 titulo: Página Pagamentos com calendário mês inteiro + lista lateral acionável
-status: backlog
+status: concluida
+concluida_em: 2026-05-07
 prioridade: alta
 data_criacao: 2026-05-07
 fase: PARIDADE_VISUAL
@@ -10,6 +11,7 @@ co_executavel_com: [UX-V-2.1, UX-V-2.3, UX-V-2.7]
 esforco_estimado_horas: 5
 origem: docs/auditorias/AUDITORIA_PARIDADE_VISUAL_2026-05-07.md (página 04)
 mockup: novo-mockup/mockups/04-pagamentos.html
+sprints_filhas: [UX-V-2.2.A, UX-V-2.2.B]
 ---
 
 # Sprint UX-V-2.2 — Página Pagamentos paridade com mockup
