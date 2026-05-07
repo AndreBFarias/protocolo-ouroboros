@@ -38,6 +38,8 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
+from src.dashboard.componentes.html_utils import minificar
+from src.dashboard.componentes.ui import carregar_css_pagina
 from src.dashboard.tema import CORES
 
 CAMINHO_LOG_D7: Path = (
@@ -61,7 +63,7 @@ def renderizar(
 
     del dados, periodo, pessoa, ctx
 
-    st.markdown(_estilos_locais(), unsafe_allow_html=True)
+    st.markdown(minificar(carregar_css_pagina("skills_d7")), unsafe_allow_html=True)
     st.markdown(_page_header_html(), unsafe_allow_html=True)
 
     snapshot = _carregar_snapshot()
@@ -352,91 +354,5 @@ def _evolucao_html(pontos: list[dict]) -> str:
     )
 
 
-def _estilos_locais() -> str:
-    """CSS específico desta página -- override mínimo (UX-M-02.C).
-
-    KPIs migrados para ``.kpi-grid``/``.kpi`` canônicos (components.css).
-    Mantidos aqui apenas estruturas únicas: grid de 5 colunas das skills
-    (``.s7-row``), moldura ``.s7-grid`` e gráfico SVG ``.s7-evo``.
-    """
-    fundo = CORES["card_fundo"]
-    inset = CORES["fundo_inset"]
-    texto_pri = CORES["texto"]
-    texto_sec = CORES["texto_sec"]
-    texto_muted = CORES["texto_muted"]
-    border_subtle = "#2a2d3a"
-
-    return f"""
-    <style>
-      .s7-grid {{
-        background: {fundo};
-        border: 1px solid {border_subtle};
-        border-radius: 12px;
-        padding: 16px;
-        margin-bottom: 16px;
-      }}
-      .s7-grid-head {{
-        font-family: ui-monospace, 'JetBrains Mono', monospace;
-        font-size: 11px;
-        letter-spacing: 0.10em;
-        text-transform: uppercase;
-        color: {texto_muted};
-        margin-bottom: 12px;
-        padding-bottom: 8px;
-        border-bottom: 1px solid {border_subtle};
-      }}
-      .s7-row {{
-        display: grid;
-        grid-template-columns: 2fr 110px 90px 90px 110px;
-        gap: 12px;
-        align-items: center;
-        padding: 10px 0;
-        border-bottom: 1px dashed {border_subtle};
-        font-size: 13px;
-        color: {texto_sec};
-      }}
-      .s7-row:last-child {{ border-bottom: none; }}
-      .s7-row.s7-head {{
-        font-family: ui-monospace, 'JetBrains Mono', monospace;
-        font-size: 10px;
-        color: {texto_muted};
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        padding: 6px 0;
-      }}
-      .s7-name strong {{
-        display: block;
-        font-family: ui-monospace, 'JetBrains Mono', monospace;
-        font-size: 13px;
-        color: {texto_pri};
-      }}
-      .s7-desc {{
-        display: block;
-        font-size: 11px;
-        color: {texto_muted};
-        margin: 2px 0 4px;
-      }}
-      .s7-conf, .s7-runs, .s7-when {{
-        font-family: ui-monospace, 'JetBrains Mono', monospace;
-        font-size: 12px;
-        font-variant-numeric: tabular-nums;
-      }}
-      .s7-runs, .s7-when {{ color: {texto_muted}; }}
-      .s7-evo {{
-        background: {fundo};
-        border: 1px solid {border_subtle};
-        border-radius: 12px;
-        padding: 16px;
-      }}
-      .s7-evo-empty {{
-        color: {texto_muted};
-        font-family: ui-monospace, 'JetBrains Mono', monospace;
-        font-size: 12px;
-      }}
-      .s7-evo-empty p {{ margin: 0; padding: 16px 0; text-align: center; }}
-      .s7-evo svg {{ background: {inset}; border-radius: 8px; padding: 8px; }}
-    </style>
-    """
-
-
+# CSS dedicado: src/dashboard/css/paginas/skills_d7.css (UX-M-02.C residual).
 # "O que se mede, se gerencia." -- Peter Drucker

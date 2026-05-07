@@ -51,6 +51,8 @@ filósofo no rodapé, (h) limite 800 linhas.
 """
 from __future__ import annotations
 
+from pathlib import Path
+
 # ---------------------------------------------------------------------------
 # Imports internos -- componentes já modulares (re-exports)
 # ---------------------------------------------------------------------------
@@ -99,7 +101,28 @@ __all__ = [
     "kpi_card",
     "data_row",
     "group_card",
+    # Helper de carregamento de CSS por página
+    "carregar_css_pagina",
 ]
+
+
+# ---------------------------------------------------------------------------
+# Helper -- CSS dedicado por página
+# ---------------------------------------------------------------------------
+_RAIZ_CSS_PAGINAS = Path(__file__).resolve().parent.parent / "css" / "paginas"
+
+
+def carregar_css_pagina(nome: str) -> str:
+    """Retorna ``<style>...</style>`` carregado de ``css/paginas/<nome>.css``.
+
+    Padrão Onda M para CSS específico de página: classes que NÃO duplicam
+    ``components.css`` ficam em arquivo dedicado, não inline em Python.
+    Quando o arquivo não existe, retorna string vazia (no-op seguro).
+    """
+    css_path = _RAIZ_CSS_PAGINAS / f"{nome}.css"
+    if not css_path.exists():
+        return ""
+    return f"<style>\n{css_path.read_text(encoding='utf-8')}\n</style>"
 
 
 # ---------------------------------------------------------------------------

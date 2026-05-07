@@ -46,6 +46,7 @@ from src.dashboard.componentes.humanizar_tipos import humanizar
 from src.dashboard.componentes.ui import (
     callout_html,
     card_html,
+    carregar_css_pagina,
     subtitulo_secao_html,
 )
 from src.dashboard.dados import (
@@ -90,37 +91,8 @@ CORES_STATUS: dict[str, str] = {
 # CSS local da página -- redesign UX-RD-09 (toolbar + tabela densa)
 # ---------------------------------------------------------------------------
 
-_CSS_LOCAL_CATALOGACAO: str = minificar(
-    """
-    <style>
-    .ouroboros-cat-toolbar {
-        display: flex; align-items: center; gap: 8px;
-        padding: 8px 12px;
-        margin-bottom: 12px;
-        background: var(--bg-surface);
-        border: 1px solid var(--border-subtle);
-        border-radius: 8px;
-    }
-    .ouroboros-cat-toolbar .icon {
-        color: var(--accent-purple);
-        font-family: var(--ff-mono, monospace);
-        font-size: 14px;
-    }
-    .ouroboros-cat-toolbar .ct {
-        font-family: var(--ff-mono, monospace);
-        font-size: 11px;
-        color: var(--text-muted);
-        margin-left: auto;
-    }
-    .ouroboros-cat-toolbar .label {
-        font-family: var(--ff-mono, monospace);
-        font-size: 12px;
-        color: var(--text-secondary);
-        flex: 1;
-    }
-    </style>
-    """
-)
+# CSS dedicado da página: src/dashboard/css/paginas/catalogacao.css
+# (UX-M-02.A-RESIDUAL extraiu de _CSS_LOCAL_CATALOGACAO inline.)
 
 
 def renderizar(
@@ -139,7 +111,7 @@ def renderizar(
 
     _ = dados, periodo, pessoa, ctx
 
-    st.markdown(_CSS_LOCAL_CATALOGACAO, unsafe_allow_html=True)
+    st.markdown(minificar(carregar_css_pagina("catalogacao")), unsafe_allow_html=True)
 
     # Page-header canônico UX-RD-09 (substitui hero_titulo_html legado
     # — duplicação visual eliminada 2026-05-06).

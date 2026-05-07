@@ -203,11 +203,16 @@ def test_html_minificado_sem_indentacao_perigosa(df_categorias: pd.DataFrame) ->
     """HTML não pode ter linhas com indentação ≥4 espaços (vira `<pre>` do CommonMark)."""
     arvore = pagina.calcular_arvore_categorias(df_categorias)
     total = sum(n["valor"] for n in arvore)
+    from src.dashboard.componentes.html_utils import minificar
+    from src.dashboard.componentes.ui import carregar_css_pagina
     arv = pagina._arvore_html(arvore, total)
     kpis = pagina.calcular_kpis_categoria(df_categorias)
     kpi_html = pagina._kpis_html(kpis)
     regras_html = pagina._regras_yaml_html([], None)
-    for html in (arv, kpi_html, regras_html, pagina._CSS_PAGINA):
+    # CSS dedicado da pagina (UX-M-02.C residual): valida que apos minificar
+    # nao ha indentacao perigosa quando injetado via st.markdown.
+    css_minificado = minificar(carregar_css_pagina("categorias"))
+    for html in (arv, kpi_html, regras_html, css_minificado):
         # após minificar não há quebra de linha em sequência indentada
         for linha in html.splitlines():
             assert not linha.startswith("    "), f"linha indentada vaza <pre>: {linha[:80]}"

@@ -68,6 +68,7 @@ from src.dashboard.componentes.busca_roteador import rotear
 from src.dashboard.componentes.html_utils import minificar
 from src.dashboard.componentes.ui import (
     callout_html,
+    carregar_css_pagina,
     subtitulo_secao_html,
 )
 from src.dashboard.dados import (
@@ -151,149 +152,8 @@ _FACETAS_BUSCA: list[tuple[str, str]] = [
 # CSS local da página -- redesign UX-RD-09 (search-bar + facets + cards)
 # ---------------------------------------------------------------------------
 
-_CSS_LOCAL_BUSCA: str = minificar(
-    """
-    <style>
-    /* Cor do ícone (i) do callout info: var(--color-destaque) em vez do
-       azul Streamlit default (feedback dono 2026-04-27). */
-    div[data-testid='stAlert'] svg,
-    div[role='alert'] svg {
-        color: var(--color-destaque) !important;
-        fill: currentColor !important;
-    }
-
-    /* Search-bar grande no topo (espelha mockup 06-busca-global.html). */
-    .ouroboros-search-bar {
-        background: var(--bg-surface);
-        border: 1px solid var(--accent-purple);
-        border-radius: 10px;
-        padding: 10px 14px;
-        display: flex; align-items: center; gap: 10px;
-        margin-bottom: 14px;
-        box-shadow: 0 0 0 4px rgba(189,147,249,0.10);
-    }
-    .ouroboros-search-bar .icon {
-        color: var(--accent-purple);
-        font-family: var(--ff-mono, monospace);
-        font-size: 18px;
-    }
-    .ouroboros-search-bar .ct {
-        font-family: var(--ff-mono, monospace);
-        font-size: 11px;
-        color: var(--text-muted);
-    }
-    .ouroboros-search-bar .kbd {
-        font-family: var(--ff-mono, monospace);
-        font-size: 10px;
-        color: var(--text-muted);
-        border: 1px solid var(--border-subtle);
-        padding: 2px 6px; border-radius: 4px;
-        background: var(--bg-inset);
-    }
-
-    /* Card de faceta lateral (placeholder visual; checkboxes vivem em
-       st.columns no Python). */
-    .ouroboros-facet-card {
-        background: var(--bg-surface);
-        border: 1px solid var(--border-subtle);
-        border-radius: 8px;
-        padding: 10px 12px;
-        margin-bottom: 10px;
-    }
-    .ouroboros-facet-card h4 {
-        font-family: var(--ff-mono, monospace);
-        font-size: 10px;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        color: var(--text-muted);
-        margin: 0 0 6px;
-    }
-
-    /* Cards de resultado com snippet highlight. */
-    .ouroboros-res-group {
-        background: var(--bg-surface);
-        border: 1px solid var(--border-subtle);
-        border-radius: 10px;
-        margin-bottom: 12px;
-    }
-    .ouroboros-res-head {
-        padding: 10px 14px;
-        border-bottom: 1px solid var(--border-subtle);
-        display: flex; align-items: center; gap: 10px;
-    }
-    .ouroboros-res-head .pill-tipo {
-        width: 28px; height: 28px;
-        border-radius: 6px;
-        background: var(--bg-inset);
-        color: var(--accent-purple);
-        display: grid; place-items: center;
-        font-family: var(--ff-mono, monospace);
-        font-size: 11px; font-weight: 600;
-    }
-    .ouroboros-res-head h3 {
-        font-family: var(--ff-mono, monospace);
-        font-size: 12px;
-        letter-spacing: 0.06em;
-        text-transform: uppercase;
-        color: var(--text-secondary);
-        margin: 0;
-    }
-    .ouroboros-res-head .ct {
-        font-family: var(--ff-mono, monospace);
-        font-size: 11px;
-        color: var(--text-muted);
-        margin-left: auto;
-    }
-    .ouroboros-res-row {
-        padding: 10px 14px;
-        border-bottom: 1px dashed var(--border-subtle);
-    }
-    .ouroboros-res-row:last-child { border-bottom: none; }
-    .ouroboros-res-title {
-        font-size: 14px;
-        margin-bottom: 4px;
-        color: var(--text-primary);
-    }
-    .ouroboros-res-meta {
-        font-family: var(--ff-mono, monospace);
-        font-size: 11px;
-        color: var(--text-muted);
-        display: flex; gap: 12px; flex-wrap: wrap;
-    }
-    .ouroboros-res-snippet {
-        font-family: var(--ff-mono, monospace);
-        font-size: 12px;
-        color: var(--text-secondary);
-        margin-top: 6px;
-        padding: 6px 10px;
-        background: var(--bg-inset);
-        border-radius: 6px;
-        border-left: 2px solid var(--accent-purple);
-        line-height: 1.5;
-    }
-    .ouroboros-res-title mark,
-    .ouroboros-res-snippet mark {
-        background: rgba(241,250,140,0.30);
-        color: var(--accent-yellow);
-        padding: 0 2px;
-        border-radius: 2px;
-        font-weight: 500;
-    }
-
-    /* Faixa de contagem unificada (UX-127 invariante). */
-    .ouroboros-busca-contagem {
-        font-family: var(--ff-mono, monospace);
-        font-size: 12px;
-        color: var(--text-muted);
-        margin-bottom: 10px;
-    }
-    .ouroboros-busca-contagem strong {
-        color: var(--text-primary);
-        font-weight: 600;
-    }
-    </style>
-    """
-)
+# CSS dedicado da página: src/dashboard/css/paginas/busca.css
+# (UX-M-02.A-RESIDUAL extraiu de _CSS_LOCAL_BUSCA inline.)
 
 
 # ---------------------------------------------------------------------------
@@ -568,7 +428,7 @@ def renderizar(
     ctx = ctx or {}
     forma_pagamento = ctx.get("forma_pagamento")
 
-    st.markdown(_CSS_LOCAL_BUSCA, unsafe_allow_html=True)
+    st.markdown(minificar(carregar_css_pagina("busca")), unsafe_allow_html=True)
 
     # Page-header canônico UX-RD-09 (substitui hero_titulo_html legado
     # da Sprint 59 — duplicação visual eliminada 2026-05-06).
