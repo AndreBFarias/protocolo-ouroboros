@@ -36,6 +36,8 @@ import pandas as pd
 import streamlit as st
 
 from src.dashboard.componentes.html_utils import minificar
+from src.dashboard.componentes.page_header import renderizar_page_header
+from src.dashboard.componentes.ui import callout_html, carregar_css_pagina
 from src.dashboard.tema import CORES
 from src.mobile_cache.escrever_evento import escrever_evento
 from src.mobile_cache.eventos import gerar_cache as gerar_cache_eventos
@@ -75,7 +77,7 @@ def renderizar(
 
     del dados, periodo, ctx
 
-    st.markdown(_estilos_locais(), unsafe_allow_html=True)
+    st.markdown(minificar(carregar_css_pagina("be_eventos")), unsafe_allow_html=True)
 
     vault_root = descobrir_vault_root()
     items = _carregar_items(vault_root)
@@ -136,22 +138,27 @@ def renderizar(
 
     with col_lista:
         st.markdown(
-            _page_header_html(len(items_filtrados)),
+            _page_header_canonico(len(items_filtrados)),
             unsafe_allow_html=True,
         )
 
         if vault_root is None:
-            st.warning(
-                "Vault Bem-estar não encontrado. Configure `OUROBOROS_VAULT` "
+            msg = (
+                "Vault Bem-estar não encontrado. Configure OUROBOROS_VAULT "
                 "para visualizar a timeline de eventos."
             )
+            st.markdown(callout_html("warning", msg), unsafe_allow_html=True)
         elif not items:
-            st.info(
+            msg = (
                 "Nenhum evento registrado no vault. "
                 "Use o botão à esquerda para criar o primeiro."
             )
+            st.markdown(callout_html("info", msg), unsafe_allow_html=True)
         elif not items_filtrados:
-            st.info("Nenhum evento casa com os filtros atuais.")
+            st.markdown(
+                callout_html("info", "Nenhum evento casa com os filtros atuais."),
+                unsafe_allow_html=True,
+            )
         else:
             for item in items_filtrados:
                 st.markdown(_card_html(item), unsafe_allow_html=True)
@@ -237,29 +244,16 @@ def _top_bairros(items: list[dict[str, Any]], *, top_n: int = 10) -> list[tuple[
 # ---------------------------------------------------------------------------
 
 
-def _page_header_html(qtd: int) -> str:
-    return minificar(
-        f"""
-        <div class="page-header">
-          <div>
-            <h1 class="page-title">BEM-ESTAR · EVENTOS</h1>
-            <p class="page-subtitle">
-              Timeline cronológica de eventos
-              <code style="color:{CORES['superfluo']};
-              background:{CORES['fundo_inset']};padding:1px 6px;
-              border-radius:2px;">positivo</code> ou
-              <code style="color:{CORES['superfluo']};
-              background:{CORES['fundo_inset']};padding:1px 6px;
-              border-radius:2px;">negativo</code> com lugar, bairro e
-              fotos anexadas.
-            </p>
-          </div>
-          <div class="page-meta">
-            <span class="sprint-tag">UX-RD-18</span>
-            <span class="pill pill-d7-graduado">{qtd} eventos</span>
-          </div>
-        </div>
-        """
+def _page_header_canonico(qtd: int) -> str:
+    """Page-header canônico via UX-M-02 (substitui markup local)."""
+    return renderizar_page_header(
+        titulo="BEM-ESTAR · EVENTOS",
+        subtitulo=(
+            "Timeline cronológica de eventos positivo ou negativo "
+            "com lugar, bairro e fotos anexadas."
+        ),
+        sprint_tag="UX-RD-18",
+        pills=[{"texto": f"{qtd} eventos", "tipo": "d7-graduado"}],
     )
 
 
@@ -363,162 +357,7 @@ def _escape(texto: str) -> str:
     )
 
 
-def _estilos_locais() -> str:
-    return minificar(
-        f"""
-        <style>
-          .evento-card {{
-            background: {CORES['card_fundo']};
-            border: 1px solid {CORES['card_elevado']};
-            border-radius: 6px;
-            padding: 12px 14px;
-            margin-bottom: 10px;
-          }}
-          .evento-card-head {{
-            display: flex;
-            gap: 12px;
-            align-items: center;
-            margin-bottom: 8px;
-            flex-wrap: wrap;
-          }}
-          .evento-data {{
-            font-family: monospace;
-            font-size: 13px;
-            color: {CORES['texto']};
-          }}
-          .evento-modo-pill {{
-            font-family: monospace;
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            padding: 2px 8px;
-            border-radius: 12px;
-          }}
-          .evento-cat-pill {{
-            font-family: monospace;
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
-            padding: 2px 8px;
-            border-radius: 4px;
-            background: {CORES['fundo_inset']};
-            color: {CORES['texto_sec']};
-          }}
-          .evento-autor {{
-            font-family: monospace;
-            font-size: 11px;
-            color: {CORES['texto_muted']};
-            margin-left: auto;
-          }}
-          .evento-lugar {{
-            font-size: 14px;
-            color: {CORES['texto']};
-            margin-bottom: 6px;
-          }}
-          .evento-bairro {{
-            font-size: 12px;
-            color: {CORES['texto_muted']};
-            margin-left: 4px;
-          }}
-          .evento-intens {{
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            margin-bottom: 6px;
-          }}
-          .evento-intens-label {{
-            font-family: monospace;
-            font-size: 10px;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: {CORES['texto_muted']};
-          }}
-          .evento-intens .dot {{
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            display: inline-block;
-          }}
-          .evento-intens .dot.on {{
-            background: {CORES['destaque']};
-          }}
-          .evento-intens .dot.off {{
-            background: {CORES['card_elevado']};
-          }}
-          .evento-intens-num {{
-            font-family: monospace;
-            font-size: 11px;
-            color: {CORES['texto_muted']};
-            margin-left: 4px;
-          }}
-          .evento-thumbs {{
-            display: flex;
-            gap: 6px;
-            flex-wrap: wrap;
-            margin-bottom: 6px;
-          }}
-          .thumb-mini {{
-            font-family: monospace;
-            font-size: 10px;
-            background: {CORES['fundo_inset']};
-            color: {CORES['texto_sec']};
-            padding: 4px 8px;
-            border-radius: 4px;
-            border: 1px dashed {CORES['card_elevado']};
-          }}
-          .evento-com {{
-            display: inline-block;
-            margin-top: 4px;
-            font-family: monospace;
-            font-size: 11px;
-            color: {CORES['texto_muted']};
-          }}
-          .bairros-card {{
-            background: {CORES['card_fundo']};
-            border: 1px solid {CORES['card_elevado']};
-            border-radius: 6px;
-            padding: 14px;
-            position: sticky;
-            top: 20px;
-          }}
-          .bairros-titulo {{
-            font-family: monospace;
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 0.10em;
-            color: {CORES['texto_muted']};
-            margin-bottom: 10px;
-          }}
-          .bairro-linha {{
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline;
-            padding: 4px 0;
-            border-bottom: 1px solid {CORES['card_elevado']};
-          }}
-          .bairro-linha:last-child {{
-            border-bottom: none;
-          }}
-          .bairro-nome {{
-            font-size: 12px;
-            color: {CORES['texto']};
-          }}
-          .bairro-count {{
-            font-family: monospace;
-            font-size: 11px;
-            color: {CORES['destaque']};
-          }}
-          .bairro-vazio {{
-            font-family: monospace;
-            font-size: 11px;
-            color: {CORES['texto_muted']};
-            font-style: italic;
-          }}
-        </style>
-        """
-    )
-
-
+# CSS dedicado: src/dashboard/css/paginas/be_eventos.css (UX-M-02.D residual).
 # ---------------------------------------------------------------------------
 # Form modal
 # ---------------------------------------------------------------------------

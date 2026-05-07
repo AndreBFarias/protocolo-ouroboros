@@ -1,0 +1,209 @@
+/* CSS dedicado da página Inbox (UX-M-02.C residual).
+   Origem: função _estilos_locais() inline em src/dashboard/paginas/inbox.py.
+   Estruturas únicas: dropzone pontilhado, fila densa com thumb/sha8/ts,
+   drawer embarcado, syntax-highlight do sidecar. Cores canonizadas para
+   tokens CSS. */
+
+.inbox-dropzone-marker {
+    border: 2px dashed var(--border-subtle);
+    border-radius: 12px;
+    padding: 24px;
+    text-align: center;
+    background: var(--bg-surface);
+    margin-bottom: 8px;
+}
+.inbox-dropzone-marker:hover {
+    border-color: var(--accent-purple);
+}
+.inbox-dz-glyph {
+    font-size: 36px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+}
+.inbox-dropzone-marker h3 {
+    font-family: ui-monospace, 'JetBrains Mono', monospace;
+    font-size: 16px;
+    margin: 0 0 6px;
+    color: var(--text-primary);
+}
+.inbox-dropzone-marker p {
+    color: var(--text-muted);
+    font-size: 13px;
+    margin: 0;
+}
+.inbox-tipo-chips {
+    margin-top: 10px;
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+.inbox-tipo-chip {
+    font-family: ui-monospace, 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 2px 8px;
+    border: 1px solid var(--border-subtle);
+    border-radius: 6px;
+    color: var(--text-secondary);
+    background: var(--bg-inset);
+}
+
+.inbox-fila-card {
+    margin-top: 16px;
+    padding: 0;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+}
+.inbox-fila-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px 10px;
+    border-bottom: 1px solid var(--border-subtle);
+}
+.inbox-fila-head h2 {
+    font-family: ui-monospace, 'JetBrains Mono', monospace;
+    font-size: 18px;
+    font-weight: 500;
+    margin: 0;
+    letter-spacing: -0.01em;
+    color: var(--text-primary);
+}
+.inbox-fila-count {
+    font-family: ui-monospace, 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+.inbox-fila-scroll {
+    overflow: auto;
+    max-height: 420px;
+}
+.inbox-fila-table { width: 100%; }
+.inbox-fila-table th {
+    font-family: ui-monospace, 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-align: left;
+    padding: 8px 10px;
+    background: var(--bg-inset);
+}
+.inbox-fila-table td {
+    padding: 8px 10px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    border-bottom: 1px dashed var(--border-subtle);
+}
+.inbox-fila-table .thumb-cell { width: 44px; }
+.inbox-fila-thumb {
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--border-subtle);
+    border-radius: 6px;
+    display: grid;
+    place-items: center;
+    color: var(--text-secondary);
+    background: var(--bg-inset);
+    font-family: ui-monospace, 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.04em;
+}
+.inbox-filename {
+    color: var(--text-primary);
+    font-family: ui-monospace, 'JetBrains Mono', monospace;
+    font-size: 13px;
+}
+.inbox-tipo-arq {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+.inbox-sha8 { color: var(--text-secondary); }
+.inbox-ts { color: var(--text-muted); }
+
+.row-novo { animation: inbox-chegou 0.8s ease-out; }
+@keyframes inbox-chegou {
+    0%   { background: rgba(189, 147, 249, 0.20); }
+    100% { background: transparent; }
+}
+
+.inbox-fila-vazia .inbox-vazia-msg {
+    padding: 32px 20px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 13px;
+}
+.inbox-fila-vazia .inbox-vazia-msg code {
+    background: var(--bg-inset);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+.inbox-drawer {
+    position: relative;
+    margin-top: 16px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    padding: 0;
+}
+.inbox-drawer .drawer-head {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border-subtle);
+}
+.inbox-drawer-rotulo {
+    font-family: ui-monospace, 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+.inbox-drawer-sha {
+    font-family: ui-monospace, 'JetBrains Mono', monospace;
+    font-size: 16px;
+    color: var(--text-primary);
+    margin-top: 2px;
+}
+.inbox-drawer-filename {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+}
+.inbox-drawer .drawer-body {
+    padding: 14px 16px;
+}
+.inbox-drawer-erro {
+    background: rgba(255, 85, 85, 0.08);
+    border-left: 3px solid var(--accent-red);
+    padding: 8px 12px;
+    margin-bottom: 12px;
+    font-size: 13px;
+    color: var(--text-primary);
+}
+.inbox-drawer-sem-sidecar {
+    color: var(--text-muted);
+    font-size: 13px;
+}
+.inbox-drawer-sem-sidecar code {
+    background: var(--bg-inset);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+}
+.inbox-sidecar-pre {
+    margin: 0;
+    font-family: ui-monospace, 'JetBrains Mono', monospace;
+    font-size: 12px;
+    line-height: 1.55;
+    color: var(--text-secondary);
+    white-space: pre-wrap;
+    background: var(--bg-inset);
+    padding: 12px;
+    border-radius: 8px;
+    max-height: 420px;
+    overflow: auto;
+}

@@ -337,23 +337,50 @@ be_eventos.renderizar({}, "90 dias", "pessoa_a", None)
 
 
 def test_be_diario_renderiza_sem_crash_vault_ausente():
+    """Sprint UX-M-02.D: warning agora vem como callout_html (markdown).
+
+    Invariante: usuário continua vendo aviso de vault, mas via callout
+    canônico (visualmente consistente com tema Dracula) em vez de
+    ``st.warning`` (paleta amarelada default Streamlit).
+    """
     from streamlit.testing.v1 import AppTest
 
     at = AppTest.from_string(_SCRIPT_BE_DIARIO)
     at.run()
     assert not at.exception
-    avisos = [w.value for w in at.warning] + [i.value for i in at.info]
-    assert any("vault" in t.lower() or "configure" in t.lower() for t in avisos)
+    # Coleta avisos de qualquer canal: warning, info, ou markdown (callout).
+    avisos = (
+        [w.value for w in at.warning]
+        + [i.value for i in at.info]
+        + [m.value for m in at.markdown]
+    )
+    assert any(
+        ("vault" in str(t).lower() or "configure" in str(t).lower())
+        for t in avisos
+    )
 
 
 def test_be_eventos_renderiza_sem_crash_vault_ausente():
+    """Sprint UX-M-02.D: warning agora vem como callout_html (markdown).
+
+    Invariante: usuário continua vendo aviso de vault, mas via callout
+    canônico (visualmente consistente com tema Dracula) em vez de
+    ``st.warning`` (paleta amarelada default Streamlit).
+    """
     from streamlit.testing.v1 import AppTest
 
     at = AppTest.from_string(_SCRIPT_BE_EVENTOS)
     at.run()
     assert not at.exception
-    avisos = [w.value for w in at.warning] + [i.value for i in at.info]
-    assert any("vault" in t.lower() or "configure" in t.lower() for t in avisos)
+    avisos = (
+        [w.value for w in at.warning]
+        + [i.value for i in at.info]
+        + [m.value for m in at.markdown]
+    )
+    assert any(
+        ("vault" in str(t).lower() or "configure" in str(t).lower())
+        for t in avisos
+    )
 
 
 # ===========================================================================

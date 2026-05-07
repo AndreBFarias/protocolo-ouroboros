@@ -66,6 +66,11 @@ from src.dashboard.componentes.busca_resultado_inline import (
 )
 from src.dashboard.componentes.busca_roteador import rotear
 from src.dashboard.componentes.html_utils import minificar
+from src.dashboard.componentes.ui import (
+    callout_html,
+    carregar_css_pagina,
+    subtitulo_secao_html,
+)
 from src.dashboard.dados import (
     buscar_global,
     carregar_dados,
@@ -77,10 +82,8 @@ from src.dashboard.tema import (
     CORES,
     FONTE_LABEL,
     SPACING,
-    callout_html,
     icon_html,
     rgba_cor_inline,
-    subtitulo_secao_html,
 )
 
 RAIZ = Path(__file__).resolve().parents[3]
@@ -149,149 +152,8 @@ _FACETAS_BUSCA: list[tuple[str, str]] = [
 # CSS local da página -- redesign UX-RD-09 (search-bar + facets + cards)
 # ---------------------------------------------------------------------------
 
-_CSS_LOCAL_BUSCA: str = minificar(
-    """
-    <style>
-    /* Cor do ícone (i) do callout info: var(--color-destaque) em vez do
-       azul Streamlit default (feedback dono 2026-04-27). */
-    div[data-testid='stAlert'] svg,
-    div[role='alert'] svg {
-        color: var(--color-destaque) !important;
-        fill: currentColor !important;
-    }
-
-    /* Search-bar grande no topo (espelha mockup 06-busca-global.html). */
-    .ouroboros-search-bar {
-        background: var(--bg-surface, var(--color-card-fundo));
-        border: 1px solid var(--accent-purple, var(--color-destaque));
-        border-radius: 10px;
-        padding: 10px 14px;
-        display: flex; align-items: center; gap: 10px;
-        margin-bottom: 14px;
-        box-shadow: 0 0 0 4px rgba(189,147,249,0.10);
-    }
-    .ouroboros-search-bar .icon {
-        color: var(--accent-purple, var(--color-destaque));
-        font-family: var(--ff-mono, monospace);
-        font-size: 18px;
-    }
-    .ouroboros-search-bar .ct {
-        font-family: var(--ff-mono, monospace);
-        font-size: 11px;
-        color: var(--text-muted, var(--color-texto-sec));
-    }
-    .ouroboros-search-bar .kbd {
-        font-family: var(--ff-mono, monospace);
-        font-size: 10px;
-        color: var(--text-muted, var(--color-texto-sec));
-        border: 1px solid var(--border-subtle, var(--color-texto-sec));
-        padding: 2px 6px; border-radius: 4px;
-        background: var(--bg-inset, var(--color-fundo));
-    }
-
-    /* Card de faceta lateral (placeholder visual; checkboxes vivem em
-       st.columns no Python). */
-    .ouroboros-facet-card {
-        background: var(--bg-surface, var(--color-card-fundo));
-        border: 1px solid var(--border-subtle, var(--color-texto-sec));
-        border-radius: 8px;
-        padding: 10px 12px;
-        margin-bottom: 10px;
-    }
-    .ouroboros-facet-card h4 {
-        font-family: var(--ff-mono, monospace);
-        font-size: 10px;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        color: var(--text-muted, var(--color-texto-sec));
-        margin: 0 0 6px;
-    }
-
-    /* Cards de resultado com snippet highlight. */
-    .ouroboros-res-group {
-        background: var(--bg-surface, var(--color-card-fundo));
-        border: 1px solid var(--border-subtle, var(--color-texto-sec));
-        border-radius: 10px;
-        margin-bottom: 12px;
-    }
-    .ouroboros-res-head {
-        padding: 10px 14px;
-        border-bottom: 1px solid var(--border-subtle, var(--color-texto-sec));
-        display: flex; align-items: center; gap: 10px;
-    }
-    .ouroboros-res-head .pill-tipo {
-        width: 28px; height: 28px;
-        border-radius: 6px;
-        background: var(--bg-inset, var(--color-fundo));
-        color: var(--accent-purple, var(--color-destaque));
-        display: grid; place-items: center;
-        font-family: var(--ff-mono, monospace);
-        font-size: 11px; font-weight: 600;
-    }
-    .ouroboros-res-head h3 {
-        font-family: var(--ff-mono, monospace);
-        font-size: 12px;
-        letter-spacing: 0.06em;
-        text-transform: uppercase;
-        color: var(--text-secondary, var(--color-texto-sec));
-        margin: 0;
-    }
-    .ouroboros-res-head .ct {
-        font-family: var(--ff-mono, monospace);
-        font-size: 11px;
-        color: var(--text-muted, var(--color-texto-sec));
-        margin-left: auto;
-    }
-    .ouroboros-res-row {
-        padding: 10px 14px;
-        border-bottom: 1px dashed var(--border-subtle, var(--color-texto-sec));
-    }
-    .ouroboros-res-row:last-child { border-bottom: none; }
-    .ouroboros-res-title {
-        font-size: 14px;
-        margin-bottom: 4px;
-        color: var(--text-primary, var(--color-texto));
-    }
-    .ouroboros-res-meta {
-        font-family: var(--ff-mono, monospace);
-        font-size: 11px;
-        color: var(--text-muted, var(--color-texto-sec));
-        display: flex; gap: 12px; flex-wrap: wrap;
-    }
-    .ouroboros-res-snippet {
-        font-family: var(--ff-mono, monospace);
-        font-size: 12px;
-        color: var(--text-secondary, var(--color-texto-sec));
-        margin-top: 6px;
-        padding: 6px 10px;
-        background: var(--bg-inset, var(--color-fundo));
-        border-radius: 6px;
-        border-left: 2px solid var(--accent-purple, var(--color-destaque));
-        line-height: 1.5;
-    }
-    .ouroboros-res-title mark,
-    .ouroboros-res-snippet mark {
-        background: rgba(241,250,140,0.30);
-        color: var(--accent-yellow, var(--color-alerta));
-        padding: 0 2px;
-        border-radius: 2px;
-        font-weight: 500;
-    }
-
-    /* Faixa de contagem unificada (UX-127 invariante). */
-    .ouroboros-busca-contagem {
-        font-family: var(--ff-mono, monospace);
-        font-size: 12px;
-        color: var(--text-muted, var(--color-texto-sec));
-        margin-bottom: 10px;
-    }
-    .ouroboros-busca-contagem strong {
-        color: var(--text-primary, var(--color-texto));
-        font-weight: 600;
-    }
-    </style>
-    """
-)
+# CSS dedicado da página: src/dashboard/css/paginas/busca.css
+# (UX-M-02.A-RESIDUAL extraiu de _CSS_LOCAL_BUSCA inline.)
 
 
 # ---------------------------------------------------------------------------
@@ -566,7 +428,7 @@ def renderizar(
     ctx = ctx or {}
     forma_pagamento = ctx.get("forma_pagamento")
 
-    st.markdown(_CSS_LOCAL_BUSCA, unsafe_allow_html=True)
+    st.markdown(minificar(carregar_css_pagina("busca")), unsafe_allow_html=True)
 
     # Page-header canônico UX-RD-09 (substitui hero_titulo_html legado
     # da Sprint 59 — duplicação visual eliminada 2026-05-06).
@@ -741,7 +603,7 @@ def _renderizar_search_bar(termo: str | None) -> None:
           <span class="icon">⌕</span>
           <span style="flex:1; font-family: var(--ff-mono, monospace);
                        font-size: 13px;
-                       color: var(--text-muted, var(--color-texto-sec));">
+                       color: var(--text-muted);">
             BUSCA GLOBAL — chips canônicos abaixo do input ativo.
           </span>
           {aviso}
@@ -873,7 +735,7 @@ def _renderizar_facetas_laterais(
             linhas_html.append(
                 "<div style='font-family:var(--ff-mono,monospace);"
                 " font-size:11px;"
-                " color:var(--text-muted, var(--color-texto-sec));'>—</div>"
+                " color:var(--text-muted);'>—</div>"
             )
         else:
             ordenado = sorted(contagem.items(), key=lambda kv: kv[1], reverse=True)
@@ -883,7 +745,7 @@ def _renderizar_facetas_laterais(
                     " padding:3px 0;font-family:var(--ff-mono,monospace);"
                     " font-size:12px;color:var(--color-texto);'>"
                     f"<span>{_html.escape(_mascarar_pii(str(chave)))}</span>"
-                    f"<span style='color:var(--text-muted,var(--color-texto-sec));"
+                    f"<span style='color:var(--text-muted);"
                     f" font-size:11px;'>{n}</span>"
                     "</div>"
                 )
@@ -891,7 +753,7 @@ def _renderizar_facetas_laterais(
         # Total de fornecedores aparece no grupo "Tipo" como faceta
         # auxiliar (mockup mostra Tipo no topo).
         nota = (
-            f" <span style='color:var(--text-muted,var(--color-texto-sec));"
+            f" <span style='color:var(--text-muted);"
             f" font-size:10px;'>(+{len(forns)} fornec.)</span>"
             if titulo == "Tipo" and forns
             else ""
@@ -934,9 +796,9 @@ def _renderizar_grupo_transacoes(transacoes: list[dict], termo: str) -> None:
         valor = float(t.get("valor", 0.0) or 0.0)
         valor_str = formatar_moeda(valor)
         cor_valor = (
-            "var(--accent-red, var(--color-negativo))"
+            "var(--accent-red)"
             if valor < 0
-            else "var(--accent-green, var(--color-positivo))"
+            else "var(--accent-green)"
         )
         data = str(t.get("data", "--"))
         banco = _html.escape(str(t.get("banco_origem", "--")))

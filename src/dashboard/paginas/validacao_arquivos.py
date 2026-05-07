@@ -15,7 +15,7 @@ from __future__ import annotations
 import pandas as pd
 import streamlit as st
 
-from src.dashboard.tema import callout_html
+from src.dashboard.componentes.ui import callout_html
 
 
 def renderizar(

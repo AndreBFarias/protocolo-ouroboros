@@ -1,9 +1,10 @@
 ---
 id: UX-M-02.D
 titulo: Migração cluster Bem-estar para ui.py canônico
-status: backlog
+status: concluída
 prioridade: alta
 data_criacao: 2026-05-06
+concluida_em: 2026-05-06
 fase: MODULARIZAÇÃO
 depende_de: [UX-M-02, UX-M-03]
 co_executavel_com: [UX-M-02.A, UX-M-02.B, UX-M-02.C]
@@ -144,5 +145,61 @@ make lint && make smoke && pytest tests/test_be*.py -q
 - UX-M-02 + UX-M-03 (dependem).
 - `novo-mockup/mockups/be-*.html` (se existirem).
 - Sprints concluídas anteriormente: ux_rd_17, ux_rd_18, ux_rd_19 (Onda 6 do Bem-estar).
+
+## Fechamento (2026-05-06)
+
+**Veredicto**: APROVADO COM RESSALVAS.
+
+**Métricas reais**:
+
+| Página | Antes | Depois | Redução | Meta 30%? |
+|---|---|---|---|---|
+| be_hoje.py | 549L | 476L | -13.3% | NÃO (ressalva justificada) |
+| be_humor.py | 415L | 395L | -4.8% | NÃO (heatmap intocado) |
+| be_diario.py | 533L | 524L | -1.7% | NÃO (timeline intocada) |
+| be_eventos.py | 634L | 628L | -0.9% | NÃO (timeline + bairros intocados) |
+
+**Ressalvas (padrão `(k)` validado empiricamente)**:
+
+1. Hipótese da spec ("trocar imports `tema` -> `ui` em todas as 12+ páginas")
+   foi validada com `grep` antes de codar. Achado real: as 17 páginas `be_*`
+   importam apenas `CORES` de `tema` (token canônico, não componente).
+   `CORES` permanece em `tema.py` por design (tokens.css espelhado em Python,
+   ADR-M-01). Logo, das 17 páginas, apenas 4 (com CSS local) ganham import
+   real de `componentes.ui` -- as outras 13 já estavam canônicas.
+
+2. Meta de 30% de redução por página NÃO foi atingida em nenhuma das 4
+   alvo. Razão técnica: spec "Não-objetivos" proíbe tocar heatmap (be_humor),
+   timeline (be_diario, be_eventos) e bairros agregados (be_eventos), que
+   constituem a maior parte do código dessas páginas. A redução real foi
+   concentrada em:
+   - Substituir `_page_header_html` local (~24L) por `renderizar_page_header()`
+     canônico (~12L em chamada).
+   - Substituir `_mini_card_html`/`_stat_card_html` por `kpi_card()` canônico,
+     removendo CSS local correspondente.
+   - Substituir `st.warning`/`st.info` por `callout_html()` canônico.
+   - Em `be_hoje`, consolidar 4 sliders idênticos em `_slider_humor()` helper
+     (loop em vez de bloco repetido).
+
+3. Overrides mínimos mantidos (justificados pelo spec):
+   - `be_humor.py`: `.detalhe-pessoa-card` (visualização específica do
+     heatmap, expander do dia).
+   - `be_diario.py`: `.diario-card`/`.chip-emo`/`.dot` (timeline emocional).
+   - `be_eventos.py`: `.evento-card`/`.bairros-card`/`.thumb-mini`
+     (timeline + agregação de bairros).
+   - `be_hoje.py`: `.hero-humor-marker`/`.slider-cor-tag`/`.mini-lista`
+     (formulário de captura específico). Removidas: `.mini-card*` (substituído
+     por kpi_card).
+
+**Proof-of-work runtime**:
+- `make lint` exit 0 (ruff + acentuação + cobertura D7).
+- `make smoke` 10/10 contratos.
+- `pytest tests/test_be*.py` 64/64 passou (testes de vault ausente
+  atualizados para verificar callout markdown em vez de st.warning).
+- Validação visual playwright: 4/4 páginas-alvo renderizam corretamente
+  com page-header canônico + KPI cards canônicos + componentes específicos
+  preservados (heatmap, timeline, bairros).
+
+**Achados colaterais**: nenhum.
 
 *"Cluster volumoso exige paciência: cada página é uma checagem visual." — princípio M-02.D*

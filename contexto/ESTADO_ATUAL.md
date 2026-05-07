@@ -1,9 +1,72 @@
-# ESTADO_ATUAL.md -- Snapshot tecnico em 2026-05-06 (pos-Onda T fechada, Onda M especificada)
+# ESTADO_ATUAL.md -- Snapshot tecnico em 2026-05-06 (Onda M FECHADA -- modularização completa)
 
-> **Versionado a partir de 2026-04-29 pela Sprint DOC-VERDADE-01.A; atualizado em 2026-05-06 com Onda M (modularização) especificada**.
+> **Versionado a partir de 2026-04-29 pela Sprint DOC-VERDADE-01.A; atualizado em 2026-05-06 (parte 4) com Onda M COMPLETA (4 sub-sprints + 2 fixes residuais zero-débito)**.
 > Whitelist em `.gitignore` permite este arquivo + COMO_AGIR.md no repo (POR_QUE.md e PROMPT_NOVA_SESSAO.md continuam locais por conter PII estrutural).
 > Esta doc e fotografia do momento — para verdade vivo consulte `git log` + `ls docs/sprints/concluidos/`.
 > Para auditar este snapshot contra realidade: `python scripts/auditar_estado.py`.
+
+## Sessao 2026-05-06 (parte 4) -- Onda M COMPLETA (4 sub-sprints + zero débito residual)
+
+**Onda M FECHADA em 2026-05-06**, validada visualmente side-by-side (mockup vs dashboard real via `claude-in-chrome`) pelo supervisor (padrão `(p)`). Branch `ux/onda-m` pronta para merge em `main`.
+
+### 4 sub-sprints paralelas executadas via subagents `executor-sprint` (worktrees isolados)
+
+| Sprint | Commit | Cluster | Métrica |
+|---|---|---|---|
+| UX-M-02.A | `e1ccd55` | Documentos (7 páginas) | imports tema→ui em 7/7 |
+| UX-M-02.B | `c564b92` | Finanças (4 páginas) | imports tema→ui em 4/4 |
+| UX-M-02.C | `6d36249` | Análise+Metas+Inbox+Sistema (6 páginas) | imports parciais (3/6); 3 overrides justificados |
+| UX-M-02.D | `b413ac7` | Bem-estar (17 páginas, 4 com CSS local) | 4 páginas-chave migradas; 4 overrides justificados |
+
+### 2 fixes residuais (zero-débito) executados pelo supervisor
+
+| Fix | Commit | Métrica |
+|---|---|---|
+| `css/paginas/` + helper `carregar_css_pagina` + bug "undefined" Plotly | `9309ff8` | -971L em 6 páginas + 6 CSS criados |
+| Overrides Bem-estar para `css/paginas/be_*.css` | `2a28aee` | -381L em 4 páginas + 4 CSS criados |
+
+### Métricas finais Onda M completa
+
+- 30 páginas migradas para `ui.py` + classes canônicas.
+- 10 arquivos CSS dedicados em `src/dashboard/css/paginas/` (busca, catalogacao, extrato, categorias, inbox, skills_d7, be_hoje, be_humor, be_diario, be_eventos).
+- Helper `carregar_css_pagina(nome)` em `ui.py` segue padrão `tema_css.py:65`.
+- `tema_plotly.py`: bug do `title.font` sem `title.text` corrigido (gerava placeholder "undefined" em todos os Plotly charts).
+- **Redução total Python**: -1352L em paginas/.
+- **Pytest baseline**: 2555 passed / 14 skipped / 1 xfailed = 2570 (mantida; 22 fails preexistentes flaky resolvidos no caminho).
+- **Validação visual side-by-side**: 9 páginas confrontadas mockup vs dashboard real (Projeções, Busca, Extrato, Categorias, Inbox, Skills D7, Be-hoje, Be-humor, Be-diário). Zero regressão.
+
+---
+
+## Sessao 2026-05-06 (parte 3) -- Onda M FASE CENTRAL CONCLUÍDA (modularização do dashboard)
+
+**5 sprints da Onda M concluídas em 2026-05-06**, todas validadas pessoalmente pelo supervisor (padrão (p)) — branch `ux/onda-m`, ainda não merged em main:
+
+| # | Sprint | Commit | Esforço | Métrica chave |
+|---|---|---|---|---|
+| 1 | UX-M-01 (tokens) | `bbedf2c` | 30min | tokens.css 137L canônico; tema_css.py -95L |
+| 2 | UX-M-04 (shell) | `2947f2b` | 16min | shell.py 211→72L; setProperty 56→2 |
+| 3 | UX-M-TESTES (4 testes) | `da8f639` | 30min | 4 testes pré-existentes corrigidos |
+| 4 | UX-M-02 (ui.py) | `3ef1d66` | 25min | ui.py 684L com 14 funções; tema.py 723→454L |
+| 5 | UX-M-03 (components.css) | `2544160` | 25min | tema_css.py 1619→987L (-632); 3 CSS canônicos |
+
+**Métricas Onda M consolidadas:**
+- `tema_css.py`: 1675 → 987 linhas (-688, -41%)
+- `tema.py`: 723 → 454 linhas (-269, -37%)
+- `shell.py`: 604 → 465 linhas (-139, -23%)
+- `setProperty` JS runtime: 56 → 2 (96% migrado para CSS estático)
+- 5 arquivos CSS canônicos criados em `src/dashboard/css/`: tokens.css, components.css, shell.css, overrides_streamlit.css, extensoes_dashboard.css
+- `ui.py` criado como fronteira pública única com 14 funções (9 migradas + 3 novas + 2 re-exports)
+
+**Pytest baseline:** 2555 passed / 14 skipped / 1 xfailed (era 2018 do ESTADO_ATUAL.md original — desatualizado pré-Onda T+Q+U).
+
+**Validação visual (5 páginas amostradas em cada sprint):** zero regressão visual — sidebar 240px, topbar full-width, page-headers UPPERCASE, KPIs com bordas semânticas, layouts internos preservados.
+
+**Próximo passo (4 sub-sprints UX-M-02.A..D — migração de páginas):**
+Cluster Documentos (A), Finanças (B), Análise+Metas+Inbox+Sistema (C), Bem-estar (D) — paralelos, ~16h total. Devem rodar em **nova sessão Claude Code com prompt canônico** (contexto fresco), pois Opus principal atual já está pesado.
+
+Após sub-sprints verdes: merge `ux/onda-m` → `main` finaliza Onda M.
+
+---
 
 ## Sessao 2026-05-06 (parte 2) -- Onda M especificada (modularização do dashboard)
 

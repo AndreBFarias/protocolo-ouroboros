@@ -1,10 +1,11 @@
 ---
 id: UX-M-02
 titulo: Componentes universais HTML em ui.py (consolidação)
-status: backlog
+status: concluída
 prioridade: alta
 data_criacao: 2026-05-06
 data_revisao: 2026-05-06
+concluida_em: 2026-05-06
 fase: MODULARIZAÇÃO
 depende_de: [UX-M-01]
 bloqueia: [UX-M-03, UX-M-02.A, UX-M-02.B, UX-M-02.C, UX-M-02.D]

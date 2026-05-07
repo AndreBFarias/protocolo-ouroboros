@@ -34,7 +34,8 @@ from src.dashboard.componentes.heatmap_humor import (
     gerar_legenda_html,
 )
 from src.dashboard.componentes.html_utils import minificar
-from src.dashboard.tema import CORES
+from src.dashboard.componentes.page_header import renderizar_page_header
+from src.dashboard.componentes.ui import callout_html, carregar_css_pagina, kpi_card
 from src.mobile_cache.humor_heatmap import gerar_humor_heatmap
 from src.mobile_cache.varrer_vault import descobrir_vault_root
 
@@ -59,7 +60,7 @@ def renderizar(
     del dados, periodo, ctx
 
     st.markdown(gerar_estilos_heatmap(), unsafe_allow_html=True)
-    st.markdown(_estilos_locais(), unsafe_allow_html=True)
+    st.markdown(minificar(carregar_css_pagina("be_humor")), unsafe_allow_html=True)
 
     hoje = date.today()
     vault_root = descobrir_vault_root()
@@ -68,20 +69,32 @@ def renderizar(
     items = payload.get("celulas", []) if payload else []
     stats_payload = payload.get("estatisticas", {}) if payload else {}
 
-    st.markdown(_page_header_html(len(items)), unsafe_allow_html=True)
+    st.markdown(_page_header_canonico(len(items)), unsafe_allow_html=True)
 
     if vault_root is None:
-        st.warning(
-            "Vault Bem-estar não encontrado. Configure `OUROBOROS_VAULT` "
-            "para visualizar o heatmap de humor."
+        st.markdown(
+            callout_html(
+                "warning",
+                (
+                    "Vault Bem-estar não encontrado. Configure OUROBOROS_VAULT "
+                    "para visualizar o heatmap de humor."
+                ),
+            ),
+            unsafe_allow_html=True,
         )
         return
 
     if not payload:
-        st.info(
-            "Nenhum cache `humor-heatmap.json` encontrado no vault. "
-            "Registre humor pela aba Hoje ou rode "
-            "`python -m src.mobile_cache.humor_heatmap` para gerar o cache."
+        st.markdown(
+            callout_html(
+                "info",
+                (
+                    "Nenhum cache humor-heatmap.json encontrado no vault. "
+                    "Registre humor pela aba Hoje ou rode "
+                    "python -m src.mobile_cache.humor_heatmap para gerar o cache."
+                ),
+            ),
+            unsafe_allow_html=True,
         )
         return
 
@@ -125,26 +138,17 @@ def renderizar(
 # ---------------------------------------------------------------------------
 
 
-def _page_header_html(qtd_celulas: int) -> str:
-    return minificar(
-        f"""
-        <div class="page-header">
-          <div>
-            <h1 class="page-title">BEM-ESTAR · HUMOR</h1>
-            <p class="page-subtitle">
-              Heatmap 13×7 lê <code style="color:{CORES['superfluo']};
-              background:{CORES['fundo_inset']};padding:1px 6px;
-              border-radius:2px;">.ouroboros/cache/humor-heatmap.json</code>
-              gerado por ``mobile_cache.humor_heatmap``. Modo Pessoa A,
-              Pessoa B ou sobreposto. Vazia = sem registro.
-            </p>
-          </div>
-          <div class="page-meta">
-            <span class="sprint-tag">UX-RD-17</span>
-            <span class="pill pill-d7-graduado">{qtd_celulas} células</span>
-          </div>
-        </div>
-        """
+def _page_header_canonico(qtd_celulas: int) -> str:
+    """Page-header canônico via UX-M-02 (substitui markup local)."""
+    return renderizar_page_header(
+        titulo="BEM-ESTAR · HUMOR",
+        subtitulo=(
+            "Heatmap 13×7 lê .ouroboros/cache/humor-heatmap.json gerado por "
+            "mobile_cache.humor_heatmap. Modo Pessoa A, Pessoa B ou "
+            "sobreposto. Célula vazia significa sem registro."
+        ),
+        sprint_tag="UX-RD-17",
+        pills=[{"texto": f"{qtd_celulas} células", "tipo": "d7-graduado"}],
     )
 
 
@@ -196,37 +200,37 @@ def _renderizar_stats(
     melhor, pior = _melhor_pior_30d(items, hoje, pessoa_foco)
 
     st.markdown(
-        _stat_card_html(
+        kpi_card(
             "média 30 dias",
             f"{media_30d:.2f}/5" if media_30d else "—",
-            cor=CORES["destaque"],
+            accent="purple",
         ),
         unsafe_allow_html=True,
     )
     st.markdown(
-        _stat_card_html(
+        kpi_card(
             "registros · 30 dias",
             f"{registros_30d}/30",
-            cor=CORES["neutro"],
+            accent="cyan",
         ),
         unsafe_allow_html=True,
     )
     col_melhor, col_pior = st.columns(2)
     with col_melhor:
         st.markdown(
-            _stat_card_html(
+            kpi_card(
                 "melhor",
                 f"{melhor}/5" if melhor else "—",
-                cor=CORES["positivo"],
+                accent="green",
             ),
             unsafe_allow_html=True,
         )
     with col_pior:
         st.markdown(
-            _stat_card_html(
+            kpi_card(
                 "pior",
                 f"{pior}/5" if pior else "—",
-                cor=CORES["negativo"],
+                accent="red",
             ),
             unsafe_allow_html=True,
         )
@@ -258,17 +262,6 @@ def _melhor_pior_30d(
     if not valores:
         return 0, 0
     return max(valores), min(valores)
-
-
-def _stat_card_html(label: str, valor: str, *, cor: str) -> str:
-    return minificar(
-        f"""
-        <div class="stat-card-be">
-          <div class="stat-label">{label}</div>
-          <div class="stat-valor" style="color:{cor};">{valor}</div>
-        </div>
-        """
-    )
 
 
 # ---------------------------------------------------------------------------
@@ -341,75 +334,5 @@ def _renderizar_detalhe_dia(
 # ---------------------------------------------------------------------------
 
 
-def _estilos_locais() -> str:
-    return minificar(
-        f"""
-        <style>
-          .stat-card-be {{
-            background: {CORES['card_fundo']};
-            border: 1px solid {CORES['card_elevado']};
-            border-radius: 6px;
-            padding: 14px;
-            margin-bottom: 8px;
-          }}
-          .stat-card-be .stat-label {{
-            font-family: monospace;
-            font-size: 11px;
-            letter-spacing: 0.10em;
-            text-transform: uppercase;
-            color: {CORES['texto_muted']};
-            margin-bottom: 4px;
-          }}
-          .stat-card-be .stat-valor {{
-            font-family: monospace;
-            font-size: 26px;
-            font-weight: 500;
-          }}
-          .detalhe-pessoa-card {{
-            background: {CORES['card_fundo']};
-            border: 1px solid {CORES['card_elevado']};
-            border-left: 3px solid {CORES['destaque']};
-            border-radius: 6px;
-            padding: 12px 14px;
-            margin-bottom: 8px;
-          }}
-          .detalhe-pessoa-head {{
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline;
-            margin-bottom: 6px;
-          }}
-          .detalhe-pessoa-nome {{
-            font-family: monospace;
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            color: {CORES['texto_sec']};
-          }}
-          .detalhe-pessoa-dia {{
-            font-family: monospace;
-            font-size: 11px;
-            color: {CORES['texto_muted']};
-          }}
-          .detalhe-pessoa-grid {{
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 8px;
-          }}
-          .detalhe-pessoa-grid .l {{
-            font-size: 10px;
-            color: {CORES['texto_muted']};
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
-          }}
-          .detalhe-pessoa-grid .v {{
-            font-family: monospace;
-            font-size: 16px;
-            color: {CORES['texto']};
-          }}
-        </style>
-        """
-    )
-
-
+# CSS dedicado: src/dashboard/css/paginas/be_humor.css (UX-M-02.D residual).
 # "Conhece-te a ti mesmo." -- Sócrates

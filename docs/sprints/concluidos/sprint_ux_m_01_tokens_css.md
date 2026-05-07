@@ -1,7 +1,8 @@
 ---
 id: UX-M-01
 titulo: Tokens CSS centralizados em um único arquivo
-status: backlog
+status: concluída
+concluida_em: 2026-05-06
 prioridade: alta
 data_criacao: 2026-05-06
 data_revisao: 2026-05-06
@@ -10,6 +11,7 @@ depende_de: []
 bloqueia: [UX-M-02, UX-M-03]
 co_executavel_com: [UX-M-04]
 esforco_estimado_horas: 3-5
+esforco_real_horas: ~30min
 ---
 
 # Sprint UX-M-01 — Tokens CSS centralizados

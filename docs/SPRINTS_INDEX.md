@@ -46,18 +46,23 @@ Plano operacional: `~/.claude/plans/auditoria-honesta-da-magical-lovelace.md`. G
 
 Plan operacional: `~/.claude/plans/auditoria-honesta-da-magical-lovelace.md`. Índice da onda: `docs/sprints/backlog/INDICE_ONDA_M_MODULARIZACAO.md`.
 
+**FASE CENTRAL CONCLUÍDA em 2026-05-06** (4 sprints principais + 1 sub-sprint de testes regressivos). Branch `ux/onda-m`, ainda não merged. Ver entrada "Sessao 2026-05-06 (parte 3)" em `contexto/ESTADO_ATUAL.md`.
+
 | Sprint | Título | Depende | Esforço | Status |
 |---|---|---|---|---|
-| UX-M-01 | Tokens CSS centralizados (copy `novo-mockup/_shared/tokens.css`) | — | 3-5h | Backlog |
-| UX-M-02 | Componentes universais HTML (consolidar em `ui.py`) | M-01 | 8-10h | Backlog |
-| UX-M-03 | CSS canônico do mockup (copy `novo-mockup/_shared/components.css`) | M-01, M-02 | 4-6h | Backlog |
-| UX-M-04 | Shell consolidado em CSS estático (211→80 linhas) | M-01 | 5-7h | Backlog (paralelo com M-01) |
-| UX-M-02.A | Migração cluster Documentos | M-02, M-03 | 4h | Backlog |
-| UX-M-02.B | Migração cluster Finanças | M-02, M-03 | 3h | Backlog |
-| UX-M-02.C | Migração cluster Análise+Metas+Inbox+Sistema | M-02, M-03 | 3h | Backlog |
-| UX-M-02.D | Migração cluster Bem-estar | M-02, M-03 | 6h | Backlog |
+| UX-M-01 | Tokens CSS centralizados (copy `novo-mockup/_shared/tokens.css`) | — | 3-5h | **CONCLUÍDA** (commit `bbedf2c`, 30min real) |
+| UX-M-04 | Shell consolidado em CSS estático (211→80 linhas) | M-01 | 5-7h | **CONCLUÍDA** (commit `2947f2b`, 16min real, 211→72L) |
+| UX-M-TESTES-REGRESSIVOS | Atualizar 4 testes pré-Onda M | — | 1-2h | **CONCLUÍDA** (commit `da8f639`, 30min real) |
+| UX-M-02 | Componentes universais HTML (consolidar em `ui.py`) | M-01 | 8-10h | **CONCLUÍDA** (commit `3ef1d66`, 25min real) |
+| UX-M-03 | CSS canônico do mockup (copy `novo-mockup/_shared/components.css`) | M-01, M-02 | 4-6h | **CONCLUÍDA** (commit `2544160`, 25min real, -632L) |
+| UX-M-02.A | Migração cluster Documentos | M-02, M-03 | 4h | Backlog (próxima sessão) |
+| UX-M-02.B | Migração cluster Finanças | M-02, M-03 | 3h | Backlog (próxima sessão) |
+| UX-M-02.C | Migração cluster Análise+Metas+Inbox+Sistema | M-02, M-03 | 3h | Backlog (próxima sessão) |
+| UX-M-02.D | Migração cluster Bem-estar | M-02, M-03 | 6h | Backlog (próxima sessão) |
 
-**Total**: 36-44h. Meta: zero `_CSS_LOCAL_*`, ≤10 `setProperty`, fonte canônica em `novo-mockup/_shared/`.
+**Métricas Onda M central (consolidadas):** tema_css.py -688L (-41%); tema.py -269L (-37%); shell.py -139L; setProperty JS 56→2 (-96%). 5 arquivos CSS canônicos em `src/dashboard/css/`. Pytest 2555 passed.
+
+**Total restante (sub-sprints A..D):** ~16h paralelos, recomendado executar em nova sessão Claude Code com prompt canônico (contexto fresco).
 
 ## Mapeamento das sprints antigas (17 em backlog pré-plan)
 

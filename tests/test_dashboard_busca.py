@@ -267,7 +267,15 @@ class TestRenderizacaoStreamlit:
         assert "nenhum" in textos_markdown
 
     def test_pagina_renderiza_com_termo_que_casa(self, grafo_busca):
-        """Termo que casa: fornecedor aparece em markdown, sem crash."""
+        """Termo que casa: fornecedor aparece em markdown, sem crash.
+
+        Sprint UX-M-TESTES (2026-05-06): commit 2817706 removeu
+        ``hero_titulo_html("Busca Global")`` legado da busca.py em favor
+        do ``_page_header_html()`` canônico (UX-RD-09) que emite
+        ``<h1 class="page-title">BUSCA GLOBAL</h1>`` em UPPERCASE. Teste
+        atualizado para casar UPPERCASE OU Title Case (busca case-insensitive
+        garante que o header da página continua sendo renderizado).
+        """
         from streamlit.testing.v1 import AppTest
 
         script = _script_teste_busca(grafo_busca, termo_inicial="neoenergia")
@@ -275,8 +283,8 @@ class TestRenderizacaoStreamlit:
         at.run()
         assert not at.exception
         markdowns = " ".join(m.value for m in at.markdown)
-        # hero com "Busca Global" sempre presente
-        assert "Busca Global" in markdowns
+        # Header da página presente (UPPERCASE pós-UX-RD-09 OU legado).
+        assert "Busca Global" in markdowns or "BUSCA GLOBAL" in markdowns
         # fornecedor renderizado
         assert "NEOENERGIA" in markdowns
 

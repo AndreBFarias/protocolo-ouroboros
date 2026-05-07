@@ -43,6 +43,12 @@ import streamlit as st
 from src.dashboard import dados as _dados
 from src.dashboard.componentes.html_utils import minificar
 from src.dashboard.componentes.humanizar_tipos import humanizar
+from src.dashboard.componentes.ui import (
+    callout_html,
+    card_html,
+    carregar_css_pagina,
+    subtitulo_secao_html,
+)
 from src.dashboard.dados import (
     carregar_documentos_grafo,
     contar_propostas_linking,
@@ -54,10 +60,7 @@ from src.dashboard.tema import (
     FONTE_LABEL,
     FONTE_SUBTITULO,
     SPACING,
-    callout_html,
-    card_html,
     rgba_cor_inline,
-    subtitulo_secao_html,
 )
 
 COLUNAS_TABELA: list[str] = ["Data", "Fornecedor", "Total", "Status"]
@@ -88,37 +91,8 @@ CORES_STATUS: dict[str, str] = {
 # CSS local da página -- redesign UX-RD-09 (toolbar + tabela densa)
 # ---------------------------------------------------------------------------
 
-_CSS_LOCAL_CATALOGACAO: str = minificar(
-    """
-    <style>
-    .ouroboros-cat-toolbar {
-        display: flex; align-items: center; gap: 8px;
-        padding: 8px 12px;
-        margin-bottom: 12px;
-        background: var(--bg-surface, var(--color-card-fundo));
-        border: 1px solid var(--border-subtle, var(--color-texto-sec));
-        border-radius: 8px;
-    }
-    .ouroboros-cat-toolbar .icon {
-        color: var(--accent-purple, var(--color-destaque));
-        font-family: var(--ff-mono, monospace);
-        font-size: 14px;
-    }
-    .ouroboros-cat-toolbar .ct {
-        font-family: var(--ff-mono, monospace);
-        font-size: 11px;
-        color: var(--text-muted, var(--color-texto-sec));
-        margin-left: auto;
-    }
-    .ouroboros-cat-toolbar .label {
-        font-family: var(--ff-mono, monospace);
-        font-size: 12px;
-        color: var(--text-secondary, var(--color-texto-sec));
-        flex: 1;
-    }
-    </style>
-    """
-)
+# CSS dedicado da página: src/dashboard/css/paginas/catalogacao.css
+# (UX-M-02.A-RESIDUAL extraiu de _CSS_LOCAL_CATALOGACAO inline.)
 
 
 def renderizar(
@@ -137,7 +111,7 @@ def renderizar(
 
     _ = dados, periodo, pessoa, ctx
 
-    st.markdown(_CSS_LOCAL_CATALOGACAO, unsafe_allow_html=True)
+    st.markdown(minificar(carregar_css_pagina("catalogacao")), unsafe_allow_html=True)
 
     # Page-header canônico UX-RD-09 (substitui hero_titulo_html legado
     # — duplicação visual eliminada 2026-05-06).
@@ -397,10 +371,10 @@ def _tabela_densa_html(docs: pd.DataFrame) -> str:
         # vinculada? Quando vinculado => marca verde (entidade unicode
         # CHECK MARK escapada via &#x2713;); senão traço.
         check = (
-            "<span style='color:var(--accent-green,var(--color-positivo));'>"
+            "<span style='color:var(--accent-green);'>"
             "&#x2713;</span>"
             if status == "Vinculado"
-            else "<span style='color:var(--text-muted,var(--color-texto-sec));'>—</span>"
+            else "<span style='color:var(--text-muted);'>—</span>"
         )
         total_v = float(row.get("total", 0.0) or 0.0)
         total_str = formatar_moeda(total_v) if total_v else "--"
@@ -438,8 +412,8 @@ def _tabela_densa_html(docs: pd.DataFrame) -> str:
     )
     return minificar(
         f"""
-        <div style="background: var(--bg-surface, var(--color-card-fundo));
-                    border: 1px solid var(--border-subtle, var(--color-texto-sec));
+        <div style="background: var(--bg-surface);
+                    border: 1px solid var(--border-subtle);
                     border-radius: 10px;
                     overflow: hidden;
                     margin-bottom: 12px;">

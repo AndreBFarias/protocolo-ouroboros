@@ -42,13 +42,9 @@ TEMPLATE_DRACULA: Final[dict[str, dict[str, Any]]] = {
         "paper_bgcolor": COR_BG_BASE,
         "plot_bgcolor": COR_BG_SURFACE,
         "font": {"family": "Inter, sans-serif", "color": COR_TEXT_PRIMARY, "size": 13},
-        "title": {
-            "font": {
-                "family": "JetBrains Mono",
-                "size": 14,
-                "color": COR_TEXT_PRIMARY,
-            },
-        },
+        # title removido do template (UX-M-02 fix): definir apenas title.font
+        # sem title.text fazia o Plotly renderizar "undefined" no canto sup.
+        # esquerdo. Gráficos que precisam de título setam title=... explícito.
         "colorway": PALETA_DRACULA,
         "xaxis": {
             "gridcolor": COR_BORDER_SUBTLE,

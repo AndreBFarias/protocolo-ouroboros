@@ -1,9 +1,11 @@
 ---
 id: UX-M-02.C
 titulo: Migração clusters Análise + Metas + Inbox + Sistema para ui.py
-status: backlog
+status: concluída
 prioridade: alta
 data_criacao: 2026-05-06
+concluida_em: 2026-05-06
+commit: 6d36249
 fase: MODULARIZAÇÃO
 depende_de: [UX-M-02, UX-M-03]
 co_executavel_com: [UX-M-02.A, UX-M-02.B, UX-M-02.D]

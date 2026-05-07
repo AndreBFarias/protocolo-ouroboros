@@ -1,0 +1,47 @@
+/* CSS dedicado da página Bem-estar / Humor (UX-M-02.D residual).
+   Origem: bloco inline em src/dashboard/paginas/be_humor.py.
+   Estruturas únicas: visualização detalhada por pessoa A/B no expander
+   do dia selecionado. Cores canonizadas para tokens. */
+
+.detalhe-pessoa-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--bg-elevated);
+    border-left: 3px solid var(--accent-purple);
+    border-radius: 6px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+}
+.detalhe-pessoa-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 6px;
+}
+.detalhe-pessoa-nome {
+    font-family: monospace;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-secondary);
+}
+.detalhe-pessoa-dia {
+    font-family: monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+}
+.detalhe-pessoa-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+}
+.detalhe-pessoa-grid .l {
+    font-size: 10px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.detalhe-pessoa-grid .v {
+    font-family: monospace;
+    font-size: 16px;
+    color: var(--text-primary);
+}

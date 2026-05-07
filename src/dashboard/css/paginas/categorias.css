@@ -1,0 +1,156 @@
+/* CSS dedicado da página Categorias (UX-M-02.C residual).
+   Origem: bloco _CSS_PAGINA inline em src/dashboard/paginas/categorias.py.
+   Estruturas únicas: árvore expansível <details> por família, treemap
+   cards, linhas de regras YAML. Sem equivalente em components.css. */
+
+.ux-rd-12-grid {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: var(--sp-3, 12px);
+}
+.ux-rd-12-card {
+    background: var(--bg-surface, #1a1d28);
+    border: 1px solid var(--border-subtle, #313445);
+    border-radius: var(--r-md, 6px);
+    margin-bottom: var(--sp-3, 12px);
+}
+.ux-rd-12-card .head {
+    padding: var(--sp-3, 12px) var(--sp-4, 16px);
+    border-bottom: 1px solid var(--border-subtle, #313445);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.ux-rd-12-card .head h3 {
+    font-family: var(--ff-mono, monospace);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-secondary, #a8a9b8);
+    margin: 0;
+}
+.ux-rd-12-tree {
+    padding: var(--sp-3, 12px);
+}
+.ux-rd-12-cat-row {
+    display: grid;
+    grid-template-columns: 1fr 80px 100px;
+    gap: var(--sp-3, 12px);
+    align-items: center;
+    padding: 8px var(--sp-3, 12px);
+    border-radius: var(--r-sm, 4px);
+}
+.ux-rd-12-cat-row.l1 {
+    font-weight: 500;
+}
+.ux-rd-12-cat-row.l2 {
+    padding-left: var(--sp-5, 20px);
+    font-size: 12px;
+}
+.ux-rd-12-cat-row.l2 .name {
+    color: var(--text-secondary, #a8a9b8);
+}
+.ux-rd-12-cat-row .name {
+    font-family: var(--ff-mono, monospace);
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.ux-rd-12-cat-row .name .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    flex-shrink: 0;
+}
+.ux-rd-12-cat-row .pct {
+    font-family: var(--ff-mono, monospace);
+    font-size: 11px;
+    color: var(--text-muted, #6c6f7d);
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+.ux-rd-12-cat-row .v {
+    font-family: var(--ff-mono, monospace);
+    font-size: 13px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+.ux-rd-12-cat-row .bar {
+    grid-column: 1/-1;
+    height: 3px;
+    background: var(--bg-inset, #0a0b10);
+    border-radius: var(--r-full, 999px);
+    overflow: hidden;
+    margin-top: 4px;
+}
+.ux-rd-12-cat-row .bar > span {
+    display: block;
+    height: 100%;
+}
+details.ux-rd-12-fam {
+    border: none;
+    margin-bottom: 4px;
+}
+details.ux-rd-12-fam > summary {
+    list-style: none;
+    cursor: pointer;
+}
+details.ux-rd-12-fam > summary::-webkit-details-marker {
+    display: none;
+}
+.ux-rd-12-fam .arrow {
+    display: inline-block;
+    width: 12px;
+    color: var(--text-muted, #6c6f7d);
+    transition: transform 0.15s;
+}
+details[open].ux-rd-12-fam .arrow {
+    transform: rotate(90deg);
+}
+.ux-rd-12-rules {
+    padding: var(--sp-4, 16px);
+}
+.ux-rd-12-rules h3 {
+    font-family: var(--ff-mono, monospace);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-secondary, #a8a9b8);
+    margin: 0 0 var(--sp-3, 12px);
+}
+.ux-rd-12-rule {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: var(--sp-2, 8px);
+    padding: var(--sp-2, 8px) 0;
+    border-bottom: 1px dashed var(--border-subtle, #313445);
+    font-size: 12px;
+}
+.ux-rd-12-rule:last-child {
+    border-bottom: none;
+}
+.ux-rd-12-rule .regex {
+    font-family: var(--ff-mono, monospace);
+    color: var(--accent-purple, #bd93f9);
+    font-size: 11px;
+    word-break: break-all;
+}
+.ux-rd-12-rule .desc {
+    font-family: var(--ff-mono, monospace);
+    color: var(--text-secondary, #a8a9b8);
+    margin-top: 2px;
+}
+.ux-rd-12-rule .ct {
+    font-family: var(--ff-mono, monospace);
+    font-size: 11px;
+    color: var(--text-muted, #6c6f7d);
+    white-space: nowrap;
+}
+.ux-rd-12-empty {
+    font-family: var(--ff-mono, monospace);
+    color: var(--text-muted, #6c6f7d);
+    font-size: 12px;
+    padding: var(--sp-3, 12px);
+    text-align: center;
+}

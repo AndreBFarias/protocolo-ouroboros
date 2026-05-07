@@ -639,14 +639,27 @@ class TestSprintUX115FaixasVaziasAlinhamento:
         assert "#444659" not in css
 
     def test_st_main_background_associado_ao_seletor(self):
-        # Verifica que a regra `background-color: var(--color-card-fundo)`
-        # aparece logo depois do seletor stMain (a janela de 400 chars
-        # cobre o bloco de declaracoes da regra).
+        # Verifica que a regra de background do stMain está presente.
+        #
+        # Sprint UX-M-TESTES (2026-05-06): teste atualizado para refletir
+        # arquitetura de profundidade Dracula canônica do mockup. UX-M-04
+        # (commit 2947f2b) escopou stMain para `--bg-base` (#0e0f15, fundo
+        # base) via shell.css. Antes de UX-M-04, regra UX-115 usava
+        # `var(--color-card-fundo)` (token legado para bg-surface #1a1d28).
+        # Aceitar qualquer um dos 3 tokens canônicos que representam o
+        # fundo do main:
+        #   - `#0e0f15` (UX-M-04 escopado)
+        #   - `var(--bg-base)` (token canônico mockup)
+        #   - `var(--color-card-fundo)` (token UX-115 legado)
         css = tema.css_global()
         idx_seletor = css.find('[data-testid="stMain"] {')
         assert idx_seletor >= 0, "seletor stMain ausente do css_global()"
         bloco = css[idx_seletor : idx_seletor + 400]
-        assert "background-color: var(--color-card-fundo)" in bloco
+        assert (
+            "background-color: var(--color-card-fundo)" in bloco
+            or "background-color: var(--bg-base)" in bloco
+            or "background-color: #0e0f15" in bloco
+        ), f"stMain sem background-color reconhecido. Bloco: {bloco[:200]}"
 
     def test_label_icon_alinhado_a_esquerda(self):
         # Sprint UX-115: contrato explícito de alinhamento à esquerda no
@@ -663,19 +676,38 @@ class TestSprintUX115FaixasVaziasAlinhamento:
         assert "justify-content: flex-start" in bloco
 
     def test_st_main_e_stapp_compartilham_token_card_fundo(self):
-        # Sprint UX-119 AC14: stMain (UX-115) e stApp (UX-118) ambos usam
-        # var(--color-card-fundo). Antes de UX-119, stMain era literal
-        # `#444659` e stApp era `var(--color-card-fundo)`. Agora ambos
-        # apontam para o mesmo token, eliminando a divergencia de 1 ponto
-        # no canal verde (`#444659` vs `#44475A`) detectada visualmente.
+        # Sprint UX-119 AC14 original: stMain e stApp ambos usavam
+        # `var(--color-card-fundo)` (paridade total).
+        #
+        # Sprint UX-M-TESTES (2026-05-06): hipótese AC14 SUPERADA pelo
+        # redesign mockup canônico (`novo-mockup/_shared/tokens.css`).
+        # A arquitetura Dracula canônica usa profundidade hierárquica:
+        #   - stApp (envoltório): `--color-card-fundo` (#1a1d28, bg-surface)
+        #   - stMain (área conteúdo): `--bg-base` (#0e0f15, fundo mais profundo)
+        # Isso é INTENCIONAL — não regressão. Garante contraste sutil
+        # entre wrapper externo e área de leitura. Aplicado por UX-M-04
+        # (commit 2947f2b) via shell.css.
+        #
+        # Teste atualizado: validar que AMBOS têm regra de background-color
+        # canônica (não importa se mesmo token; importa não estar quebrado).
         css = tema.css_global()
         idx_main = css.find('[data-testid="stMain"] {')
         idx_app = css.find('[data-testid="stApp"] {')
         assert idx_main >= 0 and idx_app >= 0
         bloco_main = css[idx_main : idx_main + 200]
         bloco_app = css[idx_app : idx_app + 200]
-        assert "var(--color-card-fundo)" in bloco_main
-        assert "var(--color-card-fundo)" in bloco_app
+        # stMain canônico (UX-M-04): bg-base
+        assert (
+            "background-color: var(--bg-base)" in bloco_main
+            or "background-color: #0e0f15" in bloco_main
+            or "background-color: var(--color-card-fundo)" in bloco_main
+        ), f"stMain sem background-color canônico. Bloco: {bloco_main[:150]}"
+        # stApp canônico: bg-surface (--color-card-fundo)
+        assert (
+            "background-color: var(--color-card-fundo)" in bloco_app
+            or "background-color: var(--bg-surface)" in bloco_app
+            or "background-color: #1a1d28" in bloco_app
+        ), f"stApp sem background-color canônico. Bloco: {bloco_app[:150]}"
 
 
 class TestSprintUX118PolishCombo:
@@ -854,30 +886,43 @@ class TestSprintUX119PolishV2:
         assert "border-right: 2px solid var(--color-destaque)" in css
 
     def test_ac6_sidebar_background_preservado(self):
-        # Subregra retrocompatível (padrão l): a regra antiga UX-116
-        # `[data-testid="stSidebar"] { background-color: ... }`
-        # continua presente. UX-119 adiciona uma SEGUNDA regra com
-        # border-right; não reescreve a primeira. Como UX-119 é inserida
-        # ANTES (cosmeticamente) da regra original UX-116, ambas regras
-        # com seletor `[data-testid="stSidebar"] {` coexistem; basta
-        # detectar background-color em algum bloco do CSS após algum
-        # `[data-testid="stSidebar"] {`.
+        # Subregra retrocompatível (padrão (o)): a regra de background
+        # da sidebar continua presente em ALGUMA das ocorrências de
+        # `[data-testid="stSidebar"] {` no CSS.
+        #
+        # Sprint UX-M-TESTES (2026-05-06): teste original (UX-119 AC6)
+        # exigia que a SEGUNDA ocorrência tivesse background-color, porque
+        # UX-119 adicionou regra com border-right ANTES da regra UX-116
+        # original. Mas UX-M-04 (commit 2947f2b) introduziu shell.css com
+        # 5+ ocorrências de stSidebar em ordem diferente, e a regra de
+        # background-color migrou para outra posição. Teste atualizado
+        # para validar a INVARIANTE real: ao menos uma ocorrência de
+        # stSidebar tem background-color (paridade visual preservada).
         css = tema.css_global()
-        # Conta quantas regras `[data-testid="stSidebar"] {` (com chave
-        # aberta) existem no CSS -- esperamos pelo menos 2 (UX-119 nova
-        # com border-right + UX-116 original com background).
         ocorrencias = css.count('[data-testid="stSidebar"] {')
         assert ocorrencias >= 2, (
             f'Esperado pelo menos 2 regras `[data-testid="stSidebar"] {{`'
-            f" (UX-119 + UX-116); encontrei {ocorrencias}"
+            f" (UX-119 border-right + UX-116 background); encontrei {ocorrencias}"
         )
-        # Background da regra original (UX-116) sobrevive: pega a SEGUNDA
-        # ocorrencia (rfind apos a primeira).
-        idx_primeira = css.find('[data-testid="stSidebar"] {')
-        idx_segunda = css.find('[data-testid="stSidebar"] {', idx_primeira + 1)
-        assert idx_segunda >= 0
-        bloco_segunda = css[idx_segunda : idx_segunda + 200]
-        assert "background-color:" in bloco_segunda
+        # Iterar TODAS as ocorrências e exigir background-color em pelo
+        # menos uma delas. Reflete que o seletor stSidebar tem múltiplas
+        # regras (estrutura/borda/background) — basta que background
+        # exista em alguma.
+        idx = 0
+        achou_background = False
+        while True:
+            idx = css.find('[data-testid="stSidebar"] {', idx)
+            if idx < 0:
+                break
+            bloco = css[idx : idx + 200]
+            if "background-color:" in bloco:
+                achou_background = True
+                break
+            idx += 1
+        assert achou_background, (
+            "Nenhuma das ocorrências de stSidebar tem background-color "
+            "— sidebar pode ter perdido cor canônica."
+        )
 
     # AC7 -- padding-top header (h1 com margin-bottom)
     def test_ac7_h1_em_main_block_container_tem_margin_bottom(self):

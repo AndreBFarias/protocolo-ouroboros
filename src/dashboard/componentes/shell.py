@@ -392,16 +392,34 @@ def instalar_atalhos_globais() -> None:
 
 
 def instalar_fix_sidebar_padding() -> None:
-    """SIDEBAR-CANON-FIX-3: força padding/margin/overflow zero via JS inline.
+    """JS runtime mínimo do shell. Sprint UX-M-04 (Onda M).
 
-    Streamlit injeta CSS-in-JS com classes ``st-emotion-cache-*`` no
-    ``<head>`` em runtime, vencendo qualquer ``<style>`` do projeto.
-    Único caminho confiável é aplicar ``style.setProperty(..., 'important')``
-    diretamente no DOM via ``window.parent`` (o iframe de
-    ``components.html`` precisa atravessar para o documento principal).
+    A maioria absoluta das regras de layout (padding/margin/overflow/
+    transform de sidebar, topbar, mainBlockContainer, stVerticalBlock,
+    stColumn, stHorizontalBlock, stElementContainer, stMain) foi
+    migrada para CSS estático escopado em ``src/dashboard/css/shell.css``
+    (carregado via ``tema_css.py::css_global()``).
 
-    Roda toda vez que ``main()`` reexecuta — idempotente porque sempre
-    aplica os mesmos valores.
+    Aqui ficam APENAS as duas regras que CSS comprovadamente NÃO alcança:
+
+    1. ``target="_self"`` em ``<a>`` — Streamlit força ``target="_blank"``
+       em links emitidos via ``unsafe_allow_html=True`` (abre em nova
+       aba). CSS não muda atributos HTML; precisa de JS para sobrescrever.
+
+    2. ``display:none`` em filhos do stVerticalBlock com altura zero —
+       Streamlit insere ``stElementContainer`` "invisíveis" (têm filhos
+       mas ``getBoundingClientRect().height === 0``). CSS ``:empty`` NÃO
+       detecta isso porque os elementos têm child nodes; só runtime
+       detection via ``getBoundingClientRect`` resolve.
+
+    Roda em cada ``main()`` reexecutado — idempotente porque sempre
+    aplica os mesmos atributos. ``MutationObserver`` é necessário para
+    reagir aos re-renders do Streamlit.
+
+    Antes da Onda M esta função tinha 211 linhas e 56 ``setProperty``
+    aplicando regras universais que ricocheteavam em todas as 30+
+    páginas (anti-padrão (w) do VALIDATOR_BRIEF; ver commit 928628c
+    revertido em 2817706).
     """
     try:
         from streamlit.components import v1 as components
@@ -413,182 +431,25 @@ def instalar_fix_sidebar_padding() -> None:
     (function() {
       const doc = window.parent.document;
       const apply = () => {
-        const sbc = doc.querySelector('[data-testid="stSidebarContent"]');
-        if (sbc) {
-          sbc.style.setProperty('padding', '0', 'important');
-          sbc.style.setProperty('margin', '0', 'important');
-          sbc.style.setProperty('overflow-y', 'visible', 'important');
-          sbc.style.setProperty('overflow-x', 'hidden', 'important');
-          sbc.style.setProperty('height', 'auto', 'important');
-          sbc.style.setProperty('max-height', 'none', 'important');
-        }
-        const sb = doc.querySelector('[data-testid="stSidebar"]');
-        if (sb) {
-          sb.style.setProperty('overflow-y', 'visible', 'important');
-          sb.style.setProperty('overflow-x', 'hidden', 'important');
-          sb.style.setProperty('height', 'auto', 'important');
-          sb.style.setProperty('max-height', 'none', 'important');
-          sb.style.setProperty('min-height', '100vh', 'important');
-        }
-        // Wrappers internos: stVerticalBlock, stElementContainer,
-        // stMarkdown, stMarkdownContainer.
-        const wrappers = doc.querySelectorAll(
-          '[data-testid="stSidebar"] [data-testid="stVerticalBlock"],' +
-          '[data-testid="stSidebar"] [data-testid="stElementContainer"],' +
-          '[data-testid="stSidebar"] [data-testid="stMarkdown"],' +
-          '[data-testid="stSidebar"] [data-testid="stMarkdownContainer"]'
-        );
-        wrappers.forEach(w => {
-          w.style.setProperty('padding', '0', 'important');
-          w.style.setProperty('margin', '0', 'important');
-          w.style.setProperty('gap', '0', 'important');
-          w.style.setProperty('overflow-x', 'hidden', 'important');
-          w.style.setProperty('overflow-y', 'visible', 'important');
-          w.style.setProperty('width', '240px', 'important');
-          w.style.setProperty('max-width', '240px', 'important');
-        });
-        // aside canônico: usa transform translateX(-10px) para compensar
-        // offset residual de origem desconhecida (Streamlit aplica gap/
-        // alinhamento em wrapper interno via emotion CSS-in-JS que
-        // empurra o conteúdo 10px para a direita mesmo com pad/margin/
-        // position 0). transform vence porque é GPU-applied no rendering.
-        const aside = doc.querySelector('aside.sidebar.ouroboros-sidebar-redesign');
-        if (aside) {
-          aside.style.setProperty('margin', '0', 'important');
-          aside.style.setProperty('padding', '12px 0', 'important');
-          aside.style.setProperty('width', '240px', 'important');
-          aside.style.setProperty('overflow-y', 'visible', 'important');
-          aside.style.setProperty('overflow-x', 'hidden', 'important');
-          aside.style.setProperty('height', 'auto', 'important');
-          aside.style.setProperty('max-height', 'none', 'important');
-          aside.style.setProperty('transform', 'translateX(-10px)', 'important');
-        }
-        // Esconde header Streamlit (botão Deploy + hambúrguer).
-        const header = doc.querySelector('[data-testid="stHeader"]');
-        if (header) header.style.setProperty('display', 'none', 'important');
-        // Botão de colapso da sidebar do Streamlit (canto superior
-        // direito) — esconder porque o mockup não tem.
-        const collapseBtn = doc.querySelector('[data-testid="stSidebarCollapseButton"]');
-        if (collapseBtn) collapseBtn.style.setProperty('display', 'none', 'important');
-        // stSidebarHeader: barrinha de 30px com botão keyboard_double_arrow_left
-        // que Streamlit insere antes do conteúdo. Esconder para o aside
-        // começar em y=0.
-        const sbHeader = doc.querySelector('[data-testid="stSidebarHeader"]');
-        if (sbHeader) sbHeader.style.setProperty('display', 'none', 'important');
-        // stLogoSpacer: placeholder de logo Streamlit (vazio) entre o
-        // stSidebarHeader e nosso HTML.
-        const sbLogo = doc.querySelector('[data-testid="stLogoSpacer"]');
-        if (sbLogo) sbLogo.style.setProperty('display', 'none', 'important');
-        // SIDEBAR-CANON-FIX: Streamlit força target="_blank" em todos
-        // os <a> de unsafe_allow_html=True (abre em nova aba). Mockup
-        // navega na mesma aba. Forçar target="_self" em sidebar +
-        // topbar-actions + cards de cluster.
+        // (1) target="_self" em links de unsafe_allow_html=True.
+        // Atributo HTML; CSS não alcança.
         doc.querySelectorAll(
           'aside.sidebar a, .topbar-actions a, ' +
           '.vg-t01-cluster-card, .vg-t01-kpi, .breadcrumb a'
         ).forEach(a => {
           if (a.tagName === 'A') a.target = '_self';
         });
-        // BODY-FIX (2026-05-06): mainBlockContainer tem padding default
-        // 32px 75px 150px do Streamlit que afasta o conteúdo do canto
-        // superior esquerdo. Mockup canônico tem topbar full-width
-        // (sem padding) + body com padding lateral 24px.
-        const mainBlock = doc.querySelector('[data-testid="stMainBlockContainer"]');
-        if (mainBlock) {
-          // padding-top 0 para topbar colar no canto superior;
-          // laterais 0 também para topbar ocupar largura total;
-          // demais elementos compensam com margin-left/right via CSS.
-          mainBlock.style.setProperty('padding', '0', 'important');
-          mainBlock.style.setProperty('max-width', 'none', 'important');
-        }
-        // TOPBAR-FULL-WIDTH: topbar ocupa toda a largura disponível
-        // (do final da sidebar até a borda direita do viewport),
-        // começando em y=0. Mockup canônico tem topbar sticky no topo.
-        const topbar = doc.querySelector('.topbar');
-        if (topbar) {
-          topbar.style.setProperty('position', 'sticky', 'important');
-          topbar.style.setProperty('top', '0', 'important');
-          topbar.style.setProperty('left', '0', 'important');
-          topbar.style.setProperty('z-index', '10', 'important');
-          topbar.style.setProperty('width', 'calc(100vw - 240px)', 'important');
-          topbar.style.setProperty('margin', '0', 'important');
-        }
-        // BODY-PADDING: aplicar padding 24px APENAS no stVerticalBlock
-        // de TOPO (filho direto do mainBlockContainer). VBs aninhados
-        // (filhos de stColumn) recebem padding 0 para evitar duplo
-        // afastamento que desalinhava clusters em x=288 vs hero=264.
-        const topVB = doc.querySelector(
-          '[data-testid="stMainBlockContainer"] > [data-testid="stVerticalBlock"]'
-        );
-        if (topVB) {
-          topVB.style.setProperty('gap', '12px', 'important');
-          topVB.style.setProperty('padding', '0 24px', 'important');
-        }
-        // VBs aninhados (dentro de stColumn) sem padding adicional.
-        doc.querySelectorAll(
-          '[data-testid="stMain"] [data-testid="stColumn"] [data-testid="stVerticalBlock"]'
-        ).forEach(b => {
-          b.style.setProperty('padding', '0', 'important');
-          b.style.setProperty('gap', '12px', 'important');
-        });
-        // Topbar é o filho 1 (após âncora skip-link); precisa
-        // ESCAPAR do padding 24px do parent + compensar 12px de gap
-        // residual do stVerticalBlock (gap entre filhos invisíveis).
-        if (topbar) {
-          topbar.style.setProperty('margin-left', '-24px', 'important');
-          topbar.style.setProperty('margin-right', '-24px', 'important');
-          topbar.style.setProperty('margin-top', '-12px', 'important');
-          topbar.style.setProperty('width', 'calc(100vw - 240px)', 'important');
-        }
-        // Esconder filhos com altura 0 (estilos injetados via st.markdown
-        // não-visíveis) para o gap do stVerticalBlock não criar espaço.
-        const __selFilhosVB =
+        // (2) Esconder filhos invisíveis (h=0) do stVerticalBlock.
+        // Detecção runtime via getBoundingClientRect; CSS :empty não
+        // serve porque os containers têm child nodes apesar de h=0.
+        const selFilhos =
           '[data-testid="stMain"] [data-testid="stVerticalBlock"] '
           + '> [data-testid="stElementContainer"]';
-        doc.querySelectorAll(__selFilhosVB).forEach(c => {
+        doc.querySelectorAll(selFilhos).forEach(c => {
           if (c.getBoundingClientRect().height === 0) {
             c.style.setProperty('display', 'none', 'important');
           }
         });
-        // ALINHAMENTO HORIZONTAL: st.columns aplica padding interno
-        // em stColumn + gap em stHorizontalBlock que cria 24px
-        // adicional. Zerar tudo para clusters/sprint alinharem com
-        // hero/KPIs em x=264 (240 sidebar + 24 padding canônico).
-        doc.querySelectorAll(
-          '[data-testid="stMain"] [data-testid="stColumn"]'
-        ).forEach(c => {
-          c.style.setProperty('padding', '0', 'important');
-        });
-        doc.querySelectorAll(
-          '[data-testid="stMain"] [data-testid="stHorizontalBlock"]'
-        ).forEach(b => {
-          b.style.setProperty('gap', '24px', 'important');
-          b.style.setProperty('margin-left', '0', 'important');
-          b.style.setProperty('margin-right', '0', 'important');
-        });
-        // BG-CONTINUITY: stApp tem bg #1a1d28 (correto), mas main tem
-        // bg #0e0f15 (body). Para a parte do topo direito não mostrar
-        // body bg quando topbar não cobre (cantos arredondados etc),
-        // forçar stMain bg como surface bg-base que combine.
-        const stMain = doc.querySelector('[data-testid="stMain"]');
-        if (stMain) {
-          stMain.style.setProperty('background-color', '#0e0f15', 'important');
-        }
-        // VG-GAP-FIX: stElementContainer com margin-bottom 0 para
-        // eliminar gaps mortos entre Hero/KPIs/Clusters.
-        doc.querySelectorAll(
-          '[data-testid="stMain"] [data-testid="stElementContainer"]'
-        ).forEach(c => {
-          c.style.setProperty('margin-bottom', '0', 'important');
-        });
-        // Lupa centralizada no input de busca: força top: 50% +
-        // transform translateY(-50%) explícito (browser pode estar
-        // calculando matrix com offset diferente).
-        const searchIcon = doc.querySelector('.sidebar-search-icon');
-        if (searchIcon) {
-          searchIcon.style.setProperty('top', '50%', 'important');
-          searchIcon.style.setProperty('transform', 'translateY(-50%)', 'important');
-        }
       };
       apply();
       // Reaplica quando Streamlit re-renderiza wrappers.

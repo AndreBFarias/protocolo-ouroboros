@@ -1,0 +1,152 @@
+/* CSS dedicado da página Bem-estar / Eventos (UX-M-02.D residual).
+   Origem: bloco inline em src/dashboard/paginas/be_eventos.py.
+   Estruturas únicas: cards de evento (lugar/bairro/intensidade/thumbs)
+   + bairros-card sticky lateral. Cores canonizadas. */
+
+.evento-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--bg-elevated);
+    border-radius: 6px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+}
+.evento-card-head {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+}
+.evento-data {
+    font-family: monospace;
+    font-size: 13px;
+    color: var(--text-primary);
+}
+.evento-modo-pill {
+    font-family: monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 2px 8px;
+    border-radius: 12px;
+}
+.evento-cat-pill {
+    font-family: monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: var(--bg-inset);
+    color: var(--text-secondary);
+}
+.evento-autor {
+    font-family: monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-left: auto;
+}
+.evento-lugar {
+    font-size: 14px;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+}
+.evento-bairro {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-left: 4px;
+}
+.evento-intens {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+}
+.evento-intens-label {
+    font-family: monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+}
+.evento-intens .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+}
+.evento-intens .dot.on {
+    background: var(--accent-purple);
+}
+.evento-intens .dot.off {
+    background: var(--bg-elevated);
+}
+.evento-intens-num {
+    font-family: monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-left: 4px;
+}
+.evento-thumbs {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 6px;
+}
+.thumb-mini {
+    font-family: monospace;
+    font-size: 10px;
+    background: var(--bg-inset);
+    color: var(--text-secondary);
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: 1px dashed var(--bg-elevated);
+}
+.evento-com {
+    display: inline-block;
+    margin-top: 4px;
+    font-family: monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+}
+.bairros-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--bg-elevated);
+    border-radius: 6px;
+    padding: 14px;
+    position: sticky;
+    top: 20px;
+}
+.bairros-titulo {
+    font-family: monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.10em;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+}
+.bairro-linha {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 4px 0;
+    border-bottom: 1px solid var(--bg-elevated);
+}
+.bairro-linha:last-child {
+    border-bottom: none;
+}
+.bairro-nome {
+    font-size: 12px;
+    color: var(--text-primary);
+}
+.bairro-count {
+    font-family: monospace;
+    font-size: 11px;
+    color: var(--accent-purple);
+}
+.bairro-vazio {
+    font-family: monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    font-style: italic;
+}

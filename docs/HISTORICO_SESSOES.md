@@ -36,6 +36,25 @@ Sessão crítica que desencadeou a Onda M (modularização do dashboard) após O
 
 **Próximo passo:** dono valida specs Onda M endurecidas. Ao aprovar, executor inicia UX-M-01 ou UX-M-04 (paralelos).
 
+**Resultado (mesma sessão, ainda 2026-05-06):**
+6 commits, 5 sprints fechadas em ~2h30min combinados:
+- UX-M-01 foreground (`bbedf2c`, 30min): tokens.css 137L copiado do mockup; tema_css.py -95L.
+- UX-M-04 background subagent (`2947f2b`, 16min wall): shell.py 211→72L; setProperty 56→2.
+- UX-M-TESTES-REGRESSIVOS (`da8f639`, 30min): 4 testes pré-existentes corrigidos.
+- UX-M-02 background subagent (`3ef1d66`, 25min wall): ui.py 684L com 14 funções consolidadas.
+- (`a9b0709`, 5min): fix-secundário test_dashboard_busca + acentuação specs.
+- UX-M-03 background subagent (`2544160`, 25min wall): components.css canônico, tema_css.py 1619→987L (-632L, 210% da meta).
+
+Validação visual em cada gate (5 páginas-amostra, padrão (p) supervisor pessoal): zero regressão.
+
+**Padrões observados (lições da sessão):**
+- Subagents executor-sprint funcionam bem para sprints isoladas com spec endurecida — entregaram em wall clock 5-25× menor que estimativa humana.
+- "Edit-pronto" inline (acentuação `concluida`→`concluída`) é mais rápido que sprint-filha.
+- Hipótese 80% do M-04 venceu com folga (96% migrado para CSS).
+- Testes pré-existentes precisam de validação cruzada via `git clone limpo + checkout commit base` para não atribuir regressão errada.
+
+**Próximo passo (4 sub-sprints UX-M-02.A..D):** migração de páginas em paralelo. Recomendado executar em nova sessão Claude Code com prompt canônico (contexto fresco).
+
 ---
 
 ## 2026-04-28/29 — Onda 0 + Onda 1 fechadas + Onda 2 LLM iniciada (Opus autônomo)

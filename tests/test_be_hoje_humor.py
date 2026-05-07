@@ -248,7 +248,12 @@ def test_be_hoje_renderiza_sem_crash_quando_vault_ausente(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
-    """``be_hoje.renderizar`` mostra warning sem estourar quando vault=None."""
+    """``be_hoje.renderizar`` mostra callout warning quando vault=None.
+
+    Sprint UX-M-02.D substituiu ``st.warning`` por ``callout_html("warning",
+    ...)`` para consistência visual no tema Dracula. Invariante semântica
+    preservada: usuário continua vendo aviso quando o vault não existe.
+    """
     from src.dashboard.paginas import be_hoje
 
     chamadas: list[tuple[str, Any]] = []
@@ -290,8 +295,17 @@ def test_be_hoje_renderiza_sem_crash_quando_vault_ausente(
 
     be_hoje.renderizar({}, "mes_atual", "pessoa_a", None)
 
-    tipos = [c[0] for c in chamadas]
-    assert "warning" in tipos, f"esperava warning quando vault=None, obtive {tipos}"
+    # Callout warning canônico emite via st.markdown com HTML contendo o
+    # tipo + mensagem do vault. Procuramos a string de aviso emitida.
+    htmls = [str(c[1]) for c in chamadas if c[0] == "markdown"]
+    achou_aviso_vault = any(
+        ("vault" in h.lower() or "OUROBOROS_VAULT" in h)
+        for h in htmls
+    )
+    assert achou_aviso_vault, (
+        f"esperava callout com aviso de vault quando vault=None, "
+        f"obtive {len(chamadas)} chamadas markdown sem aviso"
+    )
 
 
 # ============================================================================

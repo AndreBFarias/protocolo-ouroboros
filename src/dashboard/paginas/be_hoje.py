@@ -39,6 +39,8 @@ import pandas as pd
 import streamlit as st
 
 from src.dashboard.componentes.html_utils import minificar
+from src.dashboard.componentes.page_header import renderizar_page_header
+from src.dashboard.componentes.ui import callout_html, carregar_css_pagina, kpi_card
 from src.dashboard.tema import CORES
 from src.mobile_cache.escrever_humor import TAGS_CANONICAS, escrever_registro
 from src.mobile_cache.varrer_vault import descobrir_vault_root
@@ -83,7 +85,7 @@ def renderizar(
 
     del dados, periodo, ctx
 
-    st.markdown(_estilos_locais(), unsafe_allow_html=True)
+    st.markdown(minificar(carregar_css_pagina("be_hoje")), unsafe_allow_html=True)
 
     pessoa_default = pessoa if pessoa in {"pessoa_a", "pessoa_b", "casal"} else "pessoa_a"
     if pessoa_default == "casal":
@@ -92,7 +94,7 @@ def renderizar(
     hoje = date.today()
     vault_root = descobrir_vault_root()
 
-    st.markdown(_page_header_html(hoje), unsafe_allow_html=True)
+    st.markdown(_page_header_canonico(hoje), unsafe_allow_html=True)
 
     if vault_root is None:
         _renderizar_fallback_vault()
@@ -116,38 +118,36 @@ def renderizar(
 # ---------------------------------------------------------------------------
 
 
-def _page_header_html(hoje: date) -> str:
-    cor_destaque = CORES["destaque"]
+def _page_header_canonico(hoje: date) -> str:
+    """Page-header canônico via UX-M-02 (substitui markup local)."""
     data_pt = hoje.strftime("%d/%m/%Y")
-    return minificar(
-        f"""
-        <div class="page-header">
-          <div>
-            <h1 class="page-title">BEM-ESTAR · HOJE</h1>
-            <p class="page-subtitle">
-              Captura rápida de humor (&lt; 30s) e agregado dos registros
-              do dia. Persiste em <code style="color:{cor_destaque};
-              background:{CORES['fundo_inset']};padding:1px 6px;
-              border-radius:2px;">daily/{hoje.isoformat()}.md</code> com
-              autor canônico (pessoa_a / pessoa_b / casal).
-            </p>
-          </div>
-          <div class="page-meta">
-            <span class="sprint-tag">UX-RD-17</span>
-            <span class="pill pill-d7-graduado">{data_pt}</span>
-          </div>
-        </div>
-        """
+    return renderizar_page_header(
+        titulo="BEM-ESTAR · HOJE",
+        subtitulo=(
+            f"Captura rápida de humor (<30s) e agregado dos registros do dia. "
+            f"Persiste em daily/{hoje.isoformat()}.md com autor canônico "
+            f"(pessoa_a / pessoa_b / casal)."
+        ),
+        sprint_tag="UX-RD-17",
+        pills=[{"texto": data_pt, "tipo": "d7-graduado"}],
     )
 
 
 def _renderizar_fallback_vault() -> None:
-    """Aviso visível quando o vault Bem-estar não é encontrado."""
-    st.warning(
-        "Vault Bem-estar não encontrado. Configure a variável de ambiente "
-        "`OUROBOROS_VAULT` apontando para a raiz do vault Obsidian, ou crie "
-        "um dos diretórios candidatos canônicos. Sem o vault, a captura de "
-        "humor e os mini-cards do dia ficam indisponíveis."
+    """Callout visível quando o vault Bem-estar não é encontrado."""
+    st.markdown(
+        callout_html(
+            "warning",
+            (
+                "Vault Bem-estar não encontrado. Configure a variável de "
+                "ambiente OUROBOROS_VAULT apontando para a raiz do vault "
+                "Obsidian, ou crie um dos diretórios candidatos canônicos. "
+                "Sem o vault, a captura de humor e os mini-cards do dia "
+                "ficam indisponíveis."
+            ),
+            titulo="Vault indisponível",
+        ),
+        unsafe_allow_html=True,
     )
 
 
@@ -163,6 +163,26 @@ def _cores_sliders() -> dict[str, str]:
         "ansiedade": CORES["alerta"],    # orange
         "foco": CORES["neutro"],         # cyan
     }
+
+
+def _slider_humor(rotulo: str, cor: str, key: str) -> int:
+    """Renderiza um slider 1..5 com label colorido em monospace.
+
+    Helper interno: substitui 4 blocos repetidos de ~12 linhas cada por
+    chamada única. Reduz acoplamento e centraliza estilo do label.
+    """
+    st.markdown(
+        f'<span class="slider-cor-tag" style="color:{cor};">{rotulo}</span>',
+        unsafe_allow_html=True,
+    )
+    return st.slider(
+        rotulo,
+        min_value=1,
+        max_value=5,
+        value=int(st.session_state.get(key, 3)),
+        key=key,
+        label_visibility="collapsed",
+    )
 
 
 def _renderizar_hero_humor(
@@ -191,59 +211,11 @@ def _renderizar_hero_humor(
     with st.form(key="be_hoje_form_humor", clear_on_submit=False):
         col_h, col_e = st.columns(2)
         with col_h:
-            st.markdown(
-                f'<span class="slider-cor-tag" style="color:{cores["humor"]};">'
-                f"humor</span>",
-                unsafe_allow_html=True,
-            )
-            humor = st.slider(
-                "humor",
-                min_value=1,
-                max_value=5,
-                value=int(st.session_state.get(_KEY_HUMOR, 3)),
-                key=_KEY_HUMOR,
-                label_visibility="collapsed",
-            )
-            st.markdown(
-                f'<span class="slider-cor-tag" style="color:{cores["energia"]};">'
-                f"energia</span>",
-                unsafe_allow_html=True,
-            )
-            energia = st.slider(
-                "energia",
-                min_value=1,
-                max_value=5,
-                value=int(st.session_state.get(_KEY_ENERGIA, 3)),
-                key=_KEY_ENERGIA,
-                label_visibility="collapsed",
-            )
+            humor = _slider_humor("humor", cores["humor"], _KEY_HUMOR)
+            energia = _slider_humor("energia", cores["energia"], _KEY_ENERGIA)
         with col_e:
-            st.markdown(
-                f'<span class="slider-cor-tag" style="color:{cores["ansiedade"]};">'
-                f"ansiedade</span>",
-                unsafe_allow_html=True,
-            )
-            ansiedade = st.slider(
-                "ansiedade",
-                min_value=1,
-                max_value=5,
-                value=int(st.session_state.get(_KEY_ANSIEDADE, 3)),
-                key=_KEY_ANSIEDADE,
-                label_visibility="collapsed",
-            )
-            st.markdown(
-                f'<span class="slider-cor-tag" style="color:{cores["foco"]};">'
-                f"foco</span>",
-                unsafe_allow_html=True,
-            )
-            foco = st.slider(
-                "foco",
-                min_value=1,
-                max_value=5,
-                value=int(st.session_state.get(_KEY_FOCO, 3)),
-                key=_KEY_FOCO,
-                label_visibility="collapsed",
-            )
+            ansiedade = _slider_humor("ansiedade", cores["ansiedade"], _KEY_ANSIEDADE)
+            foco = _slider_humor("foco", cores["foco"], _KEY_FOCO)
 
         col_med, col_sono = st.columns(2)
         with col_med:
@@ -363,76 +335,52 @@ def _filtrar_por_dia(
 
 
 def _renderizar_mini_cards(vault_root: Path, hoje: date) -> None:
+    """Renderiza 3 KPIs canônicos (kpi_card) + listas dos itens do dia.
+
+    Estrutura de configuração compacta: cada entrada define o cache, chave
+    interna, accent visual, descrição e texto vazio. Loop único substitui
+    3 blocos repetidos manualmente.
+    """
     diarios = _carregar_cache(vault_root, "diario-emocional") or {}
     eventos = _carregar_cache(vault_root, "eventos") or {}
     medidas = _carregar_cache(vault_root, "medidas") or {}
 
-    diarios_dia = _filtrar_por_dia(diarios.get("registros", []) or [], hoje)
-    eventos_dia = _filtrar_por_dia(
-        eventos.get("eventos", []) or [],
-        hoje,
-        chave_data="inicio",
-    )
-    medidas_dia = _filtrar_por_dia(medidas.get("medidas", []) or [], hoje)
-
-    st.markdown(
-        _mini_card_html(
+    cards: list[tuple[str, list[dict[str, Any]], str, str, str, str]] = [
+        (
             "Diários do dia",
-            len(diarios_dia),
-            CORES["superfluo"],
-            descricao="registros emocionais",
+            _filtrar_por_dia(diarios.get("registros", []) or [], hoje),
+            "registros emocionais",
+            "pink",
+            "titulo",
+            "Sem diário hoje",
         ),
-        unsafe_allow_html=True,
-    )
-    if diarios_dia:
-        st.markdown(_lista_mini_html(diarios_dia, "titulo"), unsafe_allow_html=True)
-    else:
-        st.markdown(_vazio_html("Sem diário hoje"), unsafe_allow_html=True)
-
-    st.markdown(
-        _mini_card_html(
+        (
             "Eventos do dia",
-            len(eventos_dia),
-            CORES["neutro"],
-            descricao="agenda + alarmes",
+            _filtrar_por_dia(eventos.get("eventos", []) or [], hoje, chave_data="inicio"),
+            "agenda + alarmes",
+            "cyan",
+            "titulo",
+            "Sem eventos hoje",
         ),
-        unsafe_allow_html=True,
-    )
-    if eventos_dia:
+        (
+            "Medidas do dia",
+            _filtrar_por_dia(medidas.get("medidas", []) or [], hoje),
+            "peso · pressão · glicose",
+            "green",
+            "tipo",
+            "Sem medidas hoje",
+        ),
+    ]
+
+    for titulo, items, sub, accent, chave, vazio in cards:
         st.markdown(
-            _lista_mini_html(eventos_dia, "titulo"),
+            kpi_card(titulo, str(len(items)), sub_label=sub, accent=accent),
             unsafe_allow_html=True,
         )
-    else:
-        st.markdown(_vazio_html("Sem eventos hoje"), unsafe_allow_html=True)
-
-    st.markdown(
-        _mini_card_html(
-            "Medidas do dia",
-            len(medidas_dia),
-            CORES["positivo"],
-            descricao="peso · pressão · glicose",
-        ),
-        unsafe_allow_html=True,
-    )
-    if medidas_dia:
-        st.markdown(_lista_mini_html(medidas_dia, "tipo"), unsafe_allow_html=True)
-    else:
-        st.markdown(_vazio_html("Sem medidas hoje"), unsafe_allow_html=True)
-
-
-def _mini_card_html(titulo: str, qtd: int, cor: str, *, descricao: str) -> str:
-    return minificar(
-        f"""
-        <div class="mini-card" style="border-left:3px solid {cor};">
-          <div class="mini-card-head">
-            <span class="mini-card-titulo">{titulo}</span>
-            <span class="mini-card-qtd" style="color:{cor};">{qtd}</span>
-          </div>
-          <div class="mini-card-desc">{descricao}</div>
-        </div>
-        """
-    )
+        if items:
+            st.markdown(_lista_mini_html(items, chave), unsafe_allow_html=True)
+        else:
+            st.markdown(_vazio_html(vazio), unsafe_allow_html=True)
 
 
 def _lista_mini_html(items: list[dict[str, Any]], chave_titulo: str) -> str:
@@ -456,94 +404,5 @@ def _vazio_html(texto: str) -> str:
 # ---------------------------------------------------------------------------
 
 
-def _estilos_locais() -> str:
-    return minificar(
-        f"""
-        <style>
-          .hero-humor-marker {{
-            background: {CORES['card_fundo']};
-            border: 1px solid {CORES['card_elevado']};
-            border-radius: 8px;
-            padding: 16px 20px;
-            margin-bottom: 12px;
-          }}
-          .hero-humor-marker .hero-head {{
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 8px;
-          }}
-          .hero-humor-marker .hero-titulo {{
-            font-family: monospace;
-            font-size: 13px;
-            letter-spacing: 0.10em;
-            text-transform: uppercase;
-            color: {CORES['texto_muted']};
-            margin: 0;
-          }}
-          .hero-humor-marker .hero-data {{
-            font-family: monospace;
-            font-size: 12px;
-            color: {CORES['texto_sec']};
-          }}
-          .hero-humor-marker .hero-legend {{
-            font-size: 11px;
-            color: {CORES['texto_muted']};
-            font-family: monospace;
-          }}
-          .slider-cor-tag {{
-            font-family: monospace;
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-          }}
-          .mini-card {{
-            background: {CORES['card_fundo']};
-            border-radius: 6px;
-            padding: 10px 14px;
-            margin-bottom: 6px;
-          }}
-          .mini-card .mini-card-head {{
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline;
-          }}
-          .mini-card .mini-card-titulo {{
-            font-family: monospace;
-            font-size: 11px;
-            letter-spacing: 0.10em;
-            text-transform: uppercase;
-            color: {CORES['texto_muted']};
-          }}
-          .mini-card .mini-card-qtd {{
-            font-family: monospace;
-            font-size: 22px;
-            font-weight: 500;
-          }}
-          .mini-card .mini-card-desc {{
-            font-size: 11px;
-            color: {CORES['texto_sec']};
-          }}
-          .mini-lista {{
-            list-style: none;
-            padding: 0;
-            margin: 4px 0 12px 0;
-          }}
-          .mini-lista .mini-item {{
-            font-size: 12px;
-            color: {CORES['texto']};
-            padding: 4px 8px;
-            border-left: 2px solid {CORES['card_elevado']};
-            margin-bottom: 4px;
-          }}
-          .mini-vazio {{
-            font-size: 11px;
-            font-style: italic;
-            margin: 4px 0 12px 4px;
-          }}
-        </style>
-        """
-    )
-
-
+# CSS dedicado: src/dashboard/css/paginas/be_hoje.css (UX-M-02.D residual).
 # "O dia bem registrado é o dia bem vivido." -- princípio do diarismo

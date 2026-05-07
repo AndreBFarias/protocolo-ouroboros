@@ -43,6 +43,7 @@ import pandas as pd
 import streamlit as st
 
 from src.dashboard.componentes.html_utils import minificar
+from src.dashboard.componentes.ui import carregar_css_pagina
 from src.dashboard.tema import CORES
 from src.intake.inbox_reader import (
     contar_estados,
@@ -84,7 +85,7 @@ def renderizar(
 
     del dados, periodo, pessoa, ctx
 
-    st.markdown(_estilos_locais(), unsafe_allow_html=True)
+    st.markdown(minificar(carregar_css_pagina("inbox")), unsafe_allow_html=True)
 
     itens = listar_inbox()
     contagens = contar_estados(itens)
@@ -266,26 +267,26 @@ def _barra_status_html(contagens: dict[str, int], total: int) -> str:
 
     return minificar(
         f"""
-        <div class="inbox-barra-status">
-          <div class="inbox-status-tile aguardando">
-            <div class="v" style="color:{cor_aguardando};">{aguardando}</div>
-            <div class="l">Aguardando</div>
+        <div class="kpi-grid" style="margin-bottom:16px;">
+          <div class="kpi">
+            <div class="kpi-label">Aguardando</div>
+            <div class="kpi-value" style="color:{cor_aguardando};">{aguardando}</div>
           </div>
-          <div class="inbox-status-tile extraido">
-            <div class="v" style="color:{cor_extraido};">{extraido}</div>
-            <div class="l">Extraído</div>
+          <div class="kpi">
+            <div class="kpi-label">Extraído</div>
+            <div class="kpi-value" style="color:{cor_extraido};">{extraido}</div>
           </div>
-          <div class="inbox-status-tile falhou">
-            <div class="v" style="color:{cor_falhou};">{falhou}</div>
-            <div class="l">Falhou</div>
+          <div class="kpi">
+            <div class="kpi-label">Falhou</div>
+            <div class="kpi-value" style="color:{cor_falhou};">{falhou}</div>
           </div>
-          <div class="inbox-status-tile duplicado">
-            <div class="v" style="color:{cor_duplicado};">{duplicado}</div>
-            <div class="l">Pulado (duplicado)</div>
+          <div class="kpi">
+            <div class="kpi-label">Pulado (duplicado)</div>
+            <div class="kpi-value" style="color:{cor_duplicado};">{duplicado}</div>
           </div>
-          <div class="inbox-status-tile total">
-            <div class="v" style="color:{cor_total};">{total}</div>
-            <div class="l">Total na fila</div>
+          <div class="kpi">
+            <div class="kpi-label">Total na fila</div>
+            <div class="kpi-value" style="color:{cor_total};">{total}</div>
           </div>
         </div>
         """
@@ -535,252 +536,5 @@ def _skill_instr_html() -> str:
 # ---------------------------------------------------------------------------
 
 
-def _estilos_locais() -> str:
-    fundo = CORES["card_fundo"]
-    inset = CORES["fundo_inset"]
-    texto = CORES["texto"]
-    texto_sec = CORES["texto_sec"]
-    texto_muted = CORES["texto_muted"]
-    border_subtle = "#2a2d3a"
-    destaque = CORES["destaque"]
-
-    return f"""
-    <style>
-      .inbox-barra-status {{
-        display: flex;
-        gap: 8px;
-        margin-bottom: 16px;
-        flex-wrap: wrap;
-      }}
-      .inbox-status-tile {{
-        flex: 1;
-        min-width: 140px;
-        background: {fundo};
-        border: 1px solid {border_subtle};
-        border-radius: 8px;
-        padding: 12px 14px;
-      }}
-      .inbox-status-tile .v {{
-        font-family: ui-monospace, 'JetBrains Mono', monospace;
-        font-size: 24px;
-        font-weight: 500;
-        font-variant-numeric: tabular-nums;
-        line-height: 1;
-      }}
-      .inbox-status-tile .l {{
-        font-size: 11px;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        color: {texto_muted};
-        margin-top: 4px;
-      }}
-      .inbox-status-tile.total {{ flex: 0 0 200px; }}
-
-      .inbox-dropzone-marker {{
-        border: 2px dashed {border_subtle};
-        border-radius: 12px;
-        padding: 24px;
-        text-align: center;
-        background: {fundo};
-        margin-bottom: 8px;
-      }}
-      .inbox-dropzone-marker:hover {{
-        border-color: {destaque};
-      }}
-      .inbox-dz-glyph {{
-        font-size: 36px;
-        color: {texto_muted};
-        margin-bottom: 8px;
-      }}
-      .inbox-dropzone-marker h3 {{
-        font-family: ui-monospace, 'JetBrains Mono', monospace;
-        font-size: 16px;
-        margin: 0 0 6px;
-        color: {texto};
-      }}
-      .inbox-dropzone-marker p {{
-        color: {texto_muted};
-        font-size: 13px;
-        margin: 0;
-      }}
-      .inbox-tipo-chips {{
-        margin-top: 10px;
-        display: flex;
-        gap: 6px;
-        justify-content: center;
-        flex-wrap: wrap;
-      }}
-      .inbox-tipo-chip {{
-        font-family: ui-monospace, 'JetBrains Mono', monospace;
-        font-size: 11px;
-        padding: 2px 8px;
-        border: 1px solid {border_subtle};
-        border-radius: 6px;
-        color: {texto_sec};
-        background: {inset};
-      }}
-
-      .inbox-fila-card {{
-        margin-top: 16px;
-        padding: 0;
-        background: {fundo};
-        border: 1px solid {border_subtle};
-        border-radius: 12px;
-      }}
-      .inbox-fila-head {{
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 14px 16px 10px;
-        border-bottom: 1px solid {border_subtle};
-      }}
-      .inbox-fila-head h2 {{
-        font-family: ui-monospace, 'JetBrains Mono', monospace;
-        font-size: 18px;
-        font-weight: 500;
-        margin: 0;
-        letter-spacing: -0.01em;
-        color: {texto};
-      }}
-      .inbox-fila-count {{
-        font-family: ui-monospace, 'JetBrains Mono', monospace;
-        font-size: 11px;
-        color: {texto_muted};
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-      }}
-      .inbox-fila-scroll {{
-        overflow: auto;
-        max-height: 420px;
-      }}
-      .inbox-fila-table {{ width: 100%; }}
-      .inbox-fila-table th {{
-        font-family: ui-monospace, 'JetBrains Mono', monospace;
-        font-size: 10px;
-        color: {texto_muted};
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        text-align: left;
-        padding: 8px 10px;
-        background: {inset};
-      }}
-      .inbox-fila-table td {{
-        padding: 8px 10px;
-        font-size: 13px;
-        color: {texto_sec};
-        border-bottom: 1px dashed {border_subtle};
-      }}
-      .inbox-fila-table .thumb-cell {{ width: 44px; }}
-      .inbox-fila-thumb {{
-        width: 32px;
-        height: 32px;
-        border: 1px solid {border_subtle};
-        border-radius: 6px;
-        display: grid;
-        place-items: center;
-        color: {texto_sec};
-        background: {inset};
-        font-family: ui-monospace, 'JetBrains Mono', monospace;
-        font-size: 9px;
-        letter-spacing: 0.04em;
-      }}
-      .inbox-filename {{
-        color: {texto};
-        font-family: ui-monospace, 'JetBrains Mono', monospace;
-        font-size: 13px;
-      }}
-      .inbox-tipo-arq {{
-        font-size: 11px;
-        color: {texto_muted};
-      }}
-      .inbox-sha8 {{ color: {texto_sec}; }}
-      .inbox-ts {{ color: {texto_muted}; }}
-
-      .row-novo {{ animation: inbox-chegou 0.8s ease-out; }}
-      @keyframes inbox-chegou {{
-        0%   {{ background: rgba(189, 147, 249, 0.20); }}
-        100% {{ background: transparent; }}
-      }}
-
-      .inbox-fila-vazia .inbox-vazia-msg {{
-        padding: 32px 20px;
-        text-align: center;
-        color: {texto_muted};
-        font-size: 13px;
-      }}
-      .inbox-fila-vazia .inbox-vazia-msg code {{
-        background: {inset};
-        padding: 2px 6px;
-        border-radius: 4px;
-        font-size: 12px;
-      }}
-
-      .inbox-drawer {{
-        position: relative;
-        margin-top: 16px;
-        background: {fundo};
-        border: 1px solid {border_subtle};
-        border-radius: 12px;
-        padding: 0;
-      }}
-      .inbox-drawer .drawer-head {{
-        padding: 14px 16px;
-        border-bottom: 1px solid {border_subtle};
-      }}
-      .inbox-drawer-rotulo {{
-        font-family: ui-monospace, 'JetBrains Mono', monospace;
-        font-size: 11px;
-        letter-spacing: 0.06em;
-        text-transform: uppercase;
-        color: {texto_muted};
-      }}
-      .inbox-drawer-sha {{
-        font-family: ui-monospace, 'JetBrains Mono', monospace;
-        font-size: 16px;
-        color: {texto};
-        margin-top: 2px;
-      }}
-      .inbox-drawer-filename {{
-        font-size: 12px;
-        color: {texto_sec};
-        margin-top: 2px;
-      }}
-      .inbox-drawer .drawer-body {{
-        padding: 14px 16px;
-      }}
-      .inbox-drawer-erro {{
-        background: rgba(255, 85, 85, 0.08);
-        border-left: 3px solid {CORES["negativo"]};
-        padding: 8px 12px;
-        margin-bottom: 12px;
-        font-size: 13px;
-        color: {texto};
-      }}
-      .inbox-drawer-sem-sidecar {{
-        color: {texto_muted};
-        font-size: 13px;
-      }}
-      .inbox-drawer-sem-sidecar code {{
-        background: {inset};
-        padding: 2px 6px;
-        border-radius: 4px;
-        font-size: 12px;
-      }}
-      .inbox-sidecar-pre {{
-        margin: 0;
-        font-family: ui-monospace, 'JetBrains Mono', monospace;
-        font-size: 12px;
-        line-height: 1.55;
-        color: {texto_sec};
-        white-space: pre-wrap;
-        background: {inset};
-        padding: 12px;
-        border-radius: 8px;
-        max-height: 420px;
-        overflow: auto;
-      }}
-    </style>
-    """
-
-
+# CSS dedicado: src/dashboard/css/paginas/inbox.css (UX-M-02.C residual).
 # "O caos organizado é o primeiro passo da ordem." -- princípio do GTD

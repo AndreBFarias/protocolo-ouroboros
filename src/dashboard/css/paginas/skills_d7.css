@@ -1,0 +1,72 @@
+/* CSS dedicado da página Skills D7 (UX-M-02.C residual).
+   Origem: função inline em src/dashboard/paginas/skills_d7.py.
+   Estruturas únicas: grid de 5 colunas das skills (.s7-row), moldura
+   .s7-grid e gráfico SVG .s7-evo. Cores canonizadas para tokens. */
+
+.s7-grid {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+.s7-grid-head {
+    font-family: ui-monospace, 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-subtle);
+}
+.s7-row {
+    display: grid;
+    grid-template-columns: 2fr 110px 90px 90px 110px;
+    gap: 12px;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px dashed var(--border-subtle);
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+.s7-row:last-child { border-bottom: none; }
+.s7-row.s7-head {
+    font-family: ui-monospace, 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 6px 0;
+}
+.s7-name strong {
+    display: block;
+    font-family: ui-monospace, 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--text-primary);
+}
+.s7-desc {
+    display: block;
+    font-size: 11px;
+    color: var(--text-muted);
+    margin: 2px 0 4px;
+}
+.s7-conf, .s7-runs, .s7-when {
+    font-family: ui-monospace, 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+}
+.s7-runs, .s7-when { color: var(--text-muted); }
+.s7-evo {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    padding: 16px;
+}
+.s7-evo-empty {
+    color: var(--text-muted);
+    font-family: ui-monospace, 'JetBrains Mono', monospace;
+    font-size: 12px;
+}
+.s7-evo-empty p { margin: 0; padding: 16px 0; text-align: center; }
+.s7-evo svg { background: var(--bg-inset); border-radius: 8px; padding: 8px; }

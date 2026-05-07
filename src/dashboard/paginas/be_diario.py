@@ -38,6 +38,8 @@ import pandas as pd
 import streamlit as st
 
 from src.dashboard.componentes.html_utils import minificar
+from src.dashboard.componentes.page_header import renderizar_page_header
+from src.dashboard.componentes.ui import callout_html, carregar_css_pagina
 from src.dashboard.tema import CORES
 from src.mobile_cache.diario_emocional import gerar_cache as gerar_cache_diario
 from src.mobile_cache.escrever_diario import escrever_diario
@@ -81,7 +83,7 @@ def renderizar(
 
     del dados, periodo, ctx
 
-    st.markdown(_estilos_locais(), unsafe_allow_html=True)
+    st.markdown(minificar(carregar_css_pagina("be_diario")), unsafe_allow_html=True)
 
     vault_root = descobrir_vault_root()
     items = _carregar_items(vault_root)
@@ -135,24 +137,29 @@ def renderizar(
 
     with col_lista:
         st.markdown(
-            _page_header_html(len(items_filtrados)),
+            _page_header_canonico(len(items_filtrados)),
             unsafe_allow_html=True,
         )
 
         if vault_root is None:
-            st.warning(
-                "Vault Bem-estar não encontrado. Configure `OUROBOROS_VAULT` "
+            msg = (
+                "Vault Bem-estar não encontrado. Configure OUROBOROS_VAULT "
                 "para visualizar registros do diário emocional."
             )
+            st.markdown(callout_html("warning", msg), unsafe_allow_html=True)
             return
 
         if not items:
-            st.info(
+            msg = (
                 "Nenhum registro de diário emocional no vault. "
                 "Use o botão acima para criar o primeiro."
             )
+            st.markdown(callout_html("info", msg), unsafe_allow_html=True)
         elif not items_filtrados:
-            st.info("Nenhum registro casa com os filtros atuais.")
+            st.markdown(
+                callout_html("info", "Nenhum registro casa com os filtros atuais."),
+                unsafe_allow_html=True,
+            )
         else:
             for item in items_filtrados:
                 st.markdown(_card_html(item), unsafe_allow_html=True)
@@ -223,32 +230,16 @@ def _filtrar(
 # ---------------------------------------------------------------------------
 
 
-def _page_header_html(qtd: int) -> str:
-    return minificar(
-        f"""
-        <div class="page-header">
-          <div>
-            <h1 class="page-title">BEM-ESTAR · DIÁRIO</h1>
-            <p class="page-subtitle">
-              Lista cronológica de registros do tipo
-              <code style="color:{CORES['superfluo']};
-              background:{CORES['fundo_inset']};padding:1px 6px;
-              border-radius:2px;">trigger</code> ou
-              <code style="color:{CORES['superfluo']};
-              background:{CORES['fundo_inset']};padding:1px 6px;
-              border-radius:2px;">vitória</code>.
-              Cache lido de
-              <code style="color:{CORES['superfluo']};
-              background:{CORES['fundo_inset']};padding:1px 6px;
-              border-radius:2px;">.ouroboros/cache/diario-emocional.json</code>.
-            </p>
-          </div>
-          <div class="page-meta">
-            <span class="sprint-tag">UX-RD-18</span>
-            <span class="pill pill-d7-graduado">{qtd} registros</span>
-          </div>
-        </div>
-        """
+def _page_header_canonico(qtd: int) -> str:
+    """Page-header canônico via UX-M-02 (substitui markup local)."""
+    return renderizar_page_header(
+        titulo="BEM-ESTAR · DIÁRIO",
+        subtitulo=(
+            "Lista cronológica de registros do tipo trigger ou vitória. "
+            "Cache lido de .ouroboros/cache/diario-emocional.json."
+        ),
+        sprint_tag="UX-RD-18",
+        pills=[{"texto": f"{qtd} registros", "tipo": "d7-graduado"}],
     )
 
 
@@ -326,109 +317,7 @@ def _escape(texto: str) -> str:
     )
 
 
-def _estilos_locais() -> str:
-    return minificar(
-        f"""
-        <style>
-          .diario-card {{
-            background: {CORES['card_fundo']};
-            border: 1px solid {CORES['card_elevado']};
-            border-radius: 6px;
-            padding: 12px 14px;
-            margin-bottom: 10px;
-          }}
-          .diario-card-head {{
-            display: flex;
-            gap: 12px;
-            align-items: center;
-            margin-bottom: 8px;
-            flex-wrap: wrap;
-          }}
-          .diario-data {{
-            font-family: monospace;
-            font-size: 13px;
-            color: {CORES['texto']};
-          }}
-          .diario-modo-pill {{
-            font-family: monospace;
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            padding: 2px 8px;
-            border-radius: 12px;
-          }}
-          .diario-autor {{
-            font-family: monospace;
-            font-size: 11px;
-            color: {CORES['texto_muted']};
-            margin-left: auto;
-          }}
-          .diario-emocoes {{
-            display: flex;
-            gap: 6px;
-            flex-wrap: wrap;
-            margin-bottom: 8px;
-          }}
-          .chip-emo {{
-            font-family: monospace;
-            font-size: 11px;
-            background: {CORES['fundo_inset']};
-            color: {CORES['texto_sec']};
-            padding: 2px 8px;
-            border-radius: 4px;
-          }}
-          .chip-emo.chip-vazio {{
-            color: {CORES['texto_muted']};
-            font-style: italic;
-          }}
-          .diario-intens {{
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            margin-bottom: 8px;
-          }}
-          .diario-intens-label {{
-            font-family: monospace;
-            font-size: 10px;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: {CORES['texto_muted']};
-          }}
-          .diario-intens .dot {{
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            display: inline-block;
-          }}
-          .diario-intens .dot.on {{
-            background: {CORES['destaque']};
-          }}
-          .diario-intens .dot.off {{
-            background: {CORES['card_elevado']};
-          }}
-          .diario-intens-num {{
-            font-family: monospace;
-            font-size: 11px;
-            color: {CORES['texto_muted']};
-            margin-left: 4px;
-          }}
-          .diario-frase {{
-            font-size: 13px;
-            color: {CORES['texto']};
-            line-height: 1.5;
-          }}
-          .diario-com {{
-            display: inline-block;
-            margin-top: 6px;
-            font-family: monospace;
-            font-size: 11px;
-            color: {CORES['texto_muted']};
-          }}
-        </style>
-        """
-    )
-
-
+# CSS dedicado: src/dashboard/css/paginas/be_diario.css (UX-M-02.D residual).
 # ---------------------------------------------------------------------------
 # Form modal
 # ---------------------------------------------------------------------------

@@ -29,6 +29,11 @@ import pandas as pd
 import streamlit as st
 
 from src.dashboard.componentes.html_utils import minificar
+from src.dashboard.componentes.ui import (
+    callout_html,
+    card_html,
+    subtitulo_secao_html,
+)
 from src.dashboard.dados import (
     CAMINHO_XLSX,
     filtrar_por_forma_pagamento,
@@ -42,10 +47,7 @@ from src.dashboard.tema import (
     CORES,
     FONTE_CORPO,
     FONTE_MINIMA,
-    callout_html,
-    card_html,
     rgba_cor,
-    subtitulo_secao_html,
 )
 
 # Limites de utilização de cartão de crédito (escala D7).

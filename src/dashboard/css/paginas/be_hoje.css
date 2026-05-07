@@ -1,0 +1,59 @@
+/* CSS dedicado da página Bem-estar / Hoje (UX-M-02.D residual).
+   Origem: bloco inline em src/dashboard/paginas/be_hoje.py.
+   Estruturas únicas: hero do formulário, listas dos resultados do dia,
+   estados vazio. Cores canonizadas para tokens. */
+
+.hero-humor-marker {
+    background: var(--bg-surface);
+    border: 1px solid var(--bg-elevated);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 12px;
+}
+.hero-humor-marker .hero-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+.hero-humor-marker .hero-titulo {
+    font-family: monospace;
+    font-size: 13px;
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin: 0;
+}
+.hero-humor-marker .hero-data {
+    font-family: monospace;
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+.hero-humor-marker .hero-legend {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-family: monospace;
+}
+.slider-cor-tag {
+    font-family: monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+.mini-lista {
+    list-style: none;
+    padding: 0;
+    margin: 4px 0 12px 0;
+}
+.mini-lista .mini-item {
+    font-size: 12px;
+    color: var(--text-primary);
+    padding: 4px 8px;
+    border-left: 2px solid var(--bg-elevated);
+    margin-bottom: 4px;
+}
+.mini-vazio {
+    font-size: 11px;
+    font-style: italic;
+    margin: 4px 0 12px 4px;
+}

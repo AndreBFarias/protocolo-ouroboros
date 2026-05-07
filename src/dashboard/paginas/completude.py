@@ -35,6 +35,7 @@ from src.analysis.gap_documental import (
     orfas_para_csv,
 )
 from src.dashboard.componentes.html_utils import minificar
+from src.dashboard.componentes.ui import callout_html
 from src.dashboard.dados import (
     filtrar_por_forma_pagamento,
     filtrar_por_pessoa,
@@ -44,7 +45,6 @@ from src.dashboard.tema import (
     CORES,
     FONTE_SUBTITULO,
     LAYOUT_PLOTLY,
-    callout_html,
 )
 
 # Sprint 92a item 3: limiar mínimo de transações para uma categoria entrar na

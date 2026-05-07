@@ -36,6 +36,8 @@ declarados em ``tema.py`` e são consumidos aqui via import explícito.
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from src.dashboard.tema import (
     BORDA_ATIVA_PX,
     BORDA_RAIO,
@@ -55,812 +57,111 @@ from src.dashboard.tema import (
     SPACING,
 )
 
+# Sprint UX-M-01: tokens.css canônico carregado via I/O (Streamlit não
+# suporta @import url() em <style> dinâmico). Cópia 1:1 de
+# novo-mockup/_shared/tokens.css. Espelho Python: tema.py (CORES, SPACING,
+# FONTE_*). Manter sincronizado.
+_RAIZ_DASHBOARD = Path(__file__).resolve().parent
+_TOKENS_CSS = (_RAIZ_DASHBOARD / "css" / "tokens.css").read_text(encoding="utf-8")
+
+# Sprint UX-M-04: shell.css canônico carregado via I/O. Substitui ~80% das
+# regras que antes rodavam em runtime via setProperty('important') na
+# função instalar_fix_sidebar_padding(). Specificity escopada via
+# "html body [data-testid='...']" (0,1,2) vence Streamlit emotion (0,1,0)
+# com !important. Manter sincronizado com shell.py se layout mudar.
+_SHELL_CSS = (_RAIZ_DASHBOARD / "css" / "shell.css").read_text(encoding="utf-8")
+
+# Sprint UX-M-03: components.css canônico carregado via I/O. Cópia 1:1 de
+# novo-mockup/_shared/components.css com 87 classes (.shell, .sidebar,
+# .page-header, .kpi, .btn, .card, .pill, .table, .drawer, .skill-instr,
+# etc.). As regras canônicas vêm PRIMEIRO; overrides Streamlit-specific
+# (selectors [data-testid="stSidebar"] + !important) vêm DEPOIS via
+# overrides_streamlit.css para vencer cascata Streamlit emotion CSS-in-JS.
+_COMPONENTS_CSS = (_RAIZ_DASHBOARD / "css" / "components.css").read_text(encoding="utf-8")
+
+# Sprint UX-M-03: overrides Streamlit-specific carregados via I/O. Selectors
+# com [data-testid="stSidebar"] + !important para vencer cascata emotion
+# CSS-in-JS. Não estão em components.css puro pois são exclusivas do
+# contexto Streamlit (não fazem sentido no mockup HTML estático).
+_OVERRIDES_CSS = (_RAIZ_DASHBOARD / "css" / "overrides_streamlit.css").read_text(encoding="utf-8")
+
+# Sprint UX-M-03: extensões do dashboard que não estão no mockup.
+# Componentes Completude (UX-RD-10) + Revisor (UX-RD-10). Ficam fora de
+# components.css para preservar sincronia 1:1 com mockup canônico.
+_EXTENSOES_CSS = (_RAIZ_DASHBOARD / "css" / "extensoes_dashboard.css").read_text(encoding="utf-8")
+
 
 def _root_redesign() -> str:
-    """Bloco ``:root`` da Sprint UX-RD-02 com tokens hifenizados.
+    """Tokens canônicos do dashboard. Sprint UX-M-01.
 
-    Espelha 1:1 ``novo-mockup/_shared/tokens.css``. Lê os hex literais de
-    ``CORES`` (Sprint UX-RD-01 já migrou) para evitar duplicação. Tokens
-    sem correspondência direta em ``CORES`` (--syn-*, --diff-*, dimensões
-    de shell, sombras) carregam o hex do mockup como fonte canônica
-    via fallback dentro de ``var()``. Auditoria (≤3 hex literais fora
-    de ``var()`` ou comentário) limita-se a esses fallbacks
-    inevitáveis.
+    Carrega ``src/dashboard/css/tokens.css`` (cópia 1:1 de
+    ``novo-mockup/_shared/tokens.css``). Antes do UX-M-01 esta função
+    interpolava ``CORES["..."]`` via f-string; agora usa CSS estático
+    canônico, evitando duplicação de fonte de verdade.
+
+    Espelho Python (CORES, SPACING, FONTE_* em tema.py) preservado
+    para compat com 30+ páginas e 81+ testes que importam de tema.py.
+    Manter sincronizado: editar tokens.css E tema.py na MESMA sprint.
     """
-    return f"""
-    :root {{
-        /* ─── Fundo (escala de profundidade UX-RD-01) ─── */
-        --bg-base:     {CORES["fundo"]};
-        --bg-surface:  {CORES["card_fundo"]};
-        --bg-elevated: {CORES["card_elevado"]};
-        --bg-inset:    {CORES["fundo_inset"]};
+    return _TOKENS_CSS
 
-        /* ─── Bordas ─── */
-        --border-subtle: #313445;  /* noqa: accent (literal canônico tokens.css) */
-        --border-strong: #4a4f63;  /* noqa: accent */
-        --border-accent: #6b5a9c;  /* noqa: accent */
 
-        /* ─── Texto ─── */
-        --text-primary:   {CORES["texto"]};
-        --text-secondary: {CORES["texto_sec"]};
-        --text-muted:     {CORES["texto_muted"]};
-        --text-inverse:   {CORES["fundo"]};
+def _shell_redesign() -> str:
+    """Regras canônicas do shell (sidebar, topbar, main). Sprint UX-M-04.
 
-        /* ─── Acentos Dracula ─── */
-        --accent-purple: {CORES["destaque"]};
-        --accent-pink:   {CORES["superfluo"]};
-        --accent-cyan:   {CORES["neutro"]};
-        --accent-green:  {CORES["positivo"]};
-        --accent-yellow: {CORES["info"]};
-        --accent-orange: {CORES["alerta"]};
-        --accent-red:    {CORES["negativo"]};
+    Carrega ``src/dashboard/css/shell.css`` que substitui ~80% das
+    regras que antes rodavam em runtime via JS (setProperty) na função
+    ``instalar_fix_sidebar_padding()``. CSS estático escopado via
+    ``html body [data-testid="..."]`` (specificity 0,1,2 com !important)
+    vence o Streamlit emotion CSS-in-JS (0,1,0).
 
-        /* ─── Estados D7 (cobertura observável) ─── */
-        --d7-graduado:   {CORES["d7_graduado"]};
-        --d7-calibracao: {CORES["d7_calibracao"]};
-        --d7-regredindo: {CORES["d7_regredindo"]};
-        --d7-pendente:   {CORES["d7_pendente"]};
+    Anti-padrão (w) do VALIDATOR_BRIEF: JS runtime global afetando todas
+    as páginas; cada nova regra setProperty era universal e quebrou
+    layouts internos no commit 928628c (revertido em 2817706). Esta
+    refatoração mata 46 das 56 ``setProperty`` originais.
 
-        /* ─── Estados de validação humana ─── */
-        --humano-aprovado:  {CORES["humano_aprovado"]};
-        --humano-rejeitado: {CORES["humano_rejeitado"]};
-        --humano-revisar:   {CORES["humano_revisar"]};
-        --humano-pendente:  {CORES["humano_pendente"]};
-
-        /* ─── Diff viewer ─── */
-        --diff-added-bg:       rgba(80, 250, 123, 0.10);
-        --diff-added-gutter:   {CORES["positivo"]};
-        --diff-removed-bg:     rgba(255, 85, 85, 0.10);
-        --diff-removed-gutter: {CORES["negativo"]};
-        --diff-neutral-gutter: var(--border-strong);
-
-        /* ─── Syntax highlight JSON ─── */
-        --syn-key:    {CORES["superfluo"]};
-        --syn-string: {CORES["info"]};
-        --syn-number: {CORES["destaque"]};
-        --syn-bool:   {CORES["alerta"]};
-        --syn-null:   {CORES["texto_muted"]};
-
-        /* ─── Espaçamento (4px base) ─── */
-        --sp-1:  4px;
-        --sp-2:  8px;
-        --sp-3:  12px;
-        --sp-4:  16px;
-        --sp-5:  20px;
-        --sp-6:  24px;
-        --sp-8:  32px;
-        --sp-10: 40px;
-        --sp-12: 48px;
-        --sp-16: 64px;
-
-        /* ─── Raio ─── */
-        --r-xs:   2px;
-        --r-sm:   4px;
-        --r-md:   6px;
-        --r-lg:   8px;
-        --r-full: 999px;
-
-        /* ─── Dimensões de shell ─── */
-        --sidebar-w:         240px;
-        --sidebar-collapsed: 56px;
-        --topbar-h:          56px;
-        --page-header-h:     72px;
-        --row-h:             32px;
-        --row-h-compact:     28px;
-        --kpi-w:             180px;
-        --kpi-h:             96px;
-        --drawer-w:          480px;
-
-        /* ─── Sombras ─── */
-        --sh-sm: 0 1px 2px rgba(0,0,0,0.40);
-        --sh-md: 0 4px 12px rgba(0,0,0,0.50), inset 0 1px 0 rgba(255,255,255,0.02);
-        --sh-lg: 0 12px 32px rgba(0,0,0,0.60), inset 0 1px 0 rgba(255,255,255,0.03);
-        --sh-xl: 0 24px 64px rgba(0,0,0,0.70), inset 0 1px 0 rgba(255,255,255,0.04);
-        --sh-focus: 0 0 0 2px var(--bg-base), 0 0 0 4px var(--accent-purple);
-
-        /* ─── Tipografia ─── */
-        --ff-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-        --ff-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
-        --fs-11: 11px;
-        --fs-12: 12px;
-        --fs-13: 13px;
-        --fs-14: 14px;
-        --fs-16: 16px;
-        --fs-18: 18px;
-        --fs-20: 20px;
-        --fs-24: 24px;
-        --fs-32: 32px;
-        --fs-40: 40px;
-    }}
+    O JS residual em ``shell.py::instalar_fix_sidebar_padding()`` mantém
+    apenas o que CSS comprovadamente não alcança: atributos HTML
+    (``target='_self'``) e detecção runtime de filhos invisíveis (h=0).
     """
+    return _SHELL_CSS
 
 
 def _classes_redesign() -> str:
-    """Classes utilitárias UX-RD-02 espelhando ``components.css``.
+    """Classes utilitárias do redesign (Sprint UX-M-03).
 
-    Cada bloco corresponde a uma seção do components.css dos mockups.
-    Páginas legadas (até UX-RD-03 ser entregue) ignoram essas classes
-    pois não as referenciam. Páginas redesenhadas começam a consumi-las
-    a partir de UX-RD-03.
+    Concatena três fontes canônicas, cada uma carregada via I/O do
+    diretório ``src/dashboard/css/``:
+
+    1. ``components.css`` — 87 classes do mockup (cópia 1:1 de
+       ``novo-mockup/_shared/components.css``). Fonte de verdade para
+       layout dos componentes universais (``.shell``, ``.sidebar``,
+       ``.page-header``, ``.kpi``, ``.btn``, ``.card``, ``.pill``,
+       ``.table``, ``.drawer``, ``.skill-instr``).
+
+    2. ``overrides_streamlit.css`` — selectors com
+       ``[data-testid="stSidebar"]`` + ``!important`` que vencem a
+       cascata Streamlit emotion CSS-in-JS (specificity 0,1,0). Não
+       fazem sentido no mockup HTML estático.
+
+    3. ``extensoes_dashboard.css`` — componentes específicos do
+       dashboard sem contraparte no mockup (Completude UX-RD-10 +
+       Revisor UX-RD-10).
+
+    Ordem de cascata importa: canônico vem PRIMEIRO; overrides
+    sobrescrevem com ``!important``; extensões adicionam classes novas
+    sem conflito. Páginas legadas ignoram essas classes pois não as
+    referenciam; páginas redesenhadas (UX-RD-03+) consomem-as.
     """
-    return """
-    /* ============================================================
-       UX-RD-02: Classes utilitárias do redesign
-       Fonte canônica: novo-mockup/_shared/components.css
-       ============================================================ */
+    return f"""
+    /* UX-M-03: components.css canônico (87 classes do mockup) */
+    {_COMPONENTS_CSS}
 
-    /* ─── SHELL: sidebar + topbar + main ─── */
-    .shell {
-        display: grid;
-        grid-template-columns: var(--sidebar-w) 1fr;
-        grid-template-rows: var(--topbar-h) 1fr;
-        grid-template-areas:
-            "sidebar topbar"
-            "sidebar main";
-        min-height: 100vh;
-    }
-    .shell.sidebar-collapsed { grid-template-columns: var(--sidebar-collapsed) 1fr; }
+    /* UX-M-03: overrides Streamlit-specific (cascata + !important) */
+    {_OVERRIDES_CSS}
 
-    .sidebar {
-        grid-area: sidebar;
-        background: var(--bg-surface);
-        border-right: 1px solid var(--border-subtle);
-        padding: var(--sp-3) 0;
-        overflow-y: auto;
-        display: flex;
-        flex-direction: column;
-        gap: var(--sp-2);
-    }
-    /* UX-U-04 + auditoria-sidebar: !important para vencer cascata
-       Streamlit. Padding canônico 8px 16px (mockup) = h 36px com fs
-       14px line 1.45. Antes h era 40px por padding excessivo. */
-    .sidebar-brand,
-    [data-testid="stSidebar"] a.sidebar-brand,
-    [data-testid="stSidebar"] .sidebar-brand {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 8px 16px !important;
-        font-family: var(--ff-mono) !important;
-        font-weight: 500 !important;
-        font-size: var(--fs-14) !important;
-        line-height: 1.45 !important;
-        letter-spacing: 0.04em !important;
-        text-transform: uppercase !important;
-    }
-    .sidebar-brand-glyph { width: 20px; height: 20px; color: var(--accent-purple); }
-    .sidebar-search { margin: 0 var(--sp-3) var(--sp-2); position: relative; }
-    .sidebar-search input {
-        width: 100%;
-        background: var(--bg-inset);
-        border: 1px solid var(--border-subtle);
-        border-radius: var(--r-sm);
-        padding: 6px var(--sp-2) 6px 28px;
-        font-size: var(--fs-12);
-        color: var(--text-primary);
-    }
-    .sidebar-search-icon {
-        position: absolute; left: var(--sp-2); top: 50%; transform: translateY(-50%);
-        width: 14px; height: 14px; color: var(--text-muted);
-    }
-    .sidebar-search kbd {
-        position: absolute; right: var(--sp-2); top: 50%; transform: translateY(-50%);
-        font-family: var(--ff-mono); font-size: 10px;
-        background: var(--bg-elevated); color: var(--text-muted);
-        border: 1px solid var(--border-subtle); border-radius: var(--r-xs);
-        padding: 1px 4px;
-    }
-
-    /* auditoria-sidebar-2026-05-06: cluster fontSize 14px (era 15px
-       herdado de p,div,span global). H igual ao mockup (32px = 8px
-       padding * 2 + 16px line-height de 11px font). */
-    .sidebar-cluster {
-        margin-top: var(--sp-1);
-        font-size: var(--fs-13) !important;
-    }
-    .sidebar-cluster-header,
-    [data-testid="stSidebar"] .sidebar-cluster-header {
-        display: flex; align-items: center; justify-content: space-between;
-        padding: 8px 16px !important;
-        font-family: var(--ff-mono) !important;
-        font-size: var(--fs-11) !important;
-        font-weight: 400 !important;
-        line-height: 1.45 !important;
-        letter-spacing: 0.10em !important;
-        text-transform: uppercase !important;
-        color: var(--text-muted) !important;
-        overflow: visible !important;
-    }
-    /* Badge não deve ser cortada por overflow do parent. */
-    .sidebar-cluster-header .badge {
-        flex-shrink: 0 !important;
-    }
-    /* SVG dos cluster headers herda cor + tamanho fixo. */
-    .sidebar-cluster-header svg {
-        flex-shrink: 0;
-        color: var(--accent-purple);
-    }
-    .sidebar-cluster-header .badge {
-        font-family: var(--ff-mono);
-        font-size: 10px;
-        background: var(--accent-purple);
-        color: var(--text-inverse);
-        border-radius: var(--r-full);
-        padding: 1px 6px;
-        font-weight: 500;
-        letter-spacing: 0;
-    }
-    /* UX-U-04 followup: Streamlit aplica CSS agressivo em
-       [data-testid="stSidebar"] a (cor azul de link, sublinhado).
-       Forçar !important + reset text-decoration para a sidebar item
-       respeitar o token canônico do mockup (var(--text-secondary),
-       sem sublinhado, sem cor de link). */
-    /* SIDEBAR-CANON-FIX: cursor pointer !important para vencer cascata
-       Streamlit (que pode aplicar col-resize ou default em <a>). */
-    [data-testid="stSidebar"] a.sidebar-item,
-    [data-testid="stSidebar"] .sidebar-item,
-    .sidebar-item {
-        display: flex !important;
-        align-items: center;
-        gap: var(--sp-2);
-        padding: 4px 16px 4px 32px !important;
-        font-family: var(--ff-sans) !important;
-        font-size: var(--fs-13) !important;
-        font-weight: 400 !important;
-        line-height: 1.5 !important;
-        letter-spacing: normal !important;
-        text-transform: none !important;
-        color: var(--text-secondary) !important;
-        text-decoration: none !important;
-        border-left: 2px solid transparent;
-        cursor: pointer !important;
-        user-select: none;
-        transition: background .15s, color .15s, border-color .15s;
-    }
-    [data-testid="stSidebar"] a.sidebar-item:hover,
-    [data-testid="stSidebar"] .sidebar-item:hover,
-    .sidebar-item:hover {
-        background: var(--bg-elevated) !important;
-        color: var(--text-primary) !important;
-        text-decoration: none !important;
-        cursor: pointer !important;
-    }
-    [data-testid="stSidebar"] a.sidebar-item.active,
-    .sidebar-item.active {
-        background: linear-gradient(90deg, rgba(189,147,249,0.12), transparent 60%);
-        color: var(--text-primary) !important;
-        border-left-color: var(--accent-purple);
-    }
-    .sidebar-item .count {
-        margin-left: auto;
-        font-family: var(--ff-mono); font-size: 10px;
-        color: var(--text-muted) !important;
-    }
-    /* Brand glyph link: também precisa reset de text-decoration + cursor. */
-    [data-testid="stSidebar"] a.sidebar-brand,
-    .sidebar-brand {
-        text-decoration: none !important;
-        color: var(--text-primary) !important;
-        cursor: pointer !important;
-    }
-
-    /* UX-U-04 followup: topbar canônica do mockup tem 56px de altura
-       (00-shell-navegacao.html mede 56px). Sem min-height, o header
-       colapsa para a altura do breadcrumb (~22px) que não acomoda
-       botões da topbar-actions (T-01 vai preencher). */
-    .topbar {
-        grid-area: topbar;
-        background: var(--bg-surface);
-        border-bottom: 1px solid var(--border-subtle);
-        display: flex; align-items: center;
-        padding: 0 var(--sp-6);
-        gap: var(--sp-4);
-        min-height: 56px;
-    }
-    .breadcrumb {
-        display: flex; align-items: center; gap: var(--sp-2);
-        font-family: var(--ff-mono); font-size: var(--fs-12);
-        color: var(--text-muted); letter-spacing: 0.04em; text-transform: uppercase;
-    }
-    .breadcrumb .seg { color: var(--text-secondary); }
-    .breadcrumb .seg.current { color: var(--text-primary); }
-    .breadcrumb .sep { color: var(--border-strong); }
-    .topbar-actions { margin-left: auto; display: flex; align-items: center; gap: var(--sp-2); }
-
-    .main { grid-area: main; padding: var(--sp-6); overflow-y: auto; }
-
-    /* ─── PAGE HEADER ─── */
-    .page-header {
-        display: flex; align-items: flex-end; justify-content: space-between;
-        gap: var(--sp-4);
-        padding-bottom: var(--sp-4);
-        border-bottom: 1px solid var(--border-subtle);
-        margin-bottom: var(--sp-6);
-    }
-    /* UX-U-04 followup: !important para vencer h1 { font-size: 28px !important }
-       global do tema (linha 1059) e p,div,span { font-size: FONTE_CORPO } que
-       deformam page-title (40 -> 28) e page-subtitle (13 -> 15). */
-    .page-title,
-    h1.page-title {
-        font-family: var(--ff-mono) !important;
-        font-size: var(--fs-40) !important;
-        font-weight: 500 !important;
-        letter-spacing: -0.02em !important;
-        text-transform: uppercase !important;
-        margin: 0 !important;
-        line-height: 1 !important;
-        padding: 0 !important;
-        background: linear-gradient(
-            180deg,
-            var(--text-primary) 0%,
-            color-mix(in oklch, var(--text-primary) 80%, var(--accent-purple)) 100%
-        );
-        -webkit-background-clip: text;
-        background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
-    .page-subtitle,
-    p.page-subtitle {
-        font-family: var(--ff-sans) !important;
-        font-size: var(--fs-13) !important;
-        font-weight: 400 !important;
-        color: var(--text-secondary) !important;
-        margin: var(--sp-2) 0 0 !important;
-        max-width: 720px;
-    }
-    .page-meta {
-        display: flex; gap: var(--sp-2); align-items: center; flex-wrap: wrap;
-    }
-
-    /* ─── BOTÕES ─── */
-    /* auditoria-sidebar: btn canônico mockup tem fs 12px / padding 4px 8px /
-       gap 6-8px, h ~27px. Antes era 31px com fs 13px. !important para
-       vencer o estilo de Streamlit ``[data-testid] a`` que aplica cor
-       azul de link em ``<a class="btn">`` (incluindo btn-primary). */
-    .btn,
-    .topbar-actions a.btn,
-    .topbar-actions button.btn {
-        display: inline-flex !important;
-        align-items: center !important;
-        gap: 8px !important;
-        background: var(--bg-elevated) !important;
-        color: var(--text-primary) !important;
-        border: 1px solid var(--border-subtle) !important;
-        border-radius: var(--r-sm) !important;
-        padding: 4px 8px !important;
-        font-family: var(--ff-sans) !important;
-        font-size: var(--fs-12) !important;
-        font-weight: 500 !important;
-        text-decoration: none !important;
-        line-height: 1.45 !important;
-        transition: border-color .15s, background .15s, transform .12s;
-    }
-    .btn:active,
-    .topbar-actions a.btn:active { transform: translateY(1px); }
-    .btn:hover,
-    .topbar-actions a.btn:hover {
-        border-color: var(--border-strong) !important;
-        background: var(--bg-surface) !important;
-    }
-    .btn-primary,
-    .topbar-actions a.btn-primary,
-    .topbar-actions button.btn-primary {
-        background: var(--accent-purple) !important;
-        color: var(--text-inverse) !important;
-        border-color: var(--accent-purple) !important;
-    }
-    .btn-primary:hover,
-    .topbar-actions a.btn-primary:hover { filter: brightness(1.08); }
-    .btn-ghost { background: transparent; }
-    .btn-danger {
-        background: transparent;
-        color: var(--accent-red);
-        border-color: rgba(255,85,85,0.30);
-    }
-    .btn-sm { padding: 4px 8px; font-size: var(--fs-12); }
-    .btn-icon { padding: 6px; }
-    .btn-icon svg { width: 14px; height: 14px; }
-
-    /* ─── CARDS ─── */
-    .card {
-        background: var(--bg-surface);
-        border: 1px solid var(--border-subtle);
-        border-radius: var(--r-md);
-        padding: var(--sp-4);
-        transition: border-color .18s, transform .18s, box-shadow .18s;
-    }
-    .card.interactive { cursor: pointer; }
-    .card.interactive:hover {
-        border-color: var(--accent-purple);
-        transform: translateY(-1px);
-        box-shadow: 0 6px 20px -10px rgba(189,147,249,0.30);
-    }
-    .card-compact { padding: var(--sp-3); }
-    .card-head {
-        display: flex; align-items: center; justify-content: space-between;
-        margin-bottom: var(--sp-3);
-    }
-    .card-title {
-        font-size: var(--fs-11);
-        font-weight: 500;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        color: var(--text-secondary);
-        margin: 0;
-    }
-
-    /* ─── KPI tile ─── */
-    .kpi {
-        background: var(--bg-surface);
-        border: 1px solid var(--border-subtle);
-        border-radius: var(--r-md);
-        padding: var(--sp-3) var(--sp-4);
-        min-width: var(--kpi-w);
-        height: var(--kpi-h);
-        display: flex; flex-direction: column; justify-content: space-between;
-        transition: border-color .18s, transform .18s;
-        position: relative; overflow: hidden;
-    }
-    .kpi::after {
-        content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
-        background: linear-gradient(90deg, transparent, var(--accent-purple), transparent);
-        opacity: 0; transition: opacity .18s;
-    }
-    .kpi:hover { border-color: var(--border-strong); transform: translateY(-1px); }
-    .kpi:hover::after { opacity: 0.5; }
-    .kpi-label {
-        font-size: var(--fs-11); font-weight: 500;
-        letter-spacing: 0.08em; text-transform: uppercase;
-        color: var(--text-muted);
-    }
-    .kpi-value {
-        font-family: var(--ff-mono);
-        font-size: var(--fs-32); font-weight: 500;
-        letter-spacing: -0.02em;
-        font-variant-numeric: tabular-nums;
-        line-height: 1;
-    }
-    .kpi-delta {
-        font-family: var(--ff-mono); font-size: var(--fs-12);
-        display: inline-flex; align-items: center; gap: 4px;
-    }
-    .kpi-delta.up    { color: var(--accent-green); }
-    .kpi-delta.down  { color: var(--accent-red); }
-    .kpi-delta.flat  { color: var(--text-muted); }
-
-    /* ─── PILLS / BADGES ─── */
-    /* UX-U-04 followup: !important para vencer p,div,span { font-size: 15px }
-       global (FONTE_CORPO). Pills canônicas ficam em 11px JetBrains Mono. */
-    .pill,
-    span.pill {
-        display: inline-flex !important; align-items: center; gap: 4px;
-        font-family: var(--ff-mono) !important;
-        font-size: var(--fs-11) !important;
-        font-weight: 500 !important;
-        letter-spacing: 0.04em !important;
-        text-transform: uppercase !important;
-        padding: 2px 8px !important;
-        border-radius: var(--r-full);
-        border: 1px solid transparent;
-        white-space: nowrap;
-    }
-    .pill-d7-graduado {
-        background: rgba(107,142,127,0.15);
-        color: var(--d7-graduado);
-        border-color: rgba(107,142,127,0.30);
-    }
-    .pill-d7-calibracao {
-        background: rgba(241,250,140,0.10);
-        color: var(--d7-calibracao);
-        border-color: rgba(241,250,140,0.25);
-    }
-    .pill-d7-regredindo {
-        background: rgba(255,184,108,0.10);
-        color: var(--d7-regredindo);
-        border-color: rgba(255,184,108,0.30);
-    }
-    .pill-d7-pendente {
-        background: rgba(108,111,125,0.15);
-        color: var(--d7-pendente);
-        border-color: rgba(108,111,125,0.30);
-    }
-
-    .pill-humano-aprovado {
-        background: rgba(107,142,127,0.15);
-        color: var(--humano-aprovado);
-        border-color: rgba(107,142,127,0.30);
-    }
-    .pill-humano-rejeitado {
-        background: rgba(255,85,85,0.10);
-        color: var(--humano-rejeitado);
-        border-color: rgba(255,85,85,0.30);
-    }
-    .pill-humano-revisar {
-        background: rgba(241,250,140,0.10);
-        color: var(--humano-revisar);
-        border-color: rgba(241,250,140,0.25);
-    }
-    .pill-humano-pendente {
-        background: rgba(108,111,125,0.15);
-        color: var(--humano-pendente);
-        border-color: rgba(108,111,125,0.30);
-    }
-
-    /* UX-U-04 followup: !important para vencer cascata global. */
-    .sprint-tag,
-    span.sprint-tag {
-        display: inline-flex !important; align-items: center; gap: 4px;
-        font-family: var(--ff-mono) !important;
-        font-size: var(--fs-11) !important;
-        font-weight: 500 !important;
-        letter-spacing: 0.04em !important;
-        text-transform: uppercase !important;
-        color: var(--text-muted) !important;
-        padding: 2px 6px !important;
-        border: 1px solid var(--border-subtle);
-        border-radius: var(--r-xs);
-        background: var(--bg-inset);
-    }
-    .sprint-tag::before { content: ""; font-size: 8px; color: var(--accent-purple); }
-
-    .confidence {
-        display: inline-flex; align-items: center; gap: 4px;
-        font-family: var(--ff-mono);
-        font-size: var(--fs-11);
-        padding: 2px 6px;
-        border-radius: var(--r-xs);
-        font-variant-numeric: tabular-nums;
-    }
-    .confidence-bar {
-        display: inline-block;
-        width: 36px; height: 4px;
-        background: var(--bg-inset);
-        border-radius: var(--r-full);
-        overflow: hidden;
-        position: relative;
-    }
-    .confidence-bar > span {
-        position: absolute; left: 0; top: 0; bottom: 0;
-        background: var(--d7-graduado);
-    }
-
-    /* ─── TABELA DENSA ─── */
-    .table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: var(--fs-13);
-    }
-    .table th, .table td {
-        height: var(--row-h);
-        padding: 0 var(--sp-3);
-        text-align: left;
-        border-bottom: 1px solid var(--border-subtle);
-        vertical-align: middle;
-        white-space: nowrap;
-    }
-    .table thead th {
-        position: sticky; top: 0;
-        background: var(--bg-surface);
-        font-family: var(--ff-mono);
-        font-size: var(--fs-11);
-        font-weight: 500;
-        letter-spacing: 0.06em;
-        text-transform: uppercase;
-        color: var(--text-muted);
-        border-bottom: 1px solid var(--border-strong);
-    }
-    .table tbody tr:hover { background: var(--bg-elevated); }
-    .table tbody tr.selected { background: rgba(189,147,249,0.08); }
-    .table .col-num {
-        text-align: right;
-        font-family: var(--ff-mono);
-        font-variant-numeric: tabular-nums;
-    }
-    .table .col-mono { font-family: var(--ff-mono); }
-
-    /* ─── DRAWER (painel lateral deslizante) ─── */
-    .drawer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.40); z-index: 39; }
-    .drawer {
-        position: fixed; top: 0; right: 0; bottom: 0;
-        width: var(--drawer-w);
-        background: var(--bg-elevated);
-        border-left: 1px solid var(--border-subtle);
-        box-shadow: var(--sh-xl);
-        z-index: 40;
-        display: flex; flex-direction: column;
-    }
-    .drawer-head {
-        display: flex; align-items: center; justify-content: space-between;
-        padding: var(--sp-4);
-        border-bottom: 1px solid var(--border-subtle);
-    }
-    .drawer-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border-subtle); }
-    .drawer-tab {
-        padding: var(--sp-3) var(--sp-4);
-        font-size: var(--fs-12); font-weight: 500;
-        color: var(--text-secondary);
-        border-bottom: 2px solid transparent;
-        cursor: pointer;
-        background: transparent; border-top: none; border-left: none; border-right: none;
-    }
-    .drawer-tab.active { color: var(--text-primary); border-bottom-color: var(--accent-purple); }
-    .drawer-body { padding: var(--sp-4); overflow-y: auto; flex: 1; }
-
-    /* ─── INSTRUÇÃO SKILL (Inbox) ─── */
-    .skill-instr {
-        border: 1px solid var(--border-subtle);
-        border-radius: var(--r-md);
-        background: var(--bg-inset);
-        padding: var(--sp-4);
-        font-family: var(--ff-mono);
-        font-size: var(--fs-13);
-        line-height: 1.6;
-    }
-    .skill-instr h4 {
-        margin: 0 0 var(--sp-3);
-        font-size: var(--fs-11);
-        letter-spacing: 0.10em;
-        text-transform: uppercase;
-        color: var(--accent-purple);
-    }
-    .skill-instr code {
-        background: var(--bg-elevated);
-        border: 1px solid var(--border-subtle);
-        border-radius: var(--r-xs);
-        padding: 2px 6px;
-        color: var(--accent-pink);
-    }
-    .skill-instr ol { margin: 0; padding-left: var(--sp-5); }
-    .skill-instr .why {
-        margin-top: var(--sp-3);
-        padding-top: var(--sp-3);
-        border-top: 1px dashed var(--border-subtle);
-        color: var(--text-muted);
-        font-size: var(--fs-12);
-    }
-
-    /* ─── COMPLETUDE (UX-RD-10) — matriz tipo × mês ─── */
-    .completude-matriz-card {
-        background: var(--bg-surface);
-        border: 1px solid var(--border-subtle);
-        border-radius: var(--r-md);
-        padding: var(--sp-4);
-        margin-bottom: var(--sp-4);
-    }
-    .completude-matriz-grid {
-        display: grid;
-        gap: 3px;
-        font-family: var(--ff-mono);
-        font-size: 10px;
-    }
-    .completude-matriz-h {
-        color: var(--text-muted);
-        padding: 4px;
-        text-align: center;
-        text-transform: uppercase;
-        letter-spacing: 0.06em;
-    }
-    .completude-matriz-rotulo {
-        color: var(--text-muted);
-        padding: 8px 4px;
-        text-align: right;
-        font-size: 11px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-    .completude-cell {
-        aspect-ratio: 1.5;
-        border-radius: var(--r-xs);
-        display: grid;
-        place-items: center;
-        cursor: pointer;
-        position: relative;
-        font-size: 10px;
-        color: var(--bg-base);
-        font-weight: 500;
-        text-decoration: none;
-        transition: transform 90ms ease;
-    }
-    .completude-cell-full    { background: var(--d7-graduado); }
-    .completude-cell-partial { background: var(--accent-yellow); color: var(--bg-base); }
-    .completude-cell-missing { background: var(--accent-red); color: var(--bg-base); }
-    .completude-cell-empty   {
-        background: var(--bg-inset); color: var(--text-muted); cursor: default;
-    }
-    .completude-cell:hover:not(.completude-cell-empty) {
-        transform: scale(1.08);
-        z-index: 1;
-        box-shadow: 0 0 0 2px var(--accent-purple);
-    }
-    .completude-matriz-legenda {
-        display: flex;
-        gap: var(--sp-3);
-        font-family: var(--ff-mono);
-        font-size: 11px;
-        color: var(--text-muted);
-        margin-top: var(--sp-3);
-    }
-    .completude-matriz-legenda .dot {
-        display: inline-block;
-        width: 10px;
-        height: 10px;
-        border-radius: 2px;
-        vertical-align: middle;
-        margin-right: 4px;
-    }
-    .completude-secao-titulo {
-        font-family: var(--ff-mono);
-        font-size: 12px;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        color: var(--text-secondary);
-        margin: var(--sp-4) 0 var(--sp-3);
-    }
-
-    /* ─── REVISOR (UX-RD-10) — cards de divergência 4-way ─── */
-    .revisor-card {
-        background: var(--bg-surface);
-        border: 1px solid var(--border-subtle);
-        border-radius: var(--r-md);
-        padding: var(--sp-3) var(--sp-4);
-        margin-bottom: var(--sp-3);
-        position: relative;
-        transition: box-shadow 120ms ease;
-    }
-    .revisor-card[data-revisor-foco="1"] {
-        box-shadow: 0 0 0 2px var(--accent-purple);
-    }
-    .revisor-card-fontes {
-        display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: var(--sp-3);
-        margin-top: var(--sp-3);
-    }
-    .revisor-fonte {
-        background: var(--bg-inset);
-        border-left: 3px solid var(--border-subtle);
-        border-radius: var(--r-sm);
-        padding: var(--sp-2) var(--sp-3);
-        min-height: 64px;
-        font-family: var(--ff-mono);
-        font-size: var(--fs-12);
-    }
-    .revisor-fonte-etl    { border-left-color: var(--accent-green); }
-    .revisor-fonte-opus   { border-left-color: var(--accent-purple); }
-    .revisor-fonte-grafo  { border-left-color: var(--accent-yellow); }
-    .revisor-fonte-humano { border-left-color: var(--accent-pink); }
-    .revisor-fonte-rotulo {
-        font-size: 10px;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        color: var(--text-muted);
-        margin-bottom: 4px;
-    }
-    .revisor-fonte-valor {
-        color: var(--text-primary);
-        word-break: break-word;
-    }
-    .revisor-fonte-valor.diverge {
-        background: var(--diff-added-bg, rgba(255, 121, 198, 0.08));
-        padding: 2px 4px;
-        border-radius: var(--r-xs);
-    }
-    .revisor-card-titulo {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: var(--sp-3);
-        font-family: var(--ff-mono);
-        font-size: var(--fs-12);
-        letter-spacing: 0.06em;
-        text-transform: uppercase;
-        color: var(--text-secondary);
-    }
-    .revisor-card-dimensao {
-        font-weight: 500;
-        color: var(--text-primary);
-    }
+    /* UX-M-03: extensões dashboard (Completude + Revisor) */
+    {_EXTENSOES_CSS}
     """
 
 
@@ -890,6 +191,7 @@ def css_global() -> str:
     """
     bloco_redesign_root = _root_redesign()
     bloco_redesign_classes = _classes_redesign()
+    bloco_shell_redesign = _shell_redesign()
     return f"""
     <style>
     /* SIDEBAR-CANON-FIX (2026-05-06): cor de fundo do body é bg-base
@@ -1668,6 +970,16 @@ def css_global() -> str:
         font-feature-settings: "liga";
         -webkit-font-smoothing: antialiased;
     }}
+
+    /* ============================================================
+       UX-M-04 — Shell consolidado em CSS estático escopado.
+       Substitui ~80% das regras de instalar_fix_sidebar_padding()
+       que antes rodavam via setProperty('important') em runtime.
+       Specificity 'html body [data-testid=...]' (0,1,2) vence o
+       Streamlit emotion CSS-in-JS (0,1,0) com !important.
+       Fonte canônica: src/dashboard/css/shell.css.
+       ============================================================ */
+    {bloco_shell_redesign}
     </style>
     """
 

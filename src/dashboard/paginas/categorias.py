@@ -49,6 +49,7 @@ import yaml
 
 from src.dashboard.componentes.drilldown import aplicar_drilldown
 from src.dashboard.componentes.html_utils import minificar
+from src.dashboard.componentes.ui import callout_html, carregar_css_pagina
 from src.dashboard.dados import (
     filtrar_por_forma_pagamento,
     filtrar_por_periodo,
@@ -61,7 +62,6 @@ from src.dashboard.tema import (
     LAYOUT_PLOTLY,
     MAPA_CLASSIFICACAO,
     aplicar_locale_ptbr,
-    callout_html,
 )
 
 # Retrocompat com testes da Sprint 92a (test_dashboard_categorias.py): expõe o
@@ -308,198 +308,13 @@ def calcular_kpis_categoria(df: pd.DataFrame) -> dict[str, Any]:
 
 
 # ---------------------------------------------------------------------------
-# CSS local (página-específico) — não toca tema_css.py
+# CSS local (override mínimo justificado -- UX-M-02.C)
 # ---------------------------------------------------------------------------
-_CSS_PAGINA = minificar(
-    """
-    <style>
-    .ux-rd-12-kpi-row {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: var(--sp-3, 12px);
-        margin-bottom: var(--sp-4, 16px);
-    }
-    .ux-rd-12-kpi {
-        background: var(--bg-surface, #1a1d28);
-        border: 1px solid var(--border-subtle, #313445);
-        border-radius: var(--r-md, 6px);
-        padding: var(--sp-4, 16px);
-    }
-    .ux-rd-12-kpi .l {
-        font-family: var(--ff-mono, monospace);
-        font-size: 10px;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        color: var(--text-muted, #6c6f7d);
-    }
-    .ux-rd-12-kpi .v {
-        font-family: var(--ff-mono, monospace);
-        font-size: 26px;
-        font-weight: 500;
-        line-height: 1;
-        margin-top: 6px;
-        font-variant-numeric: tabular-nums;
-    }
-    .ux-rd-12-kpi .d {
-        font-family: var(--ff-mono, monospace);
-        font-size: 11px;
-        color: var(--text-muted, #6c6f7d);
-        margin-top: 6px;
-    }
-    .ux-rd-12-grid {
-        display: grid;
-        grid-template-columns: 1.5fr 1fr;
-        gap: var(--sp-3, 12px);
-    }
-    .ux-rd-12-card {
-        background: var(--bg-surface, #1a1d28);
-        border: 1px solid var(--border-subtle, #313445);
-        border-radius: var(--r-md, 6px);
-        margin-bottom: var(--sp-3, 12px);
-    }
-    .ux-rd-12-card .head {
-        padding: var(--sp-3, 12px) var(--sp-4, 16px);
-        border-bottom: 1px solid var(--border-subtle, #313445);
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-    }
-    .ux-rd-12-card .head h3 {
-        font-family: var(--ff-mono, monospace);
-        font-size: 11px;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        color: var(--text-secondary, #a8a9b8);
-        margin: 0;
-    }
-    .ux-rd-12-tree {
-        padding: var(--sp-3, 12px);
-    }
-    .ux-rd-12-cat-row {
-        display: grid;
-        grid-template-columns: 1fr 80px 100px;
-        gap: var(--sp-3, 12px);
-        align-items: center;
-        padding: 8px var(--sp-3, 12px);
-        border-radius: var(--r-sm, 4px);
-    }
-    .ux-rd-12-cat-row.l1 {
-        font-weight: 500;
-    }
-    .ux-rd-12-cat-row.l2 {
-        padding-left: var(--sp-5, 20px);
-        font-size: 12px;
-    }
-    .ux-rd-12-cat-row.l2 .name {
-        color: var(--text-secondary, #a8a9b8);
-    }
-    .ux-rd-12-cat-row .name {
-        font-family: var(--ff-mono, monospace);
-        font-size: 13px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-    .ux-rd-12-cat-row .name .dot {
-        width: 10px;
-        height: 10px;
-        border-radius: 2px;
-        flex-shrink: 0;
-    }
-    .ux-rd-12-cat-row .pct {
-        font-family: var(--ff-mono, monospace);
-        font-size: 11px;
-        color: var(--text-muted, #6c6f7d);
-        text-align: right;
-        font-variant-numeric: tabular-nums;
-    }
-    .ux-rd-12-cat-row .v {
-        font-family: var(--ff-mono, monospace);
-        font-size: 13px;
-        text-align: right;
-        font-variant-numeric: tabular-nums;
-    }
-    .ux-rd-12-cat-row .bar {
-        grid-column: 1/-1;
-        height: 3px;
-        background: var(--bg-inset, #0a0b10);
-        border-radius: var(--r-full, 999px);
-        overflow: hidden;
-        margin-top: 4px;
-    }
-    .ux-rd-12-cat-row .bar > span {
-        display: block;
-        height: 100%;
-    }
-    details.ux-rd-12-fam {
-        border: none;
-        margin-bottom: 4px;
-    }
-    details.ux-rd-12-fam > summary {
-        list-style: none;
-        cursor: pointer;
-    }
-    details.ux-rd-12-fam > summary::-webkit-details-marker {
-        display: none;
-    }
-    .ux-rd-12-fam .arrow {
-        display: inline-block;
-        width: 12px;
-        color: var(--text-muted, #6c6f7d);
-        transition: transform 0.15s;
-    }
-    details[open].ux-rd-12-fam .arrow {
-        transform: rotate(90deg);
-    }
-    .ux-rd-12-rules {
-        padding: var(--sp-4, 16px);
-    }
-    .ux-rd-12-rules h3 {
-        font-family: var(--ff-mono, monospace);
-        font-size: 11px;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        color: var(--text-secondary, #a8a9b8);
-        margin: 0 0 var(--sp-3, 12px);
-    }
-    .ux-rd-12-rule {
-        display: grid;
-        grid-template-columns: 1fr auto;
-        gap: var(--sp-2, 8px);
-        padding: var(--sp-2, 8px) 0;
-        border-bottom: 1px dashed var(--border-subtle, #313445);
-        font-size: 12px;
-    }
-    .ux-rd-12-rule:last-child {
-        border-bottom: none;
-    }
-    .ux-rd-12-rule .regex {
-        font-family: var(--ff-mono, monospace);
-        color: var(--accent-purple, #bd93f9);
-        font-size: 11px;
-        word-break: break-all;
-    }
-    .ux-rd-12-rule .desc {
-        font-family: var(--ff-mono, monospace);
-        color: var(--text-secondary, #a8a9b8);
-        margin-top: 2px;
-    }
-    .ux-rd-12-rule .ct {
-        font-family: var(--ff-mono, monospace);
-        font-size: 11px;
-        color: var(--text-muted, #6c6f7d);
-        white-space: nowrap;
-    }
-    .ux-rd-12-empty {
-        font-family: var(--ff-mono, monospace);
-        color: var(--text-muted, #6c6f7d);
-        font-size: 12px;
-        padding: var(--sp-3, 12px);
-        text-align: center;
-    }
-    </style>
-    """
-)
+# KPIs migrados para ``.kpi-grid``/``.kpi`` canônicos (components.css).
+# Mantidas aqui apenas estruturas únicas: árvore expansível ``<details>`` por
+# família, cards do treemap, linhas de regras YAML. Não há equivalente
+# universal para esses padrões na fronteira ``ui.py``.
+# CSS dedicado: src/dashboard/css/paginas/categorias.css (UX-M-02.C residual).
 
 
 # ---------------------------------------------------------------------------
@@ -515,28 +330,36 @@ def _kpis_html(kpis: dict[str, Any]) -> str:
         if cobertura >= 70
         else CORES["negativo"]
     )
+    saida_fmt = formatar_moeda(kpis["saida_total"])
+    txns = kpis["transacoes"]
+    cats = kpis["categorias_ativas"]
+    cor_sup = CORES["superfluo"]
+    valor_top_fmt = formatar_moeda(valor_top)
+    cor_info = CORES["info"]
+    n_nc = kpis["nao_classificadas"]
+    nc_fmt = formatar_moeda(kpis["valor_nao_classif"])
     return minificar(
         f"""
-        <div class="ux-rd-12-kpi-row">
-            <div class="ux-rd-12-kpi">
-                <div class="l">Saída · período</div>
-                <div class="v">{formatar_moeda(kpis["saida_total"])}</div>
-                <div class="d">{kpis["transacoes"]} transações</div>
+        <div class="kpi-grid" style="margin-bottom:16px;">
+            <div class="kpi">
+                <div class="kpi-label">Saída · período</div>
+                <div class="kpi-value">{saida_fmt}</div>
+                <div class="kpi-delta flat">{txns} transações</div>
             </div>
-            <div class="ux-rd-12-kpi">
-                <div class="l">Cobertura auto</div>
-                <div class="v" style="color:{cor_cob};">{cobertura:.0f}%</div>
-                <div class="d">{kpis["categorias_ativas"]} categorias ativas</div>
+            <div class="kpi">
+                <div class="kpi-label">Cobertura auto</div>
+                <div class="kpi-value" style="color:{cor_cob};">{cobertura:.0f}%</div>
+                <div class="kpi-delta flat">{cats} categorias ativas</div>
             </div>
-            <div class="ux-rd-12-kpi">
-                <div class="l">Maior família</div>
-                <div class="v" style="color:{CORES["superfluo"]};">{pct_top:.0f}%</div>
-                <div class="d">{cat_top} · {formatar_moeda(valor_top)}</div>
+            <div class="kpi">
+                <div class="kpi-label">Maior família</div>
+                <div class="kpi-value" style="color:{cor_sup};">{pct_top:.0f}%</div>
+                <div class="kpi-delta flat">{cat_top} · {valor_top_fmt}</div>
             </div>
-            <div class="ux-rd-12-kpi">
-                <div class="l">Não-classificadas</div>
-                <div class="v" style="color:{CORES["info"]};">{kpis["nao_classificadas"]}</div>
-                <div class="d">{formatar_moeda(kpis["valor_nao_classif"])} · revisar</div>
+            <div class="kpi">
+                <div class="kpi-label">Não-classificadas</div>
+                <div class="kpi-value" style="color:{cor_info};">{n_nc}</div>
+                <div class="kpi-delta flat">{nc_fmt} · revisar</div>
             </div>
         </div>
         """
@@ -719,7 +542,7 @@ def renderizar(
          "title": "Reclassificar transações"},
     ])
 
-    st.markdown(_CSS_PAGINA, unsafe_allow_html=True)
+    st.markdown(minificar(carregar_css_pagina("categorias")), unsafe_allow_html=True)
 
     if "extrato" not in dados:
         st.markdown(
