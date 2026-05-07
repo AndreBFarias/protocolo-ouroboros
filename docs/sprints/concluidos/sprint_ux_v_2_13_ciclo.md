@@ -1,7 +1,8 @@
 ---
 id: UX-V-2.13
 titulo: Bem-estar / Ciclo com anel circular SVG + sintomas + cruzamento humor
-status: backlog
+status: concluida
+concluida_em: 2026-05-07
 prioridade: alta
 data_criacao: 2026-05-07
 fase: PARIDADE_VISUAL
