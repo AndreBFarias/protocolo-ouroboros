@@ -1,7 +1,7 @@
 ---
 id: UX-V-2.17
 titulo: Página Recap com Comparativo vs 30D anteriores + Destaques do mês
-status: concluida
+status: concluída
 concluida_em: 2026-05-07
 prioridade: media
 data_criacao: 2026-05-07

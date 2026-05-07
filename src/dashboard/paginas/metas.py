@@ -556,7 +556,7 @@ def _carregar_metas_operacionais(dados: dict) -> list[dict[str, Any]]:
     """Reúne metas operacionais a partir de ``_calcular_metricas_operacionais``.
 
     Mapeia o dicionário existente para o formato esperado pelo card V-2.5
-    (nome, descricao, valor_atual, valor_alvo). Quando ``dados`` está
+    (nome, descrição, valor_atual, valor_alvo). Quando ``dados`` está
     ausente ou vazio, retorna lista vazia (fallback graceful).
     """
     metricas = _calcular_metricas_operacionais(dados or {})

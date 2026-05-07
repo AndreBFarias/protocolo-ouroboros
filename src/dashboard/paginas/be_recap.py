@@ -157,7 +157,7 @@ def _agregados_medidas(items: list[dict[str, Any]]) -> dict[str, Any]:
 
 
 def _periodo_anterior(dias: int, hoje: date) -> tuple[date, date]:
-    """Retorna ``(inicio, fim)`` da janela de ``dias`` imediatamente anterior.
+    """Retorna ``(início, fim)`` da janela de ``dias`` imediatamente anterior.
 
     Exemplo: para ``dias=30`` e ``hoje=2026-05-07`` o periodo atual e
     ``[2026-04-08, 2026-05-07]``; o anterior e ``[2026-03-09, 2026-04-07]``.
@@ -172,7 +172,7 @@ def _periodo_anterior(dias: int, hoje: date) -> tuple[date, date]:
 def _filtrar_intervalo(
     items: list[dict[str, Any]], inicio: date, fim: date
 ) -> list[dict[str, Any]]:
-    """Filtra items por ``data`` ISO no intervalo fechado ``[inicio, fim]``."""
+    """Filtra items por ``data`` ISO no intervalo fechado ``[início, fim]``."""
     saida: list[dict[str, Any]] = []
     for it in items:
         ds = str(it.get("data") or "")
@@ -188,7 +188,7 @@ def _filtrar_intervalo(
 def _humor_intervalo(
     vault_root: Path | None, inicio: date, fim: date
 ) -> dict[str, Any]:
-    """Variante de :func:`_agregados_humor` para janela ``[inicio, fim]``."""
+    """Variante de :func:`_agregados_humor` para janela ``[início, fim]``."""
     if vault_root is None:
         return {"media": None, "qtd": 0}
     arquivo = vault_root / ".ouroboros" / "cache" / "humor-heatmap.json"
@@ -223,7 +223,7 @@ def _metricas_janela(
     inicio: date,
     fim: date,
 ) -> dict[str, float]:
-    """Calcula metricas comparaveis para a janela ``[inicio, fim]``.
+    """Calcula métricas comparáveis para a janela ``[início, fim]``.
 
     Devolve apenas chaves que tem dado real (``None`` filtrado em
     :func:`_comparativo_html`). Conformidade ADR-13: tudo deterministico
@@ -257,10 +257,10 @@ def _metricas_janela(
 def _comparativo_html(
     metricas_atual: dict[str, float], metricas_ant: dict[str, float]
 ) -> str:
-    """Tabela rica de comparacao com delta sinalizado por metrica.
+    """Tabela rica de comparação com delta sinalizado por métrica.
 
-    Apenas chaves presentes nos dois lados sao exibidas; faltantes ficam
-    fora do bloco para nao mentir 0 quando dado nao existe.
+    Apenas chaves presentes nos dois lados são exibidas; faltantes ficam
+    fora do bloco para não mentir 0 quando dado não existe.
     """
     chaves_legiveis = {
         "humor_medio": "humor médio",
@@ -310,7 +310,7 @@ def _comparativo_html(
 def _gerar_destaques(
     vault_root: Path | None, inicio: date, fim: date
 ) -> list[dict[str, str]]:
-    """Gera ate 5 destaques deterministicos da janela ``[inicio, fim]``.
+    """Gera até 5 destaques determinísticos da janela ``[início, fim]``.
 
     Heuristicas (todas sobre caches reais):
     - viagens: eventos com categoria contendo "viagem"
@@ -435,7 +435,7 @@ def _destaques_html(destaques: list[dict[str, str]]) -> str:
 def _narrativa_manual_html(periodo: str) -> str:
     """Le ``docs/recaps/<periodo>.md`` se existir; senao renderiza CTA.
 
-    Conformidade ADR-13: nenhum LLM via API. Conteudo gerado por humano
+    Conformidade ADR-13: nenhum LLM via API. Conteúdo gerado por humano
     (Opus interativo via skill ``/gerar-recap``) e gravado a mao no
     arquivo Markdown. Aqui apenas exibimos.
     """

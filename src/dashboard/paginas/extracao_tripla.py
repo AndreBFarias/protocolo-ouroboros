@@ -1,6 +1,6 @@
 """Aba "Extração Tripla" -- Sprint UX-RD-11 + paridade visual UX-V-2.4.
 
-Layout 2 colunas alinhado ao mockup ``novo-mockup/mockups/10-validacao-arquivos.html``:
+Layout 2 colunas alinhado ao mockup canônico de validação por arquivo:
 
   - Header com 4 KPIs (PARIDADE, DIVERGÊNCIAS, EM REVISÃO, total ARQUIVOS).
   - Coluna esquerda: lista de arquivos agrupada por TIPO/formato com badge,
