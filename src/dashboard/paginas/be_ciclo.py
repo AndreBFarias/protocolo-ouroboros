@@ -187,10 +187,47 @@ def renderizar(
     items = _carregar_cache_ciclo(vault_root)
 
     if not items:
-        st.info(
-            "Nenhum registro de ciclo encontrado. Crie arquivos em "
-            "`<vault>/ciclo/<data>.md` com frontmatter `tipo: ciclo` e "
-            "`fase: menstrual|folicular|ovulacao|lutea`."
+        from src.dashboard.componentes.ui import (
+            fallback_estado_inicial_html,
+            ler_sync_info,
+        )
+        skeleton = (
+            '<div style="display:flex;gap:18px;align-items:center;">'
+            '<span class="skel-bloco" style="width:120px;height:120px;'
+            'border-radius:50%;"></span>'
+            '<div style="flex:1;display:flex;flex-direction:column;gap:8px;">'
+            '<span class="skel-bloco" style="width:40%;height:0.9em;"></span>'
+            '<span class="skel-bloco" style="width:80%;"></span>'
+            '<span class="skel-bloco" style="width:65%;"></span>'
+            '<span class="skel-bloco" style="width:75%;height:0.85em;"></span>'
+            '</div></div>'
+            '<div style="margin-top:14px;display:grid;'
+            'grid-template-columns:repeat(4,1fr);gap:8px;">'
+            '<div class="kpi"><span class="kpi-label">FASE</span>'
+            '<span class="kpi-value">--</span></div>'
+            '<div class="kpi"><span class="kpi-label">DIA DO CICLO</span>'
+            '<span class="kpi-value">--</span></div>'
+            '<div class="kpi"><span class="kpi-label">DURAÇÃO MÉDIA</span>'
+            '<span class="kpi-value">--</span></div>'
+            '<div class="kpi"><span class="kpi-label">PRÓXIMO</span>'
+            '<span class="kpi-value">--</span></div>'
+            '</div>'
+        )
+        st.markdown(
+            fallback_estado_inicial_html(
+                titulo="CICLO · sem registros ainda",
+                descricao=(
+                    "Acompanhamento do ciclo (fases menstrual, folicular, "
+                    "ovulação, lútea) e sintomas associados é registrado "
+                    "diariamente no app mobile. Cada arquivo "
+                    "<code>vault/ciclo/&lt;data&gt;.md</code> aparece como "
+                    "ponto no anel acima."
+                ),
+                skeleton_html=skeleton,
+                cta_secao="ciclo",
+                sync_info=ler_sync_info(),
+            ),
+            unsafe_allow_html=True,
         )
         return
 

@@ -1,14 +1,21 @@
 ---
 id: UX-V-03
 titulo: Fallback skeleton + CTA app mobile para páginas Bem-estar com dado vazio
-status: backlog
+status: concluida
 prioridade: alta
 data_criacao: 2026-05-07
+concluida_em: 2026-05-07
 fase: PARIDADE_VISUAL
 depende_de: [UX-V-02]
 co_executavel_com: [UX-V-01, UX-V-04, UX-V-05]
 esforco_estimado_horas: 5
+esforco_real_horas: 4
 origem: docs/auditorias/AUDITORIA_PARIDADE_VISUAL_2026-05-07.md (P3)
+commit: 3439be6
+ressalvas:
+  - V-02 (insight_card_html, sparkline_html) ainda nao fechada -- skeletons usam apenas .skel-bloco + .kpi (componentes ja presentes), sem dependencia em micro-componentes V-02.
+  - ui.py cresceu para 836 linhas (>800 de convencao h). ui.py e fronteira publica canonica; tema crescimento aceito por UX-M-02. Backlog: sprint REFAC-ui-modulo dividir por dominio.
+  - Validacao visual via AppTest (11/11 paginas com fallback-estado renderizado) + 2 screenshots reais (be_rotina + skills_d7) que exibem o componente em producao.
 ---
 
 # Sprint UX-V-03 — Fallback estado-inicial-atrativo + CTA app mob

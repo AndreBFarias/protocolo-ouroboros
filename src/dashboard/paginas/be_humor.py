@@ -94,15 +94,44 @@ def renderizar(
         )
         return
 
-    if not payload:
+    if not payload or not payload.get("celulas"):
+        from src.dashboard.componentes.ui import (
+            fallback_estado_inicial_html,
+            ler_sync_info,
+        )
+        skeleton = (
+            '<div style="display:grid;grid-template-columns:repeat(13,1fr);'
+            'gap:3px;margin-bottom:12px;">'
+            + ''.join(
+                '<span class="skel-bloco" style="height:18px;min-width:0;'
+                'border-radius:3px;"></span>'
+                for _ in range(13 * 7)
+            )
+            + '</div>'
+            '<div style="display:grid;grid-template-columns:repeat(4,1fr);'
+            'gap:8px;">'
+            '<div class="kpi"><span class="kpi-label">MÉDIA</span>'
+            '<span class="kpi-value">--</span></div>'
+            '<div class="kpi"><span class="kpi-label">DIAS</span>'
+            '<span class="kpi-value">--</span></div>'
+            '<div class="kpi"><span class="kpi-label">PICO</span>'
+            '<span class="kpi-value">--</span></div>'
+            '<div class="kpi"><span class="kpi-label">VALE</span>'
+            '<span class="kpi-value">--</span></div>'
+            '</div>'
+        )
         st.markdown(
-            callout_html(
-                "info",
-                (
-                    "Nenhum cache humor-heatmap.json encontrado no vault. "
-                    "Registre humor pela aba Hoje ou rode "
-                    "python -m src.mobile_cache.humor_heatmap para gerar o cache."
+            fallback_estado_inicial_html(
+                titulo="HUMOR · sem registros ainda",
+                descricao=(
+                    "Cada registro de humor no app mobile vira uma célula "
+                    "colorida no heatmap de 13 semanas acima. Capture rápido "
+                    "(<30s) na aba <code>Hoje</code> do app e a curva começa "
+                    "a aparecer aqui após o próximo sync."
                 ),
+                skeleton_html=skeleton,
+                cta_secao="humor",
+                sync_info=ler_sync_info(),
             ),
             unsafe_allow_html=True,
         )
