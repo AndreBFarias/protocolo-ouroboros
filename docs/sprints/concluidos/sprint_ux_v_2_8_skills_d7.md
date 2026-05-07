@@ -1,7 +1,7 @@
 ---
 id: UX-V-2.8
 titulo: Página Skills D7 com 5 KPIs + inventário 18 skills + cobertura por cluster
-status: concluida
+status: concluída
 prioridade: alta
 data_criacao: 2026-05-07
 concluida_em: 2026-05-07

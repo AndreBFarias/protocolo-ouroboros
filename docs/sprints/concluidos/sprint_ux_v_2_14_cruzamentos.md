@@ -1,7 +1,7 @@
 ---
 id: UX-V-2.14
 titulo: Página Cruzamentos com builder dinâmico (3 dropdowns + scatter + perguntas pré-prontas)
-status: concluida
+status: concluída
 concluida_em: 2026-05-07
 prioridade: alta
 data_criacao: 2026-05-07
