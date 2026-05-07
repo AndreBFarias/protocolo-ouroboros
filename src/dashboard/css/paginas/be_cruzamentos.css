@@ -1,0 +1,127 @@
+/* CSS dedicado da pagina Bem-estar / Cruzamentos (UX-V-2.14).
+   Origem: spec sprint_ux_v_2_14_cruzamentos.md.
+   Estruturas unicas: builder dinamico (3 dropdowns), grid de
+   perguntas pre-prontas 4x2, cards de insight com correlacao
+   classificada. Tokens canonicos via tokens.css. */
+
+/* ===== Builder - query atual ===== */
+.cz-builder-bloco {
+    background: var(--bg-surface);
+    border: 1px solid var(--accent-purple);
+    border-radius: var(--r-md);
+    padding: var(--sp-3);
+    font-family: var(--ff-mono);
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    flex-wrap: wrap;
+    color: var(--text-secondary);
+    margin: var(--sp-3) 0;
+    line-height: 1.6;
+}
+.cz-builder-bloco strong {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+.cz-builder-x,
+.cz-builder-em,
+.cz-builder-rotulo {
+    color: var(--text-muted);
+    font-size: 12px;
+}
+.cz-builder-rotulo {
+    text-transform: uppercase;
+    letter-spacing: 0.10em;
+    font-size: 11px;
+}
+
+/* ===== Perguntas pre-prontas ===== */
+.cz-perguntas-bloco {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--r-md);
+    padding: var(--sp-4);
+    margin: var(--sp-3) 0;
+}
+.cz-perguntas-titulo {
+    font-family: var(--ff-mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.10em;
+    color: var(--text-muted);
+    margin: 0 0 var(--sp-3);
+}
+.cz-perguntas-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--sp-2);
+}
+.cz-pergunta-card {
+    background: var(--bg-inset);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--r-sm);
+    padding: var(--sp-2) var(--sp-3);
+    transition: border-color 0.12s ease;
+}
+.cz-pergunta-card:hover {
+    border-color: var(--accent-purple);
+}
+.cz-pergunta-texto {
+    display: block;
+    font-size: 12px;
+    color: var(--text-primary);
+    font-weight: 500;
+    line-height: 1.35;
+}
+.cz-pergunta-meta {
+    display: block;
+    font-family: var(--ff-mono);
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-top: 4px;
+    letter-spacing: 0.04em;
+}
+
+/* ===== Insight cards (correlacao classificada) ===== */
+.cz-insight {
+    background: var(--bg-inset);
+    border: 1px solid var(--border-subtle);
+    border-left: 3px solid var(--cor, var(--accent-purple));
+    border-radius: var(--r-sm);
+    padding: var(--sp-3);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: var(--sp-2);
+}
+.cz-insight-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-2);
+}
+.cz-insight-titulo {
+    font-size: 13px;
+    color: var(--text-primary);
+    font-weight: 500;
+}
+.cz-insight-classe {
+    font-family: var(--ff-mono);
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    background: rgba(189, 147, 249, 0.12);
+    color: var(--accent-purple);
+    padding: 2px 6px;
+    border-radius: var(--r-xs);
+    white-space: nowrap;
+}
+.cz-insight-corpo {
+    font-family: var(--ff-mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    line-height: 1.5;
+}
+
+/* "A medida do dado e a clareza da pergunta." -- principio V-2.14 */
