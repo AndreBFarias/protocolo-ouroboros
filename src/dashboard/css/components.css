@@ -396,3 +396,128 @@
   color: var(--text-muted);
   font-size: var(--fs-12);
 }
+
+
+/* ===== Micro-componentes UX-V-02 ===== */
+
+/* Sparkline */
+.sparkline { display: inline-block; vertical-align: middle; line-height: 0; }
+.sparkline-line { stroke-linecap: round; stroke-linejoin: round; }
+
+/* Barra de uso */
+.bar-uso { display: flex; flex-direction: column; gap: 2px; }
+.bar-uso-label {
+    font-family: var(--ff-mono); font-size: 10px;
+    color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 0.06em;
+}
+.bar-uso-track {
+    height: 6px; background: var(--bg-inset);
+    border-radius: var(--r-full); overflow: hidden;
+}
+.bar-uso-fill {
+    display: block; height: 100%;
+    border-radius: var(--r-full);
+    transition: width 0.3s ease-out;
+}
+
+/* Donut mini */
+.donut-mini {
+    position: relative;
+    display: inline-grid;
+    place-items: center;
+    vertical-align: middle;
+}
+.donut-mini svg { position: absolute; inset: 0; }
+.donut-mini-track { opacity: 0.4; }
+.donut-mini-pct {
+    position: relative; z-index: 1;
+    font-family: var(--ff-mono);
+    font-size: 13px; font-weight: 500;
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Prazo / Ritmo / Falta (cards de meta) */
+.prazo-ritmo-falta {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--sp-3);
+    padding: var(--sp-3) 0 0;
+    border-top: 1px solid var(--border-subtle);
+    margin-top: var(--sp-3);
+}
+.prf-celula { display: flex; flex-direction: column; gap: 2px; }
+.prf-rotulo {
+    font-family: var(--ff-mono); font-size: 10px;
+    text-transform: uppercase; letter-spacing: 0.10em;
+    color: var(--text-muted);
+}
+.prf-valor {
+    font-family: var(--ff-mono); font-size: 12px;
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Tab counter */
+.tab-counter {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 10px; border-radius: var(--r-sm);
+    font-family: var(--ff-mono); font-size: 12px;
+    color: var(--text-secondary);
+    cursor: pointer; user-select: none;
+    border-bottom: 2px solid transparent;
+}
+.tab-counter-num {
+    font-size: 10px; font-weight: 600;
+    color: var(--text-muted);
+    background: var(--bg-inset);
+    padding: 1px 6px; border-radius: var(--r-full);
+}
+.tab-counter-ativo {
+    color: var(--accent-purple);
+    border-bottom-color: var(--accent-purple);
+}
+.tab-counter-ativo .tab-counter-num {
+    color: var(--accent-purple);
+    background: rgba(189, 147, 249, 0.15);
+}
+
+/* Insight card */
+.insight-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-left: 3px solid var(--accent-purple);
+    border-radius: var(--r-md);
+    padding: var(--sp-3) var(--sp-4);
+    margin-bottom: var(--sp-3);
+}
+.insight-card-tipo {
+    display: inline-block;
+    font-family: var(--ff-mono); font-size: 10px;
+    text-transform: uppercase; letter-spacing: 0.10em;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+}
+.insight-card-titulo {
+    font-size: 14px; font-weight: 500;
+    color: var(--text-primary);
+    margin: 0 0 6px;
+}
+.insight-card-corpo {
+    font-family: var(--ff-mono); font-size: 12px;
+    color: var(--text-secondary);
+    margin: 0; line-height: 1.5;
+}
+
+.insight-positivo { border-left-color: var(--accent-green); }
+.insight-positivo .insight-card-tipo { color: var(--accent-green); }
+
+.insight-atencao { border-left-color: var(--accent-orange); }
+.insight-atencao .insight-card-tipo { color: var(--accent-orange); }
+
+.insight-descoberta { border-left-color: var(--accent-purple); }
+.insight-descoberta .insight-card-tipo { color: var(--accent-purple); }
+
+.insight-previsao { border-left-color: var(--accent-cyan); }
+.insight-previsao .insight-card-tipo { color: var(--accent-cyan); }

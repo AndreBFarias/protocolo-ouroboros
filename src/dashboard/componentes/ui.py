@@ -56,6 +56,7 @@ from pathlib import Path
 # ---------------------------------------------------------------------------
 # Imports internos -- componentes já modulares (re-exports)
 # ---------------------------------------------------------------------------
+from src.dashboard.componentes.html_utils import minificar
 from src.dashboard.componentes.page_header import (
     renderizar_page_header as page_header,
 )
@@ -103,6 +104,13 @@ __all__ = [
     "group_card",
     # Helper de carregamento de CSS por página
     "carregar_css_pagina",
+    # Micro-componentes UX-V-02 (6)
+    "sparkline_html",
+    "bar_uso_html",
+    "donut_inline_html",
+    "prazo_ritmo_falta_html",
+    "tab_counter_html",
+    "insight_card_html",
 ]
 
 
@@ -704,4 +712,239 @@ def group_card(
     )
 
 
+# ---------------------------------------------------------------------------
+# === Micro-componentes UX-V-02 ===
+# ---------------------------------------------------------------------------
+# Sprint UX-V-02 (Onda V -- paridade visual) entrega 6 micro-componentes
+# transversais consumidos por páginas da Leva V-2: sparkline (Contas/Medidas),
+# bar_uso (Contas/Categorias), donut_inline + prazo_ritmo_falta (Metas),
+# tab_counter (Análise/Memórias) e insight_card (Análise/Cruzamentos).
+#
+# Esta sprint apenas ENTREGA a fronteira; migração das páginas é escopo das
+# sprints V-2.x. CSS canônico vive em ``src/dashboard/css/components.css``.
+#
+# Referência: docs/sprints/concluidos/sprint_ux_v_02_micro_componentes.md.
+
+_INSIGHT_TIPOS_VALIDOS = {"positivo", "atencao", "descoberta", "previsao"}
+
+
+def sparkline_html(
+    valores: list[float],
+    *,
+    cor: str | None = None,
+    largura: int = 80,
+    altura: int = 24,
+) -> str:
+    """Sparkline SVG inline minimalista (sem libs externas).
+
+    Args:
+        valores: série numérica (>=2 pontos). Lista vazia ou ponto único
+            retornam string vazia (degradação graciosa, ADR-10).
+        cor: hex/var token. Default ``var(--accent-purple)``.
+        largura: pixels (default 80).
+        altura: pixels (default 24).
+
+    Returns:
+        ``<span class="sparkline">...</span>`` minificado.
+    """
+    if not valores or len(valores) < 2:
+        return ""
+    cor_efetiva = cor or "var(--accent-purple)"
+    minimo, maximo = min(valores), max(valores)
+    intervalo = (maximo - minimo) or 1.0
+    n = len(valores)
+    pontos = " ".join(
+        f"{(i / (n - 1)) * largura:.2f},{altura - ((v - minimo) / intervalo) * altura:.2f}"
+        for i, v in enumerate(valores)
+    )
+    return minificar(
+        f"""
+        <span class="sparkline">
+          <svg viewBox="0 0 {largura} {altura}" width="{largura}" height="{altura}">
+            <polyline class="sparkline-line"
+              fill="none" stroke="{cor_efetiva}" stroke-width="1.5"
+              points="{pontos}" />
+          </svg>
+        </span>
+        """
+    )
+
+
+def bar_uso_html(
+    usado: float,
+    total: float,
+    *,
+    label: str = "",
+    cor: str | None = None,
+) -> str:
+    """Barra horizontal de uso percentual usado/total.
+
+    Args:
+        usado: valor consumido (numerador).
+        total: capacidade total (denominador). ``<= 0`` retorna string vazia.
+        label: texto pequeno acima da barra (ex.: ``"36% usado"``).
+        cor: override; default escolhe por percentual
+            (>=90 vermelho, >=60 laranja, senão verde).
+
+    Returns:
+        ``<div class="bar-uso">...</div>`` minificado.
+    """
+    if total <= 0:
+        return ""
+    pct = max(0.0, min(100.0, (usado / total) * 100.0))
+    if cor is None:
+        if pct >= 90:
+            cor = "var(--accent-red)"
+        elif pct >= 60:
+            cor = "var(--accent-orange)"
+        else:
+            cor = "var(--accent-green)"
+    label_html = f'<span class="bar-uso-label">{label}</span>' if label else ""
+    return minificar(
+        f"""
+        <div class="bar-uso" data-pct="{pct:.1f}">
+          {label_html}
+          <div class="bar-uso-track">
+            <span class="bar-uso-fill" style="width:{pct:.2f}%; background:{cor};"></span>
+          </div>
+        </div>
+        """
+    )
+
+
+def donut_inline_html(
+    percentual: float,
+    *,
+    tamanho: int = 60,
+    cor: str | None = None,
+) -> str:
+    """Donut SVG compacto com percentual no centro.
+
+    Args:
+        percentual: 0..100 (clamped automaticamente).
+        tamanho: pixels do quadrado SVG (default 60).
+        cor: stroke do arco; default por percentual
+            (=100 verde, >=70 amarelo, >=30 roxo, senão vermelho).
+
+    Returns:
+        ``<span class="donut-mini">...</span>`` minificado.
+    """
+    pct = max(0.0, min(100.0, percentual))
+    if cor is None:
+        if pct >= 100:
+            cor = "var(--accent-green)"
+        elif pct >= 70:
+            cor = "var(--accent-yellow)"
+        elif pct >= 30:
+            cor = "var(--accent-purple)"
+        else:
+            cor = "var(--accent-red)"
+    raio = (tamanho - 8) / 2  # margem 4px
+    centro = tamanho / 2
+    circ = 2 * 3.14159 * raio
+    offset = circ * (1 - pct / 100)
+    return minificar(
+        f"""
+        <span class="donut-mini" style="width:{tamanho}px;height:{tamanho}px;">
+          <svg viewBox="0 0 {tamanho} {tamanho}">
+            <circle class="donut-mini-track"
+              cx="{centro}" cy="{centro}" r="{raio:.2f}"
+              fill="none" stroke="var(--bg-elevated)" stroke-width="4" />
+            <circle class="donut-mini-fill"
+              cx="{centro}" cy="{centro}" r="{raio:.2f}"
+              fill="none" stroke="{cor}" stroke-width="4"
+              stroke-dasharray="{circ:.2f}" stroke-dashoffset="{offset:.2f}"
+              transform="rotate(-90 {centro} {centro})" />
+          </svg>
+          <span class="donut-mini-pct">{pct:.0f}%</span>
+        </span>
+        """
+    )
+
+
+def prazo_ritmo_falta_html(prazo: str, ritmo: str, falta: str) -> str:
+    """Layout de 3 colunas (PRAZO / RITMO / FALTA) usado em cards de meta.
+
+    Args:
+        prazo: texto curto (ex.: ``"SET/2026"``).
+        ritmo: texto curto (ex.: ``"+R$ 2.500/MÊS"``).
+        falta: texto curto (ex.: ``"5 MESES"``).
+
+    Returns:
+        ``<div class="prazo-ritmo-falta">...</div>`` minificado.
+    """
+    return minificar(
+        f"""
+        <div class="prazo-ritmo-falta">
+          <div class="prf-celula">
+            <span class="prf-rotulo">PRAZO</span>
+            <span class="prf-valor">{prazo}</span>
+          </div>
+          <div class="prf-celula">
+            <span class="prf-rotulo">RITMO</span>
+            <span class="prf-valor">{ritmo}</span>
+          </div>
+          <div class="prf-celula">
+            <span class="prf-rotulo">FALTA</span>
+            <span class="prf-valor">{falta}</span>
+          </div>
+        </div>
+        """
+    )
+
+
+def tab_counter_html(label: str, count: int, *, ativo: bool = False) -> str:
+    """Tab inline com counter (ex.: ``"Fluxo de caixa  3"``).
+
+    Renderiza apenas o HTML do rótulo + counter, embarcável em
+    ``st.tabs([...])`` via custom CSS ou em radio horizontal. Não
+    implementa comportamento de tab (responsabilidade da página).
+
+    Args:
+        label: texto da tab.
+        count: número exibido pequeno após o label.
+        ativo: se True aplica classe ``.tab-counter-ativo`` (cor accent).
+
+    Returns:
+        ``<span class="tab-counter">...</span>`` minificado.
+    """
+    classe = "tab-counter tab-counter-ativo" if ativo else "tab-counter"
+    return minificar(
+        f"""
+        <span class="{classe}">
+          {label}
+          <span class="tab-counter-num">{count}</span>
+        </span>
+        """
+    )
+
+
+def insight_card_html(tipo: str, titulo: str, corpo: str) -> str:
+    """Card lateral de insight derivado.
+
+    Args:
+        tipo: ``"positivo" | "atencao" | "descoberta" | "previsao"``.
+            Outro valor cai em ``"descoberta"`` (degradação graciosa,
+            ADR-10) -- não levanta erro.
+        titulo: heading curto (<=60 chars idealmente).
+        corpo: parágrafo (HTML safe esperado; chamador escapa input
+            não-confiável).
+
+    Returns:
+        ``<div class="insight-card insight-{tipo}">...</div>`` minificado.
+    """
+    if tipo not in _INSIGHT_TIPOS_VALIDOS:
+        tipo = "descoberta"
+    return minificar(
+        f"""
+        <div class="insight-card insight-{tipo}">
+          <span class="insight-card-tipo">{tipo.upper()}</span>
+          <h4 class="insight-card-titulo">{titulo}</h4>
+          <p class="insight-card-corpo">{corpo}</p>
+        </div>
+        """
+    )
+
+
 # "A unidade é a forma da multiplicidade." -- Plotino
+# "A medida do componente é seu uso, não sua existência." -- princípio UX-V-02
