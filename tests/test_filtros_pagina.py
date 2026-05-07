@@ -88,13 +88,12 @@ def test_sidebar_continua_com_8_clusters(streamlit_url: str) -> None:
 
 
 def test_filtros_globais_main_tem_chip_bar(streamlit_url: str) -> None:
-    """UX-V-01: filtros globais migraram para chip-bar fina sem expander.
+    """UX-V-01.b: filtros globais como 4 popovers (granularidade/período/pessoa/forma).
 
     Substitui o teste original ``test_filtros_globais_main_tem_expander``
-    (UX-U-04) -- a chip-bar exibe 4 chips visíveis sempre e os 4 selectbox
-    estão renderizados de forma invisível (``label_visibility=collapsed``)
-    diretamente abaixo, sem precisar de click em expander. Contrato 3-tuple
-    e 7 chaves de session_state preservados.
+    (UX-U-04). Refator V-01.b (2026-05-07): cada chip da chip-bar é
+    ``st.popover`` Streamlit nativo. Contrato 3-tuple e 7 chaves de
+    session_state preservados; pipeline downstream intacto.
     """
     with sync_playwright() as p:
         b = p.chromium.launch()
@@ -104,36 +103,38 @@ def test_filtros_globais_main_tem_chip_bar(streamlit_url: str) -> None:
         info = page.evaluate(
             """() => {
                 const sidebar_selects = document.querySelectorAll('[data-testid="stSidebar"] [data-testid="stSelectbox"]');
-                const all_selects = document.querySelectorAll('[data-testid="stSelectbox"]');
-                let main_count = 0;
-                all_selects.forEach(s => {
-                    let p = s.closest('[data-testid="stSidebar"]');
-                    if (!p) main_count++;
-                });
-                const chip_bar = document.querySelectorAll('.chip-bar-globais').length;
-                const chips = document.querySelectorAll('.chip-bar-globais .chip-filtro').length;
+                const popovers_main = Array.from(
+                    document.querySelectorAll('[data-testid="stPopover"]')
+                ).filter(e => !e.closest('[data-testid="stSidebar"]')).length;
+                const labels_chips = Array.from(
+                    document.querySelectorAll('[data-testid="stPopover"] button')
+                ).map(b => (b.textContent || '').toLowerCase().trim());
+                const tem_granularidade = labels_chips.some(l => l.includes('granularidade'));
+                const tem_periodo = labels_chips.some(l => l.includes('período') || l.includes('periodo'));
+                const tem_pessoa = labels_chips.some(l => l.includes('pessoa'));
+                const tem_forma = labels_chips.some(l => l.includes('forma'));
                 const expanders_filtros = Array.from(
                     document.querySelectorAll('[data-testid="stExpander"], details')
                 ).filter(e => (e.textContent || '').includes('Filtros globais')).length;
                 return {
-                    sidebar: sidebar_selects.length,
-                    main: main_count,
-                    chip_bar: chip_bar,
-                    chips: chips,
+                    sidebar_selects: sidebar_selects.length,
+                    popovers_main: popovers_main,
+                    tem_granularidade: tem_granularidade,
+                    tem_periodo: tem_periodo,
+                    tem_pessoa: tem_pessoa,
+                    tem_forma: tem_forma,
                     expanders_filtros: expanders_filtros,
                 };
             }"""
         )
-        assert info["sidebar"] == 0, f"esperado 0 selectbox sidebar; achou {info['sidebar']}"
-        assert info["main"] >= 4, (
-            f"esperado >=4 selectbox no main (granularidade+periodo+pessoa+forma); achou {info['main']}"
+        assert info["sidebar_selects"] == 0, f"esperado 0 selectbox sidebar; achou {info['sidebar_selects']}"
+        assert info["popovers_main"] >= 4, (
+            f"esperado >=4 popovers no main (granularidade/periodo/pessoa/forma); achou {info['popovers_main']}"
         )
-        assert info["chip_bar"] >= 1, (
-            f"esperado chip-bar fina .chip-bar-globais visível; achou {info['chip_bar']}"
-        )
-        assert info["chips"] >= 4, (
-            f"esperado 4 chips (granularidade/período/pessoa/forma); achou {info['chips']}"
-        )
+        assert info["tem_granularidade"], "popover 'granularidade' não encontrado"
+        assert info["tem_periodo"], "popover 'período' não encontrado"
+        assert info["tem_pessoa"], "popover 'pessoa' não encontrado"
+        assert info["tem_forma"], "popover 'forma' não encontrado"
         assert info["expanders_filtros"] == 0, (
             f"expander 'Filtros globais' deve sumir após UX-V-01; achou {info['expanders_filtros']}"
         )
