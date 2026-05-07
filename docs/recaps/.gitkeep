@@ -1,0 +1,3 @@
+# Diretorio para narrativas mensais geradas via skill /gerar-recap
+# (Opus interativo grava docs/recaps/<YYYY-MM>.md, dashboard exibe quando existe).
+# Conformidade ADR-13: nada de chamada API; recap escrito a mao no Claude Code.
