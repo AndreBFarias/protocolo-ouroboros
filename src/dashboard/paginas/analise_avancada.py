@@ -47,7 +47,12 @@ import streamlit as st
 from src.dashboard import tema
 from src.dashboard.componentes.drilldown import aplicar_drilldown
 from src.dashboard.componentes.html_utils import minificar
-from src.dashboard.componentes.ui import callout_html
+from src.dashboard.componentes.ui import (
+    callout_html,
+    carregar_css_pagina,
+    insight_card_html,
+    tab_counter_html,
+)
 from src.dashboard.dados import (
     filtrar_por_forma_pagamento,
     filtrar_por_periodo,
@@ -398,8 +403,19 @@ def _kpi_card_html(label: str, valor: str, delta: str, cor_valor: str) -> str:
     )
 
 
-def _renderizar_aba_fluxo(df: pd.DataFrame) -> None:
-    """Renderiza KPIs + Sankey de 3 níveis."""
+def _renderizar_aba_fluxo(
+    df: pd.DataFrame,
+    delta: dict | None = None,
+    insights: list[tuple[str, str, str]] | None = None,
+) -> None:
+    """Renderiza KPIs + Sankey de 3 níveis.
+
+    UX-V-2.6: parâmetros opcionais ``delta`` (dict com pct vs anterior)
+    e ``insights`` (lista de tuplas) renderizam, respectivamente, a
+    linha ``+X% vs anterior`` nos KPIs e o painel lateral
+    INSIGHTS DERIVADOS. Ambos com fallback gracioso (ADR-10): default
+    ``None`` mantém comportamento antigo (retrocompatível -- padrão (o)).
+    """
     kpis = calcular_kpis_fluxo(df)
 
     col1, col2, col3, col4 = st.columns(4)
@@ -408,20 +424,55 @@ def _renderizar_aba_fluxo(df: pd.DataFrame) -> None:
     def fmt(v: float) -> str:
         return f"R$ {v:,.0f}".replace(",", ".")
 
+    def _fmt_delta(pct: float) -> str:
+        sinal = "+" if pct >= 0 else ""
+        return f"{sinal}{pct:.0f}% vs anterior"
+
     cor_saldo = CORES["d7_graduado"] if kpis["saldo"] >= 0 else CORES["negativo"]
     pct_poupanca = f"{kpis['taxa_poupanca'] * 100:.1f}% taxa de poupança"
+
+    if delta:
+        legenda_entradas = _fmt_delta(delta.get("delta_entradas_pct", 0.0))
+        legenda_saidas = _fmt_delta(delta.get("delta_saidas_pct", 0.0))
+        legenda_saldo = _fmt_delta(delta.get("delta_saldo_pct", 0.0))
+    else:
+        legenda_entradas = "Receita do recorte"
+        legenda_saidas = "Despesas + impostos"
+        legenda_saldo = "Entradas - saídas"
+
     cards = [
-        ("Entradas", fmt(kpis["entradas"]), "Receita do recorte", CORES["positivo"]),
-        ("Saídas", fmt(kpis["saidas"]), "Despesas + impostos", CORES["negativo"]),
+        ("Entradas", fmt(kpis["entradas"]), legenda_entradas, CORES["positivo"]),
+        ("Saídas", fmt(kpis["saidas"]), legenda_saidas, CORES["negativo"]),
         ("Investido", fmt(kpis["investido"]), pct_poupanca, CORES["destaque"]),
-        ("Saldo", fmt(kpis["saldo"]), "Entradas - saídas", cor_saldo),
+        ("Saldo", fmt(kpis["saldo"]), legenda_saldo, cor_saldo),
     ]
-    for col, (label, valor, delta, cor) in zip(cols, cards, strict=True):
+    for col, (label, valor, delta_txt, cor) in zip(cols, cards, strict=True):
         with col:
-            st.markdown(_kpi_card_html(label, valor, delta, cor), unsafe_allow_html=True)
+            st.markdown(_kpi_card_html(label, valor, delta_txt, cor), unsafe_allow_html=True)
 
     st.markdown("---")
 
+    # Layout 2:1 -- Sankey à esquerda, INSIGHTS DERIVADOS à direita.
+    if insights:
+        col_main, col_insights = st.columns([2, 1])
+        with col_main:
+            _renderizar_sankey_inline(df)
+        with col_insights:
+            st.markdown(
+                '<h3 class="insights-titulo">INSIGHTS DERIVADOS</h3>',
+                unsafe_allow_html=True,
+            )
+            for tipo, titulo, corpo in insights:
+                st.markdown(
+                    insight_card_html(tipo, titulo, corpo),
+                    unsafe_allow_html=True,
+                )
+    else:
+        _renderizar_sankey_inline(df)
+
+
+def _renderizar_sankey_inline(df: pd.DataFrame) -> None:
+    """Sankey 3 níveis isolado para suportar layout em colunas (UX-V-2.6)."""
     dados_sankey = preparar_dados_sankey(df)
     if not dados_sankey:
         st.markdown(
@@ -623,6 +674,167 @@ def _renderizar_aba_padroes(df: pd.DataFrame) -> None:
 
 
 # ---------------------------------------------------------------------------
+# Helpers UX-V-2.6 -- delta vs anterior + insights derivados (ADR-13)
+# ---------------------------------------------------------------------------
+
+
+def _delta_periodo_anterior(df: pd.DataFrame, periodo_atual: str) -> dict:
+    """Calcula valores do período anterior para comparação.
+
+    Se ``periodo_atual='2026-04'``, anterior é ``'2026-03'``. Devolve dict
+    com ``delta_entradas_pct``, ``delta_saidas_pct``, ``delta_saldo_pct``,
+    ``mes_anterior``.
+
+    Degradação graciosa (ADR-10): se o período anterior não tem dados ou
+    o formato é inválido, devolve ``{}`` -- chamador deve tratar.
+    """
+    if df.empty or "mes_ref" not in df.columns:
+        return {}
+    try:
+        ano, mes = map(int, periodo_atual.split("-"))
+        if mes == 1:
+            ant = f"{ano - 1}-12"
+        else:
+            ant = f"{ano}-{mes - 1:02d}"
+    except (ValueError, AttributeError):
+        return {}
+
+    df_ant = df[df["mes_ref"] == ant]
+    df_atual = df[df["mes_ref"] == periodo_atual]
+    if df_ant.empty or df_atual.empty:
+        return {}
+
+    ent_ant = df_ant[df_ant["valor"] > 0]["valor"].sum()
+    ent_atual = df_atual[df_atual["valor"] > 0]["valor"].sum()
+    sai_ant = abs(df_ant[df_ant["valor"] < 0]["valor"].sum())
+    sai_atual = abs(df_atual[df_atual["valor"] < 0]["valor"].sum())
+    saldo_ant = ent_ant - sai_ant
+    saldo_atual = ent_atual - sai_atual
+
+    def _pct(atual: float, ant: float) -> float:
+        if ant <= 0:
+            return 0.0
+        return (atual - ant) / ant * 100
+
+    return {
+        "delta_entradas_pct": _pct(ent_atual, ent_ant),
+        "delta_saidas_pct": _pct(sai_atual, sai_ant),
+        "delta_saldo_pct": (
+            _pct(saldo_atual, saldo_ant) if saldo_ant != 0 else 0.0
+        ),
+        "mes_anterior": ant,
+    }
+
+
+def _gerar_insights(df: pd.DataFrame) -> list[tuple[str, str, str]]:
+    """Gera 3-4 insights derivados deterministicamente da estatística.
+
+    Devolve lista de tuplas ``(tipo, titulo, corpo)`` com tipo em
+    ``{"positivo", "atencao", "descoberta", "previsao"}``.
+
+    Sem LLM (ADR-13). Heurísticas:
+
+    * Categoria que cresceu mais que 20% vs mês anterior -> Atenção.
+    * Saldo crescente nos últimos 3+ meses -> Positivo.
+    * Recorrência de mesmo local em 4+ dos últimos 6 meses -> Descoberta.
+    * Margem prevista para próximo mês com base em média móvel -> Previsão.
+    """
+    insights: list[tuple[str, str, str]] = []
+
+    if df.empty or len(df) < 30:
+        return insights
+
+    # 1. Crescimento por categoria (Atenção)
+    if "mes_ref" in df.columns and "categoria" in df.columns:
+        meses = sorted(df["mes_ref"].dropna().unique())
+        if len(meses) >= 2:
+            mes_atual = meses[-1]
+            mes_ant = meses[-2]
+            for cat in df["categoria"].dropna().unique():
+                v_atual = abs(
+                    df[(df["mes_ref"] == mes_atual) & (df["categoria"] == cat)][
+                        "valor"
+                    ].sum()
+                )
+                v_ant = abs(
+                    df[(df["mes_ref"] == mes_ant) & (df["categoria"] == cat)][
+                        "valor"
+                    ].sum()
+                )
+                if v_ant > 0:
+                    delta = (v_atual - v_ant) / v_ant * 100
+                    if delta > 20 and v_atual > 100:
+                        insights.append(
+                            (
+                                "atencao",
+                                f"{cat} aumentou {delta:.0f}%",
+                                f"De R$ {v_ant:,.2f} ({mes_ant}) para "
+                                f"R$ {v_atual:,.2f} ({mes_atual}). "
+                                "Sazonalidade ou novo padrão?",
+                            )
+                        )
+                        break
+
+    # 2. Saldo crescente (Positivo)
+    saldos = pd.Series(dtype=float)
+    if "mes_ref" in df.columns:
+        saldos = df.groupby("mes_ref")["valor"].sum().tail(6)
+        if len(saldos) >= 3 and saldos.iloc[-1] > saldos.iloc[0]:
+            insights.append(
+                (
+                    "positivo",
+                    "Saldo crescente nos últimos meses",
+                    f"De R$ {saldos.iloc[0]:,.2f} ({saldos.index[0]}) para "
+                    f"R$ {saldos.iloc[-1]:,.2f} ({saldos.index[-1]}).",
+                )
+            )
+
+    # 3. Recorrência por local (Descoberta) -- 4+ ocorrências em 6 meses
+    if "mes_ref" in df.columns and "local" in df.columns and len(saldos) >= 3:
+        meses_recentes = sorted(df["mes_ref"].dropna().unique())[-6:]
+        df_recente = df[df["mes_ref"].isin(meses_recentes) & (df["valor"] < 0)]
+        if not df_recente.empty:
+            contagem = (
+                df_recente.groupby("local")["mes_ref"]
+                .nunique()
+                .sort_values(ascending=False)
+            )
+            for local, n_meses in contagem.items():
+                if (
+                    n_meses >= 4
+                    and isinstance(local, str)
+                    and local.strip()
+                ):
+                    valor_medio = abs(
+                        df_recente[df_recente["local"] == local]["valor"].mean()
+                    )
+                    insights.append(
+                        (
+                            "descoberta",
+                            f"Recorrência detectada: {local}",
+                            f"R$ {valor_medio:,.2f} em {int(n_meses)} dos "
+                            f"últimos {len(meses_recentes)} meses. "
+                            "Promover para fixo?",
+                        )
+                    )
+                    break
+
+    # 4. Previsão (média móvel)
+    if len(saldos) >= 3:
+        media = saldos.mean()
+        insights.append(
+            (
+                "previsao",
+                "Margem prevista para próximo mês",
+                f"Saldo médio R$ {media:,.2f} pelos últimos {len(saldos)} "
+                "meses. Aporte sugerido em CDB.",
+            )
+        )
+
+    return insights[:4]
+
+
+# ---------------------------------------------------------------------------
 # Entrypoint público
 # ---------------------------------------------------------------------------
 
@@ -665,6 +877,12 @@ def renderizar(
         )
         return
 
+    # UX-V-2.6: CSS escopado da página (tabs counters, kpi-delta, insights).
+    st.markdown(
+        minificar(carregar_css_pagina("analise_avancada")),
+        unsafe_allow_html=True,
+    )
+
     gran = ctx.get("granularidade", "Mês") if ctx else "Mês"
     periodo_filtro = ctx.get("periodo", periodo) if ctx else periodo
 
@@ -674,12 +892,46 @@ def renderizar(
     )
     extrato_periodo = filtrar_por_periodo(extrato_pessoa, gran, periodo_filtro)
 
+    # UX-V-2.6: tabs canônicas com counters (paridade com mockup 12-analise).
+    # Linha visual ANTES do st.tabs nativo. Counters: Fluxo=3 (níveis Sankey),
+    # Categorias=N únicas, Padrões=Nd (dias do recorte).
+    n_categorias = (
+        int(extrato_periodo["categoria"].nunique())
+        if "categoria" in extrato_periodo.columns and not extrato_periodo.empty
+        else 0
+    )
+    if (
+        "data" in extrato_periodo.columns
+        and not extrato_periodo.empty
+        and pd.notna(extrato_periodo["data"].min())
+    ):
+        n_dias = int(
+            (extrato_periodo["data"].max() - extrato_periodo["data"].min()).days
+        ) + 1
+    else:
+        n_dias = 0
+    tabs_html = (
+        tab_counter_html("Fluxo de caixa", 3, ativo=True)
+        + tab_counter_html("Categorias", n_categorias)
+        + tab_counter_html("Padrões temporais", f"{n_dias}d")
+    )
+    st.markdown(
+        f'<div class="analise-tabs">{tabs_html}</div>',
+        unsafe_allow_html=True,
+    )
+
+    # UX-V-2.6: delta vs período anterior + insights determinísticos (ADR-13).
+    delta_kpis = _delta_periodo_anterior(extrato_pessoa, periodo_filtro)
+    insights_lista = _gerar_insights(extrato_pessoa)
+
     aba_fluxo, aba_comparativo, aba_padroes = st.tabs(
         ["Fluxo de caixa", "Comparativo mensal", "Padrões temporais"]
     )
 
     with aba_fluxo:
-        _renderizar_aba_fluxo(extrato_periodo)
+        _renderizar_aba_fluxo(
+            extrato_periodo, delta=delta_kpis, insights=insights_lista
+        )
 
     with aba_comparativo:
         # Comparativo usa série histórica completa (não recortada por período)

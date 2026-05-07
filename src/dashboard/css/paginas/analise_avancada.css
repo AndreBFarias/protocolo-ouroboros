@@ -1,0 +1,38 @@
+/* CSS dedicado da página Análise -- UX-V-2.6.
+   Espelha mockup novo-mockup/mockups/12-analise.html (tabs com counters,
+   delta vs anterior nos KPIs, painel lateral INSIGHTS DERIVADOS).
+   Tokens canônicos via tokens.css (ADR-19). */
+
+/* Tabs canônicas com counters -- linha visual antes do st.tabs nativo. */
+.analise-tabs {
+    display: flex;
+    gap: var(--sp-3, 12px);
+    align-items: center;
+    margin-bottom: var(--sp-4, 16px);
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--border-subtle, #313445);
+    flex-wrap: wrap;
+}
+
+/* Delta vs anterior -- segunda linha do KPI. Verde quando positivo. */
+.kpi-delta {
+    font-family: var(--ff-mono, monospace);
+    font-size: 11px;
+    color: var(--accent-green, #50fa7b);
+    font-variant-numeric: tabular-nums;
+}
+.kpi-delta.negativo {
+    color: var(--accent-red, #ff5555);
+}
+
+/* Cabeçalho do painel lateral INSIGHTS DERIVADOS. */
+.insights-titulo {
+    font-family: var(--ff-mono, monospace);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.10em;
+    color: var(--text-secondary, #a8a9b8);
+    margin: 0 0 var(--sp-3, 12px);
+}
+
+/* "O dado fala; o insight escuta." -- princípio V-2.6 */
