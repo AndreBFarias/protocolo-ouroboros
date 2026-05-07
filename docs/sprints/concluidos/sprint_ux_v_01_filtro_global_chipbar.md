@@ -12,7 +12,7 @@ bloqueia: [UX-V-2.*, UX-V-3.*]
 esforco_estimado_horas: 4
 origem: docs/auditorias/AUDITORIA_PARIDADE_VISUAL_2026-05-07.md (P1)
 revisao_2026_05_07: spec corrigida após executor-sprint reportar achado-bloqueio (k) — código real tem 4 filtros + chaves seletor_* + contrato 3-tuple
-commit: pendente_assinatura_pos_commit
+commit: 4e66dcb
 ---
 
 # Sprint UX-V-01 — Filtro global como chip-bar fina canônica
