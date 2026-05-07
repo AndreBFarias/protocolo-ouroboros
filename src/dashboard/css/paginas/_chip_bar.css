@@ -1,67 +1,63 @@
-/* Chip-bar fina de filtros globais (UX-V-01).
-   Renderizada entre breadcrumb e page-header em TODAS páginas
-   orquestradas por main() em src/dashboard/app.py.
+/* Chip-bar fina de filtros globais (UX-V-01.b -- 2026-05-07).
+   Refator para usar st.popover Streamlit nativo: cada chip é um
+   popover clicável que abre dropdown com selectbox. Layout coeso
+   e fino, em substituição à versão V-01.a (chip-bar HTML estática
+   + 4 selectboxes verbosos abaixo).
 
-   Substitui visual do st.expander("Filtros globais") legado mas
-   preserva os mesmos selectboxes Streamlit abaixo via
-   label_visibility=collapsed. */
+   Renderizada por chip_bar_filtros_globais em
+   src/dashboard/componentes/ui.py, chamada por
+   src/dashboard/app.py:_filtros_globais_main. */
 
-.chip-bar-globais {
-    display: flex;
-    align-items: center;
-    gap: var(--sp-2);
-    padding: var(--sp-2) var(--sp-3);
-    margin-bottom: var(--sp-2);
-    background: var(--bg-inset);
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--r-md);
-    font-family: var(--ff-mono, monospace);
-    font-size: 11px;
-    flex-wrap: wrap;
+/* Estilo do botão popover dos chips de filtro -- visualizado como
+   chip fino na largura da coluna. Streamlit renderiza popover com
+   data-testid="stPopover" envolvendo o button. */
+[data-testid="stPopover"] > div > button {
+    width: 100%;
+    min-height: 28px !important;
+    height: 28px !important;
+    padding: 2px 12px !important;
+    background: var(--bg-inset) !important;
+    color: var(--text-secondary) !important;
+    border: 1px solid var(--border-subtle) !important;
+    border-radius: var(--r-full) !important;
+    font-family: var(--ff-mono, monospace) !important;
+    font-size: 11px !important;
+    text-align: left !important;
+    text-transform: lowercase;
+    letter-spacing: 0.02em;
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
 }
 
-.chip-bar-rotulo {
-    text-transform: uppercase;
+[data-testid="stPopover"] > div > button:hover {
+    border-color: var(--accent-purple) !important;
+    color: var(--text-primary) !important;
+    background: var(--bg-surface) !important;
+}
+
+[data-testid="stPopover"] > div > button:focus,
+[data-testid="stPopover"] > div > button[aria-expanded="true"] {
+    border-color: var(--accent-purple) !important;
+    color: var(--accent-purple) !important;
+    background: rgba(189, 147, 249, 0.10) !important;
+    box-shadow: 0 0 0 2px rgba(189, 147, 249, 0.20) !important;
+}
+
+/* Adicionar rótulo "filtros" antes do primeiro popover via ::before
+   no primeiro stHorizontalBlock que contém um popover. */
+[data-testid="stHorizontalBlock"]:has(> [data-testid="column"] > [data-testid="stVerticalBlock"] > [data-testid="stPopover"])::before {
+    content: "FILTROS";
+    align-self: center;
+    padding-right: var(--sp-2);
+    margin-right: var(--sp-1);
+    font-family: var(--ff-mono, monospace);
+    font-size: 10px;
     letter-spacing: 0.10em;
     color: var(--text-muted);
-    margin-right: var(--sp-2);
 }
 
-.chip-filtro {
-    padding: 2px 10px;
-    border-radius: var(--r-full);
-    background: var(--bg-surface);
-    color: var(--text-secondary);
-    border: 1px solid var(--border-subtle);
-    cursor: default;
-    transition: border-color 0.15s, color 0.15s;
-}
-
-.chip-filtro strong {
-    color: var(--text-primary);
-    font-weight: 600;
-    margin-left: 4px;
-}
-
-.chip-filtro:hover {
-    border-color: var(--accent-purple);
-    color: var(--text-primary);
-}
-
-.chip-filtro-ativo {
-    background: rgba(189, 147, 249, 0.10);
-    border-color: var(--accent-purple);
-    color: var(--accent-purple);
-}
-
-/* Selectboxes invisíveis abaixo da chip-bar -- Streamlit ainda
-   renderiza altura/padding mesmo com label_visibility=collapsed.
-   Compactar via top negativo para que o conjunto chip-bar + 4
-   selectboxes ocupe altura mínima. */
-div[data-testid="stSelectbox"] > label[aria-hidden="true"] {
-    display: none !important;
-}
-div[data-testid="stHorizontalBlock"]:has(div[data-testid="stSelectbox"] > label[aria-hidden="true"]) {
-    margin-top: -8px;
-    margin-bottom: var(--sp-2);
+/* Compactar gap das colunas dos chips para ficar parecido com chip-bar */
+[data-testid="stHorizontalBlock"]:has(> [data-testid="column"] > [data-testid="stVerticalBlock"] > [data-testid="stPopover"]) {
+    gap: var(--sp-2) !important;
+    margin-bottom: var(--sp-3);
+    align-items: center;
 }

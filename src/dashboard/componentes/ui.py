@@ -1062,7 +1062,6 @@ def chip_bar_filtros_globais(dados: dict) -> tuple[str, str, str]:
     """
     import streamlit as st
 
-    from src.dashboard.componentes.html_utils import minificar
     from src.dashboard.dados import (
         obter_anos_disponiveis,
         obter_dias_do_mes,
@@ -1084,113 +1083,99 @@ def chip_bar_filtros_globais(dados: dict) -> tuple[str, str, str]:
     granularidade_atual = st.session_state.get("seletor_granularidade", "Mês")
     pessoa_atual = st.session_state.get("seletor_pessoa", "Todos")
     forma_atual = st.session_state.get("seletor_forma_pagamento", "Todas")
+    periodo_chip = _resumir_periodo_chip(granularidade_atual)
 
-    # Chip-bar visual (HTML estático lido por _chip_bar.css). Mostra estado
-    # corrente das 4 dimensões. O texto do "período" é derivado de
-    # ``_resumir_periodo_chip``; valores reais do filtro são definidos
-    # pelos selectboxes invisíveis renderizados logo abaixo.
-    chip_bar_html = minificar(
-        f"""
-        <div class="chip-bar-globais">
-          <span class="chip-bar-rotulo">filtros</span>
-          <span class="chip-filtro" data-tipo="granularidade">
-            granularidade: <strong>{granularidade_atual}</strong>
-          </span>
-          <span class="chip-filtro" data-tipo="periodo">
-            período: <strong>{_resumir_periodo_chip(granularidade_atual)}</strong>
-          </span>
-          <span class="chip-filtro" data-tipo="pessoa">
-            pessoa: <strong>{pessoa_atual}</strong>
-          </span>
-          <span class="chip-filtro" data-tipo="forma">
-            forma: <strong>{forma_atual}</strong>
-          </span>
-        </div>
-        """
-    )
-    st.markdown(chip_bar_html, unsafe_allow_html=True)
+    # Refator V-01.b (2026-05-07): cada chip da chip-bar é agora um
+    # st.popover Streamlit nativo. Clicar abre dropdown com selectbox
+    # dentro. Substitui chip-bar HTML estática + 4 selectboxes verbosos
+    # por interface coesa, fina e funcional. Streamlit >= 1.32.
+    #
+    # Layout: 4 colunas estreitas que renderizam só os labels dos
+    # popovers (que já são os "chips"). CSS em _chip_bar.css adapta os
+    # botões de popover para ter visual de chip fino.
+    cols = st.columns([1, 1, 1, 1, 6])  # 4 chips + spacer
 
-    # Selectboxes invisíveis (label_visibility=collapsed) -- preservam o
-    # comportamento Streamlit do expander legado SEM o expander. Layout:
-    # 4 colunas finas alinhadas com a chip-bar.
-    col_g, col_p, col_pessoa, col_forma = st.columns([1, 1, 1, 1])
-
-    with col_g:
-        granularidade: str = st.selectbox(
-            "Granularidade",
-            ["Dia", "Semana", "Mês", "Ano"],
-            index=2,
-            key="seletor_granularidade",
-            label_visibility="collapsed",
-        )
-
-    with col_p:
-        if granularidade == "Ano":
-            anos = obter_anos_disponiveis(dados)
-            periodo: str = st.selectbox(
-                "Período",
-                anos,
-                index=0,
-                key="seletor_periodo",
-                label_visibility="collapsed",
+    with cols[0]:
+        with st.popover(
+            f"granularidade: {granularidade_atual}",
+            use_container_width=True,
+        ):
+            granularidade: str = st.selectbox(
+                "Granularidade",
+                ["Dia", "Semana", "Mês", "Ano"],
+                index=2,
+                key="seletor_granularidade",
             )
-        else:
-            mes_base: str = st.selectbox(
-                "Mês",
-                meses,
-                index=0,
-                key="seletor_mes_base",
-                label_visibility="collapsed",
-            )
-            if granularidade == "Semana":
-                semanas = obter_semanas_do_mes(dados, mes_base)
-                periodo = (
-                    st.selectbox(
-                        "Semana",
-                        semanas,
-                        index=0,
-                        key="seletor_detalhe",
-                        label_visibility="collapsed",
-                    )
-                    if semanas
-                    else mes_base
-                )
-            elif granularidade == "Dia":
-                dias = obter_dias_do_mes(dados, mes_base)
-                periodo = (
-                    st.selectbox(
-                        "Dia",
-                        dias,
-                        index=0,
-                        key="seletor_detalhe",
-                        label_visibility="collapsed",
-                    )
-                    if dias
-                    else mes_base
+
+    with cols[1]:
+        with st.popover(
+            f"período: {periodo_chip}",
+            use_container_width=True,
+        ):
+            if granularidade == "Ano":
+                anos = obter_anos_disponiveis(dados)
+                periodo: str = st.selectbox(
+                    "Período",
+                    anos,
+                    index=0,
+                    key="seletor_periodo",
                 )
             else:
-                periodo = mes_base
+                mes_base: str = st.selectbox(
+                    "Mês",
+                    meses,
+                    index=0,
+                    key="seletor_mes_base",
+                )
+                if granularidade == "Semana":
+                    semanas = obter_semanas_do_mes(dados, mes_base)
+                    periodo = (
+                        st.selectbox(
+                            "Semana", semanas, index=0,
+                            key="seletor_detalhe",
+                        )
+                        if semanas
+                        else mes_base
+                    )
+                elif granularidade == "Dia":
+                    dias = obter_dias_do_mes(dados, mes_base)
+                    periodo = (
+                        st.selectbox(
+                            "Dia", dias, index=0,
+                            key="seletor_detalhe",
+                        )
+                        if dias
+                        else mes_base
+                    )
+                else:
+                    periodo = mes_base
 
-    with col_pessoa:
-        pessoa: str = st.selectbox(
-            "Pessoa",
-            opcoes_pessoa,
-            index=0,
-            key="seletor_pessoa",
-            label_visibility="collapsed",
-        )
+    with cols[2]:
+        with st.popover(
+            f"pessoa: {pessoa_atual}",
+            use_container_width=True,
+        ):
+            pessoa: str = st.selectbox(
+                "Pessoa",
+                opcoes_pessoa,
+                index=0,
+                key="seletor_pessoa",
+            )
 
-    with col_forma:
-        forma_sel: str = st.selectbox(
-            "Forma de pagamento",
-            ["Todas", "Pix", "Débito", "Crédito", "Boleto", "Transferência"],
-            index=0,
-            key="seletor_forma_pagamento",
-            label_visibility="collapsed",
-        )
-        st.session_state["filtro_forma"] = (
-            None if forma_sel == "Todas" else forma_sel
-        )
+    with cols[3]:
+        with st.popover(
+            f"forma: {forma_atual}",
+            use_container_width=True,
+        ):
+            forma_sel: str = st.selectbox(
+                "Forma de pagamento",
+                ["Todas", "Pix", "Débito", "Crédito", "Boleto", "Transferência"],
+                index=0,
+                key="seletor_forma_pagamento",
+            )
+            st.session_state["filtro_forma"] = (
+                None if forma_sel == "Todas" else forma_sel
+            )
 
     return periodo, pessoa, granularidade
 
