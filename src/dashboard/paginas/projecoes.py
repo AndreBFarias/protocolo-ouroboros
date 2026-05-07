@@ -32,6 +32,10 @@ import streamlit as st
 
 from src.dashboard import tema
 from src.dashboard.componentes.html_utils import minificar
+from src.dashboard.componentes.ui import (
+    callout_html,
+    subtitulo_secao_html,
+)
 from src.dashboard.dados import (
     filtrar_por_forma_pagamento,
     filtrar_por_pessoa,
@@ -43,9 +47,7 @@ from src.dashboard.tema import (
     FONTE_MINIMA,
     LAYOUT_PLOTLY,
     aplicar_locale_ptbr,
-    callout_html,
     rgba_cor,
-    subtitulo_secao_html,
 )
 from src.dashboard.tema_plotly import st_plotly_chart_dracula
 

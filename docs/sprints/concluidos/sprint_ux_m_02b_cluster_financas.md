@@ -1,14 +1,32 @@
 ---
 id: UX-M-02.B
 titulo: Migração cluster Finanças para ui.py canônico
-status: backlog
+status: concluida
+concluida_em: 2026-05-06
 prioridade: alta
 data_criacao: 2026-05-06
 fase: MODULARIZAÇÃO
 depende_de: [UX-M-02, UX-M-03]
 co_executavel_com: [UX-M-02.A, UX-M-02.C, UX-M-02.D]
 esforco_estimado_horas: 3
+veredicto: APROVADO_COM_RESSALVAS
+commit: 85f116b
 ---
+
+## Conclusão (2026-05-06)
+
+**Veredicto: APROVADO COM RESSALVAS** — sub-spec UX-M-02.B.1 derivada (achado colateral).
+
+### Realizado
+
+- Migrados imports `callout_html`, `card_html`, `subtitulo_secao_html` de `src.dashboard.tema` para `src.dashboard.componentes.ui` em 4 páginas do cluster Finanças (`extrato.py`, `contas.py`, `pagamentos.py`, `projecoes.py`).
+- `make lint` exit 0, 77 testes do cluster Finanças passando, validação visual playwright batch das 4 páginas com dados reais (sha256 + descrição multimodal no proof-of-work).
+
+### Ressalvas (sprint-filha aberta)
+
+1. **`_estilos_locais_html()` permanece em `extrato.py`** (~345 linhas de CSS específico de página). Hipótese da spec citava `_CSS_LOCAL_EXTRATO`; nome real é `_estilos_locais_html`. Análise mostrou que as classes `.t02-*` e `.extrato-saldo-*` são genuinamente específicas da página (variações do mockup `02-extrato.html` sem equivalente em `components.css`), não duplicações triviais.
+
+2. **Meta "≥30% redução em extrato.py" NÃO atingida** — escopo factível desta sub-sprint cobre apenas migração de imports (1 import movida em extrato). Extrair `_estilos_locais_html` para arquivo CSS dedicado exigiria sprint-filha (proibido tocar `components.css` no escopo M-02.B). Sprint-filha proposta: `UX-M-02.B.1` em `docs/sprints/backlog/`.
 
 # Sprint UX-M-02.B — Migração cluster Finanças
 

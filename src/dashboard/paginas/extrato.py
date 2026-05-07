@@ -53,6 +53,9 @@ from src.dashboard.componentes.drilldown import (
     limpar_filtro,
 )
 from src.dashboard.componentes.html_utils import minificar
+from src.dashboard.componentes.ui import (
+    callout_html,
+)
 from src.dashboard.dados import (
     filtrar_por_forma_pagamento,
     filtrar_por_periodo,
@@ -63,7 +66,6 @@ from src.dashboard.tema import (
     CORES,
     FONTE_CORPO,
     breadcrumb_drilldown_html,
-    callout_html,
     icon_html,
 )
 
