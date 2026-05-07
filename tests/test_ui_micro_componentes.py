@@ -78,11 +78,17 @@ def test_insight_card_tipo_invalido_cai_em_descoberta() -> None:
     assert "insight-descoberta" in html
 
 
-@pytest.mark.parametrize("tipo", ["positivo", "atencao", "descoberta", "previsao"])
-def test_insight_card_tipos_validos(tipo: str) -> None:
+@pytest.mark.parametrize("tipo,label_esperado", [
+    ("positivo", "POSITIVO"),
+    ("atencao", "ATENÇÃO"),
+    ("descoberta", "DESCOBERTA"),
+    ("previsao", "PREVISÃO"),
+])
+def test_insight_card_tipos_validos(tipo: str, label_esperado: str) -> None:
+    """UX-V-2.6 fix: rótulo PT-BR canônico (não tipo.upper() ASCII)."""
     html = insight_card_html(tipo, "Título", "Corpo")
     assert f"insight-{tipo}" in html
-    assert tipo.upper() in html
+    assert label_esperado in html
 
 
 def test_todos_micro_componentes_minificados() -> None:
