@@ -172,14 +172,14 @@ def test_listagem_de_paginas_nao_vazia() -> None:
 # das anteriores.
 # Sprint UX-U-03: ``extrato.py`` e ``analise_avancada.py`` migraram para
 # ``renderizar_page_header`` (helper canônico Onda U). ``hero_titulo_html``
-# está em deprecação progressiva. ``contas.py`` e ``projecoes.py``
-# permanecem na lista até serem refatoradas em sprint formal (Onda T).
-PAGINAS_COM_HERO: frozenset[str] = frozenset(
-    {
-        "contas.py",
-        "projecoes.py",
-    }
-)
+# está em deprecação progressiva.
+# Sprint UX-M-TESTES (2026-05-06): ``contas.py`` e ``projecoes.py`` saíram
+# da lista — commit ``2817706`` substituiu ``hero_titulo_html`` em sub-seções
+# de ambos por ``subtitulo_secao_html`` (hero é exclusivo do page-header
+# canônico no topo da página, conforme Onda U-03). Lista agora vazia
+# documenta o estado terminal: ``hero_titulo_html`` foi totalmente
+# desindexado do escopo histórico Sprint 92a.6.
+PAGINAS_COM_HERO: frozenset[str] = frozenset()
 
 
 @pytest.mark.parametrize("nome_pagina", sorted(PAGINAS_COM_HERO), ids=lambda s: s)

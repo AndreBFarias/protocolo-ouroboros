@@ -1,13 +1,15 @@
 ---
 id: UX-M-TESTES-REGRESSIVOS
 titulo: Atualizar 4 testes regressivos pre-Onda M (debito historico)
-status: backlog
+status: concluida
+concluida_em: 2026-05-06
 prioridade: media
 data_criacao: 2026-05-06
 fase: MODULARIZAÇÃO
 depende_de: []
 co_executavel_com: [UX-M-01, UX-M-02, UX-M-03, UX-M-04]
 esforco_estimado_horas: 1-2
+esforco_real_horas: ~30min
 ---
 
 # Sprint UX-M-TESTES-REGRESSIVOS — Atualizar 4 testes regressivos pré-Onda M
