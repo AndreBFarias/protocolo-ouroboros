@@ -1,9 +1,11 @@
 # ruff: noqa: E501
-"""Testes UX-U-04: sidebar shell-only e helpers de filtros por página.
+"""Testes UX-U-04 + UX-V-01: sidebar shell-only e filtros globais.
 
 - Sidebar tem ZERO selectbox e ZERO text_input após refactor radical.
 - 8 clusters do shell HTML continuam acessíveis.
-- Expander "Filtros globais" no main tem 4 selectbox.
+- Filtros globais no main usam chip-bar fina (UX-V-01) com 4 chips
+  visíveis e 4 selectbox invisíveis (``label_visibility=collapsed``).
+  O ``st.expander("Filtros globais")`` legado foi substituído.
 - Helper ``componentes/filtros_pagina.py`` exporta os 4 helpers canônicos.
 """
 from __future__ import annotations
@@ -85,49 +87,56 @@ def test_sidebar_continua_com_8_clusters(streamlit_url: str) -> None:
         b.close()
 
 
-def test_filtros_globais_main_tem_expander(streamlit_url: str) -> None:
-    """UX-U-04: filtros migraram para expander no main com 4 selectbox.
+def test_filtros_globais_main_tem_chip_bar(streamlit_url: str) -> None:
+    """UX-V-01.b: filtros globais como 4 popovers (granularidade/período/pessoa/forma).
 
-    Expander começa colapsado; teste expande primeiro e depois conta.
+    Substitui o teste original ``test_filtros_globais_main_tem_expander``
+    (UX-U-04). Refator V-01.b (2026-05-07): cada chip da chip-bar é
+    ``st.popover`` Streamlit nativo. Contrato 3-tuple e 7 chaves de
+    session_state preservados; pipeline downstream intacto.
     """
     with sync_playwright() as p:
         b = p.chromium.launch()
         page = b.new_context(viewport={"width": 1440, "height": 900}).new_page()
         page.goto(streamlit_url)
         page.wait_for_timeout(6000)
-        # Tenta clicar no header do expander "Filtros globais"
-        clicou = page.evaluate(
-            """() => {
-                const labels = Array.from(document.querySelectorAll('summary, [data-testid="stExpanderToggleIcon"]'));
-                const matches = Array.from(document.querySelectorAll('details, [data-testid="stExpander"]'));
-                for (const m of matches) {
-                    const txt = m.textContent || '';
-                    if (txt.includes('Filtros globais')) {
-                        const sum = m.querySelector('summary') || m.querySelector('[role="button"]');
-                        if (sum) { sum.click(); return true; }
-                    }
-                }
-                return false;
-            }"""
-        )
-        page.wait_for_timeout(2500)
         info = page.evaluate(
             """() => {
                 const sidebar_selects = document.querySelectorAll('[data-testid="stSidebar"] [data-testid="stSelectbox"]');
-                const all_selects = document.querySelectorAll('[data-testid="stSelectbox"]');
-                // selectbox fora da sidebar = no main
-                let main_count = 0;
-                all_selects.forEach(s => {
-                    let p = s.closest('[data-testid="stSidebar"]');
-                    if (!p) main_count++;
-                });
-                return {sidebar: sidebar_selects.length, main: main_count, clicou_expander: true};
+                const popovers_main = Array.from(
+                    document.querySelectorAll('[data-testid="stPopover"]')
+                ).filter(e => !e.closest('[data-testid="stSidebar"]')).length;
+                const labels_chips = Array.from(
+                    document.querySelectorAll('[data-testid="stPopover"] button')
+                ).map(b => (b.textContent || '').toLowerCase().trim());
+                const tem_granularidade = labels_chips.some(l => l.includes('granularidade'));
+                const tem_periodo = labels_chips.some(l => l.includes('período') || l.includes('periodo'));
+                const tem_pessoa = labels_chips.some(l => l.includes('pessoa'));
+                const tem_forma = labels_chips.some(l => l.includes('forma'));
+                const expanders_filtros = Array.from(
+                    document.querySelectorAll('[data-testid="stExpander"], details')
+                ).filter(e => (e.textContent || '').includes('Filtros globais')).length;
+                return {
+                    sidebar_selects: sidebar_selects.length,
+                    popovers_main: popovers_main,
+                    tem_granularidade: tem_granularidade,
+                    tem_periodo: tem_periodo,
+                    tem_pessoa: tem_pessoa,
+                    tem_forma: tem_forma,
+                    expanders_filtros: expanders_filtros,
+                };
             }"""
         )
-        info["clicou_expander"] = clicou
-        assert info["sidebar"] == 0, f"esperado 0 selectbox sidebar; achou {info['sidebar']}"
-        assert info["main"] >= 4, (
-            f"esperado >=4 selectbox no main (granularidade+periodo+pessoa+forma); achou {info['main']}; expander_clicked={clicou}"
+        assert info["sidebar_selects"] == 0, f"esperado 0 selectbox sidebar; achou {info['sidebar_selects']}"
+        assert info["popovers_main"] >= 4, (
+            f"esperado >=4 popovers no main (granularidade/periodo/pessoa/forma); achou {info['popovers_main']}"
+        )
+        assert info["tem_granularidade"], "popover 'granularidade' não encontrado"
+        assert info["tem_periodo"], "popover 'período' não encontrado"
+        assert info["tem_pessoa"], "popover 'pessoa' não encontrado"
+        assert info["tem_forma"], "popover 'forma' não encontrado"
+        assert info["expanders_filtros"] == 0, (
+            f"expander 'Filtros globais' deve sumir após UX-V-01; achou {info['expanders_filtros']}"
         )
         b.close()
 

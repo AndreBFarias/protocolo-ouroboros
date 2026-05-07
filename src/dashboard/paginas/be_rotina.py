@@ -173,8 +173,9 @@ def renderizar(
     """Renderiza Bem-estar / Rotina (UX-T-20)."""
     from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
     renderizar_grupo_acoes([
-        {"label": "Hoje", "href": "?cluster=Bem-estar&tab=Hoje"},
-        {"label": "Novo", "primary": True,
+        {"label": "Hoje", "glyph": "calendar",
+         "href": "?cluster=Bem-estar&tab=Hoje"},
+        {"label": "Novo", "primary": True, "glyph": "plus",
          "title": "Wizard alarme/tarefa/contador"},
     ])
 
@@ -200,9 +201,60 @@ def renderizar(
     )
 
     if cfg is None:
-        st.warning(
-            f"Arquivo `{caminho}` não encontrado. "
-            "Use a aba **Editor TOML** para criar a rotina inicial."
+        from src.dashboard.componentes.ui import (
+            fallback_estado_inicial_html,
+            ler_sync_info,
+        )
+        skeleton = (
+            '<div style="display:grid;grid-template-columns:repeat(4,1fr);'
+            'gap:10px;margin-bottom:14px;">'
+            '<div class="kpi"><span class="kpi-label">ALARMES</span>'
+            '<span class="kpi-value">--</span></div>'
+            '<div class="kpi"><span class="kpi-label">TAREFAS</span>'
+            '<span class="kpi-value">--</span></div>'
+            '<div class="kpi"><span class="kpi-label">CONTADORES</span>'
+            '<span class="kpi-value">--</span></div>'
+            '<div class="kpi"><span class="kpi-label">STREAK</span>'
+            '<span class="kpi-value">--</span></div>'
+            '</div>'
+            '<div style="display:grid;grid-template-columns:1.2fr 1fr 0.8fr;'
+            'gap:14px;">'
+            '<div><span class="skel-bloco" style="width:40%;height:0.8em;'
+            'margin-bottom:8px;"></span>'
+            '<div style="display:flex;flex-direction:column;gap:6px;">'
+            '<span class="skel-bloco" style="width:90%;"></span>'
+            '<span class="skel-bloco" style="width:70%;"></span>'
+            '</div></div>'
+            '<div><span class="skel-bloco" style="width:40%;height:0.8em;'
+            'margin-bottom:8px;"></span>'
+            '<div style="display:flex;flex-direction:column;gap:6px;">'
+            '<span class="skel-bloco" style="width:85%;"></span>'
+            '<span class="skel-bloco" style="width:75%;"></span>'
+            '</div></div>'
+            '<div><span class="skel-bloco" style="width:50%;height:0.8em;'
+            'margin-bottom:8px;"></span>'
+            '<div style="display:flex;flex-direction:column;gap:6px;">'
+            '<span class="skel-bloco" style="width:80%;"></span>'
+            '<span class="skel-bloco" style="width:60%;"></span>'
+            '</div></div>'
+            '</div>'
+        )
+        st.markdown(
+            fallback_estado_inicial_html(
+                titulo="ROTINA · sem configuração ainda",
+                descricao=(
+                    "Alarmes, tarefas recorrentes e contadores diários são "
+                    "definidos em <code>privacidade/rotina.toml</code>. Use a "
+                    "aba <code>Editor TOML</code> ao lado para criar a "
+                    "configuração inicial -- ou edite o arquivo direto no "
+                    "app mobile, que sincroniza com o vault."
+                ),
+                skeleton_html=skeleton,
+                cta_label="Configure pelo Editor TOML ou pelo app mobile",
+                cta_secao="rotina",
+                sync_info=ler_sync_info(),
+            ),
+            unsafe_allow_html=True,
         )
         return
 

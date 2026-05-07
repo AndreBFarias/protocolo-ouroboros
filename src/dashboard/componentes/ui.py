@@ -56,6 +56,7 @@ from pathlib import Path
 # ---------------------------------------------------------------------------
 # Imports internos -- componentes já modulares (re-exports)
 # ---------------------------------------------------------------------------
+from src.dashboard.componentes.html_utils import minificar
 from src.dashboard.componentes.page_header import (
     renderizar_page_header as page_header,
 )
@@ -103,6 +104,20 @@ __all__ = [
     "group_card",
     # Helper de carregamento de CSS por página
     "carregar_css_pagina",
+    # Micro-componentes UX-V-02 (6)
+    "sparkline_html",
+    "bar_uso_html",
+    "donut_inline_html",
+    "prazo_ritmo_falta_html",
+    "tab_counter_html",
+    "insight_card_html",
+    # Sync observabilidade (UX-V-04)
+    "ler_sync_info",
+    "sync_indicator_html",
+    # Fallback estado-inicial (UX-V-03)
+    "fallback_estado_inicial_html",
+    # UX-V-01: chip-bar de filtros globais
+    "chip_bar_filtros_globais",
 ]
 
 
@@ -704,4 +719,583 @@ def group_card(
     )
 
 
-# "A unidade é a forma da multiplicidade." -- Plotino
+# ---------------------------------------------------------------------------
+# === Micro-componentes UX-V-02 ===
+# ---------------------------------------------------------------------------
+# Sprint UX-V-02 (Onda V -- paridade visual) entrega 6 micro-componentes
+# transversais consumidos por páginas da Leva V-2: sparkline (Contas/Medidas),
+# bar_uso (Contas/Categorias), donut_inline + prazo_ritmo_falta (Metas),
+# tab_counter (Análise/Memórias) e insight_card (Análise/Cruzamentos).
+#
+# Esta sprint apenas ENTREGA a fronteira; migração das páginas é escopo das
+# sprints V-2.x. CSS canônico vive em ``src/dashboard/css/components.css``.
+#
+# Referência: docs/sprints/concluidos/sprint_ux_v_02_micro_componentes.md.
+
+_INSIGHT_TIPOS_VALIDOS = {"positivo", "atencao", "descoberta", "previsao"}
+
+
+def sparkline_html(
+    valores: list[float],
+    *,
+    cor: str | None = None,
+    largura: int = 80,
+    altura: int = 24,
+) -> str:
+    """Sparkline SVG inline minimalista (sem libs externas).
+
+    Args:
+        valores: série numérica (>=2 pontos). Lista vazia ou ponto único
+            retornam string vazia (degradação graciosa, ADR-10).
+        cor: hex/var token. Default ``var(--accent-purple)``.
+        largura: pixels (default 80).
+        altura: pixels (default 24).
+
+    Returns:
+        ``<span class="sparkline">...</span>`` minificado.
+    """
+    if not valores or len(valores) < 2:
+        return ""
+    cor_efetiva = cor or "var(--accent-purple)"
+    minimo, maximo = min(valores), max(valores)
+    intervalo = (maximo - minimo) or 1.0
+    n = len(valores)
+    pontos = " ".join(
+        f"{(i / (n - 1)) * largura:.2f},{altura - ((v - minimo) / intervalo) * altura:.2f}"
+        for i, v in enumerate(valores)
+    )
+    return minificar(
+        f"""
+        <span class="sparkline">
+          <svg viewBox="0 0 {largura} {altura}" width="{largura}" height="{altura}">
+            <polyline class="sparkline-line"
+              fill="none" stroke="{cor_efetiva}" stroke-width="1.5"
+              points="{pontos}" />
+          </svg>
+        </span>
+        """
+    )
+
+
+def bar_uso_html(
+    usado: float,
+    total: float,
+    *,
+    label: str = "",
+    cor: str | None = None,
+) -> str:
+    """Barra horizontal de uso percentual usado/total.
+
+    Args:
+        usado: valor consumido (numerador).
+        total: capacidade total (denominador). ``<= 0`` retorna string vazia.
+        label: texto pequeno acima da barra (ex.: ``"36% usado"``).
+        cor: override; default escolhe por percentual
+            (>=90 vermelho, >=60 laranja, senão verde).
+
+    Returns:
+        ``<div class="bar-uso">...</div>`` minificado.
+    """
+    if total <= 0:
+        return ""
+    pct = max(0.0, min(100.0, (usado / total) * 100.0))
+    if cor is None:
+        if pct >= 90:
+            cor = "var(--accent-red)"
+        elif pct >= 60:
+            cor = "var(--accent-orange)"
+        else:
+            cor = "var(--accent-green)"
+    label_html = f'<span class="bar-uso-label">{label}</span>' if label else ""
+    return minificar(
+        f"""
+        <div class="bar-uso" data-pct="{pct:.1f}">
+          {label_html}
+          <div class="bar-uso-track">
+            <span class="bar-uso-fill" style="width:{pct:.2f}%; background:{cor};"></span>
+          </div>
+        </div>
+        """
+    )
+
+
+def donut_inline_html(
+    percentual: float,
+    *,
+    tamanho: int = 60,
+    cor: str | None = None,
+) -> str:
+    """Donut SVG compacto com percentual no centro.
+
+    Args:
+        percentual: 0..100 (clamped automaticamente).
+        tamanho: pixels do quadrado SVG (default 60).
+        cor: stroke do arco; default por percentual
+            (=100 verde, >=70 amarelo, >=30 roxo, senão vermelho).
+
+    Returns:
+        ``<span class="donut-mini">...</span>`` minificado.
+    """
+    pct = max(0.0, min(100.0, percentual))
+    if cor is None:
+        if pct >= 100:
+            cor = "var(--accent-green)"
+        elif pct >= 70:
+            cor = "var(--accent-yellow)"
+        elif pct >= 30:
+            cor = "var(--accent-purple)"
+        else:
+            cor = "var(--accent-red)"
+    raio = (tamanho - 8) / 2  # margem 4px
+    centro = tamanho / 2
+    circ = 2 * 3.14159 * raio
+    offset = circ * (1 - pct / 100)
+    return minificar(
+        f"""
+        <span class="donut-mini" style="width:{tamanho}px;height:{tamanho}px;">
+          <svg viewBox="0 0 {tamanho} {tamanho}">
+            <circle class="donut-mini-track"
+              cx="{centro}" cy="{centro}" r="{raio:.2f}"
+              fill="none" stroke="var(--bg-elevated)" stroke-width="4" />
+            <circle class="donut-mini-fill"
+              cx="{centro}" cy="{centro}" r="{raio:.2f}"
+              fill="none" stroke="{cor}" stroke-width="4"
+              stroke-dasharray="{circ:.2f}" stroke-dashoffset="{offset:.2f}"
+              transform="rotate(-90 {centro} {centro})" />
+          </svg>
+          <span class="donut-mini-pct">{pct:.0f}%</span>
+        </span>
+        """
+    )
+
+
+def prazo_ritmo_falta_html(prazo: str, ritmo: str, falta: str) -> str:
+    """Layout de 3 colunas (PRAZO / RITMO / FALTA) usado em cards de meta.
+
+    Args:
+        prazo: texto curto (ex.: ``"SET/2026"``).
+        ritmo: texto curto (ex.: ``"+R$ 2.500/MÊS"``).
+        falta: texto curto (ex.: ``"5 MESES"``).
+
+    Returns:
+        ``<div class="prazo-ritmo-falta">...</div>`` minificado.
+    """
+    return minificar(
+        f"""
+        <div class="prazo-ritmo-falta">
+          <div class="prf-celula">
+            <span class="prf-rotulo">PRAZO</span>
+            <span class="prf-valor">{prazo}</span>
+          </div>
+          <div class="prf-celula">
+            <span class="prf-rotulo">RITMO</span>
+            <span class="prf-valor">{ritmo}</span>
+          </div>
+          <div class="prf-celula">
+            <span class="prf-rotulo">FALTA</span>
+            <span class="prf-valor">{falta}</span>
+          </div>
+        </div>
+        """
+    )
+
+
+def tab_counter_html(label: str, count: int, *, ativo: bool = False) -> str:
+    """Tab inline com counter (ex.: ``"Fluxo de caixa  3"``).
+
+    Renderiza apenas o HTML do rótulo + counter, embarcável em
+    ``st.tabs([...])`` via custom CSS ou em radio horizontal. Não
+    implementa comportamento de tab (responsabilidade da página).
+
+    Args:
+        label: texto da tab.
+        count: número exibido pequeno após o label.
+        ativo: se True aplica classe ``.tab-counter-ativo`` (cor accent).
+
+    Returns:
+        ``<span class="tab-counter">...</span>`` minificado.
+    """
+    classe = "tab-counter tab-counter-ativo" if ativo else "tab-counter"
+    return minificar(
+        f"""
+        <span class="{classe}">
+          {label}
+          <span class="tab-counter-num">{count}</span>
+        </span>
+        """
+    )
+
+
+def insight_card_html(tipo: str, titulo: str, corpo: str) -> str:
+    """Card lateral de insight derivado.
+
+    Args:
+        tipo: ``"positivo" | "atencao" | "descoberta" | "previsao"``.
+            Outro valor cai em ``"descoberta"`` (degradação graciosa,
+            ADR-10) -- não levanta erro.
+        titulo: heading curto (<=60 chars idealmente).
+        corpo: parágrafo (HTML safe esperado; chamador escapa input
+            não-confiável).
+
+    Returns:
+        ``<div class="insight-card insight-{tipo}">...</div>`` minificado.
+    """
+    if tipo not in _INSIGHT_TIPOS_VALIDOS:
+        tipo = "descoberta"
+    return minificar(
+        f"""
+        <div class="insight-card insight-{tipo}">
+          <span class="insight-card-tipo">{tipo.upper()}</span>
+          <h4 class="insight-card-titulo">{titulo}</h4>
+          <p class="insight-card-corpo">{corpo}</p>
+        </div>
+        """
+    )
+
+
+# ---------------------------------------------------------------------------
+# === Sync indicator (UX-V-04) ===
+# ---------------------------------------------------------------------------
+# Componente discreto que expõe quando o pipeline vault → cache → dashboard
+# rodou pela última vez. Fallback resiliente (ADR-10): se o cache não existe
+# ou está corrompido, renderiza "sync: nunca" sem quebrar a página.
+#
+# Pareado com ``src.obsidian.sync_rico._gravar_last_sync`` (escritor).
+
+
+def ler_sync_info() -> dict | None:
+    """Lê ``.ouroboros/cache/last_sync.json`` da raiz do projeto.
+
+    Retorna o payload (dict) quando o arquivo existe e é JSON válido.
+    Retorna ``None`` quando ausente, ilegível ou malformado -- chamadores
+    devem tratar ambos os casos como "nunca sincronizado" (graceful, ADR-10).
+    """
+    import json
+    try:
+        raiz = Path(__file__).resolve().parents[3]
+        arquivo = raiz / ".ouroboros" / "cache" / "last_sync.json"
+        if not arquivo.exists():
+            return None
+        return json.loads(arquivo.read_text(encoding="utf-8"))
+    except (OSError, ValueError, json.JSONDecodeError):
+        return None
+
+
+def sync_indicator_html(sync_info: dict | None = None) -> str:
+    """Chip pequeno mostrando idade da última sync vault → cache.
+
+    - Verde (default): sync < 1h.
+    - Amarelo (``sync-indicator-stale``): sync entre 1h e 24h.
+    - Amarelo + "rode --sync": sync > 24h ou nunca.
+    """
+    from datetime import datetime, timezone
+
+    if sync_info is None:
+        sync_info = ler_sync_info()
+
+    if not sync_info or "data" not in sync_info:
+        return (
+            '<span class="sync-indicator sync-indicator-stale" '
+            'title="Nunca sincronizado">sync: nunca</span>'
+        )
+
+    try:
+        ts = datetime.fromisoformat(sync_info["data"])
+    except (ValueError, TypeError):
+        return (
+            '<span class="sync-indicator sync-indicator-stale" '
+            'title="Timestamp inválido">sync: ?</span>'
+        )
+
+    agora = datetime.now(tz=ts.tzinfo or timezone.utc)
+    delta_horas = (agora - ts).total_seconds() / 3600
+
+    if delta_horas < 1:
+        classe = ""
+        minutos = max(0, int(delta_horas * 60))
+        rotulo = f"sync agora ({minutos}min atrás)"
+    elif delta_horas < 24:
+        classe = "sync-indicator-stale"
+        rotulo = f"sync {int(delta_horas)}h atrás"
+    else:
+        classe = "sync-indicator-stale"
+        dias = int(delta_horas / 24)
+        rotulo = f"sync {dias}d atrás (rode --sync)"
+
+    n = sync_info.get("n_arquivos", "?")
+    titulo = f"Última sync: {sync_info['data']} · {n} arquivos"
+    classe_final = f"sync-indicator {classe}".strip()
+    return (
+        f'<span class="{classe_final}" title="{titulo}">{rotulo}</span>'
+    )
+
+
+# ---------------------------------------------------------------------------
+# Chip-bar de filtros globais (UX-V-01)
+# ---------------------------------------------------------------------------
+
+
+def chip_bar_filtros_globais(dados: dict) -> tuple[str, str, str]:
+    """Chip-bar fina canônica de filtros globais (UX-V-01).
+
+    Substitui o ``st.expander("Filtros globais", ...)`` legado em
+    ``app.py:_filtros_globais_main``. Preserva 100% do contrato:
+
+    - Mesmas 7 chaves de session_state: ``seletor_granularidade``,
+      ``seletor_periodo``, ``seletor_mes_base``, ``seletor_detalhe``,
+      ``seletor_pessoa``, ``seletor_forma_pagamento``, ``filtro_forma``.
+    - Mesmo retorno: ``(periodo, pessoa, granularidade)``.
+    - Mesma lógica condicional de período por granularidade
+      (Ano: anos disponíveis; Mês: meses; Semana: meses + semanas;
+      Dia: meses + dias).
+
+    O que muda é APENAS o layout visual: chip-bar fina ao invés de
+    expander. Pipeline downstream (37 sítios consumindo session_state)
+    continua intacto.
+
+    Args:
+        dados: dicionário de DataFrames; consumido por
+            ``obter_meses_disponiveis`` etc.
+
+    Returns:
+        ``(periodo, pessoa, granularidade)`` para o dispatcher.
+    """
+    import streamlit as st
+
+    from src.dashboard.dados import (
+        obter_anos_disponiveis,
+        obter_dias_do_mes,
+        obter_meses_disponiveis,
+        obter_semanas_do_mes,
+    )
+    from src.utils.pessoas import nome_de
+
+    meses = obter_meses_disponiveis(dados)
+    if not meses:
+        st.warning("Nenhum dado disponível.")
+        return "", "Todos", "Mês"
+
+    nome_a = nome_de("pessoa_a")
+    nome_b = nome_de("pessoa_b")
+    opcoes_pessoa = ["Todos", nome_a, nome_b]
+
+    # Estado atual lido de session_state com defaults (espelha visual).
+    granularidade_atual = st.session_state.get("seletor_granularidade", "Mês")
+    pessoa_atual = st.session_state.get("seletor_pessoa", "Todos")
+    forma_atual = st.session_state.get("seletor_forma_pagamento", "Todas")
+    periodo_chip = _resumir_periodo_chip(granularidade_atual)
+
+    # Refator V-01.b (2026-05-07): cada chip da chip-bar é agora um
+    # st.popover Streamlit nativo. Clicar abre dropdown com selectbox
+    # dentro. Substitui chip-bar HTML estática + 4 selectboxes verbosos
+    # por interface coesa, fina e funcional. Streamlit >= 1.32.
+    #
+    # Layout: 4 colunas estreitas que renderizam só os labels dos
+    # popovers (que já são os "chips"). CSS em _chip_bar.css adapta os
+    # botões de popover para ter visual de chip fino.
+    cols = st.columns([1, 1, 1, 1, 6])  # 4 chips + spacer
+
+    with cols[0]:
+        with st.popover(
+            f"granularidade: {granularidade_atual}",
+            use_container_width=True,
+        ):
+            granularidade: str = st.selectbox(
+                "Granularidade",
+                ["Dia", "Semana", "Mês", "Ano"],
+                index=2,
+                key="seletor_granularidade",
+            )
+
+    with cols[1]:
+        with st.popover(
+            f"período: {periodo_chip}",
+            use_container_width=True,
+        ):
+            if granularidade == "Ano":
+                anos = obter_anos_disponiveis(dados)
+                periodo: str = st.selectbox(
+                    "Período",
+                    anos,
+                    index=0,
+                    key="seletor_periodo",
+                )
+            else:
+                mes_base: str = st.selectbox(
+                    "Mês",
+                    meses,
+                    index=0,
+                    key="seletor_mes_base",
+                )
+                if granularidade == "Semana":
+                    semanas = obter_semanas_do_mes(dados, mes_base)
+                    periodo = (
+                        st.selectbox(
+                            "Semana", semanas, index=0,
+                            key="seletor_detalhe",
+                        )
+                        if semanas
+                        else mes_base
+                    )
+                elif granularidade == "Dia":
+                    dias = obter_dias_do_mes(dados, mes_base)
+                    periodo = (
+                        st.selectbox(
+                            "Dia", dias, index=0,
+                            key="seletor_detalhe",
+                        )
+                        if dias
+                        else mes_base
+                    )
+                else:
+                    periodo = mes_base
+
+    with cols[2]:
+        with st.popover(
+            f"pessoa: {pessoa_atual}",
+            use_container_width=True,
+        ):
+            pessoa: str = st.selectbox(
+                "Pessoa",
+                opcoes_pessoa,
+                index=0,
+                key="seletor_pessoa",
+            )
+
+    with cols[3]:
+        with st.popover(
+            f"forma: {forma_atual}",
+            use_container_width=True,
+        ):
+            forma_sel: str = st.selectbox(
+                "Forma de pagamento",
+                ["Todas", "Pix", "Débito", "Crédito", "Boleto", "Transferência"],
+                index=0,
+                key="seletor_forma_pagamento",
+            )
+            st.session_state["filtro_forma"] = (
+                None if forma_sel == "Todas" else forma_sel
+            )
+
+    return periodo, pessoa, granularidade
+
+
+def _resumir_periodo_chip(granularidade: str) -> str:
+    """Retorna texto curto para o chip de período baseado na granularidade.
+
+    Lê do ``st.session_state`` quando disponível; cai em placeholder
+    ``...`` no primeiro frame. O chip é apenas display visual -- o valor
+    real do filtro vem do selectbox invisível abaixo da chip-bar.
+    """
+    import streamlit as st
+
+    if granularidade == "Ano":
+        return st.session_state.get("seletor_periodo", "...")
+    mes = st.session_state.get("seletor_mes_base", "...")
+    if granularidade == "Semana":
+        return st.session_state.get("seletor_detalhe", mes)
+    if granularidade == "Dia":
+        return st.session_state.get("seletor_detalhe", mes)
+    return mes
+
+
+# ===========================================================================
+# Fallback estado-inicial-atrativo (UX-V-03)
+# ===========================================================================
+#
+# Origem dos dados de Bem-estar: app companion ``Protocolo-Mob-Ouroboros``
+# (Expo + React Native, em refundação golden-zebra) escreve ``.md`` no vault
+# Obsidian compartilhado. Desktop lê via ``obsidian/sync_rico.py`` -> caches
+# em ``.ouroboros/cache/*.json`` -> dashboard renderiza.
+#
+# Quando o cache está vazio, os antigos callouts pobres do tipo "Arquivo X
+# não encontrado" davam zero contexto ao usuário. UX-V-03 substitui por um
+# estado inicial atrativo: skeleton mockup-like opaco + CTA explicando o
+# pipeline mob -> vault -> cache -> dashboard. Sem semear demo (violaria
+# regra 6 do CLAUDE.md "nunca inventar dados").
+# ===========================================================================
+
+
+def fallback_estado_inicial_html(
+    *,
+    titulo: str,
+    descricao: str,
+    skeleton_html: str = "",
+    cta_label: str = "Use o app Ouroboros Mobile",
+    cta_secao: str = "geral",
+    sync_info: dict | None = None,
+) -> str:
+    """Fallback estado-inicial-atrativo para páginas com dado vazio.
+
+    Substitui callouts pobres (``"Arquivo X não encontrado"``,
+    ``"Nenhum registro de Y"``) por um bloco rico que combina:
+
+    1. **Skeleton opaco** do layout final (placeholder visual do mockup).
+    2. **Heading** ``"<TITULO> · sem registros ainda"``.
+    3. **Descrição** explicando origem dos dados (mob -> vault -> cache).
+    4. **CTA** apontando para o app companion ``Protocolo-Mob-Ouroboros``.
+    5. **Linha sync-info** lida de ``.ouroboros/cache/last_sync.json`` (UX-V-04
+       será responsável por escrever esse arquivo). Se ausente, exibe
+       ``"Sincronização: nunca"``.
+
+    Padrões aplicados: VALIDATOR_BRIEF (b) acentuação PT-BR completa,
+    (o) subregra retrocompatível -- ``sync_info=None`` mantém estado pré
+    UX-V-04 sem quebrar nada.
+
+    Args:
+        titulo: Heading do bloco em UPPERCASE (ex: ``"HUMOR · sem registros
+            ainda"``).
+        descricao: Parágrafo explicando como popular (ex: ``"Registre seu  # noqa: accent
+            humor no app Ouroboros Mobile..."``). HTML inline permitido
+            (``<code>``, ``<strong>``).
+        skeleton_html: HTML opcional do skeleton mockup-like. Se vazio, omite
+            o bloco visual de placeholder. Geralmente combina ``.skel-bloco``
+            com KPI cards / grid placeholders.
+        cta_label: Texto principal do CTA. Default ``"Use o app Ouroboros
+            Mobile"``.
+        cta_secao: Identificador da seção (ex: ``"humor"``, ``"medidas"``).
+            Vai para ``data-secao`` para tracking visual / QA.
+        sync_info: Dict opcional ``{"data": "2026-05-07T14:32",
+            "n_arquivos": 12}`` lido por :func:`ler_sync_info`. Se ``None``
+            ou sem chave ``"data"``, mostra ``"Sincronização: nunca"``.
+
+    Returns:
+        Bloco HTML minificado, pronto para ``st.markdown(...,
+        unsafe_allow_html=True)``.
+    """
+    skeleton = (
+        f'<div class="fallback-skeleton">{skeleton_html}</div>'
+        if skeleton_html
+        else ""
+    )
+    if sync_info and "data" in sync_info:
+        sync_str = (
+            f'Última sync: <strong>{sync_info["data"]}</strong>'
+            f' · {sync_info.get("n_arquivos", "?")} arquivos lidos do vault'
+        )
+    else:
+        sync_str = (
+            "Sincronização: <strong>nunca</strong> -- rode "
+            "<code>./run.sh --sync</code> após registrar no app."
+        )
+
+    return minificar(
+        f"""
+        <div class="fallback-estado" data-secao="{cta_secao}">
+          {skeleton}
+          <div class="fallback-cta">
+            <h3 class="fallback-titulo">{titulo}</h3>
+            <p class="fallback-descricao">{descricao}</p>
+            <p class="fallback-acao">
+              <strong>{cta_label}</strong> (Android) para começar a
+              registrar. O app escreve <code>.md</code> no vault Obsidian
+              compartilhado; o dashboard lê via sync.
+            </p>
+            <p class="fallback-sync-info">{sync_str}</p>
+          </div>
+        </div>
+        """
+    )
+
+
+

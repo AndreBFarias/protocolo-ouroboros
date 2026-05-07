@@ -276,17 +276,28 @@ class TestRenderizarEndToEnd:
         assert not at.exception, [str(e) for e in at.exception]
 
     def test_skills_d7_sem_snapshot_emite_fallback(self) -> None:
-        """Sem skill_d7_log.json, página deve renderizar fallback graceful."""
+        """Sem skill_d7_log.json, página deve renderizar fallback graceful.
+
+        Atualizado em UX-V-03: a chamada padrão agora aponta para o novo
+        _fallback_estado_inicial_html (estado inicial atrativo + CTA mob).
+        O _fallback_graceful_html (skill-instr) permanece definido para
+        retrocompatibilidade do teste de função pura acima (linha ~123).
+        """
         from streamlit.testing.v1 import AppTest
 
         script = _script_skills_d7_sem_log()
         at = AppTest.from_string(script)
         at.run()
         assert not at.exception
-        # Verifica presença do fallback em algum bloco markdown
+        # Verifica presença do fallback (novo padrão UX-V-03 OU antigo).
         textos = [m.value for m in at.markdown]
         joined = " ".join(textos)
-        assert "Cobertura D7" in joined or "skill-instr" in joined
+        assert (
+            "fallback-estado" in joined
+            or "SKILLS · D7 ainda" in joined
+            or "Cobertura D7" in joined
+            or "skill-instr" in joined
+        )
 
     def test_styleguide_renderiza_sem_crash(self) -> None:
         from streamlit.testing.v1 import AppTest

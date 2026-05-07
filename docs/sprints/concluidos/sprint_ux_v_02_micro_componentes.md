@@ -1,15 +1,17 @@
 ---
 id: UX-V-02
 titulo: Micro-componentes visuais canônicos em ui.py + components.css
-status: backlog
+status: concluída
 prioridade: altissima
 data_criacao: 2026-05-07
+concluida_em: 2026-05-07
 fase: PARIDADE_VISUAL
 depende_de: [UX-M-02, UX-M-03]
 bloqueia: [UX-V-2.*]
 co_executavel_com: [UX-V-01, UX-V-03, UX-V-04, UX-V-05]
 esforco_estimado_horas: 5
 origem: docs/auditorias/AUDITORIA_PARIDADE_VISUAL_2026-05-07.md (P2)
+commit: e04a2a1410d51f854966f320152b7feb7b37f6cf
 ---
 
 # Sprint UX-V-02 — Micro-componentes visuais canônicos
@@ -606,7 +608,7 @@ Validação visual fica para sprints V-2.x que consumirem os componentes — est
 ## Referência
 
 - Auditoria 2026-05-07 P2 (`docs/auditorias/AUDITORIA_PARIDADE_VISUAL_2026-05-07.md`).
-- Mockups consumidores: 03-contas, 04-pagamentos, 12-analise, 13-metas, 24-medidas.
+- Mockups consumidores: 03-contas, 04-pagamentos, 12-analise, 13-metas, 24-medidas. <!-- noqa: accent -->
 - VALIDATOR_BRIEF padrões: `(a)` edit incremental, `(b)` acentuação PT-BR, `(g)` citação filósofo, `(h)` limite 800L, `(u)` proof-of-work runtime real.
 
 *"A medida do componente é seu uso, não sua existência." — princípio V-02*

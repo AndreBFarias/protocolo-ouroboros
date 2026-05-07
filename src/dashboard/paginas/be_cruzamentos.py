@@ -167,7 +167,7 @@ def renderizar(
     """Renderiza Bem-estar / Cruzamentos (UX-T-26)."""
     from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
     renderizar_grupo_acoes([
-        {"label": "Salvar como bloco do Recap",
+        {"label": "Salvar como bloco do Recap", "glyph": "validar",
          "title": "Padrão vai aparecer no Recap mensal"},
         {"label": "Voltar ao Recap", "primary": True,
          "href": "?cluster=Bem-estar&tab=Recap"},
@@ -179,9 +179,34 @@ def renderizar(
 
     vault_root = descobrir_vault_root()
     if vault_root is None:
-        st.warning(
-            "Vault Bem-estar não encontrado. Configure `OUROBOROS_VAULT` "
-            "para visualizar correlações."
+        from src.dashboard.componentes.ui import (
+            fallback_estado_inicial_html,
+            ler_sync_info,
+        )
+        skeleton = (
+            '<div style="display:flex;flex-direction:column;gap:10px;">'
+            '<div style="display:flex;gap:10px;">'
+            '<span class="skel-bloco" style="width:30%;height:36px;"></span>'
+            '<span class="skel-bloco" style="width:30%;height:36px;"></span>'
+            '<span class="skel-bloco" style="width:30%;height:36px;"></span>'
+            '</div>'
+            '<span class="skel-bloco" style="width:100%;height:160px;"></span>'
+            '</div>'
+        )
+        st.markdown(
+            fallback_estado_inicial_html(
+                titulo="CRUZAMENTOS · sem dados para correlacionar",
+                descricao=(
+                    "Correlações entre humor × eventos × medidas × treinos "
+                    "exigem caches populados no vault. Configure "
+                    "<code>OUROBOROS_VAULT</code> e registre pelo app mobile "
+                    "ao longo de algumas semanas para que padrões emerjam."
+                ),
+                skeleton_html=skeleton,
+                cta_secao="cruzamentos",
+                sync_info=ler_sync_info(),
+            ),
+            unsafe_allow_html=True,
         )
         return
 

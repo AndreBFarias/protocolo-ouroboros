@@ -159,8 +159,8 @@ def renderizar(
     """Renderiza Bem-estar / Memórias (UX-T-23)."""
     from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
     renderizar_grupo_acoes([
-        {"label": "Random", "title": "Memória aleatória"},
-        {"label": "Capturar", "primary": True,
+        {"label": "Random", "glyph": "refresh", "title": "Memória aleatória"},
+        {"label": "Capturar", "primary": True, "glyph": "plus",
          "title": "Foto/áudio/texto/vídeo"},
     ])
 
@@ -171,9 +171,45 @@ def renderizar(
     vault_root = descobrir_vault_root()
 
     if vault_root is None:
-        st.warning(
-            "Vault Bem-estar não encontrado. Configure `OUROBOROS_VAULT` "
-            "para visualizar memórias."
+        from src.dashboard.componentes.ui import (
+            fallback_estado_inicial_html,
+            ler_sync_info,
+        )
+        skeleton = (
+            '<div style="display:grid;grid-template-columns:repeat(4,1fr);'
+            'gap:10px;margin-bottom:12px;">'
+            '<div class="kpi"><span class="kpi-label">TREINOS</span>'
+            '<span class="kpi-value">--</span></div>'
+            '<div class="kpi"><span class="kpi-label">FOTOS</span>'
+            '<span class="kpi-value">--</span></div>'
+            '<div class="kpi"><span class="kpi-label">MARCOS</span>'
+            '<span class="kpi-value">--</span></div>'
+            '<div class="kpi"><span class="kpi-label">SEMANAS</span>'
+            '<span class="kpi-value">--</span></div>'
+            '</div>'
+            '<div style="display:grid;grid-template-columns:repeat(4,1fr);'
+            'gap:8px;">'
+            + ''.join(
+                '<span class="skel-bloco" style="height:60px;min-width:0;'
+                'border-radius:6px;"></span>'
+                for _ in range(8)
+            )
+            + '</div>'
+        )
+        st.markdown(
+            fallback_estado_inicial_html(
+                titulo="MEMÓRIAS · sem registros ainda",
+                descricao=(
+                    "Sessões de treino, fotos anexadas a eventos e marcos "
+                    "biográficos vivem no vault e formam o cluster de "
+                    "memórias. Configure <code>OUROBOROS_VAULT</code> e "
+                    "comece a registrar pelo app mobile."
+                ),
+                skeleton_html=skeleton,
+                cta_secao="memorias",
+                sync_info=ler_sync_info(),
+            ),
+            unsafe_allow_html=True,
         )
         return
 

@@ -114,11 +114,25 @@ class TestSpriUx117SidebarGlobal:
         assert "revisor_filtro_tipo" not in fonte
 
     def test_sidebar_app_mantem_filtros_transversais(self) -> None:
-        """Mês / Pessoa / Forma de pagamento permanecem globais."""
-        fonte = FONTE_APP.read_text(encoding="utf-8")
-        assert '"Mês"' in fonte
-        assert '"Pessoa"' in fonte
-        assert '"Forma de pagamento"' in fonte
+        """Mês / Pessoa / Forma de pagamento permanecem globais.
+
+        UX-V-01: as labels foram movidas de ``app.py`` para a fronteira
+        ``componentes/ui.py::chip_bar_filtros_globais``. ``app.py`` apenas
+        delega via ``_filtros_globais_main``. O contrato global permanece
+        intacto -- testamos a fonte canônica nova.
+        """
+        from src.dashboard.componentes import ui as componentes_ui
+
+        fonte_app = FONTE_APP.read_text(encoding="utf-8")
+        # Delegação preservada (padrão (o) subregra retrocompatível).
+        assert "chip_bar_filtros_globais" in fonte_app
+        assert "_filtros_globais_main(dados)" in fonte_app
+
+        # Labels canônicas vivem agora em componentes/ui.py.
+        fonte_ui = Path(componentes_ui.__file__).read_text(encoding="utf-8")
+        assert '"Mês"' in fonte_ui
+        assert '"Pessoa"' in fonte_ui
+        assert '"Forma de pagamento"' in fonte_ui
 
 
 # -----------------------------------------------------------------------------

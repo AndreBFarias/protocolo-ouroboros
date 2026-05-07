@@ -396,3 +396,285 @@
   color: var(--text-muted);
   font-size: var(--fs-12);
 }
+
+/* ===== Micro-componentes UX-V-02 ===== */
+
+/* Sparkline */
+.sparkline { display: inline-block; vertical-align: middle; line-height: 0; }
+.sparkline-line { stroke-linecap: round; stroke-linejoin: round; }
+
+/* Barra de uso */
+.bar-uso { display: flex; flex-direction: column; gap: 2px; }
+.bar-uso-label {
+    font-family: var(--ff-mono); font-size: 10px;
+    color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 0.06em;
+}
+.bar-uso-track {
+    height: 6px; background: var(--bg-inset);
+    border-radius: var(--r-full); overflow: hidden;
+}
+.bar-uso-fill {
+    display: block; height: 100%;
+    border-radius: var(--r-full);
+    transition: width 0.3s ease-out;
+}
+
+/* Donut mini */
+.donut-mini {
+    position: relative;
+    display: inline-grid;
+    place-items: center;
+    vertical-align: middle;
+}
+.donut-mini svg { position: absolute; inset: 0; }
+.donut-mini-track { opacity: 0.4; }
+.donut-mini-pct {
+    position: relative; z-index: 1;
+    font-family: var(--ff-mono);
+    font-size: 13px; font-weight: 500;
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Prazo / Ritmo / Falta (cards de meta) */
+.prazo-ritmo-falta {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--sp-3);
+    padding: var(--sp-3) 0 0;
+    border-top: 1px solid var(--border-subtle);
+    margin-top: var(--sp-3);
+}
+.prf-celula { display: flex; flex-direction: column; gap: 2px; }
+.prf-rotulo {
+    font-family: var(--ff-mono); font-size: 10px;
+    text-transform: uppercase; letter-spacing: 0.10em;
+    color: var(--text-muted);
+}
+.prf-valor {
+    font-family: var(--ff-mono); font-size: 12px;
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Tab counter */
+.tab-counter {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 10px; border-radius: var(--r-sm);
+    font-family: var(--ff-mono); font-size: 12px;
+    color: var(--text-secondary);
+    cursor: pointer; user-select: none;
+    border-bottom: 2px solid transparent;
+}
+.tab-counter-num {
+    font-size: 10px; font-weight: 600;
+    color: var(--text-muted);
+    background: var(--bg-inset);
+    padding: 1px 6px; border-radius: var(--r-full);
+}
+.tab-counter-ativo {
+    color: var(--accent-purple);
+    border-bottom-color: var(--accent-purple);
+}
+.tab-counter-ativo .tab-counter-num {
+    color: var(--accent-purple);
+    background: rgba(189, 147, 249, 0.15);
+}
+
+/* Insight card */
+.insight-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-left: 3px solid var(--accent-purple);
+    border-radius: var(--r-md);
+    padding: var(--sp-3) var(--sp-4);
+    margin-bottom: var(--sp-3);
+}
+.insight-card-tipo {
+    display: inline-block;
+    font-family: var(--ff-mono); font-size: 10px;
+    text-transform: uppercase; letter-spacing: 0.10em;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+}
+.insight-card-titulo {
+    font-size: 14px; font-weight: 500;
+    color: var(--text-primary);
+    margin: 0 0 6px;
+}
+.insight-card-corpo {
+    font-family: var(--ff-mono); font-size: 12px;
+    color: var(--text-secondary);
+    margin: 0; line-height: 1.5;
+}
+
+.insight-positivo { border-left-color: var(--accent-green); }
+.insight-positivo .insight-card-tipo { color: var(--accent-green); }
+
+.insight-atencao { border-left-color: var(--accent-orange); }
+.insight-atencao .insight-card-tipo { color: var(--accent-orange); }
+
+.insight-descoberta { border-left-color: var(--accent-purple); }
+.insight-descoberta .insight-card-tipo { color: var(--accent-purple); }
+
+.insight-previsao { border-left-color: var(--accent-cyan); }
+.insight-previsao .insight-card-tipo { color: var(--accent-cyan); }
+
+/* ===== Sync indicator (UX-V-04) ===== */
+/*
+ * Chip discreto exibindo idade da última sync vault -> cache -> dashboard.
+ * Renderizado por src.dashboard.componentes.ui.sync_indicator_html().
+ * Verde (default): sync recente (< 1h). Amarelo (.sync-indicator-stale):
+ * sync antiga (>= 1h) ou ausente.
+ */
+.sync-indicator {
+  display: inline-block;
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 2px 8px;
+  border-radius: var(--r-full);
+  background: rgba(80, 250, 123, 0.12);
+  color: var(--accent-green);
+  border: 1px solid rgba(80, 250, 123, 0.30);
+  cursor: help;
+  user-select: none;
+}
+
+.sync-indicator-stale {
+  background: rgba(255, 184, 108, 0.10);
+  color: var(--accent-orange);
+  border-color: rgba(255, 184, 108, 0.30);
+}
+
+/* Wrapper opcional para alinhar o chip a direita do page-header. */
+.sync-indicator-wrapper {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: calc(-1 * var(--sp-2));
+  margin-bottom: var(--sp-2);
+}
+
+/* ===== Fallback estado-inicial-atrativo (UX-V-03) ===== */
+
+/* Bloco principal: container do estado vazio rico (skeleton + CTA mob).
+ * Substitui callouts pobres em paginas Bem-estar com cache vazio.
+ * Origem: app companion Protocolo-Mob-Ouroboros -> vault Obsidian -> sync. */
+.fallback-estado {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  padding: var(--sp-5);
+  background: var(--bg-surface);
+  border: 1px dashed var(--border-subtle);
+  border-radius: var(--r-md);
+  margin: var(--sp-4) 0;
+}
+
+/* Skeleton: placeholder visual opaco do layout final. Mockup-like, sem
+ * dados reais (regra 6 do CLAUDE.md). Pointer-events bloqueados para
+ * evitar clique acidental em elementos placeholder. */
+.fallback-skeleton {
+  opacity: 0.35;
+  pointer-events: none;
+  user-select: none;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: var(--sp-4);
+  filter: grayscale(0.5);
+}
+
+/* CTA: bloco de chamada para usar o app mobile. */
+.fallback-cta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.fallback-titulo {
+  font-family: var(--ff-mono);
+  font-size: var(--fs-14);
+  font-weight: 500;
+  color: var(--accent-purple);
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.fallback-descricao {
+  font-size: var(--fs-13);
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.fallback-acao {
+  font-size: var(--fs-13);
+  color: var(--text-primary);
+  margin: var(--sp-2) 0 0;
+  line-height: 1.5;
+}
+.fallback-acao code {
+  background: var(--bg-inset);
+  padding: 1px 6px;
+  border-radius: var(--r-xs);
+  font-size: var(--fs-12);
+}
+
+/* Sync info: rodape com data da ultima sincronizacao do vault. */
+.fallback-sync-info {
+  font-family: var(--ff-mono);
+  font-size: var(--fs-11);
+  color: var(--text-muted);
+  margin: var(--sp-2) 0 0;
+  padding-top: var(--sp-2);
+  border-top: 1px solid var(--border-subtle);
+}
+.fallback-sync-info code {
+  background: var(--bg-elevated);
+  padding: 1px 4px;
+  border-radius: var(--r-xs);
+}
+.fallback-sync-info strong {
+  color: var(--text-secondary);
+}
+
+/* Skeleton helper: bloco animado generico para placeholders dentro do
+ * .fallback-skeleton. Usado por paginas Bem-estar com layouts variados. */
+.skel-bloco {
+  background: linear-gradient(
+    90deg,
+    var(--bg-surface) 0%,
+    var(--bg-elevated) 50%,
+    var(--bg-surface) 100%
+  );
+  background-size: 200% 100%;
+  animation: skel-pulse 1.5s ease-in-out infinite;
+  border-radius: var(--r-sm);
+  height: 1.2em;
+  min-width: 60px;
+  display: inline-block;
+}
+
+@keyframes skel-pulse {
+  0%, 100% { background-position: 0% 0%; }
+  50% { background-position: 100% 0%; }
+}
+
+=======
+/* ===== Topbar glyphs (UX-V-05) ===== */
+/* Wrapper inline do glyph SVG dentro de botões/links da topbar.
+   O SVG inline já carrega width/height/viewBox; este span apenas
+   garante alinhamento vertical, espaçamento à direita do label e
+   leve atenuação cromática para hierarquia visual (glyph < label). */
+.btn-glyph {
+  display: inline-flex;
+  align-items: center;
+  margin-right: var(--sp-1, 4px);
+  opacity: 0.85;
+  line-height: 1;
+}
+.btn-glyph svg {
+  display: block;
+}

@@ -90,6 +90,14 @@ _OVERRIDES_CSS = (_RAIZ_DASHBOARD / "css" / "overrides_streamlit.css").read_text
 # components.css para preservar sincronia 1:1 com mockup canônico.
 _EXTENSOES_CSS = (_RAIZ_DASHBOARD / "css" / "extensoes_dashboard.css").read_text(encoding="utf-8")
 
+# Sprint UX-V-01: chip-bar fina canônica de filtros globais. Substitui
+# visualmente o st.expander("Filtros globais") legado mantendo as 7 chaves
+# de session_state e o contrato 3-tuple consumido em app.py:434. Como o
+# componente aparece em TODAS as páginas orquestradas por main(), o CSS
+# entra no bloco global (junto com components/overrides/extensoes) e não
+# em uma página individual.
+_CHIP_BAR_CSS = (_RAIZ_DASHBOARD / "css" / "paginas" / "_chip_bar.css").read_text(encoding="utf-8")
+
 
 def _root_redesign() -> str:
     """Tokens canônicos do dashboard. Sprint UX-M-01.
@@ -162,6 +170,9 @@ def _classes_redesign() -> str:
 
     /* UX-M-03: extensões dashboard (Completude + Revisor) */
     {_EXTENSOES_CSS}
+
+    /* UX-V-01: chip-bar fina canônica de filtros globais */
+    {_CHIP_BAR_CSS}
     """
 
 

@@ -145,8 +145,10 @@ def renderizar(
     """Renderiza Bem-estar / Medidas (UX-T-24)."""
     from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
     renderizar_grupo_acoes([
-        {"label": "Importar Mi Fit", "title": "Balança Xiaomi"},
-        {"label": "Registrar", "primary": True, "title": "Peso, BF%, cintura"},
+        {"label": "Importar Mi Fit", "glyph": "upload",
+         "title": "Balança Xiaomi"},
+        {"label": "Registrar", "primary": True, "glyph": "plus",
+         "title": "Peso, BF%, cintura"},
     ])
 
     del dados, periodo, ctx
@@ -169,10 +171,48 @@ def renderizar(
         return
 
     if not items_filtrados:
-        st.info(
-            "Nenhuma medida registrada ainda. Crie arquivos em "
-            "`<vault>/medidas/<pessoa>/<data>.md` com frontmatter "
-            "`tipo: medidas`, `peso`, `cintura`, etc."
+        from src.dashboard.componentes.ui import (
+            fallback_estado_inicial_html,
+            ler_sync_info,
+        )
+        skeleton = (
+            '<div style="display:grid;grid-template-columns:repeat(3,1fr);'
+            'gap:10px;margin-bottom:12px;">'
+            '<div class="kpi"><span class="kpi-label">PESO</span>'
+            '<span class="kpi-value">--</span></div>'
+            '<div class="kpi"><span class="kpi-label">CINTURA</span>'
+            '<span class="kpi-value">--</span></div>'
+            '<div class="kpi"><span class="kpi-label">PRESSÃO</span>'
+            '<span class="kpi-value">--</span></div>'
+            '</div>'
+            '<div style="display:grid;grid-template-columns:repeat(3,1fr);'
+            'gap:10px;">'
+            '<div class="kpi"><span class="kpi-label">FREQ. CARD.</span>'
+            '<span class="kpi-value">--</span></div>'
+            '<div class="kpi"><span class="kpi-label">SONO</span>'
+            '<span class="kpi-value">--</span></div>'
+            '<div class="kpi"><span class="kpi-label">SPO2</span>'
+            '<span class="kpi-value">--</span></div>'
+            '</div>'
+            '<div style="margin-top:12px;">'
+            '<span class="skel-bloco" style="width:100%;height:60px;"></span>'
+            '</div>'
+        )
+        st.markdown(
+            fallback_estado_inicial_html(
+                titulo="MEDIDAS · sem registros ainda",
+                descricao=(
+                    "Métricas físicas (peso, cintura, pressão, frequência "
+                    "cardíaca, sono, SpO2) são capturadas no app mobile via "
+                    "integração Mi Fit/Garmin ou entrada manual. Cada medida "
+                    "vira um arquivo <code>.md</code> em "
+                    "<code>vault/medidas/&lt;pessoa&gt;/</code>."
+                ),
+                skeleton_html=skeleton,
+                cta_secao="medidas",
+                sync_info=ler_sync_info(),
+            ),
+            unsafe_allow_html=True,
         )
         return
 

@@ -89,8 +89,9 @@ def renderizar(
     """Renderiza a página IRPF (UX-RD-14 + UX-T-15)."""
     from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
     renderizar_grupo_acoes([
-        {"label": "Recalcular", "title": "Recalcular IRPF do ano"},
-        {"label": "Gerar pacote", "primary": True,
+        {"label": "Recalcular", "glyph": "refresh",
+         "title": "Recalcular IRPF do ano"},
+        {"label": "Gerar pacote", "primary": True, "glyph": "download",
          "title": "DEC + DARF + PDFs"},
     ])
 

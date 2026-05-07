@@ -39,7 +39,11 @@ import streamlit as st
 
 from src.dashboard.componentes.html_utils import minificar
 from src.dashboard.componentes.page_header import renderizar_page_header
-from src.dashboard.componentes.ui import callout_html, carregar_css_pagina
+from src.dashboard.componentes.ui import (
+    callout_html,
+    carregar_css_pagina,
+    sync_indicator_html,
+)
 from src.dashboard.tema import CORES
 from src.mobile_cache.diario_emocional import gerar_cache as gerar_cache_diario
 from src.mobile_cache.escrever_diario import escrever_diario
@@ -74,9 +78,10 @@ def renderizar(
     """Renderiza Bem-estar / Diário emocional (UX-T-19)."""
     from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
     renderizar_grupo_acoes([
-        {"label": "Heatmap", "href": "?cluster=Bem-estar&tab=Humor",
+        {"label": "Heatmap", "glyph": "analise",
+         "href": "?cluster=Bem-estar&tab=Humor",
          "title": "Ver humor 91 dias"},
-        {"label": "Hoje", "primary": True,
+        {"label": "Hoje", "primary": True, "glyph": "calendar",
          "href": "?cluster=Bem-estar&tab=Hoje",
          "title": "Registrar humor de hoje"},
     ])
@@ -140,6 +145,11 @@ def renderizar(
             _page_header_canonico(len(items_filtrados)),
             unsafe_allow_html=True,
         )
+        # UX-V-04: indicador de observabilidade sync vault -> cache -> dashboard.
+        st.markdown(
+            f'<div class="sync-indicator-wrapper">{sync_indicator_html()}</div>',
+            unsafe_allow_html=True,
+        )
 
         if vault_root is None:
             msg = (
@@ -150,11 +160,44 @@ def renderizar(
             return
 
         if not items:
-            msg = (
-                "Nenhum registro de diário emocional no vault. "
-                "Use o botão acima para criar o primeiro."
+            from src.dashboard.componentes.ui import (
+                fallback_estado_inicial_html,
+                ler_sync_info,
             )
-            st.markdown(callout_html("info", msg), unsafe_allow_html=True)
+            skeleton = (
+                '<div style="display:flex;flex-direction:column;gap:10px;">'
+                '<div style="display:flex;align-items:center;gap:10px;">'
+                '<span class="skel-bloco" style="width:40px;height:40px;'
+                'border-radius:50%;"></span>'
+                '<div style="flex:1;display:flex;flex-direction:column;gap:6px;">'
+                '<span class="skel-bloco" style="width:60%;"></span>'
+                '<span class="skel-bloco" style="width:90%;height:0.9em;"></span>'
+                '</div></div>'
+                '<div style="display:flex;align-items:center;gap:10px;">'
+                '<span class="skel-bloco" style="width:40px;height:40px;'
+                'border-radius:50%;"></span>'
+                '<div style="flex:1;display:flex;flex-direction:column;gap:6px;">'
+                '<span class="skel-bloco" style="width:50%;"></span>'
+                '<span class="skel-bloco" style="width:80%;height:0.9em;"></span>'
+                '</div></div>'
+                '</div>'
+            )
+            st.markdown(
+                fallback_estado_inicial_html(
+                    titulo="DIÁRIO EMOCIONAL · sem registros ainda",
+                    descricao=(
+                        "Entradas longas de diário (ânimo, contexto, gatilhos) "
+                        "são escritas no app mobile e viram cards emocionais "
+                        "aqui. Cada arquivo <code>.md</code> em "
+                        "<code>vault/diario/&lt;data&gt;.md</code> aparece como "
+                        "card individual após o sync."
+                    ),
+                    skeleton_html=skeleton,
+                    cta_secao="diario",
+                    sync_info=ler_sync_info(),
+                ),
+                unsafe_allow_html=True,
+            )
         elif not items_filtrados:
             st.markdown(
                 callout_html("info", "Nenhum registro casa com os filtros atuais."),

@@ -70,8 +70,8 @@ def renderizar(
     """Renderiza Bem-estar / Eventos (UX-T-22)."""
     from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
     renderizar_grupo_acoes([
-        {"label": "Calendário", "title": "Vista mensal"},
-        {"label": "Novo evento", "primary": True,
+        {"label": "Calendário", "glyph": "calendar", "title": "Vista mensal"},
+        {"label": "Novo evento", "primary": True, "glyph": "plus",
          "title": "Wizard de evento"},
     ])
 
@@ -149,11 +149,47 @@ def renderizar(
             )
             st.markdown(callout_html("warning", msg), unsafe_allow_html=True)
         elif not items:
-            msg = (
-                "Nenhum evento registrado no vault. "
-                "Use o botão à esquerda para criar o primeiro."
+            from src.dashboard.componentes.ui import (
+                fallback_estado_inicial_html,
+                ler_sync_info,
             )
-            st.markdown(callout_html("info", msg), unsafe_allow_html=True)
+            skeleton = (
+                '<div style="display:flex;flex-direction:column;gap:14px;">'
+                '<div style="display:flex;gap:10px;align-items:flex-start;">'
+                '<span class="skel-bloco" style="width:60px;height:0.9em;"></span>'
+                '<div style="flex:1;display:flex;flex-direction:column;gap:6px;">'
+                '<span class="skel-bloco" style="width:55%;"></span>'
+                '<span class="skel-bloco" style="width:75%;height:0.85em;"></span>'
+                '</div></div>'
+                '<div style="display:flex;gap:10px;align-items:flex-start;">'
+                '<span class="skel-bloco" style="width:60px;height:0.9em;"></span>'
+                '<div style="flex:1;display:flex;flex-direction:column;gap:6px;">'
+                '<span class="skel-bloco" style="width:45%;"></span>'
+                '<span class="skel-bloco" style="width:65%;height:0.85em;"></span>'
+                '</div></div>'
+                '<div style="display:flex;gap:10px;align-items:flex-start;">'
+                '<span class="skel-bloco" style="width:60px;height:0.9em;"></span>'
+                '<div style="flex:1;display:flex;flex-direction:column;gap:6px;">'
+                '<span class="skel-bloco" style="width:60%;"></span>'
+                '<span class="skel-bloco" style="width:80%;height:0.85em;"></span>'
+                '</div></div>'
+                '</div>'
+            )
+            st.markdown(
+                fallback_estado_inicial_html(
+                    titulo="EVENTOS · sem registros ainda",
+                    descricao=(
+                        "Marcadores cronológicos (encontros, exames, viagens, "
+                        "datas-chave) são registrados rapidamente no app mobile "
+                        "e formam a timeline acima. Use a aba "
+                        "<code>+ Evento</code> do app para criar o primeiro."
+                    ),
+                    skeleton_html=skeleton,
+                    cta_secao="eventos",
+                    sync_info=ler_sync_info(),
+                ),
+                unsafe_allow_html=True,
+            )
         elif not items_filtrados:
             st.markdown(
                 callout_html("info", "Nenhum evento casa com os filtros atuais."),

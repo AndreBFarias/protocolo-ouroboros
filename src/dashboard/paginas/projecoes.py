@@ -520,8 +520,10 @@ def renderizar(
     """Renderiza a página de projeções financeiras (UX-RD-08 + UX-T-05)."""
     from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
     renderizar_grupo_acoes([
-        {"label": "Comparar cenários", "title": "A/B/C lado a lado"},
-        {"label": "Salvar cenário", "primary": True, "title": "Persistir cenário ativo"},
+        {"label": "Comparar cenários", "glyph": "diff",
+         "title": "A/B/C lado a lado"},
+        {"label": "Salvar cenário", "primary": True, "glyph": "validar",
+         "title": "Persistir cenário ativo"},
     ])
 
     if "extrato" not in dados:

@@ -196,7 +196,8 @@ def renderizar(
     """Renderiza Bem-estar / Recap (UX-T-21)."""
     from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
     renderizar_grupo_acoes([
-        {"label": "Re-gerar agora", "title": "Gerar Recap do período"},
+        {"label": "Re-gerar agora", "glyph": "refresh",
+         "title": "Gerar Recap do período"},
         {"label": "Compartilhar com Pessoa B", "primary": True,
          "title": "Vista resumida sem trechos íntimos"},
     ])
@@ -218,9 +219,42 @@ def renderizar(
     hoje = date.today()
 
     if vault_root is None:
-        st.warning(
-            "Vault Bem-estar não encontrado. Configure `OUROBOROS_VAULT` "
-            "para visualizar o recap."
+        from src.dashboard.componentes.ui import (
+            fallback_estado_inicial_html,
+            ler_sync_info,
+        )
+        skeleton = (
+            '<div style="display:grid;grid-template-columns:repeat(4,1fr);'
+            'gap:10px;margin-bottom:12px;">'
+            '<div class="kpi"><span class="kpi-label">HUMOR MÉDIO</span>'
+            '<span class="kpi-value">--</span></div>'
+            '<div class="kpi"><span class="kpi-label">EVENTOS</span>'
+            '<span class="kpi-value">--</span></div>'
+            '<div class="kpi"><span class="kpi-label">TREINOS</span>'
+            '<span class="kpi-value">--</span></div>'
+            '<div class="kpi"><span class="kpi-label">MEDIDAS</span>'
+            '<span class="kpi-value">--</span></div>'
+            '</div>'
+            '<div style="display:flex;flex-direction:column;gap:6px;">'
+            '<span class="skel-bloco" style="width:80%;"></span>'
+            '<span class="skel-bloco" style="width:65%;"></span>'
+            '<span class="skel-bloco" style="width:90%;height:0.9em;"></span>'
+            '</div>'
+        )
+        st.markdown(
+            fallback_estado_inicial_html(
+                titulo="RECAP · sem dados no período",
+                descricao=(
+                    "O recap agrega humor, eventos, treinos e medidas dos "
+                    "últimos N dias. Configure <code>OUROBOROS_VAULT</code> "
+                    "apontando para o vault Obsidian compartilhado com o app "
+                    "mobile para popular este painel."
+                ),
+                skeleton_html=skeleton,
+                cta_secao="recap",
+                sync_info=ler_sync_info(),
+            ),
+            unsafe_allow_html=True,
         )
         return
 

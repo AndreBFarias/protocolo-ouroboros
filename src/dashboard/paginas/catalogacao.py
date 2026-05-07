@@ -104,8 +104,9 @@ def renderizar(
     """Ponto de entrada da página Catalogação (UX-T-07)."""
     from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
     renderizar_grupo_acoes([
-        {"label": "Reprocessar", "title": "Re-extrair documentos"},
-        {"label": "Adicionar tipo", "primary": True,
+        {"label": "Reprocessar", "glyph": "refresh",
+         "title": "Re-extrair documentos"},
+        {"label": "Adicionar tipo", "primary": True, "glyph": "plus",
          "title": "Cadastrar novo tipo de documento"},
     ])
 

@@ -26,8 +26,6 @@ from src.dashboard.dados import (  # noqa: E402
     filtrar_por_periodo,
     filtrar_por_pessoa,
     formatar_moeda,
-    obter_anos_disponiveis,
-    obter_meses_disponiveis,
 )
 from src.dashboard.paginas import (  # noqa: E402
     analise_avancada,
@@ -238,89 +236,21 @@ def _sidebar(dados: dict, aba_ativa: str = "") -> tuple[str, str, str, str]:
 
 
 def _filtros_globais_main(dados: dict) -> tuple[str, str, str]:
-    """UX-U-04: filtros globais no main (substituem widgets da sidebar).
+    """UX-V-01: chip-bar fina substitui o ``st.expander`` legado.
 
-    Renderizados num ``st.expander`` colapsado por default, abaixo da
-    topbar e antes do dispatcher. Cada página de Onda T pode optar por
-    filtros inline próprios via ``componentes/filtros_pagina`` — neste
-    caso o expander global continua presente mas cada um opera sobre
-    namespace de session_state distinto.
+    Delega para ``componentes.ui.chip_bar_filtros_globais`` que preserva
+    o contrato 3-tuple ``(periodo, pessoa, granularidade)`` e as 7 chaves
+    de session_state (``seletor_granularidade``, ``seletor_periodo``,
+    ``seletor_mes_base``, ``seletor_detalhe``, ``seletor_pessoa``,
+    ``seletor_forma_pagamento``, ``filtro_forma``). Pipeline downstream
+    (37 sítios) continua intacto.
 
     Returns:
         ``(periodo, pessoa, granularidade)`` para o dispatcher.
     """
-    meses = obter_meses_disponiveis(dados)
-    if not meses:
-        st.warning("Nenhum dado disponível.")
-        return "", "Todos", "Mês"
+    from src.dashboard.componentes.ui import chip_bar_filtros_globais
 
-    from src.utils.pessoas import nome_de
-    nome_a = nome_de("pessoa_a")
-    nome_b = nome_de("pessoa_b")
-    opcoes_pessoa = ["Todos", nome_a, nome_b]
-
-    with st.expander("Filtros globais", expanded=False):
-        col_g, col_p, col_pessoa, col_forma = st.columns([1, 1, 1, 1])
-
-        with col_g:
-            granularidade: str = st.selectbox(
-                "Granularidade",
-                ["Dia", "Semana", "Mês", "Ano"],
-                index=2,
-                key="seletor_granularidade",
-            )
-
-        with col_p:
-            if granularidade == "Ano":
-                anos = obter_anos_disponiveis(dados)
-                periodo: str = st.selectbox(
-                    "Período",
-                    anos,
-                    index=0,
-                    key="seletor_periodo",
-                )
-            else:
-                mes_base: str = st.selectbox(
-                    "Mês",
-                    meses,
-                    index=0,
-                    key="seletor_mes_base",
-                )
-                if granularidade == "Semana":
-                    from src.dashboard.dados import obter_semanas_do_mes
-                    semanas = obter_semanas_do_mes(dados, mes_base)
-                    periodo = (
-                        st.selectbox("Semana", semanas, index=0, key="seletor_detalhe")
-                        if semanas else mes_base
-                    )
-                elif granularidade == "Dia":
-                    from src.dashboard.dados import obter_dias_do_mes
-                    dias = obter_dias_do_mes(dados, mes_base)
-                    periodo = (
-                        st.selectbox("Dia", dias, index=0, key="seletor_detalhe")
-                        if dias else mes_base
-                    )
-                else:
-                    periodo = mes_base
-
-        with col_pessoa:
-            pessoa: str = st.selectbox(
-                "Pessoa",
-                opcoes_pessoa,
-                index=0,
-                key="seletor_pessoa",
-            )
-
-        with col_forma:
-            forma_sel: str = st.selectbox(
-                "Forma de pagamento",
-                ["Todas", "Pix", "Débito", "Crédito", "Boleto", "Transferência"],
-                index=0,
-                key="seletor_forma_pagamento",
-            )
-            st.session_state["filtro_forma"] = None if forma_sel == "Todas" else forma_sel
-
-    return periodo, pessoa, granularidade
+    return chip_bar_filtros_globais(dados)
 
 
 def _cards_sidebar(dados: dict, periodo: str, pessoa: str, granularidade: str) -> None:
