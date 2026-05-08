@@ -35,3 +35,41 @@
     margin-right: 4px;
     vertical-align: middle;
 }
+
+/* UX-V-2.3-FIX: chip-bar à direita do título do heatmap (mockup 08).
+ * Linha horizontal com 3 chips compactos -- completo / parcial / ausente.
+ * Fica colada ao H3 da seção via flexbox no wrapper .completude-matriz-titulo.
+ */
+.completude-matriz-titulo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-3);
+    margin-top: var(--sp-3);
+}
+
+.completude-matriz-titulo .completude-secao-titulo {
+    margin: 0;
+}
+
+.completude-chipbar {
+    display: flex;
+    gap: var(--sp-3);
+    font-family: var(--ff-mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    align-items: center;
+}
+
+.completude-chipbar .chip-cor {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    vertical-align: middle;
+    margin-right: 4px;
+}
+
+.completude-chipbar .chip-completo { background: var(--accent-green); }
+.completude-chipbar .chip-parcial { background: var(--accent-yellow); }
+.completude-chipbar .chip-ausente { background: var(--accent-red); }

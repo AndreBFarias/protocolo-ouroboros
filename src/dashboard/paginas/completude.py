@@ -41,6 +41,7 @@ from src.dashboard.dados import (
     filtrar_por_pessoa,
     filtro_forma_ativo,
 )
+from src.dashboard.dados_grafo import carregar_documentos_grafo
 from src.dashboard.tema import (
     CORES,
     FONTE_SUBTITULO,
@@ -55,6 +56,39 @@ LIMIAR_MIN_TX_FILTRO_RUIDO: int = 2
 # Limite de meses exibidos na matriz (mockup mostra 12). Configurável aqui
 # para casar mudanças futuras do mockup sem refactor profundo.
 JANELA_MESES_MATRIZ: int = 12
+
+# UX-V-2.3-FIX: famílias documentais do eixo Y do heatmap. O mockup
+# `08-completude.html` mostra cobertura por TIPO DE DOCUMENTO (não categoria de
+# transação). A taxonomia abaixo agrega ids de `mappings/tipos_documento.yaml`
+# em famílias humanas legíveis. "OFX bancos" e "Comprovantes Pix" não estão no
+# YAML porque vêm de extratores especializados (extratores OFX bancários por
+# banco e extratores Pix), e são incluídos aqui como famílias canônicas
+# adicionais para casar com o mockup canônico da Onda V-2.
+FAMILIAS_DOCUMENTAIS: list[tuple[str, tuple[str, ...]]] = [
+    ("OFX bancos", ("ofx", "extrato_bancario", "extrato_c6_pdf")),
+    ("Faturas cartão", ("fatura_cartao",)),
+    ("Comprovantes Pix", ("comprovante_pix", "pix")),
+    (
+        "NF serviços",
+        ("danfe_nfe55", "nfce_consumidor_eletronica", "xml_nfe", "nfe_modelo_55", "nfce_modelo_65"),
+    ),
+    ("Recibos", ("recibo_nao_fiscal",)),
+]
+
+
+def _familia_de_tipo(tipo_documento: str) -> str | None:
+    """Mapeia ``tipo_documento`` (id YAML ou metadata.tipo_documento do grafo)
+    para a família canônica do heatmap. Retorna ``None`` quando o tipo não
+    pertence a nenhuma família mapeada (caso dos tipos pessoais como holerite,
+    irpf_parcela, etc., que não fazem parte do contrato visual da página).
+    """
+    if not tipo_documento:
+        return None
+    tipo_norm = str(tipo_documento).strip().lower()
+    for familia, ids in FAMILIAS_DOCUMENTAIS:
+        if tipo_norm in ids:
+            return familia
+    return None
 
 
 def filtrar_categorias_por_volume(
@@ -113,8 +147,7 @@ def _heatmap(resumo: dict) -> go.Figure | None:
             y=categorias,
             customdata=texto,
             hovertemplate=(
-                "<b>%{y}</b><br>%{x}: %{customdata} com doc "
-                "(%{z:.0f}%%)<extra></extra>"
+                "<b>%{y}</b><br>%{x}: %{customdata} com doc (%{z:.0f}%%)<extra></extra>"
             ),
             colorscale=[
                 [0.0, CORES["alerta"]],
@@ -185,17 +218,12 @@ def _matriz_html(
     mockup já define ``.cal-c.*`` como referência visual; tema_css.py emite
     classes equivalentes via ``.completude-cell-*``).
     """
-    head_html = (
-        '<div class="completude-matriz-h" aria-hidden="true"></div>'
-        + "".join(
-            f'<div class="completude-matriz-h">{m}</div>' for m in meses
-        )
+    head_html = '<div class="completude-matriz-h" aria-hidden="true"></div>' + "".join(
+        f'<div class="completude-matriz-h">{m}</div>' for m in meses
     )
     linhas: list[str] = []
     for cat in categorias:
-        cells: list[str] = [
-            f'<div class="completude-matriz-rotulo" title="{cat}">{cat}</div>'
-        ]
+        cells: list[str] = [f'<div class="completude-matriz-rotulo" title="{cat}">{cat}</div>']
         for mes in meses:
             info = resumo.get(mes, {}).get(cat)
             if info is None or info["total"] == 0:
@@ -208,8 +236,7 @@ def _matriz_html(
                 tooltip = f"{cat} · {mes} · {info['com_doc']}/{info['total']} ({pct:.0f}%)"
                 # Deep-link Catalogação filtrada (UX-RD-10).
                 href = (
-                    f"?cluster=Documentos&tab=Catalogação"
-                    f"&completude_mes={mes}&completude_cat={cat}"
+                    f"?cluster=Documentos&tab=Catalogação&completude_mes={mes}&completude_cat={cat}"
                 )
             label = _cell_label(estado)
             if href:
@@ -239,6 +266,162 @@ def _matriz_html(
             <span><span class="dot completude-cell-partial"></span>parcial</span>
             <span><span class="dot completude-cell-missing"></span>ausente</span>
           </div>
+        </div>
+        """
+    )
+
+
+def _calcular_cobertura_documental(
+    df_docs: pd.DataFrame,
+    meses: list[str],
+) -> dict[str, dict[str, dict[str, Any]]]:
+    """UX-V-2.3-FIX: cobertura mês × família documental.
+
+    Devolve ``{mes: {familia: {presente: int, esperado: int}}}`` para cada par
+    (mês, família). ``esperado`` é fixo em 1 na v1 (presença/ausência) -- ainda
+    podemos refinar por bandeira/banco quando o intake registrar
+    expectativa-mensal-canonica. ``presente`` é a contagem de documentos da
+    família com ``data_emissao`` no mês.
+
+    Argumentos:
+      - ``df_docs``: DataFrame retornado por ``carregar_documentos_grafo``
+        (colunas ``tipo_documento`` e ``data_emissao``); aceita vazio.
+      - ``meses``: lista de meses canônicos ``YYYY-MM`` que devem aparecer no
+        heatmap (independente de haver documentos no mês ou não).
+    """
+    cobertura: dict[str, dict[str, dict[str, Any]]] = {}
+    for mes in meses:
+        cobertura[mes] = {
+            familia: {"presente": 0, "esperado": 1} for familia, _ids in FAMILIAS_DOCUMENTAIS
+        }
+
+    if df_docs is None or df_docs.empty:
+        return cobertura
+
+    if "tipo_documento" not in df_docs.columns or "data_emissao" not in df_docs.columns:
+        return cobertura
+
+    for _, doc in df_docs.iterrows():
+        familia = _familia_de_tipo(str(doc.get("tipo_documento") or ""))
+        if familia is None:
+            continue
+        data_emissao = str(doc.get("data_emissao") or "")
+        if len(data_emissao) < 7:
+            continue
+        mes_doc = data_emissao[:7]
+        if mes_doc not in cobertura:
+            continue
+        cobertura[mes_doc][familia]["presente"] += 1
+
+    return cobertura
+
+
+def _classificar_celula_documental(presente: int, esperado: int) -> str:
+    """UX-V-2.3-FIX: estado D7 da célula a partir de ``presente``/``esperado``.
+
+    Tabela canônica:
+      - ``empty``    -> esperado == 0 (família não monitorada no mês)
+      - ``full``     -> presente >= esperado (cobertura total)
+      - ``partial``  -> 0 < presente < esperado (cobertura parcial)
+      - ``missing``  -> presente == 0 (ausência total quando esperado > 0)
+    """
+    if esperado <= 0:
+        return "empty"
+    if presente >= esperado:
+        return "full"
+    if presente == 0:
+        return "missing"
+    return "partial"
+
+
+def _matriz_documental_html(
+    cobertura: dict[str, dict[str, dict[str, Any]]],
+    familias: list[str],
+    meses: list[str],
+) -> str:
+    """UX-V-2.3-FIX: matriz família documental × mês (espelha mockup 08).
+
+    Reusa as classes ``completude-cell-{estado}`` já definidas em tema_css.py
+    (UX-RD-10). Cada célula tem tooltip com ``presente/esperado`` e símbolo
+    interno ``~`` (parcial) / ``!`` (ausente).
+    """
+    head_html = '<div class="completude-matriz-h" aria-hidden="true"></div>' + "".join(
+        f'<div class="completude-matriz-h">{m}</div>' for m in meses
+    )
+    linhas: list[str] = []
+    for familia in familias:
+        cells: list[str] = [
+            f'<div class="completude-matriz-rotulo" title="{familia}">{familia}</div>'
+        ]
+        for mes in meses:
+            info = cobertura.get(mes, {}).get(familia, {"presente": 0, "esperado": 1})
+            presente = int(info.get("presente", 0))
+            esperado = int(info.get("esperado", 1))
+            estado = _classificar_celula_documental(presente, esperado)
+            tooltip = (
+                f"{familia} · {mes} · {presente}/{esperado} documento(s)"
+                if esperado > 0
+                else f"{familia} · {mes} · não monitorado"
+            )
+            label = _cell_label(estado)
+            cells.append(
+                f'<div class="completude-cell completude-cell-{estado}" '
+                f'title="{tooltip}">{label}</div>'
+            )
+        linhas.append("".join(cells))
+
+    grid = head_html + "".join(linhas)
+    return minificar(
+        f"""
+        <div class="completude-matriz-card">
+          <div class="completude-matriz-grid"
+               style="grid-template-columns: 160px repeat({len(meses)}, 1fr);">
+            {grid}
+          </div>
+        </div>
+        """
+    )
+
+
+def _cobertura_global_documental(
+    cobertura: dict[str, dict[str, dict[str, Any]]],
+) -> tuple[float, int]:
+    """UX-V-2.3-FIX: percentual global e total de lacunas a partir da
+    cobertura documental ``mes × familia``. ``cobertura`` é o dict produzido
+    por ``_calcular_cobertura_documental``.
+
+    Retorna ``(pct_global, lacunas)`` onde ``pct_global`` é
+    ``presente_total / esperado_total * 100`` (0 quando esperado é zero) e
+    ``lacunas`` é a soma de ``max(esperado - presente, 0)`` em cada célula.
+    """
+    presente_total = 0
+    esperado_total = 0
+    lacunas = 0
+    for cells in cobertura.values():
+        for info in cells.values():
+            presente = int(info.get("presente", 0))
+            esperado = int(info.get("esperado", 0))
+            presente_total += presente
+            esperado_total += esperado
+            if esperado > presente:
+                lacunas += esperado - presente
+    pct = (presente_total / esperado_total) * 100.0 if esperado_total else 0.0
+    return pct, lacunas
+
+
+def _legenda_chip_bar_html() -> str:
+    """UX-V-2.3-FIX: legenda chip-bar à direita do título do heatmap.
+
+    Casa o mockup ``08-completude.html`` que renderiza um chip-bar inline no
+    ``card-head`` do mapa de cobertura: três chips (completo / parcial /
+    ausente) com mini-quadrado colorido.
+    """
+    return minificar(
+        """
+        <div class="completude-chipbar">
+          <span><span class="chip-cor chip-completo"></span>completo</span>
+          <span><span class="chip-cor chip-parcial"></span>parcial</span>
+          <span><span class="chip-cor chip-ausente"></span>ausente</span>
         </div>
         """
     )
@@ -294,8 +477,7 @@ def _calcular_metricas_globais(
                 pass
     for cat in cats_todas:
         sem_doc_cat = sum(
-            resumo.get(m, {}).get(cat, {"sem_doc": 0})["sem_doc"]
-            for m in resumo.keys()
+            resumo.get(m, {}).get(cat, {"sem_doc": 0})["sem_doc"] for m in resumo.keys()
         )
         if sem_doc_cat == 0:
             cats_completas.add(cat)
@@ -338,9 +520,7 @@ def _calcular_kpis_completude(
             total_geral += info.get("total", 0)
             com_doc_geral += info.get("com_doc", 0)
 
-    cobertura = (
-        (com_doc_geral / total_geral) * 100.0 if total_geral else 0.0
-    )
+    cobertura = (com_doc_geral / total_geral) * 100.0 if total_geral else 0.0
 
     cobertura_por_cat: dict[str, tuple[int, int]] = {}
     for cat in cats_todas:
@@ -354,9 +534,7 @@ def _calcular_kpis_completude(
             total_cat += info.get("total", 0)
         cobertura_por_cat[cat] = (com_doc_cat, total_cat)
 
-    tipos_completos = sum(
-        1 for com, tot in cobertura_por_cat.values() if tot > 0 and com == tot
-    )
+    tipos_completos = sum(1 for com, tot in cobertura_por_cat.values() if tot > 0 and com == tot)
     tipos_total = sum(1 for _com, tot in cobertura_por_cat.values() if tot > 0)
 
     lacunas_criticas = 0
@@ -407,13 +585,13 @@ def _kpis_html(kpis: dict[str, Any]) -> str:
           <div class="kpi">
             <span class="kpi-label">LACUNAS CRÍTICAS</span>
             <span class="kpi-value"
-                  style="color: var(--accent-red);">{kpis['lacunas_criticas']}</span>
+                  style="color: var(--accent-red);">{kpis["lacunas_criticas"]}</span>
             <span class="kpi-sub">categorias &lt; 50% cobertas</span>
           </div>
           <div class="kpi">
             <span class="kpi-label">LACUNAS MÉDIAS</span>
             <span class="kpi-value"
-                  style="color: var(--accent-yellow);">{kpis['lacunas_medias']}</span>
+                  style="color: var(--accent-yellow);">{kpis["lacunas_medias"]}</span>
             <span class="kpi-sub">tolerável &middot; sem bloquear</span>
           </div>
         </div>
@@ -454,17 +632,21 @@ def renderizar(
 ) -> None:
     """Entry point da aba Completude (UX-RD-10 + UX-T-08 + UX-V-2.3)."""
     from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
-    renderizar_grupo_acoes([
-        {"label": "Reprocessar", "glyph": "refresh",
-         "title": "Reanalisar completude"},
-        {"label": "Exportar gaps", "primary": True, "glyph": "download",
-         "title": "Exportar lista de lacunas"},
-    ])
+
+    renderizar_grupo_acoes(
+        [
+            {"label": "Reprocessar", "glyph": "refresh", "title": "Reanalisar completude"},
+            {
+                "label": "Exportar gaps",
+                "primary": True,
+                "glyph": "download",
+                "title": "Exportar lista de lacunas",
+            },
+        ]
+    )
 
     # CSS dedicado da página (kpi-sub + legenda) -- UX-V-2.3.
-    st.markdown(
-        minificar(carregar_css_pagina("completude")), unsafe_allow_html=True
-    )
+    st.markdown(minificar(carregar_css_pagina("completude")), unsafe_allow_html=True)
 
     del mes_selecionado, ctx
 
@@ -496,13 +678,22 @@ def renderizar(
 
     # Sprint 92a item 3: toggle para filtrar ruído. Renderizado APÓS o header
     # mas ANTES da matriz para o usuário ver o efeito imediato.
-    resumo_completo = calcular_completude(
-        extrato, categorias_obrigatorias=frozenset(categorias)
+    resumo_completo = calcular_completude(extrato, categorias_obrigatorias=frozenset(categorias))
+
+    # UX-V-2.3-FIX: cobertura documental real (família × mês) substitui a
+    # cobertura por categoria de transação no header e no heatmap. Os 4 KPIs
+    # do topo continuam vindo de ``resumo_completo`` (UX-V-2.3 original) --
+    # eles falam de cobertura por categoria, agregação distinta da matriz.
+    df_docs = carregar_documentos_grafo()
+    meses_extrato = (
+        sorted({str(m) for m in extrato["mes_ref"].dropna().unique() if str(m) and str(m) != "nan"})
+        if "mes_ref" in extrato.columns
+        else []
     )
-    pct_inicial, lacunas_inicial, _ = _calcular_metricas_globais(resumo_completo)
-    st.markdown(
-        _page_header_html(pct_inicial, lacunas_inicial), unsafe_allow_html=True
-    )
+    meses_documental = _ordenar_meses(meses_extrato)
+    cobertura_doc = _calcular_cobertura_documental(df_docs, meses_documental)
+    pct_doc, lacunas_doc = _cobertura_global_documental(cobertura_doc)
+    st.markdown(_page_header_html(pct_doc, lacunas_doc), unsafe_allow_html=True)
 
     # 4 KPIs no topo (UX-V-2.3) -- antes do toggle de filtro para que o
     # usuário veja métricas globais imediatas, independente do recorte da
@@ -534,9 +725,7 @@ def renderizar(
             )
             return
 
-    resumo = calcular_completude(
-        extrato, categorias_obrigatorias=frozenset(categorias)
-    )
+    resumo = calcular_completude(extrato, categorias_obrigatorias=frozenset(categorias))
     if not resumo:
         st.markdown(
             callout_html(
@@ -549,12 +738,19 @@ def renderizar(
         )
         return
 
-    meses_ordenados = _ordenar_meses(list(resumo.keys()))
-    categorias_ordenadas = sorted(categorias)
-
-    # Matriz HTML
+    # UX-V-2.3-FIX: heatmap canônico = família documental × mês (paridade com
+    # mockup `08-completude.html`). A matriz por categoria de transação foi
+    # promovida ao "Detalhe" abaixo, onde alimenta o drill-down e o CSV.
+    familias = [familia for familia, _ids in FAMILIAS_DOCUMENTAIS]
     st.markdown(
-        _matriz_html(resumo, categorias_ordenadas, meses_ordenados),
+        '<div class="completude-matriz-titulo">'
+        '<h3 class="completude-secao-titulo">Mapa de cobertura · 12 meses</h3>'
+        f"{_legenda_chip_bar_html()}"
+        "</div>",
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        _matriz_documental_html(cobertura_doc, familias, meses_documental),
         unsafe_allow_html=True,
     )
 
@@ -571,8 +767,7 @@ def renderizar(
         st.markdown(
             callout_html(
                 "success",
-                "Nenhum alerta para o período -- todas as categorias estão "
-                "cobertas.",
+                "Nenhum alerta para o período -- todas as categorias estão cobertas.",
             ),
             unsafe_allow_html=True,
         )
@@ -580,10 +775,7 @@ def renderizar(
         for a in lista_alertas[:20]:
             st.markdown(callout_html("warning", a), unsafe_allow_html=True)
         if len(lista_alertas) > 20:
-            st.caption(
-                f"+{len(lista_alertas) - 20} alertas adicionais (export CSV "
-                "abaixo)."
-            )
+            st.caption(f"+{len(lista_alertas) - 20} alertas adicionais (export CSV abaixo).")
 
     # Detalhe mês × categoria (drill-down nativo Streamlit)
     st.markdown(

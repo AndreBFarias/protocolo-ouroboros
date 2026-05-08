@@ -215,4 +215,196 @@ def test_legenda_html_tem_3_estados_com_cores_d7() -> None:
     assert "accent-yellow" in html
     assert "accent-red" in html
 
+
+# ---------------------------------------------------------------------------
+# Sprint UX-V-2.3-FIX -- eixo Y por família documental + chip-bar no header
+# ---------------------------------------------------------------------------
+
+
+def test_familias_documentais_canonicas_casam_mockup_08() -> None:
+    """Mockup `08-completude.html` lista exatamente 5 famílias na ordem fixa.
+
+    Garantir que o eixo Y do heatmap real espelha a taxonomia canônica do
+    mockup; alterações exigem nova spec UX-V (versionar a expectativa visual).
+    """
+    from src.dashboard.paginas.completude import FAMILIAS_DOCUMENTAIS
+
+    nomes = [familia for familia, _ids in FAMILIAS_DOCUMENTAIS]
+    assert nomes == [
+        "OFX bancos",
+        "Faturas cartão",
+        "Comprovantes Pix",
+        "NF serviços",
+        "Recibos",
+    ]
+
+
+def test_familia_de_tipo_mapeia_ids_canonicos_yaml() -> None:
+    """`tipos_documento.yaml` ids comuns devem cair em sua família correta."""
+    from src.dashboard.paginas.completude import _familia_de_tipo
+
+    assert _familia_de_tipo("fatura_cartao") == "Faturas cartão"
+    assert _familia_de_tipo("danfe_nfe55") == "NF serviços"
+    assert _familia_de_tipo("nfce_modelo_65") == "NF serviços"
+    assert _familia_de_tipo("recibo_nao_fiscal") == "Recibos"
+    assert _familia_de_tipo("ofx") == "OFX bancos"
+    assert _familia_de_tipo("extrato_c6_pdf") == "OFX bancos"
+
+
+def test_familia_de_tipo_devolve_none_para_tipos_pessoais() -> None:
+    """Holerite, IRPF, comprovante CPF -- não pertencem ao contrato visual.
+
+    Esses tipos existem no YAML mas não estão no mockup `08-completude.html`;
+    evitamos poluir o heatmap com famílias adicionais.
+    """
+    from src.dashboard.paginas.completude import _familia_de_tipo
+
+    assert _familia_de_tipo("holerite") is None
+    assert _familia_de_tipo("irpf_parcela") is None
+    assert _familia_de_tipo("comprovante_cpf") is None
+    assert _familia_de_tipo("") is None
+
+
+def test_calcular_cobertura_documental_marca_full_quando_doc_presente() -> None:
+    """Documento `fatura_cartao` em jan/2026 -> família 'Faturas cartão' full."""
+    import pandas as pd
+
+    from src.dashboard.paginas.completude import _calcular_cobertura_documental
+
+    df_docs = pd.DataFrame(
+        [
+            {"tipo_documento": "fatura_cartao", "data_emissao": "2026-01-15"},
+        ]
+    )
+    cobertura = _calcular_cobertura_documental(df_docs, ["2026-01", "2026-02"])
+    assert cobertura["2026-01"]["Faturas cartão"]["presente"] == 1
+    assert cobertura["2026-01"]["Faturas cartão"]["esperado"] == 1
+    # Mês sem documento mantém presente=0.
+    assert cobertura["2026-02"]["Faturas cartão"]["presente"] == 0
+
+
+def test_calcular_cobertura_documental_ignora_tipos_fora_da_taxonomia() -> None:
+    """Holerite não polui o heatmap (taxonomia canônica restrita ao mockup)."""
+    import pandas as pd
+
+    from src.dashboard.paginas.completude import _calcular_cobertura_documental
+
+    df_docs = pd.DataFrame(
+        [
+            {"tipo_documento": "holerite", "data_emissao": "2026-01-15"},
+            {"tipo_documento": "irpf_parcela", "data_emissao": "2026-02-01"},
+        ]
+    )
+    cobertura = _calcular_cobertura_documental(df_docs, ["2026-01", "2026-02"])
+    # Nenhuma família deve ter presente > 0 -- documentos pessoais não contam.
+    for cells in cobertura.values():
+        for info in cells.values():
+            assert info["presente"] == 0
+
+
+def test_calcular_cobertura_documental_df_vazio_retorna_estrutura_default() -> None:
+    """Sem documentos no grafo, todas as células ficam em zero (missing)."""
+    import pandas as pd
+
+    from src.dashboard.paginas.completude import (
+        FAMILIAS_DOCUMENTAIS,
+        _calcular_cobertura_documental,
+    )
+
+    df_docs = pd.DataFrame(columns=["tipo_documento", "data_emissao"])
+    cobertura = _calcular_cobertura_documental(df_docs, ["2026-01"])
+    # Cada família aparece com presente=0 / esperado=1 (full miss).
+    for familia, _ids in FAMILIAS_DOCUMENTAIS:
+        info = cobertura["2026-01"][familia]
+        assert info == {"presente": 0, "esperado": 1}
+
+
+def test_classificar_celula_documental_tabela_d7() -> None:
+    """Tabela canônica presente/esperado -> estado D7."""
+    from src.dashboard.paginas.completude import _classificar_celula_documental
+
+    assert _classificar_celula_documental(0, 0) == "empty"
+    assert _classificar_celula_documental(1, 1) == "full"
+    assert _classificar_celula_documental(2, 1) == "full"
+    assert _classificar_celula_documental(0, 1) == "missing"
+    assert _classificar_celula_documental(1, 3) == "partial"
+
+
+def test_matriz_documental_html_renderiza_familias_e_estados() -> None:
+    """Matriz documental tem rótulo da família e classes D7 nas células."""
+    from src.dashboard.paginas.completude import _matriz_documental_html
+
+    cobertura = {
+        "2026-01": {
+            "OFX bancos": {"presente": 1, "esperado": 1},
+            "Faturas cartão": {"presente": 0, "esperado": 1},
+            "Comprovantes Pix": {"presente": 1, "esperado": 3},
+            "NF serviços": {"presente": 0, "esperado": 1},
+            "Recibos": {"presente": 1, "esperado": 1},
+        },
+    }
+    familias = [
+        "OFX bancos",
+        "Faturas cartão",
+        "Comprovantes Pix",
+        "NF serviços",
+        "Recibos",
+    ]
+    html = _matriz_documental_html(cobertura, familias, ["2026-01"])
+    # Rótulos das famílias presentes.
+    for nome in familias:
+        assert nome in html
+    # Estados D7 representados como classes CSS.
+    assert "completude-cell-full" in html
+    assert "completude-cell-missing" in html
+    assert "completude-cell-partial" in html
+    # Símbolos canônicos do mockup.
+    assert ">~<" in html or "~</div>" in html
+    assert ">!<" in html or "!</div>" in html
+
+
+def test_legenda_chip_bar_html_emite_3_chips_canonicos() -> None:
+    """Chip-bar à direita do título lista completo/parcial/ausente."""
+    from src.dashboard.paginas.completude import _legenda_chip_bar_html
+
+    html = _legenda_chip_bar_html()
+    assert 'class="completude-chipbar"' in html
+    assert "completo" in html
+    assert "parcial" in html
+    assert "ausente" in html
+    assert "chip-completo" in html
+    assert "chip-parcial" in html
+    assert "chip-ausente" in html
+
+
+def test_cobertura_global_documental_calcula_pct_e_lacunas() -> None:
+    """Soma presente/esperado e devolve pct global + total de lacunas."""
+    from src.dashboard.paginas.completude import _cobertura_global_documental
+
+    cobertura = {
+        "2026-01": {
+            "OFX bancos": {"presente": 1, "esperado": 1},
+            "Faturas cartão": {"presente": 0, "esperado": 1},
+        },
+        "2026-02": {
+            "OFX bancos": {"presente": 1, "esperado": 1},
+            "Faturas cartão": {"presente": 1, "esperado": 1},
+        },
+    }
+    pct, lacunas = _cobertura_global_documental(cobertura)
+    # 3 presentes / 4 esperados = 75%.
+    assert pct == 75.0
+    # 1 lacuna remanescente (jan / Faturas cartão).
+    assert lacunas == 1
+
+
+def test_cobertura_global_documental_zero_esperado_devolve_zero() -> None:
+    """Cobertura sem expectativa configurada não estoura ZeroDivision."""
+    from src.dashboard.paginas.completude import _cobertura_global_documental
+
+    pct, lacunas = _cobertura_global_documental({})
+    assert pct == 0.0
+    assert lacunas == 0
+
+
 # "Um heatmap honesto mostra o que falta -- não grita." -- princípio UX
