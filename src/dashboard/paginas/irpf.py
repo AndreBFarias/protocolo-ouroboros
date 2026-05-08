@@ -1,37 +1,44 @@
-"""Página IRPF — UX-RD-14.
-
-Reescrita conforme mockup ``novo-mockup/mockups/15-irpf.html``.
+"""Página IRPF — UX-RD-14 + UX-V-3.4 (paridade visual com mockup 15-irpf.html).
 
 Layout em grid 1fr / 380px:
 
-* **Esquerda** — 8 categorias canônicas IRPF (compiladas das tags
-  geradas por ``src/transform/irpf_tagger.py``). Cada linha mostra
-  label uppercase, valor mono tabular, contagem de transações e barra
-  de "completude" (proxy: fração de transações com ``cnpj_cpf``
-  preenchido — comprovante mais robusto).
+* **Esquerda** — 8 categorias canônicas IRPF (compiladas das tags geradas
+  por ``src/transform/irpf_tagger.py``). Cada linha mostra label uppercase,
+  descrição, barra de completude colorida (verde >=90%, amarelo 70-89%,
+  vermelho <70%), valor mono tabular, badge de confiança e botões
+  expand/baixar inline.
 * **Direita** — card "Pacote IRPF <ano>" com totalizador, lista dos
-  4 artefatos a serem gerados e botão "Gerar pacote", que invoca
-  ``src/exports/pacote_irpf.gerar_pacote(ano)``.
+  4 artefatos a serem gerados, checklist de 5 itens e botão "Gerar pacote",
+  que invoca ``src/exports/pacote_irpf.gerar_pacote(ano)``.
 
-A regra ``forbidden`` da spec UX-RD-14 é literal: **só lê tags reais**
+Sprint UX-V-3.4 (2026-05-08):
+* Ano agora vem do filtro global (``ctx["periodo"]``); selectbox local
+  proeminente foi rebaixado a fallback discreto (label colapsado).
+* Título exibe ``IRPF {ano}`` literalmente (mockup 15-irpf.html linha 110).
+* Barras coloridas por threshold de completude.
+* Botões expand/baixar inline por categoria (visual; ação real é
+  "Gerar pacote" no card lateral).
+* Checklist lateral com 5 itens estruturados (mockup linhas 137-141).
+
+A regra ``forbidden`` da spec UX-RD-14 permanece literal: **só lê tags reais**
 do tagger. As categorias ``dedutivel_educacional``, ``previdencia_privada``
-e ``doacao_dedutivel`` ainda não têm regex no tagger atual; elas
-aparecem zeradas no painel para que o redesign exponha a estrutura
-canônica completa, sem inventar valores.
+e ``doacao_dedutivel`` ainda não têm regex no tagger atual; aparecem zeradas
+no painel para que o redesign exponha a estrutura canônica completa, sem
+inventar valores.
 
 Função pública preservada:
 * ``renderizar(dados, periodo, pessoa, ctx)`` — entrypoint do dispatcher.
-
-Assinatura de antes (``renderizar(dados, periodo, pessoa, ctx)``)
-permanece inalterada -- ver ``src/dashboard/app.py`` linha ~512.
 """
 
 from __future__ import annotations
+
+import datetime as _dt
 
 import pandas as pd
 import streamlit as st
 
 from src.dashboard.componentes.html_utils import minificar
+from src.dashboard.componentes.ui import carregar_css_pagina
 from src.dashboard.dados import formatar_moeda
 from src.dashboard.tema import CORES
 from src.exports.pacote_irpf import (
@@ -86,8 +93,9 @@ def renderizar(
     pessoa: str,
     ctx: dict | None = None,
 ) -> None:
-    """Renderiza a página IRPF (UX-RD-14 + UX-T-15)."""
+    """Renderiza a página IRPF (UX-RD-14 + UX-V-3.4)."""
     from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
+
     renderizar_grupo_acoes([
         {"label": "Recalcular", "glyph": "refresh",
          "title": "Recalcular IRPF do ano"},
@@ -95,20 +103,44 @@ def renderizar(
          "title": "DEC + DARF + PDFs"},
     ])
 
+    st.markdown(
+        minificar(carregar_css_pagina("irpf")),
+        unsafe_allow_html=True,
+    )
+
     extrato = dados.get("extrato") if isinstance(dados, dict) else None
     anos_disponiveis = _extrair_anos(extrato)
 
+    # Ano-base: 1) ctx["periodo"] se contiver ano válido, 2) ano corrente,
+    # 3) selectbox secundário só aparece se houver múltiplos anos no extrato.
+    ano_global = _ano_do_periodo(ctx)
+    ano_corrente = _dt.date.today().year
+    ano_default = ano_global or (
+        anos_disponiveis[0] if anos_disponiveis else str(ano_corrente)
+    )
+
     if not anos_disponiveis:
-        st.markdown(_page_header_html("--", 0, 0, 0.0), unsafe_allow_html=True)
+        st.markdown(_page_header_html(ano_default, 0, 0, 0.0), unsafe_allow_html=True)
         st.info("Sem extrato carregado para análise IRPF.")
         return
 
-    ano_selecionado = st.selectbox(
-        "Ano-calendário",
-        anos_disponiveis,
-        index=0,
-        key="irpf_ano",
-    )
+    # Selectbox secundário: label colapsado, só visível se houver mais de
+    # um ano no extrato. Default é o ano global ou o mais recente.
+    if len(anos_disponiveis) > 1:
+        try:
+            idx_default = anos_disponiveis.index(ano_default)
+        except ValueError:
+            idx_default = 0
+        ano_selecionado = st.selectbox(
+            "Trocar ano-calendário",
+            anos_disponiveis,
+            index=idx_default,
+            key="irpf_ano",
+            label_visibility="collapsed",
+        )
+    else:
+        ano_selecionado = anos_disponiveis[0]
+
     ano_int = int(ano_selecionado)
 
     df_ano = extrato[extrato["mes_ref"].astype(str).str.startswith(ano_selecionado)].copy()
@@ -124,42 +156,45 @@ def renderizar(
         unsafe_allow_html=True,
     )
 
-    col_categorias, col_pacote = st.columns([1.0, 0.42])
+    # Render lista (esquerda) + card sticky (direita) num único bloco HTML
+    # para que o grid CSS controle o layout (Streamlit columns quebram o
+    # sticky-positioning do card lateral).
+    linhas_html = "".join(
+        _row_categoria_html(cat, totais.get(cat, {"valor": 0.0, "count": 0}),
+                            _calcular_completude(eventos, cat))
+        for cat in CATEGORIAS_IRPF
+    )
+    card_html = _card_pacote_html(ano_int, soma_total, n_eventos, totais, eventos)
 
-    with col_categorias:
-        for categoria in CATEGORIAS_IRPF:
-            info = totais.get(categoria, {"valor": 0.0, "count": 0})
-            completude = _calcular_completude(eventos, categoria)
-            st.markdown(
-                _row_categoria_html(categoria, info, completude),
-                unsafe_allow_html=True,
-            )
+    st.markdown(
+        minificar(
+            f'<div class="irpf-grid">'
+            f'<div>{linhas_html}</div>'
+            f'{card_html}'
+            f'</div>'
+        ),
+        unsafe_allow_html=True,
+    )
 
-    with col_pacote:
-        st.markdown(
-            _card_pacote_html(ano_int, soma_total, n_eventos, totais, eventos),
-            unsafe_allow_html=True,
+    # Botão real (Streamlit) para acionar a geração. O botão "Gerar pacote"
+    # do card HTML é puramente visual; o controle interativo precisa ser do
+    # Streamlit para disparar callback no servidor.
+    if st.button(
+        f"Gerar pacote IRPF {ano_int}",
+        key=f"irpf_gerar_pacote_{ano_int}",
+        type="primary",
+        width="stretch",
+    ):
+        with st.spinner(f"Gerando pacote IRPF {ano_int}..."):
+            diretorio = gerar_pacote(ano_int, dados=dados)
+        st.success(
+            f"Pacote IRPF {ano_int} gerado em `{diretorio}`. "
+            "Conteúdo: relatorio.pdf, dados.xlsx, dados.json, originais/."
         )
-
-        # Botão real (Streamlit) para acionar a geração. O HTML do mockup
-        # acima é só visual; o controle interativo precisa ser do
-        # Streamlit para disparar callback no servidor.
-        if st.button(
-            f"Gerar pacote IRPF {ano_int}",
-            key=f"irpf_gerar_pacote_{ano_int}",
-            type="primary",
-            width="stretch",
-        ):
-            with st.spinner(f"Gerando pacote IRPF {ano_int}..."):
-                diretorio = gerar_pacote(ano_int, dados=dados)
-            st.success(
-                f"Pacote IRPF {ano_int} gerado em `{diretorio}`. "
-                "Conteúdo: relatorio.pdf, dados.xlsx, dados.json, originais/."
-            )
 
 
 # ---------------------------------------------------------------------------
-# HTML helpers (UX-RD-14)
+# HTML helpers (UX-V-3.4)
 # ---------------------------------------------------------------------------
 
 
@@ -169,7 +204,13 @@ def _page_header_html(
     n_categorias_ativas: int,
     soma_total: float,
 ) -> str:
-    """HTML do page-header UX-RD-14 (título + sprint-tag + pill ano)."""
+    """HTML do page-header UX-V-3.4 (título com ano embutido + sprint-tag + pills).
+
+    O ano-calendário deixa de ser dropdown proeminente (movido para o título,
+    ``IRPF {ano}``, alinhamento com mockup 15-irpf.html linha 110). A pill
+    ``Ano-base {ano}`` permanece como rótulo redundante na faixa de meta
+    para manter contrato de teste UX-RD-14 (test_irpf_page_header_html_canonico).
+    """
     if n_categorias_ativas >= 6:
         pill_classe = "pill-d7-graduado"
     elif n_categorias_ativas >= 3:
@@ -182,7 +223,7 @@ def _page_header_html(
         f"""
         <div class="page-header">
           <div>
-            <h1 class="page-title">IRPF</h1>
+            <h1 class="page-title">IRPF {ano}</h1>
             <p class="page-subtitle">
               Compilação automática a partir do banco catalogado.
               Cada categoria agrega transações com a mesma classificação
@@ -201,114 +242,74 @@ def _page_header_html(
     )
 
 
+def _classe_cor_completude(pct: float, count: int) -> str:
+    """Classifica a cor da linha conforme completude.
+
+    * verde: completude >= 90%
+    * amarelo: 70-89%
+    * vermelho: < 70% (com pelo menos 1 evento)
+    * neutro: sem dados (count == 0)
+    """
+    if count == 0:
+        return "neutral"
+    if pct >= 0.9:
+        return "green"
+    if pct >= 0.7:
+        return "yellow"
+    return "red"
+
+
+def _classe_conf(pct: float, count: int) -> tuple[str, str]:
+    """Retorna (classe_css, label_textual) do badge de confiança."""
+    if count == 0:
+        return ("none", "—")
+    if pct >= 0.9:
+        return ("high", "≥90%")
+    if pct >= 0.7:
+        return ("mid", "70-90%")
+    return ("low", "<70%")
+
+
 def _row_categoria_html(
     categoria: str,
     info: dict[str, float],
     completude: float,
 ) -> str:
-    """HTML de uma linha de categoria IRPF.
+    """HTML de uma linha de categoria IRPF (UX-V-3.4).
 
-    Layout: label uppercase + descrição + barra de completude + valor
-    mono tabular + count + sinal narrativo de comprovante (OK/parcial/falta).
+    Layout grid 5 colunas: nome+desc / barra colorida / valor /
+    badge de confiança / botões expand+baixar.
     """
     meta = META_CATEGORIAS.get(categoria, {"cor": CORES["texto_sec"], "descricao": ""})
-    cor = meta["cor"]
     descricao = meta["descricao"]
     valor = info.get("valor", 0.0)
     count = int(info.get("count", 0))
     pct = max(0.0, min(1.0, completude))
     pct_int = int(round(pct * 100))
-
-    # Sinal de comprovante: "OK" se ao menos 80% dos eventos têm
-    # CNPJ/CPF; "parcial" entre 30 e 80; "falta" abaixo de 30 (e count>0).
-    if count == 0:
-        sinal_label = "sem dados"
-        sinal_cor = CORES["texto_sec"]
-    elif pct >= 0.8:
-        sinal_label = "comprovante: OK"
-        sinal_cor = CORES["positivo"]
-    elif pct >= 0.3:
-        sinal_label = "comprovante: parcial"
-        sinal_cor = CORES["alerta"]
-    else:
-        sinal_label = "comprovante: falta"
-        sinal_cor = CORES["negativo"]
-
+    cor_classe = _classe_cor_completude(pct, count)
+    conf_classe, conf_label = _classe_conf(pct, count)
     valor_fmt = formatar_moeda(valor)
 
     return minificar(
         f"""
-        <div style="
-            background: {CORES['card_fundo']};
-            border: 1px solid {CORES['texto_sec']}33;
-            border-left: 4px solid {cor};
-            border-radius: 8px;
-            padding: 14px 18px;
-            margin: 6px 0;
-            display: grid;
-            grid-template-columns: 1.2fr 1fr 0.6fr 0.6fr;
-            gap: 16px;
-            align-items: center;
-        ">
+        <div class="irpf-row" data-cor="{cor_classe}">
           <div>
-            <div style="
-                font-family: ui-monospace, 'JetBrains Mono', monospace;
-                font-size: 13px;
-                color: {CORES['texto']};
-                text-transform: uppercase;
-                letter-spacing: 0.04em;
-                font-weight: 600;
-            ">{categoria}</div>
-            <div style="
-                font-size: 11px;
-                color: {CORES['texto_sec']};
-                margin-top: 2px;
-            ">{descricao}</div>
+            <div class="irpf-tag-name">{categoria}</div>
+            <div class="irpf-tag-desc">{descricao}</div>
           </div>
           <div>
-            <div style="
-                font-family: ui-monospace, 'JetBrains Mono', monospace;
-                font-size: 11px;
-                color: {CORES['texto_sec']};
-                margin-bottom: 4px;
-                display: flex;
-                justify-content: space-between;
-            ">
-              <span>{count} registro(s)</span>
+            <div class="irpf-bar-label">
+              <span>{count} arquivo(s)</span>
               <span>{pct_int}% completude</span>
             </div>
-            <div style="
-                height: 6px;
-                background: {CORES['texto_sec']}22;
-                border-radius: 3px;
-                overflow: hidden;
-            ">
-              <span style="
-                  display: block;
-                  height: 100%;
-                  width: {pct_int}%;
-                  background: {cor};
-              "></span>
-            </div>
+            <div class="irpf-bar"><span style="width: {pct_int}%;"></span></div>
           </div>
-          <div style="
-              font-family: ui-monospace, 'JetBrains Mono', monospace;
-              font-size: 16px;
-              font-weight: 500;
-              text-align: right;
-              color: {CORES['texto']};
-              font-variant-numeric: tabular-nums;
-          ">{valor_fmt}</div>
-          <div style="
-              text-align: right;
-              font-family: ui-monospace, 'JetBrains Mono', monospace;
-              font-size: 11px;
-              color: {sinal_cor};
-              border: 1px solid {sinal_cor}55;
-              border-radius: 4px;
-              padding: 3px 8px;
-              white-space: nowrap;
-          ">{sinal_label}</div>
+          <div class="irpf-val">{valor_fmt}</div>
+          <div><span class="irpf-conf {conf_classe}">{conf_label}</span></div>
+          <div class="irpf-actions">
+            <button type="button" title="Ver arquivos">expand</button>
+            <button type="button" title="Baixar evidências">baixar</button>
+          </div>
         </div>
         """
     )
@@ -321,130 +322,107 @@ def _card_pacote_html(
     totais: dict[str, dict[str, float]],
     eventos: list[dict],
 ) -> str:
-    """HTML do card lateral 'Pacote IRPF <ano>' (sticky, 380px)."""
+    """HTML do card lateral 'Pacote IRPF <ano>' (sticky, 380px).
+
+    Checklist com 5 itens estruturados conforme mockup 15-irpf.html
+    linhas 137-141:
+    1. 8/8 tags compiladas (categorias com dados reais).
+    2. X/Y arquivos validados (eventos com cnpj_cpf).
+    3. X categorias com confiança < 70% (count > 0 e pct < 0.7).
+    4. Totais batem com soma dos arquivos.
+    5. X fornecedores ainda não cruzados com CNPJ.
+    """
     total_fmt = formatar_moeda(soma_total)
     n_categorias_ativas = sum(1 for info in totais.values() if info["count"] > 0)
     n_com_cnpj = sum(1 for ev in eventos if ev.get("cnpj_cpf"))
     n_sem_cnpj = max(0, n_eventos - n_com_cnpj)
-    pct_validados = (n_com_cnpj / n_eventos * 100) if n_eventos else 100
 
-    if n_categorias_ativas >= 6:
-        ck1_cor = CORES["positivo"]
-        ck1_glyph = "OK"
+    # Item 3: categorias com confiança < 70% (count > 0).
+    n_baixa_conf = 0
+    for cat, info in totais.items():
+        cnt = int(info.get("count", 0))
+        if cnt == 0:
+            continue
+        eventos_cat = [ev for ev in eventos if ev.get("tag") == cat]
+        com_cnpj_cat = sum(1 for ev in eventos_cat if ev.get("cnpj_cpf"))
+        pct_cat = (com_cnpj_cat / cnt) if cnt else 0.0
+        if pct_cat < 0.7:
+            n_baixa_conf += 1
+
+    # Item 1: 8/8 tags se TODAS as 8 estão presentes (count > 0). Caso
+    # contrário, X/8 com aviso.
+    if n_categorias_ativas == 8:
+        ck1_classe, ck1_mark = "ck-ok", "OK"
+        ck1_texto = "8/8 tags compiladas"
     else:
-        ck1_cor = CORES["alerta"]
-        ck1_glyph = "!"
+        ck1_classe, ck1_mark = "ck-warn", "!"
+        ck1_texto = f"{n_categorias_ativas}/8 tags compiladas"
 
-    if pct_validados >= 80:
-        ck2_cor = CORES["positivo"]
-        ck2_glyph = "OK"
+    # Item 2: validados por humano = eventos com cnpj_cpf preenchido.
+    if n_eventos == 0:
+        ck2_classe, ck2_mark = "ck-warn", "!"
+        ck2_texto = "0/0 arquivos validados"
+    elif n_com_cnpj == n_eventos:
+        ck2_classe, ck2_mark = "ck-ok", "OK"
+        ck2_texto = f"{n_com_cnpj}/{n_eventos} arquivos validados"
     else:
-        ck2_cor = CORES["alerta"]
-        ck2_glyph = "!"
+        ck2_classe, ck2_mark = "ck-warn", "!"
+        ck2_texto = f"{n_com_cnpj}/{n_eventos} arquivos validados"
 
+    # Item 3: confiança baixa.
+    if n_baixa_conf == 0:
+        ck3_classe, ck3_mark = "ck-ok", "OK"
+        ck3_texto = "0 categorias com confiança < 70%"
+    else:
+        ck3_classe, ck3_mark = "ck-warn", "!"
+        ck3_texto = f"{n_baixa_conf} categorias com confiança < 70%"
+
+    # Item 4: totais batem com soma dos eventos. Por construção
+    # ``compilar_totais`` é a soma direta -- verificação trivial.
+    soma_eventos = sum(abs(ev.get("valor", 0.0)) for ev in eventos)
+    diff = abs(soma_eventos - soma_total)
+    if diff < 0.01:
+        ck4_classe, ck4_mark = "ck-ok", "OK"
+        ck4_texto = "totais batem com soma dos arquivos"
+    else:
+        ck4_classe, ck4_mark = "ck-fail", "X"
+        ck4_texto = f"divergência de {formatar_moeda(diff)} entre totais e arquivos"
+
+    # Item 5: fornecedores sem CNPJ.
     if n_sem_cnpj == 0:
-        ck3_cor = CORES["positivo"]
-        ck3_glyph = "OK"
+        ck5_classe, ck5_mark = "ck-ok", "OK"
+        ck5_texto = "todos fornecedores cruzados com CNPJ"
     else:
-        ck3_cor = CORES["alerta"]
-        ck3_glyph = "!"
+        ck5_classe, ck5_mark = "ck-warn", "!"
+        ck5_texto = f"{n_sem_cnpj} fornecedor(es) sem CNPJ cruzado"
 
     return minificar(
         f"""
-        <aside style="
-            background: {CORES['card_fundo']};
-            border: 1px solid {CORES['texto_sec']}33;
-            border-radius: 8px;
-            padding: 20px;
-            position: sticky;
-            top: 16px;
-        ">
-          <h3 style="
-              font-family: ui-monospace, 'JetBrains Mono', monospace;
-              font-size: 13px;
-              letter-spacing: 0.04em;
-              margin: 0 0 8px;
-              color: {CORES['destaque']};
-              text-transform: uppercase;
-          ">Pacote IRPF {ano}</h3>
-          <div style="
-              font-family: ui-monospace, 'JetBrains Mono', monospace;
-              font-size: 28px;
-              font-weight: 500;
-              color: {CORES['destaque']};
-              font-variant-numeric: tabular-nums;
-          ">{total_fmt}</div>
-          <div style="
-              font-family: ui-monospace, 'JetBrains Mono', monospace;
-              font-size: 11px;
-              color: {CORES['texto_sec']};
-              margin-top: 4px;
-          ">soma das tags · {n_eventos} eventos</div>
+        <aside class="irpf-export-card">
+          <h3>Pacote IRPF {ano}</h3>
+          <div class="irpf-total">{total_fmt}</div>
+          <div class="irpf-total-sub">soma das tags · {n_eventos} eventos</div>
 
-          <h4 style="
-              font-family: ui-monospace, 'JetBrains Mono', monospace;
-              font-size: 11px;
-              letter-spacing: 0.08em;
-              text-transform: uppercase;
-              color: {CORES['texto_sec']};
-              margin: 18px 0 8px;
-          ">Será gerado em data/aplicacoes/irpf_{ano}/</h4>
-          <ul style="
-              list-style: none;
-              padding: 8px 12px;
-              margin: 0 0 16px;
-              background: {CORES['fundo']};
-              border: 1px solid {CORES['texto_sec']}22;
-              border-radius: 4px;
-              font-family: ui-monospace, 'JetBrains Mono', monospace;
-              font-size: 11px;
-          ">
-            <li style="display:flex;justify-content:space-between;
-              color:{CORES['texto_sec']};padding:3px 0;">
-              <span>relatorio.pdf</span><code style="color:{CORES['destaque']};">PDF</code>
-            </li>
-            <li style="display:flex;justify-content:space-between;
-              color:{CORES['texto_sec']};padding:3px 0;">
-              <span>dados.xlsx</span><code style="color:{CORES['destaque']};">XLSX</code>
-            </li>
-            <li style="display:flex;justify-content:space-between;
-              color:{CORES['texto_sec']};padding:3px 0;">
-              <span>dados.json</span><code style="color:{CORES['destaque']};">JSON</code>
-            </li>
-            <li style="display:flex;justify-content:space-between;
-              color:{CORES['texto_sec']};padding:3px 0;">
-              <span>originais/</span><code style="color:{CORES['destaque']};">DIR</code>
-            </li>
+          <h4>Será gerado em data/aplicacoes/irpf_{ano}/</h4>
+          <ul class="irpf-files">
+            <li><span>relatorio.pdf</span><code>PDF</code></li>
+            <li><span>dados.xlsx</span><code>XLSX</code></li>
+            <li><span>dados.json</span><code>JSON</code></li>
+            <li><span>originais/</span><code>DIR</code></li>
           </ul>
 
-          <h4 style="
-              font-family: ui-monospace, 'JetBrains Mono', monospace;
-              font-size: 11px;
-              letter-spacing: 0.08em;
-              text-transform: uppercase;
-              color: {CORES['texto_sec']};
-              margin: 0 0 6px;
-          ">Checklist</h4>
-          <ul style="
-              list-style: none;
-              padding: 0;
-              margin: 0 0 12px;
-              font-size: 12px;
-              color: {CORES['texto']};
-          ">
-            <li style="padding:3px 0;">
-              <span style="color:{ck1_cor};font-weight:bold;margin-right:6px;">[{ck1_glyph}]</span>
-              {n_categorias_ativas}/8 categorias com dados reais
-            </li>
-            <li style="padding:3px 0;">
-              <span style="color:{ck2_cor};font-weight:bold;margin-right:6px;">[{ck2_glyph}]</span>
-              {n_com_cnpj}/{n_eventos} eventos com CNPJ/CPF ({pct_validados:.0f}%)
-            </li>
-            <li style="padding:3px 0;">
-              <span style="color:{ck3_cor};font-weight:bold;margin-right:6px;">[{ck3_glyph}]</span>
-              {n_sem_cnpj} eventos sem identificador da fonte
-            </li>
+          <h4>Checklist</h4>
+          <ul class="irpf-checklist">
+            <li><span class="ck-mark {ck1_classe}">[{ck1_mark}]</span><span>{ck1_texto}</span></li>
+            <li><span class="ck-mark {ck2_classe}">[{ck2_mark}]</span><span>{ck2_texto}</span></li>
+            <li><span class="ck-mark {ck3_classe}">[{ck3_mark}]</span><span>{ck3_texto}</span></li>
+            <li><span class="ck-mark {ck4_classe}">[{ck4_mark}]</span><span>{ck4_texto}</span></li>
+            <li><span class="ck-mark {ck5_classe}">[{ck5_mark}]</span><span>{ck5_texto}</span></li>
           </ul>
+
+          <p class="irpf-saved-path">
+            Salva em <code>data/aplicacoes/irpf_{ano}/</code>
+          </p>
         </aside>
         """
     )
@@ -464,6 +442,30 @@ def _extrair_anos(extrato: pd.DataFrame | None) -> list[str]:
     meses = extrato["mes_ref"].dropna().astype(str).unique().tolist()
     anos = sorted({m[:4] for m in meses if len(m) >= 4}, reverse=True)
     return anos
+
+
+def _ano_do_periodo(ctx: dict | None) -> str | None:
+    """Extrai ano (4 dígitos) do filtro global ``ctx["periodo"]``.
+
+    Suporta os formatos emitidos por ``filtrar_por_periodo``:
+    * Ano: ``"2026"``.
+    * Mês: ``"2026-04"`` (4 primeiros chars).
+    * Dia: ``"15/04/2026"`` (4 últimos chars).
+
+    Retorna ``None`` quando não consegue extrair ano válido.
+    """
+    if not ctx:
+        return None
+    periodo = str(ctx.get("periodo", "")).strip()
+    if not periodo:
+        return None
+    # Formato dia DD/MM/YYYY -- ano nos 4 últimos.
+    if len(periodo) == 10 and periodo[2] == "/" and periodo[5] == "/":
+        candidato = periodo[-4:]
+        return candidato if candidato.isdigit() else None
+    # Demais formatos (ano ou mês): 4 primeiros chars.
+    candidato = periodo[:4]
+    return candidato if candidato.isdigit() else None
 
 
 def _calcular_completude(eventos: list[dict], categoria: str) -> float:

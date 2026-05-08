@@ -1,0 +1,203 @@
+/* CSS dedicado da página IRPF (UX-V-3.4).
+   Origem: novo-mockup/mockups/15-irpf.html.
+   Classes específicas da página -- não duplicam components.css. */
+
+/* Grid 2 colunas: lista de categorias + card lateral sticky 380px. */
+.irpf-grid {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: var(--sp-4);
+    margin-top: var(--sp-3);
+}
+
+/* Linha de categoria. Cor da borda esquerda muda conforme completude:
+   verde (>=90%), amarelo (70-89%), vermelho (<70%) ou neutra (sem dados). */
+.irpf-row {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-left: 4px solid var(--border-strong);
+    border-radius: var(--r-md);
+    padding: var(--sp-3) var(--sp-4);
+    margin-bottom: var(--sp-2);
+    display: grid;
+    grid-template-columns: 1.4fr 1.1fr 0.7fr 0.5fr 0.6fr;
+    gap: var(--sp-3);
+    align-items: center;
+}
+.irpf-row[data-cor="green"]   { border-left-color: var(--d7-graduado); }
+.irpf-row[data-cor="yellow"]  { border-left-color: var(--accent-yellow); }
+.irpf-row[data-cor="red"]     { border-left-color: var(--accent-red); }
+.irpf-row[data-cor="neutral"] { border-left-color: var(--border-strong); }
+
+.irpf-tag-name {
+    font-family: var(--ff-mono);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.irpf-tag-desc {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+
+.irpf-bar-label {
+    font-family: var(--ff-mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+    display: flex;
+    justify-content: space-between;
+}
+.irpf-bar {
+    height: 6px;
+    background: var(--bg-inset);
+    border-radius: var(--r-full);
+    overflow: hidden;
+}
+.irpf-bar > span {
+    display: block;
+    height: 100%;
+    background: var(--accent-purple);
+}
+.irpf-row[data-cor="green"]  .irpf-bar > span { background: var(--d7-graduado); }
+.irpf-row[data-cor="yellow"] .irpf-bar > span { background: var(--accent-yellow); }
+.irpf-row[data-cor="red"]    .irpf-bar > span { background: var(--accent-red); }
+
+.irpf-val {
+    font-family: var(--ff-mono);
+    font-size: 16px;
+    font-weight: 500;
+    text-align: right;
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+}
+
+.irpf-conf {
+    text-align: center;
+    font-family: var(--ff-mono);
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: var(--r-xs);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+.irpf-conf.high { color: var(--d7-graduado);   border-color: rgba(107,142,127,0.4); }
+.irpf-conf.mid  { color: var(--accent-yellow); border-color: rgba(241,250,140,0.4); }
+.irpf-conf.low  { color: var(--accent-red);    border-color: rgba(255,85,85,0.4); }
+.irpf-conf.none { color: var(--text-muted);    border-color: var(--border-subtle); }
+
+.irpf-actions {
+    display: flex;
+    gap: 4px;
+    justify-content: flex-end;
+}
+.irpf-actions button {
+    background: var(--bg-inset);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--r-sm);
+    padding: 4px 8px;
+    font-family: var(--ff-mono);
+    font-size: 11px;
+    cursor: pointer;
+    transition: background 120ms;
+}
+.irpf-actions button:hover {
+    background: var(--bg-elevated);
+    color: var(--text-primary);
+}
+
+/* Card lateral "Pacote IRPF". */
+.irpf-export-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--r-md);
+    padding: var(--sp-4);
+    position: sticky;
+    top: var(--sp-4);
+}
+.irpf-export-card h3 {
+    font-family: var(--ff-mono);
+    font-size: 13px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin: 0 0 var(--sp-2);
+    color: var(--accent-purple);
+}
+.irpf-export-card .irpf-total {
+    font-family: var(--ff-mono);
+    font-size: 32px;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    color: var(--accent-purple);
+    line-height: 1.1;
+}
+.irpf-export-card .irpf-total-sub {
+    font-family: var(--ff-mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 4px;
+}
+.irpf-export-card h4 {
+    font-family: var(--ff-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin: var(--sp-4) 0 var(--sp-2);
+}
+.irpf-files {
+    background: var(--bg-inset);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--r-sm);
+    padding: var(--sp-2);
+    font-family: var(--ff-mono);
+    font-size: 11px;
+    list-style: none;
+    margin: 0 0 var(--sp-3);
+}
+.irpf-files li {
+    display: flex;
+    justify-content: space-between;
+    color: var(--text-secondary);
+    padding: 3px 0;
+}
+.irpf-files li code {
+    color: var(--accent-pink);
+}
+
+.irpf-checklist {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 var(--sp-3);
+    font-size: 12px;
+    color: var(--text-primary);
+}
+.irpf-checklist li {
+    display: grid;
+    grid-template-columns: 18px 1fr;
+    gap: 8px;
+    padding: 4px 0;
+    align-items: baseline;
+}
+.irpf-checklist .ck-mark {
+    font-family: var(--ff-mono);
+    font-weight: bold;
+}
+.irpf-checklist .ck-ok   { color: var(--d7-graduado); }
+.irpf-checklist .ck-warn { color: var(--accent-yellow); }
+.irpf-checklist .ck-fail { color: var(--accent-red); }
+
+.irpf-saved-path {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin: var(--sp-2) 0 0;
+    text-align: center;
+}
+.irpf-saved-path code {
+    color: var(--accent-pink);
+}
