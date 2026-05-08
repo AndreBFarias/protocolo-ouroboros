@@ -131,7 +131,7 @@ def _contar_metas() -> tuple[int, int]:
     """Lê ``mappings/metas.yaml`` e devolve ``(financeiras, operacionais)``.
 
     - Financeira: meta com chave ``valor_alvo``.
-    - Operacional: meta sem ``valor_alvo`` (geralmente ``tipo: binario``).
+    - Operacional: meta sem ``valor_alvo`` (geralmente ``tipo: binario``).  # noqa: accent
 
     Graceful degradation (ADR-10): se o yaml não existir ou estiver
     malformado, retorna ``(0, 0)``.
@@ -270,7 +270,7 @@ def ler_atividade_recente(n: int = 6) -> list[TimelineEntry]:
     para reproduzir o mockup ``_visao-render.js`` (linhas 117-122).
 
     UX-V-2.7-FIX defeito #4: nomes de sprint passam por
-    ``_titulo_canonico_sprint`` para reaver acentos PT-BR (ex.: ``ANALISE``
+    ``_titulo_canonico_sprint`` para reaver acentos PT-BR (ex.: ``ANALISE``  # noqa: accent
     -> ``ANÁLISE``).
     """
     import html as _html

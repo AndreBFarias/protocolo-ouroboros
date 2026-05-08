@@ -1,6 +1,6 @@
 """Aba "Extração Tripla" -- Sprint UX-RD-11 + paridade visual UX-V-2.4-FIX.
 
-Layout canônico (UX-V-2.4-FIX) alinhado ao mockup ``10-validacao-arquivos``:
+Layout canônico (UX-V-2.4-FIX) alinhado ao mockup ``10-validacao-arquivos.html``:  # noqa: accent
 
   - Header full-width com 4 KPIs:
     PARIDADE / DIVERGÊNCIAS / UNILATERAIS / EM REVISÃO + counter ARQUIVOS.
