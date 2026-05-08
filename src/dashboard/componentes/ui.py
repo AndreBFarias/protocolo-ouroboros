@@ -228,7 +228,11 @@ def card_sidebar_html(titulo: str, valor: str, cor: str) -> str:
     )
 
 
-def hero_titulo_html(numero: str = "", texto: str = "", descricao: str | None = None) -> str:
+def hero_titulo_html(  # acento ok -- noqa-acento
+    numero: str = "",
+    texto: str = "",
+    descricao: str | None = None,  # acento ok -- noqa-acento
+) -> str:
     """Cabeçalho grande de página (display / hero). Sprint 20.
 
     Sprint UX-122: o primeiro parâmetro virou opcional (default ``""``).
@@ -239,11 +243,11 @@ def hero_titulo_html(numero: str = "", texto: str = "", descricao: str | None = 
     Migrado de ``tema.py`` em UX-M-02.
     """
     bloco_desc = ""
-    if descricao:
+    if descricao:  # acento ok -- noqa-acento
         bloco_desc = (
             f'<p style="color: {CORES["texto_sec"]}; font-size: {FONTE_CORPO}px;'
             f" margin: {SPACING['sm']}px 0 0 0; max-width: 780px;"
-            f' line-height: 1.5;">{descricao}</p>'
+            f' line-height: 1.5;">{descricao}</p>'  # acento ok -- noqa-acento
         )
     bloco_numero = ""
     if numero:
@@ -732,15 +736,18 @@ def group_card(
 #
 # Referência: docs/sprints/concluidos/sprint_ux_v_02_micro_componentes.md.
 
-_INSIGHT_TIPOS_VALIDOS = {"positivo", "atencao", "descoberta", "previsao"}
+# acento ok -- noqa-acento (bloco): chaves canônicas do enum de insight são ASCII por contrato
+# de domínio. Renomear quebraria callers e dados serializados. Acento aplicado
+# apenas na label visível ("ATENÇÃO" / "PREVISÃO") via _INSIGHT_TIPO_LABEL.
+_INSIGHT_TIPOS_VALIDOS = {"positivo", "atencao", "descoberta", "previsao"}  # acento ok -- noqa-acento
 
-# Labels canônicos PT-BR (UX-V-2.6 fix: tipo.upper() resultava em ASCII --
-# "ATENCAO" / "PREVISAO" sem acento; rótulo correto vem deste mapa).
+# Labels canônicos PT-BR (UX-V-2.6 fix: tipo.upper() resultava em ASCII --  # acento ok -- noqa-acento
+# "ATENCAO" / "PREVISAO" sem acento; rótulo correto vem deste mapa).  # acento ok -- noqa-acento
 _INSIGHT_TIPO_LABEL = {
     "positivo": "POSITIVO",
-    "atencao": "ATENÇÃO",
+    "atencao": "ATENÇÃO",  # acento ok -- noqa-acento
     "descoberta": "DESCOBERTA",
-    "previsao": "PREVISÃO",
+    "previsao": "PREVISÃO",  # acento ok -- noqa-acento
 }
 
 
@@ -939,7 +946,7 @@ def insight_card_html(tipo: str, titulo: str, corpo: str) -> str:
     """Card lateral de insight derivado.
 
     Args:
-        tipo: ``"positivo" | "atencao" | "descoberta" | "previsao"``.
+        tipo: ``"positivo" | "atencao" | "descoberta" | "previsao"``.  # acento ok -- noqa-acento
             Outro valor cai em ``"descoberta"`` (degradação graciosa,
             ADR-10) -- não levanta erro.
         titulo: heading curto (<=60 chars idealmente).
@@ -1051,9 +1058,9 @@ def chip_bar_filtros_globais(dados: dict) -> tuple[str, str, str]:
     ``app.py:_filtros_globais_main``. Preserva 100% do contrato:
 
     - Mesmas 7 chaves de session_state: ``seletor_granularidade``,
-      ``seletor_periodo``, ``seletor_mes_base``, ``seletor_detalhe``,
+      ``seletor_periodo``, ``seletor_mes_base``, ``seletor_detalhe``,  # acento ok -- noqa-acento
       ``seletor_pessoa``, ``seletor_forma_pagamento``, ``filtro_forma``.
-    - Mesmo retorno: ``(periodo, pessoa, granularidade)``.
+    - Mesmo retorno: ``(periodo, pessoa, granularidade)``.  # acento ok -- noqa-acento
     - Mesma lógica condicional de período por granularidade
       (Ano: anos disponíveis; Mês: meses; Semana: meses + semanas;
       Dia: meses + dias).
@@ -1067,7 +1074,7 @@ def chip_bar_filtros_globais(dados: dict) -> tuple[str, str, str]:
             ``obter_meses_disponiveis`` etc.
 
     Returns:
-        ``(periodo, pessoa, granularidade)`` para o dispatcher.
+        ``(periodo, pessoa, granularidade)`` para o dispatcher.  # acento ok -- noqa-acento
     """
     import streamlit as st
 
@@ -1123,7 +1130,7 @@ def chip_bar_filtros_globais(dados: dict) -> tuple[str, str, str]:
         ):
             if granularidade == "Ano":
                 anos = obter_anos_disponiveis(dados)
-                periodo: str = st.selectbox(
+                periodo: str = st.selectbox(  # acento ok -- noqa-acento
                     "Período",
                     anos,
                     index=0,
@@ -1138,7 +1145,7 @@ def chip_bar_filtros_globais(dados: dict) -> tuple[str, str, str]:
                 )
                 if granularidade == "Semana":
                     semanas = obter_semanas_do_mes(dados, mes_base)
-                    periodo = (
+                    periodo = (  # acento ok -- noqa-acento
                         st.selectbox(
                             "Semana", semanas, index=0,
                             key="seletor_detalhe",
@@ -1148,7 +1155,7 @@ def chip_bar_filtros_globais(dados: dict) -> tuple[str, str, str]:
                     )
                 elif granularidade == "Dia":
                     dias = obter_dias_do_mes(dados, mes_base)
-                    periodo = (
+                    periodo = (  # acento ok -- noqa-acento
                         st.selectbox(
                             "Dia", dias, index=0,
                             key="seletor_detalhe",
@@ -1157,7 +1164,7 @@ def chip_bar_filtros_globais(dados: dict) -> tuple[str, str, str]:
                         else mes_base
                     )
                 else:
-                    periodo = mes_base
+                    periodo = mes_base  # acento ok -- noqa-acento
 
     with cols[2]:
         with st.popover(
@@ -1186,7 +1193,7 @@ def chip_bar_filtros_globais(dados: dict) -> tuple[str, str, str]:
                 None if forma_sel == "Todas" else forma_sel
             )
 
-    return periodo, pessoa, granularidade
+    return periodo, pessoa, granularidade  # acento ok -- noqa-acento
 
 
 def _resumir_periodo_chip(granularidade: str) -> str:
@@ -1228,7 +1235,7 @@ def _resumir_periodo_chip(granularidade: str) -> str:
 def fallback_estado_inicial_html(
     *,
     titulo: str,
-    descricao: str,
+    descricao: str,  # acento ok -- noqa-acento
     skeleton_html: str = "",
     cta_label: str = "Use o app Ouroboros Mobile",
     cta_secao: str = "geral",
@@ -1254,7 +1261,7 @@ def fallback_estado_inicial_html(
     Args:
         titulo: Heading do bloco em UPPERCASE (ex: ``"HUMOR · sem registros
             ainda"``).
-        descricao: Parágrafo explicando como popular (ex: ``"Registre seu  # noqa: accent
+        descricao: Parágrafo explicando como popular (ex: ``"Registre seu  # acento ok -- noqa-acento
             humor no app Ouroboros Mobile..."``). HTML inline permitido
             (``<code>``, ``<strong>``).
         skeleton_html: HTML opcional do skeleton mockup-like. Se vazio, omite

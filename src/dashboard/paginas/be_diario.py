@@ -23,7 +23,7 @@ Lições UX-RD herdadas:
 * HTML via :func:`minificar` (UX-RD-04).
 * Cores via ``CORES`` -- nunca hex literal.
 * Fallback graceful para vault ausente (UX-RD-15).
-* Contrato uniforme ``renderizar(dados, periodo, pessoa, ctx)``.
+* Contrato uniforme ``renderizar(dados, periodo, pessoa, ctx)``.  # acento ok -- noqa-acento
 * Identificador pessoa SEMPRE canônico (ADR-23).
 """
 
@@ -69,9 +69,9 @@ _PESSOAS_LABEL = {
 _KEY_FLASH = "be_diario_flash"
 
 
-def renderizar(
+def renderizar(  # acento ok -- noqa-acento
     dados: dict[str, pd.DataFrame],
-    periodo: str,
+    periodo: str,  # acento ok -- noqa-acento
     pessoa: str,
     ctx: dict | None = None,
 ) -> None:
@@ -86,7 +86,7 @@ def renderizar(
          "title": "Registrar humor de hoje"},
     ])
 
-    del dados, periodo, ctx
+    del dados, periodo, ctx  # acento ok -- noqa-acento
 
     st.markdown(minificar(carregar_css_pagina("be_diario")), unsafe_allow_html=True)
 
@@ -185,7 +185,7 @@ def renderizar(
             st.markdown(
                 fallback_estado_inicial_html(
                     titulo="DIÁRIO EMOCIONAL · sem registros ainda",
-                    descricao=(
+                    descricao=(  # acento ok -- noqa-acento
                         "Entradas longas de diário (ânimo, contexto, gatilhos) "
                         "são escritas no app mobile e viram cards emocionais "
                         "aqui. Cada arquivo <code>.md</code> em "

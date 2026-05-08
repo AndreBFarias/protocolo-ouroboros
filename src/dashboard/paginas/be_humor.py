@@ -14,7 +14,7 @@ coluna direita. Detalhe ao clicar em um dia é resolvido por
 
 Lições UX-RD aplicadas: HTML via :func:`minificar`, fallback graceful
 quando o cache não existe, contrato uniforme
-``renderizar(dados, periodo, pessoa, ctx)``.
+``renderizar(dados, periodo, pessoa, ctx)``.  # acento ok -- noqa-acento
 """
 
 from __future__ import annotations
@@ -47,9 +47,9 @@ from src.mobile_cache.varrer_vault import descobrir_vault_root
 PERIODO_HEATMAP_DIAS: int = 91
 
 
-def renderizar(
+def renderizar(  # acento ok -- noqa-acento
     dados: dict[str, pd.DataFrame],
-    periodo: str,
+    periodo: str,  # acento ok -- noqa-acento
     pessoa: str,
     ctx: dict | None = None,
 ) -> None:
@@ -63,7 +63,7 @@ def renderizar(
          "title": "Voltar para Hoje e registrar humor"},
     ])
 
-    del dados, periodo, ctx
+    del dados, periodo, ctx  # acento ok -- noqa-acento
 
     st.markdown(gerar_estilos_heatmap(), unsafe_allow_html=True)
     st.markdown(minificar(carregar_css_pagina("be_humor")), unsafe_allow_html=True)
@@ -124,7 +124,7 @@ def renderizar(
         st.markdown(
             fallback_estado_inicial_html(
                 titulo="HUMOR · sem registros ainda",
-                descricao=(
+                descricao=(  # acento ok -- noqa-acento
                     "Cada registro de humor no app mobile vira uma célula "
                     "colorida no heatmap de 13 semanas acima. Capture rápido "
                     "(<30s) na aba <code>Hoje</code> do app e a curva começa "
