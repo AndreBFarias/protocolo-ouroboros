@@ -167,3 +167,64 @@
     border-radius: 2px;
     display: inline-block;
 }
+
+/* === UX-V-2.8-FIX: skeleton-mockup canônico (snapshot ausente) === */
+
+.s7-skeleton {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    opacity: 0.85;
+}
+.s7-skeleton .s7-grid,
+.s7-skeleton .s7-dist,
+.s7-skeleton .s7-cluster {
+    border-style: dashed;
+}
+.s7-skeleton .s7-row .s7-conf,
+.s7-skeleton .s7-row .s7-runs,
+.s7-skeleton .s7-row .s7-when,
+.s7-skeleton .s7-cluster-pct,
+.s7-skeleton .s7-dist-num {
+    color: var(--text-muted);
+}
+.s7-skeleton .s7-cluster-track .skel-bloco {
+    width: 100%;
+    display: block;
+    border-radius: 4px;
+}
+.s7-skeleton-rodape {
+    background: var(--bg-surface);
+    border: 1px dashed var(--border-subtle);
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-top: 4px;
+}
+.s7-skeleton-cta {
+    margin: 0 0 8px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+.s7-skeleton-cta code {
+    background: var(--bg-inset);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+}
+.s7-skeleton-sync {
+    margin: 0;
+    padding-top: 8px;
+    border-top: 1px solid var(--border-subtle);
+    font-family: ui-monospace, 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+}
+.s7-skeleton-sync code {
+    background: var(--bg-elevated);
+    padding: 1px 4px;
+    border-radius: 4px;
+}
+.s7-skeleton-sync strong {
+    color: var(--text-secondary);
+}

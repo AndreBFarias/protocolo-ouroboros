@@ -170,42 +170,213 @@ def _page_header_html() -> str:
 
 
 def _fallback_estado_inicial_html() -> str:
-    """Fallback estado-inicial-atrativo (UX-V-03) para skills D7 sem log."""
-    from src.dashboard.componentes.ui import (
-        fallback_estado_inicial_html,
-        ler_sync_info,
-    )
+    """Fallback estado-inicial-atrativo (UX-V-2.8-FIX) para skills D7 sem log.
+
+    Skeleton-mockup canônico fiel a ``novo-mockup/mockups/14-skills-d7.html``:
+
+    - 5 KPIs: COBERTURA D7, TAXA DE GRADUAÇÃO, REGRESSÕES 30D, CONFIANÇA
+      MÉDIA, EXECUÇÕES 30D (todos com valor placeholder ``--``).
+    - Inventário com 18 linhas (s01..s18), label cinza animado.
+    - Distribuição por estado: 4 estados (Graduado/Calibrando/Regredindo/
+      Pendente) com contadores ``--``.
+    - Cobertura por cluster: Finanças/Documentos/Análise/Sistema com
+      barras placeholder.
+    - CTA no rodapé apontando ``./run.sh --tudo``.
+
+    O CSS dedicado já foi carregado em ``renderizar`` antes deste fallback,
+    portanto classes ``.s7-kpi5`` / ``.s7-dist`` / ``.s7-cluster`` /
+    ``.s7-grid`` ficam ativas mesmo sem snapshot.
+    """
     skeleton = (
-        '<div style="display:grid;grid-template-columns:repeat(4,1fr);'
-        'gap:10px;margin-bottom:14px;">'
-        '<div class="kpi"><span class="kpi-label">GRADUADAS</span>'
-        '<span class="kpi-value">--</span></div>'
-        '<div class="kpi"><span class="kpi-label">CALIBRANDO</span>'
-        '<span class="kpi-value">--</span></div>'
-        '<div class="kpi"><span class="kpi-label">REGREDINDO</span>'
-        '<span class="kpi-value">--</span></div>'
-        '<div class="kpi"><span class="kpi-label">PENDENTES</span>'
-        '<span class="kpi-value">--</span></div>'
-        '</div>'
-        '<div style="display:flex;flex-direction:column;gap:6px;">'
-        + ''.join(
-            '<span class="skel-bloco" style="width:100%;height:1.6em;"></span>'
-            for _ in range(6)
-        )
-        + '</div>'
+        _skeleton_kpis_html()
+        + _skeleton_inventario_html()
+        + _skeleton_distribuicao_html()
+        + _skeleton_cobertura_cluster_html()
     )
-    return fallback_estado_inicial_html(
-        titulo="SKILLS · D7 ainda não inicializado",
-        descricao=(
-            "Snapshot estruturado em "
-            "<code>data/output/skill_d7_log.json</code> ainda não foi "
-            "emitido nesta máquina. Rode <code>./run.sh --tudo</code> para "
-            "popular o painel após o classificador D7 acumular execuções."
-        ),
-        skeleton_html=skeleton,
-        cta_label="Rode ./run.sh --tudo para popular o log D7",
-        cta_secao="skills-d7",
-        sync_info=ler_sync_info(),
+    rodape = _skeleton_rodape_cta_html()
+    # Classe ``fallback-estado`` mantida para retrocompatibilidade com
+    # testes regressivos UX-V-03 (test_skills_d7_sem_snapshot_emite_fallback).
+    return _minificar(
+        f'<div class="s7-skeleton fallback-estado" data-secao="skills-d7">'
+        f'{skeleton}{rodape}'
+        f'</div>'
+    )
+
+
+def _skeleton_kpis_html() -> str:
+    """5 KPIs placeholders -- estrutura idêntica a ``_kpis_d7_html``.
+
+    Valor ``--`` em todos. Mesma classe ``.s7-kpi5`` para consumir o CSS
+    dedicado e garantir paridade visual com o mockup quando dado existir.
+    """
+    cor_grad = CORES["d7_graduado"]
+    cor_purple = CORES["destaque"]
+    cor_orange = CORES["alerta"]
+    cards = [
+        ("COBERTURA D7", "--", "meta 75%", cor_grad),
+        ("TAXA DE GRADUAÇÃO", "--", "no trimestre", cor_purple),
+        ("REGRESSÕES 30D", "--", "sem dados", cor_orange),
+        ("CONFIANÇA MÉDIA", "--", "média ponderada", None),
+        ("EXECUÇÕES 30D", "--", "runs · p95 --", None),
+    ]
+    pieces = []
+    for label, valor, hint, cor in cards:
+        estilo = f' style="color:{cor};"' if cor else ""
+        pieces.append(
+            f'<div class="kpi">'
+            f'<div class="kpi-label">{label}</div>'
+            f'<div class="kpi-value"{estilo}>{valor}</div>'
+            f'<div class="kpi-delta flat">{hint}</div>'
+            f'</div>'
+        )
+    return _minificar('<div class="s7-kpi5">' + "".join(pieces) + "</div>")
+
+
+def _skeleton_inventario_html() -> str:
+    """Inventário com 18 linhas placeholder (s01..s18).
+
+    Estrutura espelha ``_lista_skills_html`` (cabeçalho + linhas .s7-row)
+    para consumir o mesmo CSS dedicado. Cada linha exibe id (s01..s18),
+    barra animada via ``.skel-bloco`` no campo nome, e ``--`` nos demais.
+    """
+    cabecalho = (
+        '<div class="s7-row s7-head">'
+        '<div>skill</div>'
+        '<div>D7</div>'
+        '<div>confiança</div>'
+        '<div>execuções</div>'
+        '<div>último</div>'
+        '</div>'
+    )
+    linhas = []
+    for i in range(1, 19):
+        sid = f"s{i:02d}"
+        linha = (
+            f'<div class="s7-row">'
+            f'<div class="s7-name">'
+            f'<strong>{sid}</strong>'
+            f'<span class="skel-bloco" style="width:70%;height:1.1em;"></span>'
+            f'</div>'
+            f'<div class="s7-pill">'
+            f'<span class="skel-bloco" style="width:60px;height:1.1em;"></span>'
+            f'</div>'
+            f'<div class="s7-conf">--</div>'
+            f'<div class="s7-runs">--</div>'
+            f'<div class="s7-when">--</div>'
+            f'</div>'
+        )
+        linhas.append(linha)
+    return _minificar(
+        '<div class="s7-grid">'
+        '<div class="s7-grid-head">Inventário · 18 skills</div>'
+        + cabecalho
+        + "".join(linhas)
+        + "</div>"
+    )
+
+
+def _skeleton_distribuicao_html() -> str:
+    """Distribuição por estado: 4 células com ``--``.
+
+    Mesma estrutura de ``_distribuicao_estados_html`` para consumir
+    o CSS ``.s7-dist`` / ``.s7-dist-grid``.
+    """
+    celulas = [
+        ("Graduado", CORES["d7_graduado"]),
+        ("Calibrando", CORES["d7_calibracao"]),
+        ("Regredindo", CORES["d7_regredindo"]),
+        ("Pendente", CORES["d7_pendente"]),
+    ]
+    blocos = []
+    for label, cor in celulas:
+        blocos.append(
+            f'<div class="s7-dist-cell">'
+            f'<div class="s7-dist-num" style="color:{cor};">--</div>'
+            f'<div class="s7-dist-lab">{label}</div>'
+            f'</div>'
+        )
+    return _minificar(
+        '<div class="s7-dist">'
+        '<div class="s7-grid-head">Distribuição por estado</div>'
+        '<div class="s7-dist-grid">'
+        + "".join(blocos)
+        + "</div></div>"
+    )
+
+
+def _skeleton_cobertura_cluster_html() -> str:
+    """Cobertura por cluster: 4 linhas com barras placeholder.
+
+    Clusters canônicos do mockup: Finanças, Documentos, Análise, Sistema.
+    Barra animada via ``.skel-bloco`` ocupa toda a faixa de progresso.
+    """
+    cor_grad = CORES["d7_graduado"]
+    cor_cal = CORES["d7_calibracao"]
+    cor_reg = CORES["d7_regredindo"]
+    clusters = ["Finanças", "Documentos", "Análise", "Sistema"]
+    linhas = []
+    for nome in clusters:
+        linha = (
+            f'<div class="s7-cluster-row">'
+            f'<span class="s7-cluster-nome">{nome}</span>'
+            f'<div class="s7-cluster-track">'
+            f'<span class="skel-bloco" style="width:100%;height:14px;'
+            f'border-radius:0;"></span>'
+            f'</div>'
+            f'<span class="s7-cluster-pct">--</span>'
+            f'</div>'
+        )
+        linhas.append(linha)
+    legenda = (
+        '<div class="s7-cluster-legenda">'
+        f'<span class="s7-legenda-item">'
+        f'<span class="s7-legenda-sw" style="background:{cor_grad};"></span>'
+        f'graduado</span>'
+        f'<span class="s7-legenda-item">'
+        f'<span class="s7-legenda-sw" style="background:{cor_cal};"></span>'
+        f'calibrando</span>'
+        f'<span class="s7-legenda-item">'
+        f'<span class="s7-legenda-sw" style="background:{cor_reg};"></span>'
+        f'regredindo</span>'
+        f'<span class="s7-legenda-item">'
+        f'<span class="s7-legenda-sw" style="background:'
+        f'{CORES["d7_pendente"]};"></span>pendente</span>'
+        '</div>'
+    )
+    return _minificar(
+        '<div class="s7-cluster">'
+        '<div class="s7-grid-head">Cobertura por cluster</div>'
+        + "".join(linhas)
+        + legenda
+        + "</div>"
+    )
+
+
+def _skeleton_rodape_cta_html() -> str:
+    """CTA no rodapé do skeleton apontando para ``./run.sh --tudo``."""
+    from src.dashboard.componentes.ui import ler_sync_info
+    sync_info = ler_sync_info()
+    if sync_info and "data" in sync_info:
+        sync_str = (
+            f'Última sync: <strong>{sync_info["data"]}</strong>'
+            f' · {sync_info.get("n_arquivos", "?")} arquivos lidos do vault'
+        )
+    else:
+        sync_str = (
+            "Sincronização: <strong>nunca</strong> -- rode "
+            "<code>./run.sh --sync</code> após o classificador D7 "
+            "acumular execuções."
+        )
+    return _minificar(
+        f'<div class="s7-skeleton-rodape">'
+        f'<p class="s7-skeleton-cta">'
+        f'Snapshot estruturado em '
+        f'<code>data/output/skill_d7_log.json</code> ainda não foi '
+        f'emitido nesta máquina. Rode '
+        f'<code>./run.sh --tudo</code> para popular o painel.'
+        f'</p>'
+        f'<p class="s7-skeleton-sync">{sync_str}</p>'
+        f'</div>'
     )
 
 
