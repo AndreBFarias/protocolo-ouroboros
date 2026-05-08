@@ -367,11 +367,11 @@ class TestDrillDownPreservado:
 
 
 class TestGlyphsEOverflow:
-    def test_css_overflow_fix_define_min_width_260px(self) -> None:
-        """AC: sidebar tem largura mínima 260px (sem isso glyphs cortam)."""
+    def test_css_overflow_fix_define_min_width_300px(self) -> None:
+        """AC: sidebar tem largura mínima 300px (sem isso glyphs cortam)."""
         css = busca_global_sidebar.css_sidebar_overflow_fix()
         assert "min-width" in css
-        assert "260" in css
+        assert "300" in css
 
     def test_css_overflow_fix_oculta_overflow_x(self) -> None:
         """AC: ``overflow-x: hidden`` no container da sidebar."""
@@ -392,7 +392,7 @@ class TestGlyphsEOverflow:
         assert "svg" in css.lower()
 
     def test_constante_largura_minima_corresponde_ao_ac(self) -> None:
-        assert busca_global_sidebar.LARGURA_MINIMA_SIDEBAR_PX == 260
+        assert busca_global_sidebar.LARGURA_MINIMA_SIDEBAR_PX == 300
         assert busca_global_sidebar.TAMANHO_MINIMO_ICONE_SEARCH_PX == 18
 
     def test_selectbox_mes_renderiza_valor_completo_2026_04(
@@ -404,7 +404,7 @@ class TestGlyphsEOverflow:
         Não há como inspecionar o DOM renderizado pelo Streamlit em
         testunit; o que validamos é que o CSS injetado garante que o
         seletor não corta no meio do glyph (text-overflow ellipsis cobre
-        o pior caso, mas com min-width 260 a string '2026-04' cabe inteira).
+        o pior caso, mas com min-width 300 a string '2026-04' cabe inteira).
         """
         css = busca_global_sidebar.css_sidebar_overflow_fix()
         # ellipsis fallback para casos extremos:
