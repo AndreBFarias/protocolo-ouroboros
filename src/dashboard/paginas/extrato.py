@@ -304,6 +304,282 @@ def _formatar_brl(valor: float) -> str:
     return f"{sinal}R$ {abs(valor):,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
 
+# ---------------------------------------------------------------------------
+# UX-V-3.1: filt-bar canônica + lista por dia com pílulas tipadas
+# ---------------------------------------------------------------------------
+
+
+# Mapa banco_origem -> pílula 2 letras. Inclui variações sem acento e
+# substrings comuns. Fallback: primeiras 2 letras do banco em maiúsculas.
+_PILULA_BANCO_MAP: dict[str, str] = {
+    "nubank": "NB",
+    "nu": "NB",
+    "itau": "IT",
+    "itaú": "IT",
+    "inter": "IN",
+    "c6": "C6",
+    "bradesco": "BR",
+    "santander": "ST",
+    "caixa": "CX",
+    "bb": "BB",
+    "banco do brasil": "BB",
+}
+
+
+def _pilula_tipo(banco_origem: str | None, forma_pagamento: str | None) -> str:
+    """Inferência simples para a pílula tipo (2 letras) da lista por dia.
+
+    Regra:
+    1. Se forma_pagamento contém "pix" (case-insensitive) -> "PX".
+    2. Se banco_origem casa um prefixo conhecido -> sigla canônica.
+    3. Fallback: primeiras 2 letras do banco em maiúsculas, ou "??".
+    """
+    forma_str = str(forma_pagamento or "").lower()
+    if "pix" in forma_str:
+        return "PX"
+    banco_str = str(banco_origem or "").strip().lower()
+    if not banco_str:
+        return "??"
+    for chave, sigla in _PILULA_BANCO_MAP.items():
+        if banco_str.startswith(chave) or chave in banco_str:
+            return sigla
+    # Fallback: 2 primeiras letras alfabéticas do nome do banco
+    letras = "".join(c for c in banco_str if c.isalpha())[:2]
+    return letras.upper() or "??"
+
+
+def _filt_bar_canonica(
+    df: pd.DataFrame,
+    contas_disponiveis: list[str],
+    categorias_disponiveis: list[str],
+) -> dict[str, Any]:
+    """Renderiza a filt-bar canônica acima da lista por dia.
+
+    Usa st.columns + st.selectbox + st.checkbox; o "look" canônico vem do CSS
+    (.t02-filt-bar) aplicado ao container HTML que envolve o counter ao final.
+
+    Retorna dicionário com chaves:
+      - conta: str (rótulo "todas (N)" ou nome do banco)
+      - categoria: str ("todas" ou nome da categoria)
+      - busca: str (texto livre)
+      - so_saidas: bool
+      - com_sidecar: bool
+      - nao_categorizadas: bool
+    """
+    n_contas = len(contas_disponiveis)
+    contas_opcoes = [f"todas ({n_contas})"] + contas_disponiveis
+    categorias_opcoes = ["todas"] + categorias_disponiveis
+
+    col_c, col_cat, col_per, col_busca = st.columns([1, 1, 1, 1.5])
+    with col_c:
+        conta_sel = st.selectbox(
+            "Conta", contas_opcoes, key="t02_filt_conta",
+        )
+    with col_cat:
+        categoria_sel = st.selectbox(
+            "Categoria", categorias_opcoes, key="t02_filt_categoria",
+        )
+    with col_per:
+        # Período é informativo aqui (a sprint usa o ctx global do dashboard);
+        # exibido para casar com o mockup. Não filtra por enquanto.
+        st.selectbox(
+            "Período", ["período do dashboard"], key="t02_filt_periodo",
+            disabled=True,
+        )
+    with col_busca:
+        busca_local = st.text_input(
+            "Busca", key="t02_filt_busca",
+            placeholder="descrição, sha8, valor",
+        )
+
+    col_chip1, col_chip2, col_chip3, col_count = st.columns([1, 1, 1, 2])
+    with col_chip1:
+        so_saidas = st.checkbox("só saídas", key="t02_chip_saidas")
+    with col_chip2:
+        com_sidecar = st.checkbox("com sidecar", key="t02_chip_sidecar")
+    with col_chip3:
+        nao_categorizadas = st.checkbox(
+            "não categorizadas", key="t02_chip_naocat",
+        )
+    with col_count:
+        n_total = int(len(df))
+        st.markdown(
+            f'<span class="t02-filt-counter">{n_total} '
+            f"transações</span>",
+            unsafe_allow_html=True,
+        )
+
+    return {
+        "conta": conta_sel,
+        "categoria": categoria_sel,
+        "busca": busca_local,
+        "so_saidas": so_saidas,
+        "com_sidecar": com_sidecar,
+        "nao_categorizadas": nao_categorizadas,
+    }
+
+
+def _aplicar_filt_bar(df: pd.DataFrame, filtros: dict[str, Any]) -> pd.DataFrame:
+    """Aplica filtros vindos da filt-bar canônica."""
+    if df.empty:
+        return df
+    resultado = df
+
+    conta = str(filtros.get("conta", ""))
+    if conta and not conta.startswith("todas") and "banco_origem" in resultado.columns:
+        resultado = resultado[resultado["banco_origem"].astype(str) == conta]
+
+    categoria = str(filtros.get("categoria", ""))
+    if categoria and categoria != "todas" and "categoria" in resultado.columns:
+        resultado = resultado[resultado["categoria"].astype(str) == categoria]
+
+    busca = str(filtros.get("busca", "")).strip()
+    if busca and "local" in resultado.columns:
+        mascara = resultado["local"].fillna("").astype(str).str.contains(
+            busca, case=False, na=False, regex=False,
+        )
+        resultado = resultado[mascara]
+
+    if filtros.get("so_saidas") and "tipo" in resultado.columns:
+        resultado = resultado[resultado["tipo"].astype(str) == "Despesa"]
+
+    if filtros.get("com_sidecar") and "__tracking" in resultado.columns:
+        resultado = resultado[resultado["__tracking"].astype(str) == "Doc ok"]
+
+    if filtros.get("nao_categorizadas") and "categoria" in resultado.columns:
+        cat_str = resultado["categoria"].fillna("").astype(str).str.strip()
+        resultado = resultado[(cat_str == "") | (cat_str.str.lower() == "sem categoria")]
+
+    return resultado
+
+
+_DIAS_SEMANA_ABREV = {
+    0: "SEG", 1: "TER", 2: "QUA", 3: "QUI", 4: "SEX", 5: "SAB", 6: "DOM",
+}
+
+
+def _lista_por_dia_html(df: pd.DataFrame, limite: int = 50) -> str:
+    """Renderiza lista agrupada por dia (DESC) com pílulas tipadas.
+
+    Limita a ``limite`` linhas para evitar HTML gigante (Não-objetivo da
+    sprint: paginação completa fica para depois).
+    """
+    if df.empty or "data" not in df.columns:
+        return minificar(
+            '<div class="t02-lista-vazia">Sem transações para exibir.</div>'
+        )
+
+    df_local = df.copy()
+    df_local["__data_dt"] = pd.to_datetime(df_local["data"], errors="coerce")
+    df_local = df_local.dropna(subset=["__data_dt"])
+    if df_local.empty:
+        return minificar(
+            '<div class="t02-lista-vazia">Sem transações para exibir.</div>'
+        )
+
+    # Ordena DESC por data e limita.
+    df_local = df_local.sort_values("__data_dt", ascending=False).head(limite)
+
+    # Agrupa por data (sem hora). Mantém a ordem DESC já estabelecida.
+    df_local["__data_key"] = df_local["__data_dt"].dt.date
+
+    grupos_html: list[str] = []
+    # Itera grupos respeitando a ordem DESC.
+    chaves_vistas: list[Any] = []
+    for chave in df_local["__data_key"]:
+        if chave not in chaves_vistas:
+            chaves_vistas.append(chave)
+
+    for chave in chaves_vistas:
+        bloco = df_local[df_local["__data_key"] == chave]
+        # Total do dia: receitas positivas, despesas negativas.
+        if "tipo" in bloco.columns:
+            valores_signed = bloco.apply(
+                lambda r: float(pd.to_numeric(r.get("valor"), errors="coerce") or 0.0)
+                if str(r.get("tipo", "")) == "Receita"
+                else -abs(float(pd.to_numeric(r.get("valor"), errors="coerce") or 0.0)),
+                axis=1,
+            )
+        else:
+            valores_signed = pd.to_numeric(bloco["valor"], errors="coerce").fillna(0.0)
+        total_dia = float(valores_signed.sum())
+
+        data_str = chave.strftime("%Y-%m-%d")
+        dia_semana = _DIAS_SEMANA_ABREV.get(chave.weekday(), "")
+        cor_total = "var(--d7-graduado)" if total_dia >= 0 else "var(--accent-red)"
+        sinal_total = "+" if total_dia >= 0 else "-"
+        total_str = _formatar_brl(abs(total_dia))
+
+        head_html = (
+            '<div class="t02-day-head">'
+            f'<span class="when">{data_str} · {dia_semana}</span>'
+            f'<span class="total" style="color:{cor_total};">'
+            f"{sinal_total} {total_str}</span>"
+            "</div>"
+        )
+
+        linhas: list[str] = []
+        for _, row in bloco.iterrows():
+            banco = row.get("banco_origem") if hasattr(row, "get") else None
+            forma = row.get("forma_pagamento") if hasattr(row, "get") else None
+            sigla = _pilula_tipo(banco, forma)
+
+            descricao = str(row.get("local") or "-")
+            if len(descricao) > 56:
+                descricao = descricao[:53] + "..."
+
+            categoria = str(row.get("categoria") or "—")
+            conta_str = str(banco or "—")
+            forma_str = str(forma or "—")
+
+            ident = row.get("identificador") if hasattr(row, "get") else None
+            sha8 = ""
+            if ident is not None and not pd.isna(ident):
+                sha8 = str(ident)[:8]
+
+            if row.name in valores_signed.index:
+                valor_signed = float(valores_signed.loc[row.name])
+            else:
+                valor_signed = 0.0
+            cor_val_class = "neg" if valor_signed < 0 else "pos"
+            sinal_val = "+" if valor_signed >= 0 else "-"
+            valor_str = _formatar_brl(abs(valor_signed))
+
+            meta_html = (
+                f'<span class="meta">{_escape(forma_str)}'
+                + (f' · sha8 <span class="sha">{sha8}</span>' if sha8 else "")
+                + "</span>"
+            )
+
+            linha = (
+                '<div class="t02-txn">'
+                f'<div class="ic {sigla}">{sigla}</div>'
+                f'<div class="desc"><strong>{_escape(descricao)}</strong>'
+                f"{meta_html}</div>"
+                f'<div><span class="cat">{_escape(categoria)}</span></div>'
+                f'<div class="conta">{_escape(conta_str)}</div>'
+                f'<div class="val {cor_val_class}">'
+                f"{sinal_val} {valor_str}</div>"
+                "</div>"
+            )
+            linhas.append(linha)
+
+        grupo = (
+            '<div class="t02-day-group">'
+            + head_html
+            + "".join(linhas)
+            + "</div>"
+        )
+        grupos_html.append(grupo)
+
+    return minificar("".join(grupos_html))
+
+
+# ---------------------------------------------------------------------------
+# Saldo topo (existente)
+# ---------------------------------------------------------------------------
+
+
 def _saldo_topo_html(metricas: dict[str, float], periodo_rotulo: str) -> str:
     """UX-T-02: 4 KPIs canônicos do mockup ``02-extrato.html``.
 
@@ -589,16 +865,34 @@ def renderizar(
         unsafe_allow_html=True,
     )
 
+    # ---------- UX-V-3.1: filt-bar canônica (entre KPIs e right-cards) -------
+    contas_disp = (
+        sorted(df["banco_origem"].dropna().astype(str).unique().tolist())
+        if "banco_origem" in df.columns else []
+    )
+    categorias_disp = (
+        sorted(df["categoria"].dropna().astype(str).unique().tolist())
+        if "categoria" in df.columns else []
+    )
+    filtros_canonicos = _filt_bar_canonica(df, contas_disp, categorias_disp)
+    df_filtrado_canon = _aplicar_filt_bar(df, filtros_canonicos)
+
     # ---------- T-02.B right-cards (Saldo 90d + Breakdown + Origens) ----------
-    breakdown_top5 = calcular_breakdown_categorias(df, top_n=5)
+    breakdown_top5 = calcular_breakdown_categorias(df_filtrado_canon, top_n=5)
     extrato_full = filtrar_por_pessoa(extrato, pessoa)
     extrato_full = filtrar_por_forma_pagamento(extrato_full, filtro_forma_ativo())
     st.markdown(
         _t02_right_cards_html(
-            df_filtrado=df,
+            df_filtrado=df_filtrado_canon,
             breakdown=breakdown_top5,
             extrato_completo=extrato_full,
         ),
+        unsafe_allow_html=True,
+    )
+
+    # ---------- UX-V-3.1: lista por dia com pílulas tipadas ------------------
+    st.markdown(
+        _lista_por_dia_html(df_filtrado_canon, limite=50),
         unsafe_allow_html=True,
     )
 
