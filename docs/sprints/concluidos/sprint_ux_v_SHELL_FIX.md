@@ -1,7 +1,8 @@
 ---
 id: UX-V-SHELL-FIX
 titulo: Shell global — largura 100%, sidebar Buscar, alinhamento lupa, popover filtros
-status: backlog
+status: concluida
+concluida_em: 2026-05-08
 prioridade: alta
 data_criacao: 2026-05-08
 fase: PARIDADE_VISUAL
