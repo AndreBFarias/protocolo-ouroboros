@@ -1,0 +1,375 @@
+/* Revisor — UX-V-4 (paridade visual com mockup 09-revisor.html).
+ *
+ * Layout 4-way canônico:
+ *   - Lista lateral esquerda (380px) com pílulas APURADO/DIVERGENTE/RASCUNHO
+ *     + confiança%.
+ *   - Centro: 4 cards lado-a-lado (OFX banco read-only / RASCUNHO ETL /
+ *     OPUS agentic / HUMANO inputs editáveis).
+ *   - Tabs filtro no topo (Mês atual / Só divergentes / Só rascunhos /
+ *     Apurado).
+ *   - Rodapé com tabs Detalhes / Auditoria Opus / Histórico / Hints +
+ *     trace de raciocínio + arquivos consultados + próximas ações.
+ *
+ * Tokens canônicos (cores Dracula em ``css/tokens.css``):
+ *   --d7-graduado, --accent-yellow, --accent-purple, --accent-pink,
+ *   --accent-red, --bg-surface, --bg-inset, --border-subtle,
+ *   --text-primary, --text-secondary, --text-muted.
+ */
+
+/* ─────────── Header da seção 4-way ─────────── */
+.revisor-fourway-header {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    flex-wrap: wrap;
+    margin-bottom: var(--sp-3);
+}
+.revisor-fourway-header .selecao-rotulo {
+    font-family: var(--ff-mono);
+    font-size: var(--fs-11);
+    color: var(--text-muted);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+.revisor-fourway-header .selecao-titulo {
+    font-family: var(--ff-mono);
+    font-size: var(--fs-18);
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+/* ─────────── Tabs filtro topo (Mês atual / Só divergentes / etc) ─────────── */
+.revisor-tabs-filtro {
+    display: flex;
+    gap: var(--sp-1);
+    padding: var(--sp-2) var(--sp-3);
+    border-bottom: 1px solid var(--border-subtle);
+    background: var(--bg-inset);
+    border-top-left-radius: var(--r-md);
+    border-top-right-radius: var(--r-md);
+}
+.revisor-tabs-filtro .tab {
+    font-family: var(--ff-mono);
+    font-size: var(--fs-11);
+    padding: 4px 10px;
+    border-radius: var(--r-sm);
+    color: var(--text-muted);
+    cursor: pointer;
+    border: 1px solid transparent;
+    text-transform: lowercase;
+    letter-spacing: 0.02em;
+}
+.revisor-tabs-filtro .tab.active {
+    color: var(--text-primary);
+    border-color: var(--border-subtle);
+    background: var(--bg-surface);
+}
+
+/* ─────────── Lista lateral de transações ─────────── */
+.revisor-tx-list {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--r-md);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+.revisor-t-row {
+    display: grid;
+    grid-template-columns: 70px 90px 1fr 110px 70px;
+    gap: var(--sp-2);
+    align-items: center;
+    padding: 8px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border-subtle);
+    font-family: var(--ff-mono);
+    font-size: var(--fs-12);
+}
+.revisor-t-row:hover {
+    background: var(--bg-inset);
+}
+.revisor-t-row.sel {
+    background: rgba(189, 147, 249, 0.06);
+}
+.revisor-t-row .data {
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+}
+.revisor-t-row .desc {
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.revisor-t-row .val {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+.revisor-t-row .val.neg {
+    color: var(--accent-red);
+}
+.revisor-t-row .val.pos {
+    color: var(--d7-graduado);
+}
+.revisor-t-row .conf {
+    text-align: right;
+    color: var(--text-muted);
+}
+.revisor-list-rodape {
+    padding: 10px 12px;
+    border-top: 1px solid var(--border-subtle);
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--ff-mono);
+    font-size: var(--fs-11);
+    color: var(--text-muted);
+    background: var(--bg-inset);
+}
+.revisor-list-rodape strong {
+    color: var(--text-primary);
+}
+
+/* ─────────── Pílula de estado (APURADO/DIVERGENTE/RASCUNHO) ─────────── */
+.revisor-estado-pill {
+    font-family: var(--ff-mono);
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: var(--r-xs);
+    border: 1px solid var(--border-subtle);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    text-align: center;
+}
+.revisor-estado-pill.apurado {
+    color: var(--d7-graduado);
+    border-color: var(--d7-graduado);
+}
+.revisor-estado-pill.rascunho {
+    color: var(--accent-yellow);
+    border-color: var(--accent-yellow);
+}
+.revisor-estado-pill.divergente {
+    color: var(--accent-pink);
+    border-color: var(--accent-pink);
+}
+
+/* ─────────── 4 cards centrais (OFX/Rascunho/Opus/Humano) ─────────── */
+.revisor-fourway {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) repeat(3, minmax(0, 1fr));
+    gap: var(--sp-3);
+    align-items: stretch;
+    margin-top: var(--sp-3);
+}
+.revisor-fw-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--r-md);
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+}
+.revisor-fw-card .fw-head {
+    padding: var(--sp-3) var(--sp-4);
+    border-bottom: 1px solid var(--border-subtle);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-2);
+}
+.revisor-fw-card .fw-head .ttl {
+    font-family: var(--ff-mono);
+    font-size: var(--fs-12);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+.revisor-fw-card .fw-head .src {
+    font-family: var(--ff-mono);
+    font-size: var(--fs-13);
+    font-weight: 500;
+    color: var(--text-primary);
+}
+.revisor-fw-card .fw-body {
+    padding: var(--sp-3) var(--sp-4);
+    flex: 1;
+    overflow: auto;
+}
+.revisor-fw-card .fw-action-row {
+    display: flex;
+    gap: var(--sp-2);
+    padding: var(--sp-3) var(--sp-4);
+    border-top: 1px solid var(--border-subtle);
+    background: var(--bg-inset);
+    font-family: var(--ff-mono);
+    font-size: var(--fs-11);
+    color: var(--text-muted);
+}
+
+/* Distinção semântica dos cards (OFX verde / Rascunho amarelo /
+ * Opus roxo / Humano rosa). */
+.revisor-col-ofx .fw-head {
+    background: linear-gradient(180deg, rgba(80, 250, 123, 0.06), transparent);
+    border-bottom-color: rgba(80, 250, 123, 0.25);
+}
+.revisor-col-rascunho .fw-head {
+    background: linear-gradient(180deg, rgba(241, 250, 140, 0.06), transparent);
+    border-bottom-color: rgba(241, 250, 140, 0.25);
+}
+.revisor-col-opus .fw-head {
+    background: linear-gradient(180deg, rgba(189, 147, 249, 0.06), transparent);
+    border-bottom-color: rgba(189, 147, 249, 0.25);
+}
+.revisor-col-humano .fw-head {
+    background: linear-gradient(180deg, rgba(255, 121, 198, 0.06), transparent);
+    border-bottom-color: rgba(255, 121, 198, 0.25);
+}
+.revisor-col-humano .fw-action-row {
+    background: rgba(255, 121, 198, 0.04);
+}
+
+/* ─────────── Linhas de campo dentro dos cards ─────────── */
+.revisor-field {
+    display: grid;
+    grid-template-columns: 110px 1fr;
+    align-items: baseline;
+    gap: var(--sp-2);
+    padding: 6px 0;
+    border-bottom: 1px dashed var(--border-subtle);
+}
+.revisor-field:last-child {
+    border-bottom: 0;
+}
+.revisor-field .k {
+    font-family: var(--ff-mono);
+    font-size: var(--fs-11);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+.revisor-field .v {
+    font-family: var(--ff-mono);
+    font-size: var(--fs-13);
+    color: var(--text-primary);
+    word-break: break-word;
+}
+.revisor-field .v.muted {
+    color: var(--text-muted);
+}
+.revisor-field .v.diff {
+    background: rgba(255, 121, 198, 0.08);
+    padding: 1px 4px;
+    border-radius: var(--r-xs);
+}
+.revisor-field .v.miss {
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+/* ─────────── Rodapé com tabs (Detalhes/Auditoria/Histórico/Hints) ─────────── */
+.revisor-rodape {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--r-md);
+    margin-top: var(--sp-3);
+    overflow: hidden;
+}
+.revisor-rodape-tabs {
+    display: flex;
+    gap: var(--sp-1);
+    padding: var(--sp-2) var(--sp-3);
+    border-bottom: 1px solid var(--border-subtle);
+    background: var(--bg-inset);
+}
+.revisor-rodape-tabs .tab {
+    font-family: var(--ff-mono);
+    font-size: var(--fs-11);
+    padding: 4px 10px;
+    border-radius: var(--r-sm);
+    color: var(--text-muted);
+    cursor: pointer;
+    border: 1px solid transparent;
+}
+.revisor-rodape-tabs .tab.active {
+    color: var(--text-primary);
+    border-color: var(--border-subtle);
+    background: var(--bg-surface);
+}
+.revisor-rodape-corpo {
+    padding: var(--sp-3) var(--sp-4);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--sp-4);
+}
+.revisor-trace-titulo {
+    font-family: var(--ff-mono);
+    font-size: var(--fs-11);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+}
+.revisor-trace-corpo {
+    font-family: var(--ff-mono);
+    font-size: var(--fs-12);
+    line-height: 1.6;
+    color: var(--text-secondary);
+}
+.revisor-trace-corpo div {
+    margin-bottom: 4px;
+}
+.revisor-trace-corpo .destaque-amarelo {
+    color: var(--accent-yellow);
+}
+.revisor-trace-corpo .destaque-roxo {
+    color: var(--accent-purple);
+}
+.revisor-arquivo-card {
+    padding: 8px 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--bg-inset);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--r-sm);
+    margin-bottom: 6px;
+}
+.revisor-arquivo-card .arquivo-nome {
+    font-family: var(--ff-mono);
+    font-size: var(--fs-12);
+    color: var(--text-primary);
+}
+.revisor-arquivo-card .arquivo-sha {
+    margin-left: auto;
+    font-family: var(--ff-mono);
+    font-size: 11px;
+    color: var(--text-muted);
+}
+.revisor-proximas-acoes {
+    margin: var(--sp-2) 0 0 16px;
+    padding: 0;
+    font-family: var(--ff-mono);
+    font-size: var(--fs-12);
+    color: var(--text-secondary);
+    line-height: 1.7;
+}
+
+/* ─────────── Vazio: aviso quando não há registro selecionado ─────────── */
+.revisor-fourway-vazio {
+    background: var(--bg-surface);
+    border: 1px dashed var(--border-subtle);
+    border-radius: var(--r-md);
+    padding: var(--sp-4);
+    font-family: var(--ff-mono);
+    font-size: var(--fs-12);
+    color: var(--text-muted);
+    text-align: center;
+}
+
+/* ─────────── Responsivo: viewport <1568px empilha cards 2x2 ─────────── */
+@media (max-width: 1568px) {
+    .revisor-fourway {
+        grid-template-columns: 1fr 1fr;
+    }
+}

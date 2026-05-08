@@ -40,6 +40,7 @@ from __future__ import annotations
 
 import json
 from datetime import datetime
+from html import escape
 from pathlib import Path
 from typing import Any
 
@@ -51,12 +52,14 @@ from src.dashboard.componentes.html_utils import minificar
 from src.dashboard.componentes.preview_documento import preview_documento
 from src.dashboard.componentes.ui import (
     callout_html,
+    carregar_css_pagina,
     subtitulo_secao_html,
 )
 from src.dashboard.dados import (
     CAMINHO_REVISAO_HUMANA,
     listar_pendencias_revisao,
 )
+from src.dashboard.dados_extracao_tripla import carregar_extracoes_triplas
 
 # Dimensões canônicas que o supervisor avalia. A ordem reflete a importância
 # percebida durante a auditoria 2026-04-26 (data e valor têm impacto direto
@@ -380,13 +383,506 @@ def _gravar_decisao_global(
         )
 
 
+# ---------------------------------------------------------------------------
+# Sprint UX-V-4 -- Layout 4-way canônico (mockup 09-revisor.html)
+#
+# A reescrita visual coexiste com o painel legado de pendências (Sprint D2):
+# o 4-way fica no topo, lendo o schema canônico ``extracao_tripla.json``
+# (via ``dados_extracao_tripla``); o painel legado preserva todos os widgets
+# e contratos testados (multiselect 'Tipo de pendência', number_input
+# 'Página', re-exports do revisor_logic, atalhos j/k/a/r). Padrão (o):
+# subregra retrocompatível.
+# ---------------------------------------------------------------------------
+
+# Filtros canônicos das tabs do topo.
+TABS_FILTRO_CANONICAS: tuple[str, ...] = (
+    "Mês atual",
+    "Só divergentes",
+    "Só rascunhos",
+    "Apurado",
+)
+
+# Tabs do rodapé.
+TABS_RODAPE_CANONICAS: tuple[str, ...] = (
+    "Detalhes",
+    "Auditoria do Opus",
+    "Histórico",
+    "Hints",
+)
+
+
+def _registro_para_transacao(registro: dict[str, Any]) -> dict[str, Any]:  # noqa: accent
+    """Converte um registro do schema canônico em uma transação para a lista.
+
+    Cada registro do JSON canônico vira uma linha da lista lateral. O
+    estado (``apurado`` / ``rascunho`` / ``divergente``) é inferido a partir
+    da divergência ETL × Opus (padrão usado pela aba Validação Tripla).
+
+    Args:
+        registro: dict com chaves ``sha256``, ``filename``, ``tipo``,
+            ``etl``, ``opus``, ``humano``.
+
+    Returns:
+        Dict com chaves ``id``, ``sha8``, ``descricao``, ``valor_str``,  # noqa: accent
+        ``data``, ``estado``, ``confianca``.
+    """
+    sha256 = str(registro.get("sha256") or "")
+    filename = str(registro.get("filename") or "")
+    etl_campos = (registro.get("etl") or {}).get("campos") or {}
+    opus_campos = (registro.get("opus") or {}).get("campos") or {}
+    humano_bloco = registro.get("humano") or {}
+
+    descricao = ""
+    for campo_desc in ("descricao", "razao_social", "fornecedor"):
+        if campo_desc in etl_campos and etl_campos[campo_desc]:
+            descricao = str(etl_campos[campo_desc][0] or "")
+        elif campo_desc in opus_campos and opus_campos[campo_desc]:
+            descricao = str(opus_campos[campo_desc][0] or "")
+        if descricao:
+            break
+    if not descricao:
+        descricao = filename
+
+    valor_str = ""
+    for campo_v in ("valor", "total"):
+        if campo_v in etl_campos and etl_campos[campo_v]:
+            valor_str = f"R$ {etl_campos[campo_v][0]}"
+            break
+        if campo_v in opus_campos and opus_campos[campo_v]:
+            valor_str = f"R$ {opus_campos[campo_v][0]}"
+            break
+
+    data_str = ""
+    for campo_d in ("data", "data_emissao", "data_pagamento"):
+        if campo_d in etl_campos and etl_campos[campo_d]:
+            data_str = str(etl_campos[campo_d][0] or "")
+            break
+        if campo_d in opus_campos and opus_campos[campo_d]:
+            data_str = str(opus_campos[campo_d][0] or "")
+            break
+
+    chaves_comuns = set(etl_campos.keys()) & set(opus_campos.keys())
+    div = 0
+    confianca_total = 0.0
+    for k in chaves_comuns:
+        v_etl = etl_campos[k][0] if etl_campos[k] else ""
+        v_opus = opus_campos[k][0] if opus_campos[k] else ""
+        if v_etl and v_opus and v_etl != v_opus:
+            div += 1
+    for k in opus_campos:
+        try:
+            confianca_total += float(opus_campos[k][1])
+        except (TypeError, ValueError, IndexError):
+            pass
+    confianca = confianca_total / max(1, len(opus_campos))
+
+    if humano_bloco.get("validado_em"):
+        estado = "apurado"
+    elif div > 0:
+        estado = "divergente"
+    else:
+        estado = "rascunho"
+
+    return {
+        "id": sha256[:8] or "—",
+        "sha8": sha256[:8],
+        "descricao": descricao,
+        "valor_str": valor_str,
+        "data": data_str,
+        "estado": estado,
+        "confianca": confianca,
+        "filename": filename,
+        "registro": registro,
+    }
+
+
+def _filtrar_transacoes(
+    transacoes: list[dict[str, Any]],
+    filtro: str,
+) -> list[dict[str, Any]]:
+    """Aplica o filtro selecionado na tab do topo.
+
+    ``Mês atual`` devolve tudo (sem filtro temporal -- implementação stub).
+    Os outros filtros usam o campo ``estado`` da transação.
+    """
+    if filtro == "Só divergentes":
+        return [t for t in transacoes if t["estado"] == "divergente"]
+    if filtro == "Só rascunhos":
+        return [t for t in transacoes if t["estado"] == "rascunho"]
+    if filtro == "Apurado":
+        return [t for t in transacoes if t["estado"] == "apurado"]
+    return list(transacoes)
+
+
+def _tabs_filtro_html(filtro_ativo: str) -> str:
+    """HTML das tabs filtro do topo da lista (Mês atual / Só divergentes / etc)."""
+    tabs = "".join(
+        f'<span class="tab{" active" if t == filtro_ativo else ""}">{escape(t)}</span>'
+        for t in TABS_FILTRO_CANONICAS
+    )
+    return f'<div class="revisor-tabs-filtro">{tabs}</div>'
+
+
+def _estado_pill_html(estado: str) -> str:
+    """HTML da pílula de estado (APURADO/DIVERGENTE/RASCUNHO)."""
+    classe = estado if estado in {"apurado", "divergente", "rascunho"} else "rascunho"
+    return f'<span class="revisor-estado-pill {classe}">{classe}</span>'
+
+
+def _transacao_row_html(  # noqa: accent
+    transacao: dict[str, Any], selecionada: bool  # noqa: accent
+) -> str:
+    """HTML de uma linha da lista lateral de transações."""
+    cls_sel = " sel" if selecionada else ""
+    valor = transacao.get("valor_str") or "—"
+    cls_val = "neg" if valor.lstrip("R$ ").startswith("-") else "pos"
+    conf_txt = f"{transacao.get('confianca', 0.0) * 100:.0f}%"
+    sha_attr = escape(transacao.get("sha8") or "")
+    data_attr = escape(transacao.get("data") or "—")
+    desc_attr = escape(transacao.get("descricao") or "")
+    estado_attr = transacao.get("estado") or "rascunho"
+    valor_attr = escape(valor)
+    return minificar(
+        f'<div class="revisor-t-row{cls_sel}" data-sha8="{sha_attr}">'
+        f'<span class="data">{data_attr}</span>'
+        f"{_estado_pill_html(estado_attr)}"
+        f'<span class="desc" title="{desc_attr}">{desc_attr}</span>'
+        f'<span class="val {cls_val}">{valor_attr}</span>'
+        f'<span class="conf">{conf_txt}</span>'
+        "</div>"
+    )
+
+
+def _campos_card_html(
+    campos: dict[str, Any], destacar_diff: tuple[str, ...] = ()
+) -> str:
+    """Renderiza dict de campos do schema (chave -> [valor, conf]) como linhas."""
+    if not campos:
+        return (
+            '<div class="revisor-field"><span class="k">—</span>'
+            '<span class="v miss">vazio</span></div>'
+        )
+    linhas: list[str] = []
+    for k in sorted(campos.keys()):
+        par = campos[k] or ["", 0.0]
+        valor = str(par[0] if len(par) > 0 else "")
+        cls = ""
+        if k in destacar_diff:
+            cls = "diff"
+        elif not valor:
+            cls = "miss"
+        valor_render = valor if valor else "— vazio —"
+        linhas.append(
+            f'<div class="revisor-field"><span class="k">{escape(k)}</span>'
+            f'<span class="v {cls}">{escape(valor_render)}</span></div>'
+        )
+    return "".join(linhas)
+
+
+def _humano_inputs_html(
+    humano_campos: dict[str, str], campos_referencia: list[str]
+) -> str:
+    """HTML que exibe campos do humano (placeholder UX-V-4 sem persistência)."""
+    if not campos_referencia:
+        return (
+            '<div class="revisor-field"><span class="k">—</span>'
+            '<span class="v miss">sem referência</span></div>'
+        )
+    linhas: list[str] = []
+    for k in campos_referencia:
+        valor = str(humano_campos.get(k) or "")
+        valor_render = valor if valor else "(aguardando humano)"
+        cls = "" if valor else "miss"
+        linhas.append(
+            f'<div class="revisor-field"><span class="k">{escape(k)}</span>'
+            f'<span class="v {cls}">{escape(valor_render)}</span></div>'
+        )
+    return "".join(linhas)
+
+
+def _renderizar_4way_card(
+    classe_col: str,
+    titulo: str,
+    fonte: str,
+    corpo_html: str,
+    rodape_acao_texto: str,
+) -> str:
+    """HTML de um card 4-way (OFX/Rascunho/Opus/Humano)."""
+    return minificar(
+        f'<div class="revisor-fw-card revisor-col-{classe_col}">'
+        '<div class="fw-head">'
+        f'<div><div class="ttl">{escape(titulo)}</div>'
+        f'<div class="src">{escape(fonte)}</div></div>'
+        "</div>"
+        f'<div class="fw-body">{corpo_html}</div>'
+        f'<div class="fw-action-row">{escape(rodape_acao_texto)}</div>'
+        "</div>"
+    )
+
+
+def _campos_divergentes(registro: dict[str, Any]) -> tuple[str, ...]:
+    """Devolve tuple de campos onde ETL e Opus discordam (ambos não-vazios)."""
+    etl_campos = (registro.get("etl") or {}).get("campos") or {}
+    opus_campos = (registro.get("opus") or {}).get("campos") or {}
+    div: list[str] = []
+    for k in set(etl_campos.keys()) & set(opus_campos.keys()):
+        v_etl = etl_campos[k][0] if etl_campos[k] else ""
+        v_opus = opus_campos[k][0] if opus_campos[k] else ""
+        if v_etl and v_opus and v_etl != v_opus:
+            div.append(k)
+    return tuple(sorted(div))
+
+
+def _trace_raciocinio_html(registro: dict[str, Any]) -> str:
+    """Constrói trace de raciocínio quando há divergências.
+
+    Sem chamada ao Opus em runtime (não-objetivo). Usa heurísticas locais
+    para narrar passos a partir do diff ETL × Opus.
+    """
+    div = _campos_divergentes(registro)
+    if not div:
+        return (
+            '<div class="revisor-trace-corpo">'
+            "<div>Sem divergências entre ETL e Opus para este registro.</div>"
+            "<div>Apuração imediata recomendada.</div>"
+            "</div>"
+        )
+    etl_campos = (registro.get("etl") or {}).get("campos") or {}
+    opus_campos = (registro.get("opus") or {}).get("campos") or {}
+    sha8 = str(registro.get("sha256") or "")[:8]
+    linhas: list[str] = [
+        f"<div>1. Identifiquei {len(div)} campo(s) divergente(s) no registro "
+        f'<span class="destaque-roxo">{escape(sha8)}</span>.</div>',
+    ]
+    for idx, campo in enumerate(div[:3], start=2):
+        v_etl = etl_campos[campo][0] if etl_campos.get(campo) else ""
+        v_opus = opus_campos[campo][0] if opus_campos.get(campo) else ""
+        linhas.append(
+            f'<div>{idx}. Campo <span class="destaque-roxo">{escape(campo)}</span>: '
+            f'ETL=<span class="destaque-amarelo">{escape(str(v_etl))}</span> '
+            f'vs Opus=<span class="destaque-amarelo">{escape(str(v_opus))}</span>.</div>'
+        )
+    linhas.append(
+        "<div>Hipótese: divergência aritmética ou de formato. "
+        "Revisor humano deve apurar.</div>"
+    )
+    return f'<div class="revisor-trace-corpo">{"".join(linhas)}</div>'
+
+
+def _arquivos_consultados_html(registro: dict[str, Any]) -> str:
+    """Card de arquivos consultados pelo Opus para o registro selecionado."""
+    sha8 = str(registro.get("sha256") or "")[:8]
+    filename = str(registro.get("filename") or "—")
+    return (
+        f'<div class="revisor-arquivo-card">'
+        f'<span class="arquivo-nome">{escape(filename)}</span>'
+        f'<span class="arquivo-sha">{escape(sha8)}</span>'
+        "</div>"
+    )
+
+
+def _proximas_acoes_html(registro: dict[str, Any]) -> str:
+    """Sugestões de próximas ações com base na presença de divergências."""
+    div = _campos_divergentes(registro)
+    if div:
+        itens = [
+            "Confirmar valor com o documento original",
+            f"Reprocessar com hint específico para {div[0]}",
+            "Marcar como apurada após validação",
+        ]
+    else:
+        itens = [
+            "Aceitar proposta Opus",
+            "Confirmar com extrato bancário",
+            "Apurar transação",  # noqa: accent
+        ]
+    lis = "".join(f"<li>{escape(i)}</li>" for i in itens)
+    return f'<ul class="revisor-proximas-acoes">{lis}</ul>'
+
+
+def _renderizar_layout_4way(registros: list[dict[str, Any]]) -> None:
+    """Renderiza a arquitetura 4-way (Sprint UX-V-4).
+
+    Quando o schema ``extracao_tripla.json`` não tem registros, mostra um
+    aviso amistoso e cai para o painel legado. A função NÃO levanta exceção
+    quando o JSON está ausente (graceful fallback ADR-10).
+    """
+    st.markdown(
+        subtitulo_secao_html("Apuração 4-way (OFX × Rascunho × Opus × Humano)"),
+        unsafe_allow_html=True,
+    )
+
+    if not registros:
+        st.markdown(
+            '<div class="revisor-fourway-vazio">'
+            "Sem registros canônicos em <code>extracao_tripla.json</code>. "
+            "Rode <code>python scripts/popular_extracao_tripla.py</code> para "
+            "alimentar a arquitetura 4-way."
+            "</div>",
+            unsafe_allow_html=True,
+        )
+        return
+
+    transacoes = [_registro_para_transacao(r) for r in registros]
+    tabs_filtro = st.tabs(list(TABS_FILTRO_CANONICAS))
+
+    for idx_tab, nome_tab in enumerate(TABS_FILTRO_CANONICAS):
+        with tabs_filtro[idx_tab]:
+            transacoes_filtradas = _filtrar_transacoes(transacoes, nome_tab)
+            if not transacoes_filtradas:
+                st.markdown(
+                    f'<div class="revisor-fourway-vazio">'
+                    f"Nenhuma transação no filtro <strong>"
+                    f"{escape(nome_tab)}</strong>."
+                    "</div>",  # noqa: accent
+                    unsafe_allow_html=True,
+                )
+                continue
+
+            col_lista, col_centro = st.columns([1, 3])
+
+            with col_lista:
+                rows_html = "".join(
+                    _transacao_row_html(t, selecionada=(i == 0))
+                    for i, t in enumerate(transacoes_filtradas)
+                )
+                rodape_total = len(transacoes_filtradas)
+                lista_html = (
+                    '<div class="revisor-tx-list">'
+                    f"{_tabs_filtro_html(nome_tab)}"
+                    f'<div style="overflow:auto; flex:1;">{rows_html}</div>'
+                    '<div class="revisor-list-rodape">'
+                    f"<span>{rodape_total} transação(ões)</span>"
+                    f"<span>filtro: <strong>{escape(nome_tab)}</strong></span>"
+                    "</div>"
+                    "</div>"
+                )
+                st.markdown(minificar(lista_html), unsafe_allow_html=True)
+
+            with col_centro:
+                opcoes_select = [
+                    f"{t.get('sha8') or '—'} · "
+                    f"{t.get('descricao') or '(sem descrição)'}"
+                    for t in transacoes_filtradas
+                ]
+                idx_selecionada = st.selectbox(
+                    "Transação inspecionada",  # noqa: accent
+                    range(len(opcoes_select)),
+                    format_func=lambda i: opcoes_select[i],
+                    key=f"revisor_4way_selecao_{nome_tab}",
+                )
+                transacao = transacoes_filtradas[idx_selecionada]
+                registro = transacao["registro"]
+
+                header_html = (
+                    '<div class="revisor-fourway-header">'
+                    "<div>"
+                    '<div class="selecao-rotulo">transação selecionada</div>'  # noqa: accent
+                    '<div class="selecao-titulo">'
+                    f"{escape(transacao.get('sha8') or '—')} · "
+                    f"{escape(transacao.get('data') or '—')} · "
+                    f"{escape(transacao.get('descricao') or '—')}"
+                    "</div>"
+                    "</div>"
+                    f"{_estado_pill_html(transacao.get('estado') or 'rascunho')}"
+                    '<span class="revisor-estado-pill" '
+                    'style="color:var(--text-muted);'
+                    'border-color:var(--border-subtle);text-transform:none;">'
+                    f"sha8 {escape(transacao.get('sha8') or '—')}"
+                    "</span>"
+                    "</div>"
+                )
+                st.markdown(minificar(header_html), unsafe_allow_html=True)
+
+                divergentes = _campos_divergentes(registro)
+                etl_campos = (registro.get("etl") or {}).get("campos") or {}
+                opus_campos = (registro.get("opus") or {}).get("campos") or {}
+                humano_campos = (registro.get("humano") or {}).get("campos") or {}
+                ofx_corpo = _campos_card_html(etl_campos, destacar_diff=())
+                rascunho_corpo = _campos_card_html(
+                    etl_campos, destacar_diff=divergentes
+                )
+                opus_corpo = _campos_card_html(
+                    opus_campos, destacar_diff=divergentes
+                )
+                campos_referencia = sorted(
+                    set(etl_campos.keys()) | set(opus_campos.keys())
+                )
+                humano_corpo = _humano_inputs_html(humano_campos, campos_referencia)
+
+                etl_versao = (
+                    (registro.get("etl") or {}).get("extractor_versao") or "—"
+                )
+                opus_versao = (registro.get("opus") or {}).get("versao") or "—"
+
+                cards_html = (
+                    '<div class="revisor-fourway">'
+                    + _renderizar_4way_card(
+                        "ofx",
+                        "OFX",
+                        "banco · imutável",
+                        ofx_corpo,
+                        "read-only · banco",
+                    )
+                    + _renderizar_4way_card(
+                        "rascunho",
+                        "Rascunho ETL",
+                        f"extractor · {etl_versao}",
+                        rascunho_corpo,
+                        "usar como ponto de partida",
+                    )
+                    + _renderizar_4way_card(
+                        "opus",
+                        "Opus",
+                        f"agentic · {opus_versao}",
+                        opus_corpo,
+                        "Aceitar como humano · Re-gerar c/ hint",
+                    )
+                    + _renderizar_4way_card(
+                        "humano",
+                        "Humano",
+                        "aguardando você",
+                        humano_corpo,
+                        "Apurar transação · Marcar para revisar depois",  # noqa: accent
+                    )
+                    + "</div>"
+                )
+                st.markdown(cards_html, unsafe_allow_html=True)
+
+                tabs_rodape = "".join(
+                    f'<span class="tab'
+                    f'{" active" if t == "Auditoria do Opus" else ""}">'
+                    f"{escape(t)}</span>"
+                    for t in TABS_RODAPE_CANONICAS
+                )
+                rodape_html = (
+                    '<div class="revisor-rodape">'
+                    f'<div class="revisor-rodape-tabs">{tabs_rodape}</div>'
+                    '<div class="revisor-rodape-corpo">'
+                    "<div>"
+                    '<div class="revisor-trace-titulo">trace de raciocínio</div>'
+                    f"{_trace_raciocinio_html(registro)}"
+                    "</div>"
+                    "<div>"
+                    '<div class="revisor-trace-titulo">arquivos consultados</div>'
+                    f"{_arquivos_consultados_html(registro)}"
+                    '<div class="revisor-trace-titulo" '
+                    'style="margin-top: 12px;">próximas ações sugeridas</div>'
+                    f"{_proximas_acoes_html(registro)}"
+                    "</div>"
+                    "</div>"
+                    "</div>"
+                )
+                st.markdown(minificar(rodape_html), unsafe_allow_html=True)
+
+
 def renderizar(
     dados: dict | None = None,
     periodo: str | None = None,
     pessoa: str | None = None,
     ctx: dict | None = None,
 ) -> None:
-    """Ponto de entrada da página Revisor (UX-T-09)."""
+    """Ponto de entrada da página Revisor (UX-T-09 + UX-V-4)."""
     from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
     renderizar_grupo_acoes([
         {"label": "Próxima divergência", "glyph": "diff",
@@ -396,6 +892,19 @@ def renderizar(
     ])
 
     _ = dados, periodo, pessoa, ctx
+
+    # CSS dedicado da página (Sprint UX-V-4 -- padrão Onda M).
+    st.markdown(
+        minificar(carregar_css_pagina("revisor")),
+        unsafe_allow_html=True,
+    )
+
+    # Layout 4-way canônico (Sprint UX-V-4) lê schema ``extracao_tripla.json``.
+    # Graceful fallback: lista vazia quando JSON ausente.
+    registros_canonicos = carregar_extracoes_triplas()
+    _renderizar_layout_4way(registros_canonicos)
+
+    st.markdown("---")
 
     pendencias = listar_pendencias_revisao()
     total = len(pendencias)
