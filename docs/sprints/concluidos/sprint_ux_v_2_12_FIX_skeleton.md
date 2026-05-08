@@ -1,7 +1,9 @@
 ---
 id: UX-V-2.12-FIX
 titulo: Medidas — skeleton-mockup canônico (6 cards + sparkline placeholder + tabela 6 semanas)
-status: backlog
+status: concluída
+concluida_em: 2026-05-08
+commit: c8c4f61
 prioridade: alta
 data_criacao: 2026-05-08
 fase: PARIDADE_VISUAL

@@ -1,7 +1,9 @@
 ---
 id: UX-V-2.17-FIX
 titulo: Recap — comparativo 30D estruturado + 5 destaques + bloco narrativa manual
-status: backlog
+status: concluída
+concluida_em: 2026-05-08
+commit: 09d08ee
 prioridade: media
 data_criacao: 2026-05-08
 fase: PARIDADE_VISUAL

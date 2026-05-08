@@ -1,7 +1,9 @@
 ---
 id: UX-V-2.2.B
 titulo: Dividir pagamentos.py em módulos (838L excede limite 800L)
-status: backlog
+status: concluída
+concluida_em: 2026-05-08
+commit: 544a870
 prioridade: baixa
 data_criacao: 2026-05-07
 fase: PARIDADE_VISUAL

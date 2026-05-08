@@ -1,7 +1,9 @@
 ---
 id: UX-V-2.8-FIX
 titulo: Skills D7 — skeleton-mockup canônico (5 KPIs + inventário 18 skills + cobertura)
-status: backlog
+status: concluída
+concluida_em: 2026-05-08
+commit: 44fe86f
 prioridade: alta
 data_criacao: 2026-05-08
 fase: PARIDADE_VISUAL

@@ -1,7 +1,9 @@
 ---
 id: UX-V-2.0
 titulo: Projeções — sliders aporte/retorno/horizonte + 5 marcos + corrigir aporte zerado
-status: backlog
+status: concluída
+concluida_em: 2026-05-08
+commit: c9e8038
 prioridade: alta
 data_criacao: 2026-05-08
 fase: PARIDADE_VISUAL

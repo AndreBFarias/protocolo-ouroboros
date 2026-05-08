@@ -1,7 +1,9 @@
 ---
 id: UX-V-2.13-FIX
 titulo: Ciclo — anel SVG canônico de 28 dias com 4 fases coloridas + cards SINTOMAS + CRUZAMENTO
-status: backlog
+status: concluída
+concluida_em: 2026-05-08
+commit: f8921f4
 prioridade: media
 data_criacao: 2026-05-08
 fase: PARIDADE_VISUAL

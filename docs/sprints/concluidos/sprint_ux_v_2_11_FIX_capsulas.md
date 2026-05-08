@@ -1,7 +1,9 @@
 ---
 id: UX-V-2.11-FIX
 titulo: Memórias — substituir Treinos/Fotos/Marcos por grid de cápsulas multimídia + skeleton
-status: backlog
+status: concluída
+concluida_em: 2026-05-08
+commit: c400e72
 prioridade: alta
 data_criacao: 2026-05-08
 fase: PARIDADE_VISUAL
