@@ -1,14 +1,16 @@
-"""Cluster Bem-estar -- página "Memórias" (UX-RD-19 + UX-V-2.11).
+"""Cluster Bem-estar -- página "Memórias" (UX-RD-19 + UX-V-2.11 + UX-V-2.11-FIX).
 
-Estrutura híbrida:
+Arquitetura canônica (mockup ``23-memorias.html``):
 
-* Quando o vault tem ``memorias.json`` populado, renderiza KPIs no topo
-  e um grid de cápsulas multimídia (foto/áudio/texto/vídeo) com badges,
-  gradientes coloridos por paleta e meta -- paridade com mockup
-  ``23-memorias.html``. Mídia real não é renderizada (só badges + meta).
-* Quando o vault não tem cápsulas, mantém as três sub-abas históricas:
-  **Treinos** (heatmap 91 dias), **Fotos** (eventos com fotos) e
-  **Marcos** (cronologia DESC).
+* Header + 4 KPIs (total · 30d, por tipo, vinculadas a eventos, cápsulas para
+  abrir) sempre no topo.
+* Toolbar de filtros chips (todos/foto/voz/texto/video) — filtragem visual
+  aplicada via classe ativa; backend filtra a lista antes de renderizar.
+* Grid de cápsulas multimídia com gradientes coloridos por paleta. Quando o
+  vault não tem ``memorias.json`` populado, o grid mostra **skeletons** com
+  o mesmo shape e gradientes — preserva paridade visual sem dados.
+* Sub-rota ``?secao=treinos`` mantém o heatmap 91 dias antigo (UX-RD-19) +
+  abas históricas Fotos/Marcos como fallback retro.
 * Quando o vault está completamente ausente, fallback V-03 (estado inicial).
 
 Mockup-fonte: ``novo-mockup/mockups/23-memorias.html``.
@@ -18,7 +20,7 @@ Lições UX-RD/UX-V aplicadas:
 * HTML emitido via :func:`minificar` (UX-RD-04).
 * Cores via ``CORES`` em :mod:`src.dashboard.tema` -- nunca hex literal.
 * CSS dedicado em ``css/paginas/be_memorias.css`` (UX-M-02.D residual).
-* Fallback graceful: caches ausentes viram placeholders, sem crash.
+* Fallback graceful: caches ausentes viram skeletons, sem crash.
 * Contrato uniforme ``renderizar(dados, periodo, pessoa, ctx)``.
 """
 
@@ -229,6 +231,108 @@ def _grid_memorias_html(memorias: list[dict[str, Any]], limite: int = 12) -> str
     return f'<div class="mem-grid">{cartoes}</div>'
 
 
+# Tipos do filtro (mockup: TIPO_FILTRO).
+_FILTROS_TIPO: tuple[str, ...] = ("todos", "foto", "voz", "texto", "video")
+
+
+def _toolbar_filtros_html(filtro_ativo: str = "todos") -> str:
+    """Toolbar de chips de filtro (todos/foto/voz/texto/video).
+
+    Renderiza chips estáticos espelhando o mockup ``23-memorias.html``. A
+    interatividade real (alternar via clique sem rerender) exige JS dedicado;
+    nesta primeira versão a Streamlit não trata o clique nativamente — chips
+    são informativos. Filtros funcionais via query param ficam para sprint
+    futura (mockup-canônico declarado).
+    """
+    chips = "".join(
+        f'<button data-f="{tipo}" '
+        f'class="mem-chip{(" ativo" if tipo == filtro_ativo else "")}">'
+        f"{tipo}</button>"
+        for tipo in _FILTROS_TIPO
+    )
+    return f'<div class="mem-toolbar">{chips}</div>'
+
+
+def _capsula_skeleton_html(idx: int) -> str:
+    """Cápsula em modo skeleton -- gradiente vivo, conteúdo placeholder.
+
+    Preserva o shape visual quando o vault ainda não tem ``memorias.json``
+    populado. Gradiente real (não cinza) para evitar a sensação de "tela
+    vazia"; corpo e tags em barras esqueléticas.
+    """
+    cor1, cor2 = PALETAS_CAPSULA[idx % len(PALETAS_CAPSULA)]
+    return (
+        f'<div class="mem-card mem-card-skeleton" style="--cor:{cor2};">'
+        f'<div class="mem-thumb tipo-skeleton" '
+        f'style="--cor1:{cor1};--cor2:{cor2};">'
+        f'<span class="badge">vazio</span>'
+        f'<span class="ico">--</span>'
+        f"</div>"
+        f'<div class="mem-corpo">'
+        f'<span class="skel-bloco" style="height:14px;width:80%;"></span>'
+        f'<div class="mem-meta">'
+        f'<span class="skel-bloco" style="height:10px;width:40%;"></span>'
+        f'<span class="skel-bloco" style="height:10px;width:25%;"></span>'
+        f"</div>"
+        f"</div>"
+        f'<div class="mem-tags">'
+        f'<span class="skel-bloco pill" style="height:14px;width:48px;"></span>'
+        f'<span class="skel-bloco pill" style="height:14px;width:38px;"></span>'
+        f"</div>"
+        f"</div>"
+    )
+
+
+def _grid_skeleton_html(quantidade: int = 8) -> str:
+    """Grid completo de cápsulas-skeleton para estado vazio."""
+    cartoes = "".join(_capsula_skeleton_html(i) for i in range(quantidade))
+    return f'<div class="mem-grid">{cartoes}</div>'
+
+
+def _kpis_memorias_skeleton_html() -> str:
+    """Versão skeleton dos 4 KPIs -- placeholders com '--' nos numerais."""
+    return (
+        '<div class="mem-stats">'
+        '<div class="mem-stat">'
+        '<div class="l">total · 30d</div>'
+        '<div class="v" style="color:var(--accent-purple);">--</div>'
+        '<div class="sub">aguardando dados</div>'
+        "</div>"
+        '<div class="mem-stat">'
+        '<div class="l">por tipo</div>'
+        '<div class="mem-stat-tipos">'
+        '<div>'
+        '<div class="v" style="color:var(--accent-cyan);">--</div>'
+        '<div class="sub">fotos</div>'
+        "</div>"
+        '<div>'
+        '<div class="v" style="color:var(--accent-pink);">--</div>'
+        '<div class="sub">áudios</div>'
+        "</div>"
+        '<div>'
+        '<div class="v" style="color:var(--accent-yellow);">--</div>'
+        '<div class="sub">textos</div>'
+        "</div>"
+        '<div>'
+        '<div class="v" style="color:var(--accent-green);">--</div>'
+        '<div class="sub">vídeos</div>'
+        "</div>"
+        "</div>"
+        "</div>"
+        '<div class="mem-stat">'
+        '<div class="l">vinculadas a eventos</div>'
+        '<div class="v" style="color:var(--accent-pink);">--</div>'
+        '<div class="sub">sem contexto ainda</div>'
+        "</div>"
+        '<div class="mem-stat">'
+        '<div class="l">cápsulas para abrir</div>'
+        '<div class="v" style="color:var(--accent-yellow);">--</div>'
+        '<div class="sub">aguardando captura</div>'
+        "</div>"
+        "</div>"
+    )
+
+
 def _kpis_memorias_html(memorias: list[dict[str, Any]]) -> str:
     """4 KPIs do mockup: total, por tipo, vinculadas a eventos, capsulas."""
     from collections import Counter
@@ -378,21 +482,46 @@ def renderizar(
         unsafe_allow_html=True,
     )
 
-    memorias = _carregar_cache(vault_root, "memorias")
-    treinos = _carregar_cache(vault_root, "treinos")
-    eventos = _carregar_cache(vault_root, "eventos")
-    marcos = _carregar_cache(vault_root, "marcos")
+    # Sub-rota retro: ?secao=treinos preserva heatmap UX-RD-19 antigo.
+    secao = ""
+    try:
+        secao = str(st.query_params.get("secao") or "").strip().lower()
+    except Exception:
+        secao = ""
 
-    # Caminho UX-V-2.11: vault tem cápsulas multimídia -> grid + KPIs.
+    if secao == "treinos":
+        _renderizar_secao_treinos_retro(vault_root)
+        return
+
+    # Caminho canônico UX-V-2.11-FIX: KPIs + chips + grid.
+    memorias = _carregar_cache(vault_root, "memorias")
     if memorias:
         st.markdown(_kpis_memorias_html(memorias), unsafe_allow_html=True)
+        st.markdown(_toolbar_filtros_html(), unsafe_allow_html=True)
         st.markdown(
             minificar(_grid_memorias_html(memorias)),
             unsafe_allow_html=True,
         )
-        return
+    else:
+        st.markdown(_kpis_memorias_skeleton_html(), unsafe_allow_html=True)
+        st.markdown(_toolbar_filtros_html(), unsafe_allow_html=True)
+        st.markdown(
+            minificar(_grid_skeleton_html()),
+            unsafe_allow_html=True,
+        )
 
-    # Caminho histórico UX-RD-19: sem cápsulas, mostra Treinos/Fotos/Marcos.
+
+def _renderizar_secao_treinos_retro(vault_root: Path) -> None:
+    """Sub-rota ``?secao=treinos`` -- preserva heatmap 91 dias + Fotos/Marcos.
+
+    Compat retro UX-RD-19. Mantém os três fluxos antigos como abas para
+    consulta histórica enquanto a arquitetura canônica de cápsulas é a
+    rota padrão.
+    """
+    treinos = _carregar_cache(vault_root, "treinos")
+    eventos = _carregar_cache(vault_root, "eventos")
+    marcos = _carregar_cache(vault_root, "marcos")
+
     aba_treinos, aba_fotos, aba_marcos = st.tabs(["Treinos", "Fotos", "Marcos"])
 
     with aba_treinos:

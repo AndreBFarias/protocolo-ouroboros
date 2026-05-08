@@ -1,7 +1,10 @@
-/* CSS dedicado da página Bem-estar / Memórias (UX-V-2.11).
+/* CSS dedicado da página Bem-estar / Memórias (UX-V-2.11 + UX-V-2.11-FIX).
    Origem: paridade visual com novo-mockup/mockups/23-memorias.html.
-   Estruturas únicas: grid de cápsulas multimídia (foto/áudio/texto/vídeo),
-   KPIs específicos da página, sem renderização de mídia real (badges + meta).
+   Estruturas únicas: 4 KPIs no topo, toolbar de chips de filtro
+   (todos/foto/voz/texto/video) e grid de cápsulas multimídia
+   (foto/áudio/texto/vídeo) com gradientes coloridos por paleta.
+   Skeleton no estado vazio: shape preservado, gradiente vivo, conteúdo
+   placeholder em barras esqueléticas.
    Cores via tokens canônicos (tokens.css / components.css). */
 
 .mem-stats {
@@ -43,6 +46,30 @@
 }
 .mem-stat-tipos .v {
     font-size: 18px;
+}
+
+/* Toolbar de chips de filtro (UX-V-2.11-FIX). Mockup 23-memorias.html. */
+.mem-toolbar {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: var(--sp-4);
+}
+.mem-toolbar .mem-chip {
+    background: var(--bg-inset);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    padding: 6px 14px;
+    font-family: var(--ff-mono);
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    border-radius: var(--r-sm);
+    cursor: pointer;
+}
+.mem-toolbar .mem-chip.ativo {
+    background: var(--accent-purple);
+    color: var(--text-inverse);
+    border-color: var(--accent-purple);
 }
 
 .mem-grid {
@@ -130,4 +157,27 @@
     border: 1px solid var(--border-subtle);
     color: var(--text-secondary);
     border-radius: var(--r-xs);
+}
+
+/* Skeleton de cápsula (UX-V-2.11-FIX) -- shape preservado quando o vault
+   ainda não tem memorias.json populado. Gradiente vivo, conteúdo em barras
+   esqueléticas. */
+.mem-card-skeleton {
+    cursor: default;
+}
+.mem-card-skeleton:hover {
+    transform: none;
+    border-color: var(--border-subtle);
+}
+.mem-card-skeleton .skel-bloco {
+    display: inline-block;
+    background: var(--bg-elevated);
+    border-radius: var(--r-xs);
+    opacity: 0.55;
+}
+.mem-card-skeleton .mem-meta .skel-bloco {
+    display: inline-block;
+}
+.mem-card-skeleton .mem-tags .skel-bloco.pill {
+    border: 1px solid var(--border-subtle);
 }
