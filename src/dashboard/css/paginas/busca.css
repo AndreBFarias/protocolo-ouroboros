@@ -1,5 +1,4 @@
 /* CSS dedicado da página Busca Global (UX-M-02.A-RESIDUAL).
-   Origem: _CSS_LOCAL_BUSCA em src/dashboard/paginas/busca.py.
    Classes específicas da página -- não duplicam components.css. */
 
 /* Cor do ícone (i) do callout info: var(--color-destaque) em vez do

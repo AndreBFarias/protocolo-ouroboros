@@ -87,12 +87,8 @@ CORES_STATUS: dict[str, str] = {
 }
 
 
-# ---------------------------------------------------------------------------
-# CSS local da página -- redesign UX-RD-09 (toolbar + tabela densa)
-# ---------------------------------------------------------------------------
-
 # CSS dedicado da página: src/dashboard/css/paginas/catalogacao.css
-# (UX-M-02.A-RESIDUAL extraiu de _CSS_LOCAL_CATALOGACAO inline.)
+# (redesign UX-RD-09: toolbar + tabela densa).
 
 
 def renderizar(

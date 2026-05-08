@@ -148,12 +148,8 @@ _FACETAS_BUSCA: list[tuple[str, str]] = [
 ]
 
 
-# ---------------------------------------------------------------------------
-# CSS local da página -- redesign UX-RD-09 (search-bar + facets + cards)
-# ---------------------------------------------------------------------------
-
 # CSS dedicado da página: src/dashboard/css/paginas/busca.css
-# (UX-M-02.A-RESIDUAL extraiu de _CSS_LOCAL_BUSCA inline.)
+# (redesign UX-RD-09: search-bar, facets, cards de resultado).
 
 
 # ---------------------------------------------------------------------------
