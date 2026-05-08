@@ -1,6 +1,7 @@
 """Entrypoint principal do dashboard financeiro - Protocolo Ouroboros."""
 
 import sys
+import unicodedata
 from pathlib import Path
 
 import streamlit as st
@@ -13,6 +14,7 @@ from src.dashboard.componentes.drilldown import (  # noqa: E402
     CHAVE_SESSION_ABA_ATIVA,
     CHAVE_SESSION_CLUSTER_ATIVO,
     CLUSTERS_VALIDOS,
+    MAPA_ABA_PARA_CLUSTER,
     ler_filtros_da_url,
 )
 from src.dashboard.componentes.shell import (  # noqa: E402
@@ -318,6 +320,46 @@ def _finalizar_topbar(placeholder, breadcrumb: list[str]) -> None:
     placeholder.markdown(renderizar_topbar(breadcrumb), unsafe_allow_html=True)
 
 
+def _normalizar_aba_url(nome_aba: str) -> str:
+    """Resolve grafia da aba vinda da URL contra o set canônico de abas.
+
+    Sprint UX-V-3.3-FIX-ROTA: URLs externas/coladas podem trazer a aba com
+    grafia "torta" (ex: ``Catalogac%C3%A3o`` decodifica para ``Catalogacão``,
+    sem cedilha). Comparação literal contra ``"Catalogação"`` falhava
+    silenciosamente e o dispatcher caia no fallback ``busca.renderizar``,
+    fazendo a página da Catalogação parecer Busca Global. Esta função tenta
+    casar a grafia recebida contra cada chave canônica de
+    ``MAPA_ABA_PARA_CLUSTER`` usando duas reduções:
+
+    * ``unicodedata.normalize("NFC", ...)`` -- normaliza compostos vs
+      decompostos (ã pré-composto vs a + tilde combining).
+    * Strip de diacríticos + casefold -- compara ``"catalogacao"`` contra
+      ``"catalogação"`` ignorando acento e cedilha. Robusto contra qualquer
+      grafia degradada conhecida.
+
+    Devolve a chave canônica quando há match único; caso contrário devolve
+    a string original (preserva comportamento atual para abas não-mapeadas
+    como "Visão Geral" da Home, que usa cluster explícito).
+    """
+    if not nome_aba:
+        return nome_aba
+    candidato = unicodedata.normalize("NFC", nome_aba)
+    if candidato in MAPA_ABA_PARA_CLUSTER:
+        return candidato
+
+    def _reduzir(s: str) -> str:
+        # NFD separa diacríticos; filtra Mn (Mark, Nonspacing) remove acentos.
+        decomposto = unicodedata.normalize("NFD", s)
+        sem_diacritico = "".join(c for c in decomposto if unicodedata.category(c) != "Mn")
+        return sem_diacritico.casefold()
+
+    alvo = _reduzir(candidato)
+    for canonica in MAPA_ABA_PARA_CLUSTER:
+        if _reduzir(canonica) == alvo:
+            return canonica
+    return candidato
+
+
 def _renderizar_fallback_cluster(cluster: str) -> None:
     """Mensagem informativa para clusters declarados mas sem páginas.
 
@@ -348,7 +390,9 @@ def main() -> None:
         st.error("Nenhum dado encontrado. Verifique se o arquivo XLSX existe em data/output/.")
         st.stop()
 
-    aba_requerida_topbar: str = str(st.session_state.get(CHAVE_SESSION_ABA_ATIVA, ""))
+    aba_requerida_topbar: str = _normalizar_aba_url(
+        str(st.session_state.get(CHAVE_SESSION_ABA_ATIVA, ""))
+    )
     # _sidebar() agora só renderiza shell HTML; defaults para periodo/
     # pessoa/granularidade são preenchidos depois por _filtros_globais_main.
     _, _, _, cluster = _sidebar(dados, aba_ativa=aba_requerida_topbar)

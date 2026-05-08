@@ -272,4 +272,55 @@ class TestSmokeApp:
         assert app.CHAVE_SESSION_CLUSTER_ATIVO == (drilldown.CHAVE_SESSION_CLUSTER_ATIVO)
 
 
+# ============================================================================
+# Sprint UX-V-3.3-FIX-ROTA: _normalizar_aba_url() resolve grafias degradadas
+# ============================================================================
+
+
+class TestNormalizarAbaUrl:
+    """URLs externas/coladas podem trazer aba com grafia torta. O dispatcher
+    de cluster compara literal contra chaves de MAPA_ABA_PARA_CLUSTER -- se
+    bate exato, roteia certo; se não, cai no fallback (Busca Global no
+    cluster Documentos). Teste cobre o caso M5 da auditoria
+    AUDITORIA_PARIDADE_VISUAL_2026-05-08 (URL ?tab=Catalogac%C3%A3o, sem
+    cedilha, virava Busca Global silenciosamente)."""
+
+    def test_grafia_canonica_passa_intacta(self) -> None:
+        from src.dashboard.app import _normalizar_aba_url
+
+        assert _normalizar_aba_url("Catalogação") == "Catalogação"
+        assert _normalizar_aba_url("Busca Global") == "Busca Global"
+        assert _normalizar_aba_url("Visão Geral") == "Visão Geral"
+
+    def test_grafia_sem_cedilha_resolve_para_canonica(self) -> None:
+        """Bug M5 original: ?tab=Catalogac%C3%A3o decodifica para
+        'Catalogacão' (c simples + ão) e literal != 'Catalogação'."""
+        from src.dashboard.app import _normalizar_aba_url
+
+        assert _normalizar_aba_url("Catalogacão") == "Catalogação"
+
+    def test_grafia_ascii_pura_resolve_para_canonica(self) -> None:
+        """URL ?tab=Catalogacao (sem nenhum acento) também resolve."""
+        from src.dashboard.app import _normalizar_aba_url
+
+        assert _normalizar_aba_url("Catalogacao") == "Catalogação"
+        assert _normalizar_aba_url("Visao Geral") == "Visão Geral"
+
+    def test_grafia_uppercase_resolve_para_canonica(self) -> None:
+        """Comparação é case-insensitive após reduzir diacríticos."""
+        from src.dashboard.app import _normalizar_aba_url
+
+        assert _normalizar_aba_url("CATALOGAÇÃO") == "Catalogação"
+        assert _normalizar_aba_url("BUSCA GLOBAL") == "Busca Global"
+
+    def test_aba_inexistente_passa_pelo_filtro(self) -> None:
+        """Defensivo: nome desconhecido não sofre alteração silenciosa.
+        Evita corromper cluster 'Home' (cujas abas homônimas são acessadas
+        via cluster explícito e não estão em MAPA_ABA_PARA_CLUSTER)."""
+        from src.dashboard.app import _normalizar_aba_url
+
+        assert _normalizar_aba_url("Aba Inexistente") == "Aba Inexistente"
+        assert _normalizar_aba_url("") == ""
+
+
 # "Hierarquia não é opressão, é clareza." -- princípio de arquitetura da informação
