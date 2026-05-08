@@ -3,15 +3,20 @@
    delta vs anterior nos KPIs, painel lateral INSIGHTS DERIVADOS).
    Tokens canônicos via tokens.css (ADR-19). */
 
-/* Tabs canônicas com counters -- linha visual antes do st.tabs nativo. */
-.analise-tabs {
-    display: flex;
+/* UX-V-2.6-FIX: 4 KPIs em linha única (1fr 1fr 1fr 1fr). Substitui o
+   layout via st.columns(4) que quebrava 3+1 em viewport <1400px. O grid
+   nativo respeita o gap mas mantém os 4 cards na mesma linha em qualquer
+   viewport >= 960px. Em viewports menores cai em 2x2 graciosamente. */
+.analise-kpi-row {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: var(--sp-3, 12px);
-    align-items: center;
     margin-bottom: var(--sp-4, 16px);
-    padding-bottom: 4px;
-    border-bottom: 1px solid var(--border-subtle, #313445);
-    flex-wrap: wrap;
+}
+@media (max-width: 960px) {
+    .analise-kpi-row {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
 }
 
 /* Delta vs anterior -- segunda linha do KPI. Verde quando positivo. */
@@ -33,6 +38,17 @@
     letter-spacing: 0.10em;
     color: var(--text-secondary, #a8a9b8);
     margin: 0 0 var(--sp-3, 12px);
+}
+
+/* UX-V-2.6-FIX: garantir wrap do corpo dos insight cards na sidebar
+   direita. Sem isso o texto longo do card "PREVISÃO" extrapolava o
+   container e ficava parcialmente cortado em viewport 1280-1440. */
+.insight-card-corpo {
+    word-break: break-word;
+    overflow-wrap: anywhere;
+}
+.insight-card-titulo {
+    word-break: break-word;
 }
 
 /* "O dado fala; o insight escuta." -- princípio V-2.6 */

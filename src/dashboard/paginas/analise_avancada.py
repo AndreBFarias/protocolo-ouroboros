@@ -51,7 +51,6 @@ from src.dashboard.componentes.ui import (
     callout_html,
     carregar_css_pagina,
     insight_card_html,
-    tab_counter_html,
 )
 from src.dashboard.dados import (
     filtrar_por_forma_pagamento,
@@ -137,10 +136,22 @@ def calcular_kpis_fluxo(df: pd.DataFrame) -> dict[str, float]:
     entradas = float(receitas)
 
     if "categoria" in df.columns:
+        # UX-V-2.6-FIX: ampliar o filtro de "investido". O dataset real tem
+        # categorias como "Aplicação RDB" (tipo Despesa, R$ 7,4k) e
+        # "Investimento" tipo Receita (rendimentos -- NÃO é investido) ou
+        # tipo Transferência Interna (aporte -- É investido). Antes contava
+        # apenas ``categoria contains "Investimento" AND tipo == "Despesa"``
+        # e devolvia R$ 0. Padrão atual: regex que cobre Aplicação/Aporte/
+        # CDB/RDB/Tesouro além de Investimento; e tipos de SAÍDA (Despesa
+        # OU Transferência Interna). Heurística conservadora: nunca soma
+        # ``Receita`` (que seria contar rendimento como aporte).
         cat_series = df["categoria"].astype(str)
-        eh_investimento = cat_series.str.contains("Investimento", case=False, na=False)
-        eh_despesa = df["tipo"] == "Despesa"
-        investido = abs(float(df[eh_despesa & eh_investimento]["valor"].sum()))
+        padrao_inv = r"investimento|aplica[çc][ãa]o|aporte|cdb|rdb|tesouro"
+        eh_investimento = cat_series.str.contains(
+            padrao_inv, case=False, na=False, regex=True
+        )
+        eh_saida = df["tipo"].isin(["Despesa", "Transferência Interna"])
+        investido = abs(float(df[eh_saida & eh_investimento]["valor"].sum()))
     else:
         investido = 0.0
 
@@ -418,9 +429,6 @@ def _renderizar_aba_fluxo(
     """
     kpis = calcular_kpis_fluxo(df)
 
-    col1, col2, col3, col4 = st.columns(4)
-    cols = [col1, col2, col3, col4]
-
     def fmt(v: float) -> str:
         return f"R$ {v:,.0f}".replace(",", ".")
 
@@ -446,15 +454,31 @@ def _renderizar_aba_fluxo(
         ("Investido", fmt(kpis["investido"]), pct_poupanca, CORES["destaque"]),
         ("Saldo", fmt(kpis["saldo"]), legenda_saldo, cor_saldo),
     ]
-    for col, (label, valor, delta_txt, cor) in zip(cols, cards, strict=True):
-        with col:
-            st.markdown(_kpi_card_html(label, valor, delta_txt, cor), unsafe_allow_html=True)
+    # UX-V-2.6-FIX: 4 KPIs em LINHA ÚNICA via CSS grid explícito. Substituiu
+    # ``st.columns(4)`` que quebrava 3+1 em viewport intermediária por causa
+    # do min-width interno dos wrappers Streamlit. Grid ``1fr 1fr 1fr 1fr``
+    # espelha o mockup 12-analise.html (.kpi-row).
+    cards_html = "".join(
+        _kpi_card_html(label, valor, delta_txt, cor)
+        for label, valor, delta_txt, cor in cards
+    )
+    st.markdown(
+        minificar(
+            f'<div class="analise-kpi-row">{cards_html}</div>'
+        ),
+        unsafe_allow_html=True,
+    )
 
     st.markdown("---")
 
-    # Layout 2:1 -- Sankey à esquerda, INSIGHTS DERIVADOS à direita.
+    # Layout 3:2 -- Sankey à esquerda, INSIGHTS DERIVADOS à direita.
+    # UX-V-2.6-FIX: a proporção foi ajustada de ``[2, 1]`` para ``[3, 2]``
+    # porque na anterior o card "PREVISÃO" aparecia parcialmente cortado
+    # em viewport 1280-1440 (texto longo + sidebar muito estreita). Com
+    # 40% de largura para a coluna de insights, os 4 cards (POSITIVO,
+    # ATENÇÃO, DESCOBERTA, PREVISÃO) ficam totalmente legíveis.
     if insights:
-        col_main, col_insights = st.columns([2, 1])
+        col_main, col_insights = st.columns([3, 2])
         with col_main:
             _renderizar_sankey_inline(df)
         with col_insights:
@@ -820,16 +844,24 @@ def _gerar_insights(df: pd.DataFrame) -> list[tuple[str, str, str]]:
                     break
 
     # 4. Previsão (média móvel)
-    if len(saldos) >= 3:
+    # UX-V-2.6-FIX: previsão agora aparece a partir de 1 mês de dados
+    # (era >=3, o que deixava o card invisível em períodos curtos -- o
+    # mockup 12-analise.html exige o quarto card sempre presente). Com 1-2
+    # meses a previsão usa a própria média; com >=3 a heurística clássica.
+    if len(saldos) >= 1:
         media = saldos.mean()
-        insights.append(
-            (
-                "previsao",
-                "Margem prevista para próximo mês",
+        if len(saldos) >= 3:
+            corpo = (
                 f"Saldo médio R$ {media:,.2f} pelos últimos {len(saldos)} "
-                "meses. Aporte sugerido em CDB.",
+                "meses. Aporte sugerido em CDB."
             )
-        )
+        else:
+            corpo = (
+                f"Saldo do período R$ {media:,.2f} ({len(saldos)} mês"
+                f"{'es' if len(saldos) > 1 else ''}). Amostra curta -- "
+                "projeção ganha confiança a partir de 3 meses."
+            )
+        insights.append(("previsao", "Margem prevista para próximo mês", corpo))
 
     return insights[:4]
 
@@ -892,33 +924,12 @@ def renderizar(
     )
     extrato_periodo = filtrar_por_periodo(extrato_pessoa, gran, periodo_filtro)
 
-    # UX-V-2.6: tabs canônicas com counters (paridade com mockup 12-analise).
-    # Linha visual ANTES do st.tabs nativo. Counters: Fluxo=3 (níveis Sankey),
-    # Categorias=N únicas, Padrões=Nd (dias do recorte).
-    n_categorias = (
-        int(extrato_periodo["categoria"].nunique())
-        if "categoria" in extrato_periodo.columns and not extrato_periodo.empty
-        else 0
-    )
-    if (
-        "data" in extrato_periodo.columns
-        and not extrato_periodo.empty
-        and pd.notna(extrato_periodo["data"].min())
-    ):
-        n_dias = int(
-            (extrato_periodo["data"].max() - extrato_periodo["data"].min()).days
-        ) + 1
-    else:
-        n_dias = 0
-    tabs_html = (
-        tab_counter_html("Fluxo de caixa", 3, ativo=True)
-        + tab_counter_html("Categorias", n_categorias)
-        + tab_counter_html("Padrões temporais", f"{n_dias}d")
-    )
-    st.markdown(
-        f'<div class="analise-tabs">{tabs_html}</div>',
-        unsafe_allow_html=True,
-    )
+    # UX-V-2.6-FIX: a barra HTML estática ``<div class="analise-tabs">`` foi
+    # removida porque renderizava counters DUPLICADOS sobre o ``st.tabs``
+    # nativo abaixo (3 superiores estáticas + 3 sub-abas funcionais). Para
+    # eliminar redundância visual, mantemos apenas o ``st.tabs`` -- ele é a
+    # única barra de tabs interativa da página. A função ``tab_counter_html``
+    # permanece em ``componentes/ui.py`` para outras páginas que ainda a usem.
 
     # UX-V-2.6: delta vs período anterior + insights determinísticos (ADR-13).
     delta_kpis = _delta_periodo_anterior(extrato_pessoa, periodo_filtro)

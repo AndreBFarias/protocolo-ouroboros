@@ -306,6 +306,12 @@ def _renderizar_topbar_para(cluster: str, aba_ativa: str):
     """
     if cluster == "Home" and aba_ativa in ("", "Visão Geral"):
         breadcrumb = ["Ouroboros", "Visão Geral"]
+    elif cluster == "Análise" and aba_ativa in ("", "Análise"):
+        # UX-V-2.6-FIX: a aba "Análise" do cluster "Análise" é a "visão geral"
+        # do cluster (mockup 12-analise.html). Breadcrumb canônico fica
+        # 2-segmentos ``Ouroboros / Análise`` -- evita o segmento redundante
+        # "ANÁLISE / VISÃO GERAL" que aparecia antes deste fix.
+        breadcrumb = ["Ouroboros", "Análise"]
     else:
         breadcrumb = ["Ouroboros", cluster]
         if aba_ativa:
