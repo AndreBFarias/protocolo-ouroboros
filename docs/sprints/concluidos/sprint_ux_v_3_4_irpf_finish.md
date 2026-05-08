@@ -1,7 +1,9 @@
 ---
 id: UX-V-3.4
 titulo: IRPF — completar 2 categorias + barras coloridas + botões expand/baixar + checklist
-status: backlog
+status: concluída
+concluida_em: 2026-05-08
+commit: 424fd44
 prioridade: media
 data_criacao: 2026-05-08
 fase: PARIDADE_VISUAL

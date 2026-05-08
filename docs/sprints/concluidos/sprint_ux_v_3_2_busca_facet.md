@@ -1,7 +1,9 @@
 ---
 id: UX-V-3.2
 titulo: Busca Global — facet-card lateral + grupos resultado + snippet highlight
-status: backlog
+status: concluída
+concluida_em: 2026-05-08
+commit: 998fe6e
 prioridade: media
 data_criacao: 2026-05-08
 fase: PARIDADE_VISUAL

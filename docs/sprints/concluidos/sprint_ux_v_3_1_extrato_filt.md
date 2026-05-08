@@ -1,7 +1,9 @@
 ---
 id: UX-V-3.1
 titulo: Extrato — filt-bar inline canônica + lista por dia com pílulas tipadas
-status: backlog
+status: concluída
+concluida_em: 2026-05-08
+commit: 569f396
 prioridade: media
 data_criacao: 2026-05-08
 fase: PARIDADE_VISUAL

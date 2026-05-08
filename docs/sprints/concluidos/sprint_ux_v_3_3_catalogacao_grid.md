@@ -1,7 +1,9 @@
 ---
 id: UX-V-3.3-GRID
 titulo: Catalogação — grid de thumbs com badges + sidebar 3 facetas
-status: backlog
+status: concluída
+concluida_em: 2026-05-08
+commit: 6e2bf7a
 prioridade: media
 data_criacao: 2026-05-08
 fase: PARIDADE_VISUAL

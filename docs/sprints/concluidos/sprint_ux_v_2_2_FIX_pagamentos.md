@@ -1,7 +1,9 @@
 ---
 id: UX-V-2.2-FIX
 titulo: Pagamentos — adicionar legenda rodapé + total mensal + setas navegação mês
-status: backlog
+status: concluída
+concluida_em: 2026-05-08
+commit: e4c0968
 prioridade: alta
 data_criacao: 2026-05-08
 fase: PARIDADE_VISUAL
