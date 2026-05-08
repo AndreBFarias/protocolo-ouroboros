@@ -1,22 +1,14 @@
-"""Cluster Bem-estar · aba "Diário emocional" (UX-RD-18).
+"""Cluster Bem-estar · aba "Diário emocional" (UX-RD-18, UX-V-3.7).
 
-Lista cronológica DESC dos registros de diário emocional. Cada registro
-vira um cartão com border-left semântica (vermelha para ``trigger``,
-verde para ``vitoria``), chips das emoções tagueadas, slider visual da
-intensidade (1..5) e a frase capturada. Filtros laterais permitem
-restringir por modo (trigger/vitória/todos), período (7/30/90/365 dias)
-e pessoa.
+Layout 3-col canônico (UX-V-3.7) espelhando ``19-diario-emocional.html``:
 
-Layout espelha ``novo-mockup/mockups/19-diario-emocional.html``:
-
-* ``page-header`` com sprint-tag UX-RD-18 + pill com a contagem de
-  registros visíveis após filtros.
-* ``.diario-layout`` -- duas colunas (sidebar esquerda + lista).
-* ``.diario-card`` -- border-left 4px (red para trigger, green para
-  vitória), data, modo pill, chips emoção, slider visual, frase, "com".
-* Botão "Registrar diário" abre ``st.dialog`` (com fallback para
-  ``st.expander`` em versões antigas) com formulário compacto que
-  invoca :func:`escrever_diario`.
+* **Coluna esquerda** -- 3 cards de facetas (Tipo/ParaQuem/Período) com
+  counts reais derivados dos items + tags populares.
+* **Coluna central** -- card NOVA ENTRADA com 4 tabs nativas
+  (Trigger/Vitória/Reflexão/Observação). Cada tab tem título, pílulas
+  de intensidade 1-5, "para quem", tags e corpo. Embaixo, timeline
+  cronológica DESC com cards (border-left semântica por tipo).
+* **Coluna direita** -- espaço reservado para futuras métricas curtas.
 
 Lições UX-RD herdadas:
 
@@ -25,11 +17,22 @@ Lições UX-RD herdadas:
 * Fallback graceful para vault ausente (UX-RD-15).
 * Contrato uniforme ``renderizar(dados, periodo, pessoa, ctx)``.  # noqa: accent
 * Identificador pessoa SEMPRE canônico (ADR-23).
+
+Subregra retrocompatível (padrão (o)): ``_filtrar`` continua aceitando
+``"trigger"|"vitoria"|"todos"`` exatamente como antes; agora também
+aceita ``"reflexao"|"observacao"``. ``_card_html`` mantém border-left
+vermelha (trigger) e verde (vitoria); reflexao usa purple, observacao
+usa cyan.
+
+Persistência markdown de reflexao/observacao fica como placeholder
+(UX-V-3.7 não-objetivo): tabs renderizam o form, mas só trigger/vitoria
+gravam via :func:`escrever_diario`.
 """
 
 from __future__ import annotations
 
 import json
+from collections import Counter
 from datetime import date, timedelta
 from pathlib import Path
 from typing import Any
@@ -66,7 +69,34 @@ _PESSOAS_LABEL = {
     "casal": "Casal",
 }
 
+# Tipos do diário (UX-V-3.7). Ordem importa: corresponde às 4 tabs.
+_TIPOS_ORDEM: tuple[str, ...] = ("trigger", "vitoria", "reflexao", "observacao")
+_TIPOS_LABEL: dict[str, str] = {
+    "trigger": "Trigger",
+    "vitoria": "Vitória",
+    "reflexao": "Reflexão",
+    "observacao": "Observação",
+}
+_TIPOS_SUBTITULO: dict[str, str] = {
+    "trigger": "Algo que disparou ansiedade, raiva ou tristeza.",
+    "vitoria": "Algo bom -- pequeno ou grande.",
+    "reflexao": "Pensamento, observação, padrão notado.",
+    "observacao": "Sobre Pessoa B ou sobre o casal.",
+}
+# Tipos com persistência markdown atual (escrever_diario aceita).
+_TIPOS_PERSISTIDOS: frozenset[str] = frozenset({"trigger", "vitoria"})
+
 _KEY_FLASH = "be_diario_flash"
+
+
+def _cor_tipo(modo: str) -> str:
+    """Retorna a cor canônica por tipo (token CORES)."""
+    return {
+        "trigger": CORES.get("negativo", "#ff5555"),
+        "vitoria": CORES.get("positivo", "#50fa7b"),
+        "reflexao": CORES.get("destaque", "#bd93f9"),
+        "observacao": CORES.get("neutro", "#8be9fd"),
+    }.get(modo, CORES.get("texto_muted", "#6c6f7d"))
 
 
 def renderizar(  # noqa: accent
@@ -75,7 +105,7 @@ def renderizar(  # noqa: accent
     pessoa: str,
     ctx: dict | None = None,
 ) -> None:
-    """Renderiza Bem-estar / Diário emocional (UX-T-19)."""
+    """Renderiza Bem-estar / Diário emocional (UX-V-3.7)."""
     from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
     renderizar_grupo_acoes([
         {"label": "Heatmap", "glyph": "analise",
@@ -97,50 +127,33 @@ def renderizar(  # noqa: accent
     if flash:
         st.success(flash)
 
-    # Filtros laterais. Usamos st.columns ao invés de st.sidebar
-    # para manter os filtros no contexto do conteúdo (sidebar global
-    # já é dos filtros transversais).
-    col_filtros, col_lista = st.columns([1, 3], gap="large")
+    # Estado dos filtros (a coluna esquerda renderiza widgets que escrevem
+    # nessas chaves; reusamos os defaults mesmo na primeira carga).
+    pessoa_default = pessoa if pessoa in _PESSOAS else "todos"
+    modo_atual = st.session_state.get("be_diario_modo", "todos")
+    periodo_atual = st.session_state.get("be_diario_periodo", "30 dias")
+    pessoa_atual = st.session_state.get("be_diario_pessoa", pessoa_default)
 
-    with col_filtros:
-        modo_label = st.radio(
-            "Modo",
-            options=["todos", "trigger", "vitoria"],
-            format_func=lambda v: {
-                "todos": "Todos",
-                "trigger": "Trigger",
-                "vitoria": "Vitória",
-            }[v],
-            key="be_diario_modo",
-        )
-        periodo_label = st.selectbox(
-            "Período",
-            options=list(_PERIODOS.keys()),
-            index=1,
-            key="be_diario_periodo",
-        )
-        pessoa_default = pessoa if pessoa in _PESSOAS else "todos"
-        pessoa_label = st.selectbox(
-            "Pessoa",
-            options=list(_PESSOAS),
-            index=list(_PESSOAS).index(pessoa_default),
-            format_func=lambda v: _PESSOAS_LABEL[v],
-            key="be_diario_pessoa",
-        )
+    # Counts derivados dos items (faceta dinâmica).
+    counts = _counts_facetas(items, hoje=date.today())
 
-        st.markdown("---")
-        if st.button("Registrar diário", use_container_width=True, key="be_diario_btn_abrir"):
-            st.session_state["be_diario_form_aberto"] = True
+    # Layout 3-col (UX-V-3.7): facetas | conteúdo | espaço lateral.
+    col_facetas, col_conteudo, col_lateral = st.columns([1, 2.5, 0.5], gap="medium")
+
+    with col_facetas:
+        _renderizar_facetas(counts)
 
     items_filtrados = _filtrar(
         items,
-        modo=modo_label,
-        periodo_dias=_PERIODOS[periodo_label],
-        pessoa=pessoa_label,
+        modo=st.session_state.get("be_diario_modo", modo_atual),
+        periodo_dias=_PERIODOS.get(
+            st.session_state.get("be_diario_periodo", periodo_atual), 30,
+        ),
+        pessoa=st.session_state.get("be_diario_pessoa", pessoa_atual),
         hoje=date.today(),
     )
 
-    with col_lista:
+    with col_conteudo:
         st.markdown(
             _page_header_canonico(len(items_filtrados)),
             unsafe_allow_html=True,
@@ -151,15 +164,17 @@ def renderizar(  # noqa: accent
             unsafe_allow_html=True,
         )
 
+        # Card NOVA ENTRADA com 4 tabs (UX-V-3.7).
+        _renderizar_card_nova_entrada(vault_root, pessoa_atual)
+
+        # Timeline embaixo do form.
         if vault_root is None:
             msg = (
                 "Vault Bem-estar não encontrado. Configure OUROBOROS_VAULT "
                 "para visualizar registros do diário emocional."
             )
             st.markdown(callout_html("warning", msg), unsafe_allow_html=True)
-            return
-
-        if not items:
+        elif not items:
             from src.dashboard.componentes.ui import (
                 fallback_estado_inicial_html,
                 ler_sync_info,
@@ -204,11 +219,20 @@ def renderizar(  # noqa: accent
                 unsafe_allow_html=True,
             )
         else:
+            st.markdown(
+                _timeline_header_html(
+                    st.session_state.get("be_diario_modo", "todos"),
+                    st.session_state.get("be_diario_periodo", "30 dias"),
+                ),
+                unsafe_allow_html=True,
+            )
             for item in items_filtrados:
                 st.markdown(_card_html(item), unsafe_allow_html=True)
 
-    if st.session_state.get("be_diario_form_aberto"):
-        _renderizar_form(vault_root, pessoa_label)
+    with col_lateral:
+        # Espaço reservado (UX-V-3.7). Mockup tem coluna lateral estreita
+        # para futuras métricas curtas (streak, média, etc.).
+        st.markdown('<div class="diario-coluna-lateral"></div>', unsafe_allow_html=True)
 
 
 # ---------------------------------------------------------------------------
@@ -250,6 +274,14 @@ def _filtrar(
     pessoa: str,
     hoje: date,
 ) -> list[dict[str, Any]]:
+    """Filtra items por modo, período e pessoa.
+
+    Subregra retrocompatível (padrão (o)): ``modo`` aceita os mesmos
+    valores históricos (``"todos"``, ``"trigger"``, ``"vitoria"``) e
+    também os novos (``"reflexao"``, ``"observacao"``). Se o item tem
+    campo ``modo`` ausente do conjunto conhecido, filtragem por modo
+    específico o exclui (compatível com semântica anterior).
+    """
     limite = hoje - timedelta(days=periodo_dias)
     out: list[dict[str, Any]] = []
     for it in items:
@@ -268,6 +300,336 @@ def _filtrar(
     return out
 
 
+def _counts_facetas(
+    items: list[dict[str, Any]],
+    *,
+    hoje: date,
+) -> dict[str, dict[str, int]]:
+    """Calcula counts por faceta (tipo, pessoa, período) para a sidebar.
+
+    Counts de tipo e pessoa consideram TODOS os items. Counts de período
+    consideram itens dentro da janela respectiva.
+    """
+    by_tipo: Counter[str] = Counter()
+    by_pessoa: Counter[str] = Counter()
+    for it in items:
+        by_tipo[str(it.get("modo", "")) or "sem_tipo"] += 1
+        by_pessoa[str(it.get("autor", "")) or "sem_autor"] += 1
+
+    by_periodo: dict[str, int] = {}
+    for label, dias in _PERIODOS.items():
+        limite = hoje - timedelta(days=dias)
+        cnt = 0
+        for it in items:
+            try:
+                d_obj = date.fromisoformat(str(it.get("data", ""))[:10])
+            except ValueError:
+                continue
+            if limite <= d_obj <= hoje:
+                cnt += 1
+        by_periodo[label] = cnt
+
+    tags_counter: Counter[str] = Counter()
+    for it in items:
+        for emo in (it.get("emocoes") or []):
+            tags_counter[str(emo).strip()] += 1
+    tags_top = dict(tags_counter.most_common(8))
+
+    return {
+        "tipo": dict(by_tipo),
+        "pessoa": dict(by_pessoa),
+        "periodo": by_periodo,  # noqa: accent
+        "total": {"todos": len(items)},
+        "tags_top": tags_top,
+    }
+
+
+# ---------------------------------------------------------------------------
+# UI: facetas (coluna esquerda)
+# ---------------------------------------------------------------------------
+
+
+def _renderizar_facetas(counts: dict[str, dict[str, int]]) -> None:
+    """Renderiza 3 cards de facetas + tags populares com counts reais."""
+    total = counts.get("total", {}).get("todos", 0)
+
+    # Card Tipo.
+    st.markdown('<div class="filtro-card"><h3>Tipo</h3>', unsafe_allow_html=True)
+    opcoes_tipo = ["todos", *_TIPOS_ORDEM]
+
+    def _label_tipo(v: str) -> str:
+        if v == "todos":
+            return f"todos os tipos · {total}"
+        c = counts.get("tipo", {}).get(v, 0)
+        return f"{_TIPOS_LABEL.get(v, v)} · {c}"
+
+    st.radio(
+        "Tipo",
+        options=opcoes_tipo,
+        format_func=_label_tipo,
+        key="be_diario_modo",
+        label_visibility="collapsed",
+    )
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    # Card Para quem (autor).
+    st.markdown('<div class="filtro-card"><h3>Para quem</h3>', unsafe_allow_html=True)
+
+    def _label_pessoa(v: str) -> str:
+        if v == "todos":
+            return f"todos · {total}"
+        c = counts.get("pessoa", {}).get(v, 0)
+        return f"{_PESSOAS_LABEL.get(v, v)} · {c}"
+
+    st.radio(
+        "Para quem",
+        options=list(_PESSOAS),
+        format_func=_label_pessoa,
+        key="be_diario_pessoa",
+        label_visibility="collapsed",
+    )
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    # Card Período.
+    st.markdown('<div class="filtro-card"><h3>Período</h3>', unsafe_allow_html=True)
+
+    def _label_periodo(v: str) -> str:
+        c = counts.get("periodo", {}).get(v, 0)  # noqa: accent
+        return f"{v} · {c}"
+
+    st.radio(
+        "Período",
+        options=list(_PERIODOS.keys()),
+        format_func=_label_periodo,
+        index=1,
+        key="be_diario_periodo",
+        label_visibility="collapsed",
+    )
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    # Card Tags populares.
+    tags_top = counts.get("tags_top", {})
+    if tags_top:
+        chips = "".join(
+            f'<span class="pill">{_escape(tag)} · {qtd}</span>'
+            for tag, qtd in tags_top.items()
+        )
+        st.markdown(
+            minificar(
+                f'<div class="filtro-card filtro-card-inset">'
+                f'<h3>Tags populares</h3>'
+                f'<div class="filtro-tags-top">{chips}</div>'
+                f'</div>'
+            ),
+            unsafe_allow_html=True,
+        )
+
+
+# ---------------------------------------------------------------------------
+# UI: card NOVA ENTRADA com 4 tabs
+# ---------------------------------------------------------------------------
+
+
+def _renderizar_card_nova_entrada(
+    vault_root: Path | None,
+    pessoa_default: str,
+) -> None:
+    """Renderiza o card NOVA ENTRADA com 4 tabs (UX-V-3.7).
+
+    Cada tab tem o mesmo form: título, intensidade pílulas 1-5,
+    "esse registro é para", tags, corpo. Botão de salvar muda
+    label conforme tipo. Apenas trigger/vitoria persistem nesta sprint
+    (placeholder para reflexao/observacao -- ver não-objetivos).
+    """
+    st.markdown(
+        '<div class="novo-card-host"><h3 class="novo-card-titulo">Nova entrada</h3></div>',
+        unsafe_allow_html=True,
+    )
+
+    abas = st.tabs([_TIPOS_LABEL[t] for t in _TIPOS_ORDEM])
+    for aba, tipo in zip(abas, _TIPOS_ORDEM, strict=True):
+        with aba:
+            _renderizar_form_tab(vault_root, pessoa_default, tipo)
+
+
+def _renderizar_form_tab(
+    vault_root: Path | None,
+    pessoa_default: str,
+    tipo: str,
+) -> None:
+    """Form de uma tab. ``tipo`` é trigger/vitoria/reflexao/observacao."""
+    cor = _cor_tipo(tipo)
+    sub = _TIPOS_SUBTITULO.get(tipo, "")
+    rotulo = _TIPOS_LABEL.get(tipo, tipo)
+
+    # Subtítulo descritivo do tipo.
+    st.markdown(
+        f'<div class="novo-tab-subtitulo" style="border-left:3px solid {cor};">'
+        f'{_escape(sub)}</div>',
+        unsafe_allow_html=True,
+    )
+
+    if vault_root is None:
+        st.markdown(
+            callout_html(
+                "warning",
+                "Vault não encontrado. Configure OUROBOROS_VAULT para registrar.",
+            ),
+            unsafe_allow_html=True,
+        )
+        return
+
+    persistido = tipo in _TIPOS_PERSISTIDOS
+    if not persistido:
+        st.markdown(
+            callout_html(
+                "info",
+                f"Persistência de {rotulo.lower()} chega via app mobile "
+                "(placeholder nesta sprint).",
+            ),
+            unsafe_allow_html=True,
+        )
+
+    form_key = f"be_diario_form_{tipo}"
+    int_key = f"be_diario_int_{tipo}"
+
+    # Pílulas de intensidade 1-5 fora do form (cada botão é um widget
+    # interativo separado que reescreve o session_state).
+    intensidade = int(st.session_state.get(int_key, 3))
+    st.markdown(
+        '<div class="intensidade-rotulo">Intensidade</div>',
+        unsafe_allow_html=True,
+    )
+    cols_int = st.columns(5, gap="small")
+    for v, col in enumerate(cols_int, start=1):
+        ativo = v <= intensidade
+        label = f"● {v}" if ativo else f"○ {v}"
+        if col.button(
+            label,
+            key=f"{int_key}_btn_{v}",
+            use_container_width=True,
+        ):
+            st.session_state[int_key] = v
+            st.rerun()
+
+    with st.form(form_key):
+        titulo = st.text_input(
+            "Título -- uma frase",
+            key=f"{form_key}_titulo",
+            placeholder=_placeholder_titulo(tipo),
+        )
+        c1, c2 = st.columns(2, gap="medium")
+        with c1:
+            pessoas_form = ("pessoa_a", "pessoa_b", "casal")
+            autor_default = (
+                pessoa_default if pessoa_default in pessoas_form else "pessoa_a"
+            )
+            autor = st.selectbox(
+                "Esse registro é para",
+                options=pessoas_form,
+                index=pessoas_form.index(autor_default),
+                format_func=lambda v: _PESSOAS_LABEL.get(v, v),
+                key=f"{form_key}_autor",
+            )
+        with c2:
+            tags_txt = st.text_input(
+                "Tags (separe por vírgula)",
+                key=f"{form_key}_tags",
+                placeholder="trabalho, ansiedade, manhã",
+            )
+        corpo = st.text_area(
+            "Corpo -- sem julgamento, escreva como vier",
+            key=f"{form_key}_corpo",
+            placeholder=sub,
+            height=120,
+        )
+        col_a, col_b = st.columns([3, 1], gap="small")
+        salvar = col_a.form_submit_button(
+            f"Salvar {rotulo.lower()}",
+            use_container_width=True,
+            disabled=not persistido,
+        )
+        cancelar = col_b.form_submit_button(
+            "Limpar",
+            use_container_width=True,
+        )
+
+    if cancelar:
+        for chave in (
+            f"{form_key}_titulo",
+            f"{form_key}_tags",
+            f"{form_key}_corpo",
+        ):
+            st.session_state.pop(chave, None)
+        st.session_state.pop(int_key, None)
+        st.rerun()
+
+    if salvar and persistido:
+        emocoes = [t.strip() for t in (tags_txt or "").split(",") if t.strip()]
+        # Heurística: tags que parecem identificador de pessoa
+        # (``pessoa_*`` ou ``casal``) viram ``com_quem``. As demais
+        # ficam como emocoes/tags semânticas. Mantém compat com o
+        # formato gravado pelo app mobile.
+        com_quem: list[str] = []
+        emocoes_filtradas: list[str] = []
+        for e in emocoes:
+            if e.startswith("pessoa_") or e == "casal":
+                com_quem.append(e)
+            else:
+                emocoes_filtradas.append(e)
+        try:
+            arquivo = escrever_diario(
+                vault_root,
+                date.today(),
+                modo=tipo,
+                emocoes=emocoes_filtradas,
+                intensidade=int(st.session_state.get(int_key, 3)),
+                com_quem=com_quem,
+                frase=(titulo or "") + ("\n\n" + corpo if corpo else ""),
+                pessoa=autor,
+            )
+            st.session_state[_KEY_FLASH] = (
+                f"{rotulo} gravado em {arquivo.name}."
+            )
+        except (OSError, ValueError) as exc:
+            st.error(f"Falha ao gravar: {exc}")
+            return
+        for chave in (
+            f"{form_key}_titulo",
+            f"{form_key}_tags",
+            f"{form_key}_corpo",
+        ):
+            st.session_state.pop(chave, None)
+        st.session_state.pop(int_key, None)
+        st.rerun()
+
+
+def _placeholder_titulo(tipo: str) -> str:
+    return {
+        "trigger": "ex.: reunião com o chefe me deixou ansioso",
+        "vitoria": "ex.: consegui terminar o relatório sem travar",
+        "reflexao": "ex.: percebi que ansiedade some quando ando",
+        "observacao": "ex.: pessoa B parecia mais leve hoje",
+    }.get(tipo, "")
+
+
+# ---------------------------------------------------------------------------
+# UI: timeline header
+# ---------------------------------------------------------------------------
+
+
+def _timeline_header_html(modo_atual: str, periodo_atual: str) -> str:
+    rotulo_modo = (
+        "todos os tipos" if modo_atual == "todos"
+        else _TIPOS_LABEL.get(modo_atual, modo_atual).lower()
+    )
+    return minificar(
+        f'<div class="timeline-head">'
+        f'<h3>Timeline · {_escape(rotulo_modo)} · {_escape(periodo_atual)}</h3>'
+        f'</div>'
+    )
+
+
 # ---------------------------------------------------------------------------
 # HTML
 # ---------------------------------------------------------------------------
@@ -278,26 +640,32 @@ def _page_header_canonico(qtd: int) -> str:
     return renderizar_page_header(
         titulo="BEM-ESTAR · DIÁRIO",
         subtitulo=(
-            "Lista cronológica de registros do tipo trigger ou vitória. "
-            "Cache lido de .ouroboros/cache/diario-emocional.json."
+            "Triggers, vitórias, reflexões e observações. Cada entrada vai "
+            "pro markdown do dia, indexada por tag. Filtra por tipo, "
+            "para quem e período."
         ),
-        sprint_tag="UX-RD-18",
+        sprint_tag="UX-V-3.7",
         pills=[{"texto": f"{qtd} registros", "tipo": "d7-graduado"}],
     )
 
 
 def _card_html(item: dict[str, Any]) -> str:
-    """Cartão único do diário com border-left vermelha (trigger) ou verde (vitória)."""
+    """Cartão único do diário com border-left semântica.
+
+    Cores por modo (subregra retrocompatível, padrão (o)):
+
+    * trigger -> negativo (#ff5555)
+    * vitoria -> positivo (#50fa7b)
+    * reflexao -> destaque (#bd93f9)
+    * observacao -> neutro (#8be9fd)
+    """
     modo = str(item.get("modo", ""))
-    cor_borda = (
-        CORES.get("negativo", "#c0392b") if modo == "trigger"
-        else CORES.get("positivo", "#27ae60")
-    )
+    cor_borda = _cor_tipo(modo)
     classe_modo = (
-        f"diario-card-{modo}" if modo in {"trigger", "vitoria"}
+        f"diario-card-{modo}" if modo in _TIPOS_ORDEM
         else "diario-card-default"
     )
-    rotulo_modo = {"trigger": "Trigger", "vitoria": "Vitória"}.get(modo, modo or "—")
+    rotulo_modo = _TIPOS_LABEL.get(modo, modo or "—")
 
     autor = str(item.get("autor", "—"))
     data_iso = str(item.get("data", ""))
@@ -360,106 +728,6 @@ def _escape(texto: str) -> str:
     )
 
 
-# CSS dedicado: src/dashboard/css/paginas/be_diario.css (UX-M-02.D residual).
-# ---------------------------------------------------------------------------
-# Form modal
-# ---------------------------------------------------------------------------
-
-
-def _renderizar_form(vault_root: Path | None, pessoa_default: str) -> None:
-    """Form de captura. Usa st.dialog quando disponível, senão st.expander."""
-    titulo = "Registrar diário emocional"
-
-    # API st.dialog é da 1.31+; como guard, caímos em expander se ausente.
-    dialog = getattr(st, "dialog", None)
-    if dialog is not None:
-        @dialog(titulo)
-        def _modal():
-            _form_corpo(vault_root, pessoa_default)
-        _modal()
-    else:
-        with st.expander(titulo, expanded=True):
-            _form_corpo(vault_root, pessoa_default)
-
-
-def _form_corpo(vault_root: Path | None, pessoa_default: str) -> None:
-    if vault_root is None:
-        st.warning(
-            "Vault não encontrado. Configure `OUROBOROS_VAULT` antes de registrar."
-        )
-        if st.button("Fechar", key="be_diario_form_fechar"):
-            st.session_state.pop("be_diario_form_aberto", None)
-            st.rerun()
-        return
-
-    with st.form("be_diario_form"):
-        modo = st.radio(
-            "Modo",
-            options=["trigger", "vitoria"],
-            format_func=lambda v: "Trigger" if v == "trigger" else "Vitória",
-            key="be_diario_form_modo",
-        )
-        emocoes_txt = st.text_input(
-            "Emoções (separadas por vírgula)",
-            key="be_diario_form_emocoes",
-            placeholder="ansiedade, cansaço",
-        )
-        intensidade = st.slider(
-            "Intensidade",
-            min_value=1,
-            max_value=5,
-            value=3,
-            key="be_diario_form_intensidade",
-        )
-        com_txt = st.text_input(
-            "Com quem (separado por vírgula)",
-            key="be_diario_form_com",
-            placeholder="pessoa_b",
-        )
-        pessoas_form = ("pessoa_a", "pessoa_b", "casal")
-        autor_default = pessoa_default if pessoa_default in pessoas_form else "pessoa_a"
-        autor = st.selectbox(
-            "Autor",
-            options=pessoas_form,
-            index=pessoas_form.index(autor_default),
-            format_func=lambda v: _PESSOAS_LABEL.get(v, v),
-            key="be_diario_form_autor",
-        )
-        frase = st.text_area(
-            "Frase",
-            key="be_diario_form_frase",
-            placeholder="reuniao chata logo cedo.",
-        )
-        col_a, col_b = st.columns(2)
-        salvar = col_a.form_submit_button("Salvar")
-        cancelar = col_b.form_submit_button("Cancelar")
-
-    if cancelar:
-        st.session_state.pop("be_diario_form_aberto", None)
-        st.rerun()
-
-    if salvar:
-        emocoes = [e.strip() for e in (emocoes_txt or "").split(",") if e.strip()]
-        com_quem = [c.strip() for c in (com_txt or "").split(",") if c.strip()]
-        try:
-            arquivo = escrever_diario(
-                vault_root,
-                date.today(),
-                modo=modo,
-                emocoes=emocoes,
-                intensidade=intensidade,
-                com_quem=com_quem,
-                frase=frase or "",
-                pessoa=autor,
-            )
-            st.session_state[_KEY_FLASH] = (
-                f"Registro gravado em {arquivo.name}."
-            )
-        except (OSError, ValueError) as exc:
-            st.error(f"Falha ao gravar: {exc}")
-            return
-        st.session_state.pop("be_diario_form_aberto", None)
-        st.rerun()
-
+# CSS dedicado: src/dashboard/css/paginas/be_diario.css.
 
 # "O que se nomeia, se atravessa." -- princípio terapêutico

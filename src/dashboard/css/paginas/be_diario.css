@@ -1,8 +1,128 @@
-/* CSS dedicado da página Bem-estar / Diário (UX-M-02.D residual).
-   Origem: bloco inline em src/dashboard/paginas/be_diario.py.
-   Estruturas únicas: timeline emocional (cards de entradas com data,
-   chips de emoção, intensidade dot, frase). Cores canonizadas. */
+/* CSS dedicado da página Bem-estar / Diário (UX-RD-18 + UX-V-3.7).
+   Layout 3-col canônico espelhando ``19-diario-emocional.html``:
+   facetas (esq) + nova entrada/timeline (centro) + lateral (dir).
+   Cores via tokens; nada hex literal. */
 
+/* =========================================================
+   Coluna esquerda: cards de facetas
+   ========================================================= */
+.filtro-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    padding: 14px 14px 8px;
+    margin-bottom: 12px;
+}
+.filtro-card.filtro-card-inset {
+    background: var(--bg-inset);
+}
+.filtro-card h3 {
+    font-family: monospace;
+    font-size: 11px;
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin: 0 0 8px;
+}
+.filtro-tags-top {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+.filtro-tags-top .pill {
+    font-family: monospace;
+    font-size: 10px;
+    background: var(--bg-elevated);
+    color: var(--text-secondary);
+    padding: 2px 8px;
+    border-radius: 4px;
+    border: 1px solid var(--border-subtle);
+}
+
+/* Compactar radio vertical dentro dos cards de facetas. */
+.filtro-card div[role="radiogroup"] {
+    gap: 4px !important;
+}
+.filtro-card label[data-baseweb="radio"] {
+    background: var(--bg-inset);
+    border: 1px solid var(--border-subtle);
+    border-radius: 4px;
+    padding: 6px 10px;
+    margin: 0 !important;
+    font-family: monospace;
+    font-size: 12px;
+}
+.filtro-card label[data-baseweb="radio"]:hover {
+    background: var(--bg-elevated);
+}
+
+/* =========================================================
+   Coluna central: card NOVA ENTRADA
+   ========================================================= */
+.novo-card-host {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    padding: 14px 16px 6px;
+    margin-bottom: 14px;
+    margin-top: 8px;
+}
+.novo-card-titulo {
+    font-family: monospace;
+    font-size: 11px;
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin: 0 0 8px;
+}
+
+.novo-tab-subtitulo {
+    font-family: monospace;
+    font-size: 12px;
+    color: var(--text-secondary);
+    padding: 6px 10px;
+    margin: 8px 0 12px;
+    background: var(--bg-inset);
+    border-radius: 4px;
+}
+
+.intensidade-rotulo {
+    font-family: monospace;
+    font-size: 11px;
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin: 8px 0 6px;
+}
+
+/* =========================================================
+   Coluna lateral (reservada)
+   ========================================================= */
+.diario-coluna-lateral {
+    min-height: 1px;
+}
+
+/* =========================================================
+   Timeline header
+   ========================================================= */
+.timeline-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 12px 0 8px;
+}
+.timeline-head h3 {
+    font-family: monospace;
+    font-size: 11px;
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+/* =========================================================
+   Timeline cards (UX-RD-18 -- preservados)
+   ========================================================= */
 .diario-card {
     background: var(--bg-surface);
     border: 1px solid var(--bg-elevated);
