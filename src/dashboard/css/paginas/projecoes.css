@@ -1,0 +1,113 @@
+/* CSS dedicado da página Projeções (UX-V-2.0).
+ * Sliders interativos + 4 KPI cards + 5 marcos + cards de cenário.
+ * Tokens: --color-* vêm de tema_global.css (Dracula). */
+
+/* ---------- KPI strip ---------- */
+.proj-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 18px;
+}
+.proj-kpi-card {
+  background: var(--color-card-fundo);
+  border: 1px solid rgba(98, 114, 164, 0.20);
+  border-radius: 8px;
+  padding: 18px;
+}
+.proj-kpi-label {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-texto-sec);
+  font-family: monospace;
+}
+.proj-kpi-valor {
+  font-size: 26px;
+  font-weight: 500;
+  line-height: 1;
+  margin-top: 6px;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-texto);
+  font-family: monospace;
+}
+.proj-kpi-valor-destaque { color: var(--color-destaque); }
+.proj-kpi-valor-otimista {
+  font-size: 18px;
+  line-height: 1.1;
+  color: var(--color-positivo);
+}
+.proj-kpi-desc {
+  font-size: 11px;
+  color: var(--color-texto-sec);
+  margin-top: 6px;
+  font-family: monospace;
+}
+
+/* ---------- Bloco de controles (sliders) ---------- */
+.proj-controls-wrap {
+  background: var(--color-card-fundo);
+  border: 1px solid rgba(98, 114, 164, 0.20);
+  border-radius: 8px;
+  padding: 14px 18px;
+  margin-bottom: 18px;
+}
+.proj-controls-titulo {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-texto-sec);
+  font-family: monospace;
+  margin: 0 0 10px 0;
+  font-weight: 500;
+}
+.proj-controls-hint {
+  font-family: monospace;
+  font-size: 11px;
+  color: var(--color-texto-sec);
+  margin-top: 8px;
+  display: block;
+}
+
+/* ---------- Card lateral de marcos ---------- */
+.proj-marcos-card {
+  background: var(--color-card-fundo);
+  border: 1px solid rgba(98, 114, 164, 0.20);
+  border-radius: 8px;
+  padding: 18px;
+}
+.proj-marcos-titulo {
+  font-family: monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-texto-sec);
+  margin: 0 0 14px 0;
+  font-weight: 500;
+}
+.proj-marcos-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.proj-marcos-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-left: 12px;
+  border-left: 2px solid var(--color-destaque);
+}
+.proj-marcos-item-nome {
+  font-size: 13px;
+  font-family: monospace;
+  color: var(--color-texto);
+  font-weight: 600;
+}
+.proj-marcos-item-desc {
+  font-family: monospace;
+  font-size: 11px;
+  color: var(--color-texto-sec);
+}
