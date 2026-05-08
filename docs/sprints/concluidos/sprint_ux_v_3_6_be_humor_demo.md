@@ -1,7 +1,9 @@
 ---
 id: UX-V-3.6
 titulo: Bem-estar Humor — sparkline 30d + card STREAK + skeleton heatmap
-status: backlog
+status: concluída
+concluida_em: 2026-05-08
+commit: c09d918
 prioridade: media
 data_criacao: 2026-05-08
 fase: PARIDADE_VISUAL

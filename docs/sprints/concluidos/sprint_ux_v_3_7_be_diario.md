@@ -1,7 +1,9 @@
 ---
 id: UX-V-3.7
 titulo: Bem-estar Diário — form NOVA ENTRADA com 4 tabs Trigger/Vitória/Reflexão/Observação
-status: backlog
+status: concluída
+concluida_em: 2026-05-08
+commit: feea5fc
 prioridade: alta
 data_criacao: 2026-05-08
 fase: PARIDADE_VISUAL

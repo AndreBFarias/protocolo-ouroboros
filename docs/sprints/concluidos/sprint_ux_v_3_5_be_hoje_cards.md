@@ -1,7 +1,9 @@
 ---
 id: UX-V-3.5
 titulo: Bem-estar Hoje — cards laterais Status casal + Próximos alarmes + Registros do dia
-status: backlog
+status: concluída
+concluida_em: 2026-05-08
+commit: 1bf012f
 prioridade: media
 data_criacao: 2026-05-08
 fase: PARIDADE_VISUAL

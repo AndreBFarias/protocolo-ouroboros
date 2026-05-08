@@ -1,7 +1,9 @@
 ---
 id: UX-V-4
 titulo: Revisor — layout 4-pane (OFX/Rascunho/Opus/Humano) + tabs filtro + trace de raciocínio
-status: backlog
+status: concluída
+concluida_em: 2026-05-08
+commit: 0f3eb71
 prioridade: alta
 data_criacao: 2026-05-08
 fase: PARIDADE_VISUAL
