@@ -1,7 +1,7 @@
 ---
 id: UX-V-2.2.A
 titulo: Enriquecer prazos com valores reais (cruzamento boletos x prazos)
-status: concluida
+status: concluída
 prioridade: media
 data_criacao: 2026-05-07
 concluida_em: 2026-05-08

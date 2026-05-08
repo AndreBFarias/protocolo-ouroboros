@@ -220,7 +220,7 @@ def _render_documento(doc_meta: dict[str, Any], doc_nome: str) -> str:
 
 def _render_fornecedor(nome: str, meta: dict[str, Any], qtd_docs: int) -> str:
     """Gera o corpo Markdown de uma nota de fornecedor."""
-    categoria = str(meta.get("categoria", "nao-classificado"))  # acento ok -- noqa-acento
+    categoria = str(meta.get("categoria", "nao-classificado"))  # noqa: accent
     cnpj = str(meta.get("cnpj") or meta.get("cpf_cnpj") or "")
 
     frontmatter = (

@@ -24,7 +24,7 @@ Lições UX-RD aplicadas:
 * Cores via ``CORES`` em ``src.dashboard.tema`` -- nunca hex literal.
 * Fallback graceful: se o vault não for encontrado, mostra aviso
   visível em vez de crash (UX-RD-15).
-* Função pública ``renderizar(dados, periodo, pessoa, ctx)`` -- contrato  # acento ok -- noqa-acento
+* Função pública ``renderizar(dados, periodo, pessoa, ctx)`` -- contrato  # noqa: accent
   uniforme do dispatcher de ``app.py``.
 """
 
@@ -61,9 +61,9 @@ _KEY_FRASE = "be_hoje_frase"
 _KEY_FLASH = "be_hoje_flash"
 
 
-def renderizar(  # acento ok -- noqa-acento
+def renderizar(  # noqa: accent
     dados: dict[str, pd.DataFrame],
-    periodo: str,  # acento ok -- noqa-acento
+    periodo: str,  # noqa: accent
     pessoa: str,
     ctx: dict | None = None,
 ) -> None:
@@ -72,7 +72,7 @@ def renderizar(  # acento ok -- noqa-acento
     Args:
         dados: estrutura padrão de DataFrames (não consumida; a página
             opera sobre o vault Bem-estar fora do XLSX financeiro).
-        periodo: período da sidebar (ignorado nesta aba).  # acento ok -- noqa-acento
+        periodo: período da sidebar (ignorado nesta aba).  # noqa: accent
         pessoa: pessoa selecionada na sidebar
             (``pessoa_a``/``pessoa_b``/``casal``); usado como autor
             default ao gravar humor.
@@ -87,7 +87,7 @@ def renderizar(  # acento ok -- noqa-acento
          "title": "Persistir registro de humor de hoje"},
     ])
 
-    del dados, periodo, ctx  # acento ok -- noqa-acento
+    del dados, periodo, ctx  # noqa: accent
 
     st.markdown(minificar(carregar_css_pagina("be_hoje")), unsafe_allow_html=True)
 
@@ -173,7 +173,7 @@ def _renderizar_fallback_vault() -> None:
     st.markdown(
         fallback_estado_inicial_html(
             titulo="HOJE · vault Bem-estar não configurado",
-            descricao=(  # acento ok -- noqa-acento
+            descricao=(  # noqa: accent
                 "Configure a variável <code>OUROBOROS_VAULT</code> apontando "
                 "para a raiz do vault Obsidian compartilhado com o app mobile, "
                 "ou crie um dos diretórios candidatos canônicos. Sem o vault, "
