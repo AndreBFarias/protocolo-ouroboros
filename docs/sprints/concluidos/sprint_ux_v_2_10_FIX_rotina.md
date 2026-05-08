@@ -1,7 +1,9 @@
 ---
 id: UX-V-2.10-FIX
 titulo: Rotina — criar be_rotina.css + skeleton-mockup das 3 colunas (alarmes/tarefas/contadores)
-status: backlog
+status: concluída
+concluida_em: 2026-05-08
+commit: 4d26e56
 prioridade: alta
 data_criacao: 2026-05-08
 fase: PARIDADE_VISUAL

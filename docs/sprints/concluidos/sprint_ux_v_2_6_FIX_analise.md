@@ -1,7 +1,9 @@
 ---
 id: UX-V-2.6-FIX
 titulo: Análise — corrigir breadcrumb, tabs duplicadas, KPIs assimétricos, Insights
-status: backlog
+status: concluída
+concluida_em: 2026-05-08
+commit: 105ce36
 prioridade: alta
 data_criacao: 2026-05-08
 fase: PARIDADE_VISUAL

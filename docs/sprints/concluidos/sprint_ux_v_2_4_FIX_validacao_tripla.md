@@ -1,7 +1,9 @@
 ---
 id: UX-V-2.4-FIX
 titulo: Validação Tripla — corrigir layout 3-col + título acentuado + tabela completa
-status: backlog
+status: concluída
+concluida_em: 2026-05-08
+commit: b833ef7
 prioridade: altissima
 data_criacao: 2026-05-08
 fase: PARIDADE_VISUAL

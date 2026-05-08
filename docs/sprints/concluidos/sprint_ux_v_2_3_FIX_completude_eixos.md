@@ -1,7 +1,9 @@
 ---
 id: UX-V-2.3-FIX
 titulo: Completude — corrigir eixo Y (tipos doc, não categorias trans) + legenda
-status: backlog
+status: concluída
+concluida_em: 2026-05-08
+commit: 82274a2
 prioridade: alta
 data_criacao: 2026-05-08
 fase: PARIDADE_VISUAL

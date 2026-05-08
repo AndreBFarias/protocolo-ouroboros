@@ -1,7 +1,9 @@
 ---
 id: UX-V-2.7-FIX
 titulo: Visão Geral — corrigir KPI Metas, Atividade Recente, acentuação, modularizar 996L
-status: backlog
+status: concluída
+concluida_em: 2026-05-08
+commit: 28f88fc
 prioridade: alta
 data_criacao: 2026-05-08
 fase: PARIDADE_VISUAL
