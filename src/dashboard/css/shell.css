@@ -180,11 +180,37 @@ html body .sidebar-search-icon {
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  line-height: 0 !important;
+  line-height: 1 !important;
+  height: 18px !important;
+  width: 18px !important;
+  margin: 0 !important;
+  padding: 0 !important;
 }
 html body .sidebar-search-icon svg {
   display: block !important;
   vertical-align: middle !important;
+  width: 18px !important;
+  height: 18px !important;
+  margin: 0 !important;
+}
+
+/* ============================================================
+   9) UX-V-SHELL-FIX-2 (2026-05-08): largura mínima da sidebar
+      ampliada para 300px e padding interno do input "Buscar"
+      garantido para evitar corte do atalho "/" na borda direita.
+   ============================================================ */
+html body [data-testid="stSidebar"] {
+  min-width: 300px !important;
+}
+html body [data-testid="stSidebar"] [data-testid="stVerticalBlock"],
+html body [data-testid="stSidebar"] [data-testid="stElementContainer"],
+html body [data-testid="stSidebar"] [data-testid="stMarkdown"],
+html body [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] {
+  width: 300px !important;
+  max-width: 300px !important;
+}
+html body [data-testid="stSidebar"] [data-testid="stTextInput"] input {
+  padding-right: 36px !important;
 }
 
 /* "CSS é declarativo. JS é imperativo. Layout deve ser declarativo."

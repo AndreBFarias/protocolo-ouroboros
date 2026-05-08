@@ -1113,7 +1113,7 @@ def chip_bar_filtros_globais(dados: dict) -> tuple[str, str, str]:
 
     with cols[0]:
         with st.popover(
-            f"granularidade: {granularidade_atual}",
+            f"Granularidade: {granularidade_atual}",
             use_container_width=True,
         ):
             granularidade: str = st.selectbox(
@@ -1125,7 +1125,7 @@ def chip_bar_filtros_globais(dados: dict) -> tuple[str, str, str]:
 
     with cols[1]:
         with st.popover(
-            f"período: {periodo_chip}",
+            f"Período: {periodo_chip}",
             use_container_width=True,
         ):
             if granularidade == "Ano":
@@ -1168,7 +1168,7 @@ def chip_bar_filtros_globais(dados: dict) -> tuple[str, str, str]:
 
     with cols[2]:
         with st.popover(
-            f"pessoa: {pessoa_atual}",
+            f"Pessoa: {pessoa_atual}",
             use_container_width=True,
         ):
             pessoa: str = st.selectbox(
@@ -1180,7 +1180,7 @@ def chip_bar_filtros_globais(dados: dict) -> tuple[str, str, str]:
 
     with cols[3]:
         with st.popover(
-            f"forma: {forma_atual}",
+            f"Forma: {forma_atual}",
             use_container_width=True,
         ):
             forma_sel: str = st.selectbox(

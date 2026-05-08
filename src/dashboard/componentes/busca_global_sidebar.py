@@ -25,8 +25,12 @@ logger = logging.getLogger(__name__)
 CHAVE_SESSION_BUSCA: str = "busca_global_query"
 """Chave em ``st.session_state`` que carrega a query submetida pelo usuário."""
 
-LARGURA_MINIMA_SIDEBAR_PX: int = 260
-"""Largura mínima da sidebar para evitar truncamento de glyph."""
+LARGURA_MINIMA_SIDEBAR_PX: int = 300
+"""Largura mínima da sidebar para evitar truncamento de glyph.
+
+UX-V-SHELL-FIX-2 (2026-05-08): elevado de 260 → 300 para acomodar
+input "Buscar" + atalho ``/`` sem corte na borda direita após o
+shell aumentar a sidebar para 280px (M9.2)."""
 
 TAMANHO_MINIMO_ICONE_SEARCH_PX: int = 18
 """Tamanho mínimo do ícone de busca (lupa) para legibilidade."""

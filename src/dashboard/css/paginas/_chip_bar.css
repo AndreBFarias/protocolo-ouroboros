@@ -15,7 +15,7 @@
     width: 100%;
     min-height: 28px !important;
     height: 28px !important;
-    padding: 2px 12px !important;
+    padding: 2px 16px !important;
     background: var(--bg-inset) !important;
     color: var(--text-secondary) !important;
     border: 1px solid var(--border-subtle) !important;
@@ -23,7 +23,10 @@
     font-family: var(--ff-mono, monospace) !important;
     font-size: 11px !important;
     text-align: left !important;
-    text-transform: lowercase;
+    /* UX-V-SHELL-FIX-2: removido text-transform: lowercase para
+       permitir capitalização canônica "Granularidade:", "Período:",
+       "Pessoa:", "Forma:" definida em chip_bar_filtros_globais. */
+    text-transform: none;
     letter-spacing: 0.02em;
     transition: border-color 0.15s, color 0.15s, background 0.15s;
 }
