@@ -1,14 +1,33 @@
 ---
 id: UX-M-02.B.1
 titulo: Extrair `_estilos_locais_html` de extrato.py para CSS dedicado
-status: backlog
+status: concluida
 prioridade: media
 data_criacao: 2026-05-06
+concluida_em: 2026-05-06
 fase: MODULARIZAÇÃO
 depende_de: [UX-M-02.B]
 sprint_pai: UX-M-02.B
 esforco_estimado_horas: 2
+commit: 9309ff8
 ---
+
+## Fechamento (retroativo — padrão `(v)`)
+
+Sprint executada no commit `9309ff8` ("fix(ux-m-residual): zero debito -- 6 CSS extraidos + plotly undefined") em 2026-05-06, junto com 5 outras páginas (busca, catalogacao, categorias, inbox, skills_d7) e fix do `tema_plotly` (title.font undefined).
+
+Resultado para extrato.py:
+- 1381 → 1046 linhas (−335L = −24,3%) — supera meta ≥325L (≥23%).
+- `src/dashboard/css/paginas/extrato.css` criado (331L).
+- `_estilos_locais_html()` removida; carregamento via `carregar_css_pagina("extrato")` (linha 543).
+- 0 resíduos `_CSS_LOCAL_*` ou `<style>` inline em `extrato.py`.
+
+Validação rodada em 2026-05-08 (worktree `agent-ad7a77d89a6c9f34d`):
+- `make lint` exit 0.
+- `make smoke` exit 0 (23 checagens, 0 erros).
+- `pytest tests/test_extrato_redesign.py tests/test_dashboard_extrato_paginacao.py tests/test_dashboard_filtros_extrato.py -q` → 33 passed.
+
+Atributos `style="..."` decorativos pontuais em `extrato.py` (cor dinâmica, percentuais calculados) ficam preservados conforme não-objetivo da spec ("NÃO refatorar lógica Python de extrato.py — somente CSS").
 
 # Sprint UX-M-02.B.1 — Extrair CSS local de extrato.py
 
