@@ -1,7 +1,9 @@
 ---
 id: UX-V-04.A
 titulo: Acentuação periférica em be_*.py + ui.py + sync_rico.py
-status: backlog
+status: concluída
+concluida_em: 2026-05-08
+commit: 660ee6e
 prioridade: baixa
 data_criacao: 2026-05-07
 fase: ZELO

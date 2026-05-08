@@ -1,7 +1,9 @@
 ---
 id: UX-V-2.12.A
 titulo: Estender schema medidas para gordura/pressão/frequência/sono
-status: backlog
+status: concluída
+concluida_em: 2026-05-08
+commit: 9622166
 prioridade: media
 data_criacao: 2026-05-07
 fase: PARIDADE_VISUAL

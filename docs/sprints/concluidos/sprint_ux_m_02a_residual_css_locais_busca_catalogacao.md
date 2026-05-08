@@ -1,7 +1,9 @@
 ---
 id: UX-M-02.A-RESIDUAL
 titulo: Residual de CSS local em busca.py e catalogacao.py (Onda M)
-status: backlog
+status: concluída
+concluida_em: 2026-05-08
+commit: c6e84a9
 prioridade: media
 data_criacao: 2026-05-06
 fase: MODULARIZAÇÃO
