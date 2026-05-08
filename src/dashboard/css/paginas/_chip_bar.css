@@ -61,3 +61,41 @@
     margin-bottom: var(--sp-3);
     align-items: center;
 }
+
+/* UX-V-SHELL-FIX (M9.4): popover aberto dos chips de filtro global.
+   O dropdown (portal flutuante) renderizava com width=auto e crescia
+   até ~360px, ficando desproporcional ao chip de 28px de altura.
+   Streamlit envolve o conteúdo em [data-baseweb="popover"] (portal no
+   topo do DOM) cujo conteúdo está em
+   [data-testid="stPopoverBody"]/[role="dialog"]. Compactamos:
+   - largura mínima coerente com 4 colunas de chips (~220-260px);
+   - padding interno reduzido (era ~16-20px, agora 12px);
+   - borda visível (era #00000033 quase invisível) com cor de tokens;
+   - background bg-elevated alinhado com tokens.
+
+   Specificity escopada via [data-testid="stPopover"] não cobre o
+   portal flutuante; usamos [data-baseweb="popover"] direto. */
+[data-baseweb="popover"] [data-testid="stPopoverBody"],
+[data-baseweb="popover"] [role="dialog"] {
+    min-width: 220px !important;
+    max-width: 280px !important;
+    padding: var(--sp-3) !important;
+    background: var(--bg-elevated) !important;
+    border: 1px solid var(--border-subtle) !important;
+    border-radius: var(--r-md) !important;
+    box-shadow: var(--sh-lg, 0 8px 24px rgba(0,0,0,0.40)) !important;
+}
+
+/* Selectbox interno do popover não precisa de margem extra; herda
+   tipografia base. Reduzimos gap entre label e selectbox para
+   compactar visualmente. */
+[data-baseweb="popover"] [data-testid="stPopoverBody"] [data-testid="stSelectbox"],
+[data-baseweb="popover"] [role="dialog"] [data-testid="stSelectbox"] {
+    margin: 0 !important;
+}
+[data-baseweb="popover"] [data-testid="stPopoverBody"] label,
+[data-baseweb="popover"] [role="dialog"] label {
+    margin-bottom: 4px !important;
+    font-size: var(--fs-12, 12px) !important;
+    color: var(--text-secondary) !important;
+}

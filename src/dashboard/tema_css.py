@@ -241,6 +241,11 @@ def css_global() -> str:
         padding: 0 !important;
         margin: 0 !important;
     }}
+    /* UX-V-SHELL-FIX (M9.2): largura 240 → 280px para acomodar input
+       "Buscar" + atalho <kbd>/</kbd> sem truncate. Token --sidebar-w
+       (mockup canônico) preservado em 240; Streamlit recebe 280 pois
+       envolve o aside em wrappers extras (stSidebar → stSidebarContent
+       → stVerticalBlock). */
     [data-testid="stSidebarContent"],
     [data-testid="stSidebar"] [data-testid="stSidebarContent"],
     [data-testid="stSidebar"] > div,
@@ -252,14 +257,15 @@ def css_global() -> str:
         max-height: none !important;
         overflow-y: visible !important;
         overflow-x: hidden !important;
-        width: 240px !important;
-        min-width: 240px !important;
-        max-width: 240px !important;
+        width: 280px !important;
+        min-width: 280px !important;
+        max-width: 280px !important;
         box-sizing: border-box !important;
     }}
     /* Streamlit envolve nosso aside em vários containers (stVerticalBlock,
        stElementContainer, stMarkdown, stMarkdownContainer). Todos com padding
-       ou margin default que empurram o aside para x=26. Zeramos TUDO. */
+       ou margin default que empurram o aside para x=26. Zeramos TUDO.
+       UX-V-SHELL-FIX (M9.2): 240 → 280px. */
     [data-testid="stSidebar"] [data-testid="stVerticalBlock"],
     [data-testid="stSidebar"] [data-testid="stElementContainer"],
     [data-testid="stSidebar"] [data-testid="stMarkdown"],
@@ -267,8 +273,8 @@ def css_global() -> str:
         padding: 0 !important;
         margin: 0 !important;
         gap: 0 !important;
-        width: 240px !important;
-        max-width: 240px !important;
+        width: 280px !important;
+        max-width: 280px !important;
         overflow-x: hidden !important;
         overflow-y: visible !important;
         box-sizing: border-box !important;
@@ -276,12 +282,13 @@ def css_global() -> str:
     /* aside.sidebar começa em x=0, y=0 absoluto da viewport. Streamlit
        wrapper aplica padding 16px que não conseguimos vencer via
        cascata de classe emotion (mudam a cada release). Solução:
-       margin negativa puxa o aside de volta ao canto + width >= 240px. */
+       margin negativa puxa o aside de volta ao canto + width >= 280px.
+       UX-V-SHELL-FIX (M9.2): 240 → 280px. */
     [data-testid="stSidebar"] aside.sidebar,
     aside.sidebar.ouroboros-sidebar-redesign {{
         position: relative !important;
-        width: 240px !important;
-        max-width: 240px !important;
+        width: 280px !important;
+        max-width: 280px !important;
         margin: -16px 0 0 -16px !important;
         padding: 12px 0 !important;
         height: auto !important;
@@ -509,12 +516,14 @@ def css_global() -> str:
        box-sizing: border-box + overflow-x: hidden para não criar barra
        de rolagem horizontal no rodapé. Antes: stSidebarContent tinha
        padding default 16px sem box-sizing -> width effective 256px ->
-       overflow-x: auto ativado automaticamente pelo Streamlit. */
+       overflow-x: auto ativado automaticamente pelo Streamlit.
+       UX-V-SHELL-FIX (M9.2): largura 240 → 280px para acomodar input
+       "Buscar" + atalho <kbd>/</kbd> sem truncate. */
     [data-testid="stSidebar"] {{
         background-color: {CORES["card_fundo"]};
-        width: 240px !important;
-        min-width: 240px !important;
-        max-width: 240px !important;
+        width: 280px !important;
+        min-width: 280px !important;
+        max-width: 280px !important;
         border-right: 1px solid var(--border-subtle) !important;
         overflow-x: hidden !important;
     }}
@@ -522,19 +531,20 @@ def css_global() -> str:
     [data-testid="stSidebar"] > div > div,
     [data-testid="stSidebarContent"],
     [data-testid="stSidebar"] section {{
-        width: 240px !important;
-        min-width: 240px !important;
-        max-width: 240px !important;
+        width: 280px !important;
+        min-width: 280px !important;
+        max-width: 280px !important;
         padding: 0 !important;
         margin: 0 !important;
         box-sizing: border-box !important;
         overflow-x: hidden !important;
     }}
-    /* aside.sidebar (HTML interno) ocupa 240px completos. */
+    /* aside.sidebar (HTML interno) ocupa 280px completos.
+       UX-V-SHELL-FIX (M9.2): 240 → 280px. */
     [data-testid="stSidebar"] aside.sidebar,
     aside.sidebar.ouroboros-sidebar-redesign {{
-        width: 240px !important;
-        max-width: 240px !important;
+        width: 280px !important;
+        max-width: 280px !important;
         margin: 0 !important;
         padding: 12px 0 !important;
         box-sizing: border-box !important;

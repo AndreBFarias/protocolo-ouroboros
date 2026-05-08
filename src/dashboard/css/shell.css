@@ -37,11 +37,19 @@ html body [data-testid="stLogoSpacer"] {
    2) Sidebar canônica — padding/margin/overflow/transform fixos.
       Antes: 8 setProperty no aside + 6 no stSidebarContent
       + 5 no stSidebar + 7 nos wrappers internos.
+
+      UX-V-SHELL-FIX (M9.2): largura passa de 240px → 280px no
+      contexto Streamlit para acomodar o input "Buscar" + atalho
+      <kbd>/</kbd> sem truncate. O token --sidebar-w (mockup canônico)
+      permanece 240px para não quebrar paridade 1:1 dos HTMLs do
+      diretório novo-mockup/. Diferença: Streamlit precisa de respiro
+      adicional pois envolve o aside em wrappers extras (stSidebar
+      → stSidebarContent → stVerticalBlock).
    ============================================================ */
 html body aside.sidebar.ouroboros-sidebar-redesign {
   margin: 0 !important;
   padding: 12px 0 !important;
-  width: 240px !important;
+  width: 280px !important;
   overflow-y: visible !important;
   overflow-x: hidden !important;
   height: auto !important;
@@ -66,7 +74,8 @@ html body [data-testid="stSidebar"] {
   min-height: 100vh !important;
 }
 
-/* Wrappers internos da sidebar (VBs + ElementContainers + Markdown). */
+/* Wrappers internos da sidebar (VBs + ElementContainers + Markdown).
+   UX-V-SHELL-FIX (M9.2): 240px → 280px (alinhado com aside acima). */
 html body [data-testid="stSidebar"] [data-testid="stVerticalBlock"],
 html body [data-testid="stSidebar"] [data-testid="stElementContainer"],
 html body [data-testid="stSidebar"] [data-testid="stMarkdown"],
@@ -76,18 +85,25 @@ html body [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] {
   gap: 0 !important;
   overflow-x: hidden !important;
   overflow-y: visible !important;
-  width: 240px !important;
-  max-width: 240px !important;
+  width: 280px !important;
+  max-width: 280px !important;
 }
 
 /* ============================================================
    3) Main block container — padding zero + max-width liberado.
       Topbar precisa colar no canto superior; conteúdo recebe
       padding lateral via stVerticalBlock de topo.
+
+      UX-V-SHELL-FIX (M9.1): max-width: 100% explicitado para
+      garantir que o conteúdo ocupe toda a viewport disponível
+      à direita da sidebar (sem faixas pretas laterais em
+      monitores wide >=1280px). width: 100% + max-width: 100%
+      vencem qualquer max-width restritivo herdado.
    ============================================================ */
 html body [data-testid="stMainBlockContainer"] {
   padding: 0 !important;
-  max-width: none !important;
+  max-width: 100% !important;
+  width: 100% !important;
 }
 
 /* stVerticalBlock de TOPO (filho direto do main): padding lateral
@@ -106,15 +122,16 @@ html body [data-testid="stMain"] [data-testid="stColumn"] [data-testid="stVertic
 
 /* ============================================================
    4) Topbar full-width — escapa do padding do parent + sticky.
-      width: calc(100vw - 240px) cobre desde o fim da sidebar
+      width: calc(100vw - 280px) cobre desde o fim da sidebar
       até a borda direita do viewport.
+      UX-V-SHELL-FIX (M9.2): sidebar passou de 240px → 280px.
    ============================================================ */
 html body .topbar {
   position: sticky !important;
   top: 0 !important;
   left: 0 !important;
   z-index: 10 !important;
-  width: calc(100vw - 240px) !important;
+  width: calc(100vw - 280px) !important;
   margin: -12px -24px 0 -24px !important;
 }
 
@@ -150,10 +167,24 @@ html body [data-testid="stMain"] [data-testid="stElementContainer"] {
 
 /* ============================================================
    8) Lupa centralizada no input de busca da sidebar.
+
+      UX-V-SHELL-FIX (M9.3): além do top:50%/translateY, garantir
+      display:inline-flex + align-items:center para que o glyph SVG
+      "Q" da lupa fique no baseline do texto "Buscar" (antes ficava
+      acima do baseline do input). line-height:0 evita que a altura
+      do span carregue espaço fantasma vertical.
    ============================================================ */
 html body .sidebar-search-icon {
   top: 50% !important;
   transform: translateY(-50%) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  line-height: 0 !important;
+}
+html body .sidebar-search-icon svg {
+  display: block !important;
+  vertical-align: middle !important;
 }
 
 /* "CSS é declarativo. JS é imperativo. Layout deve ser declarativo."
