@@ -1,7 +1,78 @@
 /* CSS dedicado da página Bem-estar / Humor (UX-M-02.D residual).
    Origem: bloco inline em src/dashboard/paginas/be_humor.py.
    Estruturas únicas: visualização detalhada por pessoa A/B no expander
-   do dia selecionado. Cores canonizadas para tokens. */
+   do dia selecionado. Cores canonizadas para tokens.
+   UX-V-3.6: cards .humor-card-media (com sparkline + delta) e
+   .humor-card-streak na coluna direita do heatmap. */
+
+/* ─────── Cards customizados da coluna direita (UX-V-3.6) ─────── */
+.humor-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--bg-elevated);
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin: 6px 0;
+}
+.humor-card-media {
+    border-left: 4px solid var(--accent-purple);
+}
+.humor-card-streak {
+    border-left: 4px solid var(--accent-yellow);
+}
+.humor-card-label {
+    font-family: ui-monospace, monospace;
+    font-size: 11px;
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+}
+.humor-card-valor {
+    font-family: ui-monospace, monospace;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    color: var(--accent-purple);
+}
+.humor-card-streak .humor-card-valor {
+    color: var(--accent-yellow);
+}
+.humor-card-valor-num {
+    font-size: 32px;
+    font-weight: 500;
+}
+.humor-card-valor-unid {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin-left: 4px;
+}
+.humor-card-valor-vazio {
+    font-size: 32px;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+.humor-card-delta {
+    font-family: ui-monospace, monospace;
+    font-size: 12px;
+    margin-top: 6px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.humor-delta-up { color: var(--accent-green); }
+.humor-delta-down { color: var(--accent-red); }
+.humor-delta-flat { color: var(--text-muted); }
+.humor-card-spark {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--bg-elevated);
+}
+.humor-card-spark .sparkline,
+.humor-card-spark .sparkline svg {
+    display: block;
+    width: 100%;
+    height: 38px;
+}
+
 
 .detalhe-pessoa-card {
     background: var(--bg-surface);
