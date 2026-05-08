@@ -31,6 +31,7 @@ import pandas as pd
 import streamlit as st
 
 from src.dashboard.componentes.html_utils import minificar
+from src.dashboard.componentes.ui import carregar_css_pagina
 from src.dashboard.tema import CORES
 from src.mobile_cache.varrer_vault import descobrir_vault_root
 
@@ -404,6 +405,91 @@ def _contador_card_html(contador: dict[str, Any]) -> str:
     )
 
 
+def _skeleton_coluna_html(
+    titulo: str,
+    cor_var: str,
+    contagem_label: str,
+    skeleton_rows_html: str,
+) -> str:
+    """Coluna placeholder do fallback (UX-V-2.10-FIX / UX-V-03).
+
+    Renderiza header com ``<TITULO> <contagem>`` (ex: ``ALARMES — 0``,
+    ``TAREFAS — HOJE``) + botão ``+`` desabilitado + lista de
+    ``.skeleton-card``. Classes vivem em ``css/paginas/be_rotina.css``.
+    """
+    return (
+        f'<div class="rot-card" style="--cor: var({cor_var});">'
+        f'  <div class="rot-head">'
+        f'    <span class="rot-titulo">{titulo} {contagem_label}</span>'
+        f'    <button class="rot-add" disabled '
+        f'aria-label="Adicionar (configure rotina.toml primeiro)">+</button>'
+        f"  </div>"
+        f'  <div class="rot-lista">{skeleton_rows_html}</div>'
+        f"</div>"
+    )
+
+
+def _skeleton_3_colunas_html() -> str:
+    """Skeleton-mockup das 3 colunas (UX-V-03 canônico para Rotina).
+
+    Apresenta a forma final do layout (ALARMES / TAREFAS HOJE /
+    CONTADORES) com ``.skeleton-card`` translúcidos. Contagens fixas
+    em ``— 0`` / ``— HOJE`` deixam claro que é placeholder, não dado
+    real. Botão ``+`` desabilitado sinaliza que a ação só estará
+    disponível após o usuário configurar ``rotina.toml`` via Editor.
+    """
+    skel_alarme = (
+        '<div class="skeleton-card">'
+        '<span class="skel-bloco skel-leading"></span>'
+        '<div class="skel-body">'
+        '<span class="skel-bloco" style="width:80%;"></span>'
+        '<span class="skel-bloco" style="width:55%;height:0.7em;"></span>'
+        "</div>"
+        '<span class="skel-bloco skel-trailing"></span>'
+        "</div>"
+    )
+    skel_tarefa = (
+        '<div class="skeleton-card skeleton-tarefa">'
+        '<span class="skel-bloco" style="width:18px;height:18px;'
+        'border-radius:3px;"></span>'
+        '<div class="skel-body">'
+        '<span class="skel-bloco" style="width:75%;"></span>'
+        '<span class="skel-bloco" style="width:50%;height:0.7em;"></span>'
+        "</div>"
+        "</div>"
+    )
+    skel_contador = (
+        '<div class="skeleton-card skeleton-contador">'
+        '<span class="skel-bloco" style="width:60%;height:0.8em;"></span>'
+        '<span class="skel-bloco" style="width:40%;height:1.6em;"></span>'
+        '<span class="skel-bloco" style="width:100%;height:6px;"></span>'
+        "</div>"
+    )
+    col_alarmes = _skeleton_coluna_html(
+        "ALARMES",
+        "--accent-orange",
+        "&mdash; 0",
+        skel_alarme + skel_alarme,
+    )
+    col_tarefas = _skeleton_coluna_html(
+        "TAREFAS",
+        "--accent-cyan",
+        "&mdash; HOJE",
+        skel_tarefa + skel_tarefa,
+    )
+    col_contadores = _skeleton_coluna_html(
+        "CONTADORES",
+        "--accent-green",
+        "&mdash; 0",
+        skel_contador,
+    )
+    return (
+        f'<div class="rotina-grid">'
+        f"{col_alarmes}{col_tarefas}{col_contadores}"
+        f"</div>"
+    )
+
+
 def renderizar(
     dados: dict[str, pd.DataFrame],
     periodo: str,
@@ -420,6 +506,12 @@ def renderizar(
     ])
 
     del dados, periodo, pessoa, ctx
+
+    # UX-V-2.10-FIX: carrega CSS dedicado (.rotina-grid, .rot-card,
+    # .skeleton-card etc.). Idêntico ao padrão das demais páginas Bem-estar.
+    st.markdown(
+        minificar(carregar_css_pagina("be_rotina")), unsafe_allow_html=True
+    )
 
     # Caminho 1 (UX-V-2.10): diretório <vault>/.ouroboros/rotina/*.toml.
     # Caminho 2 (legado UX-RD-19): arquivo único <vault>/.ouroboros/rotina.toml.
@@ -508,40 +600,7 @@ def renderizar(
             fallback_estado_inicial_html,
             ler_sync_info,
         )
-        skeleton = (
-            '<div style="display:grid;grid-template-columns:repeat(4,1fr);'
-            'gap:10px;margin-bottom:14px;">'
-            '<div class="kpi"><span class="kpi-label">ALARMES</span>'
-            '<span class="kpi-value">--</span></div>'
-            '<div class="kpi"><span class="kpi-label">TAREFAS</span>'
-            '<span class="kpi-value">--</span></div>'
-            '<div class="kpi"><span class="kpi-label">CONTADORES</span>'
-            '<span class="kpi-value">--</span></div>'
-            '<div class="kpi"><span class="kpi-label">STREAK</span>'
-            '<span class="kpi-value">--</span></div>'
-            '</div>'
-            '<div style="display:grid;grid-template-columns:1.2fr 1fr 0.8fr;'
-            'gap:14px;">'
-            '<div><span class="skel-bloco" style="width:40%;height:0.8em;'
-            'margin-bottom:8px;"></span>'
-            '<div style="display:flex;flex-direction:column;gap:6px;">'
-            '<span class="skel-bloco" style="width:90%;"></span>'
-            '<span class="skel-bloco" style="width:70%;"></span>'
-            '</div></div>'
-            '<div><span class="skel-bloco" style="width:40%;height:0.8em;'
-            'margin-bottom:8px;"></span>'
-            '<div style="display:flex;flex-direction:column;gap:6px;">'
-            '<span class="skel-bloco" style="width:85%;"></span>'
-            '<span class="skel-bloco" style="width:75%;"></span>'
-            '</div></div>'
-            '<div><span class="skel-bloco" style="width:50%;height:0.8em;'
-            'margin-bottom:8px;"></span>'
-            '<div style="display:flex;flex-direction:column;gap:6px;">'
-            '<span class="skel-bloco" style="width:80%;"></span>'
-            '<span class="skel-bloco" style="width:60%;"></span>'
-            '</div></div>'
-            '</div>'
-        )
+        skeleton = _skeleton_3_colunas_html()
         st.markdown(
             fallback_estado_inicial_html(
                 titulo="ROTINA · sem configuração ainda",

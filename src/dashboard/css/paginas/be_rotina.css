@@ -1,0 +1,135 @@
+/* CSS dedicado da pagina Bem-estar / Rotina (UX-V-2.10-FIX).
+   Origem: classes canonizadas a partir do mockup
+   ``novo-mockup/mockups/20-rotina.html`` -- ALARMES, TAREFAS HOJE,
+   CONTADORES. UX-V-03 (skeleton-mockup canonico) atendido aqui:
+   o fallback consome ``.skeleton-card`` e ``.rot-add[disabled]``
+   para entregar a forma final mesmo sem ``rotina.toml`` configurado.
+
+   Usado por ``src/dashboard/paginas/be_rotina.py`` via
+   ``carregar_css_pagina("be_rotina")``. */
+
+/* ---------- Grade das 3 colunas ---------- */
+.rotina-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: var(--sp-4, 14px);
+    margin-top: var(--sp-3, 10px);
+}
+
+@media (max-width: 1100px) {
+    .rotina-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ---------- Card-coluna ---------- */
+.rot-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--r-md, 6px);
+    padding: var(--sp-5, 14px);
+    display: flex;
+    flex-direction: column;
+}
+
+.rot-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--sp-4, 12px);
+    padding-bottom: var(--sp-3, 8px);
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.rot-titulo {
+    font-family: var(--ff-mono);
+    font-size: var(--fs-12, 12px);
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+    color: var(--cor, var(--accent-purple));
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.rot-add {
+    background: var(--bg-inset);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    width: 28px;
+    height: 28px;
+    border-radius: var(--r-sm, 4px);
+    display: grid;
+    place-items: center;
+    font-family: var(--ff-mono);
+    font-size: 14px;
+    line-height: 1;
+}
+
+.rot-add:not([disabled]):hover {
+    color: var(--cor, var(--accent-purple));
+    border-color: var(--cor, var(--accent-purple));
+    cursor: pointer;
+}
+
+.rot-add[disabled] {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.rot-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+/* ---------- Skeleton-card (placeholder claro do fallback) ----------
+   UX-V-03: skeleton-mockup do layout final, igual ao mockup mas
+   estilizado como placeholder claro. Usa .skel-bloco animado para
+   sugerir conteudo sem inventar dado. */
+.skeleton-card {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: var(--sp-3, 8px);
+    align-items: center;
+    padding: var(--sp-3, 10px);
+    background: var(--bg-inset);
+    border: 1px solid var(--border-subtle);
+    border-left: 3px solid var(--cor, var(--accent-purple));
+    border-radius: var(--r-sm, 4px);
+    opacity: 0.5;
+}
+
+.skeleton-card .skel-leading {
+    width: 40px;
+    height: 22px;
+}
+
+.skeleton-card .skel-body {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.skeleton-card .skel-trailing {
+    width: 36px;
+    height: 18px;
+    border-radius: 999px;
+}
+
+.skeleton-card.skeleton-tarefa {
+    grid-template-columns: auto 1fr;
+}
+
+.skeleton-card.skeleton-contador {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: stretch;
+    padding: var(--sp-4, 14px);
+}
+
+/* "Esqueleto sem carne ainda e forma -- e forma comunica."
+   -- principio UX-V-2.10-FIX */
