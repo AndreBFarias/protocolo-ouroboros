@@ -104,6 +104,21 @@ html body [data-testid="stMainBlockContainer"] {
   padding: 0 !important;
   max-width: 100% !important;
   width: 100% !important;
+  /* UX-V-FINAL-FIX-2 (2026-05-08): conter scroll horizontal originado
+     por gráficos Plotly / tabelas largas / SVG estourando o container.
+     overflow-x: hidden no main impede a barra de rolagem horizontal
+     reportada pelo dono em várias páginas. */
+  overflow-x: hidden !important;
+  box-sizing: border-box !important;
+}
+
+/* Crianças diretas que tendem a estourar (gráficos, tabelas) ficam
+   contidas em max-width: 100% e overflow-x: auto interno. */
+html body [data-testid="stMainBlockContainer"] [data-testid="stPlotlyChart"],
+html body [data-testid="stMainBlockContainer"] [data-testid="stDataFrame"],
+html body [data-testid="stMainBlockContainer"] iframe {
+  max-width: 100% !important;
+  box-sizing: border-box !important;
 }
 
 /* stVerticalBlock de TOPO (filho direto do main): padding lateral
@@ -122,17 +137,27 @@ html body [data-testid="stMain"] [data-testid="stColumn"] [data-testid="stVertic
 
 /* ============================================================
    4) Topbar full-width — escapa do padding do parent + sticky.
-      width: calc(100vw - 280px) cobre desde o fim da sidebar
+      width: calc(100vw - 300px) cobre desde o fim da sidebar
       até a borda direita do viewport.
       UX-V-SHELL-FIX (M9.2): sidebar passou de 240px → 280px.
+      UX-V-FINAL-FIX-2 (2026-05-08): sidebar é 300px desde
+      V-SHELL-FIX-2; o calc estava 20px largo demais, cortando
+      os botões "Atualizar" / "Ir para Validação" no canto direito.
+      Reduzido também margin direito de -24px → -28px e box-sizing
+      explícito para garantir que padding interno do botão fique
+      dentro do viewport.
    ============================================================ */
 html body .topbar {
   position: sticky !important;
   top: 0 !important;
   left: 0 !important;
   z-index: 10 !important;
-  width: calc(100vw - 280px) !important;
+  width: calc(100vw - 300px) !important;
+  max-width: calc(100vw - 300px) !important;
   margin: -12px -24px 0 -24px !important;
+  padding-right: 24px !important;
+  box-sizing: border-box !important;
+  overflow-x: hidden !important;
 }
 
 /* ============================================================

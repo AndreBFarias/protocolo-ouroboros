@@ -1099,7 +1099,10 @@ def chip_bar_filtros_globais(dados: dict) -> tuple[str, str, str]:
     granularidade_atual = st.session_state.get("seletor_granularidade", "Mês")
     pessoa_atual = st.session_state.get("seletor_pessoa", "Todos")
     forma_atual = st.session_state.get("seletor_forma_pagamento", "Todas")
-    periodo_chip = _resumir_periodo_chip(granularidade_atual)
+    # UX-V-FINAL-FIX defeito 1 (2026-05-08): no primeiro frame, antes do
+    # selectbox interno gravar ``seletor_mes_base``, o chip caía em "...";
+    # passamos o primeiro mês disponível como fallback determinístico.
+    periodo_chip = _resumir_periodo_chip(granularidade_atual, fallback=meses[0])
 
     # Refator V-01.b (2026-05-07): cada chip da chip-bar é agora um
     # st.popover Streamlit nativo. Clicar abre dropdown com selectbox
@@ -1196,18 +1199,20 @@ def chip_bar_filtros_globais(dados: dict) -> tuple[str, str, str]:
     return periodo, pessoa, granularidade  # noqa: accent
 
 
-def _resumir_periodo_chip(granularidade: str) -> str:
+def _resumir_periodo_chip(granularidade: str, fallback: str = "...") -> str:
     """Retorna texto curto para o chip de período baseado na granularidade.
 
-    Lê do ``st.session_state`` quando disponível; cai em placeholder
-    ``...`` no primeiro frame. O chip é apenas display visual -- o valor
-    real do filtro vem do selectbox invisível abaixo da chip-bar.
+    Lê do ``st.session_state`` quando disponível. Se o estado ainda não
+    foi populado (primeiro frame, antes do selectbox interno rodar), usa
+    ``fallback`` -- tipicamente o primeiro mês disponível em ``dados``,
+    passado pelo chamador. Antes do UX-V-FINAL-FIX o fallback era a
+    string literal ``"..."``, que vazava no chip da chip-bar.
     """
     import streamlit as st
 
     if granularidade == "Ano":
-        return st.session_state.get("seletor_periodo", "...")
-    mes = st.session_state.get("seletor_mes_base", "...")
+        return st.session_state.get("seletor_periodo", fallback)
+    mes = st.session_state.get("seletor_mes_base", fallback)
     if granularidade == "Semana":
         return st.session_state.get("seletor_detalhe", mes)
     if granularidade == "Dia":

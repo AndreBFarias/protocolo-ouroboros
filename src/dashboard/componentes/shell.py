@@ -191,6 +191,12 @@ def _renderizar_cluster_html(
     cluster: dict, cluster_ativo: str, aba_ativa: str
 ) -> str:
     """Bloco de um cluster: header + lista de itens (abas)."""
+    # Importação atrasada para evitar ciclo (drilldown -> shell).
+    from src.dashboard.componentes.drilldown import (  # noqa: PLC0415
+        ABAS_HOME_HOMONIMAS,
+        CLUSTERS_VALIDOS,
+    )
+
     nome_cluster = cluster["nome"]
     nome_seguro = html.escape(nome_cluster)
 
@@ -204,7 +210,21 @@ def _renderizar_cluster_html(
         # FIX-12: aria-current="page" no item ativo para tecnologias
         # assistivas (WCAG 1.3.1 Info and Relationships).
         aria_current = ' aria-current="page"' if ativa else ""
-        href = _href_para(nome_cluster, nome_aba)
+        # UX-V-FINAL-FIX defeito 2 (2026-05-08): abas-de-cluster do Home
+        # (Finanças/Documentos/Análise/Metas) levam ao cluster próprio
+        # (?cluster=Finanças) em vez de permanecer no cluster Home com
+        # ?cluster=Home&tab=Finanças -- onde o dispatcher só renderiza
+        # Visão Geral e ignora tab=. Item da sidebar Home agora navega
+        # diretamente para o cluster homônimo, abrindo na primeira aba
+        # canônica (Extrato/Busca/Categorias/Metas).
+        if (
+            nome_cluster == "Home"
+            and nome_aba in ABAS_HOME_HOMONIMAS
+            and nome_aba in CLUSTERS_VALIDOS
+        ):
+            href = _href_para(nome_aba)
+        else:
+            href = _href_para(nome_cluster, nome_aba)
         rotulo = html.escape(nome_aba)
         # SIDEBAR-CANON-FIX (2026-05-06): badge "..." removido dos items
         # de aba não-implementada — mockup canônico não tem indicador

@@ -249,7 +249,7 @@
 .kpi-delta.up    { color: var(--accent-green); }
 .kpi-delta.down  { color: var(--accent-red); }
 .kpi-delta.flat  { color: var(--text-muted); }
-.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: var(--sp-3); }
+.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: var(--sp-5); }
 
 /* ─────────── PILLS / BADGES ─────────── */
 .pill {

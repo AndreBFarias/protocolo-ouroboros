@@ -53,11 +53,23 @@ def estilos_t01_canonicos() -> str:
       .vg-t01-cluster-grid {
         display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
       }
+      .vg-t01-cluster-card,
+      .vg-t01-cluster-card:link,
+      .vg-t01-cluster-card:visited,
+      .vg-t01-cluster-card:hover,
+      .vg-t01-cluster-card:active,
+      .vg-t01-cluster-card h3,
+      .vg-t01-cluster-card .desc,
+      .vg-t01-cluster-card .stats span,
+      .vg-t01-cluster-card .stats strong {
+        text-decoration: none !important;
+        color: inherit !important;
+      }
       .vg-t01-cluster-card {
         background: var(--bg-surface); border: 1px solid var(--border-subtle);
         border-radius: var(--r-md); padding: 16px;
-        text-decoration: none; color: inherit;
         display: flex; flex-direction: column; gap: 8px;
+        color: var(--text-primary) !important;
         transition: border-color .15s, transform .15s;
       }
       .vg-t01-cluster-card:hover {
@@ -144,7 +156,8 @@ def clusters_canonicos_html(cards: list[dict]) -> str:
         glyph_nome = c.get("glyph", "")
         glyph_html = glyph(glyph_nome, tamanho_px=18) if glyph_nome else ""
         cards_html.append(
-            f'<a class="vg-t01-cluster-card" href="{c["href"]}" target="_self">'
+            f'<a class="vg-t01-cluster-card" href="{c["href"]}" target="_self"'
+            ' style="text-decoration:none;color:inherit;">'
             '<div class="vg-t01-cluster-head">'
             f'<span class="vg-t01-cluster-ic">{glyph_html}</span>'
             f'<h3>{c["nome"]}</h3>'

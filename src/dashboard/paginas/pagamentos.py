@@ -274,10 +274,10 @@ def _kpi_row_html(kpis: dict[str, float | int]) -> str:
     cor_fixos = CORES["destaque"] if fixos > 0 else CORES["texto_sec"]
 
     cards = [
-        ("A pagar · mês", formatar_moeda(a_pagar), CORES["texto"], "consolidado do mês"),
-        ("Em atraso", formatar_moeda(atraso), cor_atraso, "pagar imediatamente"),
-        ("Cartões · faturas", formatar_moeda(faturas), cor_faturas, "agendar débito"),
-        ("Fixos identificados", str(fixos), cor_fixos, "do snapshot prazos"),
+        ("A pagar · mês", formatar_moeda(a_pagar), CORES["texto"], "Consolidado do mês"),
+        ("Em atraso", formatar_moeda(atraso), cor_atraso, "Pagar imediatamente"),
+        ("Cartões · faturas", formatar_moeda(faturas), cor_faturas, "Agendar débito"),
+        ("Fixos identificados", str(fixos), cor_fixos, "Do snapshot prazos"),
     ]
 
     cells = []

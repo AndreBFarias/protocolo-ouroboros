@@ -654,7 +654,7 @@ def renderizar(
                     margin:18px 0;">
           {_card_cenario_html(
             "cenário pessimista",
-            "CDI · sem risco",
+            "CDI · Sem risco",
             float(pess[-1]),
             f"{taxa_pess * 100:.1f}% a.a.",
             aporte_ano,
@@ -675,7 +675,7 @@ def renderizar(
           )}
           {_card_cenario_html(
             "cenário otimista",
-            "IBOV histórico",
+            "IBOV · Histórico",
             float(otim[-1]),
             f"{taxa_otim * 100:.1f}% a.a.",
             aporte_ano,
@@ -698,12 +698,15 @@ def renderizar(
         ),
         unsafe_allow_html=True,
     )
+    # UX-V-FINAL-FIX defeito 6 (2026-05-08): slider parte de R$ 100
+    # (min_value/value) para não exigir interação do usuário e já mostrar
+    # cenário simulado pré-pronto. Step 50 dá granularidade fina.
     economia_extra = st.slider(
         "Se eu economizar a mais por mês (R$):",
-        min_value=0,
+        min_value=100,
         max_value=5000,
-        value=0,
-        step=100,
+        value=100,
+        step=50,
         key="slider_economia",
     )
     if economia_extra > 0:
