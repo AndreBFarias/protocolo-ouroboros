@@ -1,15 +1,18 @@
 ---
 id: UX-V-2.16
 titulo: Editor TOML 3-col (lista arquivos + editor + preview ao vivo)
-status: backlog
+status: concluida  <!-- noqa: accent -->
 prioridade: alta
 data_criacao: 2026-05-07
+concluida_em: 2026-05-07  <!-- noqa: accent -->
+commit: 6619e6f
 fase: PARIDADE_VISUAL
 depende_de: [UX-V-02]
 co_executavel_com: [UX-V-2.8, UX-V-2.10, UX-V-2.14]
 esforco_estimado_horas: 6
 origem: docs/auditorias/AUDITORIA_PARIDADE_VISUAL_2026-05-07.md (página 28)
 mockup: novo-mockup/mockups/28-rotina-toml.html
+nota: paridade parcial -- preview com tabs/badges/diff entregue em UX-V-2.16-FIX
 ---
 
 # Sprint UX-V-2.16 -- Editor TOML 3-col + preview ao vivo

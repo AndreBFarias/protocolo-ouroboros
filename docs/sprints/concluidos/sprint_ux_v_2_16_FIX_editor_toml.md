@@ -1,9 +1,10 @@
 ---
 id: UX-V-2.16-FIX
 titulo: Editor TOML — implementar layout 3-col + preview ao vivo + validação inline
-status: backlog
+status: concluida  <!-- noqa: accent -->
 prioridade: alta
 data_criacao: 2026-05-08
+concluida_em: 2026-05-08  <!-- noqa: accent -->
 fase: PARIDADE_VISUAL
 depende_de: []
 esforco_estimado_horas: 6
@@ -64,7 +65,7 @@ Captura visual: cluster=Bem-estar&tab=Editor+TOML mostra 3-col, preview com 3 ta
 4. Badges MODIFICADO/SCHEMA OK no header.
 5. Bloco VALIDAÇÃO no rodapé com 0+ avisos.
 6. Lint + smoke + baseline pytest.
-7. Frontmatter da spec V-2.16 atualizado para `status: concluida`.
+7. Frontmatter da spec V-2.16 atualizado para `status: concluida`.  <!-- noqa: accent -->
 
 ## Referência
 

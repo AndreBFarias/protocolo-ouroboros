@@ -238,3 +238,364 @@
     border-left: 3px solid var(--accent-red);
     text-align: left;
 }
+
+/* ----------------------------------------------------------------------- */
+/* Header do editor -- badges MODIFICADO/SCHEMA OK (UX-V-2.16-FIX)         */
+/* ----------------------------------------------------------------------- */
+
+.editor-tools {
+    display: flex;
+    gap: 6px;
+    padding: var(--sp-2) var(--sp-3);
+    background: var(--bg-inset);
+    border: 1px solid var(--border-subtle);
+    border-bottom: none;
+    border-radius: var(--r-sm) var(--r-sm) 0 0;
+    font-family: var(--ff-mono);
+    font-size: 11px;
+    align-items: center;
+}
+
+.editor-tools .path {
+    color: var(--text-muted);
+    flex: 1;
+    padding-left: 6px;
+}
+
+.editor-tools .status {
+    padding: 4px 8px;
+    border-radius: var(--r-xs);
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.editor-tools .status.ok {
+    background: rgba(80, 250, 123, 0.15);
+    color: var(--accent-green);
+}
+
+.editor-tools .status.err {
+    background: rgba(255, 85, 85, 0.18);
+    color: var(--accent-red);
+}
+
+.editor-tools .status.dirty {
+    background: rgba(255, 184, 108, 0.15);
+    color: var(--accent-orange);
+}
+
+.editor-tools .status.clean {
+    background: var(--bg-base);
+    color: var(--text-muted);
+}
+
+/* Wrapper com numeracao de linhas via CSS counter (UX-V-2.16-FIX).
+ * Streamlit text_area nao expoe DOM por linha; aplicamos numeracao
+ * decorativa via gradiente + counter sobre o textarea. */
+.toml-editor-wrap {
+    position: relative;
+    margin-bottom: var(--sp-2);
+}
+
+.toml-editor-wrap [data-testid="stTextArea"] textarea {
+    font-family: var(--ff-mono) !important;
+    font-size: 13px !important;
+    line-height: 1.65 !important;
+    background: var(--bg-base) !important;
+    color: var(--text-primary) !important;
+    padding-left: 44px !important;
+    background-image: linear-gradient(
+        to right,
+        var(--bg-inset) 0,
+        var(--bg-inset) 36px,
+        var(--bg-base) 36px
+    );
+    background-attachment: local;
+    border-radius: 0 0 var(--r-sm) var(--r-sm) !important;
+    border: 1px solid var(--border-subtle) !important;
+    border-top: none !important;
+}
+
+/* ----------------------------------------------------------------------- */
+/* Preview Visual -- cards de alarme/tarefa/contador (UX-V-2.16-FIX)       */
+/* ----------------------------------------------------------------------- */
+
+.alarme-card {
+    background: var(--bg-inset);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--r-sm);
+    padding: var(--sp-3);
+    margin-bottom: 6px;
+    display: grid;
+    grid-template-columns: 60px 1fr auto;
+    gap: 12px;
+    align-items: center;
+}
+
+.alarme-card .alarme-hr {
+    font-family: var(--ff-mono);
+    font-weight: 600;
+    font-size: 18px;
+    color: var(--accent-purple);
+    letter-spacing: 0.04em;
+}
+
+.alarme-card .alarme-meta .nome {
+    font-size: 13px;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.alarme-card .alarme-meta .dias {
+    display: flex;
+    gap: 4px;
+}
+
+.alarme-card .alarme-meta .d {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--bg-base);
+    border: 1px solid var(--border-subtle);
+    font-family: var(--ff-mono);
+    font-size: 9px;
+    display: grid;
+    place-items: center;
+    color: var(--text-muted);
+}
+
+.alarme-card .alarme-meta .d.on {
+    background: var(--accent-purple);
+    color: var(--text-inverse);
+    border-color: var(--accent-purple);
+}
+
+.alarme-card .alarme-tags {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.alarme-card .alarme-tags .t {
+    font-family: var(--ff-mono);
+    font-size: 9px;
+    padding: 2px 6px;
+    border-radius: var(--r-xs);
+    background: var(--bg-base);
+    color: var(--text-muted);
+}
+
+.tarefa-card {
+    background: var(--bg-inset);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--r-sm);
+    padding: var(--sp-3);
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.tarefa-card .checkbox {
+    width: 16px;
+    height: 16px;
+    border: 1.5px solid var(--accent-purple);
+    border-radius: var(--r-xs);
+    flex-shrink: 0;
+}
+
+.tarefa-card .nome {
+    flex: 1;
+    font-size: 13px;
+    color: var(--text-primary);
+}
+
+.tarefa-card .nome .meta {
+    font-family: var(--ff-mono);
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-left: 6px;
+}
+
+.tarefa-card .tipo {
+    font-family: var(--ff-mono);
+    font-size: 10px;
+    color: var(--text-muted);
+}
+
+.contador-card {
+    background: var(--bg-inset);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--r-sm);
+    padding: var(--sp-3);
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.contador-card .nome {
+    flex: 1;
+    font-size: 13px;
+    color: var(--text-primary);
+}
+
+.contador-card .meta {
+    font-family: var(--ff-mono);
+    font-size: 10px;
+    color: var(--text-muted);
+}
+
+/* ----------------------------------------------------------------------- */
+/* Preview Diff -- linhas adicionadas/removidas/contexto                    */
+/* ----------------------------------------------------------------------- */
+
+.diff {
+    font-family: var(--ff-mono);
+    font-size: 11px;
+    line-height: 1.6;
+    background: var(--bg-base);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--r-xs);
+    padding: var(--sp-2);
+    max-height: 480px;
+    overflow-y: auto;
+}
+
+.diff .add {
+    background: rgba(80, 250, 123, 0.10);
+    color: var(--accent-green);
+    padding: 0 6px;
+    display: block;
+}
+
+.diff .rem {
+    background: rgba(255, 85, 85, 0.10);
+    color: var(--accent-red);
+    padding: 0 6px;
+    display: block;
+    text-decoration: line-through;
+}
+
+.diff .ctx {
+    color: var(--text-muted);
+    padding: 0 6px;
+    display: block;
+}
+
+.diff-rodape {
+    margin-top: var(--sp-2);
+    font-family: var(--ff-mono);
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 0.06em;
+}
+
+/* ----------------------------------------------------------------------- */
+/* Preview Schema -- campos canonicos                                       */
+/* ----------------------------------------------------------------------- */
+
+.schema-titulo {
+    font-family: var(--ff-mono);
+    font-size: 10px;
+    color: var(--text-muted);
+    margin: var(--sp-3) 0 var(--sp-2) 0;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.schema {
+    font-family: var(--ff-mono);
+    font-size: 11px;
+    line-height: 1.6;
+}
+
+.schema .campo {
+    padding: 6px 0;
+    border-bottom: 1px dashed var(--border-subtle);
+}
+
+.schema .campo:last-child {
+    border-bottom: none;
+}
+
+.schema .campo .k {
+    color: var(--accent-cyan);
+}
+
+.schema .campo .tipo {
+    color: var(--accent-pink);
+    margin-left: 6px;
+}
+
+.schema .campo .req {
+    color: var(--accent-orange);
+    margin-left: 4px;
+    font-size: 9px;
+    vertical-align: super;
+}
+
+.schema .campo .desc {
+    color: var(--text-muted);
+    display: block;
+    margin-top: 2px;
+    padding-left: 8px;
+}
+
+/* ----------------------------------------------------------------------- */
+/* Rodape global -- VALIDACAO consolidada (UX-V-2.16-FIX)                  */
+/* ----------------------------------------------------------------------- */
+
+.rv-bloco {
+    margin-top: var(--sp-4);
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--r-md);
+    padding: var(--sp-3);
+}
+
+.rv-bloco-titulo {
+    font-family: var(--ff-mono);
+    font-size: 11px;
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: var(--sp-2);
+    padding-bottom: var(--sp-2);
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.rv-bloco-vazio {
+    font-family: var(--ff-mono);
+    font-size: 11px;
+    color: var(--accent-green);
+    padding: var(--sp-2);
+}
+
+.rv-bloco .err-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.rv-bloco .err-list .err-item {
+    border-radius: var(--r-xs);
+    padding: 8px 10px;
+    font-family: var(--ff-mono);
+    font-size: 11px;
+}
+
+.rv-bloco .err-list .err-item.aviso {
+    background: rgba(255, 184, 108, 0.08);
+    border-left: 3px solid var(--accent-orange);
+    color: var(--text-secondary);
+}
+
+.rv-bloco .err-list .err-item.erro {
+    background: rgba(255, 85, 85, 0.08);
+    border-left: 3px solid var(--accent-red);
+    color: var(--accent-red);
+}
