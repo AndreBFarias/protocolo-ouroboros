@@ -30,10 +30,16 @@
     color: var(--d7-graduado);
 }
 .tripla-kpi-divergencias strong {
+    color: var(--accent-orange);
+}
+.tripla-kpi-unilaterais strong {
     color: var(--accent-yellow);
 }
 .tripla-kpi-revisao strong {
-    color: var(--accent-orange);
+    color: var(--accent-cyan);
+}
+.tripla-kpi-total {
+    margin-left: auto;
 }
 
 /* ─────────── Lista de arquivos esquerda agrupada por tipo ─────────── */

@@ -1,16 +1,24 @@
-"""Aba "Extração Tripla" -- Sprint UX-RD-11 + paridade visual UX-V-2.4.
+"""Aba "Extração Tripla" -- Sprint UX-RD-11 + paridade visual UX-V-2.4-FIX.
 
-Layout 2 colunas alinhado ao mockup canônico de validação por arquivo:
+Layout canônico (UX-V-2.4-FIX) alinhado ao mockup ``10-validacao-arquivos``:
 
-  - Header com 4 KPIs (PARIDADE, DIVERGÊNCIAS, EM REVISÃO, total ARQUIVOS).
+  - Header full-width com 4 KPIs:
+    PARIDADE / DIVERGÊNCIAS / UNILATERAIS / EM REVISÃO + counter ARQUIVOS.
   - Coluna esquerda: lista de arquivos agrupada por TIPO/formato com badge,
     flag de status humano e paridade %.
   - Coluna direita: tabela ETL × Opus × Humano para o arquivo selecionado.
     Linhas divergentes destacadas com fundo laranja/vermelho, linhas
     consenso pré-populam o input humano. Badges DIVERGENTE / CONSENSO.
 
-Sprint VALIDAÇÃO-CSV-01 (regra 11 do CLAUDE.md): alimenta
-``data/output/validacao_arquivos.csv``.
+Fonte de dados (UX-V-2.4-FIX): ``data/output/extracao_tripla.json`` lido
+via ``src.dashboard.dados_extracao_tripla.carregar_extracoes_triplas``.
+Em fallback gracioso (JSON ausente) cai no CSV legado
+``data/output/validacao_arquivos.csv`` para preservar telas em ambientes
+sem o populador rodado.
+
+Sprint VALIDAÇÃO-CSV-01 (regra 11 do CLAUDE.md): persistência humana
+ainda alimenta ``data/output/validacao_arquivos.csv`` via form Streamlit
+nativo, sem reescrever o JSON canônico (não-objetivo da sprint FIX).
 
 Princípios:
 
@@ -40,6 +48,7 @@ import streamlit as st
 
 from src.dashboard.componentes.html_utils import minificar
 from src.dashboard.componentes.ui import callout_html, carregar_css_pagina
+from src.dashboard.dados_extracao_tripla import carregar_extracoes_triplas
 from src.load import validacao_csv as vc
 
 _PADRAO_CPF = re.compile(r"\b\d{3}\.\d{3}\.\d{3}-\d{2}\b")
@@ -93,6 +102,73 @@ def _carregar_dataframe(caminho: Path) -> pd.DataFrame:
         return pd.DataFrame(columns=vc.CABECALHO)
     registros = [linha.to_row() for linha in linhas]
     return pd.DataFrame(registros, columns=vc.CABECALHO)
+
+
+def _registros_tripla_para_dataframe(
+    registros: list[dict],
+) -> pd.DataFrame:
+    """Converte registros do schema canônico v1 em DataFrame compatível.
+
+    Cada registro do JSON ``extracao_tripla.json`` aponta para 1 arquivo
+    com 3 dicionários ``etl/opus/humano``. Esta função explode em uma
+    linha por (arquivo, campo) usando o mesmo cabeçalho do CSV legado, de
+    modo que todos os helpers e formulários downstream funcionem sem
+    refactor (princípio (a) -- Edit incremental).
+
+    Convenções:
+      - O conjunto de campos é a união de chaves de ``etl.campos`` e
+        ``opus.campos`` (cobertura total D7 -- padrão (aa)).
+      - ``valor_humano`` lê de ``humano.campos`` quando presente.
+      - ``confianca_opus`` é a 2ª posição da tupla ``[valor, confianca]``.
+      - ``status_*`` ficam ``pendente`` por default; o JSON canônico não
+        carrega status individuais.
+    """
+    if not registros:
+        return pd.DataFrame(columns=vc.CABECALHO)
+
+    linhas: list[dict[str, str]] = []
+    for reg in registros:
+        sha8 = str(reg.get("sha256") or "")[:8]
+        filename = str(reg.get("filename") or "")
+        tipo = str(reg.get("tipo") or "")
+        etl_campos = (reg.get("etl") or {}).get("campos") or {}
+        opus_campos = (reg.get("opus") or {}).get("campos") or {}
+        humano_bloco = reg.get("humano") or {}
+        humano_campos = humano_bloco.get("campos") or {}
+
+        chaves = sorted(set(etl_campos.keys()) | set(opus_campos.keys()))
+        for campo in chaves:
+            v_etl_par = etl_campos.get(campo) or ["", 0.0]
+            v_opus_par = opus_campos.get(campo) or ["", 0.0]
+            valor_etl = str(v_etl_par[0] if len(v_etl_par) > 0 else "")
+            valor_opus = str(v_opus_par[0] if len(v_opus_par) > 0 else "")
+            try:
+                conf_opus = float(v_opus_par[1]) if len(v_opus_par) > 1 else 0.0
+            except (TypeError, ValueError):
+                conf_opus = 0.0
+
+            valor_humano = str(humano_campos.get(campo) or "")
+
+            linhas.append(
+                {
+                    "sha8_arquivo": sha8,
+                    "tipo_arquivo": tipo,
+                    "caminho_relativo": filename,
+                    "ts_processado": "",
+                    "campo": campo,
+                    "valor_etl": valor_etl,
+                    "valor_opus": valor_opus,
+                    "confianca_opus": f"{conf_opus:.2f}",
+                    "valor_humano": valor_humano,
+                    "status_etl": "ok" if valor_etl else "pendente",
+                    "status_opus": "ok" if valor_opus else "pendente",
+                    "status_humano": "ok" if valor_humano else "pendente",
+                    "observacoes_humano": "",
+                }
+            )
+    if not linhas:
+        return pd.DataFrame(columns=vc.CABECALHO)
+    return pd.DataFrame(linhas, columns=vc.CABECALHO)
 
 
 def _badge_formato(caminho_relativo: str) -> str:
@@ -269,10 +345,16 @@ def _flag_status_humano(status: str) -> str:
 def _kpis_header_html(
     media_paridade: float,
     n_divergencias: int,
+    n_unilaterais: int,
     n_revisao: int,
     n_total: int,
 ) -> str:
-    """KPIs do topo: PARIDADE %, DIVERGÊNCIAS N, EM REVISÃO N, total ARQUIVOS."""
+    """KPIs do topo: 4 métricas + counter ARQUIVOS.
+
+    Sprint UX-V-2.4-FIX: header full-width com PARIDADE / DIVERGÊNCIAS /
+    UNILATERAIS / EM REVISÃO + counter total. UNILATERAIS conta campos
+    presentes em apenas uma fonte (só ETL ou só Opus).
+    """
     return minificar(
         f"""
         <div class="tripla-header">
@@ -282,10 +364,13 @@ def _kpis_header_html(
           <div class="tripla-kpi tripla-kpi-divergencias">
             DIVERGÊNCIAS <strong>{n_divergencias}</strong>
           </div>
+          <div class="tripla-kpi tripla-kpi-unilaterais">
+            UNILATERAIS <strong>{n_unilaterais}</strong>
+          </div>
           <div class="tripla-kpi tripla-kpi-revisao">
             EM REVISÃO <strong>{n_revisao}</strong>
           </div>
-          <div class="tripla-kpi">
+          <div class="tripla-kpi tripla-kpi-total">
             <strong>{n_total}</strong> ARQUIVOS
           </div>
         </div>
@@ -587,7 +672,7 @@ def renderizar(
                 "Claude Opus agentic. A coluna humana chega pré-preenchida com o "
                 "consenso; você só edita as divergências e envia."
             ),
-            sprint_tag="UX-V-2.4",
+            sprint_tag="UX-V-2.4-FIX",
         ),
         unsafe_allow_html=True,
     )
@@ -595,13 +680,20 @@ def renderizar(
     raiz_repo = Path(__file__).resolve().parents[3]
     caminho_csv = raiz_repo / "data" / "output" / "validacao_arquivos.csv"
 
-    df = _carregar_dataframe(caminho_csv)
+    # Sprint UX-V-2.4-FIX: prioriza schema canônico em JSON; CSV é fallback.
+    registros_tripla = carregar_extracoes_triplas()
+    if registros_tripla:
+        df = _registros_tripla_para_dataframe(registros_tripla)
+    else:
+        df = _carregar_dataframe(caminho_csv)
+
     if df.empty:
         st.markdown(
             callout_html(
                 "info",
-                "CSV ainda vazio. Rode o pipeline para extratores começarem a "
-                "popular `data/output/validacao_arquivos.csv`. "
+                "Schema da Extração Tripla ainda vazio. Rode "
+                "`python scripts/popular_extracao_tripla.py` para popular "
+                "`data/output/extracao_tripla.json` a partir do CSV legado. "
                 "Quando o pipeline de inbox processa um novo arquivo, ele é "
                 "extraído por **ETL determinístico** e por "
                 "**Claude Opus agentic**. Divergências aparecem aqui para "
@@ -621,7 +713,7 @@ def renderizar(
         arquivo_selecionado = str(df_grupos.iloc[0]["caminho_relativo"])
         st.session_state[CHAVE_SESSION_ARQUIVO_SELECIONADO] = arquivo_selecionado
 
-    # KPIs no topo
+    # KPIs no topo (Sprint UX-V-2.4-FIX inclui UNILATERAIS).
     n_total = len(df_grupos)
     n_aprovado = int((df_grupos["status_humano"] == "aprovado").sum())
     n_revisao = max(0, n_total - n_aprovado)
@@ -629,17 +721,26 @@ def renderizar(
         float(df_grupos["paridade_pct"].mean()) if not df_grupos.empty else 0.0
     )
     n_divergencias = int(df_grupos["n_divergencias"].sum())
+    n_unilaterais = int(df_grupos["n_unilaterais"].sum())
 
     st.markdown(
-        _kpis_header_html(media_paridade, n_divergencias, n_revisao, n_total),
+        _kpis_header_html(
+            media_paridade,
+            n_divergencias,
+            n_unilaterais,
+            n_revisao,
+            n_total,
+        ),
         unsafe_allow_html=True,
     )
 
-    # Layout 2-col: lista esquerda | painel direito (cabeçalho + tabela tripla)
+    # Layout 3-col canônico (UX-V-2.4-FIX): KPIs full-width acima +
+    # 2 áreas (lista esquerda | painel direito). O selectbox Streamlit
+    # fica colapsado pois a lista HTML é a fachada visual; o usuário
+    # alterna entre arquivos via dropdown discreto até hidratação JS.
     col_lista, col_painel = st.columns([1, 3])
 
     with col_lista:
-        # Selectbox Streamlit nativo para seleção real (a lista HTML é visual)
         rotulos = [
             f"{Path(str(g['caminho_relativo'])).name} ({g['paridade_pct']:.0f}%)"
             for _, g in df_grupos.iterrows()
