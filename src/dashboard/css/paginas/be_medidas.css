@@ -180,4 +180,34 @@
   background: var(--bg-inset, #1a1c25);
 }
 
+/* ===========================================================================
+ * UX-V-2.12-FIX: skeleton-mockup canônico (vault sem dados).
+ *
+ * Replica visualmente os 6 cards corporais + sparkline placeholder + tabela
+ * de 6 linhas, todos com placeholder `--`. Garante paridade com o mockup
+ * `24-medidas.html` mesmo no estado inicial (forma comunica antes do dado).
+ * =========================================================================== */
+
+.med-card-skeleton .med-valor,
+.med-card-skeleton .med-unid {
+  color: var(--text-muted, #6b6f80);
+}
+
+.med-card-skeleton .med-delta {
+  color: var(--text-muted, #6b6f80);
+  opacity: 0.7;
+}
+
+.med-sparkline-skeleton svg {
+  width: 100%;
+  height: 32px;
+  display: block;
+  opacity: 0.5;
+}
+
+.med-hist-card-skeleton .med-tbl td .v {
+  color: var(--text-muted, #6b6f80);
+  opacity: 0.6;
+}
+
 /* "Corpo medido é corpo cuidado." -- princípio V-2.12 */

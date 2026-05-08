@@ -358,6 +358,73 @@ def _comparativo_card_html(
     )
 
 
+def _skeleton_mockup_html() -> str:
+    """UX-V-2.12-FIX: skeleton canônico do mockup `24-medidas.html`.
+
+    Renderiza 6 cards corporais (peso / gordura corp. / cintura / pressão /
+    frequência rep. / sono médio) com valor `--`, unidade, delta placeholder e
+    sparkline-skeleton (linha cinza pontilhada). Em seguida tabela "Histórico
+    semanal · últimas 6 semanas" com 6 linhas placeholder. Usado dentro do
+    bloco :func:`fallback_estado_inicial_html` quando vault está vazio.
+
+    A escolha das 6 métricas e cores espelha exatamente o mockup -- nenhuma
+    invenção numérica, apenas placeholders `--` (padrão (a) edit cirúrgico).
+    """
+    cards_meta: list[tuple[str, str, str]] = [
+        ("peso", "kg", "var(--accent-purple)"),
+        ("gordura corp.", "%", "var(--accent-orange)"),
+        ("cintura", "cm", "var(--accent-yellow)"),
+        ("pressão", "mmHg", "var(--accent-cyan)"),
+        ("frequência rep.", "bpm", "var(--accent-green)"),
+        ("sono médio", "/noite", "var(--accent-pink)"),
+    ]
+
+    cards: list[str] = []
+    for nome, unidade, cor in cards_meta:
+        cards.append(
+            f'<div class="med-card med-card-skeleton" style="--med-cor:{cor};">'
+            f'<div class="med-head">'
+            f'<span class="med-label">{nome}</span>'
+            f'<span class="med-data">--</span>'
+            f"</div>"
+            f'<div class="med-valor">--<span class="med-unid">{unidade}'
+            f"</span></div>"
+            f'<div class="med-delta med-delta-flat">delta vs 30d</div>'
+            f'<div class="med-sparkline med-sparkline-skeleton">'
+            f'<svg viewBox="0 0 240 32" preserveAspectRatio="none">'
+            f'<line x1="2" y1="16" x2="238" y2="16" '
+            f'stroke="var(--text-muted, #6b6f80)" stroke-width="1" '
+            f'stroke-dasharray="3 4" />'
+            f"</svg>"
+            f"</div>"
+            f"</div>"
+        )
+
+    grid_cards = (
+        f'<div class="med-grid med-grid-skeleton">{"".join(cards)}</div>'
+    )
+
+    colunas = ("data", "peso", "bf%", "cintura", "pressão", "sono médio")
+    cabecalho = "".join(f"<th>{c}</th>" for c in colunas)
+    linhas: list[str] = []
+    for _ in range(6):
+        celulas = "".join(
+            '<td><span class="v">--</span></td>' for _ in colunas
+        )
+        linhas.append(f"<tr>{celulas}</tr>")
+    tabela = (
+        '<div class="med-hist-card med-hist-card-skeleton">'
+        "<h3>Histórico semanal · últimas 6 semanas</h3>"
+        '<table class="med-tbl">'
+        f"<thead><tr>{cabecalho}</tr></thead>"
+        f"<tbody>{''.join(linhas)}</tbody>"
+        "</table>"
+        "</div>"
+    )
+
+    return minificar(grid_cards + tabela)
+
+
 def _page_header_html(qtd: int) -> str:
     """UX-U-03: usa helper canônico ``componentes/page_header``."""
     from src.dashboard.componentes.page_header import renderizar_page_header
@@ -418,40 +485,19 @@ def renderizar(
             fallback_estado_inicial_html,
             ler_sync_info,
         )
-        skeleton = (
-            '<div style="display:grid;grid-template-columns:repeat(3,1fr);'
-            'gap:10px;margin-bottom:12px;">'
-            '<div class="kpi"><span class="kpi-label">PESO</span>'
-            '<span class="kpi-value">--</span></div>'
-            '<div class="kpi"><span class="kpi-label">CINTURA</span>'
-            '<span class="kpi-value">--</span></div>'
-            '<div class="kpi"><span class="kpi-label">PRESSÃO</span>'
-            '<span class="kpi-value">--</span></div>'
-            '</div>'
-            '<div style="display:grid;grid-template-columns:repeat(3,1fr);'
-            'gap:10px;">'
-            '<div class="kpi"><span class="kpi-label">FREQ. CARD.</span>'
-            '<span class="kpi-value">--</span></div>'
-            '<div class="kpi"><span class="kpi-label">SONO</span>'
-            '<span class="kpi-value">--</span></div>'
-            '<div class="kpi"><span class="kpi-label">SPO2</span>'
-            '<span class="kpi-value">--</span></div>'
-            '</div>'
-            '<div style="margin-top:12px;">'
-            '<span class="skel-bloco" style="width:100%;height:60px;"></span>'
-            '</div>'
-        )
+        # UX-V-2.12-FIX: toggle Pessoa A/B sempre presente, mesmo no fallback.
+        st.markdown(_toggle_pessoa_html(pessoa), unsafe_allow_html=True)
         st.markdown(
             fallback_estado_inicial_html(
                 titulo="MEDIDAS · sem registros ainda",
                 descricao=(
-                    "Métricas físicas (peso, cintura, pressão, frequência "
-                    "cardíaca, sono, SpO2) são capturadas no app mobile via "
-                    "integração Mi Fit/Garmin ou entrada manual. Cada medida "
-                    "vira um arquivo <code>.md</code> em "
+                    "Métricas físicas (peso, gordura corp., cintura, pressão, "
+                    "frequência cardíaca, sono médio) são capturadas no app "
+                    "mobile via integração Mi Fit/Garmin ou entrada manual. "
+                    "Cada medida vira um arquivo <code>.md</code> em "
                     "<code>vault/medidas/&lt;pessoa&gt;/</code>."
                 ),
-                skeleton_html=skeleton,
+                skeleton_html=_skeleton_mockup_html(),
                 cta_secao="medidas",
                 sync_info=ler_sync_info(),
             ),
