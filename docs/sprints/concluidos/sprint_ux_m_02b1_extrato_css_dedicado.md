@@ -1,7 +1,7 @@
 ---
 id: UX-M-02.B.1
 titulo: Extrair `_estilos_locais_html` de extrato.py para CSS dedicado
-status: concluida
+status: concluída
 prioridade: media
 data_criacao: 2026-05-06
 concluida_em: 2026-05-06
