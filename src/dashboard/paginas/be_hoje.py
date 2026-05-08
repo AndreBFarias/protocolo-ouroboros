@@ -31,7 +31,7 @@ Lições UX-RD aplicadas:
 from __future__ import annotations
 
 import json
-from datetime import date, datetime
+from datetime import date, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -42,7 +42,6 @@ from src.dashboard.componentes.html_utils import minificar
 from src.dashboard.componentes.page_header import renderizar_page_header
 from src.dashboard.componentes.ui import (
     carregar_css_pagina,
-    kpi_card,
     sync_indicator_html,
 )
 from src.dashboard.tema import CORES
@@ -59,6 +58,7 @@ _KEY_SONO = "be_hoje_sono"
 _KEY_TAGS = "be_hoje_tags"
 _KEY_FRASE = "be_hoje_frase"
 _KEY_FLASH = "be_hoje_flash"
+_KEY_PARA = "be_hoje_para"
 
 
 def renderizar(  # noqa: accent
@@ -119,7 +119,7 @@ def renderizar(  # noqa: accent
         _renderizar_hero_humor(vault_root, hoje, pessoa_default)
 
     with coluna_dir:
-        _renderizar_mini_cards(vault_root, hoje)
+        _renderizar_coluna_direita(vault_root, hoje, pessoa_default)
 
 
 # ---------------------------------------------------------------------------
@@ -272,10 +272,13 @@ def _renderizar_hero_humor(
             )
 
         tags_atuais: list[str] = list(st.session_state.get(_KEY_TAGS, []))
-        tags = st.multiselect(
+        # Pílulas multi-seleção (UX-V-3.5): substitui multiselect tradicional
+        # mantendo paridade visual com mockup 17-bem-estar-hoje.html.
+        tags = st.pills(
             "Tags do momento",
             options=list(TAGS_CANONICAS),
             default=tags_atuais,
+            selection_mode="multi",
             key=_KEY_TAGS,
         )
 
@@ -287,27 +290,14 @@ def _renderizar_hero_humor(
             placeholder="ex.: manhã produtiva, sono ok, tomei medicação no horário",
         )
 
-        opcoes_pessoa = ["pessoa_a", "pessoa_b", "casal"]
-        idx_default = (
-            opcoes_pessoa.index(pessoa_default)
-            if pessoa_default in opcoes_pessoa
-            else 0
-        )
-        pessoa_escolhida = st.selectbox(
-            "Esse registro é para",
-            options=opcoes_pessoa,
-            index=idx_default,
-            format_func=lambda v: {
-                "pessoa_a": "para mim (pessoa A)",
-                "pessoa_b": "para Pessoa B",
-                "casal": "para o casal",
-            }.get(v, v),
-            key="be_hoje_pessoa",
-        )
-
         registrar = st.form_submit_button("Registrar humor")
 
     if registrar:
+        # Seletor de pessoa vive na coluna direita (card "Esse registro é
+        # para…") via st.pills. Lemos do session_state na hora de gravar.
+        pessoa_escolhida = str(st.session_state.get(_KEY_PARA, pessoa_default))
+        if pessoa_escolhida not in {"pessoa_a", "pessoa_b", "casal"}:
+            pessoa_escolhida = pessoa_default
         try:
             arquivo = escrever_registro(
                 vault_root,
@@ -318,7 +308,7 @@ def _renderizar_hero_humor(
                 foco=foco,
                 medicacao=medicacao,
                 horas_sono=float(sono),
-                tags=tags,
+                tags=tags or [],
                 frase=frase,
                 pessoa=pessoa_escolhida,
             )
@@ -333,106 +323,265 @@ def _renderizar_hero_humor(
 
 
 # ---------------------------------------------------------------------------
-# Coluna direita: 3 mini-cards
+# Coluna direita: 3 cards canônicos (UX-V-3.5)
+# 1. Esse registro é para…  (st.pills 3 opções)
+# 2. Status do casal · 7 dias (humor médio Pessoa A + Pessoa B + barras)
+# 3. Próximos · alarmes & tarefas (5 itens agregados)
 # ---------------------------------------------------------------------------
 
 
-def _carregar_cache(vault_root: Path, schema: str) -> dict[str, Any] | None:
-    """Lê ``<vault>/.ouroboros/cache/<schema>.json`` se existir."""
+def _carregar_cache_items(vault_root: Path, schema: str) -> list[dict[str, Any]]:
+    """Lê cache ``<vault>/.ouroboros/cache/<schema>.json`` retornando ``items``.
+
+    Padrão canônico do mobile_cache._base.varrer_schema (chave ``items``).
+    Usado por ``alarmes``, ``tarefas``, ``eventos``, ``contadores``.
+    """
     arquivo = vault_root / ".ouroboros" / "cache" / f"{schema}.json"
     if not arquivo.exists():
-        return None
+        return []
     try:
-        texto = arquivo.read_text(encoding="utf-8")
-        return json.loads(texto)
+        payload = json.loads(arquivo.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
-        return None
+        return []
+    items = payload.get("items") or []
+    return items if isinstance(items, list) else []
 
 
-def _filtrar_por_dia(
-    items: list[dict[str, Any]],
+def _carregar_humor_heatmap(vault_root: Path) -> dict[str, Any]:
+    """Lê ``humor-heatmap.json`` (schema próprio, chave ``celulas``)."""
+    arquivo = vault_root / ".ouroboros" / "cache" / "humor-heatmap.json"
+    if not arquivo.exists():
+        return {}
+    try:
+        return json.loads(arquivo.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+
+
+def _renderizar_coluna_direita(
+    vault_root: Path,
     hoje: date,
-    *,
-    chave_data: str = "data",
-) -> list[dict[str, Any]]:
-    """Mantém apenas itens cuja ``chave_data`` casa com ``hoje`` (ISO)."""
-    iso = hoje.isoformat()
-    resultado: list[dict[str, Any]] = []
-    for it in items:
-        valor = it.get(chave_data)
-        if isinstance(valor, str) and valor.startswith(iso):
-            resultado.append(it)
-            continue
-        if isinstance(valor, datetime) and valor.date() == hoje:
-            resultado.append(it)
-            continue
-        if isinstance(valor, date) and valor == hoje:
-            resultado.append(it)
-    return resultado
+    pessoa_default: str,
+) -> None:
+    """Renderiza os 3 cards canônicos da coluna direita."""
+    _card_para_quem(pessoa_default)
+    _card_status_casal(vault_root, hoje)
+    _card_proximos(vault_root, hoje)
 
 
-def _renderizar_mini_cards(vault_root: Path, hoje: date) -> None:
-    """Renderiza 3 KPIs canônicos (kpi_card) + listas dos itens do dia.
+def _card_para_quem(pessoa_default: str) -> None:
+    """Card 1 — seletor "Esse registro é para…" via st.pills (single).
 
-    Estrutura de configuração compacta: cada entrada define o cache, chave
-    interna, accent visual, descrição e texto vazio. Loop único substitui
-    3 blocos repetidos manualmente.
+    Substitui o ``selectbox`` que estava dentro do form do hero. Estado
+    persiste em ``st.session_state[_KEY_PARA]`` e é lido no submit.
     """
-    diarios = _carregar_cache(vault_root, "diario-emocional") or {}
-    eventos = _carregar_cache(vault_root, "eventos") or {}
-    medidas = _carregar_cache(vault_root, "medidas") or {}
+    st.markdown(
+        minificar(
+            '<div class="bloco-para-marker">'
+            '<h3 class="bloco-para-titulo">Esse registro é para…</h3>'
+            '</div>'
+        ),
+        unsafe_allow_html=True,
+    )
+    pessoas_validas = ["pessoa_a", "pessoa_b", "casal"]
+    rotulos = {
+        "pessoa_a": "para mim",
+        "pessoa_b": "para Pessoa B",
+        "casal": "para o casal",
+    }
+    atual = str(st.session_state.get(_KEY_PARA, pessoa_default))
+    if atual not in pessoas_validas:
+        atual = pessoa_default if pessoa_default in pessoas_validas else "pessoa_a"
+    st.pills(
+        "Esse registro é para",
+        options=pessoas_validas,
+        default=atual,
+        selection_mode="single",
+        format_func=lambda v: rotulos.get(v, v),
+        key=_KEY_PARA,
+        label_visibility="collapsed",
+    )
 
-    cards: list[tuple[str, list[dict[str, Any]], str, str, str, str]] = [
-        (
-            "Diários do dia",
-            _filtrar_por_dia(diarios.get("registros", []) or [], hoje),
-            "registros emocionais",
-            "pink",
-            "titulo",
-            "Sem diário hoje",
-        ),
-        (
-            "Eventos do dia",
-            _filtrar_por_dia(eventos.get("eventos", []) or [], hoje, chave_data="inicio"),
-            "agenda + alarmes",
-            "cyan",
-            "titulo",
-            "Sem eventos hoje",
-        ),
-        (
-            "Medidas do dia",
-            _filtrar_por_dia(medidas.get("medidas", []) or [], hoje),
-            "peso · pressão · glicose",
-            "green",
-            "tipo",
-            "Sem medidas hoje",
-        ),
+
+def _card_status_casal(vault_root: Path, hoje: date) -> None:
+    """Card 2 — Status do casal nos últimos 7 dias.
+
+    Lê ``humor-heatmap.json`` (campo ``celulas``) e calcula:
+      * média de humor por pessoa nos últimos 7 dias
+      * número de registros
+      * lista de 7 valores (um por dia, 0..5; 0=sem registro) para barras
+    """
+    payload = _carregar_humor_heatmap(vault_root)
+    celulas = payload.get("celulas") or []
+
+    inicio = hoje - timedelta(days=6)
+    pessoas_cfg: list[tuple[str, str, str]] = [
+        ("pessoa_a", "pessoa A · você", CORES.get("destaque", "#bd93f9")),
+        ("pessoa_b", "pessoa B", CORES.get("superfluo", "#ff79c6")),
     ]
 
-    for titulo, items, sub, accent, chave, vazio in cards:
-        st.markdown(
-            kpi_card(titulo, str(len(items)), sub_label=sub, accent=accent),
-            unsafe_allow_html=True,
+    cards_html: list[str] = []
+    for pid, rotulo, cor in pessoas_cfg:
+        valores: list[int] = [0] * 7
+        soma = 0
+        registros = 0
+        for cel in celulas:
+            if cel.get("autor") != pid:
+                continue
+            ds = str(cel.get("data") or "")
+            try:
+                d = date.fromisoformat(ds)
+            except ValueError:
+                continue
+            if not (inicio <= d <= hoje):
+                continue
+            humor = cel.get("humor")
+            if not isinstance(humor, int):
+                continue
+            idx = (d - inicio).days
+            if 0 <= idx < 7:
+                valores[idx] = humor
+                soma += humor
+                registros += 1
+        media = round(soma / registros, 1) if registros else 0.0
+        media_str = f"{media:.1f}" if registros else "—"
+        barras = "".join(
+            f'<span class="pmini-bar" style="--p:{v};"></span>'
+            for v in valores
         )
-        if items:
-            st.markdown(_lista_mini_html(items, chave), unsafe_allow_html=True)
-        else:
-            st.markdown(_vazio_html(vazio), unsafe_allow_html=True)
+        cards_html.append(
+            f'<div class="pessoa-card" style="--cor:{cor};">'
+            f'  <div class="pnome">{rotulo}</div>'
+            f'  <div class="pmedia">{media_str}'
+            f'<span class="pmedia-suffix">/5</span></div>'
+            f'  <div class="pdetalhe">{registros} registro'
+            f'{"s" if registros != 1 else ""} · 7d</div>'
+            f'  <div class="pmini">{barras}</div>'
+            f'</div>'
+        )
+
+    st.markdown(
+        minificar(
+            '<div class="bloco-status">'
+            '  <h3>Status do casal · últimos 7 dias</h3>'
+            f'  <div class="casal-grid">{"".join(cards_html)}</div>'
+            '</div>'
+        ),
+        unsafe_allow_html=True,
+    )
 
 
-def _lista_mini_html(items: list[dict[str, Any]], chave_titulo: str) -> str:
-    linhas = []
-    for it in items[:5]:
-        titulo = str(it.get(chave_titulo, "—"))
-        linhas.append(f'<li class="mini-item">{titulo}</li>')
+def _card_proximos(vault_root: Path, hoje: date) -> None:
+    """Card 3 — Próximos alarmes & tarefas.
+
+    Agrega até 5 itens combinando: alarmes ativos + tarefas pendentes
+    (concluida=False, prazo>=hoje) + próximos eventos + 1 contador ativo.
+    Cada linha tem rótulo de tipo + horário/prazo + título + tag.
+    """
+    alarmes = _carregar_cache_items(vault_root, "alarmes")
+    tarefas = _carregar_cache_items(vault_root, "tarefas")
+    eventos = _carregar_cache_items(vault_root, "eventos")
+    contadores = _carregar_cache_items(vault_root, "contadores")
+
+    cor_alarme = CORES.get("alerta", "#ffb86c")
+    cor_tarefa = CORES.get("neutro", "#8be9fd")
+    cor_evento = CORES.get("superfluo", "#ff79c6")
+    cor_contador = CORES.get("essencial", "#50fa7b")
+
+    linhas: list[str] = []
+
+    # Alarmes ativos (até 2)
+    for al in alarmes:
+        if not al.get("ativo", True):
+            continue
+        horario = str(al.get("horario") or "—")
+        titulo = str(al.get("categoria") or al.get("id") or "alarme")
+        tag = "diário" if al.get("recorrencia") else (al.get("autor") or "")
+        linhas.append(_evt_html("alarme", cor_alarme, horario, titulo, str(tag)))
+        if sum(1 for ln in linhas if "alarme" in ln) >= 2:
+            break
+
+    # Tarefas pendentes com prazo hoje ou futuro (até 2)
+    iso_hoje = hoje.isoformat()
+    cont_tarefa = 0
+    for tr in tarefas:
+        if tr.get("concluida"):
+            continue
+        prazo = str(tr.get("prazo") or "")
+        if prazo and prazo < iso_hoje:
+            continue
+        titulo = str(tr.get("titulo") or "tarefa")
+        hora = "hoje" if prazo == iso_hoje or not prazo else prazo
+        autor = str(tr.get("autor") or "")
+        rotulo_autor = {
+            "pessoa_a": "mim",
+            "pessoa_b": "Pessoa B",
+            "casal": "casal",
+        }.get(autor, autor)
+        linhas.append(_evt_html("tarefa", cor_tarefa, hora, titulo, rotulo_autor))
+        cont_tarefa += 1
+        if cont_tarefa >= 2:
+            break
+
+    # Próximo evento futuro (1)
+    for ev in sorted(eventos, key=lambda e: str(e.get("data") or "")):
+        ds = str(ev.get("data") or "")
+        if ds < iso_hoje:
+            continue
+        lugar = str(ev.get("lugar") or ev.get("categoria") or "evento")
+        bairro = str(ev.get("bairro") or "")
+        autor = str(ev.get("autor") or "")
+        rotulo_autor = {
+            "pessoa_a": "mim",
+            "pessoa_b": "Pessoa B",
+            "casal": "casal",
+        }.get(autor, autor)
+        tag = bairro or rotulo_autor
+        linhas.append(
+            _evt_html("evento", cor_evento, ds[5:] if len(ds) >= 10 else ds,
+                      lugar, tag)
+        )
+        break
+
+    # 1 contador ativo (mostra dias decorridos desde data_inicio/ultima_reset)
+    for ct in contadores:
+        nome = str(ct.get("nome") or "contador")
+        ref = ct.get("ultima_reset") or ct.get("data_inicio") or ""
+        try:
+            d_ref = date.fromisoformat(str(ref))
+            dias = (hoje - d_ref).days
+            hora = f"{dias}d" if dias >= 0 else "—"
+        except ValueError:
+            hora = "—"
+        categoria = str(ct.get("categoria") or "")
+        linhas.append(_evt_html("contador", cor_contador, hora, nome, categoria))
+        break
+
     if not linhas:
-        return ""
-    return minificar(f'<ul class="mini-lista">{"".join(linhas)}</ul>')
+        linhas.append(
+            '<div class="evt-vazio">Nada pendente nos próximos dias.</div>'
+        )
+
+    st.markdown(
+        minificar(
+            '<div class="bloco-proximos">'
+            '  <h3>Próximos · alarmes & tarefas</h3>'
+            f'  <div class="evt-lista">{"".join(linhas[:5])}</div>'
+            '</div>'
+        ),
+        unsafe_allow_html=True,
+    )
 
 
-def _vazio_html(texto: str) -> str:
-    return minificar(
-        f'<div class="mini-vazio" style="color:{CORES["texto_muted"]};">{texto}</div>'
+def _evt_html(tipo: str, cor: str, hora: str, titulo: str, tag: str) -> str:
+    """Linha de evento canônica do mockup 17-bem-estar-hoje."""
+    return (
+        f'<div class="evt">'
+        f'  <span class="evt-tipo" style="--cor:{cor};">{tipo}</span>'
+        f'  <span class="evt-hora">{hora}</span>'
+        f'  <span class="evt-titulo">{titulo}</span>'
+        f'  <span class="evt-tag">{tag}</span>'
+        f'</div>'
     )
 
 

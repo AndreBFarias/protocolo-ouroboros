@@ -57,3 +57,167 @@
     font-style: italic;
     margin: 4px 0 12px 4px;
 }
+
+/* ================================================================
+   UX-V-3.5 — Coluna direita: 3 cards canônicos do mockup
+   1. .bloco-para-marker      — seletor "Esse registro é para…"
+   2. .bloco-status           — humor médio Pessoa A + Pessoa B (7d)
+   3. .bloco-proximos         — lista de alarmes & tarefas
+   ================================================================ */
+
+.bloco-para-marker {
+    background: var(--bg-surface);
+    border: 1px solid var(--bg-elevated);
+    border-radius: 8px;
+    padding: 12px 16px 4px;
+    margin-bottom: 8px;
+}
+.bloco-para-titulo {
+    font-family: monospace;
+    font-size: 11px;
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin: 0 0 8px;
+}
+
+/* Card 2 — status do casal */
+.bloco-status {
+    background: var(--bg-surface);
+    border: 1px solid var(--bg-elevated);
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-bottom: 12px;
+}
+.bloco-status h3 {
+    font-family: monospace;
+    font-size: 11px;
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin: 0 0 10px;
+}
+.casal-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+.pessoa-card {
+    background: var(--bg-inset, #21222c);
+    border: 1px solid var(--bg-elevated);
+    border-left: 3px solid var(--cor);
+    border-radius: 4px;
+    padding: 10px 12px;
+}
+.pessoa-card .pnome {
+    font-family: monospace;
+    font-size: 11px;
+    color: var(--cor);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+}
+.pessoa-card .pmedia {
+    font-family: monospace;
+    font-size: 22px;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    color: var(--text-primary);
+}
+.pessoa-card .pmedia-suffix {
+    color: var(--text-muted);
+    font-size: 11px;
+    margin-left: 2px;
+}
+.pessoa-card .pdetalhe {
+    font-family: monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-top: 4px;
+}
+.pessoa-card .pmini {
+    display: flex;
+    gap: 2px;
+    margin-top: 8px;
+    height: 16px;
+}
+.pessoa-card .pmini .pmini-bar {
+    flex: 1;
+    height: 100%;
+    background: var(--bg-elevated);
+    border-radius: 1px;
+    opacity: calc(0.18 + 0.16 * var(--p, 0));
+}
+.pessoa-card .pmini .pmini-bar[style*="--p:0"] {
+    opacity: 0.18;
+    background: var(--bg-elevated);
+}
+
+/* Card 3 — próximos */
+.bloco-proximos {
+    background: var(--bg-surface);
+    border: 1px solid var(--bg-elevated);
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-bottom: 12px;
+}
+.bloco-proximos h3 {
+    font-family: monospace;
+    font-size: 11px;
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin: 0 0 10px;
+}
+.evt-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.evt {
+    display: grid;
+    grid-template-columns: auto auto 1fr auto;
+    gap: 10px;
+    align-items: center;
+    padding: 6px 10px;
+    background: var(--bg-inset, #21222c);
+    border: 1px solid transparent;
+    border-radius: 4px;
+    transition: border-color .12s;
+}
+.evt:hover {
+    border-color: var(--bg-elevated);
+}
+.evt-tipo {
+    font-family: monospace;
+    font-size: 10px;
+    color: var(--cor);
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+    background: var(--bg-elevated);
+    padding: 2px 6px;
+    border-radius: 3px;
+}
+.evt-hora {
+    font-family: monospace;
+    font-size: 11px;
+    color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
+}
+.evt-titulo {
+    font-size: 12px;
+    color: var(--text-primary);
+}
+.evt-tag {
+    font-family: monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+}
+.evt-vazio {
+    font-family: monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    font-style: italic;
+    padding: 8px 10px;
+}
