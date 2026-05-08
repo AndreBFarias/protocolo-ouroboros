@@ -207,16 +207,22 @@ def _proximo_ciclo(items: list[dict[str, Any]], hoje: date) -> tuple[date | None
 # ---------------------------------------------------------------------------
 
 
-def _anel_ciclo_svg(dia_atual: int, total_dias: int = TOTAL_DIAS_CICLO) -> str:
+def _anel_ciclo_svg(dia_atual: int | None, total_dias: int = TOTAL_DIAS_CICLO) -> str:
     """SVG anel circular com ``total_dias`` segmentos coloridos por fase.
 
     Adapta a lógica do mockup ``25-ciclo.html`` (função ``gerarAnel``):
     cada dia vira um arco com ``stroke-width`` maior se for o dia atual,
     e há um marcador circular ciano destacando ``dia_atual``.
+
+    Quando ``dia_atual`` é ``None`` (skeleton sem dado), todos os 28
+    segmentos são renderizados em opacidade uniforme, sem largura
+    aumentada nem marcador ciano. Padrão ``(o)`` retrocompatível: o
+    chamador antigo ``_anel_ciclo_svg(d)`` mantém comportamento original.
     """
     cx, cy, r = 230, 230, 170
     sw = 28
     arcs: list[str] = []
+    skeleton = dia_atual is None
     for d in range(1, total_dias + 1):
         a0 = ((d - 1) / total_dias) * math.pi * 2 - math.pi / 2 + 0.005
         a1 = (d / total_dias) * math.pi * 2 - math.pi / 2 - 0.005
@@ -225,9 +231,12 @@ def _anel_ciclo_svg(dia_atual: int, total_dias: int = TOTAL_DIAS_CICLO) -> str:
         x1 = cx + r * math.cos(a1)
         y1 = cy + r * math.sin(a1)
         cor = _fase_do_dia(d)["cor"]
-        is_hoje = d == dia_atual
+        is_hoje = (not skeleton) and d == dia_atual
         largura = sw + 8 if is_hoje else sw
-        opacidade = 1.0 if is_hoje else 0.7
+        if skeleton:
+            opacidade = 0.85
+        else:
+            opacidade = 1.0 if is_hoje else 0.7
         arcs.append(
             f'<path d="M {x0:.2f} {y0:.2f} A {r} {r} 0 0 1 {x1:.2f} {y1:.2f}" '
             f'stroke="{cor}" stroke-width="{largura}" fill="none" '
@@ -247,13 +256,15 @@ def _anel_ciclo_svg(dia_atual: int, total_dias: int = TOTAL_DIAS_CICLO) -> str:
                 f'font-weight="{peso}">{d}</text>'
             )
     # Marcador "hoje" -- pequeno círculo ciano sobre o segmento atual.
-    a_hoje = ((dia_atual - 0.5) / total_dias) * math.pi * 2 - math.pi / 2
-    mx = cx + (r - sw / 2 - 6) * math.cos(a_hoje)
-    my = cy + (r - sw / 2 - 6) * math.sin(a_hoje)
-    arcs.append(
-        f'<circle cx="{mx:.2f}" cy="{my:.2f}" r="6" '
-        f'fill="var(--accent-cyan)" stroke="var(--bg-base)" stroke-width="2" />'
-    )
+    # Omitido no skeleton (sem dia destacado).
+    if not skeleton:
+        a_hoje = ((dia_atual - 0.5) / total_dias) * math.pi * 2 - math.pi / 2
+        mx = cx + (r - sw / 2 - 6) * math.cos(a_hoje)
+        my = cy + (r - sw / 2 - 6) * math.sin(a_hoje)
+        arcs.append(
+            f'<circle cx="{mx:.2f}" cy="{my:.2f}" r="6" '
+            f'fill="var(--accent-cyan)" stroke="var(--bg-base)" stroke-width="2" />'
+        )
 
     return (
         f'<svg class="anel-svg" viewBox="0 0 460 460" '
@@ -405,6 +416,119 @@ def _privacidade_card_html() -> str:
     )
 
 
+SINTOMAS_SKELETON_CANONICOS: list[str] = [
+    "cólica",
+    "inchaço",
+    "dor de cabeça",
+    "sensibilidade mamária",
+    "fadiga",
+    "mudança de apetite",
+    "mudança de humor",
+    "acne",
+]
+
+CRUZAMENTO_FASES_SKELETON: list[str] = [
+    "humor médio · folicular",
+    "humor médio · fértil",
+    "humor médio · lútea (TPM)",
+    "humor médio · menstrual",
+]
+
+
+def _anel_skeleton_html() -> str:
+    """Anel SVG canônico no skeleton: 28 segmentos coloridos sem dia destacado.
+
+    Centro mostra ``d-- · de 28 · próxima --``. Mantém o anel completo do
+    mockup mesmo quando ainda não há registros, para preservar a paridade
+    visual exigida pela auditoria 2026-05-08 (página 25).
+    """
+    centro = (
+        '<div class="anel-centro">'
+        '<div class="fase-titulo" style="color:var(--text-muted);">--</div>'
+        '<div class="dia">d--</div>'
+        f'<div class="total">de {TOTAL_DIAS_CICLO}</div>'
+        '<div class="pred">próxima menstruação · --</div>'
+        '</div>'
+    )
+    return f'<div class="anel-wrap">{_anel_ciclo_svg(None)}{centro}</div>'
+
+
+def _sintomas_skeleton_html() -> str:
+    """Card SINTOMAS HOJE no skeleton: 8 linhas canônicas com escala 0-3 vazia."""
+    linhas: list[str] = []
+    for nome in SINTOMAS_SKELETON_CANONICOS:
+        dots = "".join('<span></span>' for _ in range(3))
+        linhas.append(
+            '<div class="sint-row">'
+            f'<span class="nome">{nome}</span>'
+            f'<div class="intens">{dots}</div>'
+            '</div>'
+        )
+    return (
+        '<div class="sint-card">'
+        '<h3>Sintomas hoje · escala 0-3</h3>'
+        f'{"".join(linhas)}'
+        '</div>'
+    )
+
+
+def _cruzamento_skeleton_html() -> str:
+    """Card CRUZAMENTO HUMOR no skeleton: 4 fases com valor ``--``."""
+    linhas: list[str] = []
+    for label in CRUZAMENTO_FASES_SKELETON:
+        linhas.append(
+            '<div class="cruz-row">'
+            f'<span>{label}</span>'
+            '<span class="v">--</span>'
+            '</div>'
+        )
+    nota = (
+        '<div style="margin-top:10px;padding-top:10px;'
+        'border-top:1px dashed var(--border-subtle);'
+        'font-family:var(--ff-mono);font-size:11px;'
+        'color:var(--text-muted);line-height:1.5;">'
+        'Cruzamento humor por fase requer histórico mínimo de 3 ciclos. '
+        'Continue registrando dia a dia que aqui aparecem os agregados.'
+        '</div>'
+    )
+    return (
+        '<div class="crc-card">'
+        '<h3>Cruzamento · ciclo × humor (12 ciclos)</h3>'
+        f'{"".join(linhas)}'
+        f'{nota}'
+        '</div>'
+    )
+
+
+def _skeleton_ciclo_completo_html() -> str:
+    """Skeleton canônico V-2.13-FIX: anel + sintomas + cruzamento + fases.
+
+    Renderiza, mesmo sem dado real, o layout esperado da página: anel SVG
+    com 28 segmentos coloridos (sem dia destacado), card SINTOMAS HOJE com
+    8 linhas placeholder, card CRUZAMENTO HUMOR com 4 linhas placeholder e
+    os 4 cards canônicos das fases no rodapé. Substitui o skeleton pobre
+    de UX-V-2.13 (silhueta cinza + 4 KPIs ``--``).
+    """
+    coluna_principal = (
+        '<div class="ciclo-card">'
+        f'{_anel_skeleton_html()}'
+        f'{_cards_fase_html("")}'
+        '</div>'
+    )
+    coluna_lateral = (
+        '<div class="coluna-direita">'
+        f'{_sintomas_skeleton_html()}'
+        f'{_cruzamento_skeleton_html()}'
+        '</div>'
+    )
+    return (
+        '<div class="ciclo-grid">'
+        f'<div>{coluna_principal}</div>'
+        f'{coluna_lateral}'
+        '</div>'
+    )
+
+
 def _page_header_html(ativo: bool) -> str:
     """UX-U-03: usa helper canônico ``componentes/page_header``."""
     from src.dashboard.componentes.page_header import renderizar_page_header
@@ -468,32 +592,11 @@ def renderizar(
     items = _carregar_cache_ciclo(vault_root)
 
     if not items:
-        # Fallback V-03: estado inicial antes do primeiro registro.
+        # Fallback V-03 + UX-V-2.13-FIX: estado inicial antes do primeiro
+        # registro, agora com paridade visual completa do mockup.
         from src.dashboard.componentes.ui import (
             fallback_estado_inicial_html,
             ler_sync_info,
-        )
-        skeleton = (
-            '<div style="display:flex;gap:18px;align-items:center;">'
-            '<span class="skel-bloco" style="width:120px;height:120px;'
-            'border-radius:50%;"></span>'
-            '<div style="flex:1;display:flex;flex-direction:column;gap:8px;">'
-            '<span class="skel-bloco" style="width:40%;height:0.9em;"></span>'
-            '<span class="skel-bloco" style="width:80%;"></span>'
-            '<span class="skel-bloco" style="width:65%;"></span>'
-            '<span class="skel-bloco" style="width:75%;height:0.85em;"></span>'
-            '</div></div>'
-            '<div style="margin-top:14px;display:grid;'
-            'grid-template-columns:repeat(4,1fr);gap:8px;">'
-            '<div class="kpi"><span class="kpi-label">FASE</span>'
-            '<span class="kpi-value">--</span></div>'
-            '<div class="kpi"><span class="kpi-label">DIA DO CICLO</span>'
-            '<span class="kpi-value">--</span></div>'
-            '<div class="kpi"><span class="kpi-label">DURAÇÃO MÉDIA</span>'
-            '<span class="kpi-value">--</span></div>'
-            '<div class="kpi"><span class="kpi-label">PRÓXIMO</span>'
-            '<span class="kpi-value">--</span></div>'
-            '</div>'
         )
         st.markdown(
             fallback_estado_inicial_html(
@@ -505,7 +608,7 @@ def renderizar(
                     "<code>vault/ciclo/&lt;data&gt;.md</code> aparece como "
                     "ponto no anel acima."
                 ),
-                skeleton_html=skeleton,
+                skeleton_html=minificar(_skeleton_ciclo_completo_html()),
                 cta_secao="ciclo",
                 sync_info=ler_sync_info(),
             ),
