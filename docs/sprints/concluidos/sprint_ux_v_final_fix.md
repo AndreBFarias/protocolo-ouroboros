@@ -1,7 +1,9 @@
 ---
 id: UX-V-FINAL-FIX
 titulo: 7 defeitos visuais finais (período, sidebar Home, cards, KPIs, capitalização, projecoes)
-status: backlog
+status: concluída
+concluida_em: 2026-05-08
+commit: 9c2ff28
 prioridade: alta
 data_criacao: 2026-05-08
 fase: PARIDADE_VISUAL
