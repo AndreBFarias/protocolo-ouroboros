@@ -1,7 +1,7 @@
 ---
 id: UX-V-3.3-FIX-ROTA
 titulo: Catalogação — corrigir bug de roteamento que renderiza Busca Global
-status: concluida
+status: concluída
 concluida_em: 2026-05-08
 prioridade: altissima
 data_criacao: 2026-05-08

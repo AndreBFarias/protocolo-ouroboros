@@ -1,7 +1,7 @@
 ---
 id: INFRA-EXTRACAO-TRIPLA-SCHEMA
 titulo: Schema canônico extracao_tripla.json + popular Opus em >=3 amostras reais
-status: concluida
+status: concluída
 concluida_em: 2026-05-08
 prioridade: altissima
 data_criacao: 2026-05-08
