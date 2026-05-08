@@ -45,6 +45,10 @@ from src.dashboard.dados import (
     filtro_forma_ativo,
     formatar_moeda,
 )
+from src.dashboard.paginas.pagamentos_valores import (
+    ORIGEM_SEM_DADO,
+    enriquecer_prazos_com_valor,
+)
 from src.dashboard.tema import (
     CORES,
     FONTE_CORPO,
@@ -417,10 +421,18 @@ def _pagamentos_por_data(
         except ValueError:
             continue
 
+        # UX-V-2.2.A: prefere valor_estimado (enriquecido a partir do
+        # extrato) quando disponível; cai para 'valor' por retrocompat.
+        valor_raw = row.get("valor_estimado", row.get("valor", 0))
         try:
-            valor = float(row.get("valor", 0) or 0)
+            valor = float(valor_raw or 0)
         except (ValueError, TypeError):
             valor = 0.0
+
+        origem_raw = row.get("origem_valor", ORIGEM_SEM_DADO)
+        origem = (
+            ORIGEM_SEM_DADO if pd.isna(origem_raw) else str(origem_raw)
+        ) if origem_raw is not None else ORIGEM_SEM_DADO
 
         conta_raw = row.get("conta", row.get("nome", "?"))
         if pd.isna(conta_raw):
@@ -440,6 +452,7 @@ def _pagamentos_por_data(
                 "label": label[:14],
                 "tipo": tipo,
                 "valor": valor,
+                "origem_valor": origem,
             }
         )
     return pgs
@@ -477,7 +490,9 @@ def _calendario_html(
                 classes.append("cal-hoje")
             pills = "".join(
                 f'<span class="cal-pill cal-pill-{p["tipo"]}" '
-                f'title="{p["label"]}">{str(p["label"]).upper()}</span>'
+                f'title="{p["label"]} -- R$ {float(p.get("valor", 0) or 0):,.2f} '
+                f'({p.get("origem_valor", ORIGEM_SEM_DADO)})">'
+                f'{str(p["label"]).upper()}</span>'
                 for p in pg_dia
             )
             celulas.append(
@@ -546,6 +561,8 @@ def _lista_proximos_html(
             label = str(p.get("label", "?"))
             tipo = str(p.get("tipo", "fixo"))
             valor = float(p.get("valor", 0) or 0)
+            origem = str(p.get("origem_valor", ORIGEM_SEM_DADO))
+            meta = f"{tipo.replace('_', ' ')} · {origem}"
             mes_abrev = ABREV_MESES[d.month - 1]
             linhas.append(
                 f'<div class="proximo-linha {classe}">'
@@ -555,7 +572,7 @@ def _lista_proximos_html(
                 f"</div>"
                 f'<div class="prox-detalhes">'
                 f'<span class="prox-label">{label}</span>'
-                f'<span class="prox-meta">{tipo.replace("_", " ")}</span>'
+                f'<span class="prox-meta">{meta}</span>'
                 f"</div>"
                 f'<span class="prox-valor">R$ {valor:,.2f}</span>'
                 f'<button class="prox-btn">agendar</button>'
@@ -650,7 +667,10 @@ def renderizar(
             except ValueError:
                 pass
 
-    pgs_por_data = _pagamentos_por_data(prazos, ano, mes)
+    # UX-V-2.2.A: enriquece prazos com valor_estimado cruzando com extrato.
+    # NÃO modifica o XLSX em disco; é runtime apenas.
+    prazos_enriquecidos = enriquecer_prazos_com_valor(prazos, extrato)
+    pgs_por_data = _pagamentos_por_data(prazos_enriquecidos, ano, mes)
 
     st.markdown(
         _page_header_html(len(eventos), em_atraso_qtd),

@@ -1,9 +1,10 @@
 ---
 id: UX-V-2.2.A
 titulo: Enriquecer prazos com valores reais (cruzamento boletos x prazos)
-status: backlog
+status: concluida
 prioridade: media
 data_criacao: 2026-05-07
+concluida_em: 2026-05-08
 fase: PARIDADE_VISUAL
 depende_de: [UX-V-2.2]
 origem: achado colateral durante execução UX-V-2.2 (executor sprint)
