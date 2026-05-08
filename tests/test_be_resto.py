@@ -183,6 +183,37 @@ def test_medidas_comparativo_vazio_retorna_dict_vazio():
     assert be_medidas._comparativo([]) == {}
 
 
+def test_medidas_schema_estendido_fisiologicas_opcionais():
+    """UX-V-2.12.A: novos campos fisiológicos são opcionais e
+    retrocompatíveis. Itens sem fisiológicas continuam funcionando;
+    itens com fisiológicas alimentam o comparativo normalmente."""
+    assert "gordura_pct" in be_medidas.CAMPOS
+    assert "pressao_sis" in be_medidas.CAMPOS
+    assert "freq_card" in be_medidas.CAMPOS
+    assert "sono_horas" in be_medidas.CAMPOS
+    items = [
+        {"data": "2026-04-01", "peso": 80.0},
+        {
+            "data": "2026-05-01",
+            "peso": 78.0,
+            "gordura_pct": 17.8,
+            "pressao_sis": 120.0,
+            "freq_card": 64.0,
+            "sono_horas": 6.8,
+        },
+    ]
+    comp = be_medidas._comparativo(items)
+    # Antropométrico continua funcional.
+    assert comp["peso"]["delta"] == -2.0
+    # Fisiológico com 1 ponto: primeiro == último, delta == 0.0.
+    assert comp["gordura_pct"]["primeiro"] == 17.8
+    assert comp["gordura_pct"]["ultimo"] == 17.8
+    assert comp["gordura_pct"]["delta"] == 0.0
+    # Cintura ausente em ambos -> None em todos os slots.
+    assert comp["cintura"]["primeiro"] is None
+    assert comp["cintura"]["delta"] is None
+
+
 # ===========================================================================
 # 12-13. be_ciclo
 # ===========================================================================

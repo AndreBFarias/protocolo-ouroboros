@@ -1,10 +1,17 @@
 """Parser do schema ``medidas`` para o cache Mobile.
 
-Varre ``<vault_root>/medidas/**/*.md`` extraindo frontmatter com
-``peso`` (kg, float), ``cintura``, ``quadril``, ``peito``, ``braco``,
-``coxa`` (cm, float) e ``fotos`` (lista de paths comparativos).
+Varre ``<vault_root>/medidas/**/*.md`` extraindo frontmatter com:
 
-Cache em ``.ouroboros/cache/medidas.json``. Sprint UX-RD-16.
+* Antropométricas (UX-RD-16): ``peso`` (kg), ``cintura``, ``quadril``,
+  ``peito``, ``braco``, ``coxa`` (cm).
+* Fisiológicas opcionais (UX-V-2.12.A): ``gordura_pct`` (%),
+  ``pressao_sis``/``pressao_dia`` (mmHg), ``freq_card`` (bpm),
+  ``sono_horas`` (h em decimal, ex. 6.8 = 6h48).
+
+Todos os campos numéricos são opcionais; padrão retrocompatível
+(``None`` quando ausentes) -- padrão (o) do VALIDATOR_BRIEF.
+
+Cache em ``.ouroboros/cache/medidas.json``. Sprints UX-RD-16, UX-V-2.12.A.
 """
 
 from __future__ import annotations
@@ -19,7 +26,21 @@ from src.utils.pessoas import pessoa_id_de_legacy
 
 SCHEMA = "medidas"
 SUBPATHS = (("medidas",),)
-CAMPOS_NUMERICOS = ("peso", "cintura", "quadril", "peito", "braco", "coxa")
+CAMPOS_NUMERICOS = (
+    # Antropométricas (UX-RD-16).
+    "peso",
+    "cintura",
+    "quadril",
+    "peito",
+    "braco",
+    "coxa",
+    # Fisiológicas (UX-V-2.12.A) -- opcionais, padrão None.
+    "gordura_pct",
+    "pressao_sis",
+    "pressao_dia",
+    "freq_card",
+    "sono_horas",
+)
 
 
 def _coerce_float(valor: Any) -> float | None:

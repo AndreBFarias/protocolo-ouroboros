@@ -28,7 +28,21 @@ from src.dashboard.componentes.html_utils import minificar
 from src.dashboard.tema import CORES
 from src.mobile_cache.varrer_vault import descobrir_vault_root
 
-CAMPOS = ("peso", "cintura", "quadril", "peito", "braco", "coxa")
+# UX-V-2.12.A: schema estendido com fisiológicas opcionais.
+# Antropométricas (6, UX-RD-16) + fisiológicas (5, UX-V-2.12.A).
+CAMPOS = (
+    "peso",
+    "cintura",
+    "quadril",
+    "peito",
+    "braco",
+    "coxa",
+    "gordura_pct",
+    "pressao_sis",
+    "pressao_dia",
+    "freq_card",
+    "sono_horas",
+)
 UNIDADES = {
     "peso": "kg",
     "cintura": "cm",
@@ -36,6 +50,11 @@ UNIDADES = {
     "peito": "cm",
     "braco": "cm",
     "coxa": "cm",
+    "gordura_pct": "%",
+    "pressao_sis": "mmHg",
+    "pressao_dia": "mmHg",
+    "freq_card": "bpm",
+    "sono_horas": "h",
 }
 LABEL_CAMPO = {
     "peso": "peso",
@@ -44,9 +63,15 @@ LABEL_CAMPO = {
     "peito": "peito",
     "braco": "braço",
     "coxa": "coxa",
+    "gordura_pct": "gordura corp.",
+    "pressao_sis": "pressão sis.",
+    "pressao_dia": "pressão dia.",
+    "freq_card": "freq. card.",
+    "sono_horas": "sono médio",
 }
 
 # UX-V-2.12: paleta de cor por métrica (mockup 24-medidas.html).
+# UX-V-2.12.A: estendida com fisiológicas (mantém paridade com mockup).
 CORES_METRICAS = {
     "peso": "var(--accent-purple)",
     "cintura": "var(--accent-yellow)",
@@ -54,6 +79,11 @@ CORES_METRICAS = {
     "peito": "var(--accent-orange)",
     "braco": "var(--accent-green)",
     "coxa": "var(--accent-pink)",
+    "gordura_pct": "var(--accent-orange)",
+    "pressao_sis": "var(--accent-cyan)",
+    "pressao_dia": "var(--accent-cyan)",
+    "freq_card": "var(--accent-green)",
+    "sono_horas": "var(--accent-pink)",
 }
 
 
@@ -222,10 +252,20 @@ def _formatar_data_pt(data_str: str) -> str:
     return f"{ts.day:02d} {meses[ts.month]} {ts.year % 100:02d}"
 
 
+def _coluna_tem_dado(items: list[dict[str, Any]], campo: str) -> bool:
+    """UX-V-2.12.A: True se ao menos 1 item tem valor numérico no campo."""
+    return any(isinstance(i.get(campo), (int, float)) for i in items)
+
+
 def _tabela_historico_html(
     items: list[dict[str, Any]], pessoa: str
 ) -> str:
-    """UX-V-2.12: tabela das 6 semanas mais recentes."""
+    """UX-V-2.12: tabela das 6 semanas mais recentes.
+
+    UX-V-2.12.A: colunas fisiológicas (gordura_pct, pressao, freq_card,
+    sono_horas) aparecem somente quando ao menos 1 dos itens semanais
+    expostos tem dado numérico no campo (padrão (o) -- retrocompatível).
+    """
     semanas = _agrupar_semanas(items, n=6)
     if not semanas:
         return ""
@@ -240,31 +280,40 @@ def _tabela_historico_html(
         sufixo = f" {unidade}" if unidade else ""
         return f'<td><span class="v">{v:.1f}</span>{sufixo}</td>'
 
+    # Colunas-base sempre visíveis.
+    colunas_base: list[tuple[str, str, str]] = [
+        ("peso", "peso", "kg"),
+        ("cintura", "cintura", "cm"),
+        ("quadril", "quadril", "cm"),
+        ("peito", "peito", "cm"),
+    ]
+    # Colunas fisiológicas, adicionadas só se houver dado.
+    colunas_extras: list[tuple[str, str, str]] = []
+    for campo, header, unidade in (
+        ("gordura_pct", "bf%", "%"),
+        ("pressao_sis", "press. sis.", "mmHg"),
+        ("pressao_dia", "press. dia.", "mmHg"),
+        ("freq_card", "freq. card.", "bpm"),
+        ("sono_horas", "sono", "h"),
+    ):
+        if _coluna_tem_dado(semanas, campo):
+            colunas_extras.append((campo, header, unidade))
+    colunas = colunas_base + colunas_extras
+
     linhas: list[str] = []
     for item in semanas:
         data_pt = _formatar_data_pt(str(item.get("data") or ""))
-        peso = item.get("peso")
-        cintura = item.get("cintura")
-        quadril = item.get("quadril")
-        peito = item.get("peito")
-        linhas.append(
-            f"<tr>"
-            f"<td>{data_pt}</td>"
-            f'{_cel(peso, "kg")}'
-            f'{_cel(cintura, "cm")}'
-            f'{_cel(quadril, "cm")}'
-            f'{_cel(peito, "cm")}'
-            f"</tr>"
+        celulas = "".join(
+            _cel(item.get(campo), unidade) for campo, _, unidade in colunas
         )
+        linhas.append(f"<tr><td>{data_pt}</td>{celulas}</tr>")
+    cabecalho = "".join(f"<th>{header}</th>" for _, header, _ in colunas)
     return minificar(
         f'<div class="med-hist-card">'
         f"<h3>Histórico semanal · últimas 6 semanas · "
         f"{pessoa_label}</h3>"
         f'<table class="med-tbl">'
-        f"<thead><tr>"
-        f"<th>data</th><th>peso</th><th>cintura</th>"
-        f"<th>quadril</th><th>peito</th>"
-        f"</tr></thead>"
+        f"<thead><tr><th>data</th>{cabecalho}</tr></thead>"
         f"<tbody>{''.join(linhas)}</tbody>"
         f"</table>"
         f"</div>"

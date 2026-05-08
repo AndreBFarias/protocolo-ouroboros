@@ -13,6 +13,11 @@
       "peito": 100.0,
       "braco": 32.0,
       "coxa": 56.0,
+      "gordura_pct": null,
+      "pressao_sis": null,
+      "pressao_dia": null,
+      "freq_card": null,
+      "sono_horas": null,
       "fotos": []
     },
     {
@@ -24,6 +29,11 @@
       "peito": 100.5,
       "braco": 32.5,
       "coxa": 56.5,
+      "gordura_pct": 17.8,
+      "pressao_sis": 120.0,
+      "pressao_dia": 80.0,
+      "freq_card": 64.0,
+      "sono_horas": 6.8,
       "fotos": [
         "perfil_2026-05-01.jpg"
       ]
