@@ -13,6 +13,7 @@ from __future__ import annotations
 
 from calendar import monthrange
 from datetime import date, timedelta
+from urllib.parse import quote
 
 import pandas as pd
 
@@ -93,6 +94,17 @@ def _pagamentos_por_data(
     pgs: dict[date, list[dict[str, object]]] = {}
     hoje = date.today()
     palavras_cartao = ("fatura", "cartao", "cartão", "nubank", "c6 cartao")
+    palavras_variavel = (
+        "luz",
+        "energia",
+        "agua",
+        "água",
+        "internet",
+        "telefone",
+        "celular",
+        "gas",
+        "gás",
+    )
 
     for _, row in df_prazos.iterrows():
         try:
@@ -124,6 +136,8 @@ def _pagamentos_por_data(
             tipo = "em_atraso"
         elif any(p in label_lower for p in palavras_cartao):
             tipo = "cartao"
+        elif any(p in label_lower for p in palavras_variavel):
+            tipo = "variavel"
         else:
             tipo = "fixo"
 
@@ -137,13 +151,38 @@ def _pagamentos_por_data(
     return pgs
 
 
+def _mes_vizinho(ano: int, mes: int, delta: int) -> tuple[int, int]:
+    """Retorna ``(ano, mes)`` deslocado por ``delta`` meses (±1 típico).
+
+    Resolve transbordo de ano sem depender de ``dateutil``.
+    """
+    total = ano * 12 + (mes - 1) + delta
+    return total // 12, (total % 12) + 1
+
+
+def _link_navegacao_mes(ano: int, mes: int, simbolo: str, titulo: str) -> str:
+    """Gera ``<a>`` que navega para outro mês preservando cluster/aba."""
+    alvo = f"{ano:04d}-{mes:02d}"
+    href = (
+        "?cluster="
+        + quote("Finanças")
+        + "&tab=Pagamentos&mes_cal="
+        + alvo
+    )
+    return (
+        f'<a class="cal-nav-btn cal-nav-arrow" href="{href}" '
+        f'target="_self" title="{titulo}">{simbolo}</a>'
+    )
+
+
 def _calendario_html(
     ano: int, mes: int, pagamentos_por_data: dict[date, list[dict[str, object]]]
 ) -> str:
     """Renderiza calendário do mês inteiro (Seg-Dom) com pílulas coloridas.
 
-    Cabeçalho ``<mês> · <ano>`` + grid 7 colunas + legenda no rodapé com
-    contadores e total mensal.
+    Cabeçalho ``<mês> · <ano>`` + setas de navegação + grid 7 colunas +
+    legenda no rodapé com 4 pílulas (fixo · variável · cartão · em atraso)
+    e total mensal alinhado à direita.
     """
     semanas = _gerar_calendario_mes(ano, mes)
     cabecalho = ("SEG", "TER", "QUA", "QUI", "SEX", "SÁB", "DOM")
@@ -181,13 +220,24 @@ def _calendario_html(
 
     grid = head_dias + "".join(celulas)
 
+    ano_prev, mes_prev = _mes_vizinho(ano, mes, -1)
+    ano_next, mes_next = _mes_vizinho(ano, mes, 1)
+    seta_prev = _link_navegacao_mes(
+        ano_prev, mes_prev, "<", "mês anterior"
+    )
+    seta_next = _link_navegacao_mes(
+        ano_next, mes_next, ">", "próximo mês"
+    )
+
     return minificar(
         f"""
         <div class="pagamentos-calendario">
           <div class="cal-header">
             <span class="cal-titulo">{NOMES_MESES[mes].lower()} · {ano}</span>
             <div class="cal-nav">
+              {seta_prev}
               <span class="cal-nav-btn">SEG-DOM</span>
+              {seta_next}
             </div>
           </div>
           <div class="cal-grid">{grid}</div>

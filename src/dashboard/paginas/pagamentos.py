@@ -403,6 +403,21 @@ def renderizar(
             except ValueError:
                 pass
 
+    # UX-V-2.2-FIX: setas de navegação no header do calendário escrevem
+    # ``?mes_cal=YYYY-MM``. Quando presente, sobrepõe o filtro global apenas
+    # para o calendário desta página (filtro global continua íntegro).
+    mes_cal_qp = st.query_params.get("mes_cal")
+    if isinstance(mes_cal_qp, str) and "-" in mes_cal_qp:
+        partes_qp = mes_cal_qp.split("-")
+        if len(partes_qp) >= 2:
+            try:
+                ano_qp = int(partes_qp[0])
+                mes_qp = int(partes_qp[1])
+                if 1 <= mes_qp <= 12:
+                    ano, mes = ano_qp, mes_qp
+            except ValueError:
+                pass
+
     # UX-V-2.2.A: enriquece prazos com valor_estimado cruzando com extrato.
     # NÃO modifica o XLSX em disco; é runtime apenas.
     prazos_enriquecidos = enriquecer_prazos_com_valor(prazos, extrato)

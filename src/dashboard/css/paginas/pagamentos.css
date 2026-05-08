@@ -36,6 +36,22 @@
     border-radius: var(--r-sm);
     padding: 2px 8px;
     cursor: default;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1.2;
+}
+a.cal-nav-btn.cal-nav-arrow {
+    cursor: pointer;
+    min-width: 22px;
+    padding: 2px 6px;
+    color: var(--text-secondary);
+}
+a.cal-nav-btn.cal-nav-arrow:hover {
+    color: var(--accent-purple);
+    border-color: var(--accent-purple);
+    background: rgba(189, 147, 249, 0.08);
 }
 
 .cal-grid {
