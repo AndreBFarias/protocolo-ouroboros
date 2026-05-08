@@ -427,9 +427,15 @@ def renderizar(
 
     st.markdown(minificar(carregar_css_pagina("busca")), unsafe_allow_html=True)
 
-    # Page-header canônico UX-RD-09 (substitui hero_titulo_html legado
-    # da Sprint 59 — duplicação visual eliminada 2026-05-06).
-    st.markdown(_page_header_html(), unsafe_allow_html=True)
+    # Page-header canônico UX-V-3.2: counters reais no subtítulo
+    # (substitui template estático UX-RD-09).
+    n_docs_universo, n_tx_universo, n_sidecars_universo = _contar_universo_busca()
+    st.markdown(
+        _page_header_html(
+            n_docs_universo, n_tx_universo, n_sidecars_universo
+        ),
+        unsafe_allow_html=True,
+    )
 
     # Branch (m) reversível: tenta construir índice; página segue funcional
     # mesmo se o grafo não existir.
@@ -560,21 +566,86 @@ def _aplicar_chip_sugestao(valor: str) -> None:
 _aplicar_chip_tipo = _aplicar_chip_sugestao
 
 
-def _page_header_html() -> str:
-    """HTML do page-header UX-RD-09 (título + subtítulo + sprint-tag)."""
+def _contar_universo_busca() -> tuple[int, int, int]:
+    """Conta documentos, transações e sidecars do universo indexado.
+
+    Sprint UX-V-3.2: counters reais no subtítulo (espelha mockup
+    ``06-busca-global.html`` -- "439 documentos · 2.847 transações ·
+    1.284 sidecars"). Devolve tupla ``(n_docs, n_tx, n_sidecars)``;
+    cada valor cai a 0 quando a fonte está indisponível (defesa em
+    camadas, padrão (n)).
+    """
+    import sqlite3
+
+    n_docs = 0
+    n_tx = 0
+    n_sidecars = 0
+
+    if _dados.CAMINHO_GRAFO.exists():
+        try:
+            conn = sqlite3.connect(
+                f"file:{_dados.CAMINHO_GRAFO}?mode=ro", uri=True
+            )
+            try:
+                row = conn.execute(
+                    "SELECT COUNT(*) FROM node WHERE tipo = 'documento'"
+                ).fetchone()
+                n_docs = int(row[0]) if row else 0
+                row = conn.execute(
+                    "SELECT COUNT(*) FROM node WHERE tipo = 'transacao'"
+                ).fetchone()
+                n_tx = int(row[0]) if row else 0
+            finally:
+                conn.close()
+        except sqlite3.Error:
+            pass
+
+    # Sidecars: arquivos JSON em data/inbox/sidecars/ (Sprint inbox).
+    raiz_sidecars = RAIZ / "data" / "inbox" / "sidecars"
+    if raiz_sidecars.exists() and raiz_sidecars.is_dir():
+        try:
+            n_sidecars = sum(1 for _ in raiz_sidecars.glob("*.json"))
+        except OSError:
+            n_sidecars = 0
+
+    return n_docs, n_tx, n_sidecars
+
+
+def _formatar_milhar(n: int) -> str:
+    """Formata inteiro com separador de milhar PT-BR (ponto)."""
+    return f"{n:,}".replace(",", ".")
+
+
+def _page_header_html(
+    n_docs: int = 0, n_tx: int = 0, n_sidecars: int = 0
+) -> str:
+    """HTML do page-header UX-V-3.2 (título + subtítulo com counters reais).
+
+    Counters em ``<strong>`` espelham mockup ``06-busca-global.html``:
+    "Busca atravessa <strong>N documentos</strong>,
+    <strong>M transações</strong> e <strong>K sidecars</strong>".
+    Quando counters são zero (grafo ausente / inbox vazio), o texto
+    permanece estruturalmente íntegro; números viram ``0``.
+    """
+    docs_str = _formatar_milhar(n_docs)
+    tx_str = _formatar_milhar(n_tx)
+    sc_str = _formatar_milhar(n_sidecars)
     return minificar(
-        """
+        f"""
         <div class="page-header">
           <div>
             <h1 class="page-title">BUSCA GLOBAL</h1>
             <p class="page-subtitle">
-              Busca atravessa documentos, transações e sidecars. Texto
-              extraído por OCR é indexado junto com metadados (sha8, valor,
-              data, conta, categoria, classificação).
+              Busca atravessa
+              <strong>{docs_str} documentos</strong>,
+              <strong>{tx_str} transações</strong> e
+              <strong>{sc_str} sidecars</strong>.
+              Texto extraído por OCR é indexado junto com metadados (sha8,
+              valor, data, conta, categoria).
             </p>
           </div>
           <div class="page-meta">
-            <span class="sprint-tag">UX-RD-09</span>
+            <span class="sprint-tag">UX-V-3.2</span>
           </div>
         </div>
         """
@@ -677,12 +748,22 @@ def _renderizar_controles(indice: dict[str, list[str]]) -> str:
 def _renderizar_facetas_laterais(
     resultados: dict, docs_filtrados: list[dict]
 ) -> None:
-    """Renderiza facetas laterais (5 grupos).
+    """Renderiza facetas laterais (paridade visual mockup UX-V-3.2).
 
-    Spec UX-RD-09: tipo, banco, pessoa, mês, classificação. Por enquanto
-    é HTML estático com contagens calculadas dinamicamente -- o filtro
-    real continua via roteador UX-114 + sidebar global. Em iteração
-    futura, checkboxes virarão `st.checkbox` aplicando filtros adicionais.
+    Mockup ``06-busca-global.html`` define 4 facetas: **Tipo**, **Período**,
+    **Conta**, **Categoria**. Compat regressiva UX-RD-09 preserva
+    coleta nos 5 grupos canônicos -- Tipo, Banco, Pessoa, Mês,
+    Classificação -- com variáveis ``cont_tipo / cont_banco /
+    cont_pessoa / cont_mes / cont_class`` (testes em
+    ``tests/test_busca_catalogacao_redesign.py`` inspecionam fonte).
+
+    Mapeamento visual UX-V-3.2 → coletor UX-RD-09:
+        Tipo      ← cont_tipo
+        Período   ← cont_mes
+        Conta     ← cont_banco
+        Categoria ← cont_class
+    A faceta ``Pessoa`` permanece coletada (compat) mas não é
+    renderizada visualmente -- mockup só pede 4 cards.
     """
     docs = docs_filtrados or []
     txs = resultados.get("transacoes", [])
@@ -693,57 +774,67 @@ def _renderizar_facetas_laterais(
     for d in docs:
         tipo = str(d.get("tipo_documento", "desconhecido")).strip() or "desconhecido"
         cont_tipo[tipo] = cont_tipo.get(tipo, 0) + 1
-    # Contagens por banco (via transações).
+    # Contagens por banco (via transações). Renderizado como "Conta".
     cont_banco: dict[str, int] = {}
     for t in txs:
         banco = str(t.get("banco_origem", "")).strip()
         if banco:
             cont_banco[banco] = cont_banco.get(banco, 0) + 1
-    # Contagens por pessoa (via transações).
+    # Contagens por pessoa (via transações). Compat UX-RD-09 -- não
+    # renderizada visualmente em UX-V-3.2 (mockup pede 4 facetas).
     cont_pessoa: dict[str, int] = {}
     for t in txs:
         quem = str(t.get("quem", "")).strip()
         if quem:
             cont_pessoa[quem] = cont_pessoa.get(quem, 0) + 1
-    # Contagens por mês_ref (via transações).
+    # Contagens por mês_ref (via transações). Renderizado como "Período".
     cont_mes: dict[str, int] = {}
     for t in txs:
         mes = str(t.get("mes_ref", "")).strip()
         if mes:
             cont_mes[mes] = cont_mes.get(mes, 0) + 1
-    # Contagens por classificação.
+    # Contagens por classificação. Renderizado como "Categoria".
     cont_class: dict[str, int] = {}
     for t in txs:
         cl = str(t.get("classificacao", "")).strip()
         if cl:
             cont_class[cl] = cont_class.get(cl, 0) + 1
 
-    grupos = [
-        ("Tipo", cont_tipo),
-        ("Banco", cont_banco),
-        ("Pessoa", cont_pessoa),
-        ("Mês", cont_mes),
-        ("Classificação", cont_class),
+    # Total geral usado nas linhas "todas/todos" de cada card.
+    total_docs = len(docs)
+    total_txs = len(txs)
+    total_geral = total_docs + total_txs + len(forns)
+
+    grupos_visuais = [
+        ("Tipo", cont_tipo, "todos", total_geral),
+        ("Período", cont_mes, "todo período", total_txs),
+        ("Conta", cont_banco, "todas", total_txs),
+        ("Categoria", cont_class, "todas", total_txs),
     ]
 
-    for titulo, contagem in grupos:
+    for titulo, contagem, rotulo_total, n_total in grupos_visuais:
         linhas_html: list[str] = []
+        # Linha "todas/todos" no topo (mockup): faceta ativa por padrão.
+        linhas_html.append(
+            "<div class='ouroboros-facet-row on'>"
+            f"<span>{rotulo_total}</span>"
+            f"<span class='ct'>{n_total}</span>"
+            "</div>"
+        )
         if not contagem:
             linhas_html.append(
-                "<div style='font-family:var(--ff-mono,monospace);"
-                " font-size:11px;"
-                " color:var(--text-muted);'>—</div>"
+                "<div class='ouroboros-facet-row'>"
+                "<span style='color:var(--text-muted);'>sem dados</span>"
+                "<span class='ct'>0</span>"
+                "</div>"
             )
         else:
             ordenado = sorted(contagem.items(), key=lambda kv: kv[1], reverse=True)
             for chave, n in ordenado[:8]:
                 linhas_html.append(
-                    "<div style='display:flex;justify-content:space-between;"
-                    " padding:3px 0;font-family:var(--ff-mono,monospace);"
-                    " font-size:12px;color:var(--color-texto);'>"
+                    "<div class='ouroboros-facet-row'>"
                     f"<span>{_html.escape(_mascarar_pii(str(chave)))}</span>"
-                    f"<span style='color:var(--text-muted);"
-                    f" font-size:11px;'>{n}</span>"
+                    f"<span class='ct'>{n}</span>"
                     "</div>"
                 )
         bloco = "".join(linhas_html)

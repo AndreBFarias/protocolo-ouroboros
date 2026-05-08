@@ -55,6 +55,27 @@ div[role='alert'] svg {
     color: var(--text-muted);
     margin: 0 0 6px;
 }
+/* Linha de faceta clicavel (UX-V-3.2). Espelha .facet-row do mockup
+   06-busca-global.html: rotulo a esquerda, contagem a direita. */
+.ouroboros-facet-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+    font-family: var(--ff-mono, monospace);
+    font-size: 12px;
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+.ouroboros-facet-row:hover {
+    color: var(--text-primary);
+}
+.ouroboros-facet-row.on {
+    color: var(--accent-purple);
+}
+.ouroboros-facet-row .ct {
+    color: var(--text-muted);
+    font-size: 11px;
+}
 
 /* Cards de resultado com snippet highlight. */
 .ouroboros-res-group {
