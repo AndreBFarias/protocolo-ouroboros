@@ -136,6 +136,13 @@ def renderizar(
     _renderizar_cards_por_tipo(docs)
     st.markdown(_divisor(), unsafe_allow_html=True)
 
+    # Sprint UX-V-3.3-GRID: grid de thumbs com sidebar de facetas
+    # (TIPO/PERÍODO/FONTE) entre os cards-tipos e a tabela canônica.
+    # Decisão dono 2026-05-07: layout híbrido (KPIs+tipos no topo +
+    # grid de thumbs abaixo). Mockup novo-mockup/mockups/07-catalogacao.html.
+    _renderizar_grid_thumbs(docs)
+    st.markdown(_divisor(), unsafe_allow_html=True)
+
     # Sprint UX-126 AC3: layout vertical -- "Documentos Recentes" ocupa
     # 100% da largura; "Conflitos Pendentes" e "Gaps de Cobertura" ficam
     # lado-a-lado em st.columns([1, 1]) ABAIXO da tabela.
@@ -282,6 +289,405 @@ def _renderizar_cards_por_tipo(docs: pd.DataFrame) -> None:
                 _card_tipo_html(rotulo, int(qtd), cor),
                 unsafe_allow_html=True,
             )
+
+
+# ---------------------------------------------------------------------------
+# Grid de thumbs + facetas (Sprint UX-V-3.3-GRID)
+# ---------------------------------------------------------------------------
+
+
+# Mapeamento de extensao -> badge curto (canto superior direito do thumb).
+# Cobre PDF/IMG/CSV/XLSX/OFX (criterio de aceitacao 2 da spec).
+EXTENSOES_BADGE: dict[str, str] = {
+    "pdf": "PDF",
+    "jpg": "IMG",
+    "jpeg": "IMG",
+    "png": "IMG",
+    "tif": "IMG",
+    "tiff": "IMG",
+    "csv": "CSV",
+    "xls": "XLSX",
+    "xlsx": "XLSX",
+    "ofx": "OFX",
+    "xml": "XML",
+}
+
+
+def _extrair_extensao(arquivo_origem: str) -> str:
+    """Extrai extensao em minusculo do path; vazio se ausente."""
+    if not arquivo_origem:
+        return ""
+    if "." not in arquivo_origem:
+        return ""
+    ext = arquivo_origem.rsplit(".", 1)[-1].lower().strip()
+    # Limita a extensao razoavel (evita capturar query strings ou paths
+    # malformados).
+    if not ext.isalnum() or len(ext) > 5:
+        return ""
+    return ext
+
+
+def _badge_tipo_arquivo(ext: str) -> str:
+    """Mapeia extensao para badge canonico (PDF/IMG/CSV/XLSX/OFX/XML)."""
+    return EXTENSOES_BADGE.get(ext, ext.upper() if ext else "DOC")
+
+
+def _sha8_doc(row: pd.Series) -> str:
+    """Deriva sha8 do documento.
+
+    Heurística empírica observada nos dados reais (48 docs em
+    grafo.sqlite, 2026-05-08): nomes de arquivo seguem o padrão
+    ``<TIPO>_<DATA>_<sha8>.pdf``. Quando disponível, usa esse hash;
+    caso contrário, cai para os últimos 8 caracteres do nome
+    canônico (sempre único no grafo).
+    """
+    arquivo = str(row.get("arquivo_origem", "") or "")
+    if arquivo:
+        nome = arquivo.rsplit("/", 1)[-1]
+        # Remove extensão
+        nome_sem_ext = nome.rsplit(".", 1)[0]
+        # Tenta extrair último segmento separado por _ (padrão sha8 hex).
+        if "_" in nome_sem_ext:
+            cand = nome_sem_ext.rsplit("_", 1)[-1]
+            if len(cand) == 8 and all(c in "0123456789abcdef" for c in cand.lower()):
+                return cand.lower()
+    nome_canon = str(row.get("nome_canonico", "") or "")
+    if nome_canon:
+        return nome_canon[-8:].lower()
+    return "--"
+
+
+def _fonte_doc(row: pd.Series) -> str:
+    """Heurística de FONTE do documento.
+
+    Prioriza ``razao_social`` (legível); cai para extração do
+    ``arquivo_origem`` (subdiretório sob ``data/raw/<pessoa>/<fonte>/``).
+    Vazio não classificado vira "outros".
+    """
+    razao = str(row.get("razao_social", "") or "").strip()
+    if razao:
+        return razao.title()
+    arquivo = str(row.get("arquivo_origem", "") or "")
+    if arquivo:
+        partes = arquivo.replace("\\", "/").split("/")
+        # Padrao observado: data/raw/<pessoa>/<fonte>/...
+        if "raw" in partes:
+            idx = partes.index("raw")
+            if len(partes) > idx + 2:
+                return partes[idx + 2].replace("_", " ").title()
+    return "outros"
+
+
+def _periodo_doc(data_emissao: str) -> str:
+    """Converte data ISO em rotulo de trimestre (ex: 2026-Q1)."""
+    if not data_emissao or len(data_emissao) < 7:
+        return "sem data"
+    try:
+        ano = int(data_emissao[:4])
+        mes = int(data_emissao[5:7])
+    except ValueError:
+        return "sem data"
+    trim = (mes - 1) // 3 + 1
+    return f"{ano}-Q{trim}"
+
+
+def _renderizar_grid_thumbs(docs: pd.DataFrame) -> None:
+    """Grid de cards-thumb com sidebar de 3 facetas (TIPO/PERÍODO/FONTE).
+
+    Sprint UX-V-3.3-GRID: replica mockup ``07-catalogacao.html`` em
+    Streamlit. Search-bar filtra por sha8/nome/fornecedor; facetas em
+    ``st.selectbox`` filtram por tipo/período/fonte; paginação simples
+    de 12 cards por página.
+
+    Não-objetivo (spec): não renderiza primeira página dos PDFs --
+    thumbnail é placeholder com badge da extensão no canto.
+    """
+    st.markdown(
+        subtitulo_secao_html("Catálogo de arquivos"),
+        unsafe_allow_html=True,
+    )
+
+    if docs.empty:
+        st.markdown(
+            callout_html("info", "Nenhum arquivo catalogado para exibir no grid."),
+            unsafe_allow_html=True,
+        )
+        return
+
+    # Enriquecimento (colunas derivadas). Trabalha sobre cópia para não
+    # mutar o DataFrame cacheado por carregar_documentos_grafo.
+    docs_grid = docs.copy()
+    docs_grid["__ext__"] = docs_grid["arquivo_origem"].fillna("").apply(_extrair_extensao)
+    docs_grid["__fonte__"] = docs_grid.apply(_fonte_doc, axis=1)
+    docs_grid["__periodo__"] = docs_grid["data_emissao"].fillna("").apply(_periodo_doc)
+    docs_grid["__sha8__"] = docs_grid.apply(_sha8_doc, axis=1)
+
+    # Counts por faceta (todos os docs, antes de filtrar -- AC3).
+    contagem_tipo = docs_grid["tipo_documento"].value_counts().to_dict()
+    contagem_periodo = docs_grid["__periodo__"].value_counts().to_dict()
+    contagem_fonte = docs_grid["__fonte__"].value_counts().to_dict()
+
+    col_facetas, col_grid = st.columns([1, 4])
+
+    with col_facetas:
+        st.markdown(_facet_card_html("Tipo", contagem_tipo), unsafe_allow_html=True)
+        tipos_ord = ["(todos)"] + [k for k, _ in sorted(
+            contagem_tipo.items(), key=lambda kv: kv[1], reverse=True
+        )]
+        tipo_sel = st.selectbox(
+            "Tipo",
+            tipos_ord,
+            key="ux_v33_grid_tipo",
+            label_visibility="collapsed",
+        )
+
+        st.markdown(
+            _facet_card_html("Período", contagem_periodo),
+            unsafe_allow_html=True,
+        )
+        periodos_ord = ["(todos)"] + [k for k, _ in sorted(
+            contagem_periodo.items(), key=lambda kv: kv[0], reverse=True
+        )]
+        periodo_sel = st.selectbox(
+            "Período",
+            periodos_ord,
+            key="ux_v33_grid_periodo",
+            label_visibility="collapsed",
+        )
+
+        st.markdown(
+            _facet_card_html("Fonte", contagem_fonte),
+            unsafe_allow_html=True,
+        )
+        fontes_ord = ["(todos)"] + [k for k, _ in sorted(
+            contagem_fonte.items(), key=lambda kv: kv[1], reverse=True
+        )]
+        fonte_sel = st.selectbox(
+            "Fonte",
+            fontes_ord,
+            key="ux_v33_grid_fonte",
+            label_visibility="collapsed",
+        )
+
+    with col_grid:
+        # Toolbar com search + counter (AC4).
+        termo = st.text_input(
+            "Buscar",
+            key="ux_v33_grid_busca",
+            placeholder="Buscar por sha8, nome, fornecedor...",
+            label_visibility="collapsed",
+        )
+
+        filtrados = _aplicar_filtros_grid(
+            docs_grid,
+            tipo_sel,
+            periodo_sel,
+            fonte_sel,
+            termo,
+        )
+
+        # Paginacao simples (12 por pagina, espelhando 2x6 do mockup).
+        por_pagina = 12
+        total = len(filtrados)
+        max_paginas = max(1, (total + por_pagina - 1) // por_pagina)
+        pagina = st.session_state.get("ux_v33_grid_pagina", 1)
+        if pagina > max_paginas:
+            pagina = max_paginas
+        st.session_state["ux_v33_grid_pagina"] = pagina
+
+        ini = (pagina - 1) * por_pagina
+        fim = ini + por_pagina
+        recorte = filtrados.iloc[ini:fim]
+
+        st.markdown(
+            _grid_toolbar_html(len(recorte), total, pagina, max_paginas),
+            unsafe_allow_html=True,
+        )
+
+        if recorte.empty:
+            st.markdown(
+                callout_html("info", "Nenhum arquivo casa com os filtros atuais."),
+                unsafe_allow_html=True,
+            )
+        else:
+            st.markdown(_grid_cards_html(recorte), unsafe_allow_html=True)
+
+        # Navegacao de paginas (so aparece se >1 pagina).
+        if max_paginas > 1:
+            col_prev, col_meio, col_next = st.columns([1, 2, 1])
+            with col_prev:
+                if st.button("Anterior", key="ux_v33_grid_prev", disabled=pagina <= 1):
+                    st.session_state["ux_v33_grid_pagina"] = max(1, pagina - 1)
+                    st.rerun()
+            with col_meio:
+                st.markdown(
+                    f"<p style='text-align:center; color:{CORES['texto_sec']}; "
+                    f"font-family:monospace; font-size:11px; margin:6px 0;'>"
+                    f"página {pagina} de {max_paginas}</p>",
+                    unsafe_allow_html=True,
+                )
+            with col_next:
+                if st.button(
+                    "Próxima",
+                    key="ux_v33_grid_next",
+                    disabled=pagina >= max_paginas,
+                ):
+                    st.session_state["ux_v33_grid_pagina"] = min(
+                        max_paginas, pagina + 1
+                    )
+                    st.rerun()
+
+
+def _aplicar_filtros_grid(
+    docs: pd.DataFrame,
+    tipo_sel: str,
+    periodo_sel: str,
+    fonte_sel: str,
+    termo: str,
+) -> pd.DataFrame:
+    """Aplica facetas + search-bar e devolve DataFrame filtrado."""
+    filtro = docs
+    if tipo_sel and tipo_sel != "(todos)":
+        filtro = filtro[filtro["tipo_documento"] == tipo_sel]
+    if periodo_sel and periodo_sel != "(todos)":
+        filtro = filtro[filtro["__periodo__"] == periodo_sel]
+    if fonte_sel and fonte_sel != "(todos)":
+        filtro = filtro[filtro["__fonte__"] == fonte_sel]
+    if termo and not filtro.empty:
+        termo_lower = termo.strip().lower()
+        if termo_lower:
+            # Cast explicito para str (DataFrames vazios podem inferir
+            # dtype float em colunas object, quebrando o accessor .str).
+            mascara = (
+                filtro["__sha8__"].astype(str).str.lower().str.contains(termo_lower, na=False)
+                | filtro["arquivo_origem"]
+                .astype(str)
+                .fillna("")
+                .str.lower()
+                .str.contains(termo_lower, na=False)
+                | filtro["razao_social"]
+                .astype(str)
+                .fillna("")
+                .str.lower()
+                .str.contains(termo_lower, na=False)
+                | filtro["tipo_documento"]
+                .astype(str)
+                .fillna("")
+                .str.lower()
+                .str.contains(termo_lower, na=False)
+            )
+            filtro = filtro[mascara]
+    return filtro.sort_values("data_emissao", ascending=False, na_position="last")
+
+
+def _facet_card_html(titulo: str, contagem: dict[str, int]) -> str:
+    """Card de faceta com lista de rotulos + counts (AC3 -- mockup)."""
+    if not contagem:
+        linhas_html = (
+            f"<div class='ouroboros-facet-row'>"
+            f"<span style='color:{CORES['texto_sec']};'>(vazio)</span>"
+            f"</div>"
+        )
+    else:
+        ordenado = sorted(contagem.items(), key=lambda kv: kv[1], reverse=True)
+        linhas: list[str] = []
+        for rotulo, qtd in ordenado[:8]:
+            rotulo_render = _html.escape(str(rotulo))
+            linhas.append(
+                f"<div class='ouroboros-facet-row'>"
+                f"<span>{rotulo_render}</span>"
+                f"<span class='n'>{int(qtd)}</span>"
+                f"</div>"
+            )
+        linhas_html = "".join(linhas)
+    return minificar(
+        f"""
+        <div class="ouroboros-facet-card">
+          <h3 class="ouroboros-facet-title">{_html.escape(titulo)}</h3>
+          {linhas_html}
+        </div>
+        """
+    )
+
+
+def _grid_toolbar_html(
+    visiveis: int,
+    total: int,
+    pagina: int,
+    max_paginas: int,
+) -> str:
+    """Toolbar acima do grid com contador `N de M` (mockup)."""
+    return minificar(
+        f"""
+        <div class="ouroboros-grid-toolbar">
+          <span class="label">Catálogo de arquivos · grid de thumbs</span>
+          <span class="ct">{visiveis} de {total} · página {pagina}/{max_paginas}</span>
+        </div>
+        """
+    )
+
+
+def _grid_cards_html(docs: pd.DataFrame) -> str:
+    """Renderiza grid HTML de cards-thumb (AC1 -- spec).
+
+    Cada card: thumbnail placeholder cinza com glyph da extensao + badge
+    no canto superior direito (AC2); meta com nome + sha8 + data; chips
+    com tipo e fonte na base do card.
+    """
+    cards: list[str] = []
+    for _, row in docs.iterrows():
+        ext = str(row.get("__ext__", "") or "")
+        badge = _badge_tipo_arquivo(ext)
+        sha8 = str(row.get("__sha8__", "--"))
+        nome_full = str(row.get("arquivo_origem", "") or "").rsplit("/", 1)[-1]
+        if not nome_full:
+            nome_full = str(row.get("nome_canonico", "--"))
+        nome_full_esc = _html.escape(nome_full)
+        data_e = str(row.get("data_emissao", "") or "--")
+        tipo_tec = str(row.get("tipo_documento", "") or "")
+        tipo_label = (
+            ROTULOS_TIPO_DOCUMENTO.get(tipo_tec) or humanizar(tipo_tec) or "--"
+        )
+        fonte = str(row.get("__fonte__", "") or "outros")
+        # Glyph monoespaçado simples como placeholder visual; não
+        # renderiza primeira página do PDF (não-objetivo da spec).
+        glyph_placeholder = {
+            "PDF": "PDF",
+            "IMG": "IMG",
+            "CSV": "CSV",
+            "XLSX": "XLS",
+            "OFX": "OFX",
+            "XML": "XML",
+        }.get(badge, "DOC")
+        cards.append(
+            f"""
+            <div class="ouroboros-doc-card">
+              <div class="ouroboros-doc-thumb">
+                <span class="ouroboros-doc-glyph">{glyph_placeholder}</span>
+                <span class="ouroboros-doc-ext">{_html.escape(badge)}</span>
+              </div>
+              <div class="ouroboros-doc-meta">
+                <div class="ouroboros-doc-name" title="{nome_full_esc}">
+                  {nome_full_esc}
+                </div>
+                <div class="ouroboros-doc-info">
+                  {_html.escape(sha8)} · {_html.escape(data_e)}
+                </div>
+              </div>
+              <div class="ouroboros-doc-tags">
+                <span class="pill" style="font-size:10px;">
+                  {_html.escape(tipo_label)}
+                </span>
+                <span class="pill" style="font-size:10px;">
+                  {_html.escape(fonte)}
+                </span>
+              </div>
+            </div>
+            """
+        )
+    return minificar(
+        f"<div class='ouroboros-cat-grid'>{''.join(cards)}</div>"
+    )
 
 
 # ---------------------------------------------------------------------------

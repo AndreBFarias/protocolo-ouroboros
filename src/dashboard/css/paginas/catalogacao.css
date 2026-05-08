@@ -26,3 +26,128 @@
     color: var(--text-secondary);
     flex: 1;
 }
+
+/* ---------------------------------------------------------------------
+   Sprint UX-V-3.3-GRID -- grid de thumbs + sidebar de facetas.
+   Mockup: novo-mockup/mockups/07-catalogacao.html.
+   --------------------------------------------------------------------- */
+
+.ouroboros-grid-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    margin-bottom: 10px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+}
+.ouroboros-grid-toolbar .label {
+    font-family: var(--ff-mono, monospace);
+    font-size: 12px;
+    color: var(--text-secondary);
+    flex: 1;
+}
+.ouroboros-grid-toolbar .ct {
+    font-family: var(--ff-mono, monospace);
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.ouroboros-facet-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+}
+.ouroboros-facet-title {
+    font-family: var(--ff-mono, monospace);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin: 0 0 8px 0;
+}
+.ouroboros-facet-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 3px 0;
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+.ouroboros-facet-row .n {
+    font-family: var(--ff-mono, monospace);
+    color: var(--text-muted);
+    font-size: 11px;
+}
+
+.ouroboros-cat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: 12px;
+}
+.ouroboros-doc-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+.ouroboros-doc-thumb {
+    height: 110px;
+    background: var(--bg-inset, var(--bg-elevated, #1a1a1f));
+    display: grid;
+    place-items: center;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border-subtle);
+    position: relative;
+}
+.ouroboros-doc-glyph {
+    font-family: var(--ff-mono, monospace);
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-muted);
+    letter-spacing: 0.04em;
+    opacity: 0.55;
+}
+.ouroboros-doc-ext {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    font-family: var(--ff-mono, monospace);
+    font-size: 9px;
+    letter-spacing: 0.08em;
+    padding: 2px 6px;
+    border: 1px solid var(--border-subtle);
+    border-radius: 4px;
+    background: var(--bg-elevated, #1a1a1f);
+    color: var(--text-primary);
+}
+.ouroboros-doc-meta {
+    padding: 8px 12px 6px;
+}
+.ouroboros-doc-name {
+    font-size: 12px;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-weight: 500;
+}
+.ouroboros-doc-info {
+    font-family: var(--ff-mono, monospace);
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+.ouroboros-doc-tags {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    padding: 6px 12px 8px;
+    border-top: 1px solid var(--border-subtle);
+    background: var(--bg-inset, var(--bg-elevated, #1a1a1f));
+}
