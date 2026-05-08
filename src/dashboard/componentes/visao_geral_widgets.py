@@ -54,6 +54,105 @@ def _caminho_validacao() -> Path:
     return _raiz_repo() / "data" / "output" / "validacao_arquivos.csv"
 
 
+# Mapa de termos sem acento -> com acento, para reconstruir títulos
+# canônicos a partir de stems de arquivos (que costumam ser ASCII).
+# Usado em ``_titulo_canonico_sprint`` (UX-V-2.7-FIX defeito #4).
+_ACENTOS_PT_BR: dict[str, str] = {
+    "ANALISE": "ANÁLISE",
+    "VALIDACAO": "VALIDAÇÃO",
+    "EXTRACAO": "EXTRAÇÃO",
+    "AUTENTICACAO": "AUTENTICAÇÃO",
+    "PADRAO": "PADRÃO",
+    "PADROES": "PADRÕES",
+    "RESERVA": "RESERVA",
+    "MEMORIAS": "MEMÓRIAS",
+    "CICLO": "CICLO",
+    "PRIVACIDADE": "PRIVACIDADE",
+    "ESPACAMENTO": "ESPAÇAMENTO",
+    "ATENCAO": "ATENÇÃO",
+    "OPERACAO": "OPERAÇÃO",
+    "DIVERGENCIA": "DIVERGÊNCIA",
+    "DIVERGENCIAS": "DIVERGÊNCIAS",
+    "REGRESSAO": "REGRESSÃO",
+    "EXTRACAO-CSV-01": "EXTRAÇÃO-CSV-01",
+    "EXTRACAO-TRIPLA": "EXTRAÇÃO-TRIPLA",
+    "VALIDACAO-CSV-01": "VALIDAÇÃO-CSV-01",
+    "TRANSACAO": "TRANSAÇÃO",
+    "PROJECAO": "PROJEÇÃO",
+    "PROJECOES": "PROJEÇÕES",
+    "VISAO": "VISÃO",
+    "GERACAO": "GERAÇÃO",
+}
+
+
+def _titulo_canonico_sprint(stem: str) -> str:
+    """Converte stem de arquivo (ex.: ``sprint_ux_v_2_6_analise``) em
+    título canônico legível (ex.: ``UX V 2 6 ANÁLISE``).
+
+    Trata defeito UX-V-2.7-FIX #4: ``stem.upper()`` perdia acentos do
+    PT-BR (``ANALISE/EVENTOS/VALIDACAO``). Aqui aplicamos o mapa
+    ``_ACENTOS_PT_BR`` token a token.
+    """
+    base = stem.replace("sprint_", "").replace("_", " ").upper()
+    tokens = base.split(" ")
+    convertidos = [_ACENTOS_PT_BR.get(t, t) for t in tokens]
+    return " ".join(convertidos)
+
+
+def _spec_em_execucao(spec_path: Path) -> bool:
+    """Devolve True se a spec tem ``status: em_execucao`` no frontmatter.
+
+    Usado por ``ler_sprint_atual`` (UX-V-2.7-FIX defeito #5) para filtrar
+    backlog em vez de pegar o primeiro item por mtime. Trata o frontmatter
+    como linhas plain (entre dois ``---``); robusto a aspas simples/duplas.
+    """
+    try:
+        texto = spec_path.read_text(encoding="utf-8")
+    except OSError:
+        return False
+    # Captura apenas o primeiro bloco frontmatter (entre os primeiros dois
+    # ``---``). Se não existir, retorna False.
+    if not texto.startswith("---"):
+        return False
+    try:
+        fim = texto.index("\n---", 4)
+    except ValueError:
+        return False
+    bloco = texto[4:fim]
+    for linha in bloco.splitlines():
+        s = linha.strip()
+        if s.startswith("status:"):
+            valor = s.split(":", 1)[1].strip().strip("\"'")
+            return valor == "em_execucao"
+    return False
+
+
+def _contar_metas() -> tuple[int, int]:
+    """Lê ``mappings/metas.yaml`` e devolve ``(financeiras, operacionais)``.
+
+    - Financeira: meta com chave ``valor_alvo``.
+    - Operacional: meta sem ``valor_alvo`` (geralmente ``tipo: binario``).
+
+    Graceful degradation (ADR-10): se o yaml não existir ou estiver
+    malformado, retorna ``(0, 0)``.
+    """
+    metas_path = _raiz_repo() / "mappings" / "metas.yaml"
+    if not metas_path.exists():
+        return (0, 0)
+    try:
+        import yaml  # type: ignore
+    except ImportError:
+        return (0, 0)
+    try:
+        bruto = yaml.safe_load(metas_path.read_text(encoding="utf-8")) or {}
+    except yaml.YAMLError:
+        return (0, 0)
+    metas = bruto.get("metas", []) if isinstance(bruto, dict) else []
+    fin = sum(1 for m in metas if isinstance(m, dict) and "valor_alvo" in m)
+    op = sum(1 for m in metas if isinstance(m, dict) and "valor_alvo" not in m)
+    return (fin, op)
+
+
 def calcular_kpis_agentic() -> KpisAgentic:
     """Retorna 4 KPIs agentic-first do mockup canônico.
 
@@ -155,21 +254,125 @@ def calcular_kpis_agentic() -> KpisAgentic:
 
 
 def ler_atividade_recente(n: int = 6) -> list[TimelineEntry]:
-    """Lê últimos eventos do grafo SQLite (nodes recentes) para a timeline.
+    """Agrega eventos canônicos para a timeline (UX-V-2.7-FIX defeito #3).
 
-    Estratégia:
-      1. Documentos mais recentes (até n//2).
-      2. Sprints concluídas mais recentes do diretório docs/sprints/concluidos/.
-      3. Eventos de pipeline (logs/) se houver — placeholder para futuro.
+    Fontes (em ordem de prioridade, depois ordenadas por timestamp desc):
+      1. Sprints concluídas em ``docs/sprints/concluidos/`` (glyph
+         ``check``) -- até 2 entries.
+      2. Commits recentes via ``git log`` (glyph ``diff``) -- até 2 entries.
+      3. ADRs em ``docs/adr/`` (glyph ``info``) -- até 2 entries.
+      4. Documentos do grafo SQLite (glyph ``upload``) -- preenche o
+         restante até ``n``.
 
-    Retorna lista de dicts com ``when``, ``glyph``, ``what_html`` prontos
-    para renderização. Vazia se nenhuma fonte disponível.
+    Cada entry tem ``when`` (DD/MM HH:MM), ``glyph`` (nome canônico) e
+    ``what_html`` (HTML pré-escapado). A ordenação final é por timestamp
+    decrescente -- ainda assim, garantimos diversidade de glyphs e fontes
+    para reproduzir o mockup ``_visao-render.js`` (linhas 117-122).
+
+    UX-V-2.7-FIX defeito #4: nomes de sprint passam por
+    ``_titulo_canonico_sprint`` para reaver acentos PT-BR (ex.: ``ANALISE``
+    -> ``ANÁLISE``).
     """
     import html as _html
+    import subprocess
 
-    entries: list[TimelineEntry] = []
+    eventos: list[tuple[datetime, TimelineEntry]] = []
+
+    # 1. Sprints concluídas (mais recentes por mtime).
+    concluidos = _raiz_repo() / "docs" / "sprints" / "concluidos"
+    if concluidos.exists():
+        recentes = sorted(
+            concluidos.glob("*.md"),
+            key=lambda p: p.stat().st_mtime,
+            reverse=True,
+        )[:2]
+        for p in recentes:
+            mtime = datetime.fromtimestamp(p.stat().st_mtime)
+            nome = _titulo_canonico_sprint(p.stem)[:50]
+            eventos.append(
+                (
+                    mtime,
+                    {
+                        "when": mtime.strftime("%d/%m %H:%M"),
+                        "glyph": "check",
+                        "what_html": (
+                            f"Sprint <strong>{_html.escape(nome)}</strong> concluída"
+                        ),
+                    },
+                )
+            )
+
+    # 2. Commits recentes (até 2). Graceful degradation: ignora se git
+    # não estiver disponível ou se o cwd não for repo.
+    try:
+        raw = subprocess.run(
+            [
+                "git",
+                "-C",
+                str(_raiz_repo()),
+                "log",
+                "-n",
+                "2",
+                "--format=%h\t%s\t%ct",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=2,
+        )
+        if raw.returncode == 0 and raw.stdout.strip():
+            for linha in raw.stdout.strip().splitlines():
+                partes = linha.split("\t")
+                if len(partes) < 3:
+                    continue
+                sha8, msg, ts = partes[0][:8], partes[1], partes[2]
+                try:
+                    dt = datetime.fromtimestamp(int(ts))
+                except ValueError:
+                    continue
+                msg_curta = _html.escape(msg[:60])
+                eventos.append(
+                    (
+                        dt,
+                        {
+                            "when": dt.strftime("%d/%m %H:%M"),
+                            "glyph": "diff",
+                            "what_html": (
+                                f"Commit <code>{sha8}</code> · {msg_curta}"
+                            ),
+                        },
+                    )
+                )
+    except (subprocess.SubprocessError, OSError):
+        pass
+
+    # 3. ADRs recentes (até 2 mais novos).
+    adr_dir = _raiz_repo() / "docs" / "adr"
+    if adr_dir.exists():
+        adrs = sorted(
+            adr_dir.glob("ADR-*.md"),
+            key=lambda p: p.stat().st_mtime,
+            reverse=True,
+        )[:2]
+        for p in adrs:
+            mtime = datetime.fromtimestamp(p.stat().st_mtime)
+            id_adr = p.stem.replace("_", " ")
+            eventos.append(
+                (
+                    mtime,
+                    {
+                        "when": mtime.strftime("%d/%m %H:%M"),
+                        "glyph": "info",
+                        "what_html": (
+                            f"<strong>{_html.escape(id_adr)}</strong> registrado"
+                        ),
+                    },
+                )
+            )
+
+    # 4. Documentos catalogados no grafo (glyph upload) -- preenche
+    # o restante até n.
     grafo_path = _caminho_grafo()
-    if grafo_path.exists():
+    if grafo_path.exists() and len(eventos) < n:
         try:
             with sqlite3.connect(str(grafo_path)) as conn:
                 cur = conn.execute(
@@ -180,50 +383,35 @@ def ler_atividade_recente(n: int = 6) -> list[TimelineEntry]:
                 )
                 for row in cur.fetchall():
                     rid, label, criado = row
-                    when = "—"
+                    dt: datetime | None = None
                     if criado:
                         try:
                             dt = datetime.fromisoformat(str(criado))
-                            when = dt.strftime("%d/%m %H:%M")
                         except ValueError:
-                            when = str(criado)[:16]
+                            dt = None
+                    if dt is None:
+                        continue
                     sha8 = str(rid)[:8] if rid else "—"
                     label_safe = _html.escape(str(label or "(sem label)"))
-                    entries.append(
-                        {
-                            "when": when,
-                            "glyph": "upload",
-                            "what_html": (
-                                f"<strong>{label_safe}</strong> registrado · "
-                                f"<code>{sha8}</code>"
-                            ),
-                        }
+                    eventos.append(
+                        (
+                            dt,
+                            {
+                                "when": dt.strftime("%d/%m %H:%M"),
+                                "glyph": "upload",
+                                "what_html": (
+                                    f"<strong>{label_safe}</strong> registrado · "
+                                    f"<code>{sha8}</code>"
+                                ),
+                            },
+                        )
                     )
         except sqlite3.DatabaseError:
             pass
 
-    # Sprint concluída mais recente (não-T para não recursividade).
-    concluidos = _raiz_repo() / "docs" / "sprints" / "concluidos"
-    if concluidos.exists():
-        recentes = sorted(
-            concluidos.glob("*.md"),
-            key=lambda p: p.stat().st_mtime,
-            reverse=True,
-        )[:2]
-        for p in recentes:
-            mtime = datetime.fromtimestamp(p.stat().st_mtime)
-            nome = p.stem.replace("sprint_", "").replace("_", " ").upper()[:50]
-            entries.append(
-                {
-                    "when": mtime.strftime("%d/%m %H:%M"),
-                    "glyph": "check",
-                    "what_html": (
-                        f"Sprint <strong>{_html.escape(nome)}</strong> concluída"
-                    ),
-                }
-            )
-
-    return entries[:n]
+    # Ordena por timestamp decrescente e devolve os ``n`` mais recentes.
+    eventos.sort(key=lambda par: par[0], reverse=True)
+    return [entry for _, entry in eventos[:n]]
 
 
 def ler_sprint_atual() -> SprintAtual | None:
@@ -251,15 +439,19 @@ def ler_sprint_atual() -> SprintAtual | None:
     candidato = None
     status_pill = "em calibração"
     status_tipo = "d7-calibracao"
+    # UX-V-2.7-FIX defeito #5: antes pegávamos o primeiro item do backlog
+    # por mtime, o que mostrava sub-sprints recém-redigidas como
+    # "EM EXECUÇÃO" (semântica errada). Agora filtramos pelo frontmatter
+    # ``status: em_execucao`` -- só cai no fallback quando NENHUMA spec
+    # tem esse status declarado.
     if backlog.exists():
-        # spec mais recentemente modificada no backlog é a "vigente".
-        mds = sorted(
-            backlog.glob("*.md"),
-            key=lambda p: p.stat().st_mtime,
-            reverse=True,
-        )
-        if mds:
-            candidato = mds[0]
+        em_execucao = [
+            p for p in backlog.glob("*.md")
+            if _spec_em_execucao(p)
+        ]
+        if em_execucao:
+            em_execucao.sort(key=lambda p: p.stat().st_mtime, reverse=True)
+            candidato = em_execucao[0]
             status_pill = "em execução"
             status_tipo = "d7-calibracao"
 
@@ -339,6 +531,9 @@ def montar_clusters_canonicos() -> list[dict[str, str]]:
 
     fmt = lambda k: str(contadores.get(k, "-"))  # noqa: E731
 
+    # UX-V-2.7-FIX: conta metas para o card "Metas" (fix defeito #2).
+    metas_fin, metas_op = _contar_metas()
+
     return [
         {
             "href": "?cluster=Inbox&tab=Inbox",
@@ -380,15 +575,19 @@ def montar_clusters_canonicos() -> list[dict[str, str]]:
             "stat2_label": "tags IRPF",
             "stat2_value": fmt("tag_irpf"),
         },
+        # UX-V-2.7-FIX defeito #2: card Metas mostrava
+        # ``fornecedores · períodos`` (semântica de Análise). Mockup
+        # canônico (_visao-render.js linha 108) declara
+        # ``financeiras · operacionais`` lendo de ``mappings/metas.yaml``.
         {
             "href": "?cluster=Metas&tab=Metas",
             "glyph": "metas",
             "nome": "Metas",
             "descricao": "Financeiras + operacionais (skills D7).",
-            "stat1_label": "fornecedores",
-            "stat1_value": _fmt_compact(contadores.get("fornecedor", 0)),
-            "stat2_label": "períodos",
-            "stat2_value": fmt("periodo"),
+            "stat1_label": "financeiras",
+            "stat1_value": str(metas_fin) if metas_fin else "—",
+            "stat2_label": "operacionais",
+            "stat2_value": str(metas_op) if metas_op else "—",
         },
         {
             "href": "?cluster=Sistema&tab=Skills+D7",

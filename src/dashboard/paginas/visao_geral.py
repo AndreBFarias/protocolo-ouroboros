@@ -96,11 +96,19 @@ def renderizar(
         ]
     )
 
+    from src.dashboard.componentes.atividade_recente import (
+        atividade_recente_html,
+        sprint_atual_html,
+    )
+    from src.dashboard.componentes.cards_clusters import (
+        clusters_canonicos_html,
+        estilos_t01_canonicos,
+    )
     from src.dashboard.componentes.html_utils import minificar
     from src.dashboard.componentes.ui import carregar_css_pagina
 
     st.markdown(_estilos_locais(), unsafe_allow_html=True)
-    st.markdown(_estilos_t01_canonicos(), unsafe_allow_html=True)
+    st.markdown(estilos_t01_canonicos(), unsafe_allow_html=True)
     # UX-V-2.7: CSS canônico em arquivo (paridade com mockup 01-visao-geral.html).
     st.markdown(minificar(carregar_css_pagina("visao_geral")), unsafe_allow_html=True)
 
@@ -122,10 +130,10 @@ def renderizar(
 
     col_esq, col_dir = st.columns([1.4, 1.0])
     with col_esq:
-        st.markdown(_clusters_canonicos_html(montar_clusters_canonicos()), unsafe_allow_html=True)
+        st.markdown(clusters_canonicos_html(montar_clusters_canonicos()), unsafe_allow_html=True)
     with col_dir:
-        st.markdown(_atividade_recente_html(ler_atividade_recente(n=6)), unsafe_allow_html=True)
-        st.markdown(_sprint_atual_html(sprint_meta), unsafe_allow_html=True)
+        st.markdown(atividade_recente_html(ler_atividade_recente(n=6)), unsafe_allow_html=True)
+        st.markdown(sprint_atual_html(sprint_meta), unsafe_allow_html=True)
 
 
 # ---------------------------------------------------------------------------
@@ -736,125 +744,10 @@ def _grafico_barras_historico(
 
 
 # ---------------------------------------------------------------------------
-# UX-T-01 — blocos canônicos (mockup 01-visao-geral.html)
+# UX-T-01 — KPIs agentic (CSS T-01 e cards-cluster movidos para
+# ``componentes/cards_clusters.py`` em UX-V-2.7-FIX. Atividade Recente +
+# Sprint Atual movidos para ``componentes/atividade_recente.py``.)
 # ---------------------------------------------------------------------------
-
-
-def _estilos_t01_canonicos() -> str:
-    """CSS local UX-T-01 — espelha estilo inline do mockup canônico."""
-    return """
-    <style>
-      .vg-t01 { font-family: var(--ff-sans); }
-      .vg-t01-kpis {
-        display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
-        margin: 0 0 16px;
-      }
-      .vg-t01-kpi {
-        background: var(--bg-surface); border: 1px solid var(--border-subtle);
-        border-radius: var(--r-md); padding: 16px;
-        display: flex; flex-direction: column; gap: 6px;
-        text-decoration: none; color: inherit;
-        transition: border-color .15s, transform .15s;
-      }
-      .vg-t01-kpi:hover { border-color: var(--accent-purple); transform: translateY(-2px); }
-      .vg-t01-kpi .l {
-        font-family: var(--ff-mono); font-size: var(--fs-11);
-        letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted);
-      }
-      .vg-t01-kpi .v {
-        font-family: var(--ff-mono); font-size: 32px; font-weight: 500;
-        line-height: 1; font-variant-numeric: tabular-nums;
-      }
-      .vg-t01-kpi .d {
-        font-family: var(--ff-mono); font-size: var(--fs-12); color: var(--text-muted);
-      }
-      .vg-t01-kpi.up   .v { color: var(--d7-graduado); }
-      .vg-t01-kpi.warn .v { color: var(--accent-yellow); }
-      .vg-t01-kpi.bad  .v { color: var(--accent-red); }
-
-      .vg-t01-section-label {
-        font-family: var(--ff-mono); font-size: var(--fs-13);
-        letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted);
-        margin: 0 0 8px;
-      }
-      .vg-t01-cluster-grid {
-        display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
-      }
-      .vg-t01-cluster-card {
-        background: var(--bg-surface); border: 1px solid var(--border-subtle);
-        border-radius: var(--r-md); padding: 16px;
-        text-decoration: none; color: inherit;
-        display: flex; flex-direction: column; gap: 8px;
-        transition: border-color .15s, transform .15s;
-      }
-      .vg-t01-cluster-card:hover {
-        border-color: var(--accent-purple);
-        transform: translateY(-2px);
-      }
-      .vg-t01-cluster-card h3 {
-        font-family: var(--ff-mono); font-size: var(--fs-15); font-weight: 500;
-        margin: 0; letter-spacing: -0.01em;
-      }
-      .vg-t01-cluster-head {
-        display: flex; align-items: center; gap: 8px;
-      }
-      .vg-t01-cluster-ic {
-        color: var(--accent-purple);
-        display: inline-flex; align-items: center;
-      }
-      .vg-t01-cluster-ic svg { color: var(--accent-purple); }
-      .vg-t01-cluster-card .desc {
-        font-size: var(--fs-13); color: var(--text-muted); line-height: 1.5;
-      }
-      .vg-t01-cluster-card .stats {
-        display: flex; gap: 12px; margin-top: auto; padding-top: 8px;
-        border-top: 1px solid var(--border-subtle);
-      }
-      .vg-t01-cluster-card .stats span {
-        font-family: var(--ff-mono); font-size: var(--fs-11); color: var(--text-secondary);
-      }
-      .vg-t01-cluster-card .stats strong {
-        color: var(--text-primary); margin-right: 4px;
-      }
-
-      .vg-t01-card { background: var(--bg-surface); border: 1px solid var(--border-subtle);
-                     border-radius: var(--r-md); padding: 16px; }
-      .vg-t01-tl-item {
-        display: grid; grid-template-columns: 90px 24px 1fr; gap: 8px;
-        padding: 8px 0; border-bottom: 1px dashed var(--border-subtle);
-      }
-      .vg-t01-tl-item:last-child { border-bottom: 0; }
-      .vg-t01-tl-item .when {
-        font-family: var(--ff-mono); font-size: var(--fs-11); color: var(--text-muted);
-        padding-top: 2px;
-      }
-      .vg-t01-tl-item .ic { color: var(--accent-purple); padding-top: 2px; }
-      .vg-t01-tl-item .what {
-        font-size: var(--fs-13);
-        color: var(--text-secondary);
-        line-height: 1.45;
-      }
-      .vg-t01-tl-item .what strong { color: var(--text-primary); font-family: var(--ff-mono); }
-      .vg-t01-tl-item .what code { color: var(--accent-purple); }
-
-      .vg-t01-sprint-card { margin-top: 16px; }
-      .vg-t01-sprint-head {
-        display: flex; align-items: baseline; justify-content: space-between;
-        margin-bottom: 12px;
-      }
-      .vg-t01-sprint-head .meta {
-        font-family: var(--ff-mono); font-size: 11px; letter-spacing: 0.06em;
-        text-transform: uppercase; color: var(--text-muted);
-      }
-      .vg-t01-sprint-head .titulo {
-        font-family: var(--ff-mono); font-size: 18px; font-weight: 500; margin-top: 4px;
-      }
-      .vg-t01-sprint-card .desc {
-        font-size: 13px; color: var(--text-secondary); line-height: 1.5;
-      }
-      .vg-t01-sprint-card .desc strong { color: var(--text-primary); }
-    </style>
-    """
 
 
 def _kpis_agentic_html(kpis: dict) -> str:
@@ -882,113 +775,6 @@ def _kpis_agentic_html(kpis: dict) -> str:
         + _card("bad", "?cluster=Sistema&tab=Skills+D7",
                 "Skills regredindo", kpis["skills_regredindo"], kpis["skills_nomes"])
         + "</div>"
-    )
-
-
-def _clusters_canonicos_html(cards: list[dict]) -> str:
-    """Bloco "OS 5 CLUSTERS" do mockup com 6 cards descritivos.
-
-    SIDEBAR-CANON-FIX (2026-05-06): cada card recebe glyph SVG canônico
-    no header (mockup ``_visao-render.js`` linha 130 usa ``glyph(ic, 18)``).
-    """
-    from src.dashboard.componentes.glyphs import glyph
-    from src.dashboard.componentes.html_utils import minificar
-
-    cards_html = []
-    for c in cards:
-        glyph_nome = c.get("glyph", "")
-        glyph_html = glyph(glyph_nome, tamanho_px=18) if glyph_nome else ""
-        cards_html.append(
-            f'<a class="vg-t01-cluster-card" href="{c["href"]}" target="_self">'
-            '<div class="vg-t01-cluster-head">'
-            f'<span class="vg-t01-cluster-ic">{glyph_html}</span>'
-            f'<h3>{c["nome"]}</h3>'
-            "</div>"
-            f'<div class="desc">{c["descricao"]}</div>'
-            '<div class="stats">'
-            f'<span><strong>{c["stat1_value"]}</strong>{c["stat1_label"]}</span>'
-            f'<span><strong>{c["stat2_value"]}</strong>{c["stat2_label"]}</span>'
-            "</div>"
-            "</a>"
-        )
-    return minificar(
-        '<h2 class="vg-t01-section-label">Os 5 clusters</h2>'
-        '<div class="vg-t01-cluster-grid">'
-        f'{"".join(cards_html)}'
-        "</div>"
-    )
-
-
-def _atividade_recente_html(entries: list[dict]) -> str:
-    """Timeline de eventos recentes com ícones SVG canônicos.
-
-    UX-V-2.7: cada linha recebe glyph SVG do mapeamento ``GLYPHS``
-    (em ``componentes/glyphs.py``) conforme campo ``glyph`` do
-    ``TimelineEntry`` — espelha o mockup ``_visao-render.js`` que
-    chama ``glyph(ic, 16)`` em cada ``tlItem``. Antes vazava o
-    caractere ``·`` literal sem informação visual.
-
-    Fallback (entrada sem ``glyph`` ou glyph inexistente): mantém o
-    container vazio ``<span class="ic"></span>`` para preservar o
-    grid; a Atividade Recente continua legível.
-    """
-    from src.dashboard.componentes.glyphs import GLYPHS, glyph
-    from src.dashboard.componentes.html_utils import minificar
-
-    def _icone(nome: str) -> str:
-        if nome and nome in GLYPHS:
-            return glyph(nome, tamanho_px=14)
-        return ""
-
-    if not entries:
-        body = (
-            '<div class="vg-t01-tl-item"><span class="when">—</span>'
-            '<span class="ic"></span>'
-            '<span class="what">Sem atividade recente registrada.</span></div>'
-        )
-    else:
-        body = "".join(
-            '<div class="vg-t01-tl-item">'
-            f'<span class="when">{e["when"]}</span>'
-            f'<span class="ic">{_icone(e.get("glyph", ""))}</span>'
-            f'<span class="what">{e["what_html"]}</span>'
-            "</div>"
-            for e in entries
-        )
-    return minificar(
-        '<h2 class="vg-t01-section-label">Atividade recente</h2>'
-        '<div class="vg-t01-card">'
-        f'<div class="vg-t01-timeline">{body}</div>'
-        "</div>"
-    )
-
-
-def _sprint_atual_html(meta: dict | None) -> str:
-    """Card 'SPRINT ATUAL' canônico."""
-    from src.dashboard.componentes.html_utils import minificar
-
-    if not meta:
-        return minificar(
-            '<h2 class="vg-t01-section-label" style="margin-top:20px;">Sprint atual</h2>'
-            '<div class="vg-t01-card vg-t01-sprint-card">'
-            '<div style="font-size:13px;color:var(--text-muted);">'
-            "Nenhuma sprint registrada."
-            "</div>"
-            "</div>"
-        )
-    pill_classe = f"pill pill-{meta.get('pill_tipo', 'd7-pendente')}"
-    return minificar(
-        '<h2 class="vg-t01-section-label" style="margin-top:20px;">Sprint atual</h2>'
-        '<div class="vg-t01-card vg-t01-sprint-card">'
-        '<div class="vg-t01-sprint-head">'
-        "<div>"
-        f'<div class="meta">{meta["sprint_numero"]} · {meta["periodo"]}</div>'
-        f'<div class="titulo">{meta["titulo"]}</div>'
-        "</div>"
-        f'<span class="{pill_classe}">{meta["pill_texto"]}</span>'
-        "</div>"
-        f'<div class="desc">{meta["descricao"]}</div>'
-        "</div>"
     )
 
 
