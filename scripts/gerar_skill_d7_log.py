@@ -148,6 +148,11 @@ _CATALOGO: dict[str, tuple[str, str, str]] = {
         "Conta de energia elétrica (OCR)",
         "Análise",
     ),
+    "opus_visao": (
+        "opus-visao",
+        "Opus multimodal como OCR canônico de imagens (cupom_foto, recibo)",
+        "Documentos",
+    ),
 }
 
 
