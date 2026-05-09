@@ -1,7 +1,8 @@
 ---
 id: INFRA-PROCESSAR-INBOX-MASSA
 titulo: Wrapper sobre reprocessar_documentos.py + log estruturado por categoria
-status: backlog
+status: concluída
+concluida_em: 2026-05-09
 prioridade: media
 data_criacao: 2026-05-08
 revisada_em: 2026-05-08
