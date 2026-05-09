@@ -1,7 +1,9 @@
 ---
 id: INFRA-EXTRATOR-CUPOM-FOTO
 titulo: Extrator dedicado para cupom_foto JPEG (pré-processamento + Opus + parser de itens)
-status: backlog
+status: concluída
+concluida_em: 2026-05-08
+commit: 25170a0
 prioridade: alta
 data_criacao: 2026-05-08
 fase: CONCLUSAO_REAL

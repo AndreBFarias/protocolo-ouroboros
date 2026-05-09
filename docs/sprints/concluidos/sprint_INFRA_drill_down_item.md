@@ -2,7 +2,9 @@
 ---
 id: INFRA-DRILL-DOWN-ITEM
 titulo: UI de drill-down item por transação (gastei R$X na farmácia, quais itens?)
-status: backlog
+status: concluída
+concluida_em: 2026-05-08
+commit: c266b27
 prioridade: alta
 data_criacao: 2026-05-08
 fase: CONCLUSAO_REAL

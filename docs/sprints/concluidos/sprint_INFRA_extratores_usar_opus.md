@@ -2,7 +2,9 @@
 ---
 id: INFRA-EXTRATORES-USAR-OPUS
 titulo: Refatorar 5 extratores que falham com campos_insuficientes para usar extrair_via_opus como fallback
-status: backlog
+status: concluída
+concluida_em: 2026-05-08
+commit: b4ddf37
 prioridade: altissima
 data_criacao: 2026-05-08
 fase: CONCLUSAO_REAL
