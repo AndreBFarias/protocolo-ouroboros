@@ -1,7 +1,9 @@
 ---
 id: INFRA-OCR-OPUS-VISAO
 titulo: Opus multimodal como OCR canônico de imagens (cupom_foto, comprovante_foto, recibo)
-status: backlog
+status: concluída
+concluida_em: 2026-05-08
+commit: d7f8805
 prioridade: altissima
 data_criacao: 2026-05-08
 fase: CONCLUSAO_REAL

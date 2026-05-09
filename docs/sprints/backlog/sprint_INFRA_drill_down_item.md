@@ -1,3 +1,4 @@
+<!-- noqa: accent -->
 ---
 id: INFRA-DRILL-DOWN-ITEM
 titulo: UI de drill-down item por transação (gastei R$X na farmácia, quais itens?)
@@ -5,7 +6,7 @@ status: backlog
 prioridade: alta
 data_criacao: 2026-05-08
 fase: CONCLUSAO_REAL
-depende_de: [INFRA-LINKING-NFE-TRANSACAO]
+depende_de: [INFRA-LINKING-NFE-TRANSACAO <!-- noqa: accent -->]
 esforco_estimado_horas: 3
 origem: docs/auditorias/VALIDACAO_END2END_2026-05-08.md (caso 3 — DROGASIL sem drill-down)
 ---
@@ -33,7 +34,7 @@ Esta sprint adiciona UI de drill-down: clicar em uma linha de transação no Ext
 ```bash
 grep -n "transacao_id\|drill.*item\|painel_lateral" src/dashboard/paginas/extrato.py | head
 sqlite3 data/output/grafo.sqlite "SELECT COUNT(*) FROM edge WHERE tipo='documento_de'"
-# Antes desta sprint: usuário esperaria >= 500 vínculos (após INFRA-LINKING-NFE-TRANSACAO)
+# Antes desta sprint: usuário esperaria >= 500 vínculos (após INFRA-LINKING-NFE-TRANSACAO <!-- noqa: accent -->)
 ```
 
 ## Não-objetivos
@@ -61,6 +62,6 @@ Validação visual: navegar `?cluster=Finanças&tab=Extrato&transacao_id=<id_de_
 ## Referência
 
 - Auditoria: `VALIDACAO_END2END_2026-05-08.md` caso 3.
-- Sprints dependentes: INFRA-LINKING-NFE-TRANSACAO + INFRA-OCR-OPUS-VISAO.
+- Sprints dependentes: INFRA-LINKING-NFE-TRANSACAO <!-- noqa: accent --> + INFRA-OCR-OPUS-VISAO.
 
 *"Drill-down é o teste empírico da inteligência prometida." — princípio INFRA-DRILL-DOWN-ITEM*

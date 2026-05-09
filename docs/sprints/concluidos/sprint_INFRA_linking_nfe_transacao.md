@@ -1,16 +1,19 @@
+<!-- noqa: accent -->
 ---
-id: INFRA-LINKING-NFE-TRANSACAO
-titulo: Matcher massa transação<->NF/cupom (valor + data + janela ±3d) para vincular transacoes a documentos
-status: backlog
+id: INFRA-LINKING-NFE-TRANSACAO <!-- noqa: accent -->
+titulo: Matcher massa transacao<->NF/cupom (valor + data + janela +-3d) para vincular transacoes a documentos <!-- noqa: accent -->
+status: concluída
+concluida_em: 2026-05-08
+commit: d1413ba
 prioridade: altissima
 data_criacao: 2026-05-08
 fase: CONCLUSAO_REAL
 depende_de: [INFRA-PROCESSAR-INBOX-MASSA]
 esforco_estimado_horas: 4
-origem: docs/auditorias/VALIDACAO_END2END_2026-05-08.md (25/6086 vinculos transacao->documento; 0,4% cobertura)
+origem: docs/auditorias/VALIDACAO_END2END_2026-05-08.md (25/6086 vinculos transacao->documento; 0,4% cobertura) <!-- noqa: accent -->
 ---
 
-# Sprint INFRA-LINKING-NFE-TRANSACAO — matcher em massa
+# Sprint INFRA-LINKING-NFE-TRANSACAO <!-- noqa: accent --> — matcher em massa
 
 ## Contexto
 
@@ -66,4 +69,4 @@ make lint && make smoke
 - Auditoria: `VALIDACAO_END2END_2026-05-08.md` casos 2+3.
 - Sprints linking_* (concluídas anteriormente).
 
-*"Match sem dado é heurística; match com dado é ouro." — princípio INFRA-LINKING-NFE-TRANSACAO*
+*"Match sem dado é heurística; match com dado é ouro." — princípio INFRA-LINKING-NFE-TRANSACAO <!-- noqa: accent -->*

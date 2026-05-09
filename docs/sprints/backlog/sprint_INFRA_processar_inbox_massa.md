@@ -1,22 +1,34 @@
 ---
 id: INFRA-PROCESSAR-INBOX-MASSA
-titulo: Rodar inbox_reader.processar_fila em massa em data/raw/{andre,casal,vitoria}/**
+titulo: Wrapper sobre reprocessar_documentos.py + log estruturado por categoria
 status: backlog
-prioridade: altissima
+prioridade: media
 data_criacao: 2026-05-08
+revisada_em: 2026-05-08
 fase: CONCLUSAO_REAL
-depende_de: [INFRA-OCR-OPUS-VISAO, INFRA-INBOX-OFX-READER]
-esforco_estimado_horas: 4
-origem: docs/auditorias/VALIDACAO_END2630_2026-05-08.md (854 arquivos brutos vs 48 documentos no grafo)
+depende_de: [INFRA-EXTRATORES-USAR-OPUS]
+esforco_estimado_horas: 2
+origem: docs/auditorias/VALIDACAO_END2END_2026-05-08.md + revisão do agent executor 2026-05-08
 ---
 
-# Sprint INFRA-PROCESSAR-INBOX-MASSA — processar a massa real
+# Sprint INFRA-PROCESSAR-INBOX-MASSA — wrapper sobre reprocessar_documentos.py
 
-## Contexto
+## Contexto (revisado 2026-05-08 após primeira tentativa de execução)
 
-INFRA-INBOX-OFX-READER (commit `62f71d0`) criou o leitor da inbox mas só foi rodado em 5 fixtures sintéticas. Na prática há **854 arquivos brutos** em `data/raw/{andre,casal,vitoria}/**` (excluindo `_classificar`, `_conferir`, `_envelopes`, `originais` que são pool/triagem). Hoje no grafo: **48 documentos**.
+**Achado do agent executor**: já existe `scripts/reprocessar_documentos.py` (557L, Sprint 57) que faz exatamente o pipeline proposto. Rodar idempotente NÃO incrementa o grafo (48 → 48 documentos) porque os extratores específicos para cupom_foto/garantia/danfe FALHAM com `campos_insuficientes` (OCR fraco — confirmado pela validação fim-a-fim).
 
-Esta sprint preenche o gap rodando o pipeline em massa.
+**Aritmética corrigida**: dos 854 arquivos brutos, 770 são bancários (viram `transacao`, não `documento`). Universo realista de nodes `documento` ingeríveis: **40-60** (vs meta original 200, inviável).
+
+**Solução real**: depende de INFRA-EXTRATORES-USAR-OPUS (sprint nova) que refatora os 5 extratores que falham para usar `extrair_via_opus()` como fallback quando OCR local retorna `campos_insuficientes`.
+
+## Objetivo (revisado)
+
+Wrapper fino sobre `reprocessar_documentos.py`:
+1. `scripts/processar_inbox_massa.py` que invoca `reprocessar_documentos.main(--forcar-reextracao)` após INFRA-EXTRATORES-USAR-OPUS estar integrado.
+2. Log estruturado em `logs/inbox_massa_<timestamp>.log` com totais por categoria + falhas + delta vs estado anterior.
+3. Backup automático de `grafo.sqlite` antes de rodar.
+
+Critério ajustado: documentos passam de 48 para >=70 (após extratores OCR-Opus funcionarem).
 
 ## Objetivo
 
