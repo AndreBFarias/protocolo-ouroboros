@@ -1,0 +1,10 @@
+Placeholder para fixture "cupom claro" — imagem ainda não disponível.
+
+Cenário canônico esperado quando a imagem real for adicionada:
+- Boa iluminação, foco nítido, papel térmico em estado novo.
+- Toda a coluna de descrição legível.
+- Total da nota visível na última linha.
+- Confianca esperada (campo opus): >= 0.95.
+
+Sprint INFRA-OCR-OPUS-VISAO criou esta entrada como marcador para a sprint
+seguinte INFRA-EXTRATOR-CUPOM-FOTO substituir por imagem real.

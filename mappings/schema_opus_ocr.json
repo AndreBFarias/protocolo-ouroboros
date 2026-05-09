@@ -1,0 +1,106 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ouroboros.local/schemas/opus_ocr.json",
+  "title": "OpusOcrCanonico",
+  "description": "Schema canônico de saída do OCR via Claude Opus multimodal (Sprint INFRA-OCR-OPUS-VISAO). Consumido por src/extractors/opus_visao.py.",
+  "type": "object",
+  "required": [
+    "sha256",
+    "tipo_documento",
+    "estabelecimento",
+    "data_emissao",
+    "itens",
+    "total",
+    "extraido_via",
+    "ts_extraido"
+  ],
+  "properties": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "Hash SHA-256 hex completo do conteúdo binário da imagem"
+    },
+    "tipo_documento": {
+      "type": "string",
+      "enum": [
+        "cupom_fiscal_foto",
+        "comprovante_pix_foto",
+        "recibo_foto",
+        "outro",
+        "pendente"
+      ]
+    },
+    "estabelecimento": {
+      "type": "object",
+      "required": ["razao_social"],
+      "properties": {
+        "razao_social": {"type": "string", "minLength": 1},
+        "cnpj": {
+          "type": ["string", "null"],
+          "pattern": "^[0-9]{2}\\.[0-9]{3}\\.[0-9]{3}/[0-9]{4}-[0-9]{2}$|^$"
+        },
+        "endereco": {"type": ["string", "null"]}
+      }
+    },
+    "data_emissao": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+      "description": "Data ISO YYYY-MM-DD"
+    },
+    "horario": {
+      "type": ["string", "null"],
+      "pattern": "^[0-9]{2}:[0-9]{2}:[0-9]{2}$|^$"
+    },
+    "operador": {"type": ["string", "null"]},
+    "itens": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["descricao", "valor_total"],
+        "properties": {
+          "codigo": {"type": ["string", "null"]},
+          "descricao": {"type": "string", "minLength": 1},
+          "qtd": {"type": ["number", "null"]},
+          "unidade": {"type": ["string", "null"]},
+          "valor_unit": {"type": ["number", "null"]},
+          "valor_total": {"type": "number"}
+        }
+      }
+    },
+    "total": {"type": "number", "minimum": 0},
+    "forma_pagamento": {
+      "type": ["string", "null"],
+      "enum": [
+        "dinheiro",
+        "debito",
+        "credito",
+        "pix",
+        "vale_alimentacao",
+        "vale_refeicao",
+        "outro",
+        null
+      ]
+    },
+    "extraido_via": {
+      "type": "string",
+      "enum": ["opus_v4_7", "opus_supervisor_artesanal", "ocr_local"]
+    },
+    "confianca_global": {
+      "type": ["number", "null"],
+      "minimum": 0.0,
+      "maximum": 1.0
+    },
+    "ts_extraido": {
+      "type": "string",
+      "description": "ISO 8601 com timezone"
+    },
+    "aguardando_supervisor": {
+      "type": "boolean",
+      "description": "Verdadeiro quando o pedido foi enfileirado mas o supervisor humano ainda não transcreveu. Schema completo só aparece quando o cache é gerado."
+    },
+    "caminho_imagem": {
+      "type": "string",
+      "description": "Path absoluto da imagem original. Presente em stubs aguardando_supervisor."
+    }
+  }
+}

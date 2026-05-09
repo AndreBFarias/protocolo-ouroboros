@@ -1,0 +1,13 @@
+Placeholder para fixture "cupom rasgado / baixa qualidade" — imagem ainda
+não disponível.
+
+Cenário canônico esperado:
+- Papel térmico amassado, parte do total cortada ou ilegível.
+- Iluminação irregular ou foto torta (desafio de orientação).
+- Espera-se que Opus consiga reconstruir descrição mesmo com perda parcial,
+  marcando confianca_global mais baixa (~0.6-0.8).
+
+Caso degradado serve para validar:
+- Que a função NÃO falha catastroficamente em imagem ruim.
+- Que o cache armazena o resultado parcial sem corrupção.
+- Que a flag aguardando_supervisor expira quando o supervisor processa.
