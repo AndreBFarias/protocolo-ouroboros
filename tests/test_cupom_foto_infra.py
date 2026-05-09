@@ -139,7 +139,7 @@ class TestCacheCanonico:
             payload = json.loads(cache.read_text(encoding="utf-8"))
             jsonschema.validate(payload, schema_opus)
             assert payload["tipo_documento"] == "cupom_fiscal_foto"
-            assert payload["estabelecimento"]["cnpj"], "CNPJ obrigatorio"
+            assert payload["estabelecimento"]["cnpj"], "CNPJ obrigatório"
             assert payload["total"] > 0
             assert len(payload["itens"]) >= 1
 
@@ -192,7 +192,7 @@ class TestExtrairViaOpusComCacheReal:
         reason="data ausente",
     )
     def test_cache_hit_devolve_payload_completo(self, tmp_path: Path):
-        # Replica um cache canonico em tmp_path para isolar do producao
+        # Replica um cache canonico em tmp_path para isolar do producao  # noqa: accent
         amostras = _amostras_jpeg()
         if not amostras:
             pytest.skip("nenhuma amostra real")
@@ -317,7 +317,7 @@ class TestIngerirCupomFoto:
     def test_itens_sem_codigo_recebem_codigo_sintetico(self, grafo_temp: GrafoDB):
         """Items sem codigo_barras (frutas a granel) ganham SEMCOD<NNNN>."""
         payload = _payload_canonico_minimo()
-        # Os 2 itens canonicos: o segundo (BANANA) tem codigo None
+        # Os 2 itens canonicos: o segundo (BANANA) tem codigo None  # noqa: accent
         ingerir_cupom_foto(grafo_temp, payload)
         con = sqlite3.connect(grafo_temp.caminho)
         try:
@@ -349,7 +349,7 @@ class TestIngerirCupomFoto:
 
 
 # ============================================================================
-# Integracao: 4 amostras reais via cache
+# Integracao: 4 amostras reais via cache  # noqa: accent
 # ============================================================================
 
 

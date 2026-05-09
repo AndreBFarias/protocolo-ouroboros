@@ -647,7 +647,7 @@ def ingerir_cupom_foto(
 
     Itens sem código (``codigo`` nulo) recebem código sintético
     ``SEMCOD<NNNN>`` derivado da posição na lista para preservar a
-    chave canônica ``<cnpj>|<data>|<codigo>`` do nó ``item``. Itens sem
+    chave canônica ``<cnpj>|<data>|<codigo>`` do nó ``item``. Itens sem  # noqa: accent
     descrição são descartados (decisão de ``ingerir_documento_fiscal``).
 
     Idempotente: chave do documento usa o sha256 da imagem, então

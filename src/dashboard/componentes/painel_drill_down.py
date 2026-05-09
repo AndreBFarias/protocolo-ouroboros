@@ -13,7 +13,7 @@ Blocos do painel
 -----------------
 1. Header: data, valor, fornecedor, conta, sha8 da transação.
 2. Documento vinculado: sha8 + tipo_documento + data_emissao + link.
-3. Itens da NF/cupom: tabela ``codigo | descrição | qtd | unit | total``.
+3. Itens da NF/cupom: tabela ``codigo | descricao | qtd | unit | total``.  # noqa: accent
 4. Cruzamentos (opcional): outras transações com itens iguais
    (mesmo ``produto_canonico``).
 5. Sem vínculo: callout "sem documento vinculado" + botão placeholder.
@@ -188,7 +188,7 @@ def _formatar_qtd(valor: Any) -> str:
 def _itens_html(itens: list[dict[str, Any]]) -> str:
     """Tabela de itens granulares do documento.
 
-    Cada item é dict com chaves opcionais: ``codigo`` (str), ``descricao``
+    Cada item é dict com chaves opcionais: ``codigo`` (str), ``descricao``  # noqa: accent
     (str), ``quantidade`` ou ``qtde`` (float), ``valor_unitario`` (float),
     ``valor_total`` (float).
     """

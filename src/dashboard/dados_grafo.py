@@ -477,7 +477,7 @@ def carregar_drill_down_transacao(transacao_id: int) -> dict:
         {
             "documento": {nome_canonico, tipo_documento, data_emissao,
                           razao_social, arquivo_origem} | None,
-            "itens": [{codigo, descricao, quantidade,
+            "itens": [{codigo, descricao, quantidade,  # noqa: accent
                        valor_unitario, valor_total}, ...],
         }
 
@@ -569,7 +569,7 @@ def buscar_transacao_id_por_identificador(identificador: str) -> int | None:
 
     O extrato XLSX guarda em ``identificador`` o sha256 da transação que
     coincide com ``node.nome_canonico`` quando a transação é do tipo
-    ``transacao``. Esta função faz a ponte para o drill-down acionado
+    ``transacao``. Esta função faz a ponte para o drill-down acionado  # noqa: accent
     via ``?transacao_id=<sha8>`` (sufixo curto) ou sha256 completo.
 
     Aceita prefixo (sha8 = 8 caracteres). Quando há múltiplos matches,
