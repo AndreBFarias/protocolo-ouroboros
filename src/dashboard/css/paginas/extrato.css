@@ -406,3 +406,178 @@
     color: var(--text-muted);
     font-size: var(--fs-12);
 }
+
+/* INFRA-DRILL-DOWN-ITEM: painel lateral de drill-down item por transação.
+   Acionado via ?transacao_id=<sha>. Renderiza header + documento + itens
+   + cruzamentos. Estilo coeso com .drawer (UX-RD-06) mas escopo distinto:
+   .drawer mostra JSON da transação; .painel-drill-down mostra walk de 2
+   saltos no grafo (transação --documento_de--> doc --contem_item--> item). */
+.painel-drill-down {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--r-md);
+    padding: 16px 20px;
+    margin: 16px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    font-family: var(--ff-base);
+}
+.painel-drill-header {
+    border-bottom: 1px solid var(--border-subtle);
+    padding-bottom: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.painel-drill-titulo {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+.painel-drill-rotulo {
+    font-family: var(--ff-mono);
+    font-size: 11px;
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+    color: var(--accent-purple);
+}
+.painel-drill-sha8 {
+    font-family: var(--ff-mono);
+    font-size: 11px;
+    background: var(--bg-inset);
+    padding: 2px 8px;
+    border-radius: var(--r-xs);
+    color: var(--text-secondary);
+}
+.painel-drill-meta {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+}
+.painel-drill-meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.painel-drill-meta-item .k {
+    font-family: var(--ff-mono);
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+.painel-drill-meta-item .v {
+    font-family: var(--ff-mono);
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-primary);
+}
+.painel-drill-bloco {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.painel-drill-bloco-titulo {
+    font-family: var(--ff-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+}
+.painel-drill-doc-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px 16px;
+}
+.painel-drill-doc-grid > div {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+}
+.painel-drill-doc-grid .k {
+    font-family: var(--ff-mono);
+    font-size: 10px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    min-width: 64px;
+}
+.painel-drill-doc-grid .v {
+    font-family: var(--ff-mono);
+    font-size: 12px;
+    color: var(--text-primary);
+}
+.painel-drill-doc-arquivo {
+    margin-top: 4px;
+    display: flex;
+    gap: 8px;
+    align-items: baseline;
+}
+.painel-drill-doc-arquivo .k {
+    font-family: var(--ff-mono);
+    font-size: 10px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+}
+.painel-drill-doc-arquivo .v {
+    font-family: var(--ff-mono);
+    font-size: 11px;
+    color: var(--text-secondary);
+    background: var(--bg-inset);
+    padding: 2px 6px;
+    border-radius: var(--r-xs);
+    word-break: break-all;
+}
+.painel-drill-itens-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--r-sm);
+}
+.painel-drill-itens {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--ff-base);
+    font-size: 12px;
+}
+.painel-drill-itens thead {
+    background: var(--bg-inset);
+}
+.painel-drill-itens th {
+    padding: 6px 10px;
+    text-align: left;
+    font-family: var(--ff-mono);
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border-subtle);
+}
+.painel-drill-itens td {
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--border-subtle);
+    color: var(--text-primary);
+}
+.painel-drill-itens tbody tr:last-child td { border-bottom: none; }
+.painel-drill-itens .col-mono {
+    font-family: var(--ff-mono);
+    font-size: 11px;
+    color: var(--text-secondary);
+}
+.painel-drill-itens .col-num {
+    font-family: var(--ff-mono);
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+}
+.painel-drill-vazio {
+    color: var(--text-muted);
+    font-size: 12px;
+    margin: 0;
+    padding: 4px 0;
+}
+.painel-drill-sem-vinculo {
+    background: var(--bg-inset);
+    border-left: 3px solid var(--accent-yellow);
+    padding: 12px 16px;
+    border-radius: var(--r-sm);
+}

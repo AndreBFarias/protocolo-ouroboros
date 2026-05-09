@@ -53,6 +53,10 @@ from src.dashboard.componentes.drilldown import (
     limpar_filtro,
 )
 from src.dashboard.componentes.html_utils import minificar
+from src.dashboard.componentes.painel_drill_down import (
+    persistir_revisao,
+    renderizar_painel_drill_down,
+)
 from src.dashboard.componentes.ui import (
     callout_html,
     carregar_css_pagina,
@@ -959,6 +963,12 @@ def renderizar(
     # ---------- Exportação CSV ----------
     _exibir_exportacao(resultado)
 
+    # ---------- Painel drill-down item (INFRA-DRILL-DOWN-ITEM) ----------
+    # Acionado por query-param ``?transacao_id=<sha8|sha256>``. Tem
+    # prioridade sobre o drawer JSON: se ambos estão setados, mostra só
+    # o painel (drawer continua disponível via session_state).
+    _exibir_painel_drill_down(resultado)
+
     # ---------- Drawer (renderizado quando idx setado) ----------
     _exibir_drawer(resultado)
 
@@ -1102,6 +1112,153 @@ def _exibir_exportacao(df: pd.DataFrame) -> None:
         file_name="extrato.csv",
         mime="text/csv",
     )
+
+
+_CAMINHO_REVISAO_HUMANA: Path = (
+    Path(__file__).resolve().parents[3] / "data" / "output" / "revisao_humana.sqlite"
+)
+
+
+def _ler_query_param_transacao_id() -> str | None:
+    """Devolve ``?transacao_id=<x>`` se presente, senão None.
+
+    Aceita sha8 (prefixo) ou sha256 completo. Validação leve: só strings
+    não vazias, alfanuméricas. Strings inválidas são tratadas como ausentes
+    (graceful degradation -- nunca quebrar o render por query param ruim).
+    """
+    try:
+        qs = st.query_params  # type: ignore[attr-defined]
+    except Exception:  # noqa: BLE001
+        return None
+    valor = qs.get("transacao_id")
+    if not valor:
+        return None
+    if isinstance(valor, list):
+        valor = valor[0] if valor else None
+    if not valor:
+        return None
+    valor_str = str(valor).strip()
+    if not valor_str or not valor_str.isalnum():
+        return None
+    return valor_str
+
+
+def _localizar_linha_transacao(
+    df: pd.DataFrame, identificador: str
+) -> pd.Series | None:
+    """Encontra a linha do DF cujo ``identificador`` casa com prefix.
+
+    O sha256 da transação é guardado em ``df['identificador']``. Aceita
+    prefixo (sha8) -- usa ``str.startswith``. Quando há múltiplos matches
+    retorna o primeiro; quando nenhum, devolve None.
+    """
+    if "identificador" not in df.columns or df.empty:
+        return None
+    serie_id = df["identificador"].fillna("").astype(str)
+    mascara = serie_id.str.startswith(identificador)
+    encontrados = df[mascara]
+    if encontrados.empty:
+        return None
+    return encontrados.iloc[0]
+
+
+def _exibir_painel_drill_down(df: pd.DataFrame) -> None:
+    """Renderiza o painel lateral de drill-down item.
+
+    Acionado por ``?transacao_id=<sha8|sha256>`` na URL. Busca a transação
+    no DataFrame local (para meta básica) + no grafo (para documento e
+    itens) e injeta o HTML do painel.
+
+    Quando o param está ausente ou a transação não existe, no-op.
+    """
+    identificador = _ler_query_param_transacao_id()
+    if identificador is None:
+        return
+
+    linha = _localizar_linha_transacao(df, identificador)
+    if linha is None:
+        st.markdown(
+            callout_html(
+                "warning",
+                f"Transação {identificador[:8]} não encontrada no período "
+                "filtrado. Ajuste filtros ou cole o sha256 completo.",
+            ),
+            unsafe_allow_html=True,
+        )
+        return
+
+    transacao_dict = transacao_para_dict(linha)
+    documento, itens = _buscar_drill_down_grafo(identificador)
+
+    painel_html = renderizar_painel_drill_down(
+        transacao_dict, documento=documento, itens=itens
+    )
+    st.markdown(painel_html, unsafe_allow_html=True)
+
+    # Botão "marcar revisado" -- best-effort em revisao_humana.sqlite.
+    col_rev, col_fechar = st.columns([1, 1])
+    with col_rev:
+        if st.button(
+            "Marcar revisado",
+            key=f"painel_drill_revisar_{identificador[:8]}",
+        ):
+            tx_id = _resolver_transacao_id_no_grafo(identificador)
+            if tx_id is None:
+                st.toast("Transação não localizada no grafo.")
+            else:
+                ok = persistir_revisao(tx_id, _CAMINHO_REVISAO_HUMANA)
+                if ok:
+                    st.toast(f"Marcado como revisado (id={tx_id}).")
+                else:
+                    st.toast("revisao_humana.sqlite ausente -- no-op.")
+    with col_fechar:
+        if st.button("Fechar painel", key=f"painel_drill_fechar_{identificador[:8]}"):
+            try:
+                qs = st.query_params  # type: ignore[attr-defined]
+                if "transacao_id" in qs:
+                    del qs["transacao_id"]
+            except Exception:  # noqa: BLE001
+                pass
+            st.rerun()
+
+
+def _buscar_drill_down_grafo(
+    identificador: str,
+) -> tuple[dict[str, Any] | None, list[dict[str, Any]]]:
+    """Resolve documento + itens do grafo para a transação.
+
+    Wrapper sobre ``dados_grafo.buscar_transacao_id_por_identificador`` +
+    ``dados_grafo.carregar_drill_down_transacao``. Faz graceful
+    degradation em qualquer erro (ADR-10): retorna (None, []) e o painel
+    mostra callout "sem documento vinculado".
+    """
+    try:
+        from src.dashboard.dados_grafo import (
+            buscar_transacao_id_por_identificador,
+            carregar_drill_down_transacao,
+        )
+    except ImportError:
+        return None, []
+    try:
+        tx_id = buscar_transacao_id_por_identificador(identificador)
+        if tx_id is None:
+            return None, []
+        resultado = carregar_drill_down_transacao(tx_id)
+        return resultado.get("documento"), resultado.get("itens", [])
+    except Exception:  # noqa: BLE001
+        return None, []
+
+
+def _resolver_transacao_id_no_grafo(identificador: str) -> int | None:
+    """Wrapper resiliente para localizar transação_id (PK) no grafo."""
+    try:
+        from src.dashboard.dados_grafo import buscar_transacao_id_por_identificador
+    except ImportError:
+        return None
+    try:
+        return buscar_transacao_id_por_identificador(identificador)
+    except Exception:  # noqa: BLE001
+        return None
 
 
 def _exibir_drawer(df: pd.DataFrame) -> None:

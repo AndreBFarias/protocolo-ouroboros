@@ -467,6 +467,136 @@ def carregar_subgrafo(node_id: int, radius: int = 1) -> dict:
     return {"nodes": nodes, "edges": arestas_unicas, "center_id": node_id}
 
 
+def carregar_drill_down_transacao(transacao_id: int) -> dict:
+    """Drill-down item por transação_id (INFRA-DRILL-DOWN-ITEM).
+
+    Walk de 2 saltos no grafo: transação --documento_de--> documento
+    --contem_item--> item. Retorna dict pronto para o painel
+    ``painel_drill_down`` consumir:
+
+        {
+            "documento": {nome_canonico, tipo_documento, data_emissao,
+                          razao_social, arquivo_origem} | None,
+            "itens": [{codigo, descricao, quantidade,
+                       valor_unitario, valor_total}, ...],
+        }
+
+    Quando ``transacao_id`` não tem aresta ``documento_de``, devolve
+    ``{"documento": None, "itens": []}``. Graceful degradation
+    (ADR-10) se o grafo está ausente.
+
+    Lê em modo ``mode=ro`` -- não escreve no SQLite.
+    """
+    vazio: dict = {"documento": None, "itens": []}
+    cam_grafo = _caminho_grafo()
+    if not cam_grafo.exists():
+        return vazio
+
+    import sqlite3
+
+    conn = sqlite3.connect(f"file:{cam_grafo}?mode=ro", uri=True)
+    conn.row_factory = sqlite3.Row
+    try:
+        # 1º salto: transação -> documento (aresta documento_de aponta
+        # de documento p/ transação; logo buscar dst_id == transacao_id).
+        cur = conn.execute(
+            "SELECT n.id, n.nome_canonico, n.metadata "
+            "FROM edge e JOIN node n ON n.id = e.src_id "
+            "WHERE e.dst_id = ? AND e.tipo = 'documento_de' "
+            "  AND n.tipo = 'documento' "
+            "LIMIT 1",
+            (int(transacao_id),),
+        )
+        row_doc = cur.fetchone()
+        if row_doc is None:
+            return vazio
+        try:
+            meta_doc = json.loads(row_doc["metadata"] or "{}")
+            if not isinstance(meta_doc, dict):
+                meta_doc = {}
+        except (json.JSONDecodeError, TypeError):
+            meta_doc = {}
+        documento = {
+            "id": int(row_doc["id"]),
+            "nome_canonico": row_doc["nome_canonico"],
+            "tipo_documento": meta_doc.get("tipo_documento", "desconhecido"),
+            "data_emissao": meta_doc.get("data_emissao", ""),
+            "razao_social": meta_doc.get("razao_social", ""),
+            "arquivo_origem": meta_doc.get("arquivo_origem", ""),
+        }
+
+        # 2º salto: documento -> item via contem_item.
+        itens: list[dict] = []
+        for row_item in conn.execute(
+            "SELECT n.id, n.nome_canonico, n.metadata "
+            "FROM edge e JOIN node n ON n.id = e.dst_id "
+            "WHERE e.src_id = ? AND e.tipo = 'contem_item' "
+            "  AND n.tipo = 'item'",
+            (documento["id"],),
+        ):
+            try:
+                meta_item = json.loads(row_item["metadata"] or "{}")
+                if not isinstance(meta_item, dict):
+                    meta_item = {}
+            except (json.JSONDecodeError, TypeError):
+                meta_item = {}
+            itens.append(
+                {
+                    "id": int(row_item["id"]),
+                    "codigo": meta_item.get("codigo")
+                    or meta_item.get("ean")
+                    or row_item["nome_canonico"],
+                    "descricao": meta_item.get("descricao")
+                    or meta_item.get("nome")
+                    or row_item["nome_canonico"],
+                    "quantidade": meta_item.get("quantidade")
+                    or meta_item.get("qtde")
+                    or 0,
+                    "valor_unitario": meta_item.get("valor_unitario"),
+                    "valor_total": meta_item.get("valor_total"),
+                    "produto_canonico": meta_item.get("produto_canonico", ""),
+                }
+            )
+    finally:
+        conn.close()
+
+    return {"documento": documento, "itens": itens}
+
+
+def buscar_transacao_id_por_identificador(identificador: str) -> int | None:
+    """Resolve ``transacao_id`` (PK do node) a partir do ``identificador``
+    da linha do extrato.
+
+    O extrato XLSX guarda em ``identificador`` o sha256 da transação que
+    coincide com ``node.nome_canonico`` quando a transação é do tipo
+    ``transacao``. Esta função faz a ponte para o drill-down acionado
+    via ``?transacao_id=<sha8>`` (sufixo curto) ou sha256 completo.
+
+    Aceita prefixo (sha8 = 8 caracteres). Quando há múltiplos matches,
+    retorna o primeiro -- caller deve preferir sha256 completo. Quando
+    não encontra, retorna None.
+    """
+    if not identificador:
+        return None
+    cam_grafo = _caminho_grafo()
+    if not cam_grafo.exists():
+        return None
+
+    import sqlite3
+
+    conn = sqlite3.connect(f"file:{cam_grafo}?mode=ro", uri=True)
+    try:
+        cur = conn.execute(
+            "SELECT id FROM node WHERE tipo='transacao' "
+            "AND nome_canonico LIKE ? LIMIT 1",
+            (f"{identificador}%",),
+        )
+        row = cur.fetchone()
+        return int(row[0]) if row else None
+    finally:
+        conn.close()
+
+
 def listar_fornecedores_com_id() -> list[dict]:
     """Lista fornecedores do grafo com id + nome para seleção no selectbox.
 
