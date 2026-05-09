@@ -607,6 +607,135 @@ def ingerir_documento_fiscal(
     return documento_id
 
 
+# ============================================================================
+# Sprint INFRA-EXTRATOR-CUPOM-FOTO: adapter schema_opus_ocr -> documento_fiscal
+# ============================================================================
+
+
+CAMPOS_OBRIGATORIOS_PAYLOAD_OPUS: tuple[str, ...] = (
+    "sha256",
+    "tipo_documento",
+    "estabelecimento",
+    "data_emissao",
+    "itens",
+    "total",
+)
+
+
+def ingerir_cupom_foto(
+    db: GrafoDB,
+    payload_opus: dict[str, Any],
+    caminho_arquivo: Path | None = None,
+) -> int:
+    """Ingere um cupom fiscal fotografado a partir do payload canônico do Opus.
+
+    `payload_opus` segue o schema de ``mappings/schema_opus_ocr.json``
+    (saída de ``src.extractors.opus_visao.extrair_via_opus``). Esta função
+    é um adapter fino: traduz o schema canônico para o formato esperado
+    por ``ingerir_documento_fiscal`` e delega.
+
+    Persistência no grafo (via ``ingerir_documento_fiscal``):
+
+    - 1 nó ``documento`` (chave canônica ``CUPOMFOTO|<sha256>``)
+    - 1 nó ``fornecedor`` (CNPJ canônico do estabelecimento)
+    - N nós ``item`` (1 por item do cupom)
+    - 1 aresta ``fornecido_por`` (documento -> fornecedor) -- equivalente
+      semântico de ``emitida_por`` para documentos fiscais sem campo
+      "emitente" separado de "fornecedor"
+    - 1 aresta ``ocorre_em`` (documento -> periodo)
+    - N arestas ``contem_item`` (documento -> item)
+
+    Itens sem código (``codigo`` nulo) recebem código sintético
+    ``SEMCOD<NNNN>`` derivado da posição na lista para preservar a
+    chave canônica ``<cnpj>|<data>|<codigo>`` do nó ``item``. Itens sem
+    descrição são descartados (decisão de ``ingerir_documento_fiscal``).
+
+    Idempotente: chave do documento usa o sha256 da imagem, então
+    reprocessar o mesmo arquivo nunca duplica nós nem arestas.
+
+    Pendências (``aguardando_supervisor=True``) são rejeitadas com
+    ``ValueError`` -- não há dados suficientes para ingerir.
+
+    Devolve o id do nó ``documento`` criado/atualizado.
+    """
+    if payload_opus.get("aguardando_supervisor"):
+        raise ValueError(
+            "payload_opus está em estado 'aguardando_supervisor' -- "
+            "supervisor humano ainda não transcreveu a imagem. "
+            "Ingestão abortada para evitar nó de documento órfão."
+        )
+
+    for campo in CAMPOS_OBRIGATORIOS_PAYLOAD_OPUS:
+        if not payload_opus.get(campo):
+            raise ValueError(
+                f"payload_opus sem '{campo}' -- não respeita schema_opus_ocr; "
+                "ingestão abortada"
+            )
+
+    estabelecimento = payload_opus.get("estabelecimento") or {}
+    cnpj = estabelecimento.get("cnpj") or ""
+    if not cnpj:
+        raise ValueError(
+            "payload_opus.estabelecimento.cnpj vazio -- nó fornecedor ficaria órfão"
+        )
+
+    sha = payload_opus["sha256"]
+    documento: dict[str, Any] = {
+        "chave_44": f"CUPOMFOTO|{sha}",
+        "cnpj_emitente": cnpj,
+        "data_emissao": payload_opus["data_emissao"],
+        "tipo_documento": "cupom_fiscal_foto",
+        "razao_social": estabelecimento.get("razao_social"),
+        "endereco": estabelecimento.get("endereco"),
+        "total": float(payload_opus["total"]),
+        "forma_pagamento": payload_opus.get("forma_pagamento"),
+        "extraido_via": payload_opus.get("extraido_via"),
+        "confianca_global": payload_opus.get("confianca_global"),
+        "horario": payload_opus.get("horario"),
+        "operador": payload_opus.get("operador"),
+        "sha256_imagem": sha,
+    }
+
+    itens_brutos = payload_opus.get("itens") or []
+    itens_canonicos: list[dict[str, Any]] = []
+    contador_sem_cod = 0
+    for item in itens_brutos:
+        descricao = (item.get("descricao") or "").strip()
+        if not descricao:
+            continue
+        codigo = (item.get("codigo") or "").strip()
+        if not codigo:
+            contador_sem_cod += 1
+            codigo = f"SEMCOD{contador_sem_cod:04d}"
+        valor_total = item.get("valor_total")
+        if valor_total is None:
+            continue
+        qtde = item.get("qtd") or 1.0
+        itens_canonicos.append(
+            {
+                "codigo": codigo,
+                "descricao": descricao,
+                "qtde": float(qtde),
+                "unidade": item.get("unidade"),
+                "valor_unit": item.get("valor_unit"),
+                "valor_total": float(valor_total),
+            }
+        )
+
+    documento_id = ingerir_documento_fiscal(
+        db,
+        documento,
+        itens_canonicos,
+        caminho_arquivo=caminho_arquivo,
+    )
+    logger.info(
+        "cupom_foto ingerido: sha=%s itens=%d total=R$ %.2f",
+        sha[:12],
+        len(itens_canonicos),
+        documento["total"],
+    )
+    return documento_id
+
 
 # ============================================================================
 # Sprint ANTI-MIGUE-08: ingestores especiais movidos para modulo proprio
