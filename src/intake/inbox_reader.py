@@ -303,4 +303,292 @@ def gravar_arquivo_inbox(
     return destino
 
 
+# ---------------------------------------------------------------------------
+# Sprint INFRA-INBOX-OFX-READER -- scan recursivo + fila persistida
+# ---------------------------------------------------------------------------
+#
+# Adições aditivas (padrão (o) retrocompatível): listar_inbox e companhia
+# permanecem com contrato sha8 + sidecar; abaixo entra a camada de "fila"
+# com sha256 completo, scan recursivo e schema JSON v1 da spec.
+#
+# - escanear_inbox(raiz): scan recursivo, devolve dicts schema v1.
+# - persistir_fila(itens, destino): grava JSON com chave "itens".
+# - carregar_fila(origem): leitura defensiva.
+# - agrupar_duplicatas(itens): agrega contador por sha8.
+# - processar_fila(raiz, destino, extrator): orquestra scan + dedup +
+#   persistência. Extrator é hook opcional (default: marca aguardando).
+
+# Mapeamento extensao -> tipo inferido (semantica de negocio).
+# Diferente de _EXT_PARA_TIPO_VISUAL que devolve categoria visual.
+_EXT_PARA_TIPO_INFERIDO: dict[str, str] = {
+    ".pdf": "documento_pdf",
+    ".csv": "extrato_csv",
+    ".xlsx": "planilha_xlsx",
+    ".xls": "planilha_xlsx",
+    ".ofx": "extrato_ofx",
+    ".jpg": "imagem",
+    ".jpeg": "imagem",
+    ".png": "imagem",
+    ".heic": "imagem",
+    ".heif": "imagem",
+    ".webp": "imagem",
+    ".xml": "xml_estruturado",
+    ".eml": "email",
+    ".zip": "compactado",
+    ".txt": "texto_plano",
+    ".html": "html_pagina",
+    ".json": "json_estruturado",
+}
+
+# Schema v1 da fila persistida (constante exportada para validação externa).
+SCHEMA_FILA_VERSAO: str = "1"
+
+
+def _calcular_sha256_completo(arquivo: Path) -> str:
+    """Sha256 completo (64 chars) do conteúdo binário.
+
+    Usa o mesmo padrão de chunks de 64 KiB de ``_calcular_sha8``.
+    """
+    h = hashlib.sha256()
+    with arquivo.open("rb") as fp:
+        while True:
+            chunk = fp.read(65536)
+            if not chunk:
+                break
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def _tipo_inferido(extensao: str) -> str:
+    """Tipo semântico de negócio a partir da extensão.
+
+    Fallback para ``desconhecido`` quando extensão não mapeada (defesa
+    contra novas extensões adicionadas a EXTENSOES_ACEITAS sem updates).
+    """
+    return _EXT_PARA_TIPO_INFERIDO.get(extensao.lower(), "desconhecido")
+
+
+def _raiz_inbox_padrao() -> Path:
+    """Default da Sprint INFRA-INBOX-OFX-READER: ``<raiz>/data/raw/inbox/``.
+
+    Específico do scan recursivo. NÃO confundir com ``_resolver_inbox_path``
+    que continua atendendo a UI legada (``<raiz>/inbox/``).
+    """
+    return _raiz_projeto() / "data" / "raw" / "inbox"
+
+
+def _destino_fila_padrao() -> Path:
+    """Default da fila persistida: ``<raiz>/data/output/inbox_fila.json``."""
+    return _raiz_projeto() / "data" / "output" / "inbox_fila.json"
+
+
+def escanear_inbox(raiz: Path | None = None) -> list[dict]:
+    """Scan recursivo da inbox devolvendo schema v1 da Sprint INFRA-OFX.
+
+    Args:
+        raiz: Diretório raiz da inbox. ``None`` -> ``<raiz>/data/raw/inbox/``.
+
+    Returns:
+        Lista de dicts com schema v1::
+
+            {
+              "sha256": "<64 chars>",
+              "filename": "extrato.pdf",
+              "tipo_inferido": "documento_pdf",
+              "tamanho_kb": 182,
+              "status": "aguardando",
+              "ts_descoberto": "ISO",
+              "ts_processado": None,
+              "extractor_versao": None,
+              "caminho_relativo": "subpasta/extrato.pdf",
+            }
+
+        Diretório inexistente devolve lista vazia (degradação graciosa).
+    """
+    diretorio = raiz if raiz is not None else _raiz_inbox_padrao()
+    if not diretorio.exists() or not diretorio.is_dir():
+        return []
+
+    itens: list[dict] = []
+    for arquivo in sorted(diretorio.rglob("*")):
+        if not arquivo.is_file():
+            continue
+        ext = arquivo.suffix.lower()
+        if ext not in EXTENSOES_ACEITAS:
+            continue
+        if arquivo.name.startswith("."):
+            continue
+        # Sidecars internos do listar_inbox legado não entram na fila.
+        if ".extracted" in arquivo.parts:
+            continue
+
+        try:
+            stat = arquivo.stat()
+            sha256 = _calcular_sha256_completo(arquivo)
+        except OSError:
+            continue
+
+        ts_iso, _ = _formatar_ts(datetime.fromtimestamp(stat.st_mtime))
+        try:
+            caminho_rel = str(arquivo.relative_to(diretorio))
+        except ValueError:
+            caminho_rel = arquivo.name
+
+        itens.append(
+            {
+                "sha256": sha256,
+                "filename": arquivo.name,
+                "tipo_inferido": _tipo_inferido(ext),
+                "tamanho_kb": round(stat.st_size / 1024.0, 1),
+                "status": "aguardando",
+                "ts_descoberto": ts_iso,
+                "ts_processado": None,
+                "extractor_versao": None,
+                "caminho_relativo": caminho_rel,
+            }
+        )
+
+    itens.sort(key=lambda i: i["ts_descoberto"], reverse=True)
+    return itens
+
+
+def agrupar_duplicatas(itens: list[dict]) -> dict[str, int]:
+    """Conta ocorrências por sha8 (primeiros 8 chars do sha256).
+
+    Returns:
+        Dict ``{sha8: contador}`` apenas para sha8 com contador > 1.
+        Sha8 com 1 ocorrência são omitidos (foco em duplicatas reais).
+    """
+    contagem: dict[str, int] = {}
+    for it in itens:
+        sha = it.get("sha256", "")
+        if not sha:
+            continue
+        sha8 = sha[:8]
+        contagem[sha8] = contagem.get(sha8, 0) + 1
+    return {sha8: c for sha8, c in contagem.items() if c > 1}
+
+
+def persistir_fila(itens: list[dict], destino: Path | None = None) -> Path:
+    """Grava ``{"itens": itens, "schema": "1"}`` em JSON.
+
+    Args:
+        itens: Lista de dicts no schema v1 (ver ``escanear_inbox``).
+        destino: Path do JSON. ``None`` -> ``<raiz>/data/output/inbox_fila.json``.
+
+    Returns:
+        Path absoluto do arquivo gravado.
+    """
+    caminho = destino if destino is not None else _destino_fila_padrao()
+    caminho.parent.mkdir(parents=True, exist_ok=True)
+    payload = {"schema": SCHEMA_FILA_VERSAO, "itens": itens}
+    caminho.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+    return caminho
+
+
+def carregar_fila(origem: Path | None = None) -> list[dict]:
+    """Lê ``inbox_fila.json`` e devolve a lista ``itens``.
+
+    Returns:
+        Lista de dicts (vazia se arquivo ausente, JSON malformado ou
+        schema desconhecido). Padrão: degradação graciosa.
+    """
+    caminho = origem if origem is not None else _destino_fila_padrao()
+    if not caminho.exists():
+        return []
+    try:
+        payload = json.loads(caminho.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return []
+    if not isinstance(payload, dict):
+        return []
+    itens = payload.get("itens")
+    if not isinstance(itens, list):
+        return []
+    return itens
+
+
+def processar_fila(
+    raiz: Path | None = None,
+    destino: Path | None = None,
+    extrator=None,  # callable(item: dict) -> dict | None
+) -> list[dict]:
+    """Orquestra scan recursivo + dedup + persistência da fila.
+
+    Fluxo:
+      1. ``escanear_inbox(raiz)`` produz itens em status=aguardando.
+      2. Mescla com fila anterior (preserva status já processados).
+      3. Marca duplicatas (sha8 com contador > 1) com status=pulado para
+         entradas além da primeira ocorrência.
+      4. Quando ``extrator`` é callable, chama-o para cada item em
+         aguardando; resultado atualiza status/ts_processado/extractor_versao.
+      5. ``persistir_fila(itens, destino)`` grava JSON.
+
+    Args:
+        raiz: Inbox raiz. ``None`` -> ``data/raw/inbox/``.
+        destino: Destino do JSON. ``None`` -> ``data/output/inbox_fila.json``.
+        extrator: Callable opcional ``(item) -> dict | None``. Quando
+            devolve dict, sobrescreve campos do item. Quando devolve
+            ``None``, item permanece como detectado (aguardando ou pulado).
+
+    Returns:
+        Lista final dos itens persistidos.
+    """
+    itens_novos = escanear_inbox(raiz)
+
+    # Mescla com fila anterior preservando estado.
+    fila_anterior = carregar_fila(destino)
+    estados_por_sha: dict[str, dict] = {
+        it["sha256"]: it for it in fila_anterior if "sha256" in it
+    }
+
+    fundidos: list[dict] = []
+    for novo in itens_novos:
+        anterior = estados_por_sha.get(novo["sha256"])
+        if anterior is None:
+            fundidos.append(novo)
+            continue
+        # Preserva status/ts_processado/extractor_versao quando ja processado.
+        merged = dict(novo)
+        if anterior.get("status") in {"extraido", "falhou", "pulado"}:
+            merged["status"] = anterior["status"]
+            merged["ts_processado"] = anterior.get("ts_processado")
+            merged["extractor_versao"] = anterior.get("extractor_versao")
+        fundidos.append(merged)
+
+    # Duplicatas: mantem primeira ocorrencia, demais viram "pulado".
+    vistos: set[str] = set()
+    for item in fundidos:
+        sha = item["sha256"]
+        if sha in vistos:
+            if item["status"] == "aguardando":
+                item["status"] = "pulado"
+                item["ts_processado"] = datetime.now().isoformat(timespec="seconds")
+        else:
+            vistos.add(sha)
+
+    # Hook de extracao (opcional).
+    if callable(extrator):
+        for item in fundidos:
+            if item["status"] != "aguardando":
+                continue
+            try:
+                resultado = extrator(item)
+            except Exception as exc:  # noqa: BLE001 -- isolamento de hook
+                item["status"] = "falhou"
+                item["ts_processado"] = datetime.now().isoformat(timespec="seconds")
+                item["erro"] = str(exc)[:200]
+                continue
+            if isinstance(resultado, dict):
+                item.update(resultado)
+                if "ts_processado" not in resultado:
+                    item["ts_processado"] = datetime.now().isoformat(timespec="seconds")
+
+    persistir_fila(fundidos, destino)
+    return fundidos
+
+
 # "Antes de organizar a casa, é preciso saber o que há nela." -- Sêneca

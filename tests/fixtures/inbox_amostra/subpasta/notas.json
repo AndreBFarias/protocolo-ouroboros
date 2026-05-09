@@ -1,0 +1,8 @@
+{
+  "amostra": "sintetica",
+  "tipo": "notas-fiscais-resumo",
+  "itens": [
+    {"data": "2026-01-10", "valor": 89.90, "descricao": "compra mercado"},
+    {"data": "2026-01-22", "valor": 42.00, "descricao": "farmacia"}
+  ]
+}

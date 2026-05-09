@@ -1,0 +1,6 @@
+RECIBO
+Data: 2026-01-20
+Valor: R$ 75,00
+Pagador: amostra-sintetica
+Beneficiário: amostra-sintetica
+Descrição: serviço prestado em janeiro
