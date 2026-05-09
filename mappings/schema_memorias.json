@@ -1,0 +1,103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ouroboros/schemas/memorias/v1",
+  "title": "Cache de cápsulas multimídia (memórias)",
+  "description": "Schema canônico do cache vault/.ouroboros/cache/memorias.json. Gravado pelo app Mobile (Protocolo-Mob-Ouroboros) e lido somente pelo dashboard Streamlit. Cada cápsula é um item de mídia (foto, áudio, texto, vídeo) opcionalmente vinculado a um evento ou diário.",
+  "type": "object",
+  "required": ["schema_version", "vault_id", "gerado_em", "items"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1,
+      "description": "Versão do schema. Bumpar quando mudar contrato."
+    },
+    "vault_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Identificador único do vault Mobile (UUID v4)."
+    },
+    "gerado_em": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp ISO 8601 da geração do cache (com timezone, ex.: -03:00)."
+    },
+    "items": {
+      "type": "array",
+      "description": "Lista de cápsulas. Pode ser vazia.",
+      "items": {"$ref": "#/$defs/capsula"}
+    }
+  },
+  "$defs": {
+    "capsula": {
+      "type": "object",
+      "required": [
+        "id", "tipo", "titulo", "data",
+        "preview_path", "media_path", "para_abrir"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "UUID v4 da cápsula. Estável entre gerações."
+        },
+        "tipo": {
+          "type": "string",
+          "enum": ["foto", "audio", "texto", "video"],
+          "description": "Tipo canônico da mídia. Sem acento; UI traduz para 'áudio'/'vídeo' quando exibe."
+        },
+        "titulo": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "description": "Título humano da cápsula."
+        },
+        "data": {
+          "type": "string",
+          "format": "date",
+          "description": "Data da captura no formato YYYY-MM-DD."
+        },
+        "local": {
+          "type": ["string", "null"],
+          "description": "Local da captura, livre. Null quando ausente."
+        },
+        "duracao_seg": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "description": "Duração em segundos para áudio/vídeo. Null para foto/texto."
+        },
+        "tags": {
+          "type": "array",
+          "items": {"type": "string"},
+          "default": [],
+          "description": "Tags livres. Lista vazia quando ausentes."
+        },
+        "evento_vinculado": {
+          "type": ["string", "null"],
+          "format": "uuid",
+          "description": "UUID do evento associado, ou null."
+        },
+        "diario_vinculado": {
+          "type": ["string", "null"],
+          "format": "uuid",
+          "description": "UUID da entrada de diário associada, ou null."
+        },
+        "preview_path": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Caminho relativo ao vault para o preview (thumb/waveform/snippet)."
+        },
+        "media_path": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Caminho relativo ao vault para a mídia original."
+        },
+        "para_abrir": {
+          "type": "boolean",
+          "description": "True quando a cápsula ainda precisa de contexto humano (sem evento/diário vinculado)."
+        }
+      }
+    }
+  }
+}

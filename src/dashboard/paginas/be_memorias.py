@@ -75,8 +75,20 @@ _ICO_TIPO: dict[str, str] = {
 
 
 def _carregar_cache(vault_root: Path | None, nome: str) -> list[dict[str, Any]]:
+    """Carrega items genéricos de ``<vault>/.ouroboros/cache/<nome>.json``.
+
+    Para ``nome="memorias"``, prefere o leitor validado de
+    :mod:`src.mobile_cache.memorias` (ADR-25): payloads que violam o
+    schema canônico caem em lista vazia (skeleton), evitando UI quebrada
+    quando o mob grava algo fora de contrato.
+    """
     if vault_root is None:
         return []
+    if nome == "memorias":
+        from src.mobile_cache.memorias import carregar_validado
+
+        items, _ = carregar_validado(vault_root)
+        return items
     arquivo = vault_root / ".ouroboros" / "cache" / f"{nome}.json"
     if not arquivo.exists():
         return []
@@ -191,9 +203,22 @@ def _capsula_html(memoria: dict[str, Any], idx: int) -> str:
     cor1, cor2 = PALETAS_CAPSULA[idx % len(PALETAS_CAPSULA)]
     titulo = str(memoria.get("titulo") or "(sem título)").strip()[:80]
     data = str(memoria.get("data") or "").strip()
-    vinculo = str(memoria.get("vinculo") or memoria.get("duracao") or "").strip()
-    # Mostra apenas o primeiro segmento antes do " · " (mockup faz idem).
-    vinculo_curto = vinculo.split(" · ")[0] if vinculo else ""
+    # Schema canônico ADR-25: ``local`` e ``duracao_seg``. Retrocompat
+    # com cápsulas legadas que usavam ``vinculo`` / ``duracao`` livres.
+    duracao_seg = memoria.get("duracao_seg")
+    if isinstance(duracao_seg, int) and duracao_seg > 0:
+        if duracao_seg >= 60:
+            vinculo_curto = f"{duracao_seg // 60}m {duracao_seg % 60:02d}s"
+        else:
+            vinculo_curto = f"{duracao_seg}s"
+    else:
+        local = str(memoria.get("local") or "").strip()
+        vinculo_legado = str(
+            memoria.get("vinculo") or memoria.get("duracao") or ""
+        ).strip()
+        bruto = local or vinculo_legado
+        # Mostra apenas o primeiro segmento antes do " · " (mockup faz idem).
+        vinculo_curto = bruto.split(" · ")[0] if bruto else ""
 
     tags_raw = memoria.get("tags") or []
     if not isinstance(tags_raw, list):
@@ -347,12 +372,26 @@ def _kpis_memorias_html(memorias: list[dict[str, Any]]) -> str:
     n_audios = tipos.get("voz", 0) + tipos.get("audio", 0)
     n_textos = tipos.get("texto", 0)
     n_videos = tipos.get("video", 0) + tipos.get("vídeo", 0)
+    # Schema canônico ADR-25: cápsula é "vinculada" quando tem
+    # evento_vinculado OU diario_vinculado. Retrocompat com chaves
+    # antigas (evento_id/vinculo) preservada (padrão (o)).
     n_vinculadas = sum(
         1 for m in memorias
-        if isinstance(m, dict) and (m.get("evento_id") or m.get("vinculo"))
+        if isinstance(m, dict) and (
+            m.get("evento_vinculado")
+            or m.get("diario_vinculado")
+            or m.get("evento_id")
+            or m.get("vinculo")
+        )
     )
     pct_contexto = (n_vinculadas * 100 // n) if n else 0
-    n_para_abrir = max(0, n - n_vinculadas)
+    # ``para_abrir`` é flag canônica do schema; quando ausente, deriva.
+    n_para_abrir = sum(
+        1 for m in memorias
+        if isinstance(m, dict) and bool(m.get("para_abrir"))
+    )
+    if n_para_abrir == 0:
+        n_para_abrir = max(0, n - n_vinculadas)
 
     return (
         '<div class="mem-stats">'
