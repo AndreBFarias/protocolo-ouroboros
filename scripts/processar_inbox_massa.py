@@ -147,12 +147,12 @@ def main() -> int:
         print("\nDelta nodes:")
         for tipo, d in sorted(delta_nodes.items(), key=lambda x: -abs(x[1])):
             sinal = f"+{d}" if d > 0 else str(d) if d < 0 else "0"
-            print(f"  {tipo:25s} {sinal:>+6s}")
+            print(f"  {tipo:25s} {sinal:>6s}")
     if delta_edges:
         print("\nDelta edges:")
         for tipo, d in sorted(delta_edges.items(), key=lambda x: -abs(x[1])):
             sinal = f"+{d}" if d > 0 else str(d) if d < 0 else "0"
-            print(f"  {tipo:25s} {sinal:>+6s}")
+            print(f"  {tipo:25s} {sinal:>6s}")
     print(f"\nLog completo: {log_path}")
 
     return proc.returncode
