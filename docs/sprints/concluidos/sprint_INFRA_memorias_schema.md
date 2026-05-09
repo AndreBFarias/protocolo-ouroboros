@@ -1,7 +1,9 @@
 ---
 id: INFRA-MEMORIAS-SCHEMA
 titulo: Definir schema canônico vault/.ouroboros/cache/memorias.json (cápsulas multimídia)
-status: backlog
+status: concluída
+concluida_em: 2026-05-08
+commit: e5b8af4
 prioridade: media
 data_criacao: 2026-05-08
 fase: CONCLUSAO_REAL

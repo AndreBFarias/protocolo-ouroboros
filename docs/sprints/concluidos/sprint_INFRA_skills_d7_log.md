@@ -1,7 +1,9 @@
 ---
 id: INFRA-SKILLS-D7-LOG
 titulo: Gerar data/output/skill_d7_log.json a partir do classificador D7
-status: backlog
+status: concluída
+concluida_em: 2026-05-08
+commit: 3503960
 prioridade: alta
 data_criacao: 2026-05-08
 fase: CONCLUSAO_REAL

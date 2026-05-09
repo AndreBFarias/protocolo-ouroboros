@@ -1,7 +1,9 @@
 ---
 id: INFRA-INBOX-OFX-READER
 titulo: Completar leitor OFX/PDF da inbox (data/raw/inbox/) populando fila e pipeline
-status: backlog
+status: concluída
+concluida_em: 2026-05-08
+commit: 62f71d0
 prioridade: alta
 data_criacao: 2026-05-08
 fase: CONCLUSAO_REAL
