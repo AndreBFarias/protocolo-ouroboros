@@ -245,7 +245,43 @@ class ExtratorDanfePDF(ExtratorBase):
         Fallback seguro: layout desconhecido (cabeçalho válido mas tabela
         ilegível) devolve documento com `itens=[]` e flag de warning,
         respeitando critério "layout desconhecido não crasha".
+
+        Fallback Opus (Sprint INFRA-EXTRATORES-USAR-OPUS, 2026-05-08):
+        quando ``texto_override is None`` e o parse local devolve lista
+        vazia, registra tentativa via ``extrair_via_opus``. O schema
+        canônico Opus atual cobre cupons de consumo, NÃO DANFE NFe55
+        (campos: ``chave_44`` 44 dígitos, ``cnpj_emitente``,
+        ``cnpj_destinatario``, ``natureza_operacao``, ``modelo``,
+        ``serie``, ``numero``, ``itens.ncm``, ``itens.cfop``...). Hoje  # noqa: accent
+        ``_mapear_schema_canonico_opus`` devolve lista vazia -- gancho
+        documentado para quando houver schema próprio.
         """
+        resultado_local = self._extrair_danfes_local(caminho, texto_override)
+
+        if texto_override is not None:
+            return resultado_local
+
+        if resultado_local:
+            return resultado_local
+
+        from src.extractors._opus_fallback_comum import tentar_fallback_opus
+
+        payload_opus = tentar_fallback_opus(caminho)
+        if payload_opus is None:
+            return resultado_local
+
+        resultado_opus = self._mapear_schema_canonico_opus(payload_opus)
+        if not resultado_opus:
+            return resultado_local
+
+        return resultado_opus
+
+    def _extrair_danfes_local(
+        self,
+        caminho: Path,
+        texto_override: str | None,
+    ) -> list[tuple[dict[str, Any], list[dict[str, Any]]]]:
+        """Parse local (pdfplumber + regex). Retrocompat."""
         if texto_override is not None:
             texto_total = texto_override
         else:
@@ -267,6 +303,23 @@ class ExtratorDanfePDF(ExtratorBase):
                 documento.get("chave_44"),
             )
         return [(documento, itens)]
+
+    def _mapear_schema_canonico_opus(
+        self,
+        payload: dict[str, Any],  # noqa: ARG002 -- gancho documentado
+    ) -> list[tuple[dict[str, Any], list[dict[str, Any]]]]:
+        """Schema Opus atual NÃO cobre DANFE NFe55.
+
+        Gancho registrado para quando houver schema canônico DANFE
+        (chave 44 dígitos, NCM/CFOP por item, destinatário). Hoje
+        devolve lista vazia + log INFO.
+        """
+        self.logger.info(
+            "fallback Opus invocado em %s mas schema canônico não cobre "
+            "DANFE NFe55 -- mantendo resultado local",
+            self.caminho.name,
+        )
+        return []
 
     # --------------------------------------------------------------------
     # Internals

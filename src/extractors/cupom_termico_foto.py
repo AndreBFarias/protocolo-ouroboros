@@ -583,7 +583,46 @@ class ExtratorCupomTermicoFoto(ExtratorBase):
 
         Devolve dict com `documento`, `itens`, `texto`, `confidence`,
         `recall`, `emissor`. Quando nada parseia, `documento` vem `{}`.
+
+        Fallback Opus (Sprint INFRA-EXTRATORES-USAR-OPUS, 2026-05-08):
+        quando ``texto_override is None`` e o resultado local indica
+        falha (documento vazio, recall < 0.70 ou confidence < 70.0),
+        tenta ``extrair_via_opus(caminho)`` em caches canônicos. Se o
+        cache existe e mapeia, devolve o resultado Opus; senão mantém
+        o resultado local original.
         """
+        resultado_local = self._extrair_cupom_local(caminho, texto_override)
+
+        if texto_override is not None:
+            return resultado_local
+
+        if not self._falha_local_cupom(resultado_local):
+            return resultado_local
+
+        from src.extractors._opus_fallback_comum import tentar_fallback_opus
+
+        payload_opus = tentar_fallback_opus(caminho)
+        if payload_opus is None:
+            return resultado_local
+
+        resultado_opus = self._mapear_schema_canonico_opus(payload_opus)
+        if resultado_opus is None:
+            return resultado_local
+
+        self.logger.info(
+            "cupom %s upgrade via Opus: %d itens, total=%.2f",
+            caminho.name,
+            len(resultado_opus.get("itens", [])),
+            (resultado_opus.get("documento") or {}).get("total") or 0.0,
+        )
+        return resultado_opus
+
+    def _extrair_cupom_local(
+        self,
+        caminho: Path,
+        texto_override: str | None,
+    ) -> dict[str, Any]:
+        """OCR local (tesseract) + parse via regex YAML. Retrocompat."""
         if texto_override is not None:
             texto = texto_override
             confidence = 100.0  # texto confiável em teste
@@ -612,6 +651,123 @@ class ExtratorCupomTermicoFoto(ExtratorBase):
             "confidence": confidence,
             "recall": recall,
             "emissor": emissor.get("nome"),
+        }
+
+    @staticmethod
+    def _falha_local_cupom(resultado: dict[str, Any]) -> bool:
+        """Heurística simples: caracteriza fracasso do OCR local.
+
+        Critérios (qualquer um aciona fallback):
+          - ``documento`` vazio (CNPJ + data não parseados);
+          - ``recall`` abaixo do limiar canônico (<0.70);
+          - ``confidence`` abaixo do limiar canônico (<70.0).
+        """
+        if not resultado.get("documento"):
+            return True
+        if (resultado.get("recall") or 0.0) < LIMIAR_RECALL_OK:
+            return True
+        if (resultado.get("confidence") or 0.0) < LIMIAR_CONFIDENCE_OK:
+            return True
+        return False
+
+    def _mapear_schema_canonico_opus(
+        self,
+        payload: dict[str, Any],
+    ) -> dict[str, Any] | None:
+        """Mapeia schema canônico Opus -> schema interno do cupom térmico.
+
+        Schema canônico Opus (mappings/schema_opus_ocr.json) carrega:
+          ``estabelecimento.razao_social``, ``estabelecimento.cnpj``,
+          ``data_emissao`` (YYYY-MM-DD), ``itens[]``, ``total``.
+
+        Schema interno deste extrator carrega (em ``documento``):
+          ``chave_44``, ``cnpj_emitente``, ``data_emissao``,
+          ``tipo_documento``, ``razao_social``, ``total``,
+          ``numero`` (sem acento por ser chave de dict),  # noqa: accent
+          ``serie``, ``forma_pagamento``.
+
+        Retorna ``None`` quando faltam campos críticos para construir
+        ``chave_44`` sintética (CNPJ + data).
+        """
+        if payload.get("tipo_documento") != "cupom_fiscal_foto":
+            return None
+
+        estabelecimento = payload.get("estabelecimento") or {}
+        cnpj = estabelecimento.get("cnpj") or None
+        data_iso = payload.get("data_emissao") or None
+        if not (cnpj and data_iso):
+            return None
+
+        razao = estabelecimento.get("razao_social") or None
+        total = payload.get("total")
+        if isinstance(total, (int, float)):
+            total_float: float | None = float(total)
+        else:
+            total_float = None
+
+        chave_sintetica = f"CUPOM|{cnpj}|{data_iso}|opus"
+        documento: dict[str, Any] = {
+            "chave_44": chave_sintetica,
+            "cnpj_emitente": cnpj,
+            "data_emissao": data_iso,
+            "tipo_documento": "cupom_fiscal",
+            "razao_social": razao,
+            "total": total_float,
+            "numero": None,
+            "serie": None,
+            "forma_pagamento": payload.get("forma_pagamento"),
+        }
+
+        itens_canonicos = payload.get("itens") or []
+        itens: list[dict[str, Any]] = []
+        contador_sem_codigo = 0
+        for bruto in itens_canonicos:
+            if not isinstance(bruto, dict):
+                continue
+            descricao = (bruto.get("descricao") or "").strip()
+            if not descricao:
+                continue
+            valor_total_item = bruto.get("valor_total")
+            if not isinstance(valor_total_item, (int, float)):
+                continue
+            codigo = bruto.get("codigo")
+            if not codigo:
+                contador_sem_codigo += 1
+                codigo = f"OPUS{contador_sem_codigo:04d}"
+            qtde = bruto.get("qtd") or 1.0
+            valor_unit = bruto.get("valor_unit")
+            if valor_unit is None and qtde:
+                valor_unit = float(valor_total_item) / float(qtde) if qtde else None
+            itens.append(
+                {
+                    "codigo": str(codigo),
+                    "descricao": descricao,
+                    "qtde": float(qtde) if isinstance(qtde, (int, float)) else 1.0,
+                    "unidade": bruto.get("unidade"),
+                    "valor_unit": (
+                        float(valor_unit)
+                        if isinstance(valor_unit, (int, float))
+                        else None
+                    ),
+                    "valor_total": float(valor_total_item),
+                }
+            )
+
+        recall = calcular_recall(total_float, itens) if documento else 0.0
+        confianca_global = payload.get("confianca_global")
+        confidence_pct = (
+            float(confianca_global) * 100.0
+            if isinstance(confianca_global, (int, float))
+            else 100.0
+        )
+
+        return {
+            "documento": documento,
+            "itens": itens,
+            "texto": "",  # texto OCR local não se aplica ao Opus
+            "confidence": confidence_pct,
+            "recall": recall,
+            "emissor": "opus",
         }
 
     # --------------------------------------------------------------------

@@ -236,7 +236,43 @@ class ExtratorCupomGarantiaEstendida(ExtratorBase):
         Quando `texto_override` é dado, o método ignora `caminho` para efeitos
         de leitura -- útil em testes com fixtures .txt que simulam o output
         do pdfplumber/pytesseract sem depender de PDFs binários.
+
+        Fallback Opus (Sprint INFRA-EXTRATORES-USAR-OPUS, 2026-05-08):
+        quando ``texto_override is None`` e o parse local devolve lista
+        vazia, registra tentativa via ``extrair_via_opus``. O schema
+        canônico Opus atual cobre cupons fiscais de consumo, NÃO bilhetes
+        de garantia estendida (campos: ``numero_bilhete``, ``processo_susep``,
+        ``cpf_segurado``, ``premio_total``, ``vigencia_inicio``...). Por
+        isso ``_mapear_schema_canonico_opus`` devolve sempre lista vazia
+        nesta sprint -- log INFO documenta o gancho disponível para quando
+        houver schema canônico próprio de garantia estendida.
         """
+        bilhetes_local = self._extrair_bilhetes_local(caminho, texto_override)
+
+        if texto_override is not None:
+            return bilhetes_local
+
+        if bilhetes_local:
+            return bilhetes_local
+
+        from src.extractors._opus_fallback_comum import tentar_fallback_opus
+
+        payload_opus = tentar_fallback_opus(caminho)
+        if payload_opus is None:
+            return bilhetes_local
+
+        bilhetes_opus = self._mapear_schema_canonico_opus(payload_opus)
+        if not bilhetes_opus:
+            return bilhetes_local
+
+        return bilhetes_opus
+
+    def _extrair_bilhetes_local(
+        self,
+        caminho: Path,
+        texto_override: str | None,
+    ) -> list[dict[str, Any]]:
+        """Parse local (pdfplumber + regex). Retrocompat."""
         if texto_override is not None:
             paginas = _dividir_em_bilhetes(texto_override)
         else:
@@ -252,6 +288,23 @@ class ExtratorCupomGarantiaEstendida(ExtratorBase):
             self._enriquecer_seguradora(bilhete)
             bilhetes.append(bilhete)
         return bilhetes
+
+    def _mapear_schema_canonico_opus(
+        self,
+        payload: dict[str, Any],  # noqa: ARG002 -- gancho documentado
+    ) -> list[dict[str, Any]]:
+        """Schema Opus atual NÃO cobre bilhete de garantia estendida.
+
+        Gancho registrado para quando houver schema canônico próprio
+        (campos: numero_bilhete, processo_susep, premio_total,
+        vigencia_inicio/fim etc). Hoje devolve lista vazia + log INFO.
+        """
+        self.logger.info(
+            "fallback Opus invocado em %s mas schema canônico não cobre "
+            "garantia estendida -- mantendo resultado local",
+            self.caminho.name,
+        )
+        return []
 
     # --------------------------------------------------------------------
     # Internals

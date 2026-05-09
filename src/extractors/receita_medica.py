@@ -617,7 +617,42 @@ class ExtratorReceitaMedica(ExtratorBase):
         Uma receita por arquivo é o caso comum (foto única do celular).
         Devolve a lista de prescrições parseadas (em geral 0 ou 1) para
         teste e inspeção.
+
+        Fallback Opus (Sprint INFRA-EXTRATORES-USAR-OPUS, 2026-05-08):
+        quando ``texto_override is None`` e o parse local devolve lista
+        vazia, registra tentativa via ``extrair_via_opus``. O schema
+        canônico Opus atual cobre cupons de consumo, NÃO receituário
+        médico (campos: ``crm``, ``medicamentos``, ``posologia``,
+        ``validade``, ``prescritor``...). Hoje
+        ``_mapear_schema_canonico_opus`` devolve lista vazia -- gancho
+        documentado para quando houver schema próprio.
         """
+        resultado_local = self._extrair_receitas_local(caminho, texto_override)
+
+        if texto_override is not None:
+            return resultado_local
+
+        if resultado_local:
+            return resultado_local
+
+        from src.extractors._opus_fallback_comum import tentar_fallback_opus
+
+        payload_opus = tentar_fallback_opus(caminho)
+        if payload_opus is None:
+            return resultado_local
+
+        resultado_opus = self._mapear_schema_canonico_opus(payload_opus)
+        if not resultado_opus:
+            return resultado_local
+
+        return resultado_opus
+
+    def _extrair_receitas_local(
+        self,
+        caminho: Path,
+        texto_override: str | None,
+    ) -> list[dict[str, Any]]:
+        """Parse local (pdfplumber/OCR + regex). Retrocompat."""
         if texto_override is not None:
             texto = texto_override
         else:
@@ -636,6 +671,23 @@ class ExtratorReceitaMedica(ExtratorBase):
 
         self._ingerir(parsed, caminho)
         return [parsed]
+
+    def _mapear_schema_canonico_opus(
+        self,
+        payload: dict[str, Any],  # noqa: ARG002 -- gancho documentado
+    ) -> list[dict[str, Any]]:
+        """Schema Opus atual NÃO cobre receituário médico.
+
+        Gancho registrado para quando houver schema canônico próprio
+        (CRM, princípios ativos, posologia, validade). Hoje devolve
+        lista vazia + log INFO.
+        """
+        self.logger.info(
+            "fallback Opus invocado em %s mas schema canônico não cobre "
+            "receituário médico -- mantendo resultado local",
+            self.caminho.name,
+        )
+        return []
 
     # ------------------------------------------------------------------
     # Internals

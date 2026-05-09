@@ -260,7 +260,41 @@ class ExtratorNfcePDF(ExtratorBase):
         Quando `texto_override` é dado, lê o texto direto em vez de abrir o
         arquivo via pdfplumber -- ponto de injeção para testes com fixtures
         .txt que reproduzem o output do pdfplumber sem depender de binários.
+
+        Fallback Opus (Sprint INFRA-EXTRATORES-USAR-OPUS, 2026-05-08):
+        quando ``texto_override is None`` e o parse local devolve lista
+        vazia, registra tentativa via ``extrair_via_opus``. O schema
+        canônico Opus atual cobre cupons de consumo (sem chave 44 SEFAZ,
+        sem ``serie``/``numero`` estruturados). Por isso  # noqa: accent
+        ``_mapear_schema_canonico_opus`` devolve lista vazia -- gancho
+        documentado para quando houver schema próprio NFC-e modelo 65.
         """
+        resultado_local = self._extrair_nfces_local(caminho, texto_override)
+
+        if texto_override is not None:
+            return resultado_local
+
+        if resultado_local:
+            return resultado_local
+
+        from src.extractors._opus_fallback_comum import tentar_fallback_opus
+
+        payload_opus = tentar_fallback_opus(caminho)
+        if payload_opus is None:
+            return resultado_local
+
+        resultado_opus = self._mapear_schema_canonico_opus(payload_opus)
+        if not resultado_opus:
+            return resultado_local
+
+        return resultado_opus
+
+    def _extrair_nfces_local(
+        self,
+        caminho: Path,
+        texto_override: str | None,
+    ) -> list[tuple[dict[str, Any], list[dict[str, Any]]]]:
+        """Parse local (pdfplumber + regex). Retrocompat."""
         if texto_override is not None:
             paginas = _dividir_em_nfces(texto_override)
         else:
@@ -277,6 +311,23 @@ class ExtratorNfcePDF(ExtratorBase):
             documento["qtde_itens"] = len(itens)
             resultados.append((documento, itens))
         return resultados
+
+    def _mapear_schema_canonico_opus(
+        self,
+        payload: dict[str, Any],  # noqa: ARG002 -- gancho documentado
+    ) -> list[tuple[dict[str, Any], list[dict[str, Any]]]]:
+        """Schema Opus atual NÃO cobre NFC-e modelo 65.
+
+        Gancho registrado para quando houver schema canônico próprio
+        (chave 44 SEFAZ, série, número, CFOP por item). Hoje devolve
+        lista vazia + log INFO.
+        """
+        self.logger.info(
+            "fallback Opus invocado em %s mas schema canônico não cobre "
+            "NFC-e modelo 65 -- mantendo resultado local",
+            self.caminho.name,
+        )
+        return []
 
     # --------------------------------------------------------------------
     # Internals
