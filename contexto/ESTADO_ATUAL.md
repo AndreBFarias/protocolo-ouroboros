@@ -1,9 +1,69 @@
-# ESTADO_ATUAL.md -- Snapshot tecnico em 2026-05-06 (Onda M FECHADA -- modularização completa)
+# ESTADO_ATUAL.md -- Snapshot tecnico em 2026-05-12 (Onda 6 destravada: auditoria + 8 patches + schema 11 tipos)
 
-> **Versionado a partir de 2026-04-29 pela Sprint DOC-VERDADE-01.A; atualizado em 2026-05-06 (parte 4) com Onda M COMPLETA (4 sub-sprints + 2 fixes residuais zero-débito)**.
+> **Versionado a partir de 2026-04-29 pela Sprint DOC-VERDADE-01.A; atualizado em 2026-05-12 (parte 2) com retomada apos travamento da sessao anterior: auditoria profunda das 14 specs novas + 8 patches do supervisor + schema OCR estendido (commit `59b0170`)**.
 > Whitelist em `.gitignore` permite este arquivo + COMO_AGIR.md no repo (POR_QUE.md e PROMPT_NOVA_SESSAO.md continuam locais por conter PII estrutural).
 > Esta doc e fotografia do momento — para verdade vivo consulte `git log` + `ls docs/sprints/concluidos/`.
 > Para auditar este snapshot contra realidade: `python scripts/auditar_estado.py`.
+
+## Sessao 2026-05-12 (parte 2) -- Retomada apos travamento: auditoria + 8 patches + schema 11 tipos
+
+**Pretexto**: sessao anterior travou apos produzir 15 specs + 3 auditorias + INDICE sem commit. Retomada para organizar, ajustar e disparar a Onda 6.
+
+### Auditoria profunda das 14 specs (supervisor manual contra codigo)
+
+Revisor automatizado via Explore deu 9 PRONTAS / 5 REVISAR / 0 REPROVAR. Supervisor (eu) refez auditoria 1-a-1 contra `grep` em `src/`. Resultado real: **7 PRONTAS / 6 REVISAR / 1 REPROVAR**.
+
+| Spec | Veredito real | Problema concreto |
+|---|---|---|
+| INFRA-VALIDACAO-CUPOM | REVISAR | modulo `cupom_foto` inexistente -> canonico `cupom_termico_foto.py::ExtratorCupomTermicoFoto::extrair_cupom` |
+| INFRA-VALIDACAO-DAS | REVISAR | placeholder "verificar nome" -> `ExtratorDASPARCSNPDF::extrair_das` retorna dict |
+| MOB-audit-vault | REVISAR | `boleto` listado em financeiro mas categorias.ts nao tem; spec usava `binario_companion` mas campo real eh `arquivo` |
+| **MOB-bridge-4** | **REPROVAR** | mira `inbox_reader.py` que eh PURO LEITOR. Alvo real: `inbox_processor.processar_inbox` (linha 173 `iterdir()` plano) + `intake/orchestrator` + `intake/registry` |
+| MOB-bridge-5 | REVISAR | sobrepoe escopo de DOC-27. Cortado para apenas conectar |
+| MOB-dashboard-pix | REVISAR | sidecar real `inbox/.extracted/`, nao `vault_path/.extracted/` |
+| UX-AUDIT-VISUAL | REVISAR | sem metodo objetivo de medicao |
+
+### 8 patches aplicados nesta sessao
+
+1. CUPOM: extrator canonico
+2. DAS: assinatura real
+3. MOB-audit-vault: alinhamento com categorias.ts + frontmatter `tipo: inbox_arquivo`
+4. MOB-bridge-4: reescrita parcial -- alvo correto + 4 Edits explicitos
+5. MOB-bridge-5: escopo cortado, bloqueado por DOC-27
+6. MOB-dashboard-pix: path sidecar real + `OUROBOROS_VAULT_PATH`
+7. UX-AUDIT-VISUAL: formula 0.5SSIM + 0.3hist + 0.2estrutural
+8. ADRs renumeradas para 26-29 sequenciais
+
+### Commit `59b0170` -- schema OCR estendido (executor background)
+
+Schema `mappings/schema_opus_ocr.json` agora cobre **11 valores em `tipo_documento`** (5 antigos + 6 novos: holerite, das_parcsn, nfce_modelo_65, boleto_pdf, danfe_55, extrato_bancario_pdf) com blocos `allOf if/then` por tipo. Retrocompat hard: 4 caches existentes em `data/output/opus_ocr_cache/` permanecem validos.
+
+Entregas do commit `59b0170`:
+- `mappings/schema_opus_ocr.json` (313 linhas)
+- `tests/test_opus_ocr_schema.py` (249 linhas, **21 testes**)
+- `tests/fixtures/opus_ocr_schemas/` (6 fixtures)
+- Pytest: **2758 passed / 14 skipped / 1 xfailed** (era 2726 -> +32 net)
+- Smoke: **10/10 contratos OK**
+- Spec `sprint_INFRA_opus_schema_extendido.md` movido para `concluidos/`
+
+### Armadilha do executor-sprint: stash mal-encadeado
+
+Licao: executor-sprint rodando em background com `isolation: "worktree"` editou paths absolutos para o main worktree em vez do worktree proprio. Fez `git stash -u` para pytest baseline limpo. Em algum momento o stash sumiu, supervisor (eu) teve de fazer `git stash pop` que aplicou parcialmente. Recuperado pelo commit `59b0170` que sobreviveu.
+
+Novos padroes canonicos:
+- **(w)** Stash chain hazard: agente background com worktree compartilhado pode dropar trabalho do supervisor.
+- **(x)** Schema-extension precede validation: nunca crie test/fixtures que dependam de schema antes do schema estar gravado.
+- **(y)** Auditoria automatica le texto; supervisor le texto contra grep. Discrepancia de ~30% prova que validacao ANTES (padrao `(k)`) so funciona se executada.
+
+### Proximas etapas (Onda 6, 14 specs PRONTAS)
+
+1. Validacao artesanal CUPOM_2e43640d.jpeg (supervisor multimodal + comparar com ETL via `ExtratorCupomTermicoFoto`).
+2. MOB-bridge-4 (executor apos validacao CUPOM).
+3. Validacao artesanal HOLERITE (1 G4F + 1 Infobase).
+4. Validacao artesanal NFCE (foco P55/PS5).
+5. Validacao artesanal DAS (1 pre-107 + 1 pos-107).
+
+---
 
 ## Sessao 2026-05-06 (parte 4) -- Onda M COMPLETA (4 sub-sprints + zero débito residual)
 
