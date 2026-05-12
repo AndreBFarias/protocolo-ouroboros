@@ -1,0 +1,26 @@
+{
+  "sha256": "facb21260798273da28aaf679f8b2cdad67e61ccd27785ecf1acc85074deaa5e",
+  "tipo_documento": "danfe_55",
+  "extraido_via": "opus_v4_7",
+  "ts_extraido": "2026-05-12T10:20:00+00:00",
+  "estabelecimento": {
+    "razao_social": "Distribuidora Gama LTDA",
+    "cnpj": "55.666.777/0001-44",
+    "endereco": "Rod BR-040 km 12, Luziânia-GO"
+  },
+  "data_emissao": "2026-05-08",
+  "chave_44": "53260555666777000144550010000000123456789012",
+  "protocolo_autorizacao": "353260000000123",
+  "transporte": {
+    "transportadora": "Rapida Logistica LTDA",
+    "placa_veiculo": "ABC1D23"
+  },
+  "valor_frete": 120.00,
+  "valor_seguro": 25.00,
+  "itens": [
+    {"codigo": "PR001", "descricao": "Produto comercial A", "qtd": 10, "unidade": "UN", "valor_unit": 50.00, "valor_total": 500.00, "ean": "7890123456789"},
+    {"codigo": "PR002", "descricao": "Produto comercial B", "qtd": 5, "unidade": "UN", "valor_unit": 80.00, "valor_total": 400.00, "ean": null}
+  ],
+  "total": 900.00,
+  "confianca_global": 0.93
+}

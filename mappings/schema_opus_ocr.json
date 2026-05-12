@@ -2,15 +2,11 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://ouroboros.local/schemas/opus_ocr.json",
   "title": "OpusOcrCanonico",
-  "description": "Schema canônico de saída do OCR via Claude Opus multimodal (Sprint INFRA-OCR-OPUS-VISAO). Consumido por src/extractors/opus_visao.py.",
+  "description": "Schema canônico de saída do OCR via Claude Opus multimodal. Cobre 11 tipos de documento (cupom, PIX, recibo, holerite, DAS, NFCe, boleto, DANFE, extrato, outro, pendente). Consumido por src/extractors/opus_visao.py. Estendido pela Sprint INFRA-OPUS-SCHEMA-EXTENDIDO.",
   "type": "object",
   "required": [
     "sha256",
     "tipo_documento",
-    "estabelecimento",
-    "data_emissao",
-    "itens",
-    "total",
     "extraido_via",
     "ts_extraido"
   ],
@@ -26,6 +22,12 @@
         "cupom_fiscal_foto",
         "comprovante_pix_foto",
         "recibo_foto",
+        "holerite",
+        "das_parcsn",
+        "nfce_modelo_65",
+        "boleto_pdf",
+        "danfe_55",
+        "extrato_bancario_pdf",
         "outro",
         "pendente"
       ]
@@ -44,8 +46,8 @@
     },
     "data_emissao": {
       "type": "string",
-      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
-      "description": "Data ISO YYYY-MM-DD"
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}:[0-9]{2}([+-][0-9]{2}:?[0-9]{2}|Z)?)?$",
+      "description": "Data ISO YYYY-MM-DD ou ISO 8601 datetime"
     },
     "horario": {
       "type": ["string", "null"],
@@ -63,7 +65,8 @@
           "qtd": {"type": ["number", "null"]},
           "unidade": {"type": ["string", "null"]},
           "valor_unit": {"type": ["number", "null"]},
-          "valor_total": {"type": "number"}
+          "valor_total": {"type": "number"},
+          "ean": {"type": ["string", "null"], "pattern": "^[0-9]{13}$|^$"}
         }
       }
     },
@@ -96,11 +99,215 @@
     },
     "aguardando_supervisor": {
       "type": "boolean",
-      "description": "Verdadeiro quando o pedido foi enfileirado mas o supervisor humano ainda não transcreveu. Schema completo só aparece quando o cache é gerado."
+      "description": "Verdadeiro quando o pedido foi enfileirado mas o supervisor humano ainda não transcreveu."
     },
     "caminho_imagem": {
       "type": "string",
       "description": "Path absoluto da imagem original. Presente em stubs aguardando_supervisor."
+    },
+    "proventos": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["descricao", "valor"],
+        "properties": {
+          "codigo": {"type": ["string", "null"]},
+          "descricao": {"type": "string", "minLength": 1},
+          "referencia": {"type": ["string", "null"]},
+          "valor": {"type": "number"}
+        },
+        "additionalProperties": false
+      }
+    },
+    "descontos": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["descricao", "valor"],
+        "properties": {
+          "codigo": {"type": ["string", "null"]},
+          "descricao": {"type": "string", "minLength": 1},
+          "valor": {"type": "number"}
+        },
+        "additionalProperties": false
+      }
+    },
+    "liquido": {"type": "number"},
+    "competencia": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}$",
+      "description": "Competência mensal YYYY-MM"
+    },
+    "empresa": {
+      "type": "object",
+      "required": ["razao_social"],
+      "properties": {
+        "razao_social": {"type": "string", "minLength": 1},
+        "cnpj": {
+          "type": ["string", "null"],
+          "pattern": "^[0-9]{2}\\.[0-9]{3}\\.[0-9]{3}/[0-9]{4}-[0-9]{2}$|^$"
+        }
+      }
+    },
+    "funcionario": {
+      "type": "object",
+      "required": ["nome"],
+      "properties": {
+        "nome": {"type": "string", "minLength": 1},
+        "cpf_mascarado": {"type": ["string", "null"]}
+      }
+    },
+    "salario_base": {"type": ["number", "null"]},
+    "base_inss": {"type": ["number", "null"]},
+    "base_irrf": {"type": ["number", "null"]},
+    "principal": {"type": "number"},
+    "multa": {"type": ["number", "null"]},
+    "juros": {"type": ["number", "null"]},
+    "codigo_barras": {
+      "type": ["string", "null"],
+      "pattern": "^[0-9]{47}$|^$"
+    },
+    "vencimento": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    },
+    "contribuinte": {
+      "type": "object",
+      "properties": {
+        "cpf_cnpj_mascarado": {"type": ["string", "null"]}
+      }
+    },
+    "numero_da_inscricao": {"type": ["string", "null"]},
+    "chave_44": {
+      "type": "string",
+      "pattern": "^[0-9]{44}$",
+      "description": "Chave de acesso NFCe/NFe modelo 65/55"
+    },
+    "xml_correlato_sha256": {
+      "type": ["string", "null"],
+      "pattern": "^[0-9a-f]{64}$|^$"
+    },
+    "protocolo_autorizacao": {"type": ["string", "null"]},
+    "linha_digitavel": {
+      "type": "string",
+      "pattern": "^[0-9]{47}$",
+      "description": "Linha digitável do boleto (47 dígitos)"
+    },
+    "beneficiario": {
+      "type": "object",
+      "required": ["nome"],
+      "properties": {
+        "nome": {"type": "string", "minLength": 1},
+        "cnpj": {
+          "type": ["string", "null"],
+          "pattern": "^[0-9]{2}\\.[0-9]{3}\\.[0-9]{3}/[0-9]{4}-[0-9]{2}$|^$"
+        }
+      }
+    },
+    "valor_documento": {"type": "number", "minimum": 0},
+    "valor_pago": {"type": ["number", "null"]},
+    "nosso_numero": {"type": ["string", "null"]},
+    "instrucoes": {"type": ["string", "null"]},
+    "transporte": {
+      "type": ["object", "null"],
+      "properties": {
+        "transportadora": {"type": ["string", "null"]},
+        "placa_veiculo": {"type": ["string", "null"]}
+      }
+    },
+    "valor_frete": {"type": ["number", "null"]},
+    "valor_seguro": {"type": ["number", "null"]},
+    "banco": {"type": "string", "minLength": 1},
+    "agencia": {"type": "string"},
+    "conta": {"type": "string"},
+    "periodo": {
+      "type": "object",
+      "required": ["inicio", "fim"],
+      "properties": {
+        "inicio": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"},
+        "fim": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"}
+      }
+    },
+    "saldo_inicial": {"type": "number"},
+    "saldo_final": {"type": "number"},
+    "lancamentos": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["data", "descricao", "valor_assinado"],
+        "properties": {
+          "data": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"},
+          "descricao": {"type": "string", "minLength": 1},
+          "valor_assinado": {"type": "number"},
+          "saldo_apos": {"type": ["number", "null"]}
+        },
+        "additionalProperties": false
+      }
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {"tipo_documento": {"enum": ["cupom_fiscal_foto", "comprovante_pix_foto", "recibo_foto"]}},
+        "required": ["tipo_documento"]
+      },
+      "then": {
+        "required": ["estabelecimento", "data_emissao", "itens", "total"]
+      }
+    },
+    {
+      "if": {
+        "properties": {"tipo_documento": {"const": "holerite"}},
+        "required": ["tipo_documento"]
+      },
+      "then": {
+        "required": ["proventos", "descontos", "liquido", "competencia", "empresa", "funcionario"]
+      }
+    },
+    {
+      "if": {
+        "properties": {"tipo_documento": {"const": "das_parcsn"}},
+        "required": ["tipo_documento"]
+      },
+      "then": {
+        "required": ["principal", "codigo_barras", "vencimento", "competencia", "contribuinte"]
+      }
+    },
+    {
+      "if": {
+        "properties": {"tipo_documento": {"const": "nfce_modelo_65"}},
+        "required": ["tipo_documento"]
+      },
+      "then": {
+        "required": ["chave_44", "protocolo_autorizacao", "itens", "total", "data_emissao", "estabelecimento"]
+      }
+    },
+    {
+      "if": {
+        "properties": {"tipo_documento": {"const": "boleto_pdf"}},
+        "required": ["tipo_documento"]
+      },
+      "then": {
+        "required": ["linha_digitavel", "vencimento", "beneficiario", "valor_documento"]
+      }
+    },
+    {
+      "if": {
+        "properties": {"tipo_documento": {"const": "danfe_55"}},
+        "required": ["tipo_documento"]
+      },
+      "then": {
+        "required": ["chave_44", "protocolo_autorizacao", "itens", "total", "data_emissao", "estabelecimento"]
+      }
+    },
+    {
+      "if": {
+        "properties": {"tipo_documento": {"const": "extrato_bancario_pdf"}},
+        "required": ["tipo_documento"]
+      },
+      "then": {
+        "required": ["banco", "agencia", "conta", "periodo", "saldo_inicial", "saldo_final", "lancamentos"]
+      }
+    }
+  ]
 }

@@ -1,0 +1,22 @@
+{
+  "sha256": "2f6f9ba93be9d51767b22f298d62504a5cfdd0ee475d7039464df042e29463b0",
+  "tipo_documento": "extrato_bancario_pdf",
+  "extraido_via": "opus_v4_7",
+  "ts_extraido": "2026-05-12T10:25:00+00:00",
+  "banco": "Banco Exemplo S.A.",
+  "agencia": "1234",
+  "conta": "56789-0",
+  "periodo": {
+    "inicio": "2026-04-01",
+    "fim": "2026-04-30"
+  },
+  "saldo_inicial": 5000.00,
+  "saldo_final": 5230.50,
+  "lancamentos": [
+    {"data": "2026-04-02", "descricao": "Salário recebido", "valor_assinado": 8000.00, "saldo_apos": 13000.00},
+    {"data": "2026-04-05", "descricao": "Pagamento boleto fornecedor", "valor_assinado": -1500.00, "saldo_apos": 11500.00},
+    {"data": "2026-04-10", "descricao": "Saque ATM", "valor_assinado": -300.00, "saldo_apos": 11200.00},
+    {"data": "2026-04-28", "descricao": "Transferência efetuada", "valor_assinado": -5969.50, "saldo_apos": 5230.50}
+  ],
+  "confianca_global": 0.94
+}

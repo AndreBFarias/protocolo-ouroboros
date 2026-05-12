@@ -1,0 +1,23 @@
+{
+  "sha256": "ed9c826ce5f0067f3917af4c56d8f0e5a817f18979f85ed91b8c22bcc70a2492",
+  "tipo_documento": "nfce_modelo_65",
+  "extraido_via": "opus_v4_7",
+  "ts_extraido": "2026-05-12T10:10:00+00:00",
+  "estabelecimento": {
+    "razao_social": "Supermercado Beta LTDA",
+    "cnpj": "33.444.555/0001-22",
+    "endereco": "Av Central 100, Brasília-DF"
+  },
+  "data_emissao": "2026-05-10",
+  "horario": "14:32:11",
+  "chave_44": "53260533444555000122650010000123456789012345",
+  "xml_correlato_sha256": null,
+  "protocolo_autorizacao": "153260000123456",
+  "itens": [
+    {"codigo": "7891", "descricao": "Arroz tipo 1 5kg", "qtd": 1, "unidade": "UN", "valor_unit": 25.90, "valor_total": 25.90, "ean": "7891234567890"},
+    {"codigo": "7892", "descricao": "Feijão carioca 1kg", "qtd": 2, "unidade": "UN", "valor_unit": 7.50, "valor_total": 15.00, "ean": null}
+  ],
+  "total": 40.90,
+  "forma_pagamento": "credito",
+  "confianca_global": 0.88
+}

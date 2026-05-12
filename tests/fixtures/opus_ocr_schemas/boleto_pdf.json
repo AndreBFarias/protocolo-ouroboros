@@ -1,0 +1,17 @@
+{
+  "sha256": "1f17dcd17108fb21d0e8e53f54750d01506496ec9ae4307148daf36e18674f4d",
+  "tipo_documento": "boleto_pdf",
+  "extraido_via": "opus_v4_7",
+  "ts_extraido": "2026-05-12T10:15:00+00:00",
+  "linha_digitavel": "23791234500000150009876543210987654321098765432",
+  "vencimento": "2026-06-10",
+  "beneficiario": {
+    "nome": "Prestadora Servicos LTDA",
+    "cnpj": "44.555.666/0001-33"
+  },
+  "valor_documento": 1500.00,
+  "valor_pago": null,
+  "nosso_numero": "98765432109876543",
+  "instrucoes": "Não receber após o vencimento sem multa de 2% e juros de 0.033% ao dia.",
+  "confianca_global": 0.91
+}

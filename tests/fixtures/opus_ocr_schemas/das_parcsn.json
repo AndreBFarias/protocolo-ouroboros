@@ -1,0 +1,17 @@
+{
+  "sha256": "db14e8dda8f0dafe042f4fe8a0e54aeee2c502dd1420845f58f02c1053c6d975",
+  "tipo_documento": "das_parcsn",
+  "extraido_via": "opus_v4_7",
+  "ts_extraido": "2026-05-12T10:05:00+00:00",
+  "competencia": "2026-03",
+  "principal": 850.42,
+  "multa": 17.00,
+  "juros": 4.25,
+  "codigo_barras": "85850000008504200000000000000000000000000000000",
+  "vencimento": "2026-04-20",
+  "contribuinte": {
+    "cpf_cnpj_mascarado": "***.***.***-12"
+  },
+  "numero_da_inscricao": "PA-2025-000123",
+  "confianca_global": 0.95
+}

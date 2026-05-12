@@ -1,0 +1,28 @@
+{
+  "sha256": "a1b2c3d4e5f60718293a4b5c6d7e8f90123456789abcdef0123456789abcdef0",
+  "tipo_documento": "holerite",
+  "extraido_via": "opus_v4_7",
+  "ts_extraido": "2026-05-12T10:00:00+00:00",
+  "competencia": "2026-04",
+  "empresa": {
+    "razao_social": "Empresa Exemplo Tecnologia LTDA",
+    "cnpj": "12.345.678/0001-99"
+  },
+  "funcionario": {
+    "nome": "Funcionario Teste",
+    "cpf_mascarado": "***.***.***-99"
+  },
+  "salario_base": 8500.00,
+  "base_inss": 8500.00,
+  "base_irrf": 7807.50,
+  "proventos": [
+    {"codigo": "001", "descricao": "Salário base", "referencia": "30d", "valor": 8500.00},
+    {"codigo": "045", "descricao": "Vale refeição", "referencia": "22d", "valor": 660.00}
+  ],
+  "descontos": [
+    {"codigo": "101", "descricao": "INSS", "valor": 692.50},
+    {"codigo": "102", "descricao": "IRRF", "valor": 412.30}
+  ],
+  "liquido": 8055.20,
+  "confianca_global": 0.92
+}
