@@ -148,7 +148,7 @@ Apos a infra estar pronta (script + JSON + dashboard), o fluxo cotidiano e:
 - **(kk) Sprint encerra com produto final** -- nenhum "fechamento posterior", `dossie_tipo.py --comparar` ja decide na hora.
 - **(ll) Re-trabalho em loop fechado** -- divergencia gera sprint-filha automatica no mesmo epico, executor proximo recebe brief com o diff.
 
-Padroes registrados em `VALIDATOR_BRIEF.md` (local).
+Padroes registrados em `docs/PADROES_CANONICOS.md` (trackeado) com espelho opcional em `VALIDATOR_BRIEF.md` (local, para anotacoes pessoais).
 
 ## Relacao com o ROADMAP
 

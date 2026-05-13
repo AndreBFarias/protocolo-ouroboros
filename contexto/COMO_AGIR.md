@@ -10,7 +10,7 @@ Quando duas regras conflitarem, a ordem de precedencia eh:
 2. **ADRs aceitas em `docs/adr/`** -- decisoes arquiteturais canonicas (ex: ADR-13 sobre supervisor sem API; ADR-08 sobre ciclo Supervisor-Aprovador). Vencem CLAUDE.md em qualquer caso de conflito estrutural.
 3. **CLAUDE.md** -- constituicao tecnica do projeto (regras inviolaveis e workflow).
 4. **`docs/SUPERVISOR_OPUS.md`** -- manifesto canonico do papel do supervisor (Opus interativo).
-5. **`VALIDATOR_BRIEF.md`** -- padroes canonicos descobertos em sprints anteriores. Eh historico-cumulativo (nao regra rigida); pode evoluir.
+5. **`docs/PADROES_CANONICOS.md`** (trackeado) -- padroes canonicos descobertos em sprints anteriores (a..ll). Eh historico-cumulativo (nao regra rigida); pode evoluir. `VALIDATOR_BRIEF.md` local pode espelhar com anotacoes pessoais.
 6. **`~/.claude/plans/<slug>.md`** -- plan ativo (aspiracao de fechamento, NAO eh verdade do estado atual).
 7. **`docs/PLANOS_SESSAO/<data>_<slug>.md`** -- snapshot versionado de planos em curso (preserva conhecimento entre sessoes).
 8. **Spec da sprint** que voce esta executando -- escopo declarado.
@@ -23,7 +23,7 @@ Se a spec contradiz CLAUDE.md ou ADR, voce REPROVA a spec antes de executar.
 
 - **ADRs vencem CLAUDE.md** em qualquer decisao estrutural. Se ADR diz "nao implementar X" e CLAUDE.md tem trecho que poderia ser lido como "implementar X", ADR vence. CLAUDE.md deve ser corrigido na proxima oportunidade (sprint META-* ou similar).
 - **Plan ativo eh aspiracao, nao verdade**. Se o plan diz "Sprint Y a fazer" mas `git log` mostra Sprint Y commitada, o git log ganha. Auditar via `python scripts/auditar_estado.py` se desconfiar.
-- **VALIDATOR_BRIEF eh padrao descoberto, nao regra**. Pode evoluir; padroes (a..cc) sao recomendacoes empiricas, nao mandamentos.
+- **PADROES_CANONICOS (e VALIDATOR_BRIEF local) eh padrao descoberto, nao regra**. Pode evoluir; padroes (a..ll) sao recomendacoes empiricas, nao mandamentos.
 - **`docs/PLANOS_SESSAO/` mostra o que esta em curso AGORA**. Se voce assumiu sessao apos queda do Opus anterior, leia este diretorio antes de qualquer coisa para entender o que estava sendo feito.
 - **Sempre que possivel: confie no codigo, nao na doc**. Verdade vivo eh `git log` + `ls docs/sprints/concluidos/` + comportamento em runtime. Doc eh fotografia.
 
@@ -105,7 +105,7 @@ Toda nova sprint, toda nova sessao, toda decisao de "vou criar a spec X" deve se
 
 2. **`docs/sprints/ROADMAP_ATE_PROD.md`** secao "8 epicos canonicos" -- mapa de prioridades. Toda spec NOVA tem que caber em algum epico. Se nao cabe, ou voce esta inventando trabalho fora de ordem, ou falta um epico (criar epico antes da spec).
 
-3. **`docs/CICLO_GRADUACAO_OPERACIONAL.md`** -- ritual artesanal de 6 fases que o Opus principal SEMPRE executa antes de despachar executor para sprint que toca tipo documental. Padroes `(jj)` `(kk)` `(ll)` do VALIDATOR_BRIEF formalizam o ritual. CLI canonica: `scripts/dossie_tipo.py`.
+3. **`docs/CICLO_GRADUACAO_OPERACIONAL.md`** -- ritual artesanal de 6 fases que o Opus principal SEMPRE executa antes de despachar executor para sprint que toca tipo documental. Padroes `(jj)` `(kk)` `(ll)` em `docs/PADROES_CANONICOS.md` formalizam o ritual. CLI canonica: `scripts/dossie_tipo.py`.
 
 ## Workflow canonico para sprint de tipo documental (Epico 1 do roadmap)
 
@@ -135,7 +135,7 @@ Etapas 3 e 5 SO O OPUS PRINCIPAL faz -- executor nao tem acesso a multimodal par
    ↓
 2. Skill /sprint-ciclo NN   (ou execucao manual)
    ↓
-3. Ler spec + ADRs + VALIDATOR_BRIEF rodape
+3. Ler spec + ADRs + `docs/PADROES_CANONICOS.md` rodape
    ↓
 4. PLANO: usar AskUserQuestion para ambiguidades
    ↓
@@ -148,7 +148,7 @@ Etapas 3 e 5 SO O OPUS PRINCIPAL faz -- executor nao tem acesso a multimodal par
    f. git add . && git commit -m "tipo: descricao em PT-BR"
    ↓
 5. VALIDAR (se executou em paralelo, eh outro agente):
-   a. APROVADO: move spec para concluidos/, atualiza VALIDATOR_BRIEF rodape
+   a. APROVADO: move spec para concluidos/, atualiza `docs/PADROES_CANONICOS.md` rodape se descobriu padrao novo
    b. APROVADO_COM_RESSALVAS: cada ressalva vira sprint-filha em backlog/
    c. REPROVADO: patch-brief para executor + replan
    ↓
@@ -346,7 +346,7 @@ Le **automaticamente** no inicio da sessao via MEMORY.md (max 200 linhas, indice
 
 **NAO atualize** com:
 - Estado efêmero (vai mudar amanha).
-- Detalhes ja em CLAUDE.md ou VALIDATOR_BRIEF.
+- Detalhes ja em CLAUDE.md ou `docs/PADROES_CANONICOS.md`.
 - Conversa atual (eh contexto da sessao, nao memoria).
 
 ---
