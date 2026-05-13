@@ -34,8 +34,105 @@ def deduplicar_por_identificador(transacoes: list[dict]) -> list[dict]:
     return resultado
 
 
+def _normalizar_local_para_chave(local: str) -> str:
+    """Sprint INFRA-DEDUP-C6-OFX-XLSX-AMPLO: normaliza `local` para dedup nível-2.
+
+    Remove prefixo bancário até o primeiro ` - `, lowercase e strip. Cobre
+    ingestão paralela C6 OFX + XLSX onde OFX traz `"RECEBIMENTO SALARIO - X"`
+    e XLSX traz só `"X"`. Após normalização ambos casam pela mesma chave.
+
+    Cuidado: a regra `split(" - ", 1)[-1]` é segura para pares legítimos
+    porque, quando NÃO existe ` - ` no `local`, devolve a string inteira
+    inalterada (mesma chave antiga). Pares legítimos como `"Pix enviado
+    para X"` vs `"Pix recebido de Y"` continuam com locais distintos
+    (apenas o lado da TI muda o nome do destinatário).
+    """
+    return str(local).split(" - ", 1)[-1].strip().lower()
+
+
+def _riqueza_descricao(t: dict) -> int:
+    """Heurística de qualidade: comprimento de `_descricao_original` ou `local`.
+
+    Quando dois registros colidem, preserva o de descrição mais rica. Em
+    C6, OFX traz prefixo `"RECEBIMENTO SALARIO - <conta>"` (mais informativo)
+    e XLSX traz apenas `"<conta>"`. Manter a versão mais longa preserva
+    informação para auditoria e relatórios.
+    """
+    desc = str(t.get("_descricao_original") or t.get("local") or "")
+    return len(desc)
+
+
+def _eh_arquivo_ofx(t: dict) -> bool:
+    """Detecta se a transação veio de arquivo OFX pelo `_arquivo_origem`."""
+    arq = str(t.get("_arquivo_origem") or "").lower()
+    return arq.endswith(".ofx")
+
+
+def _eh_arquivo_xlsx_csv(t: dict) -> bool:
+    """Detecta se a transação veio de XLSX/CSV/XLS pelo `_arquivo_origem`."""
+    arq = str(t.get("_arquivo_origem") or "").lower()
+    return arq.endswith((".xlsx", ".xls", ".csv"))
+
+
+def _consolidar_pares_ofx_xlsx_mesmo_banco(transacoes: list[dict]) -> list[dict]:
+    """Sprint INFRA-DEDUP-C6-OFX-XLSX-AMPLO: pass nível-2b.
+
+    Consolida pares onde mesma transação foi ingerida por OFX e XLSX/CSV
+    do MESMO banco, mesmo `quem`, mesmo `(data, valor)` -- casos que o
+    nível-2 com normalização de sufixo não pega porque o `local` é
+    materialmente distinto (ex.: XLSX C6 truncado em `"TRANSF ENVIADA PIX"`
+    vs OFX detalhado `"Pix enviado para X - TRANSF E"`).
+
+    Critério de detecção (TODOS obrigatórios):
+        - mesmo `(data, valor_abs, banco_origem, quem)`,
+        - ambos `banco_origem` declarado (sem `None`/`""`/`Histórico`),
+        - um veio de `.ofx` e outro veio de `.xlsx/.csv/.xls`,
+        - nenhum é `_virtual`.
+
+    Preserva a transação OFX (descrição mais rica). Risco controlado:
+    pares legítimos entre bancos diferentes têm `banco_origem` distinto e
+    NÃO entram aqui. Pares legítimos no MESMO banco/conta com mesmo valor
+    e data são raros e quase sempre erro de duplicidade (cliente humano
+    não envia 2 PIX idênticos no mesmo segundo).
+    """
+    grupos: dict[tuple, list[int]] = {}
+    for idx, t in enumerate(transacoes):
+        banco = t.get("banco_origem")
+        if not banco or banco == "Histórico":
+            continue
+        if t.get("_virtual"):
+            continue
+        data_str = t["data"].isoformat() if hasattr(t["data"], "isoformat") else str(t["data"])
+        chave = (data_str, f"{abs(t['valor']):.2f}", banco, t.get("quem"))
+        grupos.setdefault(chave, []).append(idx)
+
+    indices_remover: set[int] = set()
+    for ids in grupos.values():
+        if len(ids) < 2:
+            continue
+        ofx_ids = [i for i in ids if _eh_arquivo_ofx(transacoes[i])]
+        xlsx_ids = [i for i in ids if _eh_arquivo_xlsx_csv(transacoes[i])]
+        if not ofx_ids or not xlsx_ids:
+            continue
+        # Preserva OFX (descrição mais informativa); descarta XLSX/CSV
+        # correspondente. Se houver múltiplos de cada, descarta todos os
+        # XLSX (cenário raro: mesmo arquivo XLSX importado 2x já foi
+        # consolidado pelo nível-2 normal).
+        for i in xlsx_ids:
+            indices_remover.add(i)
+
+    if not indices_remover:
+        return transacoes
+
+    logger.info(
+        "Dedup nível 2b (par OFX/XLSX mesmo banco): %d duplicatas removidas",
+        len(indices_remover),
+    )
+    return [t for idx, t in enumerate(transacoes) if idx not in indices_remover]
+
+
 def deduplicar_por_hash_fuzzy(transacoes: list[dict]) -> list[dict]:
-    """Nível 2: Remove duplicatas por combinação data + valor + local.
+    """Nível 2: Remove duplicatas por combinação data + valor + local_normalizado.
 
     Cobre três cenários reais:
     - Mesma transação em OFX e XLSX/CSV legacy do mesmo banco
@@ -43,18 +140,37 @@ def deduplicar_por_hash_fuzzy(transacoes: list[dict]) -> list[dict]:
       re-extração atual do banco de origem
     - Transferência interna listada pelo OFX e pelo CSV do mesmo banco
 
-    Quando múltiplas transações casam pela chave, mantém a que TEM
-    `banco_origem != "Histórico"` (metadados melhores da fonte original).
+    Sprint INFRA-DEDUP-C6-OFX-XLSX-AMPLO: o `local` usado na chave passa
+    pela normalização `_normalizar_local_para_chave` que remove prefixo
+    bancário antes do primeiro ` - ` (padrão OFX). Sem isso, 253 pares C6
+    de pessoa_a (~510 linhas, ~43% do total) escapavam dedup por divergência
+    de prefixo entre extratores `ofx_parser.py` (OFX) e `c6_cc.py` (XLSX).
+
+    Após o pass principal, executa `_consolidar_pares_ofx_xlsx_mesmo_banco`
+    para limpar pares residuais que não casam pelo `local` mas vêm
+    inequivocamente do mesmo evento bancário (mesmo banco, mesma data,
+    mesmo valor, mesmo `quem`, um arquivo OFX e outro XLSX/CSV).
+
+    Quando múltiplas transações casam pela chave, preservação em ordem:
+        1. NÃO `_virtual` (espelhos de cartão preservados sempre, ver 82b).
+        2. `banco_origem != "Histórico"` (fonte com metadados melhores).
+        3. Descrição mais rica (`_descricao_original` mais longa) -- preserva
+           informação semântica do OFX (`"PIX ENVIADO - <NOME>"`) sobre
+           sufixo truncado do XLSX (`"<NOME>"`). Critério introduzido por
+           esta sprint.
+
     Pares LEGÍTIMOS de transferência interna (entre bancos diferentes) não
-    colidem na chave, pois têm `local` distinto em cada ponta.
+    colidem na chave, pois têm `local` materialmente distinto (nome do
+    destinatário) -- a normalização preserva o conteúdo após ` - `, não
+    apaga.
     """
     grupos: dict[str, list[int]] = {}
 
     for idx, t in enumerate(transacoes):
         data_str = t["data"].isoformat() if hasattr(t["data"], "isoformat") else str(t["data"])
         valor_str = f"{abs(t['valor']):.2f}"
-        local = str(t.get("local", "")).strip().lower()
-        chave = f"{data_str}|{valor_str}|{local}"
+        local_normalizado = _normalizar_local_para_chave(t.get("local", ""))
+        chave = f"{data_str}|{valor_str}|{local_normalizado}"
         grupos.setdefault(chave, []).append(idx)
 
     indices_remover: set[int] = set()
@@ -68,7 +184,11 @@ def deduplicar_por_hash_fuzzy(transacoes: list[dict]) -> list[dict]:
         if tem_virtual:
             continue
         nao_historicos = [i for i in ids if transacoes[i].get("banco_origem") != "Histórico"]
-        preservar = nao_historicos[0] if nao_historicos else ids[0]
+        candidatos = nao_historicos if nao_historicos else ids
+        # Entre candidatos elegíveis, preserva o de descrição mais rica
+        # (Sprint INFRA-DEDUP-C6-OFX-XLSX-AMPLO). Em empate, o primeiro
+        # (ordem de inserção) -- comportamento determinístico.
+        preservar = max(candidatos, key=lambda i: (_riqueza_descricao(transacoes[i]), -i))
         for i in ids:
             if i != preservar:
                 indices_remover.add(i)
@@ -84,6 +204,10 @@ def deduplicar_por_hash_fuzzy(transacoes: list[dict]) -> list[dict]:
             "Dedup nível 2 (fuzzy por data+valor+local): %d duplicatas removidas",
             len(indices_remover),
         )
+
+    # Pass 2b: consolidar pares OFX/XLSX mesmo banco que escapam ao 2a por
+    # `local` materialmente distinto (descrição genérica XLSX vs detalhada OFX).
+    resultado = _consolidar_pares_ofx_xlsx_mesmo_banco(resultado)
 
     return resultado
 
