@@ -82,7 +82,7 @@ def grafo_com_transacao_pequena(tmp_path: Path):
         metadata={
             "data": "2026-04-30",
             "valor": -0.01,
-            "local": "transacao ruido",
+            "local": "movimento ruido",  # noqa: accent
             "banco_origem": "c6",
         },
     )
@@ -154,7 +154,7 @@ class TestCandidatasFiltroTotalVazio:
             metadata={
                 "data": "2026-04-30",
                 "valor": -0.02,
-                "local": "transacao alvo dois centavos",
+                "local": "movimento alvo dois centavos",  # noqa: accent
                 "banco_origem": "c6",
             },
         )
@@ -216,7 +216,7 @@ class TestLinkagemFiltraTotalVazio:
             metadata={
                 "data": "2026-04-30",
                 "valor": -123.45,
-                "local": "transacao real",
+                "local": "movimento real",  # noqa: accent
                 "banco_origem": "c6",
             },
         )
