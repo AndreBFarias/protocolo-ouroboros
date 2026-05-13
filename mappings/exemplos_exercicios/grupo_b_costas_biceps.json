@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "gerado_em": "2026-05-12T08:00:00",
+  "grupos": [
+    {
+      "id": "grupo_b",
+      "nome": "Treino B — Costas + Bíceps",
+      "descricao": "Puxadas verticais e horizontais com finalização de bíceps.",
+      "cor_hex": "#4ECDC4",
+      "ordem": 2
+    }
+  ],
+  "exercicios": [
+    {
+      "id": "puxada_alta",
+      "grupo_id": "grupo_b",
+      "nome": "Puxada alta",
+      "descricao": "Puxada vertical na polia alta com pegada pronada.",
+      "gif_path": "midia/gifs/puxada_alta.gif",
+      "series_default": 4,
+      "reps_default": 10,
+      "descanso_seg": 90,
+      "tempo_execucao_seg": null,
+      "equipamento": "polia alta + barra",
+      "musculo_principal": "costas",
+      "dificuldade": 3
+    },
+    {
+      "id": "remada_curvada",
+      "grupo_id": "grupo_b",
+      "nome": "Remada curvada",
+      "descricao": "Remada com barra livre em pronação, tronco inclinado.",
+      "gif_path": "midia/gifs/remada_curvada.gif",
+      "series_default": 4,
+      "reps_default": 10,
+      "descanso_seg": 90,
+      "tempo_execucao_seg": null,
+      "equipamento": "barra livre",
+      "musculo_principal": "costas",
+      "dificuldade": 4
+    },
+    {
+      "id": "rosca_direta",
+      "grupo_id": "grupo_b",
+      "nome": "Rosca direta",
+      "descricao": "Rosca direta com barra W em pé.",
+      "gif_path": "midia/gifs/rosca_direta.gif",
+      "series_default": 3,
+      "reps_default": 12,
+      "descanso_seg": 60,
+      "tempo_execucao_seg": null,
+      "equipamento": "barra W",
+      "musculo_principal": "biceps",
+      "dificuldade": 2
+    },
+    {
+      "id": "rosca_martelo",
+      "grupo_id": "grupo_b",
+      "nome": "Rosca martelo",
+      "descricao": "Rosca com halteres em pegada neutra.",
+      "gif_path": "midia/gifs/rosca_martelo.gif",
+      "series_default": 3,
+      "reps_default": 12,
+      "descanso_seg": 60,
+      "tempo_execucao_seg": null,
+      "equipamento": "halteres",
+      "musculo_principal": "biceps",
+      "dificuldade": 2
+    }
+  ]
+}
