@@ -251,6 +251,15 @@ def normalizar_transacao(
         "mes_ref": data_transacao.strftime("%Y-%m"),
         "tag_irpf": None,
         "obs": None,
+        # Sprint DASH-PAGAMENTOS-CRUZADOS-CASAL: campos opcionais para
+        # reconhecer pagamentos cruzados do casal (Vitória paga DAS do MEI
+        # Andre, etc.). ``pessoa_pagadora`` derivado do banco origem
+        # (espelha ``quem``). ``pessoa_devedora`` populado por
+        # ``src.transform.pagamentos_cruzados.inferir_pessoa_devedora``
+        # quando há match com documento (DAS, IPVA, IRPF) no grafo.
+        # Default None: retrocompat (padrão (o)).
+        "pessoa_pagadora": pessoa,
+        "pessoa_devedora": None,
         "_identificador": identificador,
         "_descricao_original": descricao_limpa,
         "_arquivo_origem": arquivo_origem,

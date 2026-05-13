@@ -871,6 +871,84 @@ def _gerar_insights(df: pd.DataFrame) -> list[tuple[str, str, str]]:
 # ---------------------------------------------------------------------------
 
 
+def _renderizar_aba_pagamentos_cruzados(df: pd.DataFrame) -> None:
+    """Tabela densa de pagamentos cruzados do casal (Sprint DASH-PAGAMENTOS-CRUZADOS-CASAL).
+
+    Mostra transações onde ``pessoa_pagadora != pessoa_devedora`` -- ex:
+    Vitória paga DAS do MEI Andre. Sem isso, dashboard confundia com
+    transferência para terceiro.
+    """
+    from src.transform.pagamentos_cruzados import (
+        contar_pagamentos_cruzados,
+        sentinela_drift_impostos,
+    )
+
+    if df is None or df.empty:
+        st.markdown(
+            callout_html("info", "Sem transações no período selecionado."),
+            unsafe_allow_html=True,
+        )
+        return
+
+    if "pessoa_devedora" not in df.columns or "pessoa_pagadora" not in df.columns:
+        st.markdown(
+            callout_html(
+                "info",
+                "Campos pessoa_pagadora/pessoa_devedora ausentes neste recorte. "
+                "Reprocesse o extrato para popular o cruzamento.",
+            ),
+            unsafe_allow_html=True,
+        )
+        return
+
+    registros = df.to_dict("records")
+    contagem = contar_pagamentos_cruzados(registros)
+    alerta = sentinela_drift_impostos(registros)
+
+    col1, col2, col3, col4 = st.columns(4)
+    col1.metric("Total impostos", contagem["total_impostos"])
+    col2.metric("Com devedora identificada", contagem["com_devedora"])
+    col3.metric("Cruzados (casal)", contagem["cruzados"])
+    col4.metric("Sem match", contagem["sem_match"])
+
+    if alerta:
+        st.markdown(callout_html("warning", alerta), unsafe_allow_html=True)
+
+    cruzados = df[
+        df["pessoa_devedora"].notna()
+        & (df["pessoa_pagadora"] != df["pessoa_devedora"])
+    ].copy()
+
+    if cruzados.empty:
+        st.markdown(
+            callout_html(
+                "info",
+                "Nenhum pagamento cruzado detectado no período. "
+                "Cada imposto foi pago pela própria pessoa devedora.",
+            ),
+            unsafe_allow_html=True,
+        )
+        return
+
+    colunas_visiveis = [
+        c for c in (
+            "data",
+            "valor",
+            "local",
+            "categoria",
+            "pessoa_pagadora",
+            "pessoa_devedora",
+            "banco_origem",
+        )
+        if c in cruzados.columns
+    ]
+    st.dataframe(
+        cruzados[colunas_visiveis].sort_values("data", ascending=False),
+        use_container_width=True,
+        hide_index=True,
+    )
+
+
 def renderizar(
     dados: dict[str, pd.DataFrame],
     periodo: str,
@@ -935,8 +1013,13 @@ def renderizar(
     delta_kpis = _delta_periodo_anterior(extrato_pessoa, periodo_filtro)
     insights_lista = _gerar_insights(extrato_pessoa)
 
-    aba_fluxo, aba_comparativo, aba_padroes = st.tabs(
-        ["Fluxo de caixa", "Comparativo mensal", "Padrões temporais"]
+    aba_fluxo, aba_comparativo, aba_padroes, aba_cruzados = st.tabs(
+        [
+            "Fluxo de caixa",
+            "Comparativo mensal",
+            "Padrões temporais",
+            "Pagamentos cruzados",
+        ]
     )
 
     with aba_fluxo:
@@ -952,6 +1035,13 @@ def renderizar(
 
     with aba_padroes:
         _renderizar_aba_padroes(extrato_pessoa)
+
+    with aba_cruzados:
+        # Sprint DASH-PAGAMENTOS-CRUZADOS-CASAL: reconhece quando uma pessoa
+        # paga conta fiscal da outra (DAS, IPVA, IRPF). Usa série histórica
+        # completa do recorte de pessoa (não restringe ao período do filtro
+        # superior) para revelar padrão ao longo do tempo.
+        _renderizar_aba_pagamentos_cruzados(extrato_pessoa)
 
 
 # "Aqueles que não conseguem lembrar o passado estão condenados a repeti-lo." -- George Santayana
