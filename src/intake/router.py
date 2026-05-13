@@ -27,8 +27,10 @@ expandir, classificar" é responsabilidade do `inbox_processor.py`
 
 from __future__ import annotations
 
+import json
 import shutil
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from pathlib import Path
 
 from src.intake import sha8_arquivo
@@ -311,6 +313,50 @@ def _fallback_classificar(
             sucesso=False,
             motivo=f"{motivo}; fallback também falhou: {exc}",
         )
+
+
+# ============================================================================
+# Sidecar `inbox/.extracted/<sha8>.json` (MOB-bridge-4)
+# ============================================================================
+
+
+def gravar_sidecar_inbox(
+    inbox_raiz: Path,
+    sha8: str,
+    tipo_arquivo: str | None,
+    area: str | None = None,
+    subtipo_mobile: str | None = None,
+    sucesso: bool = True,
+) -> Path | None:
+    """Grava sidecar `inbox/.extracted/<sha8>.json` consumido por inbox_reader.
+
+    MOB-bridge-4: campos novos `area` e `subtipo_mobile` (derivados do path
+    relativo `inbox/<area>/<subtipo>/`) sao incluidos quando presentes.
+    Retrocompat: sidecars antigos sem esses campos continuam validos (leitor
+    usa `.get(..., None)`).
+
+    Returns:
+        Path do JSON gravado, ou None se inbox_raiz inexistente.
+    """
+    if not inbox_raiz.exists() or not inbox_raiz.is_dir():
+        return None
+    sidecar_dir = inbox_raiz / ".extracted"
+    sidecar_dir.mkdir(parents=True, exist_ok=True)
+    destino = sidecar_dir / f"{sha8}.json"
+    payload: dict[str, object] = {
+        "sha8": sha8,
+        "ts_extracao_iso": datetime.now(UTC).isoformat(timespec="seconds"),
+        "estado": "extraido" if sucesso else "falhou",
+    }
+    if tipo_arquivo is not None:
+        payload["tipo_arquivo"] = tipo_arquivo
+    if area is not None:
+        payload["area"] = area
+    if subtipo_mobile is not None:
+        payload["subtipo_mobile"] = subtipo_mobile
+    destino.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    logger.info("sidecar inbox gravado: %s (area=%s, subtipo=%s)", destino, area, subtipo_mobile)
+    return destino
 
 
 # "Cada coisa em seu lugar e um lugar para cada coisa." -- Benjamin Franklin
