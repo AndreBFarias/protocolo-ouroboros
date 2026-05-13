@@ -595,18 +595,267 @@ def _slug(texto: str) -> str:
 
 
 # ============================================================================
+# Linker especializado: comprovante PIX foto -> transação bancária
+# ============================================================================
+#
+# Sprint INFRA-LINKAR-PIX-TRANSACAO  # noqa: accent (2026-05-13). Adicionado em modo ADITIVO
+# PURO: nenhuma função existente foi alterada -- apenas estendemos o motor com
+# um pipeline dedicado para o tipo ``comprovante_pix_foto`` (entregue por
+# DOC-27 + MOB-bridge-5).
+#
+# Por que um caminho dedicado em vez de reusar ``linkar_documentos_a_transacoes``
+# direto com ``tipos_documento=["comprovante_pix_foto"]``? Porque o PIX traz um
+# identificador canônico único -- o ``id_transacao`` E2E do BACEN -- que pode
+# bater literalmente na descrição da transação bancária e elevar o score a 1.0
+# com confiança absoluta (BACEN garante unicidade do E2E entre todos os bancos).
+# Esse boost é específico de PIX e não cabe no motor genérico (que está
+# parametrizado por valor + data + CNPJ).
+#
+# Estratégia de scoring (3 camadas, executadas após o motor canônico):
+#
+#   1) E2E literal na descrição da transação -> score = 1.0 (selo BACEN).
+#      Heurística canônica: "pix_e2e_literal_match".
+#   2) E2E não bate, mas data+valor+marcador PIX/TRANSF na descrição com
+#      parte do nome do destinatário/remetente -> score original + 0.10
+#      (boost de prosa). Heurística: "pix_marcador_textual".
+#   3) Apenas data+valor (sem E2E nem marcador textual) -> score original do
+#      motor (heurísticas data_valor_*).
+#
+# A geração de aresta usa o mesmo ``EDGE_TIPO_DOCUMENTO_DE`` (idempotente via
+# UNIQUE(src,dst,tipo)) e as propostas de conflito/baixa-confiança reusam as
+# funções existentes ``_gerar_proposta_conflito`` / ``_gerar_proposta_baixa_confianca``.
+
+
+_PIX_MARCADORES_DESCRICAO: tuple[str, ...] = (
+    "PIX",
+    "TRANSF",
+    "TRANSFERENCIA",
+    "TRANSFERÊNCIA",
+)
+
+
+def _normalizar_texto_busca(texto: Any) -> str:
+    """Uppercase e strip para comparação case-insensitive resiliente a None."""
+    if not texto:
+        return ""
+    return str(texto).strip().upper()
+
+
+def _e2e_literal_na_transacao(e2e: str | None, metadata_tx: dict[str, Any]) -> bool:
+    """Verifica se o ``id_transacao`` E2E do PIX aparece literal em qualquer
+    campo textual da transação (local, descrição, observacao, identificador).
+
+    O E2E PIX tem 32 caracteres (formato BACEN ``E<ISPB><AAAAMMDDHHMM><Seq>``)
+    e é único globalmente -- match literal é selo de identidade quase absoluto.
+    """
+    if not e2e:
+        return False
+    alvo = _normalizar_texto_busca(e2e)
+    if len(alvo) < 8:
+        return False
+    for chave in ("local", "descricao", "observacao", "identificador", "memo"):
+        valor = _normalizar_texto_busca(metadata_tx.get(chave))
+        if alvo in valor:
+            return True
+    return False
+
+
+def _marcador_pix_e_nome_na_descricao(
+    razao_social: str | None,
+    metadata_tx: dict[str, Any],
+) -> bool:
+    """``True`` quando a descrição da transação tem marcador PIX/TRANSF +
+    pelo menos um token significativo (>=4 chars) do nome do destinatário.
+
+    Heurística de prosa para o caso comum: extrato do banco grava
+    ``PIX TRANSF JOAO DA SILVA 14:32:01`` ou similar. Bater algum token
+    distintivo do nome reforça que é a mesma transação.
+    """
+    texto_alvo = ""
+    for chave in ("local", "descricao", "observacao", "identificador", "memo"):
+        valor = _normalizar_texto_busca(metadata_tx.get(chave))
+        if valor:
+            texto_alvo += " " + valor
+    if not texto_alvo:
+        return False
+    tem_marcador = any(m in texto_alvo for m in _PIX_MARCADORES_DESCRICAO)
+    if not tem_marcador:
+        return False
+    nome_norm = _normalizar_texto_busca(razao_social)
+    if not nome_norm:
+        return False
+    # Token >= 4 chars (descarta "DA", "DE", "DO", "DOS" etc.)
+    tokens = [t for t in nome_norm.split() if len(t) >= 4]
+    for tok in tokens:
+        if tok in texto_alvo:
+            return True
+    return False
+
+
+def linkar_pix_transacao(
+    db: GrafoDB,
+    config: dict[str, Any] | None = None,
+    caminho_propostas: Path | None = None,
+) -> dict[str, int]:
+    """Linker dedicado para documentos ``comprovante_pix_foto``.
+
+    Percorre nós ``documento`` com ``metadata.tipo_documento == 'comprovante_pix_foto'``
+    e tenta amarrar cada um à transação correspondente no extrato bancário usando
+    o motor canônico (``candidatas_para_documento``) reforçado por dois boosts
+    específicos de PIX:
+
+    - **Boost E2E (1.0)**: se ``metadata.pix_id_transacao`` (E2E do BACEN) aparece
+      literal em algum campo textual da transação candidata, score = 1.0.
+    - **Boost textual (+0.10)**: se a descrição da transação tem marcador
+      ``PIX``/``TRANSF`` e algum token significativo (>=4 chars) do nome do
+      destinatário, soma 0.10 ao score original (clampado em 1.0).
+
+    Idempotência: ``adicionar_edge`` usa ``INSERT OR IGNORE`` no schema; rodar
+    duas vezes nunca duplica. Documentos já com aresta marcada por revisão
+    humana (``evidencia.aprovador``) são preservados.
+
+    Conflito top-1/top-2 (``margem_empate``) gera proposta em
+    ``docs/propostas/linking/``; baixa-confiança (top-1 < ``confidence_minimo``)
+    idem -- ambas via as mesmas funções de proposta usadas pelo motor canônico.
+
+    Devolve dict com contadores: ``linkados``, ``conflitos``,
+    ``baixa_confianca``, ``sem_candidato``, ``ja_linkados``, ``boost_e2e``,
+    ``boost_textual``.
+    """
+    config = config or carregar_config()
+    caminho_propostas = caminho_propostas or _PATH_PROPOSTAS_PADRAO
+    caminho_propostas.mkdir(parents=True, exist_ok=True)
+
+    margem_empate = float(config.get("margem_empate", 0.05))
+
+    stats: dict[str, int] = {
+        "linkados": 0,
+        "conflitos": 0,
+        "baixa_confianca": 0,
+        "sem_candidato": 0,
+        "ja_linkados": 0,
+        "boost_e2e": 0,
+        "boost_textual": 0,
+    }
+
+    documentos = db.listar_nodes(tipo="documento")
+    for doc in documentos:
+        if doc.id is None:
+            continue
+        if doc.metadata.get("tipo_documento") != "comprovante_pix_foto":
+            continue
+
+        if _ja_linkado_humano(db, doc.id):
+            stats["ja_linkados"] += 1
+            continue
+
+        candidatas = candidatas_para_documento(db, doc, config=config)
+        if not candidatas:
+            stats["sem_candidato"] += 1
+            logger.info(
+                "comprovante_pix_foto %s sem candidata de transação",
+                doc.nome_canonico,
+            )
+            continue
+
+        # Aplica boosts PIX. Reordena por score boosteado.
+        e2e_pix = doc.metadata.get("pix_id_transacao")
+        razao_social = doc.metadata.get("razao_social")
+        candidatas_boostadas: list[tuple[int, dict[str, Any]]] = []
+        for tid, evid in candidatas:
+            tx_node = db.buscar_node_por_id(tid)
+            if tx_node is None:
+                candidatas_boostadas.append((tid, evid))
+                continue
+            meta_tx = tx_node.metadata
+            evid_novo = dict(evid)
+            if _e2e_literal_na_transacao(e2e_pix, meta_tx):
+                evid_novo["confidence"] = 1.0
+                evid_novo["heuristica"] = "pix_e2e_literal_match"
+                evid_novo["pix_boost"] = "e2e"
+            elif _marcador_pix_e_nome_na_descricao(razao_social, meta_tx):
+                score_antigo = float(evid_novo.get("confidence", 0.0))
+                evid_novo["confidence"] = min(score_antigo + 0.10, 1.0)
+                evid_novo["heuristica"] = "pix_marcador_textual"
+                evid_novo["pix_boost"] = "textual"
+            candidatas_boostadas.append((tid, evid_novo))
+
+        candidatas_boostadas.sort(
+            key=lambda par: float(par[1]["confidence"]), reverse=True
+        )
+
+        top_id, top_evidencia = candidatas_boostadas[0]
+        parametros = _parametros_para_tipo("comprovante_pix_foto", config)
+        confidence_minimo = float(parametros["confidence_minimo"])
+        top_score = float(top_evidencia["confidence"])
+
+        # Empate top-1/top-2 -> proposta de conflito (mesma regra do motor canônico).
+        if len(candidatas_boostadas) >= 2:
+            segundo_score = float(candidatas_boostadas[1][1]["confidence"])
+            if (top_score - segundo_score) < margem_empate:
+                _gerar_proposta_conflito(
+                    doc, candidatas_boostadas[:3], caminho_propostas, parametros
+                )
+                stats["conflitos"] += 1
+                continue
+
+        if top_score < confidence_minimo:
+            _gerar_proposta_baixa_confianca(
+                doc, candidatas_boostadas[:3], caminho_propostas, parametros
+            )
+            stats["baixa_confianca"] += 1
+            continue
+
+        db.adicionar_edge(
+            src_id=doc.id,
+            dst_id=top_id,
+            tipo=EDGE_TIPO_DOCUMENTO_DE,
+            peso=top_score,
+            evidencia=top_evidencia,
+        )
+        stats["linkados"] += 1
+        boost_aplicado = top_evidencia.get("pix_boost")
+        if boost_aplicado == "e2e":
+            stats["boost_e2e"] += 1
+        elif boost_aplicado == "textual":
+            stats["boost_textual"] += 1
+
+        # PII: E2E e nome canônico do destinatário NÃO vão para log INFO -- usamos
+        # prefixo curto (E2E[:8]) e id do nó (numérico). Padrão (bb).
+        e2e_curto = (e2e_pix or "")[:8] or "sem-e2e"
+        logger.info(
+            "linked PIX %s (e2e=%s, boost=%s) -> transação %s (score=%.3f)",
+            doc.id,
+            e2e_curto,
+            boost_aplicado or "nenhum",
+            top_id,
+            top_score,
+        )
+
+    logger.info("linking PIX concluído: %s", stats)
+    return stats
+
+
+# ============================================================================
 # CLI auxiliar
 # ============================================================================
 
 
 def main() -> None:
-    """Entrypoint CLI: `python -m src.graph.linking` roda linking no grafo padrão."""
+    """Entrypoint CLI: `python -m src.graph.linking` roda linking no grafo padrão.
+
+    Sprint INFRA-LINKAR-PIX-TRANSACAO (2026-05-13)  # noqa: accent
+    após o motor canônico, roda o linker dedicado de PIX (boost E2E + textual).
+    Aditivo -- não substitui ``linkar_documentos_a_transacoes``.
+    """
     from src.graph.db import caminho_padrao
 
     logger.info("linking CLI -- abrindo grafo em %s", caminho_padrao())
     with GrafoDB(caminho_padrao()) as db:
-        stats = linkar_documentos_a_transacoes(db)
-    logger.info("estatísticas finais: %s", json.dumps(stats, ensure_ascii=False))
+        stats_canonico = linkar_documentos_a_transacoes(db)
+        stats_pix = linkar_pix_transacao(db)
+    logger.info("estatísticas canônico: %s", json.dumps(stats_canonico, ensure_ascii=False))
+    logger.info("estatísticas PIX dedicado: %s", json.dumps(stats_pix, ensure_ascii=False))
 
 
 if __name__ == "__main__":

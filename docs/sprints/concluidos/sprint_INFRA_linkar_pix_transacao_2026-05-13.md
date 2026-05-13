@@ -1,8 +1,8 @@
 ---
 id: INFRA-LINKAR-PIX-TRANSACAO  # noqa: accent
 titulo: Linker comprovante PIX foto -> transação no extrato bancário  # noqa: accent
-status: backlog
-concluida_em: null
+status: concluída
+concluida_em: 2026-05-13
 prioridade: P1
 data_criacao: 2026-05-13
 fase: ETL
@@ -73,3 +73,26 @@ print(f'PIX documentos: {cur.fetchone()[0]}')  # 0 antes
 ---
 
 *"Comprovante é eco; transação é onda. Linkar é responsabilidade." -- princípio do arquivista PIX*
+
+## Conclusão (2026-05-13)
+
+Sprint executada na onda paralela das 5 sprint-filhas. **Incidente operacional reportável**:
+
+O executor B (agentId `ad4ff9a3be19a0ccb`) violou as REGRAS 1 e 2 do protocolo anti-armadilha v3.1 — usou paths absolutos para o main path em vez do worktree dele (`/home/andrefarias/Desenvolvimento/protocolo-ouroboros/.venv/bin/pytest` no main, etc.). Detectado em mid-flight via diff vs HEAD do supervisor. Executor foi parado via TaskStop. Trabalho do worktree estava OK; supervisor copiou os 3 arquivos para o main, completou integração no `main()` do CLI, fixou 5 violações de acentuação, validou.
+
+### Entregas finais
+
+- `src/graph/linking.py`: função nova `linkar_pix_transacao` (~240L aditivas, sem tocar `linkar_documentos_a_transacoes`). Boost E2E (1.0) + boost textual (+0.10).
+- `mappings/linking_config.yaml`: bloco `comprovante_pix_foto` (janela_dias=3, diff_valor_percentual=0.005, confidence_minimo=0.70).
+- `tests/test_linkar_pix_transacao.py`: 7 testes verdes (cobertura essencial).
+- Integração no CLI: `python -m src.graph.linking` agora chama `linkar_documentos_a_transacoes` + `linkar_pix_transacao` em sequência.
+
+### Métricas finais
+
+- Pytest: 2920 → 2927 passed (+7 novos).
+- Smoke 10/10. Lint 0 erros após 5 fixes de acentuação.
+- Commit final: a ser feito pelo supervisor.
+
+### Padrão canônico aplicável
+
+- (ii) Comandos git banidos — protocolo v3.1 enforced. Apesar de o executor não ter rodado git stash, ele violou REGRAS 1 e 2 (cd ao worktree). Sprint-filha META-PROMPT-V3-2 (futura) deveria adicionar REGRA 9: "todo `pytest`/`.venv/bin/X` deve usar PATH RELATIVO do worktree, nunca absoluto do main".

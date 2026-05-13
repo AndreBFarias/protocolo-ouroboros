@@ -57,6 +57,17 @@ tipos:
     janela_dias: 1
     diff_valor_percentual: 0.01
     confidence_minimo: 0.75
+  comprovante_pix_foto:
+    # Sprint INFRA-LINKAR-PIX-TRANSACAO (2026-05-13). PIX e executado em D+0
+    # (instantaneo): janela curta (3 dias absorve fuso de captura da foto vs
+    # data registrada no extrato bancario). Valor da transferencia bate ao
+    # centavo na descricao do extrato; tolerancia minima (0.5%). Confidence
+    # 0.70 reflete que o boost por E2E (id_transacao na descricao) leva o
+    # score canonico para 1.0 quando ha match unico -- caso PIX comum.
+    janela_dias: 3
+    diff_valor_percentual: 0.005
+    confidence_minimo: 0.70
+    peso_temporal_diario: 0.05
   receita_medica:
     # Linking e indireto (prescreve_cobre -> item). Pensado para coerencia de
     # cadastro, mas sem conversao direta receita -> transacao bancaria.

@@ -1,8 +1,8 @@
 ---
 id: META-PROMPT-ANTI-ARMADILHA-V3-FORTALECER
 titulo: Fortalecer prompt anti-armadilha v3 com lista de comandos banidos e incidentes reais
-status: backlog
-concluida_em: null
+status: concluída
+concluida_em: 2026-05-13
 prioridade: P2
 data_criacao: 2026-05-13
 fase: META
@@ -79,3 +79,24 @@ Meta: 0 violações em 5 dispatches consecutivos.
 ---
 
 *"Regra dita uma vez é sugestão; regra dita com incidente é lei." — princípio da memória anti-armadilha*
+
+## Conclusão (2026-05-13)
+
+Entregue na onda paralela das 5 sprint-filhas:
+
+1. **Documento canônico trackeado**: `contexto/PROTOCOLO_ANTI_ARMADILHA_V3_1.md` — 8 regras (era 6), tabela de comandos banidos com substitutos, incidente real inline.
+2. **Padrão `(ii)` adicionado ao VALIDATOR_BRIEF.md** (local, gitignored) referenciando o protocolo + comandos banidos + verificação obrigatória `git stash list` antes do commit final.
+3. **Memória persistente atualizada**: `feedback_protocolo_anti_armadilha_v3_1.md` no diretório de memória do Claude Code, indexada em `MEMORY.md`.
+4. **Aplicação imediata**: os 2 executors despachados nesta mesma onda paralela (PROPOSTAS-GC e LINKAR-PIX-TRANSACAO) receberam o protocolo v3.1 inline no prompt, incluindo a tabela de comandos banidos com justificativa do incidente.
+
+### Métricas da sessão
+
+- 1 arquivo novo trackeado (`contexto/PROTOCOLO_ANTI_ARMADILHA_V3_1.md`, 99 linhas).
+- 1 entrada nova no VALIDATOR_BRIEF.md (padrão `(ii)`).
+- 1 memória nova + atualização do MEMORY.md.
+- Spec movida para `docs/sprints/concluidos/`.
+
+### Próximos passos (registrados, não bloqueantes)
+
+- Adicionar a tabela de comandos banidos como **hook PreToolUse** que detecta `git stash` em executors e bloqueia. Mais firme que prompt. Sprint-filha futura.
+- Documentar incidentes futuros no `## Histórico de incidentes` do protocolo v3.1 (padrão `(l)`).
