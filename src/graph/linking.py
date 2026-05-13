@@ -54,6 +54,18 @@ _PATH_PROPOSTAS_PADRAO: Path = _RAIZ_REPO / "docs" / "propostas" / "linking"
 EDGE_TIPO_DOCUMENTO_DE: str = "documento_de"
 EDGE_TIPO_CONTRAPARTE: str = "contraparte"
 
+# Sprint INFRA-LINKING-DIRPF-TOTAL-ZERO (2026-05-13): documentos com total
+# monetário nulo, zero ou abaixo de R$ 0,01 não devem entrar na heurística
+# `data_valor_aproximado`. DIRPF/retificadora, contratos sem valor declarado e
+# certidões frequentemente chegam ao grafo com `total=0.0`; como a métrica de
+# proporção fica indefinida, qualquer transação pequena (R$ 0,01) casa
+# proporcionalmente e gera 2+ candidatas dentro da margem de empate, virando
+# proposta de conflito ruidosa. O filtro abaixo é defesa em camadas (padrão
+# (n)): `candidatas_para_documento` devolve lista vazia e
+# `linkar_documentos_a_transacoes` pula antes mesmo de consultar candidatas,
+# contabilizando em `total_vazio`.
+TOTAL_MINIMO_ELEGIVEL: float = 0.01
+
 # Sprint 74 (ADR-20): classificação semântica do tipo de vínculo entre um
 # documento e a transação que ele comprova. Armazenado em `evidencia.tipo_edge_semantico`
 # da aresta `documento_de` para preservar idempotência e retrocompatibilidade com
@@ -280,6 +292,18 @@ def candidatas_para_documento(
     except (TypeError, ValueError):
         return []
 
+    # Sprint INFRA-LINKING-DIRPF-TOTAL-ZERO: total monetário nulo, zero ou
+    # abaixo do mínimo elegível inviabiliza a métrica proporcional. Documento
+    # sai do funil silenciosamente (defesa em camadas com o filtro do
+    # orquestrador `linkar_documentos_a_transacoes`).
+    if abs(total_f) <= TOTAL_MINIMO_ELEGIVEL:
+        logger.debug(
+            "documento %s com total<=%.2f -- fora da heurística por valor",
+            doc_node.nome_canonico,
+            TOTAL_MINIMO_ELEGIVEL,
+        )
+        return []
+
     candidatas_raw = obter_transacoes_candidatas_para_documento(
         db,
         data_iso=str(ancora_data),
@@ -383,6 +407,7 @@ def linkar_documentos_a_transacoes(
         "baixa_confianca": 0,
         "sem_candidato": 0,
         "ja_linkados": 0,
+        "total_vazio": 0,
     }
 
     documentos = db.listar_nodes(tipo="documento")
@@ -395,6 +420,20 @@ def linkar_documentos_a_transacoes(
 
         if _ja_linkado_humano(db, doc.id):
             stats["ja_linkados"] += 1
+            continue
+
+        # Sprint INFRA-LINKING-DIRPF-TOTAL-ZERO: documentos com total nulo
+        # ou <= R$ 0,01 (DIRPF retificadora, certidões, contratos sem valor)
+        # não entram no funil heurístico por valor. Evita propostas conflito
+        # ruidosas em que qualquer transação pequena casa proporcionalmente.
+        if _total_vazio_ou_minimo(doc.metadata.get("total")):
+            stats["total_vazio"] += 1
+            logger.info(
+                "documento %s (%s) com total ausente/<=%.2f -- fora do linking por valor",
+                doc.nome_canonico,
+                tipo_doc,
+                TOTAL_MINIMO_ELEGIVEL,
+            )
             continue
 
         candidatas = candidatas_para_documento(db, doc, config=config)
@@ -444,6 +483,23 @@ def linkar_documentos_a_transacoes(
 
     logger.info("linking concluído: %s", stats)
     return stats
+
+
+def _total_vazio_ou_minimo(total: Any) -> bool:
+    """True quando o total monetário do documento é None, não-numérico ou
+    em módulo menor/igual a `TOTAL_MINIMO_ELEGIVEL` (R$ 0,01).
+
+    Justificativa: DIRPF retificadora, contratos sem valor declarado e
+    certidões chegam com `total=0.0`; aplicar heurística proporcional sobre
+    valor zero faz qualquer transação de centavos bater, gerando propostas
+    conflito ruidosas (incidente 2026-05-13 com `DIRPF|05127373122|2025_RETIF`).
+    """
+    if total is None:
+        return True
+    try:
+        return abs(float(total)) <= TOTAL_MINIMO_ELEGIVEL
+    except (TypeError, ValueError):
+        return True
 
 
 def _ja_linkado_humano(db: GrafoDB, doc_id: int) -> bool:
