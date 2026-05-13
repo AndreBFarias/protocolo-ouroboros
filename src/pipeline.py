@@ -492,11 +492,16 @@ def _executar_linking_documentos() -> None:
 
     try:
         from src.graph.db import GrafoDB
-        from src.graph.linking import linkar_documentos_a_transacoes
+        from src.graph.linking import (
+            linkar_documentos_a_transacoes,
+            linkar_pix_transacao,
+        )
 
         with GrafoDB(caminho_grafo) as db:
             stats = linkar_documentos_a_transacoes(db)
+            stats_pix = linkar_pix_transacao(db)
         logger.info("Linking documento->transação: %s", stats)
+        logger.info("Linking PIX dedicado: %s", stats_pix)
     except Exception as erro:
         logger.warning("Linking de documentos falhou: %s", erro)
 
