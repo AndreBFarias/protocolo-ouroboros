@@ -1,8 +1,8 @@
 ---
 id: INFRA-CATEGORIZAR-SALARIO-G4F-C6
 titulo: Salário G4F R$ 6.381,14 está como Transferência (não Salário) no C6 — investigar e corrigir categorização + tag IRPF
-status: backlog
-concluida_em: null
+status: concluída  <!-- noqa: accent -->
+concluida_em: 2026-05-12  <!-- noqa: accent -->
 prioridade: P1
 data_criacao: 2026-05-12
 fase: VALIDACAO_ARTESANAL
