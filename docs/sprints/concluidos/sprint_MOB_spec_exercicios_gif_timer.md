@@ -1,8 +1,8 @@
 ---
 id: MOB-spec-exercicios-gif-timer
 titulo: Contrato JSON mappings/schema_exercicios.json para grupo + exercicios + gif + timer (consumido pelo app mobile)
-status: backlog
-concluida_em: null
+status: concluída  <!-- noqa: accent -->
+concluida_em: 2026-05-12  <!-- noqa: accent -->
 prioridade: P2
 data_criacao: 2026-05-12
 fase: BRIDGE_MOBILE
