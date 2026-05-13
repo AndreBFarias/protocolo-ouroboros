@@ -104,6 +104,30 @@ def _filtrar_extrato_ano(df: pd.DataFrame, ano: int) -> pd.DataFrame:
     return recorte
 
 
+def _filtrar_por_devedora(df: pd.DataFrame, pessoa: str | None) -> pd.DataFrame:
+    """Filtra extrato pela pessoa fiscalmente devedora (Sprint DASH-PAGAMENTOS-CRUZADOS-CASAL).
+
+    Quando ``pessoa`` é fornecida (ex: ``"pessoa_a"``), o filtro escolhe a
+    coluna canônica ``pessoa_devedora`` se populada; caso contrário, cai em
+    ``quem`` (fallback retrocompat -- padrão (o)). Resultado: imposto pago
+    de pessoa_a entra na declaração de pessoa_a mesmo quando outra pessoa
+    pagou efetivamente da conta dela.
+
+    Quando ``pessoa is None``, devolve o DataFrame inteiro (pacote global,
+    comportamento original).
+    """
+    if df is None or df.empty or pessoa is None:
+        return df if df is not None else pd.DataFrame()
+    if "quem" not in df.columns:
+        return df
+    if "pessoa_devedora" in df.columns:
+        # Constrói coluna efetiva: pessoa_devedora quando populada, senão quem.
+        efetiva = df["pessoa_devedora"].where(df["pessoa_devedora"].notna(), df["quem"])
+    else:
+        efetiva = df["quem"]
+    return df[efetiva == pessoa].copy()
+
+
 def compilar_eventos(df_ano: pd.DataFrame) -> list[dict[str, Any]]:
     """Compila lista de eventos canônicos para JSON/XLSX/PDF.
 
@@ -349,6 +373,7 @@ def gerar_pacote(
     ano: int,
     dados: dict[str, pd.DataFrame] | None = None,
     diretorio_base: Path | None = None,
+    pessoa: str | None = None,
 ) -> Path:
     """Gera o pacote IRPF do ``ano`` e devolve o diretório criado.
 
@@ -356,6 +381,10 @@ def gerar_pacote(
       tenta carregar via ``src.dashboard.dados.carregar_dados()``
       (atalho útil para o botão do dashboard; testes injetam ``dados``).
     * ``diretorio_base``: redireciona ``data/aplicacoes`` (testes/sandbox).
+    * ``pessoa``: identificador genérico (``pessoa_a`` / ``pessoa_b``)
+      para gerar pacote individual filtrando por ``pessoa_devedora``
+      (fallback ``quem``). ``None`` mantém comportamento original
+      (pacote global). Padrão (o): default retrocompat.
 
     O diretório resultante contém ``relatorio.pdf``, ``dados.xlsx``,
     ``dados.json`` e ``originais/`` (sempre criado, mesmo vazio).
@@ -371,6 +400,7 @@ def gerar_pacote(
     if extrato is None:
         extrato = pd.DataFrame()
     df_ano = _filtrar_extrato_ano(extrato, ano)
+    df_ano = _filtrar_por_devedora(df_ano, pessoa)
 
     diretorio = _diretorio_padrao(ano, diretorio_base)
     if diretorio.exists():

@@ -1,8 +1,8 @@
 ---
 id: DASH-PAGAMENTOS-CRUZADOS-CASAL
 titulo: Dashboard reconhece pagamentos cruzados do casal (Vitória paga boleto do MEI Andre) sem confundir com transferência de terceiro
-status: backlog
-concluida_em: null
+status: concluida
+concluida_em: 2026-05-12
 prioridade: P2
 data_criacao: 2026-05-12
 fase: DASHBOARD
