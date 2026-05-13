@@ -57,7 +57,7 @@ class Categorizer:
                     "regra_valor": config.get("regra_valor"),
                     # Filtros estruturais opcionais (Sprint INFRA-CATEGORIZAR-SALARIO-G4F-C6).
                     # Permitem matar drift de salario chegando como transferencia
-                    # quando a descricao bruta nao contem o nome do empregador.
+                    # quando a descricao bruta nao contem o nome do empregador.  # noqa: accent
                     "banco_origem": config.get("banco_origem"),
                     "valor_min": config.get("valor_min"),
                     "valor_max": config.get("valor_max"),
@@ -132,7 +132,7 @@ class Categorizer:
 
         Retorna True se todos os filtros declarados forem atendidos (ou ausentes).
         Sprint INFRA-CATEGORIZAR-SALARIO-G4F-C6: salario G4F chega como transferencia
-        no C6 com descricao sem nome do empregador; filtros estruturais sao a forma
+        no C6 com descricao sem nome do empregador; filtros estruturais sao a forma  # noqa: accent
         canonica de reconhecer o padrao por valor + banco + janela de data.
         """
         banco_esperado = override.get("banco_origem")
@@ -185,7 +185,7 @@ class Categorizer:
             )
 
             if descricao_vazia_ok and tem_filtros:
-                # Match estritamente estrutural; ignora descricao (ou ela e marcador).
+                # Match estritamente estrutural; ignora descrição.
                 pass
             elif descricao_chave not in texto_busca:
                 continue

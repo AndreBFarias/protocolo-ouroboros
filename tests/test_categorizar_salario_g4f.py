@@ -2,8 +2,8 @@
 
 Cenario coberto:
     Salario liquido G4F do Andre (R$ 6.381,14) chega ao C6 como transferencia interna
-    apos passar pelo Santander declarado no holerite. A descricao bruta nao contem
-    "G4F" entao o regex de categorias.yaml nao casa. O override estrutural em
+    apos passar pelo Santander declarado no holerite. A descricao bruta nao contem  # noqa: accent
+    "G4F" entao o regex de categorias.yaml nao casa. O override estrutural em  # noqa: accent
     mappings/overrides.yaml "__SALARIO_G4F_C6__" reconhece o padrao pela combinacao
     banco_origem=C6 + 6000 <= valor <= 7000 + dia do mes entre 1 e 10.
 """
@@ -31,7 +31,7 @@ def test_aplica_quando_valor_banco_e_data_batem(transacao):
 
 
 def test_nao_aplica_se_banco_diferente(transacao):
-    """Mesmo valor e data no Itau nao deve virar Salario G4F (regra e exclusiva do C6)."""
+    """Mesmo valor e data no Itaú não deve virar Salário G4F (regra é exclusiva do C6)."""
     cat = Categorizer()
     t = transacao(
         local="Credito generico",
@@ -47,7 +47,7 @@ def test_nao_aplica_se_banco_diferente(transacao):
 
 
 def test_nao_aplica_se_valor_fora_da_faixa(transacao):
-    """Valor abaixo da faixa (R$ 500) no C6 nao deve virar Salario."""
+    """Valor abaixo da faixa (R$ 500) no C6 não deve virar Salário."""
     cat = Categorizer()
     t = transacao(
         local="Transferencia recebida",
@@ -62,7 +62,7 @@ def test_nao_aplica_se_valor_fora_da_faixa(transacao):
 
 
 def test_nao_aplica_se_data_fora_da_janela(transacao):
-    """Mesmo valor no C6 mas no dia 25 nao deve virar Salario (fora da janela 1-10)."""
+    """Mesmo valor no C6 mas no dia 25 não deve virar Salário (fora da janela 1-10)."""
     cat = Categorizer()
     t = transacao(
         local="Transferencia recebida",
@@ -106,5 +106,5 @@ def test_aplica_no_limite_inferior_da_janela(transacao):
     assert t["categoria"] == "Salário"
 
 
-# "Salario nao chamado de salario nao entra no IRPF -- e o tipo de drift
+# "Salario nao chamado de salario nao entra no IRPF -- e o tipo de drift  # noqa: accent
 # que custa multa em marco do ano seguinte." -- principio da sprint
