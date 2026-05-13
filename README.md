@@ -31,6 +31,14 @@ O menu interativo guia todas as operações: processamento, dashboard, relatóri
 
 ---
 
+### Para colaboradores AI (Claude, Codex, Cursor, etc.)
+
+Se você é uma sessão de modelo de linguagem trabalhando no projeto, **leia `CLAUDE.md` na raiz primeiro**. Ele declara os 3 documentos canônicos que devem ser lidos antes de criar qualquer sprint, a filosofia central (ciclo de graduação Opus -> ETL), as ferramentas (`scripts/dossie_tipo.py`) e as regras invioláveis (acentuação PT-BR, zero emojis, zero menções a IA).
+
+O projeto se autogerencia via dossiês por tipo documental. Toda spec que toca extrator/ingestor/linker de um tipo segue o ritual artesanal de 6 fases descrito em `docs/CICLO_GRADUACAO_OPERACIONAL.md`.
+
+---
+
 ### Sobre
 
 Consolida dados bancários de múltiplas fontes (CSVs, XLSX, XLS, PDFs protegidos, imagens via OCR) em um XLSX unificado com 8 abas, relatórios mensais em Markdown e dashboard Streamlit com visualizações interativas.
