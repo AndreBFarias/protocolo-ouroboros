@@ -28,8 +28,8 @@ Arquivo: `data/raw/andre/impostos/das_parcsn/DAS_PARCSN_2025-02-28_2b8e0045.pdf`
 ```json
 {
   "tipo_documento": "das_parcsn_andre",
-  "cnpj_emitente": "45.850.636/0001-60",
-  "razao_social": "ANDRE DA SILVA BATISTA DE FARIAS",
+  "cnpj_emitente": "XX.XXX.XXX/0001-60 [MEI desativado, PII mascarada]",
+  "razao_social": "ANDRE D... S... B... DE F... [PII mascarada]",
   "data_emissao": "2025-02-28",
   "vencimento": "2025-04-30",
   "periodo_apuracao": "2025-02",
@@ -44,8 +44,8 @@ Arquivo: `data/raw/andre/impostos/das_parcsn/DAS_PARCSN_2025-02-28_2b8e0045.pdf`
 
 ```
 Documento de Arrecadação do Simples Nacional
-CNPJ: 45.850.636/0001-60 (MEI desativado do Andre)
-Razão Social: ANDRE DA SILVA BATISTA DE FARIAS [PII no cache local; mascarar em relatorio]
+CNPJ: XX.XXX.XXX/0001-60 [MEI desativado, PII mascarada] (MEI desativado do Andre)
+Razão Social: ANDRE D... S... B... DE F... [PII mascarada] [PII no cache local; mascarar em relatorio]
 Período de Apuração: Fevereiro/2025
 Data de Vencimento: 28/02/2025
 Pagar este documento até: 30/04/2025
@@ -80,7 +80,7 @@ Soma da composição por tributo: 41,57 + 11,35 + 140,77 + 12,97 + 108,64 + 9,01
 
 | Campo | ETL | Opus | Classe | Veredito |
 |---|---|---|---|---|
-| `cnpj_contribuinte` | 45.850.636/0001-60 | 45.850.636/0001-60 | A | OK |
+| `cnpj_contribuinte` | XX.XXX.XXX/0001-60 [MEI desativado, PII mascarada] | XX.XXX.XXX/0001-60 [MEI desativado, PII mascarada] | A | OK |
 | `data_emissao` | 2025-02-28 | 28/02/2025 | A | OK |
 | `vencimento` | 2025-04-30 | 30/04/2025 | A | OK |
 | `total` | 324.31 | 324,31 | A | OK |
@@ -113,8 +113,8 @@ Arquivo: `data/raw/andre/impostos/das_parcsn/DAS_PARCSN_2026-03-31_c2bdf7e2.pdf`
 ```json
 {
   "tipo_documento": "das_parcsn_andre",
-  "cnpj_emitente": "45.850.636/0001-60",
-  "razao_social": "ANDRE DA SILVA BATISTA DE FARIAS",
+  "cnpj_emitente": "XX.XXX.XXX/0001-60 [MEI desativado, PII mascarada]",
+  "razao_social": "ANDRE D... S... B... DE F... [PII mascarada]",
   "data_emissao": "2026-03-31",
   "vencimento": "2026-03-31",
   "periodo_apuracao": "diversos",

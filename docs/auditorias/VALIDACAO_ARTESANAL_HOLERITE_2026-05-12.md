@@ -36,7 +36,7 @@ Arquivo: `data/raw/andre/holerites/HOLERITE_2026-02_G4F_6381.pdf`
 ```
 Demonstrativo de Pagamento de Salário: 02/26 Seg: 695
 Empresa: G4F SOLUCOES CORPORATIVAS LTDA, CNPJ: 07.094.346/0002-26
-Colaborador: ANDRE DA SILVA BATISTA DE FARIAS, Matrícula: 16769, CBO: 212405
+Colaborador: ANDRE D... S... B... DE F... [PII mascarada], Matrícula: 16769, CBO: 212405
 CPF: XXX.XXX.XXX-22  [PII mascarada no relatório]
 Cargo: ANALISTA DE BUSINESS INTELLIGENCE
 Data de admissão: 08/05/2025
@@ -120,7 +120,7 @@ Arquivo: `data/raw/andre/holerites/HOLERITE_2026-02_INFOBASE_7442.pdf`
 INFOBASE CONSULTORIA E INFORMATICA LTDA
 CNPJ: 02.800.463/0001-63, CC: GERAL, Folha Mensal Fevereiro 2026
 Mensalista
-440 — ANDRE DA SILVA BATISTA DE FARIAS (CBO 212410)
+440 — ANDRE D... S... B... DE F... [PII mascarada] (CBO 212410)
 Cargo: ANALISTA DE DADOS, Admissão: 02/06/2025
 
 Vencimentos:
