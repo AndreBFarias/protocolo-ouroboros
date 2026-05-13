@@ -166,7 +166,7 @@ class TestExtratorDASPARCSN:
 
 
 # Sprint INFRA-DAS-EXTRAIR-COMPOSICAO 2026-05-12:
-# Bateria de testes da decomposicao, codigo de barras e composicao por tributo.
+# Bateria de testes da decomposição, código de barras e composição por tributo.
 class TestComposicaoDAS:
     """Cobre os campos novos: principal/multa/juros/codigo_barras/composicao."""
 
@@ -241,7 +241,7 @@ class TestComposicaoDAS:
 
     def test_documento_sem_composicao_nao_quebra(self, tmp_path: Path) -> None:
         """Garante backward compat: DAS antigo sem tabela ainda gera dict
-        valido (sem os campos novos)."""
+        válido (sem os campos novos)."""
         texto_minimal = """Documento de Arrecadação
 do Simples Nacional
 CNPJ Razão Social
