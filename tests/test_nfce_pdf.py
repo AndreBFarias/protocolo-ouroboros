@@ -167,11 +167,13 @@ class TestParserItens:
         itens = _parse_itens_nfce(_carregar("nfce_americanas_compra.txt"))
         assert len(itens) == 2
         codigos = {it["codigo"] for it in itens}
-        assert "000004300823" in codigos  # Controle P55
-        assert "000004298119" in codigos  # Base de carregamento
-        # Sanity de um item
+        assert "000004300823" in codigos  # Controle PS5
+        assert "000004298119" in codigos  # Base de carregamento PS5
+        # Sanity de um item -- a descrição passa por normalizar_ps5_p55
+        # (Sprint INFRA-NFCE-FIX-PS5-P55): "P55" só vira "PS5" quando o
+        # contexto adjacente prova produto PlayStation 5 (CONTROLE, DUALSENSE).
         controle = next(it for it in itens if it["codigo"] == "000004300823")
-        assert "CONTROLE P55" in controle["descricao"].upper()
+        assert "CONTROLE PS5" in controle["descricao"].upper()
         assert controle["qtde"] == pytest.approx(1.0)
         assert controle["unidade"] == "PCE"
         assert controle["valor_unit"] == pytest.approx(449.99)

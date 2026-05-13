@@ -1,8 +1,8 @@
 ---
 id: INFRA-NFCE-FIX-PS5-P55
 titulo: Corrigir bug confirmado — item "BASE DE CARREGAMENTO DO CONTROLE P55" deve ser "PS5"
-status: backlog
-concluida_em: null
+status: concluida
+concluida_em: 2026-05-12
 prioridade: P1
 data_criacao: 2026-05-12
 fase: VALIDACAO_ARTESANAL
