@@ -1,8 +1,8 @@
 ---
 id: MOB-bridge-5-classifier-pix
 titulo: Classifier liga inbox/financeiro/pix/ ao extrator comprovante_pix_foto + persiste no grafo
-status: backlog
-concluida_em: null
+status: concluida
+concluida_em: 2026-05-13
 prioridade: P0
 data_criacao: 2026-05-12
 fase: BRIDGE_MOBILE
@@ -180,3 +180,88 @@ make lint && make smoke
 - Plano de origem: `~/.claude/plans/preciso-que-use-o-crispy-stroustrup.md` Fase B.
 
 *"Pix é o dinheiro mais agil do mundo; merece o ETL mais simples." — princípio MOB-bridge-5*
+
+## Conclusão (2026-05-13)
+
+Sprint executada em escopo reduzido (Elementos 2, 3 e 5 da spec original).
+Elemento 4 (renomeação canônica via sidecar) e linking PIX -> transação
+ficam para sprint-filha `INFRA-LINKAR-PIX-TRANSACAO` já registrada (P1).
+
+### Arquivos tocados
+
+- `src/graph/ingestor_documento.py` -- nova função `ingerir_comprovante_pix_foto`
+  + helper `_cnpj_sintetico_pix` + constante `CAMPOS_OBRIGATORIOS_PAYLOAD_PIX`.
+  Reaproveita `ingerir_documento_fiscal` passando `itens=[]` (PIX é
+  transferência monolítica, sem nós `item` granulares).
+- `tests/test_bridge_pix_endtoend.py` -- 20 testes (5 categorias) cobrindo
+  roteamento via registry, contrato do extrator, ingestão no grafo,
+  idempotência e pipeline end-to-end com os 3 caches PIX reais transcritos
+  por DOC-27.
+
+### Pré-requisitos confirmados (validação ANTES, padrão (k))
+
+- `src/extractors/comprovante_pix_foto.py` produtivo (DOC-27, HEAD f3609fe). OK
+- `mappings/tipos_documento.yaml` tem entrada `comprovante_pix_foto`
+  (extrator_modulo + pasta_destino_template). OK
+- `mappings/schema_opus_ocr.json` enum `tipo_documento` inclui
+  `comprovante_pix_foto`. OK
+- `src/intake/registry.py` MOB-bridge-4 roteia `subtipo_mobile='pix'` para
+  o YAML que aponta para o extrator dedicado. OK (verificação inline):
+  `tipo=comprovante_pix_foto`, `extrator_modulo=src.extractors.comprovante_pix_foto`,
+  `pasta_destino=data/raw/<pessoa>/comprovantes_pix/`.
+- 3 caches reais Opus em `data/output/opus_ocr_cache/` (Itaú R$ 900, C6 R$ 50,
+  Nubank R$ 367,65) -- gitignored, vivem no repo principal e foram acessados
+  via path absoluto pelo teste end-to-end.
+
+### Decisão arquitetural -- Opção (a) com fornecedor sintético
+
+Comprovantes PIX para CPF de pessoa física não trazem CNPJ canônico do
+recebedor. Para reaproveitar a infra existente (`ingerir_documento_fiscal`
+exige `cnpj_emitente` para criar nó `fornecedor`), optei pela opção (a)
+da spec com fallback inteligente em vez da opção (b) (novo tipo de nó
+`pessoa`):
+
+- **Justificativa**: zero migração de schema, infra de dedup/linking
+  existente continua funcionando, e o identificador sintético tem prefixo
+  `PIX|` que permite filtros SQL (`WHERE cnpj LIKE 'PIX|%'`).
+- **Derivação**: `PIX|<sha8>` onde `sha8` = SHA-256 dos 8 primeiros hex
+  chars da chave PIX disponível (`_pix.chave_destinatario` ->
+  `_pix.destinatario_cpf_mascarado` -> `estabelecimento.razao_social` ->
+  `sha256` da imagem). Determinístico: mesmos PIX para o mesmo
+  destinatário compartilham o nó `fornecedor`.
+- **PIX para PJ**: quando o payload trouxer `estabelecimento.cnpj` real
+  (raro mas possível), o sintético NÃO é aplicado -- usa o CNPJ direto.
+- **Metadata `cnpj_origem`** registra `real_do_payload` ou
+  `sintetico_PIX_chave_destinatario` para auditoria.
+
+Sem nós `item` granulares: PIX é evento monolítico (1 transferência =
+1 movimentação). Os `itens` do payload (1 entrada com descrição/motivo)
+ficam em `metadata["itens"]` para auditoria 4-way no Revisor.
+
+### Métricas
+
+- Testes novos: **20** (TestRegistryRoteamento x2, TestExtratorCacheHit x2,
+  TestIngestorGrafo x9 incluindo parametrize 5 campos obrigatórios,
+  TestIdempotencia x2, TestEndToEnd3CachesReais x2).
+- Baseline pytest: 2832 passed antes da sprint (excluindo 13 testes de UI
+  Streamlit/playwright pré-existentes que falham por ausência de browser
+  no worktree e 5 testes mobile cache que falham por vault_sintetico
+  modificado entre commits do supervisor) -> 2852 passed após a sprint
+  (apenas adição, zero regressão).
+- Acentuação PT-BR e ruff: limpos nos arquivos modificados.
+- Smoke runtime (`./run.sh --check`): 23 checagens, 0 erros, 6 avisos
+  esperados (data/raw e data/output ausentes -- gitignored).
+
+### Não-objetivos confirmados
+
+- Sem mover arquivos da inbox (Syncthing intocável).
+- Sem parser de QR code.
+- Sem dependência de API Anthropic (modo artesanal ADR-13).
+- Sem match automático PIX -> transação (sprint-filha INFRA-LINKAR-PIX-TRANSACAO P1).
+- PII mascarada em log INFO (apenas `sha[:12]`, `e2e[:8]`, razão social);
+  CPFs mascarados ficam só dentro de metadata.
+
+### Sprint-filhas registradas
+
+- `INFRA-LINKAR-PIX-TRANSACAO` -- já existia no backlog (P1), não foi
+  duplicada.

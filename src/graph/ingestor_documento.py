@@ -937,6 +937,214 @@ def ingerir_cupom_foto(
 
 
 # ============================================================================
+# Sprint MOB-bridge-5: ingestão de comprovante PIX (foto) no grafo
+# ============================================================================
+
+
+CAMPOS_OBRIGATORIOS_PAYLOAD_PIX: tuple[str, ...] = (
+    "sha256",
+    "tipo_documento",
+    "estabelecimento",
+    "data_emissao",
+    "total",
+)
+
+
+def _cnpj_sintetico_pix(payload_opus: dict[str, Any]) -> str:
+    """Gera CNPJ sintético determinístico para destinatário PIX sem CNPJ.
+
+    Decisão arquitetural MOB-bridge-5 (opção (a) com fallback):
+
+    - Comprovantes PIX para CPF de pessoa física não trazem CNPJ canônico
+      do recebedor. Para reaproveitar a infra de ``ingerir_documento_fiscal``
+      (que exige ``cnpj_emitente`` para criar nó ``fornecedor``), montamos
+      um identificador sintético baseado em dados estáveis do payload.
+    - Prioridade da chave de derivação (do mais específico para o menos):
+        1. ``_pix.chave_destinatario`` (email/telefone/CPF do recebedor)
+        2. ``_pix.destinatario_cpf_mascarado``
+        3. ``estabelecimento.razao_social`` (nome do recebedor)
+        4. ``sha256`` do comprovante (último recurso)
+    - Formato do identificador: ``PIX|<sha8_da_chave>`` -- 12 chars, prefixo
+      ``PIX|`` para distinguir de CNPJ real (que tem 18 chars com pontuação).
+      Não respeita o padrão de pontuação ``XX.XXX.XXX/XXXX-XX`` deliberadamente,
+      para que análises retroativas via SQL filtrem facilmente
+      (``WHERE cnpj LIKE 'PIX|%'``).
+    - Se o payload trouxer ``estabelecimento.cnpj`` real (caso PIX para PJ),
+      esta função NÃO é chamada -- ``ingerir_comprovante_pix_foto`` usa o
+      CNPJ direto.
+
+    Determinismo: a mesma chave PIX sempre gera o mesmo identificador,
+    permitindo dedup automático no grafo (ex: vários PIX para o mesmo
+    destinatário caem no mesmo nó ``fornecedor``).
+    """
+    import hashlib
+
+    pix = payload_opus.get("_pix") or {}
+    candidatos = (
+        pix.get("chave_destinatario"),
+        pix.get("destinatario_cpf_mascarado"),
+        (payload_opus.get("estabelecimento") or {}).get("razao_social"),
+        payload_opus.get("sha256"),
+    )
+    chave_bruta = next(
+        (str(c) for c in candidatos if c and str(c).strip()),
+        payload_opus.get("sha256", ""),
+    )
+    sha8 = hashlib.sha256(chave_bruta.encode("utf-8")).hexdigest()[:8]
+    return f"PIX|{sha8}"
+
+
+def ingerir_comprovante_pix_foto(
+    db: GrafoDB,
+    payload_opus: dict[str, Any],
+    caminho_arquivo: Path | None = None,
+) -> int:
+    """Ingere um comprovante PIX fotografado a partir do payload canônico do Opus.
+
+    Sprint MOB-bridge-5 -- conecta o extrator dedicado (DOC-27) ao grafo.
+
+    ``payload_opus`` segue o schema de ``mappings/schema_opus_ocr.json``
+    (saída de ``src.extractors.opus_visao.extrair_via_opus``) com bloco
+    extra ``_pix`` carregando metadados específicos do comprovante (E2E,
+    chave PIX, banco origem/destino, CPFs mascarados, etc.).
+
+    Persistência no grafo (via ``ingerir_documento_fiscal``):
+
+    - 1 nó ``documento`` (chave canônica ``PIX|<sha256>``)
+    - 1 nó ``fornecedor`` (CNPJ canônico do destinatário OU CNPJ sintético
+      ``PIX|<sha8>`` quando o recebedor é pessoa física sem CNPJ -- caso
+      mais comum em PIX P2P; ver ``_cnpj_sintetico_pix``)
+    - 1 aresta ``fornecido_por`` (documento -> fornecedor)
+    - 1 aresta ``ocorre_em`` (documento -> periodo)
+
+    Diferenças deliberadas em relação a ``ingerir_cupom_foto``:
+
+    - **Não cria nós ``item``**: PIX é transferência monolítica de valor
+      (1 evento = 1 movimentação), sem granularidade de produto fiscal.
+      Os ``itens`` do payload (1 entrada com descrição do motivo do PIX)
+      ficam apenas no ``metadata["itens"]`` do documento para auditoria.
+    - **Sem aresta ``contem_item``**: nada para conter.
+    - **CNPJ sintético**: PIX a CPF não tem CNPJ canônico; usamos
+      ``PIX|<sha8_chave>`` para preservar idempotência e dedup do
+      destinatário entre múltiplos PIX.
+
+    Idempotente: chave do documento usa ``PIX|<sha256_imagem>``; o
+    fornecedor é chaveado por CNPJ (real ou sintético). Reprocessar a
+    mesma foto nunca duplica nós nem arestas.
+
+    Pendências (``aguardando_supervisor=True``) são rejeitadas com
+    ``ValueError`` -- não há dados suficientes para ingerir.
+
+    Não faz linking PIX -> transação no extrato. Essa lógica vive em
+    sprint dedicada (``INFRA-LINKAR-PIX-TRANSACAO``, P1), que casa o
+    ``id_transacao`` E2E do comprovante com a linha do extrato bancário
+    por valor + data.
+
+    Devolve o id do nó ``documento`` criado/atualizado.
+    """
+    if payload_opus.get("aguardando_supervisor"):
+        raise ValueError(
+            "payload_opus está em estado 'aguardando_supervisor' -- "
+            "supervisor humano ainda não transcreveu a imagem. "
+            "Ingestão abortada para evitar nó de documento órfão."
+        )
+
+    for campo in CAMPOS_OBRIGATORIOS_PAYLOAD_PIX:
+        if not payload_opus.get(campo):
+            raise ValueError(
+                f"payload_opus sem '{campo}' -- não respeita schema_opus_ocr "
+                "para comprovante_pix_foto; ingestão abortada"
+            )
+
+    if payload_opus.get("tipo_documento") != "comprovante_pix_foto":
+        raise ValueError(
+            f"payload_opus.tipo_documento={payload_opus.get('tipo_documento')!r}; "
+            "esperado 'comprovante_pix_foto'. Ingestão abortada."
+        )
+
+    estabelecimento = payload_opus.get("estabelecimento") or {}
+    razao_social = estabelecimento.get("razao_social") or ""
+    if not razao_social.strip():
+        raise ValueError(
+            "payload_opus.estabelecimento.razao_social vazio -- "
+            "destinatário PIX sem nome canônico; nó fornecedor ficaria órfão"
+        )
+
+    cnpj_real = (estabelecimento.get("cnpj") or "").strip()
+    if cnpj_real:
+        cnpj_emitente = cnpj_real
+        cnpj_origem = "real_do_payload"
+    else:
+        cnpj_emitente = _cnpj_sintetico_pix(payload_opus)
+        cnpj_origem = "sintetico_PIX_chave_destinatario"
+
+    sha = payload_opus["sha256"]
+    pix_meta = payload_opus.get("_pix") or {}
+
+    # Itens preservados no metadata para auditoria 4-way (1 entrada típica
+    # com descrição do motivo do PIX). Sem upsert_item -- ver docstring.
+    itens_metadata: list[dict[str, Any]] = []
+    for item in payload_opus.get("itens") or []:
+        descricao = (item.get("descricao") or "").strip()
+        if not descricao:
+            continue
+        itens_metadata.append(
+            {
+                "descricao": descricao,
+                "valor_total": float(item.get("valor_total") or 0.0),
+                "qtde": float(item.get("qtd") or item.get("qtde") or 1.0),
+                "codigo": str(item.get("codigo") or ""),
+            }
+        )
+
+    documento: dict[str, Any] = {
+        "chave_44": f"PIX|{sha}",
+        "cnpj_emitente": cnpj_emitente,
+        "data_emissao": payload_opus["data_emissao"],
+        "tipo_documento": "comprovante_pix_foto",
+        "razao_social": razao_social,
+        "endereco": estabelecimento.get("endereco"),
+        "total": float(payload_opus["total"]),
+        "forma_pagamento": payload_opus.get("forma_pagamento") or "pix",
+        "extraido_via": payload_opus.get("extraido_via"),
+        "confianca_global": payload_opus.get("confianca_global"),
+        "horario": payload_opus.get("horario"),
+        "sha256_imagem": sha,
+        "cnpj_origem": cnpj_origem,
+        # Bloco PIX preserva metadados do comprovante (E2E, banco origem/destino,
+        # CPFs mascarados) para o linker PIX->transação futuro. Mantemos PII
+        # mascarada dentro de metadata; logs INFO devem mascarar via padrão (bb).
+        "pix_id_transacao": pix_meta.get("id_transacao"),
+        "pix_chave_destinatario": pix_meta.get("chave_destinatario"),
+        "pix_banco_origem": pix_meta.get("banco_origem"),
+        "pix_banco_destino": pix_meta.get("banco_destino"),
+        "pix_destinatario_cpf_mascarado": pix_meta.get("destinatario_cpf_mascarado"),
+        "itens": itens_metadata,
+    }
+
+    # Reaproveita ingerir_documento_fiscal com lista vazia de itens granulares
+    # (PIX não tem itens fiscais; veja docstring). O metadata["itens"] já está
+    # populado para a auditoria 4-way não perder o motivo do PIX.
+    documento_id = ingerir_documento_fiscal(
+        db,
+        documento,
+        itens=[],  # nenhum nó ``item`` é criado para PIX
+        caminho_arquivo=caminho_arquivo,
+    )
+
+    # Log mascara identificadores: apenas E2E[:8] e razão social (não-PII forte).
+    e2e_curto = (pix_meta.get("id_transacao") or "")[:8] or "sem-e2e"
+    logger.info(
+        "comprovante_pix ingerido: sha=%s e2e=%s destinatario=%s total=R$ %.2f",
+        sha[:12],
+        e2e_curto,
+        razao_social,
+        documento["total"],
+    )
+    return documento_id
+
+
+# ============================================================================
 # Sprint ANTI-MIGUE-08: ingestores especiais movidos para modulo proprio
 # ============================================================================
 # As funções ``ingerir_prescricao`` e ``ingerir_garantia`` (e o helper
