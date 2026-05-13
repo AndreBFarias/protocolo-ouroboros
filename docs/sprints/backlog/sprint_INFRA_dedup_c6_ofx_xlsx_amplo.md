@@ -10,7 +10,7 @@ depende_de: [INFRA-DEDUP-LANCAMENTO-DUPLICADO-G4F]
 esforco_estimado_horas: 3
 origem: |
   Sprint INFRA-DEDUP-LANCAMENTO-DUPLICADO-G4F detectou que o par
-  R$ 6.381,14 / 2026-03-06 e parte de 253 pares no C6/pessoa_a sao
+  R$ 6.381,14 / 2026-03-06 e parte de 253 pares no C6/pessoa_a sao  <!-- noqa: accent -->
   ingestão dupla OFX + XLSX, não duplicação isolada.
   Ver docs/auditorias/DUPLICACAO_C6_OFX_XLSX_2026-05-12.md
 ---

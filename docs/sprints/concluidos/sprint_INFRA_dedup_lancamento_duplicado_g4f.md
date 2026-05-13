@@ -1,7 +1,7 @@
 ---
 id: INFRA-DEDUP-LANCAMENTO-DUPLICADO-G4F
 titulo: 2 lançamentos R$ 6.381,14 G4F idênticos em 06/03/2026 no C6 — investigar duplicação silenciosa
-status: concluida
+status: concluida  <!-- noqa: accent -->
 concluida_em: 2026-05-12
 prioridade: P1
 data_criacao: 2026-05-12
