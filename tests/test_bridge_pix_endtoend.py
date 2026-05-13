@@ -126,7 +126,7 @@ class TestRegistryRoteamento:
         """MOB-bridge-4 + DOC-27: ``subtipo_mobile='pix'`` aponta para o
         extrator de comprovante PIX, pasta canônica e nome ``PIX_<sha8>``."""
         arquivo = tmp_path / "comprovante_pix.jpg"
-        arquivo.write_bytes(b"binario qualquer para sha8")
+        arquivo.write_bytes(b"binario qualquer para sha8 noqa: accent")
 
         decisao = detectar_tipo(
             caminho=arquivo,

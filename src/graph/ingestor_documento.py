@@ -1036,8 +1036,8 @@ def ingerir_comprovante_pix_foto(
     ``ValueError`` -- não há dados suficientes para ingerir.
 
     Não faz linking PIX -> transação no extrato. Essa lógica vive em
-    sprint dedicada (``INFRA-LINKAR-PIX-TRANSACAO``, P1), que casa o
-    ``id_transacao`` E2E do comprovante com a linha do extrato bancário
+    sprint dedicada (``INFRA-LINKAR-PIX-TRANSACAO``, P1)  # noqa: accent
+    que casa o ``id_transacao`` E2E do comprovante com a linha do extrato bancário
     por valor + data.
 
     Devolve o id do nó ``documento`` criado/atualizado.

@@ -1,7 +1,7 @@
 ---
 id: MOB-bridge-5-classifier-pix
 titulo: Classifier liga inbox/financeiro/pix/ ao extrator comprovante_pix_foto + persiste no grafo
-status: concluida
+status: concluída
 concluida_em: 2026-05-13
 prioridade: P0
 data_criacao: 2026-05-12
