@@ -1,7 +1,7 @@
 ---
 id: META-PROMPT-NOVA-SESSAO-TRACKEADO
 titulo: Migrar conteúdo público de PROMPT_NOVA_SESSAO.md para arquivo trackeado pelo git
-status: concluida
+status: concluída
 concluida_em: 2026-05-13
 prioridade: P1
 data_criacao: 2026-05-13
