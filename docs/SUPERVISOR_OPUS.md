@@ -1,7 +1,21 @@
 # SUPERVISOR_OPUS — Manifesto canônico do supervisor
 
 > **Para qualquer Opus que assuma esta sessão Claude Code, especialmente após queda da Anthropic ou rotação de modelo: LEIA ESTE DOCUMENTO PRIMEIRO.**
-> Atualizado em 2026-04-29 pela Sprint META-SUPERVISOR-01.
+> Atualizado em 2026-05-13 pela Sprint META-SUPERVISOR-OPUS-ATUALIZAR (citações ao ROADMAP, ao ciclo de graduação e à ferramenta `dossie_tipo.py`).
+
+---
+
+## §0 — Antes de qualquer sprint
+
+Toda sessão Claude Code que assume o papel de supervisor Opus deve ler ANTES de criar ou executar qualquer sprint:
+
+1. **`docs/sprints/ROADMAP_ATE_PROD.md`** — filosofia operacional, os 8 épicos canônicos e as métricas globais de prontidão. Toda spec nova pertence a um épico aqui mapeado; se não cabe, falta épico (criar antes da spec).
+2. **`docs/CICLO_GRADUACAO_OPERACIONAL.md`** — ritual artesanal de 6 fases que NÃO pode ser pulado quando a sprint toca um tipo documental.
+3. **`contexto/COMO_AGIR.md`** — workflow canônico de 10 passos que governa cada rodada (leitura de contexto, hipótese empírica, proof-of-work runtime real, gate anti-migué).
+
+Os 8 épicos do roadmap, em ordem: (1) graduar tipos documentais — Fase A; (2) robustez operacional para uso diário; (3) qualidade dos dados (linking + categorização); (4) IRPF e operações financeiras; (5) UX dashboard pronto para o casal; (6) mobile bridge (Protocolo-Mob-Ouroboros); (7) inteligência aumentada (LLM revisor v2); (8) saneamento técnico contínuo.
+
+**Cada tipo documental tem um dossiê próprio em `data/output/dossies/<tipo>/`.** A CLI canônica para inspecionar, gerar prova artesanal, comparar contra o ETL e graduar é `scripts/dossie_tipo.py` (detalhada em §3.5).
 
 ---
 
@@ -98,6 +112,21 @@ Após receber o report do agente: leia, pegue 2-3 claims-chave, valide com `bash
 
 ---
 
+## §2.5 — Ritual artesanal (6 fases) para sprint de tipo documental
+
+Sempre que a sprint tocar um `<tipo>` (cupom, holerite, das, nfce, pix, boleto, etc.), o supervisor Opus principal coordena este ritual inegociável. Detalhes completos em `docs/CICLO_GRADUACAO_OPERACIONAL.md`.
+
+1. **Fase 1 — Abrir o dossiê**: `python scripts/dossie_tipo.py abrir <tipo>` mostra status (PENDENTE/CALIBRANDO/GRADUADO/REGREDINDO), amostras já analisadas, provas existentes e divergências históricas.
+2. **Fase 2 — Selecionar amostras reais**: 2+ amostras representativas via `listar-candidatos`, cobrindo emissores e layouts distintos.
+3. **Fase 3 — PROVA DOS 7 ARTESANAL (SÓ o Opus principal faz)**: Read multimodal sobre cada amostra; preenche o stub `prova-artesanal <tipo> <sha256>` com o dict canônico esperado. **Executor NÃO pode executar esta fase** — depende de Read multimodal independente do supervisor para servir de gabarito.
+4. **Fase 4 — Despachar executor**: brief inclui caminhos das amostras, paths das provas artesanais (referência, executor não modifica), schema canônico e comando de validação (`comparar`).
+5. **Fase 5 — Comparação automática 4-way (SÓ o Opus principal faz)**: `comparar <tipo> <sha256>` confronta prova × ETL × grafo aplicando tolerâncias por campo. Veredito: `GRADUADO_OK` / `DIVERGENTE` / `INSUFICIENTE`. Igual à Fase 3: depende do gabarito multimodal do supervisor.
+6. **Fase 6 — Persistir veredito**: `GRADUADO_OK` incrementa contador (2 amostras verdes ⇒ tipo passa a GRADUADO); `DIVERGENTE` gera `divergencias_<sha256>.md` e sprint-filha automática no mesmo épico (padrão `(ll)`); `INSUFICIENTE` move a amostra para `inbox/_descarte/` e o supervisor escolhe outra.
+
+**Por que Fases 3 e 5 só o Opus principal**: executores (subagents Sonnet/Opus despachados) não têm Read multimodal independente que sirva de gabarito artesanal. A "verdade visual" é responsabilidade da sessão interativa supervisora.
+
+---
+
 ## §3 — Skills disponíveis (slash commands)
 
 **Regra canônica (DOC-VERDADE-01.C)**: skills > análise manual. Antes de rodar `grep`, `sqlite3`, query ad-hoc ou qualquer reconstrução de relatório do zero, **verifique se já existe skill canônica para responder a pergunta**. Se existe, use a skill. Se não, abra issue/spec sugerindo skill nova.
@@ -145,6 +174,55 @@ Em todos os 3 casos, **registre o resultado da análise manual em arquivo versio
 
 ---
 
+## §3.5 — Ferramenta canônica de auditoria (`scripts/dossie_tipo.py`)
+
+CLI que orquestra o ciclo de graduação de tipos documentais (§2.5). Sete subcomandos:
+
+| Subcomando | Sintaxe | Efeito |
+|---|---|---|
+| `abrir` | `python scripts/dossie_tipo.py abrir <tipo>` | Mostra estado do dossiê (status, amostras, provas, divergências, sprint-filhas). Cria estrutura inicial em `data/output/dossies/<tipo>/` se ausente. |
+| `listar-candidatos` | `python scripts/dossie_tipo.py listar-candidatos <tipo>` | Lista arquivos em `inbox/` e `data/raw/.../` que parecem ser do tipo (heurística de nome+pasta). |
+| `prova-artesanal` | `python scripts/dossie_tipo.py prova-artesanal <tipo> <sha256>` | Gera stub JSON com campos canônicos para o supervisor preencher após Read multimodal. **Somente Opus principal usa este comando.** |
+| `comparar` | `python scripts/dossie_tipo.py comparar <tipo> <sha256>` | Confronta `prova_artesanal_<sha256>.json` (Opus) contra output do ETL (grafo + cache). Aplica tolerâncias por campo. Veredito: `GRADUADO_OK` / `DIVERGENTE` / `INSUFICIENTE`. |
+| `graduar-se-pronto` | `python scripts/dossie_tipo.py graduar-se-pronto <tipo>` | Avalia transição de status (≥2 amostras OK ⇒ GRADUADO). Atualiza `graduacao_tipos.json`. |
+| `snapshot` | `python scripts/dossie_tipo.py snapshot` | Regenera `data/output/graduacao_tipos.json` global (sem PII, só contadores). |
+| `listar-tipos` | `python scripts/dossie_tipo.py listar-tipos` | Lista tipos canônicos conhecidos. |
+
+A CLI também aceita a sintaxe alternativa `--abrir TIPO`, `--comparar TIPO SHA`, etc., por retrocompatibilidade com documentação antiga. Forma canônica é subcomando.
+
+Conteúdo do dossiê (todo em `data/output/`, `.gitignore`'d por PII):
+
+```
+data/output/dossies/<tipo>/
+  README.md
+  estado.json
+  amostras/<sha256>.json
+  provas_artesanais/<sha256>.json
+  comparacoes/<sha256>_<timestamp>.json
+  divergencias/<sha256>_<timestamp>.md
+  sprint_filhas.md
+```
+
+Apenas `data/output/graduacao_tipos.json` (contadores agregados sem PII) é candidato a whitelisting futuro.
+
+---
+
+## §3.6 — Como sprint encerra (padrão `(kk)`)
+
+**Sprint que toca tipo documental NÃO encerra com código + testes.** Encerra apenas quando `python scripts/dossie_tipo.py comparar <tipo> <sha256>` retorna `GRADUADO_OK` (ou registra `DIVERGENTE` com sprint-filha automática gerada no mesmo épico).
+
+Não existe "fechamento posterior". Veredito sai no momento — produto final imediato. Quem fechar a sprint encerra com o dossiê do tipo atualizado e (idealmente) com a graduação avançando.
+
+Sprints dos Épicos 2–8 (que não tocam tipos documentais diretamente) seguem o fluxo clássico: spec → código → teste → commit → spec em `concluidos/` com `concluida_em: YYYY-MM-DD`. Padrão `(v)` sobre spec retroativa continua valendo.
+
+Padrões anti-débito do ciclo:
+
+- **`(jj)` Dossiê obrigatório antes de código** — nenhum executor toca extrator sem prova artesanal prévia no dossiê.
+- **`(kk)` Sprint encerra com produto final** — sem "fechamento posterior", `comparar` decide na hora.
+- **`(ll)` Re-trabalho em loop fechado** — `DIVERGENTE` gera sprint-filha com brief executável já no `divergencias_<sha256>.md`; executor próximo recebe o relatório como input.
+
+---
+
 ## §4 — Onde grava propostas (sem chamar API)
 
 ```
@@ -182,14 +260,16 @@ Se você é um Opus que assumiu esta sessão após queda do anterior:
 
 1. **Leia em ordem**:
    - Este `SUPERVISOR_OPUS.md`.
+   - **`docs/sprints/ROADMAP_ATE_PROD.md`** — 8 épicos canônicos + métricas globais. Define o que é "prod ready" e onde está cada sprint.
+   - **`docs/CICLO_GRADUACAO_OPERACIONAL.md`** — ritual artesanal de 6 fases para tipos documentais (§2.5 deste doc).
    - **`docs/PLANOS_SESSAO/`** — `ls -lt` para ver o plano em curso mais recente; leia o `<data>_<slug>.md` + `<data>_<slug>_outputs.md` correspondente. Aqui mora o conhecimento da sessão anterior que **não está mais na conversa**.
    - `contexto/POR_QUE.md` (visão humana).
    - `contexto/ESTADO_ATUAL.md` (snapshot técnico).
-   - `contexto/COMO_AGIR.md` (workflow).
+   - `contexto/COMO_AGIR.md` (workflow canônico de 10 passos).
    - `CLAUDE.md` (constituição).
    - `~/.claude/plans/pure-swinging-mitten.md` (plan ativo, **aspiração — não é verdade**; verdade está em `git log` + `ls docs/sprints/concluidos/`).
    - `docs/HISTORICO_SESSOES.md` (sprints fechadas recentemente).
-   - `VALIDATOR_BRIEF.md` (rodapé tem padrões canônicos a..cc).
+   - `VALIDATOR_BRIEF.md` (rodapé tem padrões canônicos a..ll).
 
 2. **Verifique baseline**:
    ```bash
@@ -232,9 +312,13 @@ Mais críticos para o supervisor:
 - **(j) disciplina de worktree** — sempre `git rev-parse --show-toplevel` antes de commit em worktree.
 - **(k) hipótese da spec não é dogma** — `grep` antes de codar, refute se necessário.
 - **(p) supervisor valida pessoalmente** — você lê diff, roda proof-of-work, julga; não despacha `validador-sprint` por reflexo.
-- **(z) spec retroativa** — se sprint fechou direto via commit sem spec, crie retroativa em `concluidos/`.
-- **(aa) gate 4-way operacional** — `make conformance-<tipo>` é hard gate antes de mover spec de extrator.
+- **(v) spec retroativa** — se sprint fechou direto via commit sem spec, crie retroativa em `concluidos/`.
+- **(z) gate 4-way operacional** — `make conformance-<tipo>` é hard gate antes de mover spec de extrator.
 - **(cc) refactor revela teste frágil** — se seu fix expõe bug em teste, abra sprint-filha e siga.
+- **(ii) comandos git banidos** — `git stash` (qualquer variante), `git reset --hard`, `git clean -fd`, `git checkout -f`, `rm -rf` em subdirs do worktree, `git config --global`. Banidos pelo Protocolo Anti-Armadilha v3.1 (`contexto/PROTOCOLO_ANTI_ARMADILHA_V3_1.md`). Verificação obrigatória antes de commit final: `git stash list` vazio.
+- **(jj) dossiê obrigatório antes de código** — sprint que toca tipo documental exige prova artesanal prévia no dossiê. Sem prova, executor produz código semanticamente errado mesmo com testes verdes.
+- **(kk) sprint encerra com produto final** — `dossie_tipo.py comparar` retorna o veredito no momento; sem fechamento posterior.
+- **(ll) re-trabalho em loop fechado** — divergência gera sprint-filha automática com brief no `divergencias_<sha256>.md`.
 
 Lista completa em `VALIDATOR_BRIEF.md` rodapé.
 
