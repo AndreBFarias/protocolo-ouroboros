@@ -53,6 +53,16 @@ _PATH_PROPOSTAS_PADRAO: Path = _RAIZ_REPO / "docs" / "propostas" / "linking"
 
 EDGE_TIPO_DOCUMENTO_DE: str = "documento_de"
 EDGE_TIPO_CONTRAPARTE: str = "contraparte"
+# Sprint INFRA-LINKING-HOLERITE-MULTI-FONTE (2026-05-13): aresta que marca um
+# holerite como "alias da mesma realidade" de outro holerite escolhido como
+# representante para o linking. Mantida no grafo para trilha de auditoria sem
+# precisar mexer no schema -- apenas mais um valor de `tipo` na tabela `edge`.
+EDGE_TIPO_ALIAS_REALIDADE: str = "_alias_de"
+
+# Tolerância default (em fração de 1, ex: 0.05 = 5%) usada para considerar
+# dois holerites como "mesma realidade" quando a competência coincide. Vide
+# `_fundir_holerites_mesma_realidade`.
+TOLERANCIA_VALOR_HOLERITE_MULTI_FONTE: float = 0.05
 
 # Sprint INFRA-LINKING-DIRPF-TOTAL-ZERO (2026-05-13): documentos com total
 # monetário nulo, zero ou abaixo de R$ 0,01 não devem entrar na heurística
@@ -375,6 +385,146 @@ def _nome_heuristica(delta_dias: int, diff_valor_abs: float, cnpj_bate: bool) ->
 # ============================================================================
 
 
+def _competencia_do_holerite(doc: Node) -> str | None:
+    """Extrai a competência (YYYY-MM) de um documento holerite.
+
+    Preferência: `metadata.periodo_apuracao` (formato canônico do extrator
+    de contracheque). Fallback: sufixo `|YYYY-MM` do `nome_canonico`.
+
+    Devolve None quando nem o metadata nem o nome canônico carregam a
+    competência -- holerites sem competência não são candidatos a fusão.
+    """
+    valor = doc.metadata.get("periodo_apuracao")
+    if isinstance(valor, str) and len(valor) >= 7 and valor[4] == "-":
+        return valor[:7]
+    nome = doc.nome_canonico or ""
+    if "|" in nome:
+        sufixo = nome.rsplit("|", 1)[-1].strip()
+        if len(sufixo) >= 7 and sufixo[4] == "-" and sufixo[:4].isdigit():
+            return sufixo[:7]
+    return None
+
+
+def _fundir_holerites_mesma_realidade(
+    documentos: list[Node],
+    *,
+    tolerancia_pct: float = TOLERANCIA_VALOR_HOLERITE_MULTI_FONTE,
+) -> tuple[list[Node], dict[int, int]]:
+    """Agrupa holerites multi-fonte por (competência, valor próximo) e devolve
+    a lista filtrada com apenas o representante de cada grupo.
+
+    Critério: dois holerites pertencem à mesma realidade quando:
+      - ambos têm `tipo_documento` igual a `holerite`;
+      - têm a mesma competência (`YYYY-MM`) extraída via
+        `_competencia_do_holerite`;
+      - têm `metadata.total` definidos e a diferença relativa ao menor dos
+        dois é menor ou igual a `tolerancia_pct` (default 5%).
+
+    O representante de cada grupo é o documento com menor `id` (determinístico
+    e estável entre runs -- depende apenas da ordem de ingestão no grafo).
+
+    Devolve:
+      - Lista filtrada com apenas os representantes (holerites que não foram
+        fundidos passam intactos, junto dos outros tipos de documento).
+      - Mapa `alias_id -> representante_id` para registrar arestas
+        `_alias_de` posteriormente.
+
+    Holerites sem competência ou sem `total` não são candidatos -- passam
+    intactos para o linker (comportamento mais conservador).
+    """
+    # Particiona: holerites com competência + total -> elegíveis;
+    # resto -> passa direto.
+    elegiveis: list[Node] = []
+    pass_direto: list[Node] = []
+    for doc in documentos:
+        if doc.metadata.get("tipo_documento") != "holerite":
+            pass_direto.append(doc)
+            continue
+        competencia = _competencia_do_holerite(doc)
+        total = doc.metadata.get("total")
+        if competencia is None or total is None:
+            pass_direto.append(doc)
+            continue
+        try:
+            float(total)
+        except (TypeError, ValueError):
+            pass_direto.append(doc)
+            continue
+        elegiveis.append(doc)
+
+    # Agrupa elegíveis por competência.
+    por_competencia: dict[str, list[Node]] = {}
+    for doc in elegiveis:
+        chave = _competencia_do_holerite(doc) or ""
+        por_competencia.setdefault(chave, []).append(doc)
+
+    representantes: list[Node] = []
+    alias_para_rep: dict[int, int] = {}
+
+    for competencia, lista in por_competencia.items():
+        if len(lista) <= 1:
+            representantes.extend(lista)
+            continue
+        # Agrupa por proximidade de valor. Algoritmo O(n^2) é aceitável --
+        # poucos holerites por competência (no máximo 2-4 fontes na vida real).
+        grupos: list[list[Node]] = []
+        for doc in sorted(lista, key=lambda n: n.id or 0):
+            total_doc = float(doc.metadata["total"])
+            colocado = False
+            for grupo in grupos:
+                referencia = float(grupo[0].metadata["total"])
+                menor = min(abs(total_doc), abs(referencia))
+                if menor <= 0:
+                    continue
+                diferenca_relativa = abs(total_doc - referencia) / menor
+                if diferenca_relativa <= tolerancia_pct:
+                    grupo.append(doc)
+                    colocado = True
+                    break
+            if not colocado:
+                grupos.append([doc])
+
+        for grupo in grupos:
+            # Representante: menor id (determinístico).
+            grupo_ordenado = sorted(grupo, key=lambda n: n.id or 0)
+            representante = grupo_ordenado[0]
+            representantes.append(representante)
+            for alias in grupo_ordenado[1:]:
+                if alias.id is not None and representante.id is not None:
+                    alias_para_rep[alias.id] = representante.id
+                    logger.info(
+                        "holerite alias detectado: %s (id=%s) -> representante %s (id=%s)"
+                        " competência=%s diff_relativa<=%.2f",
+                        alias.nome_canonico,
+                        alias.id,
+                        representante.nome_canonico,
+                        representante.id,
+                        competencia,
+                        tolerancia_pct,
+                    )
+
+    return pass_direto + representantes, alias_para_rep
+
+
+def _registrar_arestas_alias(db: GrafoDB, alias_para_rep: dict[int, int]) -> None:
+    """Persiste no grafo a relação `alias_id -[_alias_de]-> representante_id`.
+
+    Idempotente: `adicionar_edge` usa INSERT OR IGNORE na unique (src,dst,tipo).
+    Rodar 2x não duplica nem altera evidência prévia.
+    """
+    for alias_id, rep_id in alias_para_rep.items():
+        db.adicionar_edge(
+            src_id=alias_id,
+            dst_id=rep_id,
+            tipo=EDGE_TIPO_ALIAS_REALIDADE,
+            peso=1.0,
+            evidencia={
+                "motivo": "holerite_mesma_competencia_valor_proximo",
+                "sprint": "INFRA-LINKING-HOLERITE-MULTI-FONTE",
+            },
+        )
+
+
 def linkar_documentos_a_transacoes(
     db: GrafoDB,
     config: dict[str, Any] | None = None,
@@ -392,14 +542,22 @@ def linkar_documentos_a_transacoes(
     - Documentos com top-1 abaixo do confidence_minimo: gera proposta
       BAIXA_CONFIANCA sem linkar.
 
+    Sprint INFRA-LINKING-HOLERITE-MULTI-FONTE (2026-05-13): antes de processar
+    holerites, agrupa por (competência, valor próximo ±5%) e linka apenas o
+    representante de cada grupo. Os demais (alias) recebem aresta `_alias_de`
+    apontando para o representante e ficam fora do linking principal.
+
     Devolve dict com contadores: linkados, conflitos, baixa_confianca,
-    sem_candidato, ja_linkados.
+    sem_candidato, ja_linkados, alias_fundidos.
     """
     config = config or carregar_config()
     caminho_propostas = caminho_propostas or _PATH_PROPOSTAS_PADRAO
     caminho_propostas.mkdir(parents=True, exist_ok=True)
 
     margem_empate = float(config.get("margem_empate", 0.05))
+    tolerancia_holerite = float(
+        config.get("tolerancia_holerite_multi_fonte", TOLERANCIA_VALOR_HOLERITE_MULTI_FONTE)
+    )
 
     stats = {
         "linkados": 0,
@@ -408,9 +566,17 @@ def linkar_documentos_a_transacoes(
         "sem_candidato": 0,
         "ja_linkados": 0,
         "total_vazio": 0,
+        "alias_fundidos": 0,
     }
 
-    documentos = db.listar_nodes(tipo="documento")
+    documentos_todos = db.listar_nodes(tipo="documento")
+    documentos, alias_para_rep = _fundir_holerites_mesma_realidade(
+        documentos_todos, tolerancia_pct=tolerancia_holerite
+    )
+    if alias_para_rep:
+        _registrar_arestas_alias(db, alias_para_rep)
+        stats["alias_fundidos"] = len(alias_para_rep)
+
     for doc in documentos:
         if doc.id is None:
             continue
