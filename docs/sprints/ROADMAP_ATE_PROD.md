@@ -2,51 +2,85 @@
 titulo: Roadmap canonico ate "prod ready" -- 8 epicos ordenados
 data: 2026-05-13
 autor: supervisor Opus principal
-escopo: organiza 119 specs em backlog/ + as recem-criadas em uma ordem integrada
-referencia: contexto/POR_QUE.md secao "Ciclo de graduacao Opus -> ETL"
+escopo: organiza todas as specs em backlog/ em 8 epicos com entregavel concreto
+referencia:
+  - docs/CICLO_GRADUACAO_OPERACIONAL.md (ritual obrigatorio antes de cada sprint)  <!-- noqa: accent -->
+  - scripts/dossie_tipo.py (CLI de auditoria por tipo documental)
+  - data/output/graduacao_tipos.json (estado vivo dos tipos)
 ---
 
 # ROADMAP ate prod -- 8 epicos canonicos
 
 ## Filosofia (presumida em toda spec nova)
 
-O projeto so chega em "prod" (`./run.sh --full-cycle` roda autonomo, dono so joga arquivos na inbox e confia) quando:
+O projeto chega em "prod" quando: dono joga arquivo em `inbox/`, roda `./run.sh --full-cycle`, e tudo aparece corretamente catalogado/categorizado/linkado SEM revisao humana.
 
-1. **Cada tipo documental que entra na inbox esta GRADUADO** -- >=2 amostras 4-way verdes (Opus multimodal × ETL × Grafo × Humano). Ver `contexto/POR_QUE.md`.
-2. **Robustez operacional minima** -- backup automatico, transacionalidade, lockfile, retencao.
-3. **Cobertura de linking** documento->transacao acima de 30% (hoje 0.41%).  <!-- noqa: accent -->
-4. **Categorizacao** com `Outros` abaixo de 5% das transacoes (hoje 17.7%).  <!-- noqa: accent -->
-5. **Dashboard utilizavel** pelo casal sem leitura de docs internos.
+Para chegar la, cada **tipo documental** percorre o ciclo de graduacao:
+
+1. **PENDENTE** -- nenhuma amostra real validada artesanalmente.
+2. **CALIBRANDO** -- 1 amostra validada (Opus multimodal le, gera "prova dos 7" artesanal, ETL roda contra mesma amostra, supervisor confirma 4-way: Opus × ETL × Grafo × Humano).
+3. **GRADUADO** -- >=2 amostras 4-way verdes consecutivas. ETL processa o tipo autonomamente.
+4. **REGREDINDO** -- ja graduado, mas amostra recente divergiu (alerta de re-calibracao).
+
+### Ritual obrigatorio antes de cada sprint que toca um tipo documental  <!-- noqa: accent -->
+
+**O Opus principal SEMPRE coordena como humano artesao.** Sequencia inegociavel para sprint de tipo `X`:
+
+1. `scripts/dossie_tipo.py --abrir X` -- ve estado atual do dossie do tipo.
+2. Se nao ha amostra recente: dono fornece via inbox; supervisor seleciona.  <!-- noqa: accent -->
+3. **PROVA ARTESANAL ANTES**: Opus le a amostra via Read multimodal e gera `prova_artesanal_<sha256>.json` no dossie. So entao decide o que pedir ao executor.
+4. `scripts/dossie_tipo.py --comparar X <sha256>` apos o ETL rodar -- compara prova vs output do ETL automaticamente.
+5. Se concordam: amostra GRADUADA, contador +1. Se ja eram 2 amostras verdes: tipo passa a GRADUADO.
+6. Se divergem: relatorio em `divergencias_<sha256>.md`, executor re-disparado com brief de correcao.  <!-- noqa: accent -->
+
+**A consequencia operacional**: cada sprint encerra com **produto final entregue** -- nao ha "sprints intermediarias de fechamento". Quem fechar a sprint encerra com o dossie do tipo atualizado e (idealmente) com graduacao avancando.  <!-- noqa: accent -->
+
+## Metricas globais de prontidao (atualizadas continuamente)
+
+| Métrica | Hoje (2026-05-13) | Meta prod |
+|---|---|---|
+| Tipos GRADUADOS | 4 (cupom, holerite, das, nfce) | >=15 |
+| Linking `documento_de` | 0.41% (25/6086) | >=30% |
+| Categorizacao "Outros" | 17.7% (1031/5840) | <=5% |
+| Backup grafo automatico | Nao | Sim |
+| Transacionalidade pipeline | Nao | Sim |
+| Lockfile concorrencia | Nao | Sim |
+| Paginas dashboard produtivas | ~30/39 | 100% |
+| Pytest passed | 2964 | (estavel, sem regressao) |
 
 ## Regra de prioridade
 
-- **P0** = bloqueia prod (sem isso, ETL nao pode rodar sozinho com confianca).  <!-- noqa: accent -->
-- **P1** = degrada UX diaria (uso funciona, mas tem atrito recorrente).
+- **P0** = bloqueia prod (sem isso, ETL nao pode rodar autonomo).  <!-- noqa: accent -->
+- **P1** = degrada UX diaria (uso funciona, mas tem atrito).
 - **P2** = ampliacao da utilidade (mais tipos, mais fontes).
 - **P3** = saneamento (debito tecnico sem efeito direto no usuario).
 
-Cada epico tem **critério de pronto** mensurável. Sub-sprints existem **dentro** de épicos -- nada fica solto.
+## Anti-fragmentacao
+
+- Toda spec NOVA pertence a um epico aqui mapeado. Se nao cabe, ou voce esta inventando trabalho fora de ordem, ou falta um epico (criar epico antes da spec).  <!-- noqa: accent -->
+- Achado colateral durante execucao vira sub-sprint DENTRO de epico, nunca avulsa.  <!-- noqa: accent -->
+- Sub-sprint nao listada aqui que aparece no backlog/: re-mapear para epico apropriado no proximo commit ao roadmap.  <!-- noqa: accent -->
 
 ---
 
 ## EPICO 1 -- Fase A: Graduar todos os tipos documentais (P0)
 
-**Critério de pronto**: `data/output/graduacao_tipos.json` mostra >=15 tipos GRADUADOS. Dashboard `graduacao_tipos.py` exibe tabela viva.
+**Entregavel**: `data/output/graduacao_tipos.json` mostra >=15 tipos GRADUADOS. Dashboard `graduacao_tipos.py` exibe tabela viva. Cada tipo tem dossie populado em `data/output/dossies/<tipo>/`.
 
-**Mãe**: `FASE-A-COMPLETAR-VALIDACAO-ARTESANAL` (novo 2026-05-13).
+**Mae**: `FASE-A-COMPLETAR-VALIDACAO-ARTESANAL` (2026-05-13).
 
-### Sub-sprints prioritárias (graduar tipos com amostras já no grafo)
+### Sub-sprints prioritarias (graduar tipos com amostras ja no grafo)
 
-| ID | Status atual | Esforço | Meta |
-|---|---|---|---|
-| INFRA-VALIDACAO-ARTESANAL-CUPOM | GRADUADO 2026-05-12 | -- | confirmar |
-| INFRA-VALIDACAO-ARTESANAL-HOLERITE | GRADUADO 2026-05-12 | -- | confirmar |
-| INFRA-VALIDACAO-ARTESANAL-DAS | GRADUADO 2026-05-12 | -- | confirmar |
-| INFRA-VALIDACAO-ARTESANAL-NFCE | GRADUADO 2026-05-12 | -- | confirmar |
-| INFRA-SUBSTITUIR-CACHE-SINTETICO-CUPOM | parcial | 2h | fechar |
-| FASE-A-VALIDAR-PIX (criar) | CALIBRANDO (3 caches) | 2h | graduar PIX |
-| FASE-A-VALIDAR-BOLETO-SERVICO (criar) | PENDENTE | 3h | 2 amostras |
-| FASE-A-VALIDAR-DIRPF (criar) | PENDENTE | 3h | 2 amostras |
+| ID | Status atual | Entregavel da sub-sprint |
+|---|---|---|
+| INFRA-VALIDACAO-ARTESANAL-CUPOM | GRADUADO 2026-05-12 | confirmar dossie + json |
+| INFRA-VALIDACAO-ARTESANAL-HOLERITE | GRADUADO 2026-05-12 | confirmar dossie + json |
+| INFRA-VALIDACAO-ARTESANAL-DAS | GRADUADO 2026-05-12 | confirmar dossie + json |
+| INFRA-VALIDACAO-ARTESANAL-NFCE | GRADUADO 2026-05-12 | confirmar dossie + json |
+| INFRA-SUBSTITUIR-CACHE-SINTETICO-CUPOM | parcial | fechar substituicao |
+| FASE-A-VALIDAR-PIX (criar) | CALIBRANDO (3 caches reais Itau/C6/Nubank) | graduar PIX |
+| FASE-A-VALIDAR-BOLETO-SERVICO (criar) | PENDENTE | 2 amostras validadas |
+| FASE-A-VALIDAR-DIRPF (criar) | PENDENTE | 2 amostras validadas |
 
 ### Sub-sprints de extrator novo (tipos sem extrator ainda)
 
@@ -75,38 +109,32 @@ Cada epico tem **critério de pronto** mensurável. Sub-sprints existem **dentro
 | doc_15_parse_data_br_centralizado | infra parsing |
 | agentic_fallback_01_extracao_para_tipos_sem_extrator | fallback geral |
 
-**Esforço épico**: 60-80h ao longo de 4-6 semanas. Dono fornece amostras conforme aparecem na vida real.
+---
+
+## EPICO 2 -- Robustez operacional para uso diario (P0)
+
+**Entregavel**: `./run.sh --tudo` pode crashar em qualquer estagio sem perda de dados. Backup automatico antes do pipeline. Lockfile impede 2 instancias. Logs rotacionam. `--restore-grafo <ts>` funcional.
+
+| ID | Entregavel |
+|---|---|
+| INFRA-BACKUP-GRAFO-AUTOMATIZADO (2026-05-13) | snapshot + retencao 7d + restore CLI |
+| INFRA-PIPELINE-TRANSACIONALIDADE (2026-05-13) | BEGIN/COMMIT por estagio + rollback granular |
+| INFRA-PII-HISTORY | scrub retroativo de PII em logs |
+| INFRA-INTEGRAR-AUDIT-VAULT-CHECK | audit roda em `./run.sh --check` |
+| propor_extrator_idempotencia_timestamp | idempotencia provada |
+| fix_micro_01_path_canonico | paths canonicos no grafo |
 
 ---
 
-## EPICO 2 -- Robustez operacional para uso diário (P0)
+## EPICO 3 -- Qualidade dos dados: linking + categorizacao (P1)
 
-**Critério de pronto**: `./run.sh --tudo` pode crashar em qualquer estágio sem perda de dados. Backup automático pré-pipeline. Lockfile impede 2 instâncias simultâneas. Logs rotacionam.
-
-| ID | Esforço | Bloqueia |
-|---|---|---|
-| INFRA-BACKUP-GRAFO-AUTOMATIZADO (novo) | 2h | -- |
-| INFRA-PIPELINE-TRANSACIONALIDADE (novo) | 4h | INFRA-BACKUP-GRAFO-AUTOMATIZADO |
-| INFRA-PII-HISTORY (existente) | 3h | -- |
-| INFRA-INTEGRAR-AUDIT-VAULT-CHECK | 1h | -- |
-| propor_extrator_idempotencia_timestamp | 2h | -- |
-| fix_micro_01_path_canonico | 1h | -- |
-
-**Esforço épico**: 13h ao longo de 1 semana.
-
----
-
-## EPICO 3 -- Qualidade dos dados: linking + categorização (P1)
-
-**Critério de pronto**: linking documento_de >= 30% (hoje 0.41%). `Outros` na categorização <= 5% (hoje 17.7%). Dashboard mostra cobertura viva.
-
-### Sub-sprints
+**Entregavel**: linking `documento_de` >= 30%. `Outros` na categorizacao <= 5%. Dashboard mostra cobertura viva.
 
 | ID | Foco |
 |---|---|
 | link_audit_01_investigar_documentos_sem_aresta_documento_de | medir cobertura real |
-| link_tuning_01_ajustar_linking_config | tolerâncias por tipo |
-| INFRA-LINKING-HOLERITE-TOLERANCIA-RECALIBRAR | 5% → 20% G4F+INFOBASE |
+| link_tuning_01_ajustar_linking_config | tolerancias por tipo |
+| INFRA-LINKING-HOLERITE-TOLERANCIA-RECALIBRAR | 5% -> 20% G4F+INFOBASE |
 | gap_01_alerta_proativo_transacao_sem_nf | UX feedback |
 | grafo_xlsx_01_investigar_discrepancia_xlsx_grafo | sanidade |
 | 93d_preservacao_forte_downloads | qualidade fonte |
@@ -116,32 +144,28 @@ Cada epico tem **critério de pronto** mensurável. Sub-sprints existem **dentro
 | micro_01_linking_micro_runtime | micro-linking |
 | micro_01a_followup_nfce_reais | NFCe reais |
 | micro_01b_linking_mercado_holerite | cruzar mercado-holerite |
-| micro_02_items_canonicos_yaml | itens canônicos |
+| micro_02_items_canonicos_yaml | itens canonicos |
 | micro_03_aba_cruzamento_micro | aba dashboard |
-
-**Esforço épico**: 30-40h ao longo de 2-3 semanas.
 
 ---
 
-## EPICO 4 -- IRPF e operações financeiras (P1)
+## EPICO 4 -- IRPF e operacoes financeiras (P1)  <!-- noqa: accent -->
 
-**Critério de pronto**: dashboard tem "Pacote IRPF" 1-click com PDF anual + memorial de cálculo. Pagador vs beneficiário modelado.
+**Entregavel**: dashboard tem "Pacote IRPF" 1-click com PDF anual + memorial. Pagador vs beneficiario modelado.
 
 | ID | Foco |
 |---|---|
 | 25_pacote_irpf | pacote anual |
 | irpf_01_pacote_irpf_botao | UX 1-click |
-| irpf_02_irpf_dedutivel_medico | regra dedução médica |
+| irpf_02_irpf_dedutivel_medico | regra deducao medica |
 | 102_pagador_vs_beneficiario | quem paga vs quem usa |
 | 24_automacao_bancaria | scraping legal |
-
-**Esforço épico**: 20-25h.
 
 ---
 
 ## EPICO 5 -- UX dashboard pronto para casal (P1)
 
-**Critério de pronto**: Vitória consegue usar o dashboard sem ajuda. 4 clusters (Hoje/Dinheiro/Saúde/Documentos) limpos. Mobile pix aparece.
+**Entregavel**: Vitoria usa o dashboard sem ajuda. 4 clusters limpos. Mobile pix aparece.
 
 | ID |
 |---|
@@ -164,14 +188,13 @@ Cada epico tem **critério de pronto** mensurável. Sub-sprints existem **dentro
 | 84_schema_er_relacional_visual |
 | 85_xlsx_docs_faltantes_expandido |
 | 86_ressalvas_humano_checklist |
-
-**Esforço épico**: 35-45h.
+| UX-DASH-GRADUACAO-TIPOS (criar) | tabela viva dos tipos |
 
 ---
 
 ## EPICO 6 -- Mobile bridge (Protocolo-Mob-Ouroboros) (P2)
 
-**Critério de pronto**: foto tirada no app aparece classificada no dashboard em <5min. Camera bug fixado. Áudio transcrito.
+**Entregavel**: foto tirada no app aparece classificada no dashboard em <5min. Camera bug fixado. Audio transcrito.
 
 | ID |
 |---|
@@ -184,13 +207,11 @@ Cada epico tem **critério de pronto** mensurável. Sub-sprints existem **dentro
 | hook_inbox_01_aviso_arquivos_pendentes |
 | 94_fusao_total_vault_ouroboros |
 
-**Esforço épico**: 20-30h.
-
 ---
 
-## EPICO 7 -- Inteligência aumentada (LLM revisor + fontes externas + omega) (P2-P3)
+## EPICO 7 -- Inteligencia aumentada (LLM revisor v2 + fontes + omega) (P2-P3)
 
-**Critério de pronto**: revisor LLM v2 propõe regras de categoria automaticamente. Calendar/Thunderbird ingeridos.
+**Entregavel**: revisor LLM v2 propoe regras de categoria automaticamente. Calendar/Thunderbird ingeridos. Omega 4 abas vivas.
 
 | ID |
 |---|
@@ -205,13 +226,11 @@ Cada epico tem **critério de pronto** mensurável. Sub-sprints existem **dentro
 | fonte_04_assinaturas_detector |
 | subagente_extracao_01_paralelizacao_FROZEN |
 
-**Esforço épico**: 40-50h.
-
 ---
 
-## EPICO 8 -- Saneamento técnico contínuo (P3)
+## EPICO 8 -- Saneamento tecnico continuo (P3)
 
-**Critério de pronto**: pylint/lint zero. Acentuação 100%. Testes >=3000. Docstrings limpas.
+**Entregavel**: lint zero. Acentuacao 100%. Testes estaveis. Docstrings limpas. Nenhuma sprint avulsa fora de epico.
 
 | ID |
 |---|
@@ -229,48 +248,38 @@ Cada epico tem **critério de pronto** mensurável. Sub-sprints existem **dentro
 | adr_23_draft_adr_23_envelope_vs_pessoa_canonico |
 | Fa_ofx_duplicacao_accounts |
 | 83_rename_protocolo_ouroboros |
-| INFRA-split-* (5 sprints arquivadas pela revogação da regra h) |
-
-**Esforço épico**: 20-30h (rola em paralelo com outros).
+| INFRA-split-* (5 sprints arquivadas pela revogacao da regra h) |
 
 ---
 
-## Ordem de execução recomendada
+## Cadeia de execucao recomendada  <!-- noqa: accent -->
 
 ```
-T+0          : Iniciar EPICO 1 (Fase A) + EPICO 2 (operacional) em paralelo.
-                EPICO 1 depende de amostras reais; EPICO 2 é puro código.
-T+2 semanas  : EPICO 1 com >=10 tipos GRADUADOS. EPICO 2 fechado.
-                Iniciar EPICO 3 (qualidade dados).
-T+4 semanas  : EPICO 1 com 15+ tipos GRADUADOS. EPICO 3 fechado.
-                Iniciar EPICO 4 (IRPF) + EPICO 5 (UX) em paralelo.
-T+6 semanas  : EPICO 4 fechado (pacote IRPF 1-click).
-                EPICO 5 com fluxos principais limpos.
-                ===> PROD CANDIDATA <===
-T+8 semanas  : EPICO 6 (mobile) + EPICO 8 (saneamento) em paralelo.
-T+12 semanas : EPICO 7 (inteligência aumentada) opcional.
+Onda 1 (paralela)      : Epicos 1 + 2 -- comecar imediatamente.
+                         Epico 1 depende de amostras reais que dono fornece.
+                         Epico 2 e puro codigo (sem dependencia humana).
+
+Onda 2 (apos onda 1)   : Epico 3 -- requer pipeline robusto + tipos graduados.
+
+Onda 3 (apos onda 2)   : Epicos 4 + 5 paralelos.
+
+===> PROD CANDIDATA <===  apos Epicos 1+2+3+4+5 fechados.
+
+Onda 4 (opcional)      : Epicos 6 + 7 + 8 ampliam utilidade pos-prod.
 ```
 
-## Anti-débito: como evitar sprints separadas e perdidas
+## Como uma sprint do roadmap "fecha" (sem sprint intermediaria)
 
-1. **Todo achado colateral** durante execução vira sub-sprint DENTRO de um épico, nunca fora.
-2. **Cada commit que muda este roadmap** atualiza a coluna Status do épico correspondente.
-3. **Sprint que não cabe em épico** = sinal de que falta um épico. Não criar spec sem revisar este arquivo primeiro.
-4. **Sub-sprints listadas aqui** mas sem spec própria em `backlog/` ganham spec quando entram em execução.
+Cada sprint do Epico 1 (graduacao de tipo) entrega produto final na primeira passagem:
 
-## Métricas globais de prontidão
+1. Spec executada -> codigo + testes.  <!-- noqa: accent -->
+2. Pipeline rodado contra >=2 amostras reais.
+3. `scripts/dossie_tipo.py --comparar` produz veredito automatico.
+4. Se graduado: `graduacao_tipos.json` atualizado, dashboard mostra a mudanca, spec movida para `concluidos/`.
+5. Se divergente: gera `divergencias.md` E ja registra a sprint-filha de correcao no proprio epico (anti-debito automatico).
 
-| Métrica | Hoje (2026-05-13) | Meta prod |
-|---|---|---|
-| Tipos GRADUADOS | 4 | 15+ |
-| Linking `documento_de` | 0.41% (25/6086) | >=30% |
-| Categorização "Outros" | 17.7% (1031/5840) | <=5% |
-| Pytest passed | 2964 | >=3000 |
-| Backup grafo automático | Não | Sim |
-| Transacionalidade pipeline | Não | Sim |
-| Lockfile concorrência | Não | Sim |
-| Páginas dashboard produtivas | ~30/39 | 100% |
+Sprints dos Epicos 2-8 fecham por entregavel canonico declarado no header do epico. Sem entregavel = nao fecha.  <!-- noqa: accent -->
 
 ---
 
-*"Roadmap nao e profecia, e bússola. Sub-sprints sao passos; epicos sao chegadas." -- principio do mapa vivo*  <!-- noqa: accent -->
+*"Roadmap nao e profecia, e bussola. Sub-sprints sao passos; epicos sao chegadas." -- principio do mapa vivo*  <!-- noqa: accent -->

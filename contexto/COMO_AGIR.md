@@ -99,11 +99,32 @@ Padrao usado em 2026-04-26: "agente do vault" entregou 7 claims, validei 5 (todo
 
 ## Leitura obrigatoria ANTES de qualquer spec nova ou sessao nova
 
-Toda nova sprint, toda nova sessao, toda decisao de "vou criar a spec X" deve ser PRECEDIDA pela leitura destes 2 arquivos canonicos. **Nao negocie**:
+Toda nova sprint, toda nova sessao, toda decisao de "vou criar a spec X" deve ser PRECEDIDA pela leitura destes 3 arquivos canonicos. **Nao negocie**:
 
-1. **`docs/sprints/ROADMAP_ATE_PROD.md`** secao "Filosofia" -- o ciclo de graduacao Opus -> ETL. Toda spec presume que o tipo documental atinge GRADUADO (>=2 amostras 4-way verdes: Opus multimodal × ETL × Grafo × Humano). Spec que nao serve esse ciclo deve ser questionada. (`contexto/POR_QUE.md` tem a versao longa com PII -- gitignored. Roadmap tem a versao publica resumida.)
+1. **`docs/sprints/ROADMAP_ATE_PROD.md`** secao "Filosofia" -- o ciclo de graduacao Opus -> ETL. Toda spec presume que o tipo documental atinge GRADUADO (>=2 amostras 4-way verdes: Opus multimodal × ETL × Grafo × Humano). Spec que nao serve esse ciclo deve ser questionada.
 
 2. **`docs/sprints/ROADMAP_ATE_PROD.md`** secao "8 epicos canonicos" -- mapa de prioridades. Toda spec NOVA tem que caber em algum epico. Se nao cabe, ou voce esta inventando trabalho fora de ordem, ou falta um epico (criar epico antes da spec).
+
+3. **`docs/CICLO_GRADUACAO_OPERACIONAL.md`** -- ritual artesanal de 6 fases que o Opus principal SEMPRE executa antes de despachar executor para sprint que toca tipo documental. Padroes `(jj)` `(kk)` `(ll)` do VALIDATOR_BRIEF formalizam o ritual. CLI canonica: `scripts/dossie_tipo.py`.
+
+## Workflow canonico para sprint de tipo documental (Epico 1 do roadmap)
+
+Sequencia inegociavel quando a sprint toca extrator/ingestor/linker de um tipo X:
+
+```
+1. scripts/dossie_tipo.py --abrir X          # estado atual do tipo
+2. scripts/dossie_tipo.py --listar-candidatos X    # achar amostras reais
+3. SUPERVISOR le amostra via Read multimodal     # OBRIGATORIO antes do executor
+4. scripts/dossie_tipo.py --prova-artesanal X <sha>  # stub para preencher
+5. SUPERVISOR edita campos_canonicos no JSON    # prova dos 7 artesanal
+6. Despacha executor com brief (codigo + testes)
+7. Executor commita. Supervisor mergeia.
+8. ./run.sh --tudo          # ETL processa amostra
+9. scripts/dossie_tipo.py --comparar X <sha>     # veredito automatico
+10. scripts/dossie_tipo.py --graduar-se-pronto X  # transiciona status do tipo
+```
+
+Etapas 3 e 5 SO O OPUS PRINCIPAL faz -- executor nao tem acesso a multimodal para gerar gabarito independente. Por isso o supervisor coordena artesanal antes; executor implementa rapido.
 
 **Regra anti-fragmentacao**: nao crie spec avulsa. Spec entra DENTRO de um epico do roadmap, com depende_de e meta de graduacao quando aplicavel. O incidente da onda 2026-05-13 (5 sprint-filhas + 3 fixes de integracao gerados na correria) mostrou que sprints avulsas viram debito: corrigido pela criacao deste roadmap.
 

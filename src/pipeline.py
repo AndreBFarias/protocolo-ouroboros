@@ -545,6 +545,24 @@ def _executar_er_produtos() -> None:
         logger.warning("ER de produtos falhou: %s", erro)
 
 
+def _executar_dossie_snapshot() -> None:
+    """Atualiza ``data/output/graduacao_tipos.json`` a partir dos dossies.
+
+    Integrado em 2026-05-13: cada `./run.sh --tudo` regenera o snapshot global
+    de graduacao por tipo documental, consumido pelo dashboard. Falha-soft.
+    Ver `docs/CICLO_GRADUACAO_OPERACIONAL.md` para o ritual completo.
+    """
+    try:
+        from scripts.dossie_tipo import cmd_snapshot
+    except ImportError as erro:
+        logger.warning("dossie_tipo indisponivel: %s", erro)
+        return
+    try:
+        cmd_snapshot()
+    except Exception as erro:
+        logger.warning("snapshot de graduacao falhou: %s", erro)
+
+
 def _executar_skill_d7_log() -> None:
     """Gera ``data/output/skill_d7_log.json`` (Sprint INFRA-SKILLS-D7-LOG).
 
@@ -731,6 +749,11 @@ def executar(mes: str | None = None, processar_tudo: bool = False) -> None:
     # Integração feita em 2026-05-13 após auditoria detectar que o script existia
     # mas não era invocado automaticamente. Falha-soft (sem grafo == no-op).
     _executar_skill_d7_log()
+
+    # 16. Snapshot do dossie de graduacao por tipo documental (2026-05-13).
+    # Materializa o estado vivo de cada tipo (PENDENTE/CALIBRANDO/GRADUADO/REGREDINDO)
+    # consumido pelo dashboard `graduacao_tipos.py`. Ver docs/CICLO_GRADUACAO_OPERACIONAL.md.
+    _executar_dossie_snapshot()
 
     logger.info("=== Pipeline concluído ===")
     logger.info("XLSX: %s", caminho_xlsx)
