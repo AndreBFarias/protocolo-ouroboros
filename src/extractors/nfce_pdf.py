@@ -43,6 +43,7 @@ from src.intake.glyph_tolerant import (
     compilar_regex_tolerante,
     extrair_cnpjs,
     extrair_cpf,
+    normalizar_ps5_p55,
 )
 from src.load import validacao_csv as _validacao_csv
 from src.utils.chave_nfe import (
@@ -422,7 +423,9 @@ def _parse_itens_nfce(texto: str) -> list[dict[str, Any]]:
             itens.append(_item_de_match(match))
             continue
         if itens and not _e_cabecalho_ou_ruido(linha_stripada):
-            itens[-1]["descricao"] = _limpar_espacos(f"{itens[-1]['descricao']} {linha_stripada}")
+            itens[-1]["descricao"] = normalizar_ps5_p55(
+                _limpar_espacos(f"{itens[-1]['descricao']} {linha_stripada}")
+            )
     return itens
 
 
@@ -440,7 +443,7 @@ def _delimitar_regiao_itens(texto: str) -> str:
 def _item_de_match(match: re.Match[str]) -> dict[str, Any]:
     return {
         "codigo": match.group("codigo"),
-        "descricao": _limpar_espacos(match.group("descricao")),
+        "descricao": normalizar_ps5_p55(_limpar_espacos(match.group("descricao"))),
         "qtde": parse_valor_br(match.group("qtde")),
         "unidade": match.group("unidade").upper(),
         "valor_unit": parse_valor_br(match.group("valor_unit")),

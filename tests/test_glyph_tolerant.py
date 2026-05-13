@@ -22,6 +22,7 @@ from src.intake.glyph_tolerant import (
     extrair_cnpjs,
     extrair_cpf,
     extrair_data_br,
+    normalizar_ps5_p55,
 )
 
 # ============================================================================
@@ -233,6 +234,60 @@ def test_extrair_chave_44_ignora_grupos_de_4_que_nao_somam_44():
     # 10 grupos de 4 dígitos = 40, regex pede exatamente 11 grupos de 4
     texto_curto = "1234 5678 9012 3456 7890 1234 5678 9012 3456 7890"
     assert extrair_chave_nfe44(texto_curto) is None
+
+
+# ============================================================================
+# normalizar_ps5_p55 (Sprint INFRA-NFCE-FIX-PS5-P55 -- bug 2026-05-12)
+# ============================================================================
+
+
+def test_normalizar_ps5_p55_corrige_base_carregamento():
+    # Bug real: cupom NFCe Americanas trouxe "CONTROLE P55" via pdfplumber.
+    entrada = "BASE DE CARREGAMENTO DO CONTROLE P55"
+    assert normalizar_ps5_p55(entrada) == "BASE DE CARREGAMENTO DO CONTROLE PS5"
+
+
+def test_normalizar_ps5_p55_preserva_controle_ps5_correto():
+    # Item que já veio correto não pode ser tocado (idempotência).
+    entrada = "CONTROLE PS5 DUALSENSE GALACTIC PURPLE"
+    assert normalizar_ps5_p55(entrada) == entrada
+
+
+def test_normalizar_ps5_p55_nao_afeta_produto_nao_relacionado():
+    # "P55" sem contexto PlayStation deve ficar como veio (poderia ser
+    # bateria P55, parafuso P55, etc.).
+    entrada = "BATERIA P55 INDUSTRIAL 12V"
+    assert normalizar_ps5_p55(entrada) == entrada
+
+
+def test_normalizar_ps5_p55_corrige_com_dualsense_no_contexto():
+    # Contexto DUALSENSE na mesma linha (janela 40 chars) prova PS5.
+    entrada = "CARREGADOR P55 PARA DUALSENSE BRANCO"
+    assert normalizar_ps5_p55(entrada) == "CARREGADOR PS5 PARA DUALSENSE BRANCO"
+
+
+def test_normalizar_ps5_p55_corrige_com_playstation_no_contexto():
+    entrada = "JOGO P55 PLAYSTATION DIGITAL"
+    assert normalizar_ps5_p55(entrada) == "JOGO PS5 PLAYSTATION DIGITAL"
+
+
+def test_normalizar_ps5_p55_idempotente():
+    # Rodar duas vezes não gera "PSS5" nem corrompe a string.
+    entrada = "CONTROLE P55 DUALSENSE"
+    saida_1 = normalizar_ps5_p55(entrada)
+    saida_2 = normalizar_ps5_p55(saida_1)
+    assert saida_1 == saida_2 == "CONTROLE PS5 DUALSENSE"
+
+
+def test_normalizar_ps5_p55_nao_atravessa_quebra_de_linha():
+    # P55 em uma linha, CONTROLE em outra -- não normaliza (linhas distintas).
+    entrada = "BATERIA P55\nCONTROLE PARA TV"
+    assert normalizar_ps5_p55(entrada) == entrada
+
+
+def test_normalizar_ps5_p55_texto_vazio_ou_sem_p55():
+    assert normalizar_ps5_p55("") == ""
+    assert normalizar_ps5_p55("texto qualquer sem token") == "texto qualquer sem token"
 
 
 # "Quem mede com vara torta ergue parede torta." -- ditado popular brasileiro

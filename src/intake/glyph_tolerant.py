@@ -201,6 +201,57 @@ def extrair_data_br(texto: str) -> str | None:
     return None
 
 
+# ============================================================================
+# Normalização de typo OCR/glyph S/5 em contexto PlayStation
+# ----------------------------------------------------------------------------
+# Bug confirmado por confronto multimodal em 2026-05-12 (auditoria
+# `docs/auditorias/VALIDACAO_ARTESANAL_NFCE_2026-05-12.md`): cupom NFCe da
+# Americanas com PDF nativo embarcou "BASE DE CARREGAMENTO DO CONTROLE PS5"
+# mas pdfplumber.extract_text() devolveu "...CONTROLE P55" (S virou 5). O
+# outro item PS5 do mesmo cupom (DUALSENSE) saiu correto -- a confusão
+# ocorre só em alguns matches específicos de fonte.
+#
+# Estratégia: regex CONSERVADORA. Só normaliza "P55" para "PS5" quando o
+# contexto adjacente (na mesma linha, janela de 30 chars) contém palavra
+# que prova ser produto PlayStation 5 (CONTROLE, DUALSENSE, PLAYSTATION).
+# Sem o contexto, "P55" pode ser produto legítimo (bateria, parafuso) e
+# permanece intocado. Isso é "defesa em camadas" -- meta-regra do projeto.
+# ============================================================================
+
+_PALAVRAS_CONTEXTO_PS5 = ("CONTROLE", "DUALSENSE", "PLAYSTATION")
+
+
+def normalizar_ps5_p55(texto: str) -> str:
+    """Substitui 'P55' por 'PS5' apenas quando contexto prova produto PlayStation 5.
+
+    Regra: 'P55' (palavra inteira, case-insensitive) só vira 'PS5' se na MESMA
+    LINHA, dentro de uma janela de 40 caracteres antes OU depois, aparecer uma
+    das palavras-âncora: CONTROLE, DUALSENSE, PLAYSTATION.
+
+    Se o contexto não prova produto PlayStation 5, deixa 'P55' como veio
+    (poderia ser bateria P55, parafuso P55, etc.). Devolve texto novo --
+    não muta entrada. Idempotente: rodar duas vezes não cria 'PSS5'.
+    """
+    if not texto or "P55" not in texto.upper():
+        return texto
+
+    def _substitui(match: re.Match[str]) -> str:
+        inicio, fim = match.span()
+        # Janela na MESMA LINHA: 40 chars antes/depois, mas não atravessa '\n'.
+        ini_linha = texto.rfind("\n", 0, inicio) + 1
+        fim_linha = texto.find("\n", fim)
+        if fim_linha == -1:
+            fim_linha = len(texto)
+        janela_ini = max(ini_linha, inicio - 40)
+        janela_fim = min(fim_linha, fim + 40)
+        contexto = texto[janela_ini:janela_fim].upper()
+        if any(palavra in contexto for palavra in _PALAVRAS_CONTEXTO_PS5):
+            return "PS5"
+        return match.group(0)
+
+    return re.sub(r"\bP55\b", _substitui, texto, flags=re.IGNORECASE)
+
+
 def extrair_chave_nfe44(texto: str) -> str | None:
     """Devolve chave 44 dígitos (apenas dígitos, sem espaço) ou None.
 
