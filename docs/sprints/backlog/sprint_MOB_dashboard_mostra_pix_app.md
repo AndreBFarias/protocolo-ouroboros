@@ -172,4 +172,4 @@ make lint && make smoke
 - Sprints dependentes: MOB-bridge-4, MOB-bridge-5.
 - Plano de origem: `~/.claude/plans/preciso-que-use-o-crispy-stroustrup.md` Fase B.
 
-*"Quando o dono ve no dashboard o que mandou pelo celular, a integracao deixou de ser promessa." — princípio MOB-dashboard-mostra-pix-app*
+*"Quando o dono ve no dashboard o que mandou pelo celular, a integracao deixou de ser promessa." — princípio MOB-dashboard-mostra-pix-app*  <!-- noqa: accent -->

@@ -1,6 +1,6 @@
 ---
-id: INFRA-VALIDACAO-ARTESANAL-NFCE
-titulo: Validacao artesanal NFCe PDF -- 2 amostras lidas por Opus multimodal versus ETL com foco em drill-down item (P55 vs PS5)
+id: INFRA-VALIDACAO-ARTESANAL-NFCE  <!-- noqa: accent -->
+titulo: Validacao artesanal NFCe PDF -- 2 amostras lidas por Opus multimodal versus ETL com foco em drill-down item (P55 vs PS5)  <!-- noqa: accent -->
 status: backlog
 concluida_em: null
 prioridade: P0
@@ -12,7 +12,7 @@ origem: Plano 2026-05-12 secao Fase A1 -- NFCe so 2 nodes no grafo (drill-down i
 mockup: novo-mockup/mockups/10-validacao-arquivos.html  <!-- noqa: accent -->
 ---
 
-# Sprint INFRA-VALIDACAO-ARTESANAL-NFCE -- prova de paridade em NFCe PDF com foco em itens
+# Sprint INFRA-VALIDACAO-ARTESANAL-NFCE -- prova de paridade em NFCe PDF com foco em itens  <!-- noqa: accent -->
 
 ## Contexto
 
@@ -167,4 +167,4 @@ make lint && make smoke
 - DOC-16 (DANFE validar ingestao) — backlog, irmã de NFCe.
 - Plano de origem: `~/.claude/plans/preciso-que-use-o-crispy-stroustrup.md` Fase A1.
 
-*"NFCe sem item drill-down é supermercado sem etiqueta de preço — promete análise mas não entrega." — princípio INFRA-VALIDACAO-ARTESANAL-NFCE*
+*"NFCe sem item drill-down é supermercado sem etiqueta de preço — promete análise mas não entrega." — princípio INFRA-VALIDACAO-ARTESANAL-NFCE*  <!-- noqa: accent -->

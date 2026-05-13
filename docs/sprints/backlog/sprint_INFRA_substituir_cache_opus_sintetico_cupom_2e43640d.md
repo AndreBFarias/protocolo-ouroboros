@@ -7,7 +7,7 @@ prioridade: P0
 data_criacao: 2026-05-12
 fase: VALIDACAO_ARTESANAL
 depende_de: []
-bloqueia: [INFRA-VALIDACAO-ARTESANAL-CUPOM, INFRA-VALIDACAO-ARTESANAL-HOLERITE, INFRA-VALIDACAO-ARTESANAL-NFCE, INFRA-VALIDACAO-ARTESANAL-DAS]
+bloqueia: [INFRA-VALIDACAO-ARTESANAL-CUPOM, INFRA-VALIDACAO-ARTESANAL-HOLERITE, INFRA-VALIDACAO-ARTESANAL-NFCE, INFRA-VALIDACAO-ARTESANAL-DAS]  <!-- noqa: accent -->
 esforco_estimado_horas: 3
 origem: docs/auditorias/VALIDACAO_ARTESANAL_CUPOM_2026-05-12.md -- auditoria revelou que cache Opus 2e43640d eh sintetico (admite em _observacao) e ETL apenas devolve cache. Mesma natureza provavel nos 3 outros caches.  <!-- noqa: accent -->
 adr_associada: ADR-26 (Opus como OCR canonico para imagens -- precisa formalizar diferenca entre placeholder sintetico e gabarito real)  <!-- noqa: accent -->

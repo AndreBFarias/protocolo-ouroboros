@@ -10,7 +10,7 @@ Cobre 5 cenarios canonicos:
    (retrocompat -- cascata legada decide).
 
 Os tres últimos testam `detectar_tipo` diretamente para isolar o hint
-sem precisar materializar PDFs/JPEGs reais com conteudo extraivel.
+sem precisar materializar PDFs/JPEGs reais com conteúdo extraível.
 """
 
 from __future__ import annotations

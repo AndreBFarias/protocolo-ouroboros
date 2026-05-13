@@ -1,6 +1,6 @@
 ---
-id: INFRA-VALIDACAO-ARTESANAL-DAS
-titulo: Validacao artesanal DAS PARCSN -- 2 amostras lidas por Opus multimodal versus ETL (alto dano fiscal)
+id: INFRA-VALIDACAO-ARTESANAL-DAS  <!-- noqa: accent -->
+titulo: Validacao artesanal DAS PARCSN -- 2 amostras lidas por Opus multimodal versus ETL (alto dano fiscal)  <!-- noqa: accent -->
 status: backlog
 concluida_em: null
 prioridade: P0
@@ -12,7 +12,7 @@ origem: Plano 2026-05-12 secao Fase A1 -- DAS PARCSN tem 19 nodes; dano fiscal a
 mockup: novo-mockup/mockups/10-validacao-arquivos.html  <!-- noqa: accent -->
 ---
 
-# Sprint INFRA-VALIDACAO-ARTESANAL-DAS -- prova de paridade ETL × Opus em DAS PARCSN
+# Sprint INFRA-VALIDACAO-ARTESANAL-DAS -- prova de paridade ETL × Opus em DAS PARCSN  <!-- noqa: accent -->
 
 ## Contexto
 
@@ -173,4 +173,4 @@ make lint && make smoke
 - Mapeamento fornecedor: `mappings/fornecedores_sinteticos.yaml`.
 - Plano de origem: `~/.claude/plans/preciso-que-use-o-crispy-stroustrup.md` Fase A1.
 
-*"Imposto errado é multa que volta no proximo mes; validar o DAS é poupar a Receita do trabalho de cobrar." — princípio INFRA-VALIDACAO-ARTESANAL-DAS*
+*"Imposto errado é multa que volta no proximo mes; validar o DAS é poupar a Receita do trabalho de cobrar." — princípio INFRA-VALIDACAO-ARTESANAL-DAS*  <!-- noqa: accent -->

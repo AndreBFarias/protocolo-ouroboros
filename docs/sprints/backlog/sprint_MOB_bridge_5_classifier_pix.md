@@ -7,7 +7,7 @@ prioridade: P0
 data_criacao: 2026-05-12
 fase: BRIDGE_MOBILE
 depende_de: [MOB-bridge-4-inbox-subtipos-reader, DOC-27]
-bloqueado_por: DOC-27 deve estar CONCLUIDA antes desta sprint iniciar -- ela só conecta o ETL existente, não cria extrator
+bloqueado_por: DOC-27 deve estar CONCLUIDA antes desta sprint iniciar -- ela só conecta o ETL existente, não cria extrator  <!-- noqa: accent -->
 esforco_estimado_horas: 3
 origem: Plano 2026-05-12 secao Fase B; categorias.ts do app mobile declara chip pix; backend hoje nao tem extrator dedicado para comprovante pix.  <!-- noqa: accent -->
 mockup: novo-mockup/mockups/10-validacao-arquivos.html  <!-- noqa: accent -->

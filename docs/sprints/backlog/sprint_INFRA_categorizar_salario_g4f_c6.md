@@ -76,4 +76,4 @@ grep -i "g4f\|6381" mappings/overrides.yaml mappings/categorias.yaml 2>/dev/null
 - Auditoria geradora: `docs/auditorias/VALIDACAO_ARTESANAL_HOLERITE_2026-05-12.md`
 - Holerites G4F: `data/raw/andre/holerites/HOLERITE_*_G4F_*.pdf` (12 meses)
 
-*"Salario nao chamado de salario nao entra no IRPF -- e o tipo de drift que custa multa em marco do ano seguinte." -- principio INFRA-CATEGORIZAR-SALARIO-G4F-C6*
+*"Salario nao chamado de salario nao entra no IRPF -- e o tipo de drift que custa multa em marco do ano seguinte." -- principio INFRA-CATEGORIZAR-SALARIO-G4F-C6*  <!-- noqa: accent -->

@@ -71,4 +71,4 @@ sqlite3 data/output/grafo.sqlite "SELECT id, json_extract(metadata,'\$.data'), j
 - Auditoria geradora: `docs/auditorias/VALIDACAO_ARTESANAL_HOLERITE_2026-05-12.md` ressalva 3
 - Sprint irmã: INFRA-CATEGORIZAR-SALARIO-G4F-C6 (categoria errada do mesmo lançamento)
 
-*"Duplicata silenciosa em transacao bancaria eh fraude contabil involuntaria; nao se esquece nem se perdoa." -- principio INFRA-DEDUP-LANCAMENTO-DUPLICADO-G4F*
+*"Duplicata silenciosa em transacao bancaria eh fraude contabil involuntaria; nao se esquece nem se perdoa." -- principio INFRA-DEDUP-LANCAMENTO-DUPLICADO-G4F*  <!-- noqa: accent -->

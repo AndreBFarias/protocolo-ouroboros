@@ -152,4 +152,4 @@ make lint && make smoke
 - Padrão `(cc)`: refactor revela teste frágil — usar como sentinela.
 - Plano de origem: `~/.claude/plans/preciso-que-use-o-crispy-stroustrup.md` Fase B.
 
-*"Arquivo grande nao e prolixidade tecnica; e gambiarra organizacional adiada. Split bem feito e contrato preservado." — princípio UX-INFRA-SPLIT-RESTANTES*
+*"Arquivo grande nao e prolixidade tecnica; e gambiarra organizacional adiada. Split bem feito e contrato preservado." — princípio UX-INFRA-SPLIT-RESTANTES*  <!-- noqa: accent -->

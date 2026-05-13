@@ -1,6 +1,6 @@
 ---
-id: INFRA-VALIDACAO-ARTESANAL-CUPOM
-titulo: Validacao artesanal cupom_foto -- 2 amostras lidas por Opus multimodal versus ETL
+id: INFRA-VALIDACAO-ARTESANAL-CUPOM  <!-- noqa: accent -->
+titulo: Validacao artesanal cupom_foto -- 2 amostras lidas por Opus multimodal versus ETL  <!-- noqa: accent -->
 status: backlog
 concluida_em: null
 prioridade: P0
@@ -12,7 +12,7 @@ origem: Plano 2026-05-12 secao Fase A1 -- cupom_foto e o caso-mae do fallback Op
 mockup: novo-mockup/mockups/10-validacao-arquivos.html  <!-- noqa: accent -->
 ---
 
-# Sprint INFRA-VALIDACAO-ARTESANAL-CUPOM -- prova de paridade ETL × Opus em cupom_foto
+# Sprint INFRA-VALIDACAO-ARTESANAL-CUPOM -- prova de paridade ETL × Opus em cupom_foto  <!-- noqa: accent -->
 
 ## Contexto
 
@@ -209,4 +209,4 @@ make lint && make smoke
 - Plano de origem: `~/.claude/plans/preciso-que-use-o-crispy-stroustrup.md` Fase A1.
 - Auditoria base: `docs/auditorias/VALIDACAO_END2END_2026-05-08.md` caso 2.
 
-*"O cupom é o teste mais honesto do OCR: tudo está ali, sem floreio, sem retoque." — princípio INFRA-VALIDACAO-ARTESANAL-CUPOM*
+*"O cupom é o teste mais honesto do OCR: tudo está ali, sem floreio, sem retoque." — princípio INFRA-VALIDACAO-ARTESANAL-CUPOM*  <!-- noqa: accent -->

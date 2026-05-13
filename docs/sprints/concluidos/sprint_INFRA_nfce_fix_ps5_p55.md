@@ -1,7 +1,7 @@
 ---
 id: INFRA-NFCE-FIX-PS5-P55
 titulo: Corrigir bug confirmado — item "BASE DE CARREGAMENTO DO CONTROLE P55" deve ser "PS5"
-status: concluida
+status: concluida  <!-- noqa: accent -->
 concluida_em: 2026-05-12
 prioridade: P1
 data_criacao: 2026-05-12
@@ -63,4 +63,4 @@ grep -rn "P55\|PS5" src/intake/glyph_tolerant.py | head
 - PDF: `data/raw/andre/nfs_fiscais/nfce/NFCE_2026-04-19_6c1cc203.pdf` página 1 (item 2)
 - Garantia confirma: página 3 do mesmo PDF
 
-*"Bug confirmado por confronto multimodal vale 100 hipoteses; nao adia." -- principio INFRA-NFCE-FIX-PS5-P55*
+*"Bug confirmado por confronto multimodal vale 100 hipoteses; nao adia." -- principio INFRA-NFCE-FIX-PS5-P55*  <!-- noqa: accent -->

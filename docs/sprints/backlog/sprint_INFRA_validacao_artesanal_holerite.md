@@ -1,6 +1,6 @@
 ---
-id: INFRA-VALIDACAO-ARTESANAL-HOLERITE
-titulo: Validacao artesanal holerite -- 2 amostras (1 G4F + 1 Infobase) lidas por Opus multimodal versus ETL
+id: INFRA-VALIDACAO-ARTESANAL-HOLERITE  <!-- noqa: accent -->
+titulo: Validacao artesanal holerite -- 2 amostras (1 G4F + 1 Infobase) lidas por Opus multimodal versus ETL  <!-- noqa: accent -->
 status: backlog
 concluida_em: null
 prioridade: P0
@@ -12,7 +12,7 @@ origem: Plano 2026-05-12 secao Fase A1 -- holerite 24/24 declarado verde mas aud
 mockup: novo-mockup/mockups/10-validacao-arquivos.html  <!-- noqa: accent -->
 ---
 
-# Sprint INFRA-VALIDACAO-ARTESANAL-HOLERITE -- prova de paridade ETL × Opus em contracheques
+# Sprint INFRA-VALIDACAO-ARTESANAL-HOLERITE -- prova de paridade ETL × Opus em contracheques  <!-- noqa: accent -->
 
 ## Contexto
 
@@ -55,7 +55,7 @@ Confirma: (a) há 24 holerites no grafo, (b) fornecedores G4F e INFOBASE estão 
 
 ## Spec de implementação
 
-Mesmo loop canônico de 7 passos da Sprint INFRA-VALIDACAO-ARTESANAL-CUPOM, adaptado:
+Mesmo loop canônico de 7 passos da Sprint INFRA-VALIDACAO-ARTESANAL-CUPOM, adaptado:  <!-- noqa: accent -->
 
 ### Diferença 1 — Schema estendido (holerite)
 
@@ -153,4 +153,4 @@ make lint && make smoke
 - AUDIT2-RAZAO-SOCIAL-HOLERITE: backlog ainda aberto — pode interagir com esta validação.
 - Plano de origem: `~/.claude/plans/preciso-que-use-o-crispy-stroustrup.md` Fase A1.
 
-*"O holerite é o documento mais privado entre todos; validar sem mascarar é falha de respeito." — princípio INFRA-VALIDACAO-ARTESANAL-HOLERITE*
+*"O holerite é o documento mais privado entre todos; validar sem mascarar é falha de respeito." — princípio INFRA-VALIDACAO-ARTESANAL-HOLERITE*  <!-- noqa: accent -->

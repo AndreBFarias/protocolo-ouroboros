@@ -1,6 +1,6 @@
 ---
 id: MOB-bug-camera-momento-repro
-titulo: Reproduzir bug "registrar momento" da camera + relatorio para equipe mobile (Onda Q fixou parcialmente)
+titulo: Reproduzir bug "registrar momento" da camera + relatorio para equipe mobile (Onda Q fixou parcialmente)  <!-- noqa: accent -->
 status: backlog
 concluida_em: null
 prioridade: P1
@@ -159,4 +159,4 @@ make lint && make smoke
 - Fix da Onda Q: `~/Desenvolvimento/Protocolo-Mob-Ouroboros/src/components/MenuCapturaVerde.tsx:217-235`.
 - Plano de origem: `~/.claude/plans/preciso-que-use-o-crispy-stroustrup.md` Fase B.
 
-*"Repro nao prova o caminho mas elimina suposicao; e o ato mais barato de honestidade tecnica." — princípio MOB-bug-camera-momento-repro*
+*"Repro nao prova o caminho mas elimina suposicao; e o ato mais barato de honestidade tecnica." — princípio MOB-bug-camera-momento-repro*  <!-- noqa: accent -->

@@ -1,7 +1,7 @@
 ---
 id: MOB-bridge-4-inbox-subtipos-reader
 titulo: Walk recursivo em inbox_processor + orchestrator + registry para enxergar inbox/<area>/<subtipo>/ do app mobile
-status: concluida
+status: concluida  <!-- noqa: accent -->
 concluida_em: 2026-05-12
 prioridade: P0
 data_criacao: 2026-05-12

@@ -331,7 +331,7 @@ def gravar_sidecar_inbox(
     """Grava sidecar `inbox/.extracted/<sha8>.json` consumido por inbox_reader.
 
     MOB-bridge-4: campos novos `area` e `subtipo_mobile` (derivados do path
-    relativo `inbox/<area>/<subtipo>/`) sao incluidos quando presentes.
+    relativo `inbox/<area>/<subtipo>/`) são incluídos quando presentes.
     Retrocompat: sidecars antigos sem esses campos continuam validos (leitor
     usa `.get(..., None)`).
 
