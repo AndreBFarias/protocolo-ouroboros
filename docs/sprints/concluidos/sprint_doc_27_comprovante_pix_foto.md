@@ -1,3 +1,13 @@
+---
+id: DOC-27
+titulo: Extrator de comprovante PIX em foto
+status: concluída
+concluida_em: 2026-05-13
+prioridade: P1
+onda: 3
+esforco_estimado_horas: 4
+---
+
 # Sprint DOC-27 -- Extrator de comprovante PIX em foto
 
 **Origem**: lacuna 1 da auditoria `docs/auditorias/cobertura_backlog_2026-04-29.md` (item 19 do plan `pure-swinging-mitten`, Onda 3).
@@ -60,3 +70,29 @@ Para mover esta spec para `docs/sprints/concluidos/`:
 7. Achados colaterais viraram sprint-ID OU Edit-pronto. Zero TODO solto.
 8. Validador (humano ou subagent) APROVOU.
 9. Frontmatter `concluida_em: YYYY-MM-DD` adicionado.
+
+
+## Conclusão (2026-05-13)
+
+Implementação entregue na sessão 2026-05-13:
+
+- Entrada YAML `comprovante_pix_foto` (prioridade especifico) em `mappings/tipos_documento.yaml`.
+- Extrator `src/extractors/comprovante_pix_foto.py` que delega ao Opus visão.
+- 3 caches canônicos transcritos artesanalmente pelo supervisor Opus 4.7 lendo via Read multimodal:
+  - Itaú: PANIFICADORA KI-SABOR, R$ 900,00, 2026-05-09 (aluguel)
+  - C6: Wesley Ramon Castro Santana, R$ 50,00, 2026-05-08
+  - Nubank: Vitória Maria Silva dos Santos, R$ 367,65, 2026-03-04
+- 17 testes em `tests/test_comprovante_pix_foto.py` (todos verdes).
+- Proof-of-work runtime: classifier reconhece 3/3 layouts (Itaú/C6/Nubank); extrator devolve payload canônico.
+
+### Escopo NÃO incluído (movido para sprint-filha)
+
+- Ingestão no grafo SQLite: criar nó `documento` PIXFOTO|<sha256> e linkar à transação no extrato bancário.
+- Ver `sprint_INFRA_linkar_pix_transacao_2026-05-13.md` (P1).
+
+### Métricas finais
+
+- Pytest: 2879 passed (+17 novos sobre baseline 2862).
+- Smoke: 10/10 contratos OK.
+- Lint: 0 erros.
+

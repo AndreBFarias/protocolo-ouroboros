@@ -410,6 +410,24 @@ tipos:
       com_data: "CUPOM_{data:%Y-%m-%d}_{sha8}.{ext}"
       sem_data: "CUPOM_{sha8}.{ext}"
 
+  - id: comprovante_pix_foto
+    descricao: "Comprovante PIX gerado por app de banco como JPEG/PNG (Itaú/C6/Nubank/Inter/etc)"
+    prioridade: especifico
+    match_mode: any
+    mimes: ["application/pdf", "image/jpeg", "image/png"]
+    regex_conteudo:
+      - "(?i)Comprovante\\s+de\\s+P[ix]{2}"
+      - "(?i)Comprovante\\s+de\\s+transfer[êe]ncia"
+      - "(?i)P[ix]{2}\\s+(realizado|enviado|em\\s+andamento)"
+      - "(?i)ID\\s+da\\s+transa[çc][ãa]o"
+      - "(?i)Chave\\s+P[ix]{2}"
+    extrator_modulo: src.extractors.comprovante_pix_foto
+    origem_sprint: 27
+    pasta_destino_template: "data/raw/{pessoa}/comprovantes_pix/"
+    renomear_template:
+      com_data: "PIX_{data:%Y-%m-%d}_{sha8}.{ext}"
+      sem_data: "PIX_{sha8}.{ext}"
+
   - id: recibo_nao_fiscal
     descricao: "Recibo simples sem CNPJ formal (aluguel/mensalidade/autônomo)"
     prioridade: fallback
