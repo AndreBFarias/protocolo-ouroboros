@@ -1,8 +1,8 @@
 ---
 id: INFRA-NFCE-DEDUP-OCR-DUPLICATAS
 titulo: Extrator NFCe gera múltiplos nodes para o mesmo cupom físico — implementar dedup tolerante a OCR
-status: backlog
-concluida_em: null
+status: concluída  <!-- noqa: accent -->
+concluida_em: 2026-05-12  <!-- noqa: accent -->
 prioridade: P1
 data_criacao: 2026-05-12
 fase: VALIDACAO_ARTESANAL
