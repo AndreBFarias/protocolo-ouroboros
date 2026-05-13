@@ -1,8 +1,8 @@
 ---
 id: INFRA-DAS-EXTRAIR-COMPOSICAO
 titulo: Estender extrator DAS PARCSN para capturar decomposição principal/multa/juros + composição por tributo + código de barras
-status: backlog
-concluida_em: null
+status: concluída  <!-- noqa: accent -->
+concluida_em: 2026-05-12  <!-- noqa: accent -->
 prioridade: P1
 data_criacao: 2026-05-12
 fase: VALIDACAO_ARTESANAL
