@@ -96,6 +96,94 @@
         "para_abrir": {
           "type": "boolean",
           "description": "True quando a cápsula ainda precisa de contexto humano (sem evento/diário vinculado)."
+        },
+        "companions": {
+          "type": "array",
+          "description": "Lista opcional de mídias associadas à cápsula (fotos, áudios, vídeos adicionais ao preview/media principais). Espelha o bloco companions[] do formato .capsula.md (ADR-25-extensao).",
+          "default": [],
+          "items": {"$ref": "#/$defs/companion"}
+        }
+      }
+    },
+    "companion": {
+      "type": "object",
+      "required": ["tipo", "arquivo"],
+      "additionalProperties": false,
+      "properties": {
+        "tipo": {
+          "type": "string",
+          "enum": ["foto", "audio", "texto", "video"],
+          "description": "Tipo da mídia companion. Mesmas convenções de capsula.tipo (sem acento)."
+        },
+        "arquivo": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Nome do arquivo binário ao lado do .capsula.md (mesma pasta). Caminho relativo proibido; apenas basename."
+        },
+        "legenda": {
+          "type": ["string", "null"],
+          "description": "Legenda livre da mídia companion. Null quando ausente."
+        }
+      }
+    },
+    "capsula_md": {
+      "type": "object",
+      "description": "Frontmatter YAML de um arquivo .capsula.md. Lido por app Mobile e dashboard. ADR-25-extensao.",
+      "required": ["_schema_version", "tipo", "data", "titulo", "slug"],
+      "additionalProperties": true,
+      "properties": {
+        "_schema_version": {"type": "integer", "const": 1},
+        "tipo": {
+          "type": "string",
+          "enum": ["memoria", "evento"],
+          "description": "Categoria semântica do registro. 'memoria' = momento livre; 'evento' = encontro/situação com lugar+hora."
+        },
+        "data": {"type": "string", "format": "date"},
+        "hora": {
+          "type": ["string", "null"],
+          "pattern": "^[0-9]{2}:[0-9]{2}(:[0-9]{2})?$",
+          "description": "Hora HH:MM ou HH:MM:SS. Null quando ausente."
+        },
+        "titulo": {"type": "string", "minLength": 1, "maxLength": 200},
+        "slug": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]+$",
+          "description": "Slug do basename do arquivo (mesma convenção de Recap)."
+        },
+        "area": {"type": ["string", "null"]},
+        "subtipo": {"type": ["string", "null"]},
+        "pessoas": {
+          "type": "array",
+          "items": {"type": "string"},
+          "default": []
+        },
+        "local": {
+          "type": ["object", "string", "null"],
+          "description": "Objeto {nome, cidade, coordenadas} ou string livre legada."
+        },
+        "tags": {
+          "type": "array",
+          "items": {"type": "string"},
+          "default": []
+        },
+        "emocao_principal": {"type": ["string", "null"]},
+        "intensidade": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "maximum": 10
+        },
+        "companions": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/companion"},
+          "default": []
+        },
+        "duracao_estimada_min": {
+          "type": ["integer", "null"],
+          "minimum": 0
+        },
+        "evento_vinculado_uuid": {
+          "type": ["string", "null"],
+          "format": "uuid"
         }
       }
     }

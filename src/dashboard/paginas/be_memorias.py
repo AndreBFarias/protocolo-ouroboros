@@ -27,6 +27,7 @@ Lições UX-RD/UX-V aplicadas:
 from __future__ import annotations
 
 import json
+from dataclasses import dataclass, field
 from datetime import date, timedelta
 from pathlib import Path
 from typing import Any
@@ -72,6 +73,152 @@ _ICO_TIPO: dict[str, str] = {
     "video": "VD",
     "vídeo": "VD",
 }
+
+
+# ---------------------------------------------------------------------------
+# ADR-25-extensao: leitura do formato .capsula.md
+# ---------------------------------------------------------------------------
+
+# Convenção de nome: <YYYY-MM-DD>-<HHmmss>-<slug>.capsula.md
+# Pasta: <vault>/inbox/memorias/<YYYY>/<MM>/ (ou tests/fixtures/capsulas/ em testes).
+_SUFIXO_CAPSULA = ".capsula.md"
+
+
+@dataclass
+class Capsula:
+    """Cápsula `.capsula.md` parseada. Frontmatter validado + corpo livre."""
+
+    frontmatter: dict[str, Any]
+    corpo: str
+    caminho: Path
+    companions_resolvidos: list[Path] = field(default_factory=list)
+
+
+def _parsear_capsula_md(texto: str) -> tuple[dict[str, Any], str]:
+    """Separa frontmatter YAML do corpo markdown.
+
+    Aceita apenas arquivos que começam com ``---\\n`` (linha exata),
+    têm um segundo delimitador ``---`` em linha própria, e corpo livre
+    depois. Retorna ``(frontmatter_dict, corpo_str)``.
+
+    Raises:
+        ValueError: quando o arquivo não respeita o formato canônico.
+    """
+    import yaml
+
+    if not texto.startswith("---\n"):
+        raise ValueError("capsula.md sem frontmatter inicial '---'")
+    resto = texto[4:]
+    fechamento = resto.find("\n---")
+    if fechamento < 0:
+        raise ValueError("capsula.md sem delimitador final '---'")
+    frente_raw = resto[:fechamento]
+    corpo = resto[fechamento + 4:].lstrip("\n")
+    frontmatter = yaml.safe_load(frente_raw) or {}
+    if not isinstance(frontmatter, dict):
+        raise ValueError("frontmatter de capsula.md deve ser dicionário YAML")
+    return frontmatter, corpo
+
+
+def _coagir_para_json(valor: Any) -> Any:
+    """Converte tipos Python do ``yaml.safe_load`` para JSON-compatíveis.
+
+    ``yaml.safe_load`` mapeia ``2026-05-12`` para ``datetime.date`` e
+    ``10:00:00`` (sem aspas) para ``int`` ou ``datetime.time``; ambos
+    quebram a validação contra schemas que esperam string. Esta função
+    normaliza in-place via cópia rasa, sem alterar ``frontmatter``
+    original.
+    """
+    import datetime
+
+    if isinstance(valor, (datetime.date, datetime.datetime, datetime.time)):
+        return valor.isoformat()
+    if isinstance(valor, dict):
+        return {k: _coagir_para_json(v) for k, v in valor.items()}
+    if isinstance(valor, list):
+        return [_coagir_para_json(v) for v in valor]
+    return valor
+
+
+def _validar_capsula_frontmatter(frontmatter: dict[str, Any]) -> None:
+    """Valida frontmatter contra ``$defs.capsula_md`` em ``schema_memorias.json``.
+
+    Aplica :func:`_coagir_para_json` antes de validar para tolerar
+    representações YAML de data/hora não-quoted.
+
+    Raises:
+        jsonschema.ValidationError: quando o frontmatter viola o schema.
+    """
+    import jsonschema
+
+    schema_path = (
+        Path(__file__).resolve().parents[3]
+        / "mappings"
+        / "schema_memorias.json"
+    )
+    schema_completo = json.loads(schema_path.read_text(encoding="utf-8"))
+    subschema = {
+        "$schema": schema_completo["$schema"],
+        "$ref": "#/$defs/capsula_md",
+        "$defs": schema_completo["$defs"],
+    }
+    jsonschema.validate(_coagir_para_json(frontmatter), subschema)
+
+
+def carregar_capsulas(base_path: Path) -> list[Capsula]:
+    """Carrega todas as cápsulas ``.capsula.md`` sob ``base_path``.
+
+    Procura recursivamente arquivos ``*.capsula.md``. Valida frontmatter
+    contra ``$defs.capsula_md`` do schema canônico. Cápsulas inválidas
+    são descartadas silenciosamente (apenas log via stderr é aceitável
+    em produção; aqui o teste cobre o caminho feliz). Ordena por
+    ``data`` decrescente (mais recente primeiro), com tie-break por
+    ``hora``.
+
+    Args:
+        base_path: raiz de busca. Em produção,
+            ``<vault>/inbox/memorias/``. Em teste, pasta de fixtures.
+
+    Returns:
+        Lista de :class:`Capsula` ordenada por data decrescente.
+    """
+    import jsonschema
+
+    if not base_path.exists():
+        return []
+
+    capsulas: list[Capsula] = []
+    for caminho in sorted(base_path.rglob(f"*{_SUFIXO_CAPSULA}")):
+        try:
+            texto = caminho.read_text(encoding="utf-8")
+            frontmatter, corpo = _parsear_capsula_md(texto)
+            _validar_capsula_frontmatter(frontmatter)
+        except (OSError, ValueError, jsonschema.ValidationError):
+            continue
+        companions_files: list[Path] = []
+        for comp in frontmatter.get("companions") or []:
+            if not isinstance(comp, dict):
+                continue
+            arq = str(comp.get("arquivo") or "").strip()
+            if not arq:
+                continue
+            companions_files.append(caminho.parent / arq)
+        capsulas.append(
+            Capsula(
+                frontmatter=frontmatter,
+                corpo=corpo,
+                caminho=caminho,
+                companions_resolvidos=companions_files,
+            )
+        )
+
+    def _chave(c: Capsula) -> tuple[str, str]:
+        data = str(c.frontmatter.get("data") or "")
+        hora = str(c.frontmatter.get("hora") or "")
+        return (data, hora)
+
+    capsulas.sort(key=_chave, reverse=True)
+    return capsulas
 
 
 def _carregar_cache(vault_root: Path | None, nome: str) -> list[dict[str, Any]]:
