@@ -93,6 +93,13 @@ STATE.md
 .cursorrules
 .windsurfrules
 .claude/
+# Excecoes trackeadas: hook session-start local + settings.json do projeto.
+!.claude/
+.claude/*
+!.claude/hooks/
+.claude/hooks/*
+!.claude/hooks/session-start-projeto.py
+!.claude/settings.json
 .cursor/
 .aider*
 .continue/

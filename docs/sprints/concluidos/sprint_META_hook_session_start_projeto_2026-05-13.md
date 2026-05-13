@@ -1,8 +1,8 @@
 ---
 id: META-HOOK-SESSION-START-PROJETO
 titulo: Hook session-start local do projeto que injeta estado vivo no contexto inicial
-status: backlog
-concluida_em: null
+status: concluída
+concluida_em: 2026-05-13
 prioridade: P1
 data_criacao: 2026-05-13
 fase: OPERACIONAL
@@ -49,3 +49,36 @@ Para que nova sessão comece sabendo: estado de graduação dos tipos, qual épi
 ---
 
 *"Hook é a primeira voz que a sessão escuta; deve dizer onde está o mapa." -- princípio do anfitrião*
+
+---
+
+## Apêndice de conclusão (2026-05-13)
+
+### Entregáveis criados
+
+- `.claude/hooks/session-start-projeto.py` -- hook Python que injeta `additionalContext` com estado vivo dos tipos, épico ativo e três docs canônicos.
+- `.claude/settings.json` -- registra o hook em `hooks.SessionStart` com timeout de 5s.
+- `tests/test_session_start_projeto.py` -- 6 testes verdes (payload vazio, ausência de snapshot, snapshot válido, JSON corrompido, subprocess ponta-a-ponta, ROADMAP ausente).
+- `.gitignore` -- adicionadas exceções (`!`) para permitir que os dois arquivos `.claude/` acima sejam trackeados sem expor o restante.
+
+### Padrões aplicados
+
+- (n) Defesa em camadas: briefing automatizado complementa leitura manual de CLAUDE.md.
+- (b) Acentuação PT-BR em código e comentários (`check_acentuacao.py` exit 0).
+- (g) Citação de filósofo no rodapé do `.py` novo (Sêneca).
+- (u) Proof-of-work runtime real: hook executado por subprocess, JSON validado por `json.tool`.
+
+### Proof-of-work
+
+```
+$ echo '{}' | python3 .claude/hooks/session-start-projeto.py | python3 -m json.tool
+{
+    "additionalContext": "## Briefing local do protocolo-ouroboros (...)
+    Estado dos tipos: graduacao_tipos.json ausente -- rode `scripts/dossie_tipo.py snapshot` (...)
+    Epico ativo (heuristica): epico 1.
+    Sprints em backlog/: 119. (...)"
+}
+```
+
+Suite isolada: 6/6 verdes em 0.10s. Suite global após mudanças: 2938 passed (cresceu +6 vs baseline 2932), 23 failed pré-existentes, 43 skipped, 1 xfailed.
+
