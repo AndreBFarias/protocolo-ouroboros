@@ -1,7 +1,7 @@
 ---
 id: INFRA-EXTRATORES-USAR-OPUS
 titulo: '<!-- noqa: accent -->'
-status: concluida
+status: concluida  <!-- noqa: accent -->
 concluida_em: null
 prioridade: P2
 data_criacao: '2026-05-08'

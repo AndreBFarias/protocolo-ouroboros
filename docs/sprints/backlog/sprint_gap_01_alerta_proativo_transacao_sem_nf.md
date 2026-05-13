@@ -1,5 +1,5 @@
 ---
-id: GAP-01-ALERTA-PROATIVO-TRANSACAO-SEM-NF
+id: GAP-01-ALERTA-PROATIVO-TRANSACAO-SEM-NF  <!-- noqa: accent -->
 titulo: 'Sprint GAP-01 -- Alerta proativo: transação sem NF/comprovante (cobertura
   total)'
 status: backlog

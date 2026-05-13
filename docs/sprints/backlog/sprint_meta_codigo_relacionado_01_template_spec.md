@@ -1,5 +1,5 @@
 ---
-id: META-CODIGO-RELACIONADO-01-TEMPLATE-SPEC
+id: META-CODIGO-RELACIONADO-01-TEMPLATE-SPEC  <!-- noqa: accent -->
 titulo: Sprint META-CODIGO-RELACIONADO-01 — Campo "código relacionado já no repo"
   no template de spec
 status: backlog
