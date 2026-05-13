@@ -1,9 +1,100 @@
-# ESTADO_ATUAL.md -- Snapshot tecnico em 2026-05-12 (Onda 6 destravada: auditoria + 8 patches + schema 11 tipos)
+# ESTADO_ATUAL.md -- Snapshot técnico em 2026-05-12 (Fase A inteira + 8 sprints executadas + bug C6 massivo resolvido)
 
-> **Versionado a partir de 2026-04-29 pela Sprint DOC-VERDADE-01.A; atualizado em 2026-05-12 (parte 2) com retomada apos travamento da sessao anterior: auditoria profunda das 14 specs novas + 8 patches do supervisor + schema OCR estendido (commit `59b0170`)**.
+> **Versionado a partir de 2026-04-29 pela Sprint DOC-VERDADE-01.A. Última atualização em 2026-05-12 (parte 6): Fase A completa (4 validações artesanais multimodais + 8 sprints executadas via executors paralelos + descoberta arquitetural de 253 duplicações OFX+XLSX no C6 / ~43% do banco)**.
 > Whitelist em `.gitignore` permite este arquivo + COMO_AGIR.md no repo (POR_QUE.md e PROMPT_NOVA_SESSAO.md continuam locais por conter PII estrutural).
-> Esta doc e fotografia do momento — para verdade vivo consulte `git log` + `ls docs/sprints/concluidos/`.
+> Esta doc é fotografia do momento — para verdade viva consulte `git log` + `ls docs/sprints/concluidos/`.
 > Para auditar este snapshot contra realidade: `python scripts/auditar_estado.py`.
+
+## Sessão 2026-05-12 (parte 6) -- Fase A completa + bug C6 arquitetural resolvido
+
+**Estado runtime (2026-05-12 23:10)**: HEAD `79f54c5`. Pytest **2830 collected** (+78 vs início da sessão). Smoke 10/10. Lint exit 0. 22 commits pushed na sessão.
+
+### 8 sprints executadas via executors paralelos (todos pushed)
+
+| # | Sprint | Executor SHA | Merge SHA |
+|---|---|---|---|
+| 1 | INFRA-OPUS-SCHEMA-EXTENDIDO | `59b0170` | direto main |
+| 2 | MOB-bridge-4-inbox-subtipos-reader | `e6390eb` | `e9f13ea` |
+| 3 | INFRA-NFCE-FIX-PS5-P55 | `cb9e216` | `3d659bb` |
+| 4 | INFRA-DAS-EXTRAIR-COMPOSICAO | `cd96a42` | `eec9c2e` |
+| 5 | INFRA-CONTRACHEQUE-EXTRAIR-BASES | `257942d` | `8a7dfda` |
+| 6 | INFRA-CATEGORIZAR-SALARIO-G4F-C6 | `4f82e26` | `b0e76cd` |
+| 7 | INFRA-DEDUP-LANCAMENTO-DUPLICADO-G4F | `5b271ef` | `a81ac7d` |
+| 8 | INFRA-DEDUP-C6-OFX-XLSX-AMPLO | `2998b26` | `d6758f6` |
+
+### Achado massivo descoberto e resolvido
+
+A sprint #7 (DEDUP-LANCAMENTO-DUPLICADO-G4F) investigou um par duplicado isolado e revelou padrão **arquitetural**: 253 pares duplicados no C6 (~510 linhas, ~43% do C6/pessoa_a) por **ingestão dupla OFX+XLSX**. Causa-raiz: `src/transform/deduplicator.py::deduplicar_por_hash_fuzzy` usa chave `(data, valor, local)` e o campo `local` derivado da descrição é estruturalmente diferente entre OFX (prefixo "RECEBIMENTO SALARIO -") e XLSX (sem prefixo).
+
+Sprint #8 (DEDUP-C6-OFX-XLSX-AMPLO P0) implementou **Opção 2 ampliada** (commit `2998b26`):
+- `_normalizar_local_para_chave` remove prefixos OFX antes do dedup
+- `_riqueza_descricao` preserva OFX vs XLSX (OFX é mais informativo no C6)
+- `_consolidar_pares_ofx_xlsx_mesmo_banco` pass 2b por `_arquivo_origem`
+
+Cross-check Itaú/Santander/Nubank: padrão **não** se repete (Itaú/Santander sem OFX, Nubank com estrutura compatível). Detalhe em `docs/auditorias/DEDUP_AMPLO_INVESTIGACAO_2026-05-12.md`.
+
+**Limitação conhecida**: XLSX consolidado (`data/output/ouroboros_2026.xlsx`) **não foi regenerado pelo agente** para não conflitar com worktrees paralelos. Dono deve rodar `make run` no main para regenerar e confirmar 253 pares desaparecem.
+
+### Validações artesanais multimodais (Fase A do supervisor)
+
+4 tipos × 2 amostras = 8 amostras lidas via Read multimodal Opus 4.7:
+
+| Tipo | Amostras | Veredito | Relatório |
+|---|---|---|---|
+| CUPOM | 4 NSP + 1 Vitória | REPROVADO inicial → 5 caches promovidos | `VALIDACAO_ARTESANAL_CUPOM_2026-05-12.md` |
+| HOLERITE | G4F + Infobase fev/2026 | APROVADO_COM_RESSALVAS | `VALIDACAO_ARTESANAL_HOLERITE_2026-05-12.md` |
+| DAS PARCSN | parcela 4/25 + 17/25 | APROVADO_COM_RESSALVAS | `VALIDACAO_ARTESANAL_DAS_2026-05-12.md` |
+| NFCe | PS5 + supermercado | APROVADO_COM_RESSALVAS_CRITICAS | `VALIDACAO_ARTESANAL_NFCE_2026-05-12.md` |
+
+### Em execução agora (2 executors background)
+
+- **INFRA-NFCE-DEDUP-OCR-DUPLICATAS** (agentId `a74f5fd0fcf3f9841`, P1, ~3h) — dedup tolerante a OCR no grafo NFCe (4 nodes → 2 esperado).
+- **DASH-PAGAMENTOS-CRUZADOS-CASAL** (agentId `a9fde3b382b451e97`, P2, ~2h) — pessoa_pagadora vs pessoa_devedora + bloco dashboard + pacote IRPF.
+
+### Sprint-filhas pendentes em backlog (P1+ não-executadas)
+
+- INFRA-SUBSTITUIR-CACHE-SINTETICO-CUPOM (P0, 5 caches já promovidos local pelo supervisor; resta validar via gauntlet)
+- INFRA-IMPORTAR-SANTANDER-ANDRE (P2, gerada por CATEGORIZAR-G4F-C6 como spec-filha)
+- INFRA-LINT-ACENTUACAO-SPECS-2026-05-12 (P3, saneamento)
+
+### Sprints originais ainda em backlog (Onda 6/7)
+
+Não executadas nesta sessão:
+- `MOB-bridge-5-classifier-pix` (depende DOC-27)
+- `MOB-dashboard-mostra-pix-app`
+- `MOB-audit-estrutura-vault-md`
+- `MOB-spec-exercicios-gif-timer`
+- `MOB-spec-transcricao-audio`
+- `MOB-spec-galeria-memorias`
+- `MOB-bug-camera-momento-repro`
+- `UX-AUDIT-VISUAL-2026-05-12`
+
+### Padrões canônicos descobertos e formalizados nesta sessão
+
+Adicionados em `VALIDATOR_BRIEF.md` (letras `(w)`-`(aa)` já estavam ocupadas com outras semânticas; descobertos viraram `(dd)`-`(hh)`):
+
+- **(dd)** Stash chain hazard: agente background com worktree compartilhado pode dropar trabalho do supervisor via `git stash` mal-encadeado.
+- **(ee)** Schema-extension precede validation: nunca crie test/fixtures que dependam de schema antes do schema existir.
+- **(ff)** Auditoria automática vs supervisor: lê texto da spec, supervisor lê texto contra grep. Padrão `(s)` Validação ANTES só funciona se executado.
+- **(gg)** Cache sintético é placeholder honesto que vira mentira silenciosa quando consumido como gabarito.
+- **(hh)** Ingestão dupla OFX+XLSX escapa dedup quando `local` é estruturalmente diferente entre as fontes.
+
+### Regra revogada
+
+**(h) Limite 800 linhas por arquivo**: REVOGADA pelo dono em 2026-05-12. Splits ficam por critério de legibilidade humana, não regra fixa. As 6 specs `INFRA-SPLIT-*` em backlog mantidas mas perderam prioridade automática.
+
+### Caches Opus promovidos a gabaritos reais (local, em `data/output/opus_ocr_cache/`)
+
+5 caches do tipo `cupom_fiscal_foto`:
+- `2e43640d` (propagado de 6554d704)
+- `6554d704` (NSP 27/04 — 49 itens alta confiança)
+- `67a3104a` (NSP 24/04 — 22 itens alta confiança)
+- `bc3c42aa` (propagado de 67a3104a)
+- `37a8a111` (Vitória farmácia 23/04 — 2 itens alta confiança)
+
+Backup dos 4 sintéticos em `data/output/opus_ocr_cache_sintetico_backup/`. 6 fixtures pytest lixo movidas para `data/output/opus_ocr_pendentes_lixo_2026-05-12/`.
+
+---
 
 ## Sessao 2026-05-12 (parte 2) -- Retomada apos travamento: auditoria + 8 patches + schema 11 tipos
 
