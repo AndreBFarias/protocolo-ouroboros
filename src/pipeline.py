@@ -545,6 +545,34 @@ def _executar_er_produtos() -> None:
         logger.warning("ER de produtos falhou: %s", erro)
 
 
+def _executar_skill_d7_log() -> None:
+    """Gera ``data/output/skill_d7_log.json`` (Sprint INFRA-SKILLS-D7-LOG).
+
+    Snapshot estruturado do classificador D7, consumido pela página
+    ``src/dashboard/paginas/skills_d7.py``. Integração feita em 2026-05-13
+    após auditoria detectar que o script existia em `scripts/gerar_skill_d7_log.py`
+    mas não era invocado automaticamente. Falha-soft.
+    """
+    try:
+        from scripts.gerar_skill_d7_log import gerar_snapshot
+    except ImportError as erro:
+        logger.warning("Snapshot D7 indisponível (import falhou): %s", erro)
+        return
+
+    try:
+        import json
+
+        snapshot = gerar_snapshot()
+        caminho_out = DIR_OUTPUT / "skill_d7_log.json"
+        caminho_out.write_text(
+            json.dumps(snapshot, ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
+        logger.info("Snapshot D7 gravado: %s", caminho_out)
+    except Exception as erro:
+        logger.warning("Geração do snapshot D7 falhou: %s", erro)
+
+
 def _executar_item_categorizer() -> None:
     """Aplica categorização por regex a todos os nodes `item` do grafo.
 
@@ -697,6 +725,12 @@ def executar(mes: str | None = None, processar_tudo: bool = False) -> None:
     # agregação por produto canônico já esteja pronta. Itens em "Outros"
     # com frequência >=3 geram proposta MD para revisão supervisor.
     _executar_item_categorizer()
+
+    # 15. Snapshot do classificador D7 (Sprint INFRA-SKILLS-D7-LOG): gera
+    # `data/output/skill_d7_log.json` consumido por `src/dashboard/paginas/skills_d7.py`.
+    # Integração feita em 2026-05-13 após auditoria detectar que o script existia
+    # mas não era invocado automaticamente. Falha-soft (sem grafo == no-op).
+    _executar_skill_d7_log()
 
     logger.info("=== Pipeline concluído ===")
     logger.info("XLSX: %s", caminho_xlsx)

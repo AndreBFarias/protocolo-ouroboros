@@ -123,6 +123,11 @@ _CATALOGO: dict[str, tuple[str, str, str]] = {
         "Cupom térmico fotografado (OCR)",
         "Documentos",
     ),
+    "comprovante_pix_foto": (
+        "comprovante-pix-foto",
+        "Comprovante PIX fotografado (Itaú/C6/Nubank via Opus visão)",
+        "Documentos",
+    ),
     "cupom_garantia_estendida_pdf": (
         "cupom-garantia-pdf",
         "Cupom de garantia estendida PDF",
