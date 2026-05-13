@@ -88,9 +88,73 @@ REGEX_G4F_PROVENTO = re.compile(r"\+\s+(.+?)\s+[\d.,]+\s+R\$\s*([\d.,]+)")
 REGEX_G4F_DESCONTO = re.compile(r"-\s+(.+?)\s+[\d.,]+\s+\(R\$\s*([\d.,]+)\)")
 REGEX_G4F_LIQUIDO = re.compile(r"Valor l[ií]quido a receber:\s*R\$\s*([\d.,]+)")
 
+# Sprint INFRA-CONTRACHEQUE-EXTRAIR-BASES: bases fiscais e metadata canônica.
+REGEX_G4F_BASE_INSS = re.compile(
+    r"Base de c[aá]lculo INSS:?\s*R?\$?\s*([\d.,]+)", re.IGNORECASE
+)
+REGEX_G4F_BASE_IRRF = re.compile(
+    r"Base de c[aá]lculo (?:IR|IRRF):?\s*R?\$?\s*([\d.,]+)", re.IGNORECASE
+)
+REGEX_G4F_BASE_FGTS = re.compile(
+    r"Base de c[aá]lculo FGTS:?\s*R?\$?\s*([\d.,]+)", re.IGNORECASE
+)
+REGEX_G4F_FGTS_MES = re.compile(
+    r"FGTS do m[eê]s:?\s*R?\$?\s*([\d.,]+)", re.IGNORECASE
+)
+REGEX_G4F_DEP_IR = re.compile(
+    r"N[ºo°]?\s*de dependentes IR:?\s*(\d+)", re.IGNORECASE
+)
+REGEX_G4F_DEP_SALFAM = re.compile(
+    r"N[ºo°]?\s*dependentes? Sal[aá]rio Fam[ií]lia:?\s*(\d+)", re.IGNORECASE
+)
+REGEX_G4F_CNPJ = re.compile(r"CNPJ:?\s*(\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2})")
+REGEX_G4F_RAZAO = re.compile(
+    r"Empresa:?\s*(G4F[^\n,]*?(?:LTDA|ME|S\.?A\.?|EIRELI)?)(?=\s*[,\n]|\s+CNPJ)",
+    re.IGNORECASE,
+)
+REGEX_G4F_CARGO = re.compile(r"Cargo:?\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ][^\n,]+?)(?=\s*[,\n])")
+REGEX_G4F_DATA_ADM = re.compile(
+    r"(?:Data de admiss[aã]o|Admiss[aã]o):?\s*(\d{2}/\d{2}/\d{4})", re.IGNORECASE
+)
+REGEX_G4F_DATA_PAG = re.compile(
+    r"Data de pagamento:?\s*(\d{2}/\d{2}/\d{4})", re.IGNORECASE
+)
+REGEX_G4F_BANCO = re.compile(
+    r"(?:Conta|Banco):?\s*Banco\s*(\d{2,3})\s*-?\s*([^,\n]+?),?\s*"
+    r"Ag[eê]ncia\s*(\d+)[,\s]+CC\s*([\d\-]+)",
+    re.IGNORECASE,
+)
+
 REGEX_INFOBASE_REF = re.compile(r"Mensalista\s+(\w+)\s+de\s+(\d{4})")
 REGEX_INFOBASE_CODIGO = re.compile(r"^\s*(\d{3,4})[|\]\s]")
 REGEX_INFOBASE_VALOR = re.compile(r"[\d.]+,\d{2}")
+
+# Sprint INFRA-CONTRACHEQUE-EXTRAIR-BASES: regex Infobase rodapé bases.
+# Valores monetários BR sempre terminam em ",DD" — ancorar para evitar comer
+# vírgula separadora subsequente ("Base_INSS 8.475,55, Base_IRRF" → captura
+# apenas "8.475,55", sem o sinal).
+REGEX_INFOBASE_BASE_INSS = re.compile(
+    r"Base[_\s]?INSS:?\s*R?\$?\s*([\d.]+,\d{2})", re.IGNORECASE
+)
+REGEX_INFOBASE_BASE_IRRF = re.compile(
+    r"Base[_\s]?IRRF:?\s*R?\$?\s*([\d.]+,\d{2})", re.IGNORECASE
+)
+REGEX_INFOBASE_BASE_FGTS = re.compile(
+    r"Base[_\s]?FGTS:?\s*R?\$?\s*([\d.]+,\d{2})", re.IGNORECASE
+)
+REGEX_INFOBASE_FGTS_MES = re.compile(
+    r"(?<!Base[_\s])FGTS[:\s]+(?!do m[eê]s)R?\$?\s*([\d.]+,\d{2})", re.IGNORECASE
+)
+REGEX_INFOBASE_CNPJ = re.compile(r"CNPJ:?\s*(\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2})")
+REGEX_INFOBASE_RAZAO = re.compile(
+    r"(INFOBASE[^\n,]*?(?:LTDA|ME|S\.?A\.?|EIRELI))", re.IGNORECASE
+)
+REGEX_INFOBASE_CARGO = re.compile(
+    r"Cargo:?\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ][^\n,]+?)(?=\s*[,\n])"
+)
+REGEX_INFOBASE_DATA_ADM = re.compile(
+    r"(?:Data de admiss[aã]o|Admiss[aã]o):?\s*(\d{2}/\d{2}/\d{4})", re.IGNORECASE
+)
 
 CODIGOS_INFOBASE: dict[str, str] = {
     "8781": "bruto",
@@ -127,6 +191,76 @@ def _detectar_fonte(texto: str) -> Optional[str]:
     if "INFOBASE" in texto.upper():
         return "Infobase"
     return None
+
+
+def _extrair_bases_g4f(texto: str) -> dict:
+    """Sprint INFRA-CONTRACHEQUE-EXTRAIR-BASES.
+
+    Extrai metadata fiscal G4F (bases INSS/IRRF/FGTS, dependentes, CNPJ,
+    cargo, datas, dados bancários) via regex sobre texto bruto.
+
+    Campos ausentes recebem None (numéricos) ou "" (strings). Não quebra
+    parse principal — falha-soft.
+    """
+    def _num(pat: re.Pattern, src: str) -> Optional[float]:
+        m = pat.search(src)
+        return parse_valor_br_float(m.group(1)) if m else None
+
+    def _int(pat: re.Pattern, src: str) -> Optional[int]:
+        m = pat.search(src)
+        return int(m.group(1)) if m else None
+
+    def _str(pat: re.Pattern, src: str) -> str:
+        m = pat.search(src)
+        return m.group(1).strip() if m else ""
+
+    banco_credito = ""
+    m_banco = REGEX_G4F_BANCO.search(texto)
+    if m_banco:
+        numero, nome, agencia, conta = m_banco.groups()
+        banco_credito = f"{nome.strip()} {numero} / Ag {agencia} / CC {conta}"
+
+    return {
+        "base_inss": _num(REGEX_G4F_BASE_INSS, texto),
+        "base_irrf": _num(REGEX_G4F_BASE_IRRF, texto),
+        "base_fgts": _num(REGEX_G4F_BASE_FGTS, texto),
+        "fgts_mes": _num(REGEX_G4F_FGTS_MES, texto),
+        "dependentes_ir": _int(REGEX_G4F_DEP_IR, texto),
+        "dependentes_salfam": _int(REGEX_G4F_DEP_SALFAM, texto),
+        "cnpj_empresa": _str(REGEX_G4F_CNPJ, texto),
+        "razao_social": _str(REGEX_G4F_RAZAO, texto),
+        "cargo": _str(REGEX_G4F_CARGO, texto),
+        "data_admissao": _str(REGEX_G4F_DATA_ADM, texto),
+        "data_pagamento": _str(REGEX_G4F_DATA_PAG, texto),
+        "banco_credito": banco_credito,
+    }
+
+
+def _extrair_bases_infobase(texto: str) -> dict:
+    """Sprint INFRA-CONTRACHEQUE-EXTRAIR-BASES.
+
+    Extrai metadata fiscal Infobase (bases INSS/IRRF/FGTS, FGTS mês, CNPJ,
+    razão social, cargo, data admissão) via regex sobre texto bruto do
+    rodapé. Falha-soft: campos ausentes viram None ou "".
+    """
+    def _num(pat: re.Pattern, src: str) -> Optional[float]:
+        m = pat.search(src)
+        return parse_valor_br_float(m.group(1)) if m else None
+
+    def _str(pat: re.Pattern, src: str) -> str:
+        m = pat.search(src)
+        return m.group(1).strip() if m else ""
+
+    return {
+        "base_inss": _num(REGEX_INFOBASE_BASE_INSS, texto),
+        "base_irrf": _num(REGEX_INFOBASE_BASE_IRRF, texto),
+        "base_fgts": _num(REGEX_INFOBASE_BASE_FGTS, texto),
+        "fgts_mes": _num(REGEX_INFOBASE_FGTS_MES, texto),
+        "cnpj_empresa": _str(REGEX_INFOBASE_CNPJ, texto),
+        "razao_social": _str(REGEX_INFOBASE_RAZAO, texto),
+        "cargo": _str(REGEX_INFOBASE_CARGO, texto),
+        "data_admissao": _str(REGEX_INFOBASE_DATA_ADM, texto),
+    }
 
 
 def _parse_g4f(texto: str) -> Optional[dict]:
@@ -175,6 +309,9 @@ def _parse_g4f(texto: str) -> Optional[dict]:
     if liquido == 0.0 and bruto > 0:
         liquido = bruto - inss - irrf - vr_va
 
+    # Sprint INFRA-CONTRACHEQUE-EXTRAIR-BASES: bases fiscais + metadata.
+    bases = _extrair_bases_g4f(texto)
+
     return {
         "mes_ref": mes_ref,
         "fonte": f"G4F - {tipo}" if tipo != "Folha Mensal" else "G4F",
@@ -183,8 +320,21 @@ def _parse_g4f(texto: str) -> Optional[dict]:
         "irrf": round(irrf, 2),
         "vr_va": round(vr_va, 2),
         "liquido": round(liquido, 2),
-        "banco": "",
+        "banco": bases.get("banco_credito") or "",
         "itens": itens_holerite,
+        # Bases fiscais (Sprint INFRA-CONTRACHEQUE-EXTRAIR-BASES).
+        "base_inss": bases.get("base_inss"),
+        "base_irrf": bases.get("base_irrf"),
+        "base_fgts": bases.get("base_fgts"),
+        "fgts_mes": bases.get("fgts_mes"),
+        "dependentes_ir": bases.get("dependentes_ir"),
+        "dependentes_salfam": bases.get("dependentes_salfam"),
+        "cnpj_empresa": bases.get("cnpj_empresa") or "",
+        "razao_social": bases.get("razao_social") or "",
+        "cargo": bases.get("cargo") or "",
+        "data_admissao": bases.get("data_admissao") or "",
+        "data_pagamento": bases.get("data_pagamento") or "",
+        "banco_credito": bases.get("banco_credito") or "",
     }
 
 
@@ -266,6 +416,9 @@ def _parse_infobase(texto: str) -> Optional[dict]:
             {"descricao": "IRRF", "valor": irrf, "tipo": "desconto"}
         )
 
+    # Sprint INFRA-CONTRACHEQUE-EXTRAIR-BASES: bases fiscais + metadata.
+    bases = _extrair_bases_infobase(texto)
+
     return {
         "mes_ref": mes_ref,
         "fonte": f"Infobase - {tipo}" if tipo != "Folha Mensal" else "Infobase",
@@ -276,6 +429,19 @@ def _parse_infobase(texto: str) -> Optional[dict]:
         "liquido": round(liquido, 2),
         "banco": "",
         "itens": itens_infobase,
+        # Bases fiscais (Sprint INFRA-CONTRACHEQUE-EXTRAIR-BASES).
+        "base_inss": bases.get("base_inss"),
+        "base_irrf": bases.get("base_irrf"),
+        "base_fgts": bases.get("base_fgts"),
+        "fgts_mes": bases.get("fgts_mes"),
+        "dependentes_ir": None,
+        "dependentes_salfam": None,
+        "cnpj_empresa": bases.get("cnpj_empresa") or "",
+        "razao_social": bases.get("razao_social") or "",
+        "cargo": bases.get("cargo") or "",
+        "data_admissao": bases.get("data_admissao") or "",
+        "data_pagamento": "",
+        "banco_credito": "",
     }
 
 
@@ -301,6 +467,34 @@ def _ingerir_holerite_no_grafo(
     # CNPJ oficial fica em metadata.cnpj_oficial para entity resolution.
     cnpj_sintetico = f"HOLERITE|{hashlib.sha256(sigla.encode('utf-8')).hexdigest()[:12]}"
     chave = f"HOLERITE|{fonte}|{mes_ref}".replace(" ", "_")
+    # Sprint INFRA-CONTRACHEQUE-EXTRAIR-BASES: serializa bases fiscais para
+    # metadata. None vira ausência de chave (graceful) — campos só aparecem
+    # quando regex casou. Retrocompat preservada para chamadas antigas.
+    bases_metadata: dict = {}
+    for chave_base in (
+        "base_inss",
+        "base_irrf",
+        "base_fgts",
+        "fgts_mes",
+        "dependentes_ir",
+        "dependentes_salfam",
+        "cnpj_empresa",
+        "razao_social_extraida",
+        "cargo",
+        "data_admissao",
+        "data_pagamento",
+        "banco_credito",
+    ):
+        # 'razao_social_extraida' lê 'razao_social' do registro (o do grafo
+        # usa razao_social_oficial via mapping; mantemos os dois sem colisão).
+        chave_registro = (
+            "razao_social" if chave_base == "razao_social_extraida" else chave_base
+        )
+        valor = registro.get(chave_registro)
+        if valor is None or valor == "":
+            continue
+        bases_metadata[chave_base] = valor
+
     documento = {
         "chave_44": chave,
         "cnpj_emitente": cnpj_sintetico,
@@ -319,6 +513,7 @@ def _ingerir_holerite_no_grafo(
         "numero": chave,
         "arquivo_original": str(arquivo.resolve()),
         "periodo_apuracao": mes_ref,
+        **bases_metadata,
         # Sprint AUDIT2-METADATA-ITENS-LISTA: lista granular de proventos+
         # descontos. Vai pra metadata.itens via spread (sem upsert_item, pois
         # holerite não tem código de produto).
