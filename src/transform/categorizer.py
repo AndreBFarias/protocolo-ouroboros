@@ -55,6 +55,15 @@ class Categorizer:
                     "tipo": config.get("tipo"),
                     "tag_irpf": config.get("tag_irpf"),
                     "regra_valor": config.get("regra_valor"),
+                    # Filtros estruturais opcionais (Sprint INFRA-CATEGORIZAR-SALARIO-G4F-C6).
+                    # Permitem matar drift de salario chegando como transferencia
+                    # quando a descricao bruta nao contem o nome do empregador.
+                    "banco_origem": config.get("banco_origem"),
+                    "valor_min": config.get("valor_min"),
+                    "valor_max": config.get("valor_max"),
+                    "dia_min": config.get("dia_min"),
+                    "dia_max": config.get("dia_max"),
+                    "match_descricao_vazia": bool(config.get("match_descricao_vazia", False)),
                 }
             )
 
@@ -118,21 +127,73 @@ class Categorizer:
 
         return operacoes.get(operador, True)
 
+    def _verificar_filtros_estruturais(self, override: dict, transacao: dict) -> bool:
+        """Verifica filtros opcionais banco_origem/valor_min/valor_max/dia_min/dia_max.
+
+        Retorna True se todos os filtros declarados forem atendidos (ou ausentes).
+        Sprint INFRA-CATEGORIZAR-SALARIO-G4F-C6: salario G4F chega como transferencia
+        no C6 com descricao sem nome do empregador; filtros estruturais sao a forma
+        canonica de reconhecer o padrao por valor + banco + janela de data.
+        """
+        banco_esperado = override.get("banco_origem")
+        if banco_esperado is not None:
+            banco_atual = (transacao.get("banco_origem") or "").strip()
+            if banco_atual.upper() != str(banco_esperado).strip().upper():
+                return False
+
+        valor = transacao.get("valor", 0) or 0
+        valor_min = override.get("valor_min")
+        valor_max = override.get("valor_max")
+        if valor_min is not None and valor < float(valor_min):
+            return False
+        if valor_max is not None and valor > float(valor_max):
+            return False
+
+        dia_min = override.get("dia_min")
+        dia_max = override.get("dia_max")
+        if dia_min is not None or dia_max is not None:
+            data_t = transacao.get("data")
+            dia = getattr(data_t, "day", None)
+            if dia is None:
+                return False
+            if dia_min is not None and dia < int(dia_min):
+                return False
+            if dia_max is not None and dia > int(dia_max):
+                return False
+
+        return True
+
     def _aplicar_override(self, transacao: dict) -> bool:
         """Tenta aplicar um override manual. Retorna True se encontrou match."""
         texto_busca = " ".join(
             [
-                transacao.get("_descricao_original", ""),
-                transacao.get("local", ""),
+                transacao.get("_descricao_original", "") or "",
+                transacao.get("local", "") or "",
             ]
         ).upper()
         valor = transacao.get("valor", 0)
 
         for override in self.overrides:
-            if override["descricao"].upper() not in texto_busca:
+            descricao_chave = override["descricao"].upper()
+            descricao_vazia_ok = override.get("match_descricao_vazia", False)
+            tem_filtros = (
+                override.get("banco_origem") is not None
+                or override.get("valor_min") is not None
+                or override.get("valor_max") is not None
+                or override.get("dia_min") is not None
+                or override.get("dia_max") is not None
+            )
+
+            if descricao_vazia_ok and tem_filtros:
+                # Match estritamente estrutural; ignora descricao (ou ela e marcador).
+                pass
+            elif descricao_chave not in texto_busca:
                 continue
 
             if not self._verificar_regra_valor(override["regra_valor"], valor):
+                continue
+
+            if not self._verificar_filtros_estruturais(override, transacao):
                 continue
 
             if override["categoria"] is not None:

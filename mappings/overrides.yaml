@@ -44,5 +44,25 @@ overrides:
     categoria: "Pessoal"
     classificacao: "Questionável"
 
+  # Sprint INFRA-CATEGORIZAR-SALARIO-G4F-C6 (2026-05-12)
+  # Salario liquido G4F (Andre) e creditado no Santander (declarado no holerite)
+  # e chega ao C6 como transferencia interna -- descricao bruta NAO contem "G4F",
+  # entao o regex de categorias.yaml nao casa. Override estrutural por:
+  #   banco_origem = C6
+  #   valor entre R$ 6.000 e R$ 7.000 (faixa do liquido mensal Andre, com folga)
+  #   dia do mes entre 1 e 10 (mes-folha tipico 05-08; janela larga para feriado)
+  # Marcador "__SALARIO_G4F_C6__" e literal e nunca aparece em descricao real,
+  # forcando match exclusivamente pelos filtros estruturais.
+  "__SALARIO_G4F_C6__":
+    categoria: "Salário"
+    tipo: "Receita"
+    tag_irpf: "rendimento_tributavel"
+    banco_origem: "C6"
+    valor_min: 6000
+    valor_max: 7000
+    dia_min: 1
+    dia_max: 10
+    match_descricao_vazia: true
+
 
 # "O que sabemos e uma gota; o que ignoramos e um oceano." -- Isaac Newton
