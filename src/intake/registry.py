@@ -84,6 +84,27 @@ _ASSINATURAS_HOLERITE: tuple[str, ...] = (
 )
 
 
+# MOB-bridge-4: hint mapping subtipo_mobile -> tipo canonico.
+# Origem: app mobile Protocolo-Mob-Ouroboros, src/lib/share/categorias.ts,
+# constante INBOX_SUBTIPOS (8 subtipos, 4 areas). Quando o app deposita o
+# arquivo em inbox/<area>/<subtipo>/, o registry usa esse mapping como hint
+# preferencial sobre a cascata YAML.
+#
+# Decisão deliberada: 'extrato' não entra no mapping -- cascata bancária
+# legada (file_detector) tem 600+ linhas de heurística para Nubank/C6/Itaú/
+# Santander e é mais precisa do que um hint genérico.
+_MAPPING_SUBTIPO_MOBILE_TO_TIPO: dict[str, str] = {
+    "pix": "comprovante_pix_foto",
+    "nota": "cupom_fiscal_foto",      # refinado por MIME (PDF -> nfce_modelo_65)
+    "exame": "exame_medico",           # DOC-09
+    "receita": "receita_medica",       # DOC-10
+    "garantia": "cupom_garantia_estendida_pdf",
+    "contrato": "contrato_locacao",    # DOC-21
+    "outro": "indeterminado",          # cai em _classificar/
+    # 'extrato': deliberadamente não mapeado -- cascata bancária legada decide
+}
+
+
 # ============================================================================
 # API pública
 # ============================================================================
@@ -94,13 +115,26 @@ def detectar_tipo(
     mime: str,
     preview: str | None,
     pessoa: str = "_indefinida",
+    subtipo_mobile: str | None = None,
 ) -> Decisao:
     """Decide o tipo de UM arquivo combinando detector legado + classifier YAML.
 
     Devolve `Decisao` -- mesmo contrato do classifier YAML. Quando o legado
     casa, o resultado é adaptado de `DeteccaoArquivo` para `Decisao` com
     `tipo="bancario_<banco>_<tipo>"` e pasta `data/raw/<pessoa>/<banco>_<tipo>/`.
+
+    MOB-bridge-4: quando `subtipo_mobile` está mapeado em
+    `_MAPPING_SUBTIPO_MOBILE_TO_TIPO`, vira hint preferencial sobre cascata
+    legada+YAML. Exceção: `subtipo_mobile='extrato'` (ou não mapeado) cai
+    na cascata atual.
     """
+    if subtipo_mobile and subtipo_mobile in _MAPPING_SUBTIPO_MOBILE_TO_TIPO:
+        tipo_canonico = _MAPPING_SUBTIPO_MOBILE_TO_TIPO[subtipo_mobile]
+        # PDF de 'nota' vira NFC-e (modelo 65); imagem vira cupom_fiscal_foto.
+        if subtipo_mobile == "nota" and mime == "application/pdf":
+            tipo_canonico = "nfce_modelo_65"
+        return _decidir_via_hint_mobile(caminho, mime, preview, pessoa, tipo_canonico)
+
     if mime in _MIMES_LEGADO_PURO:
         deteccao = _detectar_legado_silencioso(caminho)
         if deteccao:
@@ -202,6 +236,73 @@ def _periodo_para_iso(periodo: str) -> str | None:
     if not match:
         return None
     return f"{match.group(1)}-{match.group(2)}-01"
+
+
+def _decidir_via_hint_mobile(
+    caminho: Path,
+    mime: str,
+    preview: str | None,
+    pessoa: str,
+    tipo_canonico: str,
+) -> Decisao:
+    """MOB-bridge-4: Decisão canônica via hint do app mobile.
+
+    Quando o tipo canônico existe no YAML, delega para o classifier (que
+    resolve pasta_destino + nome_canonico via templates declarativos).
+    Quando não existe (ex.: pix antes do DOC-27, exame antes do DOC-09),
+    devolve `Decisao` com tipo populado mas pasta_destino=`_classificar/`,
+    preservando o hint para auditoria.
+    """
+    del preview  # não usado por enquanto; reservado para futura extração de data
+    from src.intake.classifier import _TIPOS_CACHE, recarregar_tipos
+
+    tipos = _TIPOS_CACHE if _TIPOS_CACHE is not None else recarregar_tipos()
+    tipo_yaml = next((t for t in tipos if t.get("id") == tipo_canonico), None)
+
+    sha8 = sha8_arquivo(caminho)
+    extensao = caminho.suffix.lstrip(".").lower() or "bin"
+    pessoa_resolvida = pessoa or "_indefinida"
+
+    if tipo_yaml is None:
+        # Tipo canônico ainda não registrado no YAML (DOC-27, DOC-09, etc.).
+        # Mantém o hint no campo `tipo` para auditoria; arquivo vai para
+        # _classificar/ até o extrator/regra do tipo nascer.
+        pasta = (_PATH_DATA_RAW / "_classificar").resolve()
+        nome = f"_CLASSIFICAR_{tipo_canonico.upper()}_{sha8}.{extensao}"
+        return Decisao(
+            tipo=tipo_canonico,
+            prioridade="normal",
+            match_mode=None,
+            extrator_modulo=None,
+            origem_sprint="MOB-bridge-4",
+            pasta_destino=pasta,
+            nome_canonico=nome,
+            data_detectada_iso=None,
+            regras_avaliadas=0,
+            motivo_fallback="tipo_canonico_sem_regra_yaml_ainda",
+        )
+
+    # Tipo registrado no YAML -- monta Decisao com templates declarativos.
+    from src.intake.classifier import _resolver_nome, _resolver_pasta
+
+    pasta = _resolver_pasta(tipo_yaml["pasta_destino_template"], pessoa_resolvida)
+    nome = _resolver_nome(
+        templates=tipo_yaml["renomear_template"],
+        sha8=sha8,
+        extensao=extensao,
+        data_iso=None,
+    )
+    return Decisao(
+        tipo=tipo_yaml["id"],
+        prioridade=tipo_yaml.get("prioridade"),
+        match_mode=None,
+        extrator_modulo=tipo_yaml.get("extrator_modulo"),
+        origem_sprint="MOB-bridge-4",
+        pasta_destino=pasta,
+        nome_canonico=nome,
+        data_detectada_iso=None,
+        regras_avaliadas=0,
+    )
 
 
 # ============================================================================

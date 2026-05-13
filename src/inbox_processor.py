@@ -128,6 +128,10 @@ def processar_arquivo(
     caminho: Path,
     diretorio_raw: Path | None = None,
     diretorio_nao_identificados: Path | None = None,
+    *,
+    area: str | None = None,
+    subtipo_mobile: str | None = None,
+    inbox_raiz: Path | None = None,
 ) -> list[dict]:
     """Processa UM arquivo da inbox via intake universal (Sprint 41/b/c/d).
 
@@ -138,11 +142,21 @@ def processar_arquivo(
     mantidos para compatibilidade de assinatura, mas ignorados: o
     intake universal usa caminhos canônicos (`data/raw/{pessoa}/...` e
     `data/raw/_classificar/`).
+
+    MOB-bridge-4: kwargs `area` e `subtipo_mobile` são hints derivados do
+    path relativo dentro de `inbox/<area>/<subtipo>/` (Share Intent do app
+    mobile). Quando presentes, propagam para `detectar_tipo` via registry.
     """
     del diretorio_raw, diretorio_nao_identificados  # honra contrato sem usar
 
     try:
-        relatorio = processar_arquivo_inbox(caminho, pessoa="_indefinida")
+        relatorio = processar_arquivo_inbox(
+            caminho,
+            pessoa="_indefinida",
+            area=area,
+            subtipo_mobile=subtipo_mobile,
+            inbox_raiz=inbox_raiz,
+        )
     except FileNotFoundError:
         logger.warning("arquivo da inbox sumiu antes do processamento: %s", caminho)
         return [
@@ -191,11 +205,16 @@ def processar_inbox(diretorio_inbox: Path, diretorio_raw: Path | None = None) ->
         logger.warning("diretório inbox não encontrado: %s", diretorio_inbox)
         return []
 
-    arquivos = [
+    # MOB-bridge-4: walk recursivo (era iterdir plano).
+    # Permite ler `inbox/<area>/<subtipo>/arquivo` depositado pelo app mobile
+    # via Share Intent (categorias.ts em Protocolo-Mob-Ouroboros).
+    arquivos = sorted(
         f
-        for f in sorted(diretorio_inbox.iterdir())
-        if f.is_file() and f.suffix.lower() in EXTENSOES_SUPORTADAS
-    ]
+        for f in diretorio_inbox.rglob("*")
+        if f.is_file()
+        and f.suffix.lower() in EXTENSOES_SUPORTADAS
+        and ".extracted" not in f.parts
+    )
 
     if not arquivos:
         logger.info("nenhum arquivo para processar em %s", diretorio_inbox)
@@ -207,7 +226,25 @@ def processar_inbox(diretorio_inbox: Path, diretorio_raw: Path | None = None) ->
     contadores = {"processado": 0, "duplicata": 0, "nao_identificado": 0, "erro": 0}
 
     for arquivo in arquivos:
-        dicts = processar_arquivo(arquivo)
+        # MOB-bridge-4: derivar area + subtipo_mobile do path relativo.
+        # Estrutura canônica: inbox/<area>/<subtipo>/arquivo.ext
+        #   3+ partes -> area + subtipo (ex.: financeiro/pix/foto.jpg)
+        #   2 partes  -> só area (ex.: outros/teste.txt)
+        #   1 parte   -> raiz (retrocompat -- cascata legada decide)
+        rel = arquivo.relative_to(diretorio_inbox)
+        partes = rel.parts
+        if len(partes) >= 3:
+            area, subtipo_mobile = partes[0], partes[1]
+        elif len(partes) == 2:
+            area, subtipo_mobile = partes[0], None
+        else:
+            area, subtipo_mobile = None, None
+        dicts = processar_arquivo(
+            arquivo,
+            area=area,
+            subtipo_mobile=subtipo_mobile,
+            inbox_raiz=diretorio_inbox,
+        )
         resultados.extend(dicts)
         for d in dicts:
             contadores[d["status"]] = contadores.get(d["status"], 0) + 1

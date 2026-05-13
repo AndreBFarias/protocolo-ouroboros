@@ -166,6 +166,10 @@ def _decidir_tipo_envelope(mime: str) -> TipoEnvelope:
 def processar_arquivo_inbox(
     caminho_inbox: Path,
     pessoa: str = "_indefinida",
+    *,
+    area: str | None = None,
+    subtipo_mobile: str | None = None,
+    inbox_raiz: Path | None = None,
 ) -> RelatorioRoteamento:
     """Processa UM arquivo da inbox: arquivar original, expandir envelope,
     classificar cada artefato, rotear, devolver relatório.
@@ -173,6 +177,13 @@ def processar_arquivo_inbox(
     Quando `pessoa == "_indefinida"`, dispara auto-detect (Sprint 41b):
     extrai CPF do primeiro preview disponível, consulta
     `mappings/cpfs_pessoas.yaml`; fallback para path; fallback para `casal`.
+
+    MOB-bridge-4: kwargs `area` e `subtipo_mobile` são hints derivados
+    do path relativo `inbox/<area>/<subtipo>/` (Share Intent do app mobile).
+    Quando `subtipo_mobile` está mapeado em
+    `registry._MAPPING_SUBTIPO_MOBILE_TO_TIPO`, vira hint preferencial
+    sobre a cascata YAML em `detectar_tipo`. Ambos são gravados como
+    metadata no sidecar `inbox/.extracted/<sha8>.json` quando aplicável.
 
     NÃO descarta o arquivo da inbox -- caller chama `descartar_da_inbox`
     após gravar evidências (ex.: no grafo da Sprint 42).
@@ -218,7 +229,14 @@ def processar_arquivo_inbox(
             paginas_meta=paginas_meta,
         )
         # Sprint 41c: usa registry (legado + YAML) em vez de classifier direto
-        decisao = detectar_tipo(artefato, sub_mime, preview_texto, pessoa=pessoa_resolvida)
+        # MOB-bridge-4: subtipo_mobile como 5o parametro (hint preferencial)
+        decisao = detectar_tipo(
+            artefato,
+            sub_mime,
+            preview_texto,
+            pessoa=pessoa_resolvida,
+            subtipo_mobile=subtipo_mobile,
+        )
         pares.append((artefato, decisao))
 
     # Sprint 97: reversão de split-tentativo. Se o split não foi forçado
@@ -250,7 +268,14 @@ def processar_arquivo_inbox(
                     tipo_envelope=tipo_envelope,
                     paginas_meta=paginas_meta,
                 )
-                decisao = detectar_tipo(artefato, sub_mime, preview_texto, pessoa=pessoa_resolvida)
+                # MOB-bridge-4: subtipo_mobile como 5o parametro (hint preferencial)
+                decisao = detectar_tipo(
+                    artefato,
+                    sub_mime,
+                    preview_texto,
+                    pessoa=pessoa_resolvida,
+                    subtipo_mobile=subtipo_mobile,
+                )
                 pares.append((artefato, decisao))
         else:
             logger.info(
@@ -259,13 +284,34 @@ def processar_arquivo_inbox(
                 tipos_paginas,
             )
 
-    return rotear_lote(
+    relatorio = rotear_lote(
         arquivo_inbox=caminho_inbox,
         sha8_envelope=resultado_envelope.sha8_envelope,
         diretorio_envelope=resultado_envelope.diretorio_envelope,
         pares_artefato_decisao=pares,
         erros_envelope=resultado_envelope.erros,
     )
+
+    # MOB-bridge-4: grava sidecar `inbox/.extracted/<sha8>.json` com metadata
+    # area/subtipo_mobile + tipo canonico para que o leitor observacional
+    # (src/intake/inbox_reader.py) expoe na UI.
+    try:
+        from src.intake.router import gravar_sidecar_inbox
+
+        tipo_resolvido = pares[0][1].tipo if pares else None
+        raiz_para_sidecar = inbox_raiz if inbox_raiz is not None else caminho_inbox.parent
+        gravar_sidecar_inbox(
+            inbox_raiz=raiz_para_sidecar,
+            sha8=sha8,
+            tipo_arquivo=tipo_resolvido,
+            area=area,
+            subtipo_mobile=subtipo_mobile,
+            sucesso=relatorio.sucesso_total,
+        )
+    except Exception as exc:  # noqa: BLE001 -- sidecar é best-effort, não quebra pipeline
+        logger.warning("falha ao gravar sidecar inbox para %s: %s", caminho_inbox.name, exc)
+
+    return relatorio
 
 
 def _descartar_split_tentativo(resultado_envelope: ResultadoEnvelope) -> None:
