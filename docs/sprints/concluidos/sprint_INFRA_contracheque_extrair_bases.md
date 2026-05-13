@@ -1,8 +1,8 @@
 ---
 id: INFRA-CONTRACHEQUE-EXTRAIR-BASES
 titulo: Estender _parse_g4f e _parse_infobase para capturar bases fiscais (base_inss, base_irrf, FGTS, dependentes, CNPJ empresa, dados bancários)
-status: backlog
-concluida_em: null
+status: concluída  <!-- noqa: accent -->
+concluida_em: 2026-05-12  <!-- noqa: accent -->
 prioridade: P1
 data_criacao: 2026-05-12
 fase: VALIDACAO_ARTESANAL
