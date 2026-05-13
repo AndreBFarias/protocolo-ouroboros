@@ -1,0 +1,29 @@
+# Espelho canonico de INBOX_SUBTIPOS em src/lib/share/categorias.ts do
+# Protocolo-Mob-Ouroboros (app mobile).
+#
+# Granularidade canonica: inbox/<area>/<subtipo>/, com 4 areas e 8 subtipos.
+# Drift entre este mapping e o app => sprint-filha imediata.
+#
+# Excecao do canone: a area "outros" tem apenas o subtipo "outro" e, no app,
+# o folder declarado e literalmente "inbox/outros" (sem subpasta de subtipo).
+# O auditor aceita ambos os layouts em "outros" (com ou sem subpasta) para
+# evitar falso positivo em arquivos legitimos.
+#
+# Fonte canonica verificada em 2026-05-12:
+#   ~/Desenvolvimento/Protocolo-Mob-Ouroboros/src/lib/share/categorias.ts
+#
+# Quando o app adicionar subtipo novo (ex.: boleto), atualizar este YAML e o
+# teste regressivo em tests/test_audit_vault_md.py::test_areas_subtipos_alinhadas_com_app.
+
+financeiro:
+  - pix
+  - extrato
+  - nota
+saude:
+  - exame
+  - receita
+casa:
+  - garantia
+  - contrato
+outros:
+  - outro

@@ -1,8 +1,8 @@
 ---
 id: MOB-audit-estrutura-vault-md
 titulo: Script audit_vault_md.py valida estrutura inbox/<area>/<subtipo>/, filename regex, frontmatter _schema_version=1 e zero binarios soltos
-status: backlog
-concluida_em: null
+status: concluida  # noqa: accent
+concluida_em: 2026-05-13  # noqa: accent
 prioridade: P0
 data_criacao: 2026-05-12
 fase: BRIDGE_MOBILE
@@ -231,3 +231,34 @@ make lint && make smoke
 - Plano de origem: `~/.claude/plans/preciso-que-use-o-crispy-stroustrup.md` Fase B.
 
 *"Auditoria estrutural e o vacina contra drift; rodar uma vez por semana evita reescrever um trimestre depois." — princípio MOB-audit-estrutura-vault-md*
+
+## Conclusão (2026-05-13)
+
+### Arquivos criados
+
+- `mappings/areas_subtipos.yaml` — mapping canônico (4 áreas, 8 subtipos) espelhando `INBOX_SUBTIPOS` do app mobile.
+- `scripts/audit_vault_md.py` — CLI read-only (~530L) com 4 categorias de check: estrutura, filename, frontmatter, companion.
+- `tests/test_audit_vault_md.py` — 21 testes (5 OK + 6 quebrados + 4 regressivos + 6 parametrizados de filename).
+- `docs/auditorias/AUDITORIA_VAULT_MD_2026-05-13.md` — relatório gerado no vault real.
+
+### Achados da auditoria real
+
+- Vault real `~/Protocolo-Ouroboros/` tem **1 arquivo** sob `inbox/` (diário de teste pré-app).
+- **3 violações** detectadas no único arquivo:
+  - estrutura: área `mente` fora do mapping canônico (`mente/diario/` é resíduo do MVP pré-Onda-Q).
+  - filename: `2026-04-29-1430-vit.md` usa HHmm (4 dígitos) em vez de HHmmss (6 dígitos).
+  - frontmatter: `tipo: diario_emocional` (legado) sem `_schema_version`, `area`, `subtipo`, `arquivo`, `revisar`.
+- **Decisão**: nenhum binário compartilhado pelo app mobile ainda chegou ao vault — quando o primeiro `inbox/financeiro/pix/*.jpg` chegar (MOB-bridge-4), esta auditoria valida que ele entra em conformidade canônica.
+
+### Métricas
+
+- Baseline pytest antes: **2808 passed** (5 fail + 23 errors pré-existentes, não relacionados).
+- Baseline pytest depois: **2829 passed** (+21 novos testes desta sprint).
+- Ruff: All checks passed (warnings pré-existentes em `src/dashboard/tema.py` e `be_diario.py` não relacionados).
+- Acentuação: zero violações (`scripts/check_acentuacao.py --all`).
+- Proof-of-work runtime-real: script roda em vault sintético (3 arquivos, 3 violações) e vault real (1 arquivo, 3 violações), gerando relatório markdown em ambos.
+
+### Pendências para sprints-filhas
+
+- Sprint de remediação `inbox/mente/diario/` -> migrar diário legado para layout canônico (`inbox/outros/outro/` ou descartar resíduo do MVP).
+- Considerar hook semanal em `Makefile` (`make audit-vault`) quando MOB-bridge-4 estiver em produção.
