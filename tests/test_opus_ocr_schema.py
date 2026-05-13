@@ -80,12 +80,18 @@ def test_enum_tipo_documento_tem_11_valores(schema: dict) -> None:
 
 
 def test_retrocompat_caches_existentes(validador: jsonschema.Draft202012Validator) -> None:
-    """Os 4 caches já populados em ``data/output/opus_ocr_cache/`` continuam
-    válidos sob o schema estendido (retrocompat hard, padrão (o))."""
+    """Todos os caches em ``data/output/opus_ocr_cache/`` permanecem válidos
+    sob o schema estendido (retrocompat hard, padrão (o)).
+
+    Baseline historica: 4 caches no merge de INFRA-OPUS-SCHEMA-EXTENDIDO. Como
+    a sessao 2026-05-12 promoveu 1 cache adicional (Atacadao Drogaria) pela
+    sprint INFRA-SUBSTITUIR-CACHE-SINTETICO-CUPOM, o teste agora exige >= 4
+    (cresce naturalmente conforme caches reais são promovidos).
+    """
     caches = sorted(CACHES_DIR.glob("*.json"))
-    assert len(caches) == 4, (
-        f"Esperado 4 caches em {CACHES_DIR}, achei {len(caches)}. "
-        "Spec INFRA-OPUS-SCHEMA-EXTENDIDO depende dessa baseline."
+    assert len(caches) >= 4, (
+        f"Esperado >= 4 caches em {CACHES_DIR}, achei {len(caches)}. "
+        "Spec INFRA-OPUS-SCHEMA-EXTENDIDO depende dessa baseline minima."
     )
     for cache in caches:
         with cache.open("r", encoding="utf-8") as fp:
