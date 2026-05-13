@@ -16,12 +16,12 @@ Padrão legítimo observado em 2026-05-12:
 
 API pública:
 
-    inferir_pessoa_devedora(transacao, documentos)
+    inferir_pessoa_devedora(transacao, documentos)  # noqa: accent
         Retorna ``pessoa_a`` / ``pessoa_b`` / ``casal`` se um documento
         do grafo casa com a transação por (valor, data proxima, devedor),
         ou ``None`` se nenhum match. Não modifica a transação.
 
-    enriquecer_transacoes(transacoes, grafo)
+    enriquecer_transacoes(transacoes, grafo)  # noqa: accent
         Aplica ``inferir_pessoa_devedora`` em todas as transações de
         Impostos, populando o campo ``pessoa_devedora`` quando há match.
         Operação in-place. Retorna a mesma lista para encadeamento.
@@ -150,7 +150,7 @@ def inferir_pessoa_devedora(
 ) -> Optional[str]:
     """Tenta identificar a pessoa devedora cruzando transação com documentos.
 
-    ``transacao`` é dict no schema canônico do normalizer (precisa de
+    ``transacao`` é dict no schema canônico do normalizer (precisa de  # noqa: accent
     ``valor``, ``data`` e ``categoria``). ``documentos`` é iterável de
     dicts de metadata (lidos de ``GrafoDB.listar_nodes("documento")``).
 
@@ -187,7 +187,7 @@ def inferir_pessoa_devedora(
         return candidatos[0]
 
     logger.warning(
-        "transacao com %d documentos candidatos divergentes (%s); nao atribui pessoa_devedora",
+        "transação com %d documentos candidatos divergentes (%s); não atribui pessoa_devedora",
         len(candidatos),
         sorted(unicos),
     )
@@ -227,7 +227,7 @@ def enriquecer_transacoes(
 
     if enriquecidas:
         logger.info(
-            "pagamentos cruzados: %d transacoes de Impostos enriquecidas com pessoa_devedora",
+            "pagamentos cruzados: %d transações de Impostos enriquecidas com pessoa_devedora",
             enriquecidas,
         )
     return transacoes
