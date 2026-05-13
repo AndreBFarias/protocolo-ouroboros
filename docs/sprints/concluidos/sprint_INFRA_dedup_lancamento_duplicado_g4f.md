@@ -1,8 +1,8 @@
 ---
 id: INFRA-DEDUP-LANCAMENTO-DUPLICADO-G4F
 titulo: 2 lançamentos R$ 6.381,14 G4F idênticos em 06/03/2026 no C6 — investigar duplicação silenciosa
-status: backlog
-concluida_em: null
+status: concluida
+concluida_em: 2026-05-12
 prioridade: P1
 data_criacao: 2026-05-12
 fase: VALIDACAO_ARTESANAL
@@ -66,9 +66,37 @@ sqlite3 data/output/grafo.sqlite "SELECT id, json_extract(metadata,'\$.data'), j
 3. Se legítimo: documentar em `docs/auditorias/LANCAMENTOS_LEGITIMOS_REPETIDOS.md` para evitar reclassificação futura.
 4. Pacote IRPF reflete corretamente apenas 1 salário G4F por mês.
 
+## Resolução (2026-05-12)
+
+Investigação revelou que o par sinalizado é **manifestação de ingestão dupla
+sistemática OFX × XLSX no C6/pessoa_a**, atingindo 253 pares (~510 linhas,
+~43% do total). Não é duplicação isolada -- é padrão arquitetural.
+
+Decisão: **não aplicar fix neste escopo** (não-objetivo explícito da spec
+limita a "só esse par"). Achado escalado para sprint-filha
+`INFRA-DEDUP-C6-OFX-XLSX-AMPLO` (P0).
+
+Entregas desta sprint:
+
+- `docs/auditorias/DUPLICACAO_C6_OFX_XLSX_2026-05-12.md` -- diagnóstico
+  com causa raiz e evidência empírica.
+- `docs/sprints/backlog/sprint_INFRA_dedup_c6_ofx_xlsx_amplo.md` -- spec
+  da sprint-filha com 3 opções arquiteturais.
+- `scripts/investigar_dedup_c6_ofx_xlsx.py` -- script reprodutível que
+  conta 253 pares e gera CSV para revisão manual.
+- `tests/test_dedup_lancamento.py` -- 5 testes regressivos que documentam
+  o cenário atual e validam a lógica de normalização proposta.
+
+Diagnóstico: **lançamentos legítimos do ponto de vista bancário**
+(mesma transação lida por dois extratores paralelos), mas **duplicação
+estrutural no pipeline ETL**. Não é "2 transferências separadas"; é "1
+transferência lida 2 vezes".
+
 ## Referência
 
 - Auditoria geradora: `docs/auditorias/VALIDACAO_ARTESANAL_HOLERITE_2026-05-12.md` ressalva 3
+- Auditoria desta sprint: `docs/auditorias/DUPLICACAO_C6_OFX_XLSX_2026-05-12.md`
+- Sprint-filha: `docs/sprints/backlog/sprint_INFRA_dedup_c6_ofx_xlsx_amplo.md`
 - Sprint irmã: INFRA-CATEGORIZAR-SALARIO-G4F-C6 (categoria errada do mesmo lançamento)
 
 *"Duplicata silenciosa em transacao bancaria eh fraude contabil involuntaria; nao se esquece nem se perdoa." -- principio INFRA-DEDUP-LANCAMENTO-DUPLICADO-G4F*  <!-- noqa: accent -->
