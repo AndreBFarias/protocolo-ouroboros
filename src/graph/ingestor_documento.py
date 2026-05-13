@@ -436,6 +436,158 @@ CAMPOS_OBRIGATORIOS_DOCUMENTO: tuple[str, ...] = (
 )
 
 
+# ============================================================================
+# Sprint INFRA-NFCE-DEDUP-OCR-DUPLICATAS: dedup tolerante a ruído de OCR
+# ============================================================================
+
+#: Diferença máxima padrão entre duas chave_44 (Levenshtein) para serem
+#: consideradas a mesma NFCe quando os demais critérios duros casam.
+#: Spec original (2026-05-12) propôs 4; auditoria empírica nos 4 nodes reais
+#: do grafo apontou distâncias 9 e 10. Default conservador 4 é mantido para
+#: o ingestor (preferir não-fundir a fundir errado); script retroativo passa
+#: limite calibrado via parâmetro.
+LIMITE_DIFF_CHAVE_44_PADRAO: int = 4
+
+
+def _distancia_chave(chave_a: str, chave_b: str) -> int:
+    """Distância de Levenshtein entre dois dígitos de chave_44 normalizados.
+
+    Usa rapidfuzz (já no requirements -- mesma lib usada em fuzz no item match).
+    Comparação operada após normalização básica (strip + dígitos apenas).
+    """
+    from rapidfuzz.distance import Levenshtein
+
+    a_norm = "".join(ch for ch in (chave_a or "") if ch.isdigit())
+    b_norm = "".join(ch for ch in (chave_b or "") if ch.isdigit())
+    if not a_norm or not b_norm:
+        return max(len(a_norm), len(b_norm))
+    return int(Levenshtein.distance(a_norm, b_norm))
+
+
+def _eh_mesma_nfce(
+    chave_a: str,
+    chave_b: str,
+    total_a: float | int | str | None,
+    total_b: float | int | str | None,
+    data_a: str | None,
+    data_b: str | None,
+    cnpj_a: str | None,
+    cnpj_b: str | None,
+    limite_diff_chave: int = LIMITE_DIFF_CHAVE_44_PADRAO,
+) -> bool:
+    """True quando duas NFCe são plausivelmente o mesmo cupom físico.
+
+    Quatro critérios duros (todos precisam casar):
+
+      1. Levenshtein(chave_a, chave_b) <= ``limite_diff_chave`` (tolerância OCR)
+      2. ``total_a == total_b`` (R$ 0,00 de diferença -- centavos batem)
+      3. ``data_a == data_b`` (mesma data de emissão, comparada por prefixo 10)
+      4. ``cnpj_a == cnpj_b`` (mesmo emitente, dígitos normalizados)
+
+    Conservador: na dúvida (qualquer campo None), retorna False.
+    Mesma chave (distância 0) também retorna True -- caso idempotente.
+    """
+    if not chave_a or not chave_b:
+        return False
+    if total_a is None or total_b is None:
+        return False
+    if not data_a or not data_b:
+        return False
+    if not cnpj_a or not cnpj_b:
+        return False
+
+    # Critério 4: CNPJ emitente (compara só dígitos para escapar de máscara)
+    cnpj_a_norm = "".join(ch for ch in str(cnpj_a) if ch.isdigit())
+    cnpj_b_norm = "".join(ch for ch in str(cnpj_b) if ch.isdigit())
+    if cnpj_a_norm != cnpj_b_norm:
+        return False
+
+    # Critério 3: data (compara só YYYY-MM-DD, ignora hora)
+    if str(data_a)[:10] != str(data_b)[:10]:
+        return False
+
+    # Critério 2: total exato (centavos batem; comparação numérica explícita)
+    try:
+        if round(float(total_a), 2) != round(float(total_b), 2):
+            return False
+    except (TypeError, ValueError):
+        return False
+
+    # Critério 1: chave_44 próxima (tolerância OCR)
+    if _distancia_chave(chave_a, chave_b) > limite_diff_chave:
+        return False
+
+    return True
+
+
+def _localizar_nfce_irma(
+    db: GrafoDB,
+    documento: dict[str, Any],
+    limite_diff_chave: int = LIMITE_DIFF_CHAVE_44_PADRAO,
+) -> int | None:
+    """Procura um node ``documento`` NFCe já existente que case via _eh_mesma_nfce.
+
+    Filtro inicial barato no SQL (mesmo CNPJ + mesma data + mesmo total) e em
+    seguida aplica _eh_mesma_nfce para validar a tolerância de OCR na chave.
+    Devolve o id do candidato ou None.
+    """
+    chave_self = str(documento.get("chave_44") or "")
+    total_self = documento.get("total")
+    data_self = str(documento.get("data_emissao") or "")[:10]
+    cnpj_self = str(documento.get("cnpj_emitente") or "")
+    if not (chave_self and total_self is not None and data_self and cnpj_self):
+        return None
+
+    cursor = db._conn.execute(  # noqa: SLF001 -- API interna intencional p/ ler nodes
+        """
+        SELECT id, metadata FROM node
+        WHERE tipo = 'documento'
+          AND json_extract(metadata, '$.tipo_documento') = 'nfce_modelo_65'
+          AND json_extract(metadata, '$.data_emissao') = ?
+        """,
+        (data_self,),
+    )
+    import json as _json
+
+    for node_id, meta_raw in cursor.fetchall():
+        try:
+            meta = _json.loads(meta_raw) if meta_raw else {}
+        except (TypeError, _json.JSONDecodeError):
+            continue
+        if str(meta.get("chave_44") or "") == chave_self:
+            # mesma chave -> idempotente, upsert normal cobre. Não é "irmã".
+            continue
+        if _eh_mesma_nfce(
+            chave_self,
+            str(meta.get("chave_44") or ""),
+            total_self,
+            meta.get("total"),
+            data_self,
+            str(meta.get("data_emissao") or "")[:10],
+            cnpj_self,
+            str(meta.get("cnpj_emitente") or ""),
+            limite_diff_chave=limite_diff_chave,
+        ):
+            return int(node_id)
+    return None
+
+
+def _completude_nfce(meta: dict[str, Any]) -> int:
+    """Mede completude de uma NFCe pelo número de itens com qtde > 0.
+
+    Critério de desempate quando duas NFCe são "a mesma" (OCR alt vs original):
+    a com mais itens válidos vence.
+    """
+    itens = meta.get("itens") if isinstance(meta, dict) else None
+    if not isinstance(itens, list):
+        return 0
+    return sum(
+        1
+        for it in itens
+        if isinstance(it, dict) and float(it.get("qtde") or 0.0) > 0.0
+    )
+
+
 def upsert_item(
     db: GrafoDB,
     cnpj_varejo: str,
@@ -544,7 +696,54 @@ def ingerir_documento_fiscal(
             if it.get("descricao")
         ]
 
-    documento_id = db.upsert_node("documento", documento["chave_44"], metadata=metadata)
+    # Sprint INFRA-NFCE-DEDUP-OCR-DUPLICATAS: para NFCe modelo 65, antes de criar
+    # um novo node, procura uma NFCe-irmã (mesma data + CNPJ + total exato, chave
+    # com diff <= 4 -- tolerância OCR). Se achar, faz UPDATE no node existente
+    # quando a versão nova tem mais itens (mais completude); caso contrário,
+    # apenas devolve o id existente sem criar duplicado.
+    documento_id: int | None = None
+    if metadata.get("tipo_documento") == "nfce_modelo_65":
+        irma_id = _localizar_nfce_irma(db, documento)
+        if irma_id is not None:
+            irma = db.buscar_node_por_id(irma_id)
+            completude_nova = _completude_nfce(metadata)
+            completude_irma = _completude_nfce(irma.metadata if irma else {})
+            if completude_nova > completude_irma:
+                # versão nova é mais completa -> sobrescreve metadata da irmã
+                # mas preserva chave_44 antiga como alias (auditoria).
+                logger.info(
+                    "NFCe dedup: node %d (chave %s) é mais completo que irmã "
+                    "%d (chave %s) -- fundindo metadata, mantendo node existente",
+                    irma_id,
+                    documento["chave_44"],
+                    irma_id,
+                    irma.metadata.get("chave_44") if irma else "?",
+                )
+                # upsert_node faz merge raso -- usa chave_canonica da irmã
+                # para não criar node novo.
+                chave_irma = irma.nome_canonico if irma else documento["chave_44"]
+                # registra a chave alternativa no metadata e nos aliases
+                metadata["chave_44_alternativa"] = (
+                    irma.metadata.get("chave_44") if irma else None
+                )
+                documento_id = db.upsert_node(
+                    "documento",
+                    chave_irma,
+                    metadata=metadata,
+                    aliases=[documento["chave_44"]],
+                )
+            else:
+                logger.info(
+                    "NFCe dedup: ignorando upsert de %s -- node %d já é a mesma "
+                    "NFCe e tem completude maior ou igual",
+                    documento["chave_44"],
+                    irma_id,
+                )
+                documento_id = irma_id
+    if documento_id is None:
+        documento_id = db.upsert_node(
+            "documento", documento["chave_44"], metadata=metadata
+        )
 
     fornecedor_id = upsert_fornecedor(
         db,
