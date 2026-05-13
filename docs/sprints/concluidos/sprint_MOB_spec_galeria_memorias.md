@@ -1,8 +1,8 @@
 ---
 id: MOB-spec-galeria-memorias
 titulo: Formato .capsula.md canonico para Galeria de Memorias/Eventos lido por app e dashboard
-status: backlog
-concluida_em: null
+status: concluída  <!-- noqa: accent -->
+concluida_em: 2026-05-13  <!-- noqa: accent -->
 prioridade: P2
 data_criacao: 2026-05-12
 fase: BRIDGE_MOBILE
