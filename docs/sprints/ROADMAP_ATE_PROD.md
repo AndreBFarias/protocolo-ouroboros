@@ -234,6 +234,21 @@ Para chegar la, cada **tipo documental** percorre o ciclo de graduacao:
 
 | ID |
 |---|
+### Sub-grupo 8a: Onboarding e discoverability (P0/P1) -- nascidas em 2026-05-13
+
+| ID | Prioridade | Foco |
+|---|---|---|
+| META-ONBOARDING-NOVA-SESSAO | P0 | CLAUDE.md no root + README com filosofia |
+| META-VALIDATOR-BRIEF-TRACKEADO | P0 | padroes (a..ll) para docs/PADROES_CANONICOS.md (trackeado) |
+| META-SUPERVISOR-OPUS-ATUALIZAR | P0 | docs/SUPERVISOR_OPUS.md cita ROADMAP + CICLO + dossie_tipo |
+| META-TEMPLATE-FRONTMATTER-SPECS | P1 | template + scripts/normalizar_specs.py para 97 specs |
+| META-HOOK-SESSION-START-PROJETO | P1 | hook local injeta estado vivo no contexto inicial |
+| META-PROMPT-NOVA-SESSAO-TRACKEADO | P1 | docs/PROMPT_NOVA_SESSAO.md sem PII |
+
+### Sub-grupo 8b: Debito tecnico historico
+
+| ID |
+|---|
 | INFRA-LINT-ACENTUACAO-SPECS-2026-05-12 |
 | lint_acentuacao_divida_pre_existente |
 | ux_09_cleanup_docstrings_quebradas |
