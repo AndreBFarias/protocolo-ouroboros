@@ -1,0 +1,145 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ouroboros/schemas/exercicios/v1",
+  "title": "Catalogo de exercicios -- protocolo-ouroboros",
+  "description": "Schema canonico do catalogo de exercicios + sessoes de treino. Gravado pelo app Mobile (Protocolo-Mob-Ouroboros) em ~/Protocolo-Ouroboros/catalogo/exercicios.json e lido somente pelo dashboard Streamlit (pagina Bem-estar > Treinos). Sessoes vivem em ~/Protocolo-Ouroboros/sessoes/<YYYY-MM>/<id_sessao>.json. ADR-29.",
+  "type": "object",
+  "required": ["schema_version", "gerado_em", "grupos", "exercicios"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1,
+      "description": "Versao do schema. Bumpar quando mudar contrato."
+    },
+    "gerado_em": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 do momento em que o app gerou o snapshot."
+    },
+    "grupos": {
+      "type": "array",
+      "description": "Grupos de treino (Treino A, B, C ...).",
+      "items": {
+        "type": "object",
+        "required": ["id", "nome", "ordem"],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9_]+$",
+            "description": "Identificador estavel; usado como FK em exercicios.grupo_id e sessoes.grupo_id."
+          },
+          "nome": {"type": "string", "minLength": 1},
+          "descricao": {"type": "string"},
+          "cor_hex": {
+            "type": "string",
+            "pattern": "^#[0-9A-Fa-f]{6}$",
+            "description": "Token visual usado pelo app e pelo dashboard."
+          },
+          "ordem": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Ordem de exibicao na lista de grupos."
+          }
+        }
+      }
+    },
+    "exercicios": {
+      "type": "array",
+      "description": "Catalogo de exercicios. Cada item pertence a exatamente um grupo via grupo_id.",
+      "items": {
+        "type": "object",
+        "required": ["id", "grupo_id", "nome", "musculo_principal"],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9_]+$"
+          },
+          "grupo_id": {
+            "type": "string",
+            "pattern": "^[a-z0-9_]+$",
+            "description": "Deve corresponder a algum grupos[].id."
+          },
+          "nome": {"type": "string", "minLength": 1},
+          "descricao": {"type": "string"},
+          "gif_path": {
+            "type": "string",
+            "pattern": "^midia/gifs/.+\\.gif$",
+            "description": "Path relativo a ~/Protocolo-Ouroboros/. Ex: midia/gifs/supino_reto.gif"
+          },
+          "series_default": {"type": "integer", "minimum": 1, "maximum": 10},
+          "reps_default": {"type": "integer", "minimum": 1, "maximum": 100},
+          "descanso_seg": {"type": "integer", "minimum": 0},
+          "tempo_execucao_seg": {
+            "type": ["integer", "null"],
+            "minimum": 0,
+            "description": "Duracao para exercicios isometricos/tempo (prancha). Null para exercicios contados por reps."
+          },
+          "equipamento": {"type": "string"},
+          "musculo_principal": {
+            "type": "string",
+            "enum": [
+              "peito",
+              "costas",
+              "ombro",
+              "biceps",
+              "triceps",
+              "pernas_quadriceps",
+              "pernas_posterior",
+              "gluteo",
+              "panturrilha",
+              "core",
+              "cardio",
+              "mobilidade"
+            ]
+          },
+          "dificuldade": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5,
+            "description": "1 = iniciante, 5 = avancado."
+          }
+        }
+      }
+    },
+    "sessoes": {
+      "type": "array",
+      "description": "Historico opcional de execucoes. Cada sessao = uma execucao de um grupo num dia.",
+      "items": {
+        "type": "object",
+        "required": ["id", "data_hora_inicio", "grupo_id", "exercicios_completados"],
+        "additionalProperties": false,
+        "properties": {
+          "id": {"type": "string", "minLength": 1},
+          "data_hora_inicio": {"type": "string", "format": "date-time"},
+          "data_hora_fim": {
+            "type": ["string", "null"],
+            "format": "date-time",
+            "description": "Null quando a sessao ainda esta em andamento."
+          },
+          "grupo_id": {"type": "string", "pattern": "^[a-z0-9_]+$"},
+          "exercicios_completados": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["exercicio_id", "series_feitas"],
+              "additionalProperties": false,
+              "properties": {
+                "exercicio_id": {"type": "string", "pattern": "^[a-z0-9_]+$"},
+                "series_feitas": {"type": "integer", "minimum": 0, "maximum": 10},
+                "reps_por_serie": {
+                  "type": "array",
+                  "items": {"type": "integer", "minimum": 0, "maximum": 200}
+                },
+                "peso_kg": {"type": ["number", "null"], "minimum": 0},
+                "observacao": {"type": "string"}
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

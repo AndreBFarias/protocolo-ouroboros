@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "gerado_em": "2026-05-12T08:00:00",
+  "grupos": [
+    {
+      "id": "grupo_a",
+      "nome": "Treino A — Peito + Tríceps",
+      "descricao": "Foco em peito e tríceps com finalização de core.",
+      "cor_hex": "#FF6B6B",
+      "ordem": 1
+    }
+  ],
+  "exercicios": [
+    {
+      "id": "supino_reto",
+      "grupo_id": "grupo_a",
+      "nome": "Supino reto",
+      "descricao": "Supino reto com barra livre em banco horizontal.",
+      "gif_path": "midia/gifs/supino_reto.gif",
+      "series_default": 4,
+      "reps_default": 10,
+      "descanso_seg": 90,
+      "tempo_execucao_seg": null,
+      "equipamento": "barra livre + banco",
+      "musculo_principal": "peito",
+      "dificuldade": 3
+    },
+    {
+      "id": "supino_inclinado",
+      "grupo_id": "grupo_a",
+      "nome": "Supino inclinado halteres",
+      "descricao": "Supino com halteres em banco inclinado a 30-45 graus.",
+      "gif_path": "midia/gifs/supino_inclinado.gif",
+      "series_default": 3,
+      "reps_default": 12,
+      "descanso_seg": 90,
+      "tempo_execucao_seg": null,
+      "equipamento": "halteres + banco inclinado",
+      "musculo_principal": "peito",
+      "dificuldade": 3
+    },
+    {
+      "id": "triceps_corda",
+      "grupo_id": "grupo_a",
+      "nome": "Tríceps corda",
+      "descricao": "Extensão de tríceps na polia alta com corda.",
+      "gif_path": "midia/gifs/triceps_corda.gif",
+      "series_default": 3,
+      "reps_default": 15,
+      "descanso_seg": 60,
+      "tempo_execucao_seg": null,
+      "equipamento": "polia + corda",
+      "musculo_principal": "triceps",
+      "dificuldade": 2
+    },
+    {
+      "id": "prancha_isometrica",
+      "grupo_id": "grupo_a",
+      "nome": "Prancha isométrica",
+      "descricao": "Prancha em apoio de antebraços, foco em core.",
+      "gif_path": "midia/gifs/prancha_isometrica.gif",
+      "series_default": 3,
+      "reps_default": 1,
+      "descanso_seg": 60,
+      "tempo_execucao_seg": 45,
+      "equipamento": "tapete",
+      "musculo_principal": "core",
+      "dificuldade": 2
+    }
+  ]
+}

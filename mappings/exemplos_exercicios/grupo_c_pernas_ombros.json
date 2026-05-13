@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "gerado_em": "2026-05-12T08:00:00",
+  "grupos": [
+    {
+      "id": "grupo_c",
+      "nome": "Treino C — Pernas + Ombros",
+      "descricao": "Multiarticulares de membros inferiores e desenvolvimento de ombro.",
+      "cor_hex": "#FFD166",
+      "ordem": 3
+    }
+  ],
+  "exercicios": [
+    {
+      "id": "agachamento_livre",
+      "grupo_id": "grupo_c",
+      "nome": "Agachamento livre",
+      "descricao": "Agachamento com barra nas costas, profundidade até a coxa paralela ao solo.",
+      "gif_path": "midia/gifs/agachamento_livre.gif",
+      "series_default": 4,
+      "reps_default": 8,
+      "descanso_seg": 120,
+      "tempo_execucao_seg": null,
+      "equipamento": "barra + rack",
+      "musculo_principal": "pernas_quadriceps",
+      "dificuldade": 4
+    },
+    {
+      "id": "stiff",
+      "grupo_id": "grupo_c",
+      "nome": "Stiff",
+      "descricao": "Levantamento terra romeno com barra, foco em posterior de coxa.",
+      "gif_path": "midia/gifs/stiff.gif",
+      "series_default": 4,
+      "reps_default": 10,
+      "descanso_seg": 90,
+      "tempo_execucao_seg": null,
+      "equipamento": "barra livre",
+      "musculo_principal": "pernas_posterior",
+      "dificuldade": 3
+    },
+    {
+      "id": "desenvolvimento_militar",
+      "grupo_id": "grupo_c",
+      "nome": "Desenvolvimento militar",
+      "descricao": "Desenvolvimento de ombro com barra ou halteres em pé.",
+      "gif_path": "midia/gifs/desenvolvimento_militar.gif",
+      "series_default": 4,
+      "reps_default": 10,
+      "descanso_seg": 90,
+      "tempo_execucao_seg": null,
+      "equipamento": "barra ou halteres",
+      "musculo_principal": "ombro",
+      "dificuldade": 3
+    },
+    {
+      "id": "panturrilha_em_pe",
+      "grupo_id": "grupo_c",
+      "nome": "Panturrilha em pé",
+      "descricao": "Elevação de panturrilha em pé na máquina.",
+      "gif_path": "midia/gifs/panturrilha_em_pe.gif",
+      "series_default": 4,
+      "reps_default": 15,
+      "descanso_seg": 45,
+      "tempo_execucao_seg": null,
+      "equipamento": "máquina de panturrilha",
+      "musculo_principal": "panturrilha",
+      "dificuldade": 2
+    }
+  ]
+}
