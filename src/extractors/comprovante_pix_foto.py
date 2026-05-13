@@ -41,6 +41,8 @@ from pathlib import Path
 
 from src.extractors.base import ExtratorBase, Transacao
 from src.extractors.opus_visao import extrair_via_opus
+from src.graph.db import GrafoDB, caminho_padrao
+from src.graph.ingestor_documento import ingerir_comprovante_pix_foto
 from src.utils.logger import configurar_logger
 
 logger = configurar_logger("comprovante_pix_foto")
@@ -118,6 +120,28 @@ class ExtratorComprovantePixFoto(ExtratorBase):
             destinatario,
             data,
         )
+
+        # Ingestão no grafo (Sprint pós-auditoria 2026-05-13). Padrão idêntico ao
+        # ``ExtratorCupomTermicoFoto``: extrator chama o ingestor após confirmação
+        # de payload válido. Aresta documento_de é criada pelo linker em fase
+        # posterior do pipeline (linkar_pix_transacao).
+        try:
+            with GrafoDB(caminho_padrao()) as db:
+                db.criar_schema()
+                doc_id = ingerir_comprovante_pix_foto(
+                    db, payload, caminho_arquivo=self.caminho
+                )
+            self.logger.info(
+                "comprovante PIX ingerido no grafo: doc_id=%s sha=%s",
+                doc_id,
+                payload["sha256"][:12],
+            )
+        except (ValueError, RuntimeError) as erro:
+            self.logger.warning(
+                "ingestão do comprovante PIX %s falhou: %s",
+                self.caminho.name,
+                erro,
+            )
         return []
 
 

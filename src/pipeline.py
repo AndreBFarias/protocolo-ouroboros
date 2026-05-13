@@ -119,6 +119,13 @@ def _descobrir_extratores() -> list:
         logger.warning("Extrator cupom_termico_foto indisponível: %s", e)
 
     try:
+        from src.extractors.comprovante_pix_foto import ExtratorComprovantePixFoto
+
+        extratores.append(ExtratorComprovantePixFoto)
+    except ImportError as e:
+        logger.warning("Extrator comprovante_pix_foto indisponível: %s", e)
+
+    try:
         from src.extractors.xml_nfe import ExtratorXmlNFe
 
         extratores.append(ExtratorXmlNFe)
