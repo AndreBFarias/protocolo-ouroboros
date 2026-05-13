@@ -1,8 +1,8 @@
 ---
 id: INFRA-DEDUP-C6-OFX-XLSX-AMPLO
 titulo: Eliminar duplicação sistemática C6 OFX x XLSX (253 pares, ~43% das linhas C6/pessoa_a)
-status: backlog
-concluida_em: null
+status: concluída  <!-- noqa: accent -->
+concluida_em: 2026-05-12  <!-- noqa: accent -->
 prioridade: P0
 data_criacao: 2026-05-12
 fase: VALIDACAO_ARTESANAL
