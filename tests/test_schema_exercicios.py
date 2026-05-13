@@ -1,9 +1,9 @@
-"""Testes do contrato canonico do catalogo de exercicios (ADR-29).
+"""Testes do contrato canônico do catálogo de exercícios (ADR-29).
 
 Valida:
-- schema_exercicios.json e Draft-2020-12 valido;
-- os 3 exemplos canonicos passam validacao;
-- exemplos invalidos sinteticos sao rejeitados.
+- schema_exercicios.json é Draft-2020-12 válido;
+- os 3 exemplos canônicos passam validação;
+- exemplos inválidos sintéticos são rejeitados.
 """
 
 from __future__ import annotations
