@@ -101,9 +101,9 @@ Padrao usado em 2026-04-26: "agente do vault" entregou 7 claims, validei 5 (todo
 
 Toda nova sprint, toda nova sessao, toda decisao de "vou criar a spec X" deve ser PRECEDIDA pela leitura destes 2 arquivos canonicos. **Nao negocie**:
 
-1. **`contexto/POR_QUE.md`** secao "Ciclo de graduacao Opus -> ETL" -- a filosofia. Toda spec presume que o tipo documental atinge GRADUADO (>=2 amostras 4-way verdes). Spec que nao serve esse ciclo deve ser questionada.
+1. **`docs/sprints/ROADMAP_ATE_PROD.md`** secao "Filosofia" -- o ciclo de graduacao Opus -> ETL. Toda spec presume que o tipo documental atinge GRADUADO (>=2 amostras 4-way verdes: Opus multimodal × ETL × Grafo × Humano). Spec que nao serve esse ciclo deve ser questionada. (`contexto/POR_QUE.md` tem a versao longa com PII -- gitignored. Roadmap tem a versao publica resumida.)
 
-2. **`docs/sprints/ROADMAP_ATE_PROD.md`** -- mapa canonico dos 8 epicos. Toda spec NOVA tem que caber em algum epico. Se nao cabe, ou voce esta inventando trabalho fora de ordem, ou falta um epico (criar epico antes da spec).
+2. **`docs/sprints/ROADMAP_ATE_PROD.md`** secao "8 epicos canonicos" -- mapa de prioridades. Toda spec NOVA tem que caber em algum epico. Se nao cabe, ou voce esta inventando trabalho fora de ordem, ou falta um epico (criar epico antes da spec).
 
 **Regra anti-fragmentacao**: nao crie spec avulsa. Spec entra DENTRO de um epico do roadmap, com depende_de e meta de graduacao quando aplicavel. O incidente da onda 2026-05-13 (5 sprint-filhas + 3 fixes de integracao gerados na correria) mostrou que sprints avulsas viram debito: corrigido pela criacao deste roadmap.
 
