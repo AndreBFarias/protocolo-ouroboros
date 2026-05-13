@@ -17,6 +17,7 @@ contexto/*
 !contexto/ESTADO_ATUAL.md
 !contexto/COMO_AGIR.md
 !contexto/*.template.md
+!contexto/PROTOCOLO_ANTI_ARMADILHA_V3_1.md
 
 # Senhas e credenciais
 mappings/senhas.yaml
