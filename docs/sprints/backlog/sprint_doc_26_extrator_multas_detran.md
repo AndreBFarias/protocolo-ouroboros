@@ -1,3 +1,16 @@
+---
+id: DOC-26-EXTRATOR-MULTAS-DETRAN
+titulo: Sprint DOC-26 — Extrator de multas Detran
+status: backlog
+concluida_em: null
+prioridade: P2
+data_criacao: '2026-04-28'
+fase: OUTROS
+epico: 0
+depende_de: []
+tipo_documental_alvo: null
+---
+
 # Sprint DOC-26 — Extrator de multas Detran
 
 **Origem**: BLUEPRINT_VIDA_ADULTA.md §1 domínio 7 + ramificação ANTI-MIGUE-06.

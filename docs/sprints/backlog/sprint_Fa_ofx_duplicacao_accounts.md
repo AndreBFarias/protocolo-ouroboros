@@ -1,3 +1,16 @@
+---
+id: FA-OFX-DUPLICACAO-ACCOUNTS
+titulo: 0. SPEC (machine-readable)
+status: backlog
+concluida_em: null
+prioridade: P2
+data_criacao: '2026-04-24'
+fase: OUTROS
+epico: 0
+depende_de: []
+tipo_documental_alvo: null
+---
+
 ## 0. SPEC (machine-readable)
 
 ```yaml

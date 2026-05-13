@@ -1,3 +1,16 @@
+---
+id: UX-09-CLEANUP-DOCSTRINGS-QUEBRADAS
+titulo: Sprint UX-09 -- Cleanup 6 docstrings com acentuação quebrada
+status: backlog
+concluida_em: null
+prioridade: P2
+data_criacao: '2026-04-28'
+fase: OUTROS
+epico: 0
+depende_de: []
+tipo_documental_alvo: null
+---
+
 # Sprint UX-09 -- Cleanup 6 docstrings com acentuação quebrada
 
 **Origem**: plan pure-swinging-mitten (auditoria honesta 2026-04-29).

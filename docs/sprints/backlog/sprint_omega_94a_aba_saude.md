@@ -1,3 +1,16 @@
+---
+id: OMEGA-94A-ABA-SAUDE
+titulo: Sprint OMEGA-94a -- Aba Saúde (receitas, exames, plano + alertas validade)
+status: backlog
+concluida_em: null
+prioridade: P2
+data_criacao: '2026-04-28'
+fase: OUTROS
+epico: 0
+depende_de: []
+tipo_documental_alvo: null
+---
+
 # Sprint OMEGA-94a -- Aba Saúde (receitas, exames, plano + alertas validade)
 
 **Origem**: plan pure-swinging-mitten (auditoria honesta 2026-04-29).

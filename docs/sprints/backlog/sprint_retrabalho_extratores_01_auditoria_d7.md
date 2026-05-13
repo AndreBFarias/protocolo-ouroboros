@@ -1,3 +1,17 @@
+---
+id: RETRABALHO-EXTRATORES-01-AUDITORIA-D7
+titulo: Sprint RETRABALHO-EXTRATORES-01 -- Auditoria de cada extrator sob D7 + ramificação
+  por tipo
+status: backlog
+concluida_em: null
+prioridade: P2
+data_criacao: '2026-04-29'
+fase: OUTROS
+epico: 0
+depende_de: []
+tipo_documental_alvo: null
+---
+
 # Sprint RETRABALHO-EXTRATORES-01 -- Auditoria de cada extrator sob D7 + ramificação por tipo
 
 **Origem**: pedido do dono em 2026-04-29: "Temos que fazer um trabalho de retrabalho de verdade. De arrumar na origem cada tipo de cada arquivo".

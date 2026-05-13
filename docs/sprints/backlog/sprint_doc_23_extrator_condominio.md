@@ -1,3 +1,16 @@
+---
+id: DOC-23-EXTRATOR-CONDOMINIO
+titulo: Sprint DOC-23 — Extrator de boleto de condomínio
+status: backlog
+concluida_em: null
+prioridade: P2
+data_criacao: '2026-04-28'
+fase: OUTROS
+epico: 0
+depende_de: []
+tipo_documental_alvo: null
+---
+
 # Sprint DOC-23 — Extrator de boleto de condomínio
 
 **Origem**: BLUEPRINT_VIDA_ADULTA.md §1 domínio 6 (Casa) + ramificação ANTI-MIGUE-06.

@@ -1,3 +1,16 @@
+---
+id: LLM-05-V2-REVISOR-TAB-PROPOSICOES
+titulo: Sprint LLM-05-V2 — Tab Proposições no Revisor 4-way
+status: backlog
+concluida_em: null
+prioridade: P2
+data_criacao: '2026-04-29'
+fase: OUTROS
+epico: 0
+depende_de: []
+tipo_documental_alvo: null
+---
+
 # Sprint LLM-05-V2 — Tab Proposições no Revisor 4-way
 
 **Origem**: REVISAO-LLM-ONDA-01 (reescrita sob ADR-13).

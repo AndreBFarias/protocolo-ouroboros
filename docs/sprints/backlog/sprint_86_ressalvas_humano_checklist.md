@@ -1,3 +1,16 @@
+---
+id: 86-RESSALVAS-HUMANO-CHECKLIST
+titulo: Sprint 86 — Ressalvas do caminho crítico IOTA + KAPPA (checklist humano)
+status: backlog
+concluida_em: null
+prioridade: P2
+data_criacao: '2026-04-22'
+fase: OUTROS
+epico: 0
+depende_de: []
+tipo_documental_alvo: null
+---
+
 # Sprint 86 — Ressalvas do caminho crítico IOTA + KAPPA (checklist humano)
 
 **Status:** BACKLOG

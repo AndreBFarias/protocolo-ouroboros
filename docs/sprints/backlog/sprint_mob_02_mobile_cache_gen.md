@@ -1,3 +1,16 @@
+---
+id: MOB-02-MOBILE-CACHE-GEN
+titulo: Sprint MOB-02 -- Backend gera vault/.ouroboros/cache/{financas,humor-heatmap}.json
+status: backlog
+concluida_em: null
+prioridade: P2
+data_criacao: '2026-04-28'
+fase: OUTROS
+epico: 0
+depende_de: []
+tipo_documental_alvo: null
+---
+
 # Sprint MOB-02 -- Backend gera vault/.ouroboros/cache/{financas,humor-heatmap}.json
 
 **Origem**: plan pure-swinging-mitten (auditoria honesta 2026-04-29).

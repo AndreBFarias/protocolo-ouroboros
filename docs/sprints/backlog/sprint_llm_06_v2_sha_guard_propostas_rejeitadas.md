@@ -1,3 +1,16 @@
+---
+id: LLM-06-V2-SHA-GUARD-PROPOSTAS-REJEITADAS
+titulo: Sprint LLM-06-V2 — SHA-guard de propostas rejeitadas
+status: backlog
+concluida_em: null
+prioridade: P2
+data_criacao: '2026-04-29'
+fase: OUTROS
+epico: 0
+depende_de: []
+tipo_documental_alvo: null
+---
+
 # Sprint LLM-06-V2 — SHA-guard de propostas rejeitadas
 
 **Origem**: REVISAO-LLM-ONDA-01 (reescrita sob ADR-13).

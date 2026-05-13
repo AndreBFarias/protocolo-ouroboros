@@ -1,3 +1,16 @@
+---
+id: LLM-03-V2-PROPOSICAO-REGRA-CATEGORIA
+titulo: Sprint LLM-03-V2 — Proposição de regra de categoria via Edit em mappings/proposicoes/
+status: backlog
+concluida_em: null
+prioridade: P2
+data_criacao: '2026-04-29'
+fase: OUTROS
+epico: 0
+depende_de: []
+tipo_documental_alvo: null
+---
+
 # Sprint LLM-03-V2 — Proposição de regra de categoria via Edit em mappings/proposicoes/
 
 **Origem**: REVISAO-LLM-ONDA-01 (reescrita sob ADR-13).

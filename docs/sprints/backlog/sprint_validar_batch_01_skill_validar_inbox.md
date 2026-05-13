@@ -1,3 +1,17 @@
+---
+id: VALIDAR-BATCH-01-SKILL-VALIDAR-INBOX
+titulo: Sprint VALIDAR-BATCH-01 -- Skill `/validar-inbox` iterando fila pendente do
+  CSV
+status: backlog
+concluida_em: null
+prioridade: P2
+data_criacao: '2026-04-29'
+fase: OUTROS
+epico: 0
+depende_de: []
+tipo_documental_alvo: null
+---
+
 # Sprint VALIDAR-BATCH-01 -- Skill `/validar-inbox` iterando fila pendente do CSV
 
 > **Slug ASCII para referência cruzada**: `validar_batch_01`. Em texto livre, usar "VALIDAR-BATCH-01".

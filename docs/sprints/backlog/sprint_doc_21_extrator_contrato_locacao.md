@@ -1,3 +1,16 @@
+---
+id: DOC-21-EXTRATOR-CONTRATO-LOCACAO
+titulo: Sprint DOC-21 — Extrator de contrato de locação
+status: backlog
+concluida_em: null
+prioridade: P2
+data_criacao: '2026-04-28'
+fase: OUTROS
+epico: 0
+depende_de: []
+tipo_documental_alvo: null
+---
+
 # Sprint DOC-21 — Extrator de contrato de locação
 
 **Origem**: BLUEPRINT_VIDA_ADULTA.md §1 domínio 6 (Casa) + ramificação ANTI-MIGUE-06.

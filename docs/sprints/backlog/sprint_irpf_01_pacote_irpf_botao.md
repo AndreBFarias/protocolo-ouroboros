@@ -1,3 +1,16 @@
+---
+id: IRPF-01-PACOTE-IRPF-BOTAO
+titulo: Sprint IRPF-01 -- Botão 'Gerar pacote IRPF <ano>' → ZIP completo on-demand
+status: backlog
+concluida_em: null
+prioridade: P2
+data_criacao: '2026-04-28'
+fase: OUTROS
+epico: 0
+depende_de: []
+tipo_documental_alvo: null
+---
+
 # Sprint IRPF-01 -- Botão 'Gerar pacote IRPF <ano>' → ZIP completo on-demand
 
 **Origem**: plan pure-swinging-mitten (auditoria honesta 2026-04-29).

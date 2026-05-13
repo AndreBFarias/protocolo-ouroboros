@@ -1,3 +1,16 @@
+---
+id: DOC-13-MULTI-FOTO-SELECTOR
+titulo: 'Sprint DOC-13 -- Multi-foto: escolher melhor entre N fotos do mesmo documento'
+status: backlog
+concluida_em: null
+prioridade: P2
+data_criacao: '2026-04-28'
+fase: OUTROS
+epico: 0
+depende_de: []
+tipo_documental_alvo: null
+---
+
 # Sprint DOC-13 -- Multi-foto: escolher melhor entre N fotos do mesmo documento
 
 **Origem**: plan pure-swinging-mitten (auditoria honesta 2026-04-29).

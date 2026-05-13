@@ -1,3 +1,16 @@
+---
+id: FIX-TEST-BUSCA-INDICE-FRAGIL
+titulo: Sprint FIX-TEST-BUSCA-ÍNDICE-01 — Fix testes frágeis de busca global
+status: backlog
+concluida_em: null
+prioridade: P2
+data_criacao: '2026-04-29'
+fase: OUTROS
+epico: 0
+depende_de: []
+tipo_documental_alvo: null
+---
+
 # Sprint FIX-TEST-BUSCA-ÍNDICE-01 — Fix testes frágeis de busca global
 
 **Origem**: achado colateral durante Sprint ANTI-MIGUE-08 (2026-04-29).

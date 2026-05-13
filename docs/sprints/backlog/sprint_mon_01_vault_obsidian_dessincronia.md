@@ -1,3 +1,16 @@
+---
+id: MON-01-VAULT-OBSIDIAN-DESSINCRONIA
+titulo: Sprint MON-01 -- Monitor de dessincronia do Vault Obsidian
+status: backlog
+concluida_em: null
+prioridade: P2
+data_criacao: '2026-04-28'
+fase: OUTROS
+epico: 0
+depende_de: []
+tipo_documental_alvo: null
+---
+
 # Sprint MON-01 -- Monitor de dessincronia do Vault Obsidian
 
 **Origem**: plan pure-swinging-mitten (auditoria honesta 2026-04-29).

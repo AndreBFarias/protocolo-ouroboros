@@ -8,7 +8,7 @@ data_criacao: 2026-05-13
 fase: PRODUCAO_READY
 depende_de: []
 esforco_estimado_horas: 16
-origem: lembrete do dono em 2026-05-13 sobre a ideia central do projeto. ETL só pode rodar autônomo (./run.sh --tudo sem revisão humana) quando cada tipo documental teve ≥2 amostras validadas artesanalmente: supervisor Opus lê multimodal a foto/PDF, gera "prova dos nove" canônica, ETL é executado, resultados batem 4-way (Opus × ETL × Grafo × Humano). Sem 2 amostras graduadas, o tipo fica em "calibrando".
+origem: "lembrete do dono em 2026-05-13 sobre a ideia central do projeto. ETL só pode rodar autônomo (./run.sh --tudo sem revisão humana) quando cada tipo documental teve >=2 amostras validadas artesanalmente: supervisor Opus lê multimodal a foto/PDF, gera prova-dos-nove canônica, ETL é executado, resultados batem 4-way (Opus x ETL x Grafo x Humano). Sem 2 amostras graduadas, o tipo fica em calibrando."
 ---
 
 # Sprint FASE-A-COMPLETAR-VALIDACAO-ARTESANAL  <!-- noqa: accent -->

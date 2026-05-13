@@ -1,3 +1,16 @@
+---
+id: DASH-02-YAML-CONTATOS-EMERGENCIA
+titulo: Sprint DASH-02 — YAML estruturado de contatos de emergência
+status: backlog
+concluida_em: null
+prioridade: P2
+data_criacao: '2026-04-28'
+fase: OUTROS
+epico: 0
+depende_de: []
+tipo_documental_alvo: null
+---
+
 # Sprint DASH-02 — YAML estruturado de contatos de emergência
 
 **Origem**: BLUEPRINT_VIDA_ADULTA.md §1 domínio 8 + ramificação ANTI-MIGUE-06.

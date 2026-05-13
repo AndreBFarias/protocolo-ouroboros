@@ -1,3 +1,17 @@
+---
+id: UX-10-CLARIFICAR-CLUSTER-VS-ABA-NOMENCLATURA
+titulo: Sprint UX-10 -- Clarificar hierarquia cluster vs aba (mesmos rótulos confundem
+  usuário)
+status: backlog
+concluida_em: null
+prioridade: P2
+data_criacao: '2026-04-28'
+fase: OUTROS
+epico: 0
+depende_de: []
+tipo_documental_alvo: null
+---
+
 # Sprint UX-10 -- Clarificar hierarquia cluster vs aba (mesmos rótulos confundem usuário)
 
 **Origem**: plan pure-swinging-mitten (auditoria honesta 2026-04-29).

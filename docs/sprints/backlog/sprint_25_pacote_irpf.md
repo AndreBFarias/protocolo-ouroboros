@@ -1,3 +1,16 @@
+---
+id: 25-PACOTE-IRPF
+titulo: '> **superseded_by**: `IRPF-01` (`docs/sprints/backlog/sprint_irpf_01_pacote_irpf_botao.md`).'
+status: backlog
+concluida_em: null
+prioridade: P2
+data_criacao: '2026-04-19'
+fase: OUTROS
+epico: 0
+depende_de: []
+tipo_documental_alvo: null
+---
+
 > **superseded_by**: `IRPF-01` (`docs/sprints/backlog/sprint_irpf_01_pacote_irpf_botao.md`).
 > Conteúdo conceitual desta spec foi absorvido em IRPF-01 do plan pure-swinging-mitten (2026-04-29). Mantida em backlog/ como referência histórica até IRPF-01 ser concluída.
 

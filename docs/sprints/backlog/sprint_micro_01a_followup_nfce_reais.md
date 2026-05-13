@@ -1,3 +1,16 @@
+---
+id: MICRO-01A-FOLLOWUP-NFCE-REAIS
+titulo: Sprint MICRO-01a-FOLLOWUP-NFCE-REAIS -- Validar drill-down com NFCe reais
+status: backlog
+concluida_em: null
+prioridade: P2
+data_criacao: '2026-05-01'
+fase: OUTROS
+epico: 0
+depende_de: []
+tipo_documental_alvo: null
+---
+
 # Sprint MICRO-01a-FOLLOWUP-NFCE-REAIS -- Validar drill-down com NFCe reais
 
 > **Slug ASCII**: `micro_01a_followup_nfce_reais`. Texto livre: "MICRO-01a-FOLLOWUP-NFCE-REAIS".

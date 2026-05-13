@@ -1,3 +1,17 @@
+---
+id: LINK-AUDIT-01-INVESTIGAR-DOCUMENTOS-SEM-ARESTA-DOCUMENTO-DE
+titulo: Sprint LINK-AUDIT-01 -- Investigar documentos catalogados sem aresta documento_de
+  (linking heuristico falha)
+status: backlog
+concluida_em: null
+prioridade: P2
+data_criacao: '2026-04-28'
+fase: OUTROS
+epico: 0
+depende_de: []
+tipo_documental_alvo: null
+---
+
 # Sprint LINK-AUDIT-01 -- Investigar documentos catalogados sem aresta documento_de (linking heuristico falha)
 
 **Origem**: plan pure-swinging-mitten (auditoria honesta 2026-04-29).

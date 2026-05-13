@@ -1,3 +1,16 @@
+---
+id: DOC-11-PLANO-SAUDE-CARTEIRINHA
+titulo: 'Sprint DOC-11 -- Extrator: carteirinha de plano de saúde + ANS'
+status: backlog
+concluida_em: null
+prioridade: P2
+data_criacao: '2026-04-28'
+fase: OUTROS
+epico: 0
+depende_de: []
+tipo_documental_alvo: null
+---
+
 # Sprint DOC-11 -- Extrator: carteirinha de plano de saúde + ANS
 
 **Origem**: plan pure-swinging-mitten (auditoria honesta 2026-04-29).

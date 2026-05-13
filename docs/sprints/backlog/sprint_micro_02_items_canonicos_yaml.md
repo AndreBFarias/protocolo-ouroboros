@@ -1,3 +1,16 @@
+---
+id: MICRO-02-ITEMS-CANONICOS-YAML
+titulo: Sprint MICRO-02 -- mappings/items_canonicos.yaml + categorização granular
+status: backlog
+concluida_em: null
+prioridade: P2
+data_criacao: '2026-04-28'
+fase: OUTROS
+epico: 0
+depende_de: []
+tipo_documental_alvo: null
+---
+
 # Sprint MICRO-02 -- mappings/items_canonicos.yaml + categorização granular
 
 **Origem**: plan pure-swinging-mitten (auditoria honesta 2026-04-29).

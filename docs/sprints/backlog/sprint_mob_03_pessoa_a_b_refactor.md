@@ -1,3 +1,17 @@
+---
+id: MOB-03-PESSOA-A-B-REFACTOR
+titulo: Sprint MOB-03 -- Refactor PESSOA_A/PESSOA_B + mappings/pessoas.yaml (paridade
+  com mobile)
+status: backlog
+concluida_em: null
+prioridade: P2
+data_criacao: '2026-04-28'
+fase: OUTROS
+epico: 0
+depende_de: []
+tipo_documental_alvo: null
+---
+
 # Sprint MOB-03 -- Refactor PESSOA_A/PESSOA_B + mappings/pessoas.yaml (paridade com mobile)
 
 **Origem**: plan pure-swinging-mitten (auditoria honesta 2026-04-29).

@@ -1,3 +1,16 @@
+---
+id: MOB-01-VAULT-BRIDGE-MD
+titulo: Sprint MOB-01 -- Backend lê .md do mobile e roteia para inbox
+status: backlog
+concluida_em: null
+prioridade: P2
+data_criacao: '2026-04-28'
+fase: OUTROS
+epico: 0
+depende_de: []
+tipo_documental_alvo: null
+---
+
 # Sprint MOB-01 -- Backend lê .md do mobile e roteia para inbox
 
 **Origem**: plan pure-swinging-mitten (auditoria honesta 2026-04-29).

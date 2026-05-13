@@ -1,3 +1,16 @@
+---
+id: DOC-03-CARTEIRA-ESTUDANTE
+titulo: 'Sprint DOC-03 -- Extrator: carteira de estudante (JPEG/PDF + validade)'
+status: backlog
+concluida_em: null
+prioridade: P2
+data_criacao: '2026-04-28'
+fase: OUTROS
+epico: 0
+depende_de: []
+tipo_documental_alvo: null
+---
+
 # Sprint DOC-03 -- Extrator: carteira de estudante (JPEG/PDF + validade)
 
 **Origem**: plan pure-swinging-mitten (auditoria honesta 2026-04-29).

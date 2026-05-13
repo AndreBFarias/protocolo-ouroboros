@@ -1,3 +1,16 @@
+---
+id: DOC-25-EXTRATOR-IPVA-SEGURO-AUTO
+titulo: Sprint DOC-25 — Extrator de IPVA + apólice de seguro auto
+status: backlog
+concluida_em: null
+prioridade: P2
+data_criacao: '2026-04-28'
+fase: OUTROS
+epico: 0
+depende_de: []
+tipo_documental_alvo: null
+---
+
 # Sprint DOC-25 — Extrator de IPVA + apólice de seguro auto
 
 **Origem**: BLUEPRINT_VIDA_ADULTA.md §1 domínio 7 + ramificação ANTI-MIGUE-06.

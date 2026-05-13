@@ -1,3 +1,16 @@
+---
+id: DOC-02-MERCADO-NF-FISICA
+titulo: 'Sprint DOC-02 -- Extrator: NF de mercado físico (Vivendas e similares)'
+status: backlog
+concluida_em: null
+prioridade: P2
+data_criacao: '2026-04-28'
+fase: OUTROS
+epico: 0
+depende_de: []
+tipo_documental_alvo: null
+---
+
 # Sprint DOC-02 -- Extrator: NF de mercado físico (Vivendas e similares)
 
 **Origem**: plan pure-swinging-mitten (auditoria honesta 2026-04-29).

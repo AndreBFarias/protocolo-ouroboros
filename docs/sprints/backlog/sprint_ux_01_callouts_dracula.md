@@ -1,3 +1,16 @@
+---
+id: UX-01-CALLOUTS-DRACULA
+titulo: Sprint UX-01 -- Migrar 4 arquivos st.error/warning/info/success → callout_html
+status: backlog
+concluida_em: null
+prioridade: P2
+data_criacao: '2026-04-28'
+fase: OUTROS
+epico: 0
+depende_de: []
+tipo_documental_alvo: null
+---
+
 # Sprint UX-01 -- Migrar 4 arquivos st.error/warning/info/success → callout_html
 
 **Origem**: plan pure-swinging-mitten (auditoria honesta 2026-04-29).

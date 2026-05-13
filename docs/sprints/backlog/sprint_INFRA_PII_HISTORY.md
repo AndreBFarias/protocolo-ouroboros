@@ -1,3 +1,16 @@
+---
+id: INFRA-PII-HISTORY
+titulo: 0. SPEC (machine-readable)
+status: backlog
+concluida_em: null
+prioridade: P3
+data_criacao: '2026-04-27'
+fase: OUTROS
+epico: 0
+depende_de: []
+tipo_documental_alvo: null
+---
+
 ## 0. SPEC (machine-readable)
 
 ```yaml

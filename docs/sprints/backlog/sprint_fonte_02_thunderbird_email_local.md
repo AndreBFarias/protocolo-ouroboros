@@ -1,3 +1,17 @@
+---
+id: FONTE-02-THUNDERBIRD-EMAIL-LOCAL
+titulo: Sprint FONTE-02 -- src/integrations/thunderbird_email.py — lê maildir local
+  + roteia anexos
+status: backlog
+concluida_em: null
+prioridade: P2
+data_criacao: '2026-04-28'
+fase: OUTROS
+epico: 0
+depende_de: []
+tipo_documental_alvo: null
+---
+
 # Sprint FONTE-02 -- src/integrations/thunderbird_email.py — lê maildir local + roteia anexos
 
 **Origem**: plan pure-swinging-mitten (auditoria honesta 2026-04-29).

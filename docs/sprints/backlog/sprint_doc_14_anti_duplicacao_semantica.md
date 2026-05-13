@@ -1,3 +1,16 @@
+---
+id: DOC-14-ANTI-DUPLICACAO-SEMANTICA
+titulo: Sprint DOC-14 -- Anti-duplicação semântica em data/raw/<pessoa>/<banco>/
+status: backlog
+concluida_em: null
+prioridade: P2
+data_criacao: '2026-04-28'
+fase: OUTROS
+epico: 0
+depende_de: []
+tipo_documental_alvo: null
+---
+
 # Sprint DOC-14 -- Anti-duplicação semântica em data/raw/<pessoa>/<banco>/
 
 **Origem**: plan pure-swinging-mitten (auditoria honesta 2026-04-29).

@@ -1,3 +1,16 @@
+---
+id: IRPF-02-IRPF-DEDUTIVEL-MEDICO
+titulo: Sprint IRPF-02 -- Link automático receita médica + exame + pagamento bancário
+status: backlog
+concluida_em: null
+prioridade: P2
+data_criacao: '2026-04-28'
+fase: OUTROS
+epico: 0
+depende_de: []
+tipo_documental_alvo: null
+---
+
 # Sprint IRPF-02 -- Link automático receita médica + exame + pagamento bancário
 
 **Origem**: plan pure-swinging-mitten (auditoria honesta 2026-04-29).

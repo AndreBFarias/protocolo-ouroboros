@@ -1,3 +1,16 @@
+---
+id: DOC-28-PASSAPORTE
+titulo: Sprint DOC-28 -- Extrator de passaporte digital
+status: backlog
+concluida_em: null
+prioridade: P2
+data_criacao: '2026-04-29'
+fase: OUTROS
+epico: 0
+depende_de: []
+tipo_documental_alvo: null
+---
+
 # Sprint DOC-28 -- Extrator de passaporte digital
 
 **Origem**: lacuna 2 da auditoria `docs/auditorias/cobertura_backlog_2026-04-29.md` (item 19 do plan `pure-swinging-mitten`, Onda 3).

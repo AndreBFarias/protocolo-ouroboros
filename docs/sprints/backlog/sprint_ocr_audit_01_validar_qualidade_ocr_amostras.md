@@ -1,3 +1,17 @@
+---
+id: OCR-AUDIT-01-VALIDAR-QUALIDADE-OCR-AMOSTRAS
+titulo: Sprint OCR-AUDIT-01 -- Auditoria de qualidade de OCR (5 amostras por extrator
+  com OCR)
+status: backlog
+concluida_em: null
+prioridade: P2
+data_criacao: '2026-04-28'
+fase: OUTROS
+epico: 0
+depende_de: []
+tipo_documental_alvo: null
+---
+
 # Sprint OCR-AUDIT-01 -- Auditoria de qualidade de OCR (5 amostras por extrator com OCR)
 
 **Origem**: plan pure-swinging-mitten (auditoria honesta 2026-04-29).

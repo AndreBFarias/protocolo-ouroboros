@@ -1,3 +1,16 @@
+---
+id: MICRO-03-ABA-CRUZAMENTO-MICRO
+titulo: Sprint MICRO-03 -- Aba Cruzamento Micro no dashboard (drill-down item-a-item)
+status: backlog
+concluida_em: null
+prioridade: P2
+data_criacao: '2026-04-28'
+fase: OUTROS
+epico: 0
+depende_de: []
+tipo_documental_alvo: null
+---
+
 # Sprint MICRO-03 -- Aba Cruzamento Micro no dashboard (drill-down item-a-item)
 
 **Origem**: plan pure-swinging-mitten (auditoria honesta 2026-04-29).

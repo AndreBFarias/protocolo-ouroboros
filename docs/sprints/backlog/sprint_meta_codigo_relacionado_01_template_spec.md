@@ -1,3 +1,17 @@
+---
+id: META-CODIGO-RELACIONADO-01-TEMPLATE-SPEC
+titulo: Sprint META-CODIGO-RELACIONADO-01 — Campo "código relacionado já no repo"
+  no template de spec
+status: backlog
+concluida_em: null
+prioridade: P2
+data_criacao: '2026-04-29'
+fase: OUTROS
+epico: 0
+depende_de: []
+tipo_documental_alvo: null
+---
+
 # Sprint META-CODIGO-RELACIONADO-01 — Campo "código relacionado já no repo" no template de spec
 
 **Origem**: achado da terceira sessão de validação (DOC-VERDADE-01.F, 2026-04-29). Spec GAP-01 propõe `src/analysis/gap_documental_proativo.py` paralelo a `src/analysis/gap_documental.py` (Sprint 75) sem que a spec mencione a coexistência. Risco real: outro Opus pode criar duplicação por descuido.

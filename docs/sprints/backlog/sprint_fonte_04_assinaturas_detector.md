@@ -1,3 +1,16 @@
+---
+id: FONTE-04-ASSINATURAS-DETECTOR
+titulo: Sprint FONTE-04 -- src/analysis/assinaturas.py — recorrências em cartão
+status: backlog
+concluida_em: null
+prioridade: P2
+data_criacao: '2026-04-28'
+fase: OUTROS
+epico: 0
+depende_de: []
+tipo_documental_alvo: null
+---
+
 # Sprint FONTE-04 -- src/analysis/assinaturas.py — recorrências em cartão
 
 **Origem**: plan pure-swinging-mitten (auditoria honesta 2026-04-29).

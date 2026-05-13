@@ -1,3 +1,16 @@
+---
+id: META-DEP-LINTER-01-VALIDAR-DEPENDENCIAS-BACKLOG
+titulo: Sprint META-DEP-LINTER-01 — Linter de dependências entre specs em backlog
+status: backlog
+concluida_em: null
+prioridade: P2
+data_criacao: '2026-04-29'
+fase: OUTROS
+epico: 0
+depende_de: []
+tipo_documental_alvo: null
+---
+
 # Sprint META-DEP-LINTER-01 — Linter de dependências entre specs em backlog
 
 **Origem**: achado da terceira sessão de validação (DOC-VERDADE-01.F, 2026-04-29). Spec MICRO-01 declara `Depende de: DOC-02, DOC-19` (ambas em backlog), mas não há mecanismo que avise antes de começar a executar. Risco: Opus começa MICRO-01, descobre no meio que dependência não fechou, ramifica improvisado.

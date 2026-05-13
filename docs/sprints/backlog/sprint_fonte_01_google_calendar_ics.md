@@ -1,3 +1,16 @@
+---
+id: FONTE-01-GOOGLE-CALENDAR-ICS
+titulo: Sprint FONTE-01 -- src/integrations/google_calendar.py — sync .ics
+status: backlog
+concluida_em: null
+prioridade: P2
+data_criacao: '2026-04-28'
+fase: OUTROS
+epico: 0
+depende_de: []
+tipo_documental_alvo: null
+---
+
 # Sprint FONTE-01 -- src/integrations/google_calendar.py — sync .ics
 
 **Origem**: plan pure-swinging-mitten (auditoria honesta 2026-04-29).

@@ -1,3 +1,16 @@
+---
+id: HOOK-INBOX-01-AVISO-ARQUIVOS-PENDENTES
+titulo: Sprint HOOK-INBOX-01 -- Hook contador de arquivos pendentes no inbox
+status: backlog
+concluida_em: null
+prioridade: P2
+data_criacao: '2026-04-29'
+fase: OUTROS
+epico: 0
+depende_de: []
+tipo_documental_alvo: null
+---
+
 # Sprint HOOK-INBOX-01 -- Hook contador de arquivos pendentes no inbox
 
 > **Slug ASCII para referência cruzada**: `hook_inbox_01`. Em texto livre, usar "HOOK-INBOX-01".

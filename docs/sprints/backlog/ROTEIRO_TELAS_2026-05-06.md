@@ -1,3 +1,16 @@
+---
+id: ROTEIRO-TELAS
+titulo: Roteiro Tela-a-Tela 2026-05-06 — 36 sprints (Onda U + T + Q)
+status: backlog
+concluida_em: null
+prioridade: P0
+data_criacao: '2026-05-05'
+fase: OUTROS
+epico: 0
+depende_de: []
+tipo_documental_alvo: null
+---
+
 # Roteiro Tela-a-Tela 2026-05-06 — 36 sprints (Onda U + T + Q)
 
 > **Origem**: pedido do dono em 2026-05-06 para reorganização após constatar que a abordagem de fixes transversais (UX-RD-FIX-01..14, arquivada em `docs/sprints/arquivadas/2026-05-tentativa-fix-transversal/`) entregou métricas DOM verdes mas percepção visual integrada continuou quebrada (sidebar misturando antigo+novo, KPIs semânticos errados na Home, layout esparso, bugs Plotly).

@@ -1,3 +1,17 @@
+---
+id: GRAFO-XLSX-01-INVESTIGAR-DISCREPANCIA-XLSX-GRAFO
+titulo: Sprint GRAFO-XLSX-01 -- Investigar discrepância 6.093 XLSX vs 6.086 grafo
+  (7 transações órfãs)
+status: backlog
+concluida_em: null
+prioridade: P2
+data_criacao: '2026-04-28'
+fase: OUTROS
+epico: 0
+depende_de: []
+tipo_documental_alvo: null
+---
+
 # Sprint GRAFO-XLSX-01 -- Investigar discrepância 6.093 XLSX vs 6.086 grafo (7 transações órfãs)
 
 **Origem**: plan pure-swinging-mitten (auditoria honesta 2026-04-29).

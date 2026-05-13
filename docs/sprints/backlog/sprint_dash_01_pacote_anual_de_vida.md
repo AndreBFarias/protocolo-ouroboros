@@ -1,3 +1,16 @@
+---
+id: DASH-01-PACOTE-ANUAL-DE-VIDA
+titulo: Sprint DASH-01 -- Botão 'Gerar pacote anual de vida <ano>' (não só IRPF)
+status: backlog
+concluida_em: null
+prioridade: P2
+data_criacao: '2026-04-28'
+fase: OUTROS
+epico: 0
+depende_de: []
+tipo_documental_alvo: null
+---
+
 # Sprint DASH-01 -- Botão 'Gerar pacote anual de vida <ano>' (não só IRPF)
 
 **Origem**: plan pure-swinging-mitten (auditoria honesta 2026-04-29).

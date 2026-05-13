@@ -1,3 +1,16 @@
+---
+id: SUBAGENTE-EXTRACAO-01-PARALELIZACAO-FROZEN
+titulo: Sprint SUBAGENTE-EXTRACAO-01 -- Paralelização agentic (FROZEN, P3)
+status: backlog
+concluida_em: null
+prioridade: P2
+data_criacao: '2026-04-29'
+fase: OUTROS
+epico: 0
+depende_de: []
+tipo_documental_alvo: null
+---
+
 # Sprint SUBAGENTE-EXTRACAO-01 -- Paralelização agentic (FROZEN, P3)
 
 > **Slug ASCII para referência cruzada**: `subagente_extracao_01`. Em texto livre, usar "SUBAGENTE-EXTRACAO-01".

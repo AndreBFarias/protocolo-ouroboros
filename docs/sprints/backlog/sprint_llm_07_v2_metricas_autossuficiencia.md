@@ -1,3 +1,16 @@
+---
+id: LLM-07-V2-METRICAS-AUTOSSUFICIENCIA
+titulo: Sprint LLM-07-V2 — Métricas de autossuficiência (ADR-09)
+status: backlog
+concluida_em: null
+prioridade: P2
+data_criacao: '2026-04-29'
+fase: OUTROS
+epico: 0
+depende_de: []
+tipo_documental_alvo: null
+---
+
 # Sprint LLM-07-V2 — Métricas de autossuficiência (ADR-09)
 
 **Origem**: REVISAO-LLM-ONDA-01 (reescrita sob ADR-13).

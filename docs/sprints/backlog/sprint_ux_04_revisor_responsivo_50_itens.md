@@ -1,3 +1,16 @@
+---
+id: UX-04-REVISOR-RESPONSIVO-50-ITENS
+titulo: Sprint UX-04 -- Revisor responsivo + scroll/expand em documentos com 50+ itens
+status: backlog
+concluida_em: null
+prioridade: P2
+data_criacao: '2026-04-28'
+fase: OUTROS
+epico: 0
+depende_de: []
+tipo_documental_alvo: null
+---
+
 # Sprint UX-04 -- Revisor responsivo + scroll/expand em documentos com 50+ itens
 
 **Origem**: plan pure-swinging-mitten (auditoria honesta 2026-04-29).

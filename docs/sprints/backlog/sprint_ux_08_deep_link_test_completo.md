@@ -1,3 +1,16 @@
+---
+id: UX-08-DEEP-LINK-TEST-COMPLETO
+titulo: Sprint UX-08 -- Cobertura de teste deep-link ?tab= em todas 13 abas + 5 clusters
+status: backlog
+concluida_em: null
+prioridade: P2
+data_criacao: '2026-04-28'
+fase: OUTROS
+epico: 0
+depende_de: []
+tipo_documental_alvo: null
+---
+
 # Sprint UX-08 -- Cobertura de teste deep-link ?tab= em todas 13 abas + 5 clusters
 
 **Origem**: plan pure-swinging-mitten (auditoria honesta 2026-04-29).

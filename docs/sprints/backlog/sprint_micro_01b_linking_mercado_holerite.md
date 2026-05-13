@@ -1,3 +1,16 @@
+---
+id: MICRO-01B-LINKING-MERCADO-HOLERITE
+titulo: Sprint MICRO-01b -- Linking transação→nfce→item para mercado físico + holerite
+status: backlog
+concluida_em: null
+prioridade: P2
+data_criacao: '2026-04-29'
+fase: OUTROS
+epico: 0
+depende_de: []
+tipo_documental_alvo: null
+---
+
 # Sprint MICRO-01b -- Linking transação→nfce→item para mercado físico + holerite
 
 **Origem**: ramificação de `sprint_micro_01_linking_micro_runtime.md` por decisão do dono em 2026-04-29 (Fase 0 do plano `glittery-munching-russell`, decisão D1).

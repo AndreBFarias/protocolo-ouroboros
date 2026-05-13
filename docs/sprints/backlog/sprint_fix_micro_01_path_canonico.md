@@ -1,3 +1,16 @@
+---
+id: FIX-MICRO-01-PATH-CANONICO
+titulo: Sprint FIX-MICRO-01-PATH — Re-localizar módulo MICRO-01 (condicional)
+status: backlog
+concluida_em: null
+prioridade: P2
+data_criacao: '2026-04-29'
+fase: OUTROS
+epico: 0
+depende_de: []
+tipo_documental_alvo: null
+---
+
 # Sprint FIX-MICRO-01-PATH — Re-localizar módulo MICRO-01 (condicional)
 
 **Origem**: achado da terceira sessão de validação (DOC-VERDADE-01.F, 2026-04-29). Spec MICRO-01 propõe criar `src/transform/linking_micro.py`, mas linking canônico do projeto vive em `src/graph/linking.py` (Sprint 48). Inconsistência menor de spec.

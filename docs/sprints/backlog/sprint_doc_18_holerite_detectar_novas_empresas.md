@@ -1,3 +1,17 @@
+---
+id: DOC-18-HOLERITE-DETECTAR-NOVAS-EMPRESAS
+titulo: 'Sprint DOC-18 -- Holerite: declarativo em YAML + supervisor LLM detecta novo
+  empregador'
+status: backlog
+concluida_em: null
+prioridade: P2
+data_criacao: '2026-04-28'
+fase: OUTROS
+epico: 0
+depende_de: []
+tipo_documental_alvo: null
+---
+
 # Sprint DOC-18 -- Holerite: declarativo em YAML + supervisor LLM detecta novo empregador
 
 **Origem**: plan pure-swinging-mitten (auditoria honesta 2026-04-29).

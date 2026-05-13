@@ -1,3 +1,16 @@
+---
+id: 85-XLSX-DOCS-FALTANTES-EXPANDIDO
+titulo: 0. SPEC (machine-readable)
+status: backlog
+concluida_em: null
+prioridade: P2
+data_criacao: '2026-04-21'
+fase: OUTROS
+epico: 0
+depende_de: []
+tipo_documental_alvo: null
+---
+
 ## 0. SPEC (machine-readable)
 
 ```yaml

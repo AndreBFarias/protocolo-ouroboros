@@ -1,3 +1,17 @@
+---
+id: AGENTIC-FALLBACK-01-EXTRACAO-PARA-TIPOS-SEM-EXTRATOR
+titulo: Sprint AGENTIC-FALLBACK-01 -- Extração agentic estruturada para tipos sem
+  extrator legacy
+status: backlog
+concluida_em: null
+prioridade: P2
+data_criacao: '2026-04-29'
+fase: OUTROS
+epico: 0
+depende_de: []
+tipo_documental_alvo: null
+---
+
 # Sprint AGENTIC-FALLBACK-01 -- Extração agentic estruturada para tipos sem extrator legacy
 
 > **Slug ASCII para referência cruzada**: `agentic_fallback_01`. Em texto livre, usar "AGENTIC-FALLBACK-01".

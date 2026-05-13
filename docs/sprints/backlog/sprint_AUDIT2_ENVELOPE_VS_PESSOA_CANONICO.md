@@ -1,3 +1,16 @@
+---
+id: AUDIT2-ENVELOPE-VS-PESSOA-CANONICO
+titulo: Sprint AUDIT2-ENVELOPE-VS-PESSOA-CANONICO -- Decidir path canonico em duplicatas
+status: backlog
+concluida_em: null
+prioridade: P2
+data_criacao: '2026-04-28'
+fase: OUTROS
+epico: 0
+depende_de: []
+tipo_documental_alvo: null
+---
+
 # Sprint AUDIT2-ENVELOPE-VS-PESSOA-CANONICO -- Decidir path canonico em duplicatas
 
 > **superseded_by**: `ADR-23-DRAFT` (`docs/sprints/backlog/sprint_adr_23_draft_adr_23_envelope_vs_pessoa_canonico.md`).

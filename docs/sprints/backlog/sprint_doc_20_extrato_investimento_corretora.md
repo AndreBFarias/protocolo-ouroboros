@@ -1,3 +1,17 @@
+---
+id: DOC-20-EXTRATO-INVESTIMENTO-CORRETORA
+titulo: 'Sprint DOC-20 -- Extrator: extrato de investimento (B3, NuInvest, Rico, XP,
+  BTG)'
+status: backlog
+concluida_em: null
+prioridade: P2
+data_criacao: '2026-04-28'
+fase: OUTROS
+epico: 0
+depende_de: []
+tipo_documental_alvo: null
+---
+
 # Sprint DOC-20 -- Extrator: extrato de investimento (B3, NuInvest, Rico, XP, BTG)
 
 **Origem**: plan pure-swinging-mitten (auditoria honesta 2026-04-29).

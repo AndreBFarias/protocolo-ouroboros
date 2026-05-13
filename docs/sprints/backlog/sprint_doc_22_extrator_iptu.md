@@ -1,3 +1,16 @@
+---
+id: DOC-22-EXTRATOR-IPTU
+titulo: Sprint DOC-22 — Extrator de IPTU
+status: backlog
+concluida_em: null
+prioridade: P2
+data_criacao: '2026-04-28'
+fase: OUTROS
+epico: 0
+depende_de: []
+tipo_documental_alvo: null
+---
+
 # Sprint DOC-22 — Extrator de IPTU
 
 **Origem**: BLUEPRINT_VIDA_ADULTA.md §1 domínio 6 (Casa) + ramificação ANTI-MIGUE-06.

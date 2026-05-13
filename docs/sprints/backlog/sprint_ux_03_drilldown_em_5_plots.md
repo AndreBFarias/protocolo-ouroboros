@@ -1,3 +1,17 @@
+---
+id: UX-03-DRILLDOWN-EM-5-PLOTS
+titulo: Sprint UX-03 -- Drill-down em Sankey + Heatmap + Bar Pagamentos + Line Projeções
+  + Bar Completude
+status: backlog
+concluida_em: null
+prioridade: P2
+data_criacao: '2026-04-28'
+fase: OUTROS
+epico: 0
+depende_de: []
+tipo_documental_alvo: null
+---
+
 # Sprint UX-03 -- Drill-down em Sankey + Heatmap + Bar Pagamentos + Line Projeções + Bar Completude
 
 **Origem**: plan pure-swinging-mitten (auditoria honesta 2026-04-29).

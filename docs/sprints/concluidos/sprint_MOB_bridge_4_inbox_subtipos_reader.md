@@ -10,7 +10,7 @@ fase: BRIDGE_MOBILE
 depende_de: []
 bloqueia: [MOB-bridge-5-classifier-pix, MOB-dashboard-mostra-pix-app, MOB-spec-transcricao-audio, MOB-spec-galeria-memorias]
 esforco_estimado_horas: 4
-origem: Plano 2026-05-12 secao Fase B; app mobile (Protocolo-Mob-Ouroboros) exporta .md em inbox/<area>/<subtipo>/ via Share Intent Receiver (src/lib/share/categorias.ts) mas o backend (src/inbox_processor.py linha 173+: sorted(iterdir())) so le a raiz inbox/.  <!-- noqa: accent -->
+origem: "Plano 2026-05-12 secao Fase B; app mobile (Protocolo-Mob-Ouroboros) exporta .md em inbox/<area>/<subtipo>/ via Share Intent Receiver (src/lib/share/categorias.ts) mas o backend (src/inbox_processor.py linha 173+ usa sorted(iterdir())) so le a raiz inbox/."  # noqa: accent
 adr_associada: ADR-27 (proposta -- inbox vault sincronizavel via syncthing como contrato de entrada universal)  <!-- noqa: accent -->
 ---
 

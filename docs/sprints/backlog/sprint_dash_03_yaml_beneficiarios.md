@@ -1,3 +1,16 @@
+---
+id: DASH-03-YAML-BENEFICIARIOS
+titulo: Sprint DASH-03 — YAML de beneficiários (seguros, aposentadoria)
+status: backlog
+concluida_em: null
+prioridade: P2
+data_criacao: '2026-04-28'
+fase: OUTROS
+epico: 0
+depende_de: []
+tipo_documental_alvo: null
+---
+
 # Sprint DASH-03 — YAML de beneficiários (seguros, aposentadoria)
 
 **Origem**: BLUEPRINT_VIDA_ADULTA.md §1 domínio 8 + ramificação ANTI-MIGUE-06.

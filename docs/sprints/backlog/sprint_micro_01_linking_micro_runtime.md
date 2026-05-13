@@ -1,3 +1,17 @@
+---
+id: MICRO-01-LINKING-MICRO-RUNTIME
+titulo: Sprint MICRO-01 -- Edges transação→nfce→item no grafo em runtime (SPEC PAI
+  HISTÓRICA)
+status: backlog
+concluida_em: null
+prioridade: P2
+data_criacao: '2026-04-28'
+fase: OUTROS
+epico: 0
+depende_de: []
+tipo_documental_alvo: null
+---
+
 # Sprint MICRO-01 -- Edges transação→nfce→item no grafo em runtime (SPEC PAI HISTÓRICA)
 
 > **Status: ramificada em 01a/01b por bloqueio de DOC-02/DOC-19, decisão do dono em 2026-04-29**

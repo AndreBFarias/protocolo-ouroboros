@@ -1,3 +1,16 @@
+---
+id: INFRA-LINKING-NFE-TRANSACAO
+titulo: '<!-- noqa: accent -->'
+status: concluida
+concluida_em: null
+prioridade: P2
+data_criacao: '2026-05-08'
+fase: OUTROS
+epico: 0
+depende_de: []
+tipo_documental_alvo: null
+---
+
 <!-- noqa: accent -->
 ---
 id: INFRA-LINKING-NFE-TRANSACAO <!-- noqa: accent -->

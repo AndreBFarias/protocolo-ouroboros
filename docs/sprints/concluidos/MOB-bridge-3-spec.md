@@ -1,7 +1,7 @@
 ---
 concluida_em: 2026-05-01
-escopo_refinado_por: pacote interno em src/marcos_auto/ (coerência com src/mobile_cache/), dedup via sha256(tipo|data|descricao)[:12] simétrico com M11 do Mobile, plug em mobile_cache.gerar_todos antes dos caches
-entrega_real: src/marcos_auto/ (5 módulos: __init__, dedup, parser, escrita, heuristicas) + tests/marcos_auto/ (32 testes), 2 marcos gerados em runtime real (tres_treinos_em_sete_dias e primeira_vitoria_da_semana), idempotência confirmada
+escopo_refinado_por: "pacote interno em src/marcos_auto/ (coerência com src/mobile_cache/), dedup via sha256(tipo|data|descricao)[:12] simétrico com M11 do Mobile, plug em mobile_cache.gerar_todos antes dos caches"
+entrega_real: "src/marcos_auto/ (5 módulos -- __init__, dedup, parser, escrita, heuristicas) + tests/marcos_auto/ (32 testes), 2 marcos gerados em runtime real (tres_treinos_em_sete_dias e primeira_vitoria_da_semana), idempotência confirmada"
 commits: ef20366
 seguimento: nenhum (Vault tem volume baixo de dailies/diario/eventos -- 3 das 5 heurísticas não dispararam mas a infraestrutura está pronta para quando volume crescer)
 ---

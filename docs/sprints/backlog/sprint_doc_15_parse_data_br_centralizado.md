@@ -1,3 +1,17 @@
+---
+id: DOC-15-PARSE-DATA-BR-CENTRALIZADO
+titulo: Sprint DOC-15 -- parse_data_br() em src/utils/parse_br.py + remover regex
+  local de 22 extratores
+status: backlog
+concluida_em: null
+prioridade: P2
+data_criacao: '2026-04-28'
+fase: OUTROS
+epico: 0
+depende_de: []
+tipo_documental_alvo: null
+---
+
 # Sprint DOC-15 -- parse_data_br() em src/utils/parse_br.py + remover regex local de 22 extratores
 
 **Origem**: plan pure-swinging-mitten (auditoria honesta 2026-04-29).

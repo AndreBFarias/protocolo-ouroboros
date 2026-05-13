@@ -1,3 +1,16 @@
+---
+id: DOC-24-EXTRATOR-CRLV-CRV
+titulo: Sprint DOC-24 — Extrator de CRLV/CRV digital (gov.br)
+status: backlog
+concluida_em: null
+prioridade: P2
+data_criacao: '2026-04-28'
+fase: OUTROS
+epico: 0
+depende_de: []
+tipo_documental_alvo: null
+---
+
 # Sprint DOC-24 — Extrator de CRLV/CRV digital (gov.br)
 
 **Origem**: BLUEPRINT_VIDA_ADULTA.md §1 domínio 7 (Mobilidade) + ramificação ANTI-MIGUE-06.

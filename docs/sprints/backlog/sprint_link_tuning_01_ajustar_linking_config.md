@@ -1,3 +1,17 @@
+---
+id: LINK-TUNING-01-AJUSTAR-LINKING-CONFIG
+titulo: Sprint LINK-TUNING-01 -- Ajustar linking_config.yaml para subir cobertura
+  de docs
+status: backlog
+concluida_em: null
+prioridade: P2
+data_criacao: '2026-04-29'
+fase: OUTROS
+epico: 0
+depende_de: []
+tipo_documental_alvo: null
+---
+
 # Sprint LINK-TUNING-01 -- Ajustar linking_config.yaml para subir cobertura de docs
 
 **Origem**: achado colateral da auditoria `docs/auditorias/linking_2026-04-29.md` (Fase 0 do plano `glittery-munching-russell`).

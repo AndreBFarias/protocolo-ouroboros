@@ -1,3 +1,16 @@
+---
+id: DOC-06-DIPLOMA
+titulo: 'Sprint DOC-06 -- Extrator: diploma (PDF + instituição + curso + ano)'
+status: backlog
+concluida_em: null
+prioridade: P2
+data_criacao: '2026-04-28'
+fase: OUTROS
+epico: 0
+depende_de: []
+tipo_documental_alvo: null
+---
+
 # Sprint DOC-06 -- Extrator: diploma (PDF + instituição + curso + ano)
 
 **Origem**: plan pure-swinging-mitten (auditoria honesta 2026-04-29).

@@ -1,3 +1,17 @@
+---
+id: TEST-AUDIT-01-EXPANDIR-FIXTURES-REAIS-PARA-30-AMOSTRAS
+titulo: Sprint TEST-AUDIT-01 -- Expandir fixtures reais de 6 para 30+ (item 28 da
+  auditoria honesta)
+status: backlog
+concluida_em: null
+prioridade: P2
+data_criacao: '2026-04-28'
+fase: OUTROS
+epico: 0
+depende_de: []
+tipo_documental_alvo: null
+---
+
 # Sprint TEST-AUDIT-01 -- Expandir fixtures reais de 6 para 30+ (item 28 da auditoria honesta)
 
 **Origem**: plan pure-swinging-mitten (auditoria honesta 2026-04-29).
