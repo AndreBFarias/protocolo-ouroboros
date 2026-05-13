@@ -97,16 +97,28 @@ Faca:
 
 Padrao usado em 2026-04-26: "agente do vault" entregou 7 claims, validei 5 (todos OK). "Agente do ETL" entregou 8 claims, validei 2 (todos OK). Aceitei ambos.
 
+## Leitura obrigatoria ANTES de qualquer spec nova ou sessao nova
+
+Toda nova sprint, toda nova sessao, toda decisao de "vou criar a spec X" deve ser PRECEDIDA pela leitura destes 2 arquivos canonicos. **Nao negocie**:
+
+1. **`contexto/POR_QUE.md`** secao "Ciclo de graduacao Opus -> ETL" -- a filosofia. Toda spec presume que o tipo documental atinge GRADUADO (>=2 amostras 4-way verdes). Spec que nao serve esse ciclo deve ser questionada.
+
+2. **`docs/sprints/ROADMAP_ATE_PROD.md`** -- mapa canonico dos 8 epicos. Toda spec NOVA tem que caber em algum epico. Se nao cabe, ou voce esta inventando trabalho fora de ordem, ou falta um epico (criar epico antes da spec).
+
+**Regra anti-fragmentacao**: nao crie spec avulsa. Spec entra DENTRO de um epico do roadmap, com depende_de e meta de graduacao quando aplicavel. O incidente da onda 2026-05-13 (5 sprint-filhas + 3 fixes de integracao gerados na correria) mostrou que sprints avulsas viram debito: corrigido pela criacao deste roadmap.
+
 ## Workflow de sprint completa (Mode 3 detalhado)
 
 ```
-1. Skill /sprint-ciclo NN   (ou execucao manual)
+1. Ler ROADMAP_ATE_PROD.md -- spec cabe em qual epico?
    ↓
-2. Ler spec + ADRs + VALIDATOR_BRIEF rodape
+2. Skill /sprint-ciclo NN   (ou execucao manual)
    ↓
-3. PLANO: usar AskUserQuestion para ambiguidades
+3. Ler spec + ADRs + VALIDATOR_BRIEF rodape
    ↓
-4. EXECUTAR:
+4. PLANO: usar AskUserQuestion para ambiguidades
+   ↓
+5. EXECUTAR:
    a. Validar hipotese com grep (NAO IGNORAR)
    b. Implementar mudancas em src/
    c. Adicionar testes em tests/
