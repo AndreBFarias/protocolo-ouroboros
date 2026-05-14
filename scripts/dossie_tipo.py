@@ -176,12 +176,42 @@ def cmd_abrir(tipo: str) -> int:
 # ---------------------------------------------------------------------------
 
 
+# Mapa explicito de palavras-chave por tipo. Tipos nao listados caem no default  # noqa: accent
+# (split("_")[0]) por retrocompatibilidade. Quando criar tipo novo, adicione  # noqa: accent
+# entrada aqui (padrao (n) -- defesa em camadas).
+CHAVES_BUSCA: dict[str, list[str]] = {
+    "comprovante_pix_foto": ["pix", "comprovante_pix", "whatsapp image"],
+    "cupom_fiscal_foto": ["cupom", "nfce_n", "ncfe"],
+    "holerite": ["holerite", "contracheque", "pagamento"],
+    "das_parcsn": ["das_parcsn", "das ", "parcsn"],
+    "das_mei": ["das_mei", "darf_mei", "mei_das"],
+    "nfce_modelo_65": ["nfce", "nf_consumidor"],
+    "boleto_servico": ["boleto", "bol_"],
+    "fatura_cartao": ["fatura", "_cartao", "cartao_"],
+    "extrato_bancario": ["extrato", "_cc_", "bancario"],
+    "cupom_garantia_estendida": ["garantia_est", "garantia est"],
+    "certidao_receita_cnpj": ["certidao", "cert_rf", "cnpj"],
+    "comprovante_cpf": ["comprovante_cpf", "cpf_cad"],
+    "irpf_parcela": ["darf", "irpf_parcela", "irpf-parcela"],
+    "conta_luz": ["conta_luz", "neoenergia", "ceb_", "energia_"],
+    "conta_agua": ["conta_agua", "caesb", "agua_"],
+    "receita_medica": ["receita_med", "receita medica", "prescricao"],
+    "garantia_fabricante": ["garantia_fab", "manual"],
+    "contrato": ["contrato"],
+    "danfe_nfe55": ["danfe", "nfe55", "nf55"],
+    "xml_nfe": ["xmlnfe", "xml_nfe"],
+    "extrato_c6_pdf": ["extrato_c6", "c6_cc"],
+    "recibo_nao_fiscal": ["recibo"],
+    "dirpf_retif": ["dirpf", "irpf-a", "irpf_a", "-irpf-"],
+}
+
+
 def cmd_listar_candidatos(tipo: str) -> int:
-    """Heuristica simples: nome ou pasta contem o tipo."""
+    """Heuristica: nome ou pasta contem alguma chave do mapa CHAVES_BUSCA do tipo."""
     inbox = _RAIZ_REPO / "inbox"
     raw = _RAIZ_REPO / "data" / "raw"
     encontrados: list[Path] = []
-    chave = tipo.lower().split("_")[0]  # ex: pix de comprovante_pix_foto
+    chaves = CHAVES_BUSCA.get(tipo, [tipo.lower().split("_")[0]])
     for base in (inbox, raw):
         if not base.exists():
             continue
@@ -191,9 +221,10 @@ def cmd_listar_candidatos(tipo: str) -> int:
             if p.suffix.lower() not in (".jpg", ".jpeg", ".png", ".pdf", ".heic"):
                 continue
             caminho_lower = str(p).lower()
-            if chave in caminho_lower or chave in p.name.lower():
+            nome_lower = p.name.lower()
+            if any(c in caminho_lower or c in nome_lower for c in chaves):
                 encontrados.append(p)
-    print(f"Candidatos para tipo `{tipo}` (chave='{chave}'): {len(encontrados)}")
+    print(f"Candidatos para tipo `{tipo}` (chaves={chaves}): {len(encontrados)}")
     for p in encontrados[:20]:
         sha = _calcular_sha256(p)[:12]
         print(f"  {sha}  {p.relative_to(_RAIZ_REPO)}")
@@ -255,13 +286,16 @@ def _carregar_etl_output(sha256: str) -> dict | None:
             return json.loads(cache.read_text(encoding="utf-8"))
         except json.JSONDecodeError:
             pass
-    # 2) Tentar grafo SQLite (nó documento com chave contendo sha256)
+    # 2) Tentar grafo SQLite (no documento com chave contendo sha256). Schema  # noqa: accent
+    # real da tabela `node`: id, tipo, nome_canonico, aliases, metadata,  # noqa: accent
+    # created_at, updated_at. Defesa em camadas (padrao (n)): busca em  # noqa: accent
+    # nome_canonico E metadata.  # noqa: accent
     if PATH_GRAFO.exists():
         con = sqlite3.connect(PATH_GRAFO)
         try:
             cur = con.execute(
                 "SELECT metadata FROM node WHERE tipo='documento' "
-                "AND (chave_canonica LIKE ? OR metadata LIKE ?)",
+                "AND (nome_canonico LIKE ? OR metadata LIKE ?)",
                 (f"%{sha256}%", f"%{sha256}%"),
             )
             row = cur.fetchone()

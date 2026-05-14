@@ -1,13 +1,21 @@
 ---
 id: META-FIX-DOSSIE-TIPO-BUGS-2026-05-13
 titulo: Consertar 2 bugs em scripts/dossie_tipo.py descobertos na sessão de restauração
-status: pendente
+status: concluida
+concluida_em: 2026-05-14
 data_criacao: 2026-05-13
 prioridade: P1
 fase: SANEAMENTO
 epico: 8
 depende_de: []
 origem: sessão 2026-05-13 (FASE-A-RESTAURAR-3-TIPOS). Bug 1 quebra fallback ao grafo SQLite; bug 2 faz heurística falhar silenciosamente para nomes não-canônicos.
+resultado_2026-05-14: |
+  Sessao supervisor autonomo Opus 4.7 aplicou os 2 fixes. Bug 1: query do grafo
+  usa nome_canonico (coluna real) ao inves de chave_canonica (inexistente).
+  Bug 2: introduzido mapa CHAVES_BUSCA explicito cobrindo 22 tipos canonicos
+  do mappings/tipos_documento.yaml com fallback retrocompativel para split('_')[0].
+  4 testes regressivos adicionados em tests/test_dossie_tipo.py (15 testes totais,
+  100% pass). Lint OK, smoke 10/10.  <!-- noqa: accent -->
 ---
 
 # Sprint META-FIX-DOSSIE-TIPO-BUGS-2026-05-13

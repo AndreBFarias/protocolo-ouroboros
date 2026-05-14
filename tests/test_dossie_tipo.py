@@ -182,4 +182,112 @@ def test_cli_flag_alternativa(isolar_paths: Path) -> None:
     assert dossie_tipo._dir_tipo("test_flag").exists()
 
 
+# ---------------------------------------------------------------------------
+# Sprint META-FIX-DOSSIE-TIPO-BUGS-2026-05-13: regressao dos 2 bugs detectados  # noqa: accent
+# na sessao 2026-05-13 (chave_canonica inexistente + heuristica chave unica).  # noqa: accent
+# ---------------------------------------------------------------------------
+
+
+def test_carregar_etl_output_fallback_grafo_nao_crasha(
+    isolar_paths: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Bug 1: grafo real tem coluna `nome_canonico`, não `chave_canonica`.
+
+    Antes do fix, `_carregar_etl_output` crashava com OperationalError quando
+    havia cache OCR ausente E grafo presente. Apos fix, deve retornar None
+    silenciosamente (cache miss + grafo sem match) sem crash.
+    """
+    import sqlite3
+
+    # Cria grafo SQLite com schema REAL (sem chave_canonica)
+    grafo_path = isolar_paths / "grafo_real.sqlite"
+    con = sqlite3.connect(grafo_path)
+    con.execute(
+        "CREATE TABLE node (id TEXT PRIMARY KEY, tipo TEXT, nome_canonico TEXT, "
+        "aliases TEXT, metadata TEXT, created_at TEXT, updated_at TEXT)"
+    )
+    con.commit()
+    con.close()
+    monkeypatch.setattr(dossie_tipo, "PATH_GRAFO", grafo_path)
+
+    # Sha inexistente -- fallback deve retornar None sem crash
+    r = dossie_tipo._carregar_etl_output("f" * 64)
+    assert r is None
+
+
+def test_carregar_etl_output_grafo_encontra_via_metadata(
+    isolar_paths: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Defesa em camadas: busca em `nome_canonico` OR `metadata` ambos (padrao (n))."""
+    import sqlite3
+
+    grafo_path = isolar_paths / "grafo_match.sqlite"
+    con = sqlite3.connect(grafo_path)
+    con.execute(
+        "CREATE TABLE node (id TEXT PRIMARY KEY, tipo TEXT, nome_canonico TEXT, "
+        "aliases TEXT, metadata TEXT, created_at TEXT, updated_at TEXT)"
+    )
+    sha = "9" * 64
+    con.execute(
+        "INSERT INTO node VALUES (?, ?, ?, ?, ?, ?, ?)",
+        (
+            "node1",
+            "documento",
+            "HOLERITE|G4F|2025-05",
+            "[]",
+            json.dumps({"sha256": sha, "valor": 4200.5}),
+            "2026-01-01",
+            "2026-01-01",
+        ),
+    )
+    con.commit()
+    con.close()
+    monkeypatch.setattr(dossie_tipo, "PATH_GRAFO", grafo_path)
+
+    r = dossie_tipo._carregar_etl_output(sha)
+    assert r is not None
+    assert r.get("sha256") == sha
+    assert r.get("valor") == 4200.5
+
+
+def test_listar_candidatos_pix_acha_whatsapp_images(
+    isolar_paths: Path, monkeypatch: pytest.MonkeyPatch, capsys
+) -> None:
+    """Bug 2: heuristica antiga split('_')[0] retornava 'comprovante' para
+    tipo `comprovante_pix_foto`, que não bate com nomes reais de fotos PIX
+    (geralmente `WhatsApp Image ...jpeg`). Fix usa mapa CHAVES_BUSCA explicito.
+    """
+    # Cria inbox isolado com fotos cujo nome NAO contem 'comprovante'  # noqa: accent
+    inbox = isolar_paths / "inbox"
+    inbox.mkdir()
+    (inbox / "WhatsApp Image 2026-05-13 at 09.32.30.jpeg").write_bytes(b"fake")
+    (inbox / "WhatsApp Image 2026-05-13 at 11.25.02.jpeg").write_bytes(b"fake2")
+    raw = isolar_paths / "raw"
+    raw.mkdir()
+    monkeypatch.setattr(dossie_tipo, "_RAIZ_REPO", isolar_paths)
+
+    rc = dossie_tipo.cmd_listar_candidatos("comprovante_pix_foto")
+    assert rc == 0
+    out = capsys.readouterr().out
+    # Deve listar 2 candidatos via chave "whatsapp image" do CHAVES_BUSCA
+    assert "Candidatos para tipo `comprovante_pix_foto`" in out
+    assert ": 2" in out
+
+
+def test_listar_candidatos_tipo_nao_mapeado_usa_fallback(
+    isolar_paths: Path, monkeypatch: pytest.MonkeyPatch, capsys
+) -> None:
+    """Retrocompatibilidade (padrao (o)): tipo sem entrada em CHAVES_BUSCA
+    cai no default split('_')[0]."""
+    inbox = isolar_paths / "inbox"
+    inbox.mkdir()
+    (inbox / "TIPONOVO_amostra.pdf").write_bytes(b"fake")
+    monkeypatch.setattr(dossie_tipo, "_RAIZ_REPO", isolar_paths)
+
+    rc = dossie_tipo.cmd_listar_candidatos("tiponovo_subtipo")
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert ": 1" in out
+
+
 # "Teste é como ritual: sem ele, ciclo só existe no papel." -- princípio do teste vivo
