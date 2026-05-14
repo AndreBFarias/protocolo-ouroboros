@@ -1,13 +1,16 @@
 ---
 id: FASE-A-GRADUACAO-MASSA-2026-05-13
 titulo: Graduar próximos 9 tipos da Fase A para atingir meta ≥15 GRADUADOS do roadmap
-status: pendente
+status: parcial-bloqueado-coleta
+concluida_em: 2026-05-14
 data_criacao: 2026-05-13
 prioridade: P0
 fase: A
 epico: 1
 depende_de: [META-FIX-DOSSIE-TIPO-BUGS-2026-05-13]
 origem: sessão 2026-05-13 fechou 6 tipos (pix, cupom, holerite, das_parcsn, nfce, boleto_servico). Roadmap exige ≥15. Restam 9 tipos canônicos do `mappings/tipos_documento.yaml` sem dossiê ou com dossiê esqueleto.
+resultado_2026-05-14: |
+  Supervisor autonomo Opus 4.7 graduou 3 novos tipos (fatura_cartao, extrato_bancario, cupom_garantia_estendida) totalizando 9 GRADUADOS. Meta de >=15 NAO atingida porque 6 tipos restantes nao tem amostras suficientes em `data/raw`: das_mei (0), irpf_parcela (0), conta_luz (0), conta_agua (0), recibo_nao_fiscal (0), comprovante_cpf (1), certidao_receita_cnpj (1 distinta), receita_medica (0), garantia_fabricante (0), contrato (0), danfe_nfe55 (0), xml_nfe (0). Gargalo eh coleta humana, nao codigo. Spec-filha `FASE-A-AGUARDA-AMOSTRAS-2026-05-14` enderecada para o dono coletar.  <!-- noqa: accent -->
 ---
 
 # Sprint FASE-A-GRADUACAO-MASSA-2026-05-13
