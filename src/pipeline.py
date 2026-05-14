@@ -1,9 +1,11 @@
 """Orquestrador principal do pipeline ETL financeiro."""
 
 import argparse
+import hashlib
 import re
+import shutil
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 from src.extractors.contracheque_pdf import processar_holerites
@@ -26,6 +28,11 @@ DIR_RAW = RAIZ / "data" / "raw"
 DIR_OUTPUT = RAIZ / "data" / "output"
 DIR_HISTORICO = RAIZ / "data" / "historico"
 CONTROLE_ANTIGO = DIR_HISTORICO / "controle_antigo.xlsx"
+PATH_GRAFO = DIR_OUTPUT / "grafo.sqlite"
+DIR_BACKUP_GRAFO = DIR_OUTPUT / "backup"
+PREFIXO_BACKUP_GRAFO = "grafo_"
+RETENCAO_DIAS_RECENTES = 7
+RETENCAO_SEMANAS_ADICIONAIS = 4
 
 
 def _descobrir_extratores() -> list:
@@ -626,9 +633,144 @@ def _executar_item_categorizer() -> None:
         logger.warning("Categorização de itens falhou: %s", erro)
 
 
+# ---------------------------------------------------------------------------
+# Backup automatico do grafo (Sprint INFRA-BACKUP-GRAFO-AUTOMATIZADO)  # noqa: accent
+# ---------------------------------------------------------------------------
+
+
+def _sha256_arquivo(caminho: Path) -> str:
+    """Calcula SHA-256 hex do conteúdo de um arquivo em chunks."""  # noqa: accent
+    h = hashlib.sha256()
+    with caminho.open("rb") as fp:
+        for chunk in iter(lambda: fp.read(65536), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def _ts_to_timestamp(ts: str) -> datetime | None:
+    """Parse seguro do timestamp `YYYY-MM-DD_HHMMSS` no nome do backup."""
+    try:
+        return datetime.strptime(ts, "%Y-%m-%d_%H%M%S")
+    except ValueError:
+        return None
+
+
+def _executar_backup_grafo(
+    grafo: Path = PATH_GRAFO, dir_backup: Path = DIR_BACKUP_GRAFO
+) -> Path | None:
+    """Snapshot pre-pipeline do grafo SQLite + sha256.
+
+    Retorna o caminho do backup criado, ou None se o grafo não existir
+    (pipeline em estado inicial -- nada a preservar).
+    """
+    if not grafo.exists():
+        logger.info("Backup grafo: arquivo origem ausente em %s; skip.", grafo)
+        return None
+    dir_backup.mkdir(parents=True, exist_ok=True)
+    ts = datetime.now().strftime("%Y-%m-%d_%H%M%S")
+    destino = dir_backup / f"{PREFIXO_BACKUP_GRAFO}{ts}.sqlite"
+    shutil.copy2(grafo, destino)
+    sha_path = destino.with_suffix(destino.suffix + ".sha256")
+    sha = _sha256_arquivo(destino)
+    sha_path.write_text(f"{sha}  {destino.name}\n", encoding="utf-8")
+    logger.info("Backup grafo: %s (sha256=%s...)", destino.name, sha[:12])
+    _aplicar_retencao_backups_grafo(dir_backup)
+    return destino
+
+
+def _aplicar_retencao_backups_grafo(dir_backup: Path) -> list[Path]:
+    """Aplica politica: ultimos 7 dias completos + 1 por semana das 4 anteriores.
+
+    Retorna lista de arquivos deletados.
+    """
+    if not dir_backup.exists():
+        return []
+    candidatos: list[tuple[datetime, Path]] = []
+    for p in dir_backup.glob(f"{PREFIXO_BACKUP_GRAFO}*.sqlite"):
+        ts_str = p.stem[len(PREFIXO_BACKUP_GRAFO):]
+        ts = _ts_to_timestamp(ts_str)
+        if ts is None:
+            continue
+        candidatos.append((ts, p))
+    candidatos.sort(reverse=True)
+
+    a_manter: set[Path] = set()
+    agora = datetime.now()
+    limite_recente = agora - timedelta(days=RETENCAO_DIAS_RECENTES)
+
+    # Camada 1: tudo dentro dos ultimos 7 dias
+    for ts, p in candidatos:
+        if ts >= limite_recente:
+            a_manter.add(p)
+
+    # Camada 2: 1 backup por semana para as 4 semanas anteriores aos 7 dias
+    semanas_cobertas: set[int] = set()
+    for ts, p in candidatos:
+        if ts >= limite_recente:
+            continue
+        # Número da semana relativa: 0=primeira semana antes do limite, 1=segunda, etc.
+        dias_alem = (limite_recente - ts).days
+        idx_semana = dias_alem // 7
+        if idx_semana >= RETENCAO_SEMANAS_ADICIONAIS:
+            continue
+        if idx_semana not in semanas_cobertas:
+            a_manter.add(p)
+            semanas_cobertas.add(idx_semana)
+
+    deletados: list[Path] = []
+    for _ts, p in candidatos:
+        if p not in a_manter:
+            sha_path = p.with_suffix(p.suffix + ".sha256")
+            p.unlink(missing_ok=True)
+            sha_path.unlink(missing_ok=True)
+            deletados.append(p)
+    if deletados:
+        logger.info("Backup grafo: retencao removeu %d arquivos antigos.", len(deletados))
+    return deletados
+
+
+def _restaurar_grafo_de_backup(
+    timestamp: str, grafo: Path = PATH_GRAFO, dir_backup: Path = DIR_BACKUP_GRAFO
+) -> int:
+    """Restaura grafo a partir de backup identificado pelo timestamp.
+
+    Valida checksum antes de sobrescrever. Retorna 0 em sucesso, 1 em falha.
+    """
+    backup = dir_backup / f"{PREFIXO_BACKUP_GRAFO}{timestamp}.sqlite"
+    sha_path = backup.with_suffix(backup.suffix + ".sha256")
+    if not backup.exists():
+        logger.error("Backup ausente: %s", backup)
+        return 1
+    if not sha_path.exists():
+        logger.error("Checksum ausente: %s", sha_path)
+        return 1
+    sha_gravado = sha_path.read_text(encoding="utf-8").split()[0].strip()
+    sha_atual = _sha256_arquivo(backup)
+    if sha_gravado != sha_atual:
+        logger.error(
+            "Checksum inválido: gravado=%s atual=%s (backup corrompido).",
+            sha_gravado[:12],
+            sha_atual[:12],
+        )
+        return 1
+    if grafo.exists():
+        ts_recuo = datetime.now().strftime("%Y-%m-%d_%H%M%S")
+        recuo = grafo.with_suffix(grafo.suffix + f".pre_restore_{ts_recuo}")
+        shutil.copy2(grafo, recuo)
+        logger.info("Grafo atual preservado em %s antes do restore.", recuo.name)
+    shutil.copy2(backup, grafo)
+    logger.info("Grafo restaurado de %s.", backup.name)
+    return 0
+
+
 def executar(mes: str | None = None, processar_tudo: bool = False) -> None:
     """Executa o pipeline completo."""
     logger.info("=== Protocolo Ouroboros -- Pipeline ===")
+
+    # 0. Backup automatico do grafo (Sprint INFRA-BACKUP-GRAFO-AUTOMATIZADO).
+    # Padrao (m) branch reversivel: snapshot pre-execucao permite rollback  # noqa: accent
+    # se pipeline crashar mid-ETL.
+    _executar_backup_grafo()
 
     # 1. Descobrir extratores
     classes_extratores = _descobrir_extratores()
@@ -790,7 +932,19 @@ def main(argv: list[str] | None = None) -> None:
         action="store_true",
         help="Rota administrativa: preenche arquivo_original em nodes documento (Sprint 87.5)",
     )
+    parser.add_argument(
+        "--restore-grafo",
+        type=str,
+        metavar="TIMESTAMP",
+        help=(
+            "Restaura grafo de backup data/output/backup/grafo_<TIMESTAMP>.sqlite "
+            "(formato YYYY-MM-DD_HHMMSS)."
+        ),
+    )
     args = parser.parse_args(argv)
+
+    if args.restore_grafo:
+        sys.exit(_restaurar_grafo_de_backup(args.restore_grafo))
 
     if args.backfill_metadata:
         sys.exit(_executar_backfill_metadata())

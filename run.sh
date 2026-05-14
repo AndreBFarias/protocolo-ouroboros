@@ -615,6 +615,14 @@ print(f'Salvo em: {saida}')
     --supervisor)
         bash scripts/supervisor_contexto.sh
         ;;
+    --restore-grafo)
+        if [ -z "${2:-}" ]; then
+            msg_erro "Uso: ./run.sh --restore-grafo YYYY-MM-DD_HHMMSS"
+            exit 1
+        fi
+        msg_info "Restaurando grafo do backup ${2}..."
+        python -m src.pipeline --restore-grafo "$2"
+        ;;
     --help|-h)
         exibir_help
         exit 0
