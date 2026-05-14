@@ -59,9 +59,16 @@ def test_schema_e_draft_2020_12_valido(schema: dict) -> None:
 
 
 def test_enum_tipo_documento_tem_11_valores(schema: dict) -> None:
-    """Enum ``tipo_documento`` cobre 5 antigos + 6 novos."""
+    """Enum ``tipo_documento`` cobre 5 antigos + 6 novos da Sprint
+    INFRA-OPUS-SCHEMA-EXTENDIDO + 4 alias canonicos adicionados pela
+    Sprint FASE-A-GRADUACAO-MASSA (boleto_servico, fatura_cartao,
+    extrato_bancario, cupom_garantia_estendida).
+
+    Mantem o nome do teste por estabilidade (cobre baseline historica);
+    a contagem agora eh 15 = 11 originais + 4 alias.
+    """
     enum = schema["properties"]["tipo_documento"]["enum"]
-    assert len(enum) == 11
+    assert len(enum) == 15
     novos = {
         "holerite",
         "das_parcsn",
@@ -70,8 +77,20 @@ def test_enum_tipo_documento_tem_11_valores(schema: dict) -> None:
         "danfe_55",
         "extrato_bancario_pdf",
     }
-    antigos = {"cupom_fiscal_foto", "comprovante_pix_foto", "recibo_foto", "outro", "pendente"}
-    assert set(enum) == novos | antigos
+    antigos = {
+        "cupom_fiscal_foto",
+        "comprovante_pix_foto",
+        "recibo_foto",
+        "outro",
+        "pendente",
+    }
+    alias_canonicos = {
+        "boleto_servico",
+        "fatura_cartao",
+        "extrato_bancario",
+        "cupom_garantia_estendida",
+    }
+    assert set(enum) == novos | antigos | alias_canonicos
 
 
 # ---------------------------------------------------------------------------

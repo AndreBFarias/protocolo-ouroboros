@@ -1,7 +1,7 @@
 ---
 id: META-FIX-DOSSIE-TIPO-BUGS-2026-05-13
 titulo: Consertar 2 bugs em scripts/dossie_tipo.py descobertos na sessão de restauração
-status: concluida
+status: concluída
 concluida_em: 2026-05-14
 data_criacao: 2026-05-13
 prioridade: P1

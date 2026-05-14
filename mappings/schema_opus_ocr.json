@@ -26,8 +26,12 @@
         "das_parcsn",
         "nfce_modelo_65",
         "boleto_pdf",
+        "boleto_servico",
         "danfe_55",
         "extrato_bancario_pdf",
+        "extrato_bancario",
+        "fatura_cartao",
+        "cupom_garantia_estendida",
         "outro",
         "pendente"
       ]
@@ -80,6 +84,7 @@
         "pix",
         "vale_alimentacao",
         "vale_refeicao",
+        "parcela_unica",
         "outro",
         null
       ]
