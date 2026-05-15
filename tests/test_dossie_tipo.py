@@ -118,7 +118,9 @@ def test_comparar_divergente_gera_relatorio(isolar_paths: Path) -> None:
     rc = dossie_tipo.cmd_comparar("test_tipo", sha)
     assert rc == 1
     estado = dossie_tipo._ler_estado("test_tipo")
-    assert sha in estado["amostras_divergentes"]
+    # Sprint FIX-REGREDINDO-SEMANTICA: novo schema usa divergencias_ativas.  # noqa: accent
+    assert sha in estado["divergencias_ativas"]
+    assert sha in estado["_historico_divergencias"]
     # Relatorio MD gerado  # noqa: accent
     divs = list(
         (dossie_tipo._dir_tipo("test_tipo") / "divergencias").glob("*.md")
@@ -288,6 +290,106 @@ def test_listar_candidatos_tipo_nao_mapeado_usa_fallback(
     assert rc == 0
     out = capsys.readouterr().out
     assert ": 1" in out
+
+
+# ---------------------------------------------------------------------------
+# Sprint FIX-REGREDINDO-SEMANTICA-2026-05-15: schema novo separa divergencias  # noqa: accent
+# ativas (esvazia ao revalidar OK) de historico (acumula sempre). REGREDINDO  # noqa: accent
+# detecta divergencias ativas mesmo na primeira graduacao.  # noqa: accent
+# ---------------------------------------------------------------------------
+
+
+def test_migracao_idempotente_estado_legado(isolar_paths: Path) -> None:
+    """Estado legado (`amostras_divergentes` acumulativo) migra para schema novo.
+
+    Idempotente: aplicar migrador 2x produz mesmo resultado.
+    """
+    dossie_tipo.cmd_abrir("legado_tipo")
+    sha_ok = "1" * 64
+    sha_ja_revalidado = "2" * 64
+    sha_ainda_diverge = "3" * 64
+
+    # Simula estado legado: amostras_divergentes contém AMBOS (revalidado E não-revalidado)
+    estado = dossie_tipo._ler_estado("legado_tipo")
+    estado["amostras_ok"] = [sha_ok, sha_ja_revalidado]
+    estado["amostras_divergentes"] = [sha_ja_revalidado, sha_ainda_diverge]
+    # Remove campos novos para forcar migracao  # noqa: accent
+    estado.pop("divergencias_ativas", None)
+    estado.pop("_historico_divergencias", None)
+    dossie_tipo._gravar_estado("legado_tipo", estado)
+
+    # Forca releitura via _ler_estado (que chama _migrar_estado_schema)
+    estado_migrado = dossie_tipo._ler_estado("legado_tipo")
+    assert "amostras_divergentes" not in estado_migrado
+    assert estado_migrado["_historico_divergencias"] == [sha_ja_revalidado, sha_ainda_diverge]
+    # divergencias_ativas = amostras_divergentes - amostras_ok
+    assert estado_migrado["divergencias_ativas"] == [sha_ainda_diverge]
+
+    # Idempotencia: roda migrador de novo
+    estado_2 = dossie_tipo._migrar_estado_schema(estado_migrado)
+    assert estado_2 == estado_migrado
+
+
+def test_revalidar_ok_remove_de_divergencias_ativas(isolar_paths: Path) -> None:
+    """Amostra que divergiu, ao revalidar OK, sai de `divergencias_ativas`
+    mas permanece em `_historico_divergencias` para auditoria."""
+    sha = "a" * 64
+    # 1. Comparacao divergente  # noqa: accent
+    dossie_tipo.cmd_prova_artesanal("teste_revalidar", sha)
+    p = dossie_tipo._dir_tipo("teste_revalidar") / "provas_artesanais" / f"{sha}.json"
+    payload = json.loads(p.read_text())
+    payload["campos_canonicos"] = {"valor": 100.0}
+    p.write_text(json.dumps(payload))
+    cache = dossie_tipo.DIR_OPUS_CACHE / f"{sha}.json"
+    cache.write_text(json.dumps({"valor": 999.99}))
+    dossie_tipo.cmd_comparar("teste_revalidar", sha)
+    estado = dossie_tipo._ler_estado("teste_revalidar")
+    assert sha in estado["divergencias_ativas"]
+    assert sha in estado["_historico_divergencias"]
+
+    # 2. Revalidacao OK (ETL corrigido)  # noqa: accent
+    cache.write_text(json.dumps({"valor": 100.0}))
+    dossie_tipo.cmd_comparar("teste_revalidar", sha)
+    estado = dossie_tipo._ler_estado("teste_revalidar")
+    assert sha in estado["amostras_ok"]
+    assert sha not in estado["divergencias_ativas"]  # saiu
+    assert sha in estado["_historico_divergencias"]  # mantem historico
+
+
+def test_graduar_dispara_regredindo_na_primeira_vez(isolar_paths: Path) -> None:
+    """Bug original: REGREDINDO so disparava se status_antes == GRADUADO.
+
+    Agora dispara mesmo na primeira transicao PENDENTE -> GRADUADO se ha
+    `divergencias_ativas` (regra (k) fix da auditoria 2026-05-15).
+    """
+    dossie_tipo._garantir_estrutura_dossie("regredido_primeira")
+    estado = dossie_tipo._ler_estado("regredido_primeira")
+    estado["amostras_ok"] = ["a" * 64, "b" * 64]  # suficiente para graduar
+    estado["divergencias_ativas"] = ["c" * 64]  # mas ha divergencia ativa  # noqa: accent
+    dossie_tipo._gravar_estado("regredido_primeira", estado)
+
+    rc = dossie_tipo.cmd_graduar_se_pronto("regredido_primeira")
+    assert rc == 0
+    final = dossie_tipo._ler_estado("regredido_primeira")
+    assert final["status"] == dossie_tipo.STATUS_REGREDINDO, (
+        f"esperado REGREDINDO, veio {final['status']}"
+    )
+
+
+def test_graduar_limpo_nao_dispara_regredindo(isolar_paths: Path) -> None:
+    """Graduacao sem divergencias_ativas (mesmo com historico) marca GRADUADO."""
+    dossie_tipo._garantir_estrutura_dossie("graduado_limpo")
+    estado = dossie_tipo._ler_estado("graduado_limpo")
+    estado["amostras_ok"] = ["a" * 64, "b" * 64]
+    estado["divergencias_ativas"] = []  # sem divergencias ativas  # noqa: accent
+    estado["_historico_divergencias"] = ["c" * 64]  # historico nao influi  # noqa: accent
+    dossie_tipo._gravar_estado("graduado_limpo", estado)
+
+    dossie_tipo.cmd_graduar_se_pronto("graduado_limpo")
+    final = dossie_tipo._ler_estado("graduado_limpo")
+    assert final["status"] == dossie_tipo.STATUS_GRADUADO, (
+        f"esperado GRADUADO, veio {final['status']}"
+    )
 
 
 # "Teste é como ritual: sem ele, ciclo só existe no papel." -- princípio do teste vivo

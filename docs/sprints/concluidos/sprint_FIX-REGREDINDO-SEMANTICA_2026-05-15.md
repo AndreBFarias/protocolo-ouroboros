@@ -1,8 +1,8 @@
 ---
 id: FIX-REGREDINDO-SEMANTICA
 titulo: Corrigir semântica do campo `amostras_divergentes` e transição REGREDINDO
-status: backlog
-concluida_em: null
+status: concluida
+concluida_em: 2026-05-15
 prioridade: P0
 data_criacao: 2026-05-15
 fase: PRODUCAO_READY

@@ -100,7 +100,8 @@ def _garantir_estrutura_dossie(tipo: str) -> Path:
                     "tipo": tipo,
                     "status": STATUS_PENDENTE,
                     "amostras_ok": [],
-                    "amostras_divergentes": [],
+                    "divergencias_ativas": [],
+                    "_historico_divergencias": [],
                     "criado_em": _agora_iso(),
                     "atualizado_em": _agora_iso(),
                     "historico": [],
@@ -113,8 +114,33 @@ def _garantir_estrutura_dossie(tipo: str) -> Path:
     return d
 
 
+def _migrar_estado_schema(estado: dict) -> dict:
+    """Migra estado legado (`amostras_divergentes` acumulativo) para schema novo.
+
+    Idempotente: roda multiplas vezes sem mudanca apos primeira migracao.
+
+    Semantica nova (Sprint FIX-REGREDINDO-SEMANTICA):
+
+    - `amostras_ok`: hashes que estao verdes AGORA.
+    - `divergencias_ativas`: hashes que divergem AGORA (esvazia ao revalidar OK).
+    - `_historico_divergencias`: hashes que ja divergiram em algum momento (acumula sempre).
+
+    Migração do legado: `amostras_divergentes` (acumulava) vira `_historico_divergencias`;
+    `divergencias_ativas` recebe apenas os hashes que NÃO foram revalidados OK depois
+    (interseção `amostras_divergentes - amostras_ok`).
+    """  # noqa: accent
+    if "divergencias_ativas" in estado and "_historico_divergencias" in estado:
+        return estado
+    legado = estado.pop("amostras_divergentes", [])
+    estado["_historico_divergencias"] = list(legado)
+    set_ok = set(estado.get("amostras_ok", []))
+    estado["divergencias_ativas"] = [h for h in legado if h not in set_ok]
+    return estado
+
+
 def _ler_estado(tipo: str) -> dict:
-    return json.loads((_dir_tipo(tipo) / "estado.json").read_text(encoding="utf-8"))
+    estado = json.loads((_dir_tipo(tipo) / "estado.json").read_text(encoding="utf-8"))
+    return _migrar_estado_schema(estado)
 
 
 def _gravar_estado(tipo: str, estado: dict) -> None:
@@ -155,16 +181,17 @@ def _tipos_canonicos() -> list[str]:
 def cmd_abrir(tipo: str) -> int:
     _garantir_estrutura_dossie(tipo)
     estado = _ler_estado(tipo)
+    _gravar_estado(tipo, estado)  # persiste migracao se legado  # noqa: accent
+    ativas = estado.get("divergencias_ativas", [])
+    historico = estado.get("_historico_divergencias", [])
     print(f"=== Dossie {tipo} ===")
-    print(f"Status:           {estado['status']}")
-    print(f"Amostras OK:      {len(estado['amostras_ok'])} {estado['amostras_ok']}")
-    print(
-        f"Amostras divergentes: {len(estado['amostras_divergentes'])} "
-        f"{estado['amostras_divergentes']}"
-    )
-    print(f"Criado em:        {estado.get('criado_em', '?')}")
-    print(f"Atualizado em:    {estado.get('atualizado_em', '?')}")
-    print(f"Localizacao:      {_dir_tipo(tipo)}")
+    print(f"Status:               {estado['status']}")
+    print(f"Amostras OK:          {len(estado['amostras_ok'])} {estado['amostras_ok']}")
+    print(f"Divergencias ativas:  {len(ativas)} {ativas}")
+    print(f"Historico divergencias (acumulado): {len(historico)}")
+    print(f"Criado em:            {estado.get('criado_em', '?')}")
+    print(f"Atualizado em:        {estado.get('atualizado_em', '?')}")
+    print(f"Localizacao:          {_dir_tipo(tipo)}")
     print("\nHistorico (ultimos 5 eventos):")
     for ev in (estado.get("historico") or [])[-5:]:
         print(f"  [{ev['ts']}] {ev['mensagem']}")
@@ -459,14 +486,26 @@ def cmd_comparar(tipo: str, sha256: str) -> int:
         md.write_text("\n".join(linhas), encoding="utf-8")
         print(f"\nRelatorio detalhado em {md}")
 
-    # Atualizar estado
+    # Atualizar estado com semantica nova (FIX-REGREDINDO-SEMANTICA).  # noqa: accent
     estado = _ler_estado(tipo)
-    if veredito == "GRADUADO_OK" and sha256 not in estado["amostras_ok"]:
-        estado["amostras_ok"].append(sha256)
-        _registrar_evento(estado, f"amostra {sha256[:12]} validada OK")
-    elif veredito == "DIVERGENTE" and sha256 not in estado["amostras_divergentes"]:
-        estado["amostras_divergentes"].append(sha256)
-        _registrar_evento(estado, f"amostra {sha256[:12]} divergiu")
+    if veredito == "GRADUADO_OK":
+        if sha256 not in estado["amostras_ok"]:
+            estado["amostras_ok"].append(sha256)
+            _registrar_evento(estado, f"amostra {sha256[:12]} validada OK")
+        # Revalidar OK retira de divergencias_ativas mas preserva historico.  # noqa: accent
+        if sha256 in estado.get("divergencias_ativas", []):
+            estado["divergencias_ativas"].remove(sha256)
+            _registrar_evento(estado, f"amostra {sha256[:12]} saiu de divergencias_ativas")
+    elif veredito == "DIVERGENTE":
+        if sha256 not in estado.get("divergencias_ativas", []):
+            estado.setdefault("divergencias_ativas", []).append(sha256)
+            _registrar_evento(estado, f"amostra {sha256[:12]} divergiu")
+        if sha256 not in estado.get("_historico_divergencias", []):
+            estado.setdefault("_historico_divergencias", []).append(sha256)
+        # Amostra que diverge agora nao pode estar em amostras_ok.  # noqa: accent
+        if sha256 in estado.get("amostras_ok", []):
+            estado["amostras_ok"].remove(sha256)
+            _registrar_evento(estado, f"amostra {sha256[:12]} saiu de amostras_ok")
     _gravar_estado(tipo, estado)
 
     return 0 if veredito == "GRADUADO_OK" else 1
@@ -488,10 +527,11 @@ def cmd_graduar_se_pronto(tipo: str) -> int:
         novo = STATUS_CALIBRANDO
     else:
         novo = STATUS_PENDENTE
-    if estado.get("amostras_divergentes") and novo == STATUS_GRADUADO:
-        # Regressao: se ja era graduado e tem divergencia recente
-        if status_antes == STATUS_GRADUADO:
-            novo = STATUS_REGREDINDO
+    # REGREDINDO: graduacao tecnica satisfeita (n_ok >= 2) MAS ha divergencias  # noqa: accent
+    # ativas nao-revalidadas. Detecta inclusive na primeira transicao para  # noqa: accent
+    # GRADUADO. Histórico (`_historico_divergencias`) não influencia.
+    if novo == STATUS_GRADUADO and estado.get("divergencias_ativas"):
+        novo = STATUS_REGREDINDO
 
     estado["status"] = novo
     if novo != status_antes:
@@ -527,12 +567,19 @@ def cmd_snapshot() -> int:
         estado_path = d / "estado.json"
         if not estado_path.exists():
             continue
-        estado = json.loads(estado_path.read_text(encoding="utf-8"))
+        # Migrador idempotente persiste schema novo nos dossies legados.  # noqa: accent
+        estado = _migrar_estado_schema(
+            json.loads(estado_path.read_text(encoding="utf-8"))
+        )
+        estado_path.write_text(
+            json.dumps(estado, ensure_ascii=False, indent=2), encoding="utf-8"
+        )
         status = estado.get("status", STATUS_PENDENTE)
         agregado["tipos"][d.name] = {
             "status": status,
             "amostras_ok": len(estado.get("amostras_ok", [])),
-            "amostras_divergentes": len(estado.get("amostras_divergentes", [])),
+            "divergencias_ativas": len(estado.get("divergencias_ativas", [])),
+            "historico_divergencias_count": len(estado.get("_historico_divergencias", [])),
             "atualizado_em": estado.get("atualizado_em"),
         }
         agregado["totais"][status] = agregado["totais"].get(status, 0) + 1
