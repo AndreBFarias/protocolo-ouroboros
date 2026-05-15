@@ -392,4 +392,97 @@ def test_graduar_limpo_nao_dispara_regredindo(isolar_paths: Path) -> None:
     )
 
 
+# ---------------------------------------------------------------------------
+# Sprint META-TIPOS-ALIAS-BIDIRECIONAL-2026-05-15: resolve cisma entre  # noqa: accent
+# `tipos_documento.yaml` (intake) e dossiê/grafo via campo `aliases_graduacao`.  # noqa: accent
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture
+def yaml_com_alias(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    """Cria YAML sintético com aliases para testes isolados."""
+    yaml_path = tmp_path / "tipos.yaml"
+    yaml_path.write_text(
+        "tipos:\n"
+        "  - id: nfce_consumidor_eletronica\n"
+        '    aliases_graduacao: ["nfce_modelo_65"]\n'
+        "  - id: holerite\n"
+        "    aliases_graduacao: []\n"
+        "  - id: dirpf_retif\n",  # sem campo aliases_graduacao
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(dossie_tipo, "PATH_TIPOS_YAML", yaml_path)
+    dossie_tipo._aliases_map.cache_clear()
+    yield yaml_path
+    dossie_tipo._aliases_map.cache_clear()
+
+
+def test_aliases_map_le_yaml(isolar_paths: Path, yaml_com_alias: Path) -> None:
+    """`_aliases_map()` retorna 2 dicts: alias->canonico e canonico->aliases."""
+    a2c, c2a = dossie_tipo._aliases_map()
+    assert a2c == {"nfce_modelo_65": "nfce_consumidor_eletronica"}
+    assert c2a == {
+        "nfce_consumidor_eletronica": ["nfce_modelo_65"],
+        "holerite": [],
+        "dirpf_retif": [],
+    }
+
+
+def test_resolver_canonico_alias_e_canonico(
+    isolar_paths: Path, yaml_com_alias: Path
+) -> None:
+    """`_resolver_canonico` mapeia alias -> canonico e preserva canonico/desconhecido."""  # noqa: accent
+    canonico = "nfce_consumidor_eletronica"
+    assert dossie_tipo._resolver_canonico("nfce_modelo_65") == canonico
+    assert dossie_tipo._resolver_canonico(canonico) == canonico
+    assert dossie_tipo._resolver_canonico("tipo_inexistente") == "tipo_inexistente"
+
+
+def test_dir_tipo_alias_e_canonico_resolvem_mesmo_dossie(
+    isolar_paths: Path, yaml_com_alias: Path
+) -> None:
+    """`_dir_tipo` aceita alias OU canonico e devolve o mesmo dossie fisico
+    quando este existe sob qualquer dos nomes (preserva legado)."""  # noqa: accent
+    # Simula dossie historico em path com nome de ALIAS (anterior a esta sprint):  # noqa: accent
+    # pre-criamos o diretorio manualmente para nao acionar logica de criacao.  # noqa: accent
+    legacy_dir = dossie_tipo.DIR_DOSSIES / "nfce_modelo_65"
+    legacy_dir.mkdir(parents=True)
+    (legacy_dir / "estado.json").write_text('{"tipo":"nfce","status":"PENDENTE"}')
+
+    # Ambas as entradas resolvem para o mesmo path fisico (o legacy):  # noqa: accent
+    dir_via_alias = dossie_tipo._dir_tipo("nfce_modelo_65")
+    dir_via_canonico = dossie_tipo._dir_tipo("nfce_consumidor_eletronica")
+    assert dir_via_alias == dir_via_canonico
+    assert dir_via_alias.name == "nfce_modelo_65"  # preserva nome fisico legado  # noqa: accent
+
+
+def test_snapshot_usa_chave_canonica_com_dossie_path(
+    isolar_paths: Path, yaml_com_alias: Path
+) -> None:
+    """Snapshot agrega sob chave canonica do YAML (resolve alias). Campo
+    `dossie_path` no value preserva o nome fisico do dossie no disco."""  # noqa: accent
+    # Dossie legado com nome de alias (pre-existente, anterior a esta sprint).  # noqa: accent
+    legacy_dir = dossie_tipo.DIR_DOSSIES / "nfce_modelo_65"
+    legacy_dir.mkdir(parents=True)
+    (legacy_dir / "estado.json").write_text(
+        '{"tipo":"nfce_modelo_65","status":"GRADUADO","amostras_ok":["a"],'
+        '"_historico_divergencias":[],"divergencias_ativas":[]}'
+    )
+    # Dossie criado com nome canonico (cenario novo).  # noqa: accent
+    dossie_tipo._garantir_estrutura_dossie("holerite")
+
+    dossie_tipo.cmd_snapshot()
+    snap = json.loads(dossie_tipo.PATH_GRADUACAO.read_text())
+    # nfce_modelo_65 (alias) agregado sob chave canonica:  # noqa: accent
+    assert "nfce_consumidor_eletronica" in snap["tipos"]
+    assert "nfce_modelo_65" not in snap["tipos"]
+    assert (
+        snap["tipos"]["nfce_consumidor_eletronica"]["dossie_path"]
+        == "nfce_modelo_65"
+    )
+    # holerite (canonico) agregado sob seu proprio nome:  # noqa: accent
+    assert "holerite" in snap["tipos"]
+    assert snap["tipos"]["holerite"]["dossie_path"] == "holerite"
+
+
 # "Teste é como ritual: sem ele, ciclo só existe no papel." -- princípio do teste vivo

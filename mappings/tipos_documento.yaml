@@ -53,6 +53,7 @@ tipos:
   - id: nfce_consumidor_eletronica
     descricao: "NFC-e modelo 65 (mini-cupom 80mm com QR SEFAZ)"
     prioridade: especifico
+    aliases_graduacao: ["nfce_modelo_65"]    # nome interno usado por extrator nfce_pdf + dossiê de graduação
     match_mode: all
     mimes: ["application/pdf"]
     regex_conteudo:
@@ -151,6 +152,20 @@ tipos:
     renomear_template:
       com_data: "IRPF_PARCELA_{data:%Y-%m-%d}_{sha8}.pdf"
       sem_data: "IRPF_PARCELA_{sha8}.pdf"
+
+  - id: dirpf_retif
+    descricao: "Declaração de Imposto de Renda Pessoa Física retificadora (extraído por dirpf_dec.py a partir do .DEC original; arquivo com RETIF no nome)"
+    prioridade: especifico
+    match_mode: all
+    mimes: ["application/octet-stream", "application/pdf"]
+    regex_conteudo:
+      - "^IRPF\\s+\\d{4}"   # cabeçalho do .DEC; o detector RETIF é por nome de arquivo
+    extrator_modulo: src.extractors.dirpf_dec
+    origem_sprint: META-TIPOS-ALIAS-BIDIRECIONAL-2026-05-15   # entry retroativa: extrator pré-existia em produção
+    pasta_destino_template: "data/raw/{pessoa}/impostos/dirpf/"
+    renomear_template:
+      com_data: "DIRPF_RETIF_{data:%Y-%m-%d}_{sha8}.dec"
+      sem_data: "DIRPF_RETIF_{sha8}.dec"
 
   - id: comprovante_cpf
     descricao: "Comprovante de Situação Cadastral no CPF emitido pela Receita Federal"

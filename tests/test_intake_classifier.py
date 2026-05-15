@@ -303,8 +303,9 @@ def test_yaml_real_passa_validacao():
     # Baseline 15 (pós-Sprint 46). Sprint 87.4 acrescentou 3 (irpf_parcela,
     # das_mei, comprovante_cpf). Sprint 88 acrescentou mais 3 (das_parcsn,
     # certidao_receita_cnpj, extrato_c6_pdf). Sprint DOC-27 acrescentou 1
-    # (comprovante_pix_foto). Total atual = 22.
-    assert len(tipos) == 22
+    # (comprovante_pix_foto). Sprint META-TIPOS-ALIAS-BIDIRECIONAL acrescentou
+    # 1 (dirpf_retif, entry retroativa para extrator pré-existente). Total = 23.
+    assert len(tipos) == 23
     for tipo in tipos:
         assert tipo["prioridade"] in clf._PRIORIDADES_VALIDAS
         assert tipo["match_mode"] in clf._MATCH_MODES_VALIDOS

@@ -28,6 +28,7 @@ Veredito de `--comparar`
 from __future__ import annotations
 
 import argparse
+import functools
 import hashlib
 import json
 import sqlite3
@@ -69,8 +70,53 @@ def _agora_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+@functools.lru_cache(maxsize=1)
+def _aliases_map() -> tuple[dict[str, str], dict[str, list[str]]]:
+    """Lê mappings/tipos_documento.yaml e devolve (alias->canônico, canônico->aliases).
+
+    Cache simples: invalidar via `_aliases_map.cache_clear()` em testes que
+    modificam o YAML em tempo de execução.
+    """
+    try:
+        import yaml  # type: ignore[import-untyped]
+    except ImportError:
+        return {}, {}
+    if not PATH_TIPOS_YAML.exists():
+        return {}, {}
+    dados = yaml.safe_load(PATH_TIPOS_YAML.read_text(encoding="utf-8")) or {}
+    alias_para_canonico: dict[str, str] = {}
+    canonico_para_aliases: dict[str, list[str]] = {}
+    for t in dados.get("tipos") or []:
+        cid = t.get("id")
+        if not cid:
+            continue
+        aliases = t.get("aliases_graduacao") or []
+        canonico_para_aliases[cid] = list(aliases)
+        for a in aliases:
+            alias_para_canonico[a] = cid
+    return alias_para_canonico, canonico_para_aliases
+
+
+def _resolver_canonico(tipo: str) -> str:
+    """Resolve alias -> canônico. Se `tipo` já é canônico (ou desconhecido), devolve ele mesmo."""
+    a2c, _ = _aliases_map()
+    return a2c.get(tipo, tipo)
+
+
 def _dir_tipo(tipo: str) -> Path:
-    return DIR_DOSSIES / tipo
+    """Retorna o diretório do dossiê. Aceita ID canônico OU alias.
+
+    Preferência: usa dossiê físico existente (canônico OU alias). Se nenhum
+    existe ainda, devolve path com nome canônico (para criação).
+    """
+    canonico = _resolver_canonico(tipo)
+    if (DIR_DOSSIES / canonico).exists():
+        return DIR_DOSSIES / canonico
+    _, c2a = _aliases_map()
+    for alias in c2a.get(canonico, []):
+        if (DIR_DOSSIES / alias).exists():
+            return DIR_DOSSIES / alias
+    return DIR_DOSSIES / canonico
 
 
 def _garantir_estrutura_dossie(tipo: str) -> Path:
@@ -160,8 +206,14 @@ def _calcular_sha256(caminho: Path) -> str:
     return hashlib.sha256(caminho.read_bytes()).hexdigest()
 
 
-def _tipos_canonicos() -> list[str]:
-    """Lista tipos canonicos a partir de mappings/tipos_documento.yaml."""
+def _tipos_canonicos() -> list[dict[str, Any]]:
+    """Lista tipos canônicos a partir de mappings/tipos_documento.yaml.
+
+    Retorna [{"id": canônico, "aliases": [...]}, ...]. Sprint META-TIPOS-ALIAS-BIDIRECIONAL
+    introduziu campo `aliases_graduacao` para resolver cisma entre YAML (intake) e
+    dossiê/grafo. Código legado que ainda chamava esta função esperando lista de
+    strings deve usar `[t["id"] for t in _tipos_canonicos()]`.
+    """
     try:
         import yaml  # type: ignore[import-untyped]
     except ImportError:
@@ -169,8 +221,11 @@ def _tipos_canonicos() -> list[str]:
     if not PATH_TIPOS_YAML.exists():
         return []
     dados = yaml.safe_load(PATH_TIPOS_YAML.read_text(encoding="utf-8")) or {}
-    tipos = dados.get("tipos") or []
-    return [t["id"] for t in tipos if t.get("id")]
+    return [
+        {"id": t["id"], "aliases": t.get("aliases_graduacao") or []}
+        for t in dados.get("tipos") or []
+        if t.get("id")
+    ]
 
 
 # ---------------------------------------------------------------------------
@@ -574,13 +629,18 @@ def cmd_snapshot() -> int:
         estado_path.write_text(
             json.dumps(estado, ensure_ascii=False, indent=2), encoding="utf-8"
         )
+        # Sprint META-TIPOS-ALIAS-BIDIRECIONAL: chave do snapshot eh canonico
+        # do YAML (resolve alias). Dossie fisico pode estar em path com nome
+        # de alias por razoes historicas; campo `dossie_path` preserva isso.  # noqa: accent
+        canonico = _resolver_canonico(d.name)
         status = estado.get("status", STATUS_PENDENTE)
-        agregado["tipos"][d.name] = {
+        agregado["tipos"][canonico] = {
             "status": status,
             "amostras_ok": len(estado.get("amostras_ok", [])),
             "divergencias_ativas": len(estado.get("divergencias_ativas", [])),
             "historico_divergencias_count": len(estado.get("_historico_divergencias", [])),
             "atualizado_em": estado.get("atualizado_em"),
+            "dossie_path": d.name,
         }
         agregado["totais"][status] = agregado["totais"].get(status, 0) + 1
 
@@ -604,10 +664,14 @@ def cmd_listar_tipos() -> int:
     tipos = _tipos_canonicos()
     print(f"Tipos canonicos em mappings/tipos_documento.yaml: {len(tipos)}")
     for t in tipos:
-        d = _dir_tipo(t)
+        cid = t["id"]
+        aliases = t["aliases"]
+        d = _dir_tipo(cid)
         marca = "+" if d.exists() else " "
-        print(f"  {marca} {t}")
+        sufixo = f"  (alias: {', '.join(aliases)})" if aliases else ""
+        print(f"  {marca} {cid}{sufixo}")
     print("\n+ = dossie existe; vazio = pendente de criar via --abrir")
+    print("alias: aceita-se ID canonico OU alias em todos os subcomandos.")
     return 0
 
 
