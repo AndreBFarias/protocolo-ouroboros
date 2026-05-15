@@ -55,6 +55,7 @@ from src.dashboard.paginas import (  # noqa: E402
     contas,
     extracao_tripla,
     extrato,
+    graduacao_tipos,
     grafo_obsidian,
     inbox,
     irpf,
@@ -142,7 +143,9 @@ ABAS_POR_CLUSTER: dict[str, list[str]] = {
     # Sprint UX-RD-05: cluster Sistema ganha aba "Styleguide" além de
     # "Skills D7". Páginas implementadas em ``paginas/skills_d7.py`` e
     # ``paginas/styleguide.py``; dispatcher abaixo monta as abas reais.
-    "Sistema": ["Skills D7", "Styleguide"],
+    # Sprint UX-DASH-GRADUACAO-TIPOS (2026-05-15) adiciona "Graduação"
+    # consumindo data/output/graduacao_tipos.json.
+    "Sistema": ["Skills D7", "Styleguide", "Graduação"],
 }
 
 # Sprint UX-RD-03: mapa cluster -> sprint que vai habilitar suas páginas.
@@ -475,9 +478,13 @@ def main() -> None:
 
     elif cluster == "Sistema":
         # TABS-CLUSTER-CLEANUP: dispatcher direto.
+        # UX-DASH-GRADUACAO-TIPOS (2026-05-15): aba "Graduação" mostra
+        # tabela viva dos 23 tipos canônicos + KPIs + botão snapshot.
         aba_sis = aba_requerida_topbar or "Skills D7"
         if aba_sis == "Styleguide":
             styleguide.renderizar(dados, periodo, pessoa, ctx)
+        elif aba_sis == "Graduação":
+            graduacao_tipos.renderizar(dados, periodo, pessoa, ctx)
         else:
             skills_d7.renderizar(dados, periodo, pessoa, ctx)
 

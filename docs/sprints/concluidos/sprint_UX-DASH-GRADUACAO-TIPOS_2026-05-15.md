@@ -1,8 +1,8 @@
 ---
 id: UX-DASH-GRADUACAO-TIPOS
 titulo: Página dashboard `graduacao_tipos.py` com tabela viva + KPIs + dossiê inline
-status: backlog
-concluida_em: null
+status: concluída
+concluida_em: 2026-05-15
 prioridade: P0
 data_criacao: 2026-05-15
 fase: PRODUCAO_READY
