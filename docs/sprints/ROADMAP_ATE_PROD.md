@@ -41,13 +41,13 @@ Para chegar la, cada **tipo documental** percorre o ciclo de graduacao:
 | Métrica | Hoje | Meta prod |
 |---|---|---|
 | Tipos GRADUADOS | 9 | >=16 |
-| Linking `documento_de` | 0.41% (25/6086) | >=30% |
+| Linking `documento_de` | 0.46% (28/6086) | >=30% |
 | Categorização Outros | 17.7% (1031/5840) | <=5% |
 | Backup grafo automático | Sim | Sim |
 | Transacionalidade pipeline | Sim | Sim |
 | Lockfile concorrência | Não | Sim |
 | Páginas dashboard | 39 | 40+ |
-| Pytest passed | 3075 | (estável, sem regressão) |
+| Pytest passed | 3099 | (estável, sem regressão) |
 <!-- END_AUTO_METRICAS_PRONTIDAO -->
 
 
