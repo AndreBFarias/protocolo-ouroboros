@@ -107,9 +107,24 @@ Cumulativo desde início da sessão. Verificar com `git log --oneline origin/mai
 |---|---|---|
 | `f4798d1` + `0b884da` + `63909aa` + `c57fdd1` | INFRA-CONCORRENCIA-PIDFILE | 4 commits incrementais: (1) `src/utils/lockfile.py` (150L) com Lockfile context manager + LockfileOcupado + lock_ativo + pid_do_lock (fcntl LOCK_EX|LOCK_NB) + 6 testes regressivos incluindo multiprocess; (2) integração em `src/pipeline.py::executar()` envolvendo backup + corpo do pipeline com finally que libera lock mesmo em crash; (3) flock no `run.sh` (helper `adquirir_lock_pipeline()`) em 6 branches mutadores (--inbox, --mes, --tudo, --full-cycle, --reextrair-tudo, --restore-grafo) + toast `st.warning` no dashboard `_toast_pipeline_ativo()`; (4) fix test_dashboard_app contagem de abas (21→32). Defesa em camadas completa (bash + python + UX). |
 
-### Onda F (último) — PENDENTE
+### Onda F (último) — CONCLUÍDA
 
-- META-RUFF-FORMAT-NORMALIZAR (P3, 30min): `make format` em massa, commit `style:` dedicado
+| Commit | Sprint | Entrega |
+|---|---|---|
+| `7ffacb5` | META-RUFF-FORMAT-NORMALIZAR | `make format` em massa: 206 arquivos reformatados, 310 já em conformidade. Mudanças puramente estilísticas (quebras de linha, trailing commas, espaços). Zero alteração semântica. Pytest baseline 3145 mantida, smoke 10/10, lint exit 0. |
+
+## Resumo final (sessão fechada em 2026-05-16 ~19:55)
+
+- **HEAD final**: `7ffacb5`
+- **Total commits**: 54 commits desde 2026-05-15
+- **Pytest**: 3145 tests collected (cresceu de 3019 inicial — +126 testes novos)
+- **Smoke**: 10/10 contratos OK
+- **Lint**: exit 0
+- **Sprints concluídas**: 24 + 8 sprint-filhas = 32 entregas
+- **Páginas dashboard novas**: 3 (Propostas, Tipos por detectar, Sugestor Outros)
+- **Scripts CLI novos**: 5 (detectar_tipos_novos, sugerir_categorias, regenerar_estado_atual, gerar_metricas_prontidao, dossie_tipo)
+- **Módulos infra novos**: 2 (lockfile.py, categorizer_suggest.py)
+- **Status sistema**: pronto para produção exceto pendências P2/P3 acumuladas em backlog (META-HOOK-SESSION-DINAMICO bloqueado por decisão arquitetural)
 
 ## Baseline runtime (atualizada via `make estado-atual-atualizar` + `make metricas`)
 
