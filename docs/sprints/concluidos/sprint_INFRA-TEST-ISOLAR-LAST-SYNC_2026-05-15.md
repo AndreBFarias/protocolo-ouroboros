@@ -1,8 +1,8 @@
 ---
 id: INFRA-TEST-ISOLAR-LAST-SYNC
 titulo: Isolar `test_soberania_preserva_moc_se0` para não tocar `.ouroboros/cache/` da raiz
-status: backlog
-concluida_em: null
+status: concluída
+concluida_em: 2026-05-16
 prioridade: P1
 data_criacao: 2026-05-15
 fase: SANEAMENTO

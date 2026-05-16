@@ -27,6 +27,7 @@ API:
 from __future__ import annotations
 
 import hashlib
+import os
 import re
 import shutil
 import unicodedata
@@ -459,13 +460,22 @@ def _gravar_last_sync(
     Lido por ``src.dashboard.componentes.ui.ler_sync_info`` (UX-V-03)
     e renderizado como sync-indicator pelo dashboard (UX-V-04).
 
+    Isolamento de testes (INFRA-TEST-ISOLAR-LAST-SYNC): se a variável
+    de ambiente ``OUROBOROS_CACHE_DIR`` estiver setada, escreve nela
+    em vez de ``raiz_projeto / .ouroboros / cache``. Permite que testes
+    apontem o destino para ``tmp_path`` via ``monkeypatch.setenv``.
+
     Resiliente a falhas (ADR-10): qualquer exceção é capturada e logada,
     nunca propaga — observabilidade não pode quebrar o sync.
     """
     import json
     from datetime import datetime
     try:
-        cache_dir = raiz_projeto / ".ouroboros" / "cache"
+        override = os.environ.get("OUROBOROS_CACHE_DIR")
+        if override:
+            cache_dir = Path(override)
+        else:
+            cache_dir = raiz_projeto / ".ouroboros" / "cache"
         cache_dir.mkdir(parents=True, exist_ok=True)
         payload = {
             "data": datetime.now().astimezone().isoformat(timespec="seconds"),

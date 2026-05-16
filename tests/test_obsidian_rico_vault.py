@@ -121,6 +121,24 @@ def vault_sintetico(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
+def cache_isolado(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    """Isola ``.ouroboros/cache/`` para ``tmp_path`` durante o teste.
+
+    Sprint INFRA-TEST-ISOLAR-LAST-SYNC (2026-05-16): testes que invocam
+    ``sincronizar_rico(dry_run=False)`` disparam ``_gravar_last_sync``,
+    que por default escreve em ``<raiz_repo>/.ouroboros/cache/last_sync.json``.
+    Sem este isolamento, o working tree fica dirty após pytest.
+
+    Via ``OUROBOROS_CACHE_DIR`` (lido pelo ``_gravar_last_sync``), aponta
+    o destino para ``tmp_path / .ouroboros / cache``.
+    """
+    cache_dir = tmp_path / ".ouroboros" / "cache"
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    monkeypatch.setenv("OUROBOROS_CACHE_DIR", str(cache_dir))
+    return cache_dir
+
+
+@pytest.fixture
 def grafo_rico(tmp_path: Path) -> Path:
     g = tmp_path / "grafo.sqlite"
     db = GrafoDB(g)
@@ -147,7 +165,9 @@ class TestSincronizarRico:
         assert report.documentos_escritos == 1
         assert not (vault_sintetico / "Pessoal" / "Casal").exists()
 
-    def test_executar_cria_estrutura(self, vault_sintetico: Path, grafo_rico: Path) -> None:
+    def test_executar_cria_estrutura(
+        self, vault_sintetico: Path, grafo_rico: Path, cache_isolado: Path
+    ) -> None:
         report = sr.sincronizar_rico(
             vault_sintetico, grafo_rico, dry_run=False, min_docs_por_fornecedor=2
         )
@@ -164,14 +184,18 @@ class TestSincronizarRico:
         assert "valor: 103.93" in conteudo
         assert report.documentos_escritos == 1
 
-    def test_idempotencia(self, vault_sintetico: Path, grafo_rico: Path) -> None:
+    def test_idempotencia(
+        self, vault_sintetico: Path, grafo_rico: Path, cache_isolado: Path
+    ) -> None:
         """2 execuções consecutivas devem deixar inalteradas >= 1."""
         _ = sr.sincronizar_rico(vault_sintetico, grafo_rico, dry_run=False)
         report2 = sr.sincronizar_rico(vault_sintetico, grafo_rico, dry_run=False)
         assert report2.inalteradas >= 1
         assert report2.documentos_escritos == 0
 
-    def test_edicao_manual_nao_sobrescreve(self, vault_sintetico: Path, grafo_rico: Path) -> None:
+    def test_edicao_manual_nao_sobrescreve(
+        self, vault_sintetico: Path, grafo_rico: Path, cache_isolado: Path
+    ) -> None:
         # Primeira rodada cria a nota
         sr.sincronizar_rico(vault_sintetico, grafo_rico, dry_run=False)
         nota = (
@@ -190,7 +214,9 @@ class TestSincronizarRico:
         assert report.notas_preservadas == 1
         assert nota.read_text(encoding="utf-8") == "# minha versao\nzero tag\n"
 
-    def test_grafo_ausente_nao_quebra(self, vault_sintetico: Path, tmp_path: Path) -> None:
+    def test_grafo_ausente_nao_quebra(
+        self, vault_sintetico: Path, tmp_path: Path, cache_isolado: Path
+    ) -> None:
         report = sr.sincronizar_rico(vault_sintetico, tmp_path / "nao_existe.sqlite", dry_run=False)
         assert report.erros
         assert report.documentos_escritos == 0
@@ -368,7 +394,7 @@ def grafo_multi_mes(tmp_path: Path) -> Path:
 
 class TestSincronizarRicoMoc:
     def test_executar_gera_arquivos_meses(
-        self, vault_sintetico: Path, grafo_multi_mes: Path
+        self, vault_sintetico: Path, grafo_multi_mes: Path, cache_isolado: Path
     ) -> None:
         report = sr.sincronizar_rico(vault_sintetico, grafo_multi_mes, dry_run=False)
         fin = vault_sintetico / "Pessoal" / "Casal" / "Financeiro"
@@ -384,7 +410,7 @@ class TestSincronizarRicoMoc:
         assert "Sesc" in conteudo_mar
 
     def test_soberania_preserva_moc_sem_tag(
-        self, vault_sintetico: Path, grafo_multi_mes: Path
+        self, vault_sintetico: Path, grafo_multi_mes: Path, cache_isolado: Path
     ) -> None:
         """MOC editada manualmente (sem tag/frontmatter) não deve ser reescrita."""
         sr.sincronizar_rico(vault_sintetico, grafo_multi_mes, dry_run=False)
