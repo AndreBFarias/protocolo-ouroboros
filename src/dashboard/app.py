@@ -51,6 +51,7 @@ from src.dashboard.paginas import (  # noqa: E402
     busca,
     catalogacao,
     categorias,
+    categorizer_sugestoes,
     completude,
     contas,
     extracao_tripla,
@@ -151,7 +152,16 @@ ABAS_POR_CLUSTER: dict[str, list[str]] = {
     # listando .md pendentes em docs/propostas/<categoria>/.
     # Sprint AUTO-TIPO-PROPOSTAS-DASHBOARD (2026-05-16) adiciona "Tipos
     # por detectar" consumindo data/output/propostas_tipo_novo.json.
-    "Sistema": ["Skills D7", "Styleguide", "Graduação", "Propostas", "Tipos por detectar"],
+    # Sprint CATEGORIZER-SUGESTAO-TFIDF (2026-05-16) adiciona "Sugestor
+    # Outros" consumindo data/output/sugestoes_categoria.json.
+    "Sistema": [
+        "Skills D7",
+        "Styleguide",
+        "Graduação",
+        "Propostas",
+        "Tipos por detectar",
+        "Sugestor Outros",
+    ],
 }
 
 # Sprint UX-RD-03: mapa cluster -> sprint que vai habilitar suas páginas.
@@ -497,6 +507,8 @@ def main() -> None:
             propostas_pendentes.renderizar(dados, periodo, pessoa, ctx)
         elif aba_sis == "Tipos por detectar":
             tipos_pendentes.renderizar(dados, periodo, pessoa, ctx)
+        elif aba_sis == "Sugestor Outros":
+            categorizer_sugestoes.renderizar(dados, periodo, pessoa, ctx)
         else:
             skills_d7.renderizar(dados, periodo, pessoa, ctx)
 

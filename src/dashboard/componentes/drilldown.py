@@ -117,6 +117,10 @@ MAPA_ABA_PARA_CLUSTER: dict[str, str] = {
     # detectar" consome data/output/propostas_tipo_novo.json gerado pelo
     # script CLI scripts/detectar_tipos_novos.py.
     "Tipos por detectar": "Sistema",
+    # Sprint CATEGORIZER-SUGESTAO-TFIDF (2026-05-16): aba "Sugestor
+    # Outros" consome data/output/sugestoes_categoria.json gerado pelo
+    # script CLI scripts/sugerir_categorias.py.
+    "Sugestor Outros": "Sistema",
 }
 
 # Sprint UX-125: tabs do cluster Home com nome igual a cluster próprio.

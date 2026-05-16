@@ -1,8 +1,8 @@
 ---
 id: CATEGORIZER-SUGESTAO-TFIDF
 titulo: "Sugestor TF-IDF para categorias `Outros` (17.7% do extrato)"
-status: backlog
-concluida_em: null
+status: concluída
+concluida_em: 2026-05-16
 prioridade: P2
 data_criacao: 2026-05-16
 fase: QUALIDADE
