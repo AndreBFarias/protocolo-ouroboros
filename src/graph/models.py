@@ -78,7 +78,7 @@ def deserializar_aliases(raw: str | None) -> list[str]:
         if isinstance(valor, list):
             return [str(v) for v in valor]
     except json.JSONDecodeError:
-        pass
+        pass  # noqa: BLE001 -- aliases legacy malformado; retorna [] defensivo
     return []
 
 
@@ -91,7 +91,7 @@ def deserializar_metadata(raw: str | None) -> dict[str, Any]:
         if isinstance(valor, dict):
             return valor
     except json.JSONDecodeError:
-        pass
+        pass  # noqa: BLE001 -- metadata legacy malformada; retorna {} defensivo
     return {}
 
 

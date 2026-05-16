@@ -178,7 +178,7 @@ def _str_seguro(valor: Any) -> str:
         if pd.isna(valor):
             return ""
     except (TypeError, ValueError):
-        pass
+        pass  # noqa: BLE001 -- pd.isna nao aceita certos tipos; segue para str(valor)
     texto = str(valor).strip()
     return texto
 
@@ -191,7 +191,7 @@ def _data_para_iso(valor: Any) -> str | None:
         if pd.isna(valor):
             return None
     except (TypeError, ValueError):
-        pass
+        pass  # noqa: BLE001 -- pd.isna nao aceita certos tipos; segue para isoformat
     if isinstance(valor, datetime):
         return valor.date().isoformat()
     if isinstance(valor, date):

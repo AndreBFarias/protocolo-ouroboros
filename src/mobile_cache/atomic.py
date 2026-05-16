@@ -47,7 +47,7 @@ def write_json_atomic(path: Path, payload: dict[str, Any]) -> None:
             try:
                 tmp.unlink()
             except OSError:
-                pass
+                pass  # noqa: BLE001 -- limpeza tmp best-effort; raise propaga erro original
         raise
     os.replace(tmp, path)
 

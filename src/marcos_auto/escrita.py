@@ -86,7 +86,7 @@ def write_md_atomic(
             try:
                 tmp.unlink()
             except OSError:
-                pass
+                pass  # noqa: BLE001 -- limpeza tmp best-effort; raise propaga erro original
         raise
     os.replace(tmp, path)
 

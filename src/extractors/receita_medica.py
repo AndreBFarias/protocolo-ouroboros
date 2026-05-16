@@ -245,7 +245,7 @@ def _extrair_validade_meses(texto: str, medicamentos_controlados: bool) -> int:
         try:
             return max(1, int(match.group(1)))
         except ValueError:
-            pass
+            pass  # noqa: BLE001 -- match.group(1) nao numerico; usa default abaixo
     return VALIDADE_DEFAULT_MESES
 
 

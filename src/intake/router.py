@@ -167,7 +167,7 @@ def rotear_artefato(artefato_origem: Path, decisao: Decisao) -> ArtefatoArquivad
         try:
             destino.unlink()
         except OSError:
-            pass
+            pass  # noqa: BLE001 -- unlink best-effort; move abaixo trata erro definitivo
     try:
         shutil.move(str(artefato_origem), str(destino))
     except (OSError, shutil.Error) as exc:
