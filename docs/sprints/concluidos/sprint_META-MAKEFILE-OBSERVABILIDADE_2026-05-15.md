@@ -1,8 +1,8 @@
 ---
 id: META-MAKEFILE-OBSERVABILIDADE
 titulo: 5 targets de observabilidade no Makefile (graduados/audit/spec/health-grafo/propostas)
-status: backlog
-concluida_em: null
+status: concluída
+concluida_em: 2026-05-15
 prioridade: P1
 data_criacao: 2026-05-15
 fase: DX

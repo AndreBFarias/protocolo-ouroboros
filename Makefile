@@ -1,4 +1,4 @@
-.PHONY: help process inbox tudo dashboard test lint format docs validate check install clean gauntlet smoke anti-migue sync mobile-cache
+.PHONY: help process inbox tudo dashboard test lint format docs validate check install clean gauntlet smoke anti-migue sync mobile-cache graduados audit spec health-grafo propostas
 
 SHELL := /bin/bash
 VENV := .venv
@@ -91,6 +91,40 @@ anti-migue: lint smoke test ## Gauntlet anti-migué (entry point único do gate 
 
 conformance-%: ## Gate 4-way >=3 amostras verdes (Sprint ANTI-MIGUE-01)
 	@$(PYTHON) -m tests.conformance.gate $*
+
+graduados: ## Tabela viva dos tipos canônicos (graduação Opus/ETL)
+	@$(PYTHON) scripts/dossie_tipo.py listar-tipos
+
+audit: ## Auditoria rápida (métricas de prontidão; fallback se script não materializado)
+	@if [ -f scripts/gerar_metricas_prontidao.py ]; then \
+		$(PYTHON) scripts/gerar_metricas_prontidao.py; \
+	else \
+		echo "Sprint META-ROADMAP-METRICAS-AUTO ainda não materializada -- métricas vivas pendentes."; \
+	fi
+
+spec: ## Cria spec a partir do template (uso: make spec NOME=meu-id)
+	@if [ -z "$(NOME)" ]; then echo "Uso: make spec NOME=meu-id"; exit 1; fi
+	@$(PYTHON) scripts/criar_spec.py "$(NOME)"
+
+health-grafo: ## Valida integridade do SQLite do grafo + contagem de nós/arestas
+	@if [ ! -f data/output/grafo.sqlite ]; then \
+		echo "Grafo ausente em data/output/grafo.sqlite -- rode 'make tudo' primeiro."; \
+	else \
+		sqlite3 data/output/grafo.sqlite "PRAGMA integrity_check;"; \
+		sqlite3 data/output/grafo.sqlite "PRAGMA foreign_key_check;"; \
+		$(PYTHON) -c "from src.graph.db import GrafoDB, caminho_padrao; db = GrafoDB(caminho_padrao()); n = db._conn.execute('SELECT COUNT(*) FROM node').fetchone()[0]; e = db._conn.execute('SELECT COUNT(*) FROM edge').fetchone()[0]; print(f'Nós: {n}, Arestas: {e}'); print('Esquema OK')"; \
+	fi
+
+propostas: ## Lista propostas pendentes em docs/propostas/ (status: aberta)
+	@$(PYTHON) -c "\
+	from pathlib import Path; \
+	import re; \
+	raiz = Path('docs/propostas'); \
+	abertas = []; \
+	[abertas.append((re.search(r'^id:\s*(.+)', t, re.MULTILINE).group(1) if re.search(r'^id:\s*(.+)', t, re.MULTILINE) else p.name, str(p))) for p in raiz.rglob('*.md') if '_obsoletas' not in p.parts and '_rejeitadas' not in p.parts and (t := p.read_text(encoding='utf-8')) and (m := re.search(r'^status:\s*(\w+)', t, re.MULTILINE)) and m.group(1) == 'aberta']; \
+	print('Nenhuma proposta pendente.' if not abertas else f'{len(abertas)} propostas pendentes:'); \
+	[print(f'  [{i}] {p}') for i, p in abertas]; \
+	"
 
 clean: ## Remove artefatos de build (não remove dados)
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
