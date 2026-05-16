@@ -10,7 +10,7 @@ epico: 8
 depende_de:
   - META-ROADMAP-METRICAS-AUTO (reusa metricas_prontidao.json)
 esforco_estimado_horas: 1.5
-origem: auditoria 2026-05-15. `.claude/hooks/session-start-projeto.py` injeta texto + `_bloco_graduacao` (lê JSON, OK) mas NÃO injeta: pytest count atual, smoke status, último commit, métricas linking/Outros, contagem de specs PRONTAS no backlog, working tree dirty, branches *-rebase mergeadas pendentes de delete. Próxima IA perde baseline para detectar regressão e age sem contexto vivo.
+origem: "auditoria 2026-05-15. `.claude/hooks/session-start-projeto.py` injeta texto + `_bloco_graduacao` (lê JSON, OK) mas NÃO injeta: pytest count atual, smoke status, último commit, métricas linking/Outros, contagem de specs PRONTAS no backlog, working tree dirty, branches *-rebase mergeadas pendentes de delete. Próxima IA perde baseline para detectar regressão e age sem contexto vivo."
 ---
 
 # Sprint META-HOOK-SESSION-DINAMICO

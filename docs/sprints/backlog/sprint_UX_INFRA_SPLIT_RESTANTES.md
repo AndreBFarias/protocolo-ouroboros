@@ -8,7 +8,7 @@ data_criacao: 2026-05-12
 fase: MODULARIZACAO
 depende_de: []
 esforco_estimado_horas: 5
-origem: Plano 2026-05-12 secao Fase B (achado do auditor C2 paridade visual); 5 splits ja em backlog (INFRA-SPLIT-*) mas busca.py e analise_avancada.py nao tem.  <!-- noqa: accent -->
+origem: "Plano 2026-05-12 secao Fase B (achado do auditor C2 paridade visual); 5 splits ja em backlog (INFRA-SPLIT-*) mas busca.py e analise_avancada.py nao tem.  <!-- noqa: accent -->"
 ---
 
 # Sprint UX-INFRA-SPLIT-RESTANTES -- modularizacao busca + analise_avancada

@@ -9,7 +9,7 @@ fase: SANEAMENTO
 epico: 8
 depende_de: []
 esforco_estimado_horas: 0.5
-origem: achado colateral da sprint META-SPEC-LINTER (executor `ac4b5956`, 2026-05-15). `scripts/check_concluida_em.py` detectou 16 specs em `docs/sprints/concluidos/` sem frontmatter `concluida_em`. Exemplos: `sprint_DASH_pagamentos_cruzados_casal.md`, `sprint_INFRA_categorizar_salario_g4f_c6.md`.
+origem: "achado colateral da sprint META-SPEC-LINTER (executor `ac4b5956`, 2026-05-15). `scripts/check_concluida_em.py` detectou 16 specs em `docs/sprints/concluidos/` sem frontmatter `concluida_em`. Exemplos: `sprint_DASH_pagamentos_cruzados_casal.md`, `sprint_INFRA_categorizar_salario_g4f_c6.md`."
 ---
 
 # Sprint META-FIX-CONCLUIDA-EM-FALTANTES

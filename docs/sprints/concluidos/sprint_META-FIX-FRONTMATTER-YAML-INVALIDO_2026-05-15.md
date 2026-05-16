@@ -1,8 +1,8 @@
 ---
 id: META-FIX-FRONTMATTER-YAML-INVALIDO
 titulo: Aspas duplas em 11 specs com frontmatter YAML inválido por `:` não escapado
-status: backlog
-concluida_em: null
+status: concluida
+concluida_em: 2026-05-15
 prioridade: P3
 data_criacao: 2026-05-15
 fase: SANEAMENTO
@@ -10,7 +10,7 @@ epico: 8
 depende_de:
   - META-SPEC-LINTER (concluída — detectou via baseline)
 esforco_estimado_horas: 0.5
-origem: achado colateral da sprint META-SPEC-LINTER (executor `ac4b5956`, 2026-05-15). Baseline em `docs/auditorias/specs_linter_baseline_2026-05-15.md` lista 11 specs com YAML inválido — campo `titulo` ou `origem` contém `:` interno (geralmente seguido de `<!-- noqa: accent -->` que YAML interpreta como mapping) sem aspas duplas.
+origem: "achado colateral da sprint META-SPEC-LINTER (executor `ac4b5956`, 2026-05-15). Baseline em `docs/auditorias/specs_linter_baseline_2026-05-15.md` lista 11 specs com YAML inválido — campo `titulo` ou `origem` contém `:` interno (geralmente seguido de `<!-- noqa: accent -->` que YAML interpreta como mapping) sem aspas duplas."
 ---
 
 # Sprint META-FIX-FRONTMATTER-YAML-INVALIDO

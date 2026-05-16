@@ -8,7 +8,7 @@ fase: A
 epico: 1
 depende_de: [coleta humana do dono]
 parent: FASE-A-GRADUACAO-MASSA-2026-05-13
-origem: sessao 2026-05-14 (supervisor autonomo) graduou 3 novos tipos (fatura_cartao, extrato_bancario, cupom_garantia_estendida). Auditoria provou que outros 13 tipos canonicos do `mappings/tipos_documento.yaml` nao tem amostras suficientes em `data/raw` para o ritual canonico (>=2 amostras distintas em SHA-256).  <!-- noqa: accent -->
+origem: "sessao 2026-05-14 (supervisor autonomo) graduou 3 novos tipos (fatura_cartao, extrato_bancario, cupom_garantia_estendida). Auditoria provou que outros 13 tipos canonicos do `mappings/tipos_documento.yaml` nao tem amostras suficientes em `data/raw` para o ritual canonico (>=2 amostras distintas em SHA-256).  <!-- noqa: accent -->"
 
 ---
 

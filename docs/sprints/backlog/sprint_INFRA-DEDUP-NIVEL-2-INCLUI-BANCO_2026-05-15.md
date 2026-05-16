@@ -9,7 +9,7 @@ fase: QUALIDADE
 epico: 3
 depende_de: []
 esforco_estimado_horas: 2
-origem: auditoria 2026-05-15. `src/transform/deduplicator.py::_normalizar_local_para_chave` (linha 50) retorna `local.split(" - ", 1)[-1].strip().lower()`. Chave dedup-nível-2 é `(data, valor, local_normalizado)` sem `banco_origem`. Mitigação só está em `_consolidar_pares_ofx_xlsx_mesmo_banco` (nível-2b) para mesmo banco. Cenário: PIX R$5000 batendo Nubank "Recebimento Pix - X" + C6 "X" no mesmo dia → colidem na chave `("2026-05-10", "5000.00", "x")` → uma deletada falsamente.
+origem: "auditoria 2026-05-15. `src/transform/deduplicator.py::_normalizar_local_para_chave` (linha 50) retorna `local.split(\" - \", 1)[-1].strip().lower()`. Chave dedup-nível-2 é `(data, valor, local_normalizado)` sem `banco_origem`. Mitigação só está em `_consolidar_pares_ofx_xlsx_mesmo_banco` (nível-2b) para mesmo banco. Cenário: PIX R$5000 batendo Nubank \"Recebimento Pix - X\" + C6 \"X\" no mesmo dia → colidem na chave `(\"2026-05-10\", \"5000.00\", \"x\")` → uma deletada falsamente."
 ---
 
 # Sprint INFRA-DEDUP-NIVEL-2-INCLUI-BANCO

@@ -10,7 +10,7 @@ epico: 2
 depende_de:
   - INFRA-BACKUP-GRAFO-AUTOMATIZADO (concluída em d97df41)
 esforco_estimado_horas: 0.5
-origem: auditoria 2026-05-15. `src/pipeline.py:749-755` em `_restaurar_grafo_de_backup` loga "Checksum inválido: gravado=X atual=Y (backup corrompido)" sem distinguir entre `.sha256` truncado (write parcial em disco cheio), `.sha256` malformado (algum char não-hex), ou conteúdo do backup corrompido. Admin não sabe qual cenário tratar.
+origem: "auditoria 2026-05-15. `src/pipeline.py:749-755` em `_restaurar_grafo_de_backup` loga \"Checksum inválido: gravado=X atual=Y (backup corrompido)\" sem distinguir entre `.sha256` truncado (write parcial em disco cheio), `.sha256` malformado (algum char não-hex), ou conteúdo do backup corrompido. Admin não sabe qual cenário tratar."
 ---
 
 # Sprint INFRA-RESTORE-CHECKSUM-DIAGNOSTICO

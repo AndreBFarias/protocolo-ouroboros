@@ -1,6 +1,6 @@
 ---
 id: META-LIMPEZA-SILENT-EXCEPT
-titulo: Limpar 34 violações de `except: pass` em `src/` detectadas por `check_silent_except.sh`
+titulo: "Limpar 34 violações de `except: pass` em `src/` detectadas por `check_silent_except.sh`"
 status: backlog
 concluida_em: null
 prioridade: P2
@@ -10,7 +10,7 @@ epico: 8
 depende_de:
   - META-HOOKS-AUDITAR-E-WIRAR (concluída — wirou o hook que detectou)
 esforco_estimado_horas: 2
-origem: achado colateral da sprint META-HOOKS-AUDITAR-E-WIRAR (executor `af13dd9f`, 2026-05-15). Wirar `check_silent_except.sh` no pre-commit revelou 34 ocorrências pré-existentes de `except: pass` (ou variantes silenciosas) em `src/`. Hook foi configurado com `files: ^src/.*\.py$` para rodar só em diffs de src/ — dívida histórica não bloqueia commits que não tocam src/.
+origem: "achado colateral da sprint META-HOOKS-AUDITAR-E-WIRAR (executor `af13dd9f`, 2026-05-15). Wirar `check_silent_except.sh` no pre-commit revelou 34 ocorrências pré-existentes de `except: pass` (ou variantes silenciosas) em `src/`. Hook foi configurado com `files: ^src/.*\\.py$` para rodar só em diffs de src/ — dívida histórica não bloqueia commits que não tocam src/."
 ---
 
 # Sprint META-LIMPEZA-SILENT-EXCEPT

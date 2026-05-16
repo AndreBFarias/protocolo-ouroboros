@@ -1,6 +1,6 @@
 ---
 id: MOB-bug-camera-momento-repro
-titulo: Reproduzir bug "registrar momento" da camera + relatorio para equipe mobile (Onda Q fixou parcialmente)  <!-- noqa: accent -->
+titulo: 'Reproduzir bug "registrar momento" da camera + relatorio para equipe mobile (Onda Q fixou parcialmente)  <!-- noqa: accent -->'
 status: backlog
 concluida_em: null
 prioridade: P1
@@ -8,7 +8,7 @@ data_criacao: 2026-05-12
 fase: BRIDGE_MOBILE
 depende_de: []
 esforco_estimado_horas: 1
-origem: Plano 2026-05-12 secao Fase B; brief do dono pediu "registrar momento" funcionar; auditor C1 confirmou Onda Q (commit MenuCapturaVerde.tsx:217-235) fixou heuristicamente mas validacao live pendente.  <!-- noqa: accent -->
+origem: 'Plano 2026-05-12 secao Fase B; brief do dono pediu "registrar momento" funcionar; auditor C1 confirmou Onda Q (commit MenuCapturaVerde.tsx:217-235) fixou heuristicamente mas validacao live pendente.  <!-- noqa: accent -->'
 ---
 
 # Sprint MOB-bug-camera-momento-repro -- reproduzir e documentar bug "registrar momento"

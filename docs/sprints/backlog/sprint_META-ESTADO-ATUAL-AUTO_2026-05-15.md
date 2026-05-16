@@ -1,6 +1,6 @@
 ---
 id: META-ESTADO-ATUAL-AUTO
-titulo: Regenerar seção "Versão + saúde" do ESTADO_ATUAL.md automaticamente
+titulo: 'Regenerar seção "Versão + saúde" do ESTADO_ATUAL.md automaticamente'
 status: backlog
 concluida_em: null
 prioridade: P1
@@ -9,7 +9,7 @@ fase: SANEAMENTO
 epico: 8
 depende_de: []
 esforco_estimado_horas: 2
-origem: auditoria 2026-05-15. `contexto/ESTADO_ATUAL.md` (canônico no PROMPT_NOVA_SESSAO) declara VERSAO 5.11, pytest "2.018 passed", smoke "8/8 (declarado, só 6 implementados)". Realidade atual: VERSAO 5.14 (memória), pytest 3019, smoke 10/10. Documento que serve de onboarding canônico está enganando próxima IA.
+origem: 'auditoria 2026-05-15. `contexto/ESTADO_ATUAL.md` (canônico no PROMPT_NOVA_SESSAO) declara VERSAO 5.11, pytest "2.018 passed", smoke "8/8 (declarado, só 6 implementados)". Realidade atual: VERSAO 5.14 (memória), pytest 3019, smoke 10/10. Documento que serve de onboarding canônico está enganando próxima IA.'
 ---
 
 # Sprint META-ESTADO-ATUAL-AUTO

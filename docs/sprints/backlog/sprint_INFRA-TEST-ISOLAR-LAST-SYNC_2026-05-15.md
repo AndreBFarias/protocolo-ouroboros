@@ -9,7 +9,7 @@ fase: SANEAMENTO
 epico: 8
 depende_de: []
 esforco_estimado_horas: 1
-origem: auditoria 2026-05-15. `.ouroboros/cache/last_sync.json` (raiz do repo) tem campo `vault_path: "/tmp/pytest-of-andrefarias/pytest-167/test_soberania_preserva_moc_se0/vault"` — path TEMPORÁRIO de pytest. Significa que algum teste modificou o arquivo "real" do repo com path de teste. Bug de isolamento: teste mexe em estado de produção.
+origem: "auditoria 2026-05-15. `.ouroboros/cache/last_sync.json` (raiz do repo) tem campo `vault_path: \"/tmp/pytest-of-andrefarias/pytest-167/test_soberania_preserva_moc_se0/vault\"` — path TEMPORÁRIO de pytest. Significa que algum teste modificou o arquivo \"real\" do repo com path de teste. Bug de isolamento: teste mexe em estado de produção."
 ---
 
 # Sprint INFRA-TEST-ISOLAR-LAST-SYNC

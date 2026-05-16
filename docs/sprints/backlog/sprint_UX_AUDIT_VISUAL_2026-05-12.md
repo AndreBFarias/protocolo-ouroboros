@@ -8,8 +8,8 @@ data_criacao: 2026-05-12
 fase: VALIDACAO_VISUAL
 depende_de: []
 esforco_estimado_horas: 4
-origem: Plano 2026-05-12 secao Fase B (sugerido pelo auditor C2 paridade visual); auditoria textual 2026-05-12 estimou 85-90% mas faltou confronto real-vs-mockup ao vivo via scrot/claude-in-chrome/playwright.  <!-- noqa: accent -->
-mockup: novo-mockup/mockups/*.html  <!-- noqa: accent -->
+origem: "Plano 2026-05-12 secao Fase B (sugerido pelo auditor C2 paridade visual); auditoria textual 2026-05-12 estimou 85-90% mas faltou confronto real-vs-mockup ao vivo via scrot/claude-in-chrome/playwright.  <!-- noqa: accent -->"
+mockup: "novo-mockup/mockups/*.html  <!-- noqa: accent -->"
 ---
 
 # Sprint UX-AUDIT-VISUAL-2026-05-12 -- re-auditoria visual ao vivo pos-Onda V-3

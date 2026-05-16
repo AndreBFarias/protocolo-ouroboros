@@ -9,7 +9,7 @@ fase: SANEAMENTO
 epico: 8
 depende_de: []
 esforco_estimado_horas: 1
-origem: auditoria 2026-05-15. `git worktree list | wc -l` = 75. `git branch --merged main` mostra ~50+ branches mergeadas (worktree-agent-*, sprint/*, ux/*, *-rebase). Polui ergonomia: `git branch` é ilegível, `.claude/worktrees/` ocupa espaço.
+origem: "auditoria 2026-05-15. `git worktree list | wc -l` = 75. `git branch --merged main` mostra ~50+ branches mergeadas (worktree-agent-*, sprint/*, ux/*, *-rebase). Polui ergonomia: `git branch` é ilegível, `.claude/worktrees/` ocupa espaço."
 ---
 
 # Sprint META-GC-WORKTREES-BRANCHES

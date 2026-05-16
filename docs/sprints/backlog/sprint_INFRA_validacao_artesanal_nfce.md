@@ -1,6 +1,6 @@
 ---
-id: INFRA-VALIDACAO-ARTESANAL-NFCE  <!-- noqa: accent -->
-titulo: Validacao artesanal NFCe PDF -- 2 amostras lidas por Opus multimodal versus ETL com foco em drill-down item (P55 vs PS5)  <!-- noqa: accent -->
+id: "INFRA-VALIDACAO-ARTESANAL-NFCE  <!-- noqa: accent -->"
+titulo: "Validacao artesanal NFCe PDF -- 2 amostras lidas por Opus multimodal versus ETL com foco em drill-down item (P55 vs PS5)  <!-- noqa: accent -->"
 status: backlog
 concluida_em: null
 prioridade: P0
@@ -8,8 +8,8 @@ data_criacao: 2026-05-12
 fase: VALIDACAO_ARTESANAL
 depende_de: [INFRA-OPUS-SCHEMA-EXTENDIDO]
 esforco_estimado_horas: 2
-origem: Plano 2026-05-12 secao Fase A1 -- NFCe so 2 nodes no grafo (drill-down item bloqueado); item "PEPSI 2L"/"PS5" provou que ETL local tem erro silencioso ("CONTROLE P55" registrado vs "PS5" canonico).  <!-- noqa: accent -->
-mockup: novo-mockup/mockups/10-validacao-arquivos.html  <!-- noqa: accent -->
+origem: "Plano 2026-05-12 secao Fase A1 -- NFCe so 2 nodes no grafo (drill-down item bloqueado); item \"PEPSI 2L\"/\"PS5\" provou que ETL local tem erro silencioso (\"CONTROLE P55\" registrado vs \"PS5\" canonico).  <!-- noqa: accent -->"
+mockup: "novo-mockup/mockups/10-validacao-arquivos.html  <!-- noqa: accent -->"
 ---
 
 # Sprint INFRA-VALIDACAO-ARTESANAL-NFCE -- prova de paridade em NFCe PDF com foco em itens  <!-- noqa: accent -->

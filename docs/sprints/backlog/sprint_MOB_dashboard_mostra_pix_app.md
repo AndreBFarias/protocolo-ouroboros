@@ -8,8 +8,8 @@ data_criacao: 2026-05-12
 fase: BRIDGE_MOBILE
 depende_de: [MOB-bridge-4-inbox-subtipos-reader, MOB-bridge-5-classifier-pix]
 esforco_estimado_horas: 3
-origem: Plano 2026-05-12 secao Fase B; dono quer ver no dashboard que o pix compartilhado pelo celular chegou e foi classificado.  <!-- noqa: accent -->
-mockup: novo-mockup/mockups/16-inbox.html  <!-- noqa: accent -->
+origem: "Plano 2026-05-12 secao Fase B; dono quer ver no dashboard que o pix compartilhado pelo celular chegou e foi classificado.  <!-- noqa: accent -->"
+mockup: "novo-mockup/mockups/16-inbox.html  <!-- noqa: accent -->"
 ---
 
 # Sprint MOB-dashboard-mostra-pix-app -- widget pix vindo do app

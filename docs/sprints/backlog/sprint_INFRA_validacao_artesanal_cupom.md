@@ -1,6 +1,6 @@
 ---
-id: INFRA-VALIDACAO-ARTESANAL-CUPOM  <!-- noqa: accent -->
-titulo: Validacao artesanal cupom_foto -- 2 amostras lidas por Opus multimodal versus ETL  <!-- noqa: accent -->
+id: "INFRA-VALIDACAO-ARTESANAL-CUPOM  <!-- noqa: accent -->"
+titulo: "Validacao artesanal cupom_foto -- 2 amostras lidas por Opus multimodal versus ETL  <!-- noqa: accent -->"
 status: backlog
 concluida_em: null
 prioridade: P0
@@ -8,8 +8,8 @@ data_criacao: 2026-05-12
 fase: VALIDACAO_ARTESANAL
 depende_de: [INFRA-OPUS-SCHEMA-EXTENDIDO, INFRA-OCR-OPUS-VISAO, INFRA-EXTRATORES-USAR-OPUS]
 esforco_estimado_horas: 2
-origem: Plano 2026-05-12 secao Fase A1 -- cupom_foto e o caso-mae do fallback Opus (gap 0/5 processados em 2026-05-08; OCR local erra P55 vs PS5).  <!-- noqa: accent -->
-mockup: novo-mockup/mockups/10-validacao-arquivos.html  <!-- noqa: accent -->
+origem: "Plano 2026-05-12 secao Fase A1 -- cupom_foto e o caso-mae do fallback Opus (gap 0/5 processados em 2026-05-08; OCR local erra P55 vs PS5).  <!-- noqa: accent -->"
+mockup: "novo-mockup/mockups/10-validacao-arquivos.html  <!-- noqa: accent -->"
 ---
 
 # Sprint INFRA-VALIDACAO-ARTESANAL-CUPOM -- prova de paridade ETL × Opus em cupom_foto  <!-- noqa: accent -->

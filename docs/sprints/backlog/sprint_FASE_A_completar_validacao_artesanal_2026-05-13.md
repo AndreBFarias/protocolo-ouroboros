@@ -1,5 +1,5 @@
 ---
-id: FASE-A-COMPLETAR-VALIDACAO-ARTESANAL  <!-- noqa: accent -->
+id: "FASE-A-COMPLETAR-VALIDACAO-ARTESANAL  <!-- noqa: accent -->"
 titulo: Fechar o ciclo de validação artesanal Opus multimodal para todos os tipos documentais aceitos
 status: backlog
 concluida_em: null

@@ -1,6 +1,6 @@
 ---
 id: INFRA-LINT-ACENTUACAO-SPECS-2026-05-12
-titulo: Corrigir 45 violações de acentuação acumuladas nas specs e INDICE da sessão 2026-05-12  <!-- noqa: accent -->
+titulo: "Corrigir 45 violações de acentuação acumuladas nas specs e INDICE da sessão 2026-05-12  <!-- noqa: accent -->"
 status: backlog
 concluida_em: null
 prioridade: P3
@@ -8,7 +8,7 @@ data_criacao: 2026-05-12
 fase: SANEAMENTO
 depende_de: []
 esforco_estimado_horas: 1
-origem: make lint exit 1 apos merge sessao Fase A -- 45 violacoes em 17 arquivos .md (INDICE + 11 specs + 2 concluidos + 2 arquivos do executor MOB-bridge-4). Maioria eh sigla SIGNALACAO ou palavra em maiusculas dentro de cabecalhos.  <!-- noqa: accent -->
+origem: "make lint exit 1 apos merge sessao Fase A -- 45 violacoes em 17 arquivos .md (INDICE + 11 specs + 2 concluidos + 2 arquivos do executor MOB-bridge-4). Maioria eh sigla SIGNALACAO ou palavra em maiusculas dentro de cabecalhos.  <!-- noqa: accent -->"
 ---
 
 # Sprint INFRA-LINT-ACENTUACAO-SPECS-2026-05-12

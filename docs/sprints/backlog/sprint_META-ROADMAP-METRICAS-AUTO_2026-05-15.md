@@ -10,7 +10,7 @@ epico: 8
 depende_de:
   - META-ESTADO-ATUAL-AUTO (compartilha regenerador)
 esforco_estimado_horas: 1.5
-origem: auditoria 2026-05-15. `docs/sprints/ROADMAP_ATE_PROD.md` linha 42 declara "Tipos GRADUADOS: 4"; realidade 9 (cresceu em sessão 2026-05-14). Linking 0,41% / Outros 17,7% / Pytest 2964 — todas snapshot de 2026-05-13. ROADMAP é leitura canônica (CLAUDE.md item 1) — números errados enganam priorização.
+origem: 'auditoria 2026-05-15. `docs/sprints/ROADMAP_ATE_PROD.md` linha 42 declara "Tipos GRADUADOS: 4"; realidade 9 (cresceu em sessão 2026-05-14). Linking 0,41% / Outros 17,7% / Pytest 2964 — todas snapshot de 2026-05-13. ROADMAP é leitura canônica (CLAUDE.md item 1) — números errados enganam priorização.'
 ---
 
 # Sprint META-ROADMAP-METRICAS-AUTO

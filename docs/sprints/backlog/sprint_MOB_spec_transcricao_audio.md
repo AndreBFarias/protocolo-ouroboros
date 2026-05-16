@@ -8,8 +8,8 @@ data_criacao: 2026-05-12
 fase: BRIDGE_MOBILE
 depende_de: [MOB-bridge-4-inbox-subtipos-reader]
 esforco_estimado_horas: 3
-origem: Plano 2026-05-12 secao Fase B; brief do dono pediu transcricao automatica live + app Onda Q ja entrega live transcribe; backend precisa receber audio + transcricao + persistir.  <!-- noqa: accent -->
-adr_associada: ADR-28 (motor canonico de transcricao -- whisper local vs Opus multimodal)  <!-- noqa: accent -->
+origem: "Plano 2026-05-12 secao Fase B; brief do dono pediu transcricao automatica live + app Onda Q ja entrega live transcribe; backend precisa receber audio + transcricao + persistir.  <!-- noqa: accent -->"
+adr_associada: "ADR-28 (motor canonico de transcricao -- whisper local vs Opus multimodal)  <!-- noqa: accent -->"
 ---
 
 # Sprint MOB-spec-transcricao-audio -- contrato + stub backend de transcricao de audio

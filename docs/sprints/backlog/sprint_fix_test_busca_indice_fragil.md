@@ -1,5 +1,5 @@
 ---
-id: FIX-TEST-BUSCA-INDICE-FRAGIL  <!-- noqa: accent -->
+id: "FIX-TEST-BUSCA-INDICE-FRAGIL  <!-- noqa: accent -->"
 titulo: Sprint FIX-TEST-BUSCA-ÍNDICE-01 — Fix testes frágeis de busca global
 status: backlog
 concluida_em: null

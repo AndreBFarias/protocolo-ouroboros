@@ -1,6 +1,6 @@
 ---
-id: INFRA-VALIDACAO-ARTESANAL-HOLERITE  <!-- noqa: accent -->
-titulo: Validacao artesanal holerite -- 2 amostras (1 G4F + 1 Infobase) lidas por Opus multimodal versus ETL  <!-- noqa: accent -->
+id: "INFRA-VALIDACAO-ARTESANAL-HOLERITE  <!-- noqa: accent -->"
+titulo: "Validacao artesanal holerite -- 2 amostras (1 G4F + 1 Infobase) lidas por Opus multimodal versus ETL  <!-- noqa: accent -->"
 status: backlog
 concluida_em: null
 prioridade: P0
@@ -8,8 +8,8 @@ data_criacao: 2026-05-12
 fase: VALIDACAO_ARTESANAL
 depende_de: [INFRA-OPUS-SCHEMA-EXTENDIDO]
 esforco_estimado_horas: 2
-origem: Plano 2026-05-12 secao Fase A1 -- holerite 24/24 declarado verde mas auditoria nunca cruzou ETL × Opus campo-a-campo. Suspeito mascarar erro silencioso (G4F vs Infobase tem layouts divergentes).  <!-- noqa: accent -->
-mockup: novo-mockup/mockups/10-validacao-arquivos.html  <!-- noqa: accent -->
+origem: "Plano 2026-05-12 secao Fase A1 -- holerite 24/24 declarado verde mas auditoria nunca cruzou ETL × Opus campo-a-campo. Suspeito mascarar erro silencioso (G4F vs Infobase tem layouts divergentes).  <!-- noqa: accent -->"
+mockup: "novo-mockup/mockups/10-validacao-arquivos.html  <!-- noqa: accent -->"
 ---
 
 # Sprint INFRA-VALIDACAO-ARTESANAL-HOLERITE -- prova de paridade ETL × Opus em contracheques  <!-- noqa: accent -->

@@ -9,7 +9,7 @@ fase: DX
 epico: 8
 depende_de: []
 esforco_estimado_horas: 1
-origem: auditoria 2026-05-15. `scripts/finish_sprint.sh` cobre 2 de 9 checks do VALIDATOR_BRIEF (valida estrutura MD + smoke aritmético). Não roda: make lint, pytest, schema-grafo, frontmatter `concluida_em`. Sprint "concluída" pode ter regressão silenciosa.
+origem: 'auditoria 2026-05-15. `scripts/finish_sprint.sh` cobre 2 de 9 checks do VALIDATOR_BRIEF (valida estrutura MD + smoke aritmético). Não roda: make lint, pytest, schema-grafo, frontmatter `concluida_em`. Sprint "concluída" pode ter regressão silenciosa.'
 ---
 
 # Sprint META-FINISH-SPRINT-GATE-COMPLETO

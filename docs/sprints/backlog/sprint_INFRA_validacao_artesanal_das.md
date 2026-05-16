@@ -1,6 +1,6 @@
 ---
-id: INFRA-VALIDACAO-ARTESANAL-DAS  <!-- noqa: accent -->
-titulo: Validacao artesanal DAS PARCSN -- 2 amostras lidas por Opus multimodal versus ETL (alto dano fiscal)  <!-- noqa: accent -->
+id: "INFRA-VALIDACAO-ARTESANAL-DAS  <!-- noqa: accent -->"
+titulo: "Validacao artesanal DAS PARCSN -- 2 amostras lidas por Opus multimodal versus ETL (alto dano fiscal)  <!-- noqa: accent -->"
 status: backlog
 concluida_em: null
 prioridade: P0
@@ -8,8 +8,8 @@ data_criacao: 2026-05-12
 fase: VALIDACAO_ARTESANAL
 depende_de: [INFRA-OPUS-SCHEMA-EXTENDIDO]
 esforco_estimado_horas: 2
-origem: Plano 2026-05-12 secao Fase A1 -- DAS PARCSN tem 19 nodes; dano fiscal alto (DARF da Receita); ground-truth cristalino; AUDIT2-SPRINT107-RETROATIVA pendente (14 nodes pre-Sprint 107 sem fornecedor sintetico).  <!-- noqa: accent -->
-mockup: novo-mockup/mockups/10-validacao-arquivos.html  <!-- noqa: accent -->
+origem: "Plano 2026-05-12 secao Fase A1 -- DAS PARCSN tem 19 nodes; dano fiscal alto (DARF da Receita); ground-truth cristalino; AUDIT2-SPRINT107-RETROATIVA pendente (14 nodes pre-Sprint 107 sem fornecedor sintetico).  <!-- noqa: accent -->"
+mockup: "novo-mockup/mockups/10-validacao-arquivos.html  <!-- noqa: accent -->"
 ---
 
 # Sprint INFRA-VALIDACAO-ARTESANAL-DAS -- prova de paridade ETL × Opus em DAS PARCSN  <!-- noqa: accent -->
