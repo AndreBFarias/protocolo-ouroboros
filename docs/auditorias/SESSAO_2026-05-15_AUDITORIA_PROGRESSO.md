@@ -95,11 +95,11 @@ Cumulativo desde início da sessão. Verificar com `git log --oneline origin/mai
 
 ### Onda D (P2 sequencial, em execução)
 
-| Status | Sprint | Razão |
+| Commit | Sprint | Entrega |
 |---|---|---|
-| EM_CURSO | META-PROPOSTAS-DASHBOARD (executor `a276e373...`) | despachado em 2026-05-16, página de propostas no cluster Sistema, 4 propostas vivas em `docs/propostas/` |
-| AGUARDA | AUTO-TIPO-PROPOSTAS-DASHBOARD | spec materializada em `sprint_AUTO-TIPO-PROPOSTAS-DASHBOARD_2026-05-16.md`. Depende de META-PROPOSTAS-DASHBOARD merged |
-| AGUARDA | CATEGORIZER-SUGESTAO-TFIDF | spec materializada em `sprint_CATEGORIZER-SUGESTAO-TFIDF_2026-05-16.md`. Depende de AUTO-TIPO merged |
+| `b8c1b2b` | META-PROPOSTAS-DASHBOARD | página `propostas_pendentes.py` (330L) + 7 testes verdes + wiring 5ª aba cluster Sistema. **RECUPERAÇÃO MANUAL**: executor `a276e37343092747f` foi disparado em sessão anterior que travou às ~00:53 antes do commit; trabalho ficou no worktree órfão. Supervisor recuperou em 2026-05-16 ~19h validando lint (exit 0), pytest tests/test_propostas_dashboard.py (7/7), `.ouroboros/cache/last_sync.json` revertido, então commit no worktree + cherry-pick + push. |
+| AGUARDA | AUTO-TIPO-PROPOSTAS-DASHBOARD | spec materializada em `sprint_AUTO-TIPO-PROPOSTAS-DASHBOARD_2026-05-16.md`. Pronto para despacho de executor. |
+| AGUARDA | CATEGORIZER-SUGESTAO-TFIDF | spec materializada em `sprint_CATEGORIZER-SUGESTAO-TFIDF_2026-05-16.md`. Depende de AUTO-TIPO merged. |
 
 ### Onda E (supervisor pessoal) — PENDENTE
 

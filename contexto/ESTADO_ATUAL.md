@@ -293,13 +293,13 @@ Linha de montagem das 14: ~7-8 dias uteis. Onda C1 (FIX-01..06) paralelizavel; C
 
 <!-- BEGIN_AUTO_METRICAS -->
 ```
-TESTES: 3099 tests collected in 2.66s
+TESTES: 3108 tests collected in 2.70s
 SMOKE: 10/10 contratos OK
 LINT: exit 0
 GRAFO: 7639 nodes / 25027 edges
 TIPOS GRADUADOS: 9/23 no mappings/tipos_documento.yaml
 EXTRATORES: 23 em src/extractors/
-ÚLTIMO COMMIT: 330e6e0 docs(sprints): sprint-filha INFRA-TEST-LAST-SYNC-GUARD do achado #2 do executor
+ÚLTIMO COMMIT: b8c1b2b feat(META-PROPOSTAS-DASHBOARD): pagina dashboard de propostas pendentes
 ```
 <!-- END_AUTO_METRICAS -->
 

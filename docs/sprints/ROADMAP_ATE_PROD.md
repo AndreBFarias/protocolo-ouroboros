@@ -46,8 +46,8 @@ Para chegar la, cada **tipo documental** percorre o ciclo de graduacao:
 | Backup grafo automático | Sim | Sim |
 | Transacionalidade pipeline | Sim | Sim |
 | Lockfile concorrência | Não | Sim |
-| Páginas dashboard | 39 | 40+ |
-| Pytest passed | 3099 | (estável, sem regressão) |
+| Páginas dashboard | 40 | 40+ |
+| Pytest passed | 3108 | (estável, sem regressão) |
 <!-- END_AUTO_METRICAS_PRONTIDAO -->
 
 
