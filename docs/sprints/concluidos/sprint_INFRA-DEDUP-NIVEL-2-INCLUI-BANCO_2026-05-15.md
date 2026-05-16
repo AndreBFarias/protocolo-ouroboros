@@ -1,8 +1,8 @@
 ---
 id: INFRA-DEDUP-NIVEL-2-INCLUI-BANCO
 titulo: Dedup nível-2 inclui `banco_origem` na chave (evita colisão cross-bank)
-status: backlog
-concluida_em: null
+status: concluída
+concluida_em: 2026-05-16
 prioridade: P1
 data_criacao: 2026-05-15
 fase: QUALIDADE

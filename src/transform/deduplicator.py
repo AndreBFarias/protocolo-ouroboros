@@ -74,6 +74,67 @@ def _eh_arquivo_xlsx_csv(t: dict) -> bool:
     return arq.endswith((".xlsx", ".xls", ".csv"))
 
 
+def _consolidar_historico_com_real(transacoes: list[dict]) -> list[dict]:
+    """Sprint INFRA-DEDUP-NIVEL-2-INCLUI-BANCO: pass nível-2a-pre.
+
+    Quando a chave de dedup nível-2 passa a incluir `banco_origem`,
+    transações com `banco_origem in (None, "", "Histórico")` deixam de
+    consolidar com a versão re-extraída do banco real (que tem
+    `banco_origem` definido). Esse pareamento é o caso de uso original do
+    XLSX histórico do casal: cada linha sem fonte primária deve ser
+    descartada quando o ETL atual reextrai o mesmo evento bancário.
+
+    Esta pré-fase preserva o contrato antigo (padrão (o) retrocompat):
+    para cada transação "histórica" (`banco_origem` ausente ou
+    `"Histórico"`), se existir outra com mesmo `(data, valor,
+    local_normalizado)` e `banco_origem` real (não-histórico), marca a
+    histórica para remoção. Preferência: banco real ganha (metadados
+    melhores, padrão já estabelecido pelo critério de `_riqueza_descricao`
+    + `nao_historicos` em `deduplicar_por_hash_fuzzy`).
+
+    Sem este pré-pass, testes regressivos
+    `test_nivel2_prefere_nao_historico` e
+    `test_deduplicar_orquestra_tres_niveis` quebrariam porque "Histórico"
+    e "Nubank (PF)" caem em buckets distintos na chave 4-tuple.
+    """
+    def _chave_3tuple(t: dict) -> tuple:
+        d = t["data"]
+        data_str = d.isoformat() if hasattr(d, "isoformat") else str(d)
+        local_norm = _normalizar_local_para_chave(t.get("local", ""))
+        return (data_str, f"{abs(t['valor']):.2f}", local_norm)
+
+    reais_por_chave: dict[tuple, int] = {}
+    for idx, t in enumerate(transacoes):
+        banco = t.get("banco_origem")
+        if not banco or banco == "Histórico":
+            continue
+        if t.get("_virtual"):
+            continue
+        # Em colisão de bancos reais distintos (cross-bank), mantém o primeiro
+        # como representante -- não importa qual, pois o pass principal vai
+        # tratá-los em buckets separados depois desta pré-fase.
+        reais_por_chave.setdefault(_chave_3tuple(t), idx)
+
+    indices_remover: set[int] = set()
+    for idx, t in enumerate(transacoes):
+        banco = t.get("banco_origem")
+        if banco and banco != "Histórico":
+            continue
+        if t.get("_virtual"):
+            continue
+        if _chave_3tuple(t) in reais_por_chave:
+            indices_remover.add(idx)
+
+    if not indices_remover:
+        return transacoes
+
+    logger.info(
+        "Dedup nível 2a-pre (histórico com real): %d duplicatas removidas",
+        len(indices_remover),
+    )
+    return [t for idx, t in enumerate(transacoes) if idx not in indices_remover]
+
+
 def _consolidar_pares_ofx_xlsx_mesmo_banco(transacoes: list[dict]) -> list[dict]:
     """Sprint INFRA-DEDUP-C6-OFX-XLSX-AMPLO: pass nível-2b.
 
@@ -163,14 +224,33 @@ def deduplicar_por_hash_fuzzy(transacoes: list[dict]) -> list[dict]:
     colidem na chave, pois têm `local` materialmente distinto (nome do
     destinatário) -- a normalização preserva o conteúdo após ` - `, não
     apaga.
+
+    Sprint INFRA-DEDUP-NIVEL-2-INCLUI-BANCO: a chave inclui `banco_origem`
+    como quarta componente para impedir colisão cross-bank. Cenário real:
+    PIX R$5000 no mesmo dia, Nubank "Recebimento Pix - X" vs C6 "X" -- após
+    `_normalizar_local_para_chave` ambos viram `"x"` e, com chave 3-tuple,
+    consolidavam erroneamente como mesma transação. Com `banco_origem` na
+    chave, cross-bank fica em buckets distintos e pares legítimos cross-bank
+    são preservados. Padrão (n): defesa em camadas (pré-fase 2a-pre +
+    chave 4-tuple + pass 2b por banco_origem). Padrão (o): retrocompat --
+    a pré-fase `_consolidar_historico_com_real` casa transações
+    "Histórico"/`None` com a versão real ANTES desta fase, preservando o
+    contrato antigo de consolidação histórico-com-reextração; em seguida
+    a chave 4-tuple atua sobre o restante onde todos têm `banco_origem`
+    definido (ou todos são histórico residual sem correspondente real,
+    bucket `_sem_banco`).
     """
+    transacoes = _consolidar_historico_com_real(transacoes)
+
     grupos: dict[str, list[int]] = {}
 
     for idx, t in enumerate(transacoes):
         data_str = t["data"].isoformat() if hasattr(t["data"], "isoformat") else str(t["data"])
         valor_str = f"{abs(t['valor']):.2f}"
         local_normalizado = _normalizar_local_para_chave(t.get("local", ""))
-        chave = f"{data_str}|{valor_str}|{local_normalizado}"
+        banco_raw = t.get("banco_origem")
+        banco_bucket = banco_raw if banco_raw and banco_raw != "Histórico" else "_sem_banco"
+        chave = f"{data_str}|{valor_str}|{local_normalizado}|{banco_bucket}"
         grupos.setdefault(chave, []).append(idx)
 
     indices_remover: set[int] = set()

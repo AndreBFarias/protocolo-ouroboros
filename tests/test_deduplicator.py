@@ -74,6 +74,76 @@ def test_nivel2_inclui_transferencia_interna(transacao):
     assert len(resultado) == 1
 
 
+def test_nivel2_cross_bank_pix_mesmo_valor_data_preserva_ambos(transacao):
+    """Sprint INFRA-DEDUP-NIVEL-2-INCLUI-BANCO: cross-bank não pode dedupar.
+
+    PIX R$5000 chegando ao Nubank ("Recebimento Pix - EMPRESA X") e PIX
+    R$5000 saindo do C6 para "EMPRESA X" no mesmo dia são DUAS transações
+    legítimas e distintas. Antes desta sprint, `_normalizar_local_para_chave`
+    transformava ambos os `local` em `"empresa x"`, gerando colisão na
+    chave 3-tuple `(data, valor, local_normalizado)`. Com a chave 4-tuple
+    incluindo `banco_origem`, os dois caem em buckets distintos
+    (`"Nubank"` vs `"C6"`) e são preservados.
+    """
+    t_nubank = transacao(
+        data_t=date(2026, 5, 10),
+        valor=5000.0,
+        local="Recebimento Pix - EMPRESA X",
+        banco="Nubank",
+        quem="pessoa_a",
+    )
+    t_nubank["_arquivo_origem"] = "nu.ofx"
+    t_c6 = transacao(
+        data_t=date(2026, 5, 10),
+        valor=5000.0,
+        local="EMPRESA X",
+        banco="C6",
+        quem="pessoa_a",
+    )
+    t_c6["_arquivo_origem"] = "c6.xlsx"
+    resultado = deduplicar_por_hash_fuzzy([t_nubank, t_c6])
+    assert len(resultado) == 2, f"cross-bank dedupou erroneamente: {len(resultado)}"
+    bancos = sorted(r["banco_origem"] for r in resultado)
+    assert bancos == ["C6", "Nubank"], f"bancos inesperados: {bancos}"
+
+
+def test_nivel2_mesmo_banco_ofx_xlsx_consolida_via_2b(transacao):
+    """Sprint INFRA-DEDUP-NIVEL-2-INCLUI-BANCO: mesmo banco OFX+XLSX ainda consolida.
+
+    Garante que o fix cross-bank não regrediu o comportamento da sprint
+    anterior `INFRA-DEDUP-C6-OFX-XLSX-AMPLO` (commit `2998b26`): pares
+    OFX+XLSX do mesmo banco continuam sendo consolidados via pass 2b
+    `_consolidar_pares_ofx_xlsx_mesmo_banco`. A chave 4-tuple do pass 2a
+    pode até não casar (locais materialmente distintos), mas o pass 2b
+    pega pelo critério `(data, valor, banco_origem, quem)` + diferença
+    de extensão de arquivo.
+    """
+    t_ofx = transacao(
+        data_t=date(2026, 5, 10),
+        valor=5000.0,
+        local="Recebimento Pix - X",
+        banco="C6",
+        quem="pessoa_a",
+    )
+    t_ofx["_arquivo_origem"] = "c6.ofx"
+    t_xlsx = transacao(
+        data_t=date(2026, 5, 10),
+        valor=5000.0,
+        local="X",
+        banco="C6",
+        quem="pessoa_a",
+    )
+    t_xlsx["_arquivo_origem"] = "c6.xlsx"
+    resultado = deduplicar_por_hash_fuzzy([t_ofx, t_xlsx])
+    assert len(resultado) == 1, f"mesmo-banco não consolidou: {len(resultado)}"
+    # Pass 2a normaliza ambos `local` para "x" e a chave 4-tuple casa
+    # (mesmo banco "C6"), consolidando direto na fase principal --
+    # critério de descrição mais rica preserva o OFX.
+    assert resultado[0]["_arquivo_origem"] == "c6.ofx", (
+        f"esperado OFX preservado: {resultado[0]}"
+    )
+
+
 def test_nivel3_par_transferencia_marca_ambos_lados(transacao):
     """Nível 3: Pix André→Vitória marca ambas pontas como Transferência Interna.  # anonimato-allow
 
