@@ -13,6 +13,11 @@ esforco_estimado_horas: 1.5
 origem: "auditoria 2026-05-15. `.claude/hooks/session-start-projeto.py` injeta texto + `_bloco_graduacao` (lê JSON, OK) mas NÃO injeta: pytest count atual, smoke status, último commit, métricas linking/Outros, contagem de specs PRONTAS no backlog, working tree dirty, branches *-rebase mergeadas pendentes de delete. Próxima IA perde baseline para detectar regressão e age sem contexto vivo."
 ---
 
+> **STATUS 2026-05-15**: BLOQUEADA por conflito blacklist global vs tracking local.
+> Tentativa de implementação produziu hook melhorado em disco mas commit não
+> foi pushável (hook pre-push global proíbe `.claude/`). Sprint-filha
+> META-HOOK-SESSION-DINAMICO-RESOLVER-BLACKLIST decide rota antes de retomar.
+
 # Sprint META-HOOK-SESSION-DINAMICO
 
 ## Contexto
