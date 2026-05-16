@@ -1,8 +1,8 @@
 ---
 id: AUTO-TIPO-PROPOSTAS-DASHBOARD
 titulo: "Auto-detector de tipos novos em `_classificar/` + dashboard de propostas"
-status: backlog
-concluida_em: null
+status: concluída
+concluida_em: 2026-05-16
 prioridade: P2
 data_criacao: 2026-05-16
 fase: AUTONOMIA

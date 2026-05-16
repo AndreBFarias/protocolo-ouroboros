@@ -62,6 +62,14 @@ PATH_PROPOSTAS = _RAIZ / "data" / "output" / "propostas_tipo_novo.json"
 EXTRACAO_BYTES_MAX = 8192  # 8KB suficiente para cabeçalho
 
 
+def _path_rel(p: Path) -> str:
+    """Path relativo a _RAIZ se aplicável, senão str(p) (testes em /tmp)."""
+    try:
+        return str(p.relative_to(_RAIZ))
+    except ValueError:
+        return str(p)
+
+
 def _sha256_arquivo(p: Path) -> str:
     h = hashlib.sha256()
     with p.open("rb") as f:
@@ -207,9 +215,7 @@ def gerar_propostas(min_amostras: int = 2) -> dict:
                 "id_proposto": id_proposto,
                 "n_amostras": len(ps),
                 "exemplos_sha256": [_sha256_arquivo(p)[:16] for p in ps[:5]],
-                "exemplos_paths_relativos": [
-                    str(p.relative_to(_RAIZ)) for p in ps[:5]
-                ],
+                "exemplos_paths_relativos": [_path_rel(p) for p in ps[:5]],
                 "regex_candidatos": regex_cand,
                 "mime_principal": mime,
                 "extensao_principal": ext_principal,
@@ -218,9 +224,7 @@ def gerar_propostas(min_amostras: int = 2) -> dict:
         )
         arquivos_agrupados.update(ps)
 
-    sem_grupo = [
-        str(p.relative_to(_RAIZ)) for p in arquivos if p not in arquivos_agrupados
-    ]
+    sem_grupo = [_path_rel(p) for p in arquivos if p not in arquivos_agrupados]
 
     return {
         "gerado_em": datetime.now(timezone.utc).isoformat(),
