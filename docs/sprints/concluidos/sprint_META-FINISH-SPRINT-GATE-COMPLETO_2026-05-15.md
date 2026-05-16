@@ -1,8 +1,8 @@
 ---
 id: META-FINISH-SPRINT-GATE-COMPLETO
 titulo: Estender `finish_sprint.sh` para rodar gate completo de 9 checks
-status: backlog
-concluida_em: null
+status: concluída
+concluida_em: 2026-05-15
 prioridade: P3
 data_criacao: 2026-05-15
 fase: DX
