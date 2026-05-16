@@ -511,12 +511,16 @@ def _executar_linking_documentos() -> None:
             linkar_pix_transacao,
         )
 
-        with GrafoDB(caminho_grafo) as db:
+        # Sprint INFRA-PIPELINE-TRANSACIONALIDADE: rollback granular se
+        # qualquer função interna crashar mid-linking; estágios anteriores
+        # do pipeline ficam preservados no grafo.
+        with GrafoDB(caminho_grafo) as db, db.transaction():
             stats = linkar_documentos_a_transacoes(db)
             stats_pix = linkar_pix_transacao(db)
         logger.info("Linking documento->transação: %s", stats)
         logger.info("Linking PIX dedicado: %s", stats_pix)
     except Exception as erro:
+        _registrar_falha_pipeline_estruturada("linking_documentos", erro)
         logger.warning("Linking de documentos falhou: %s", erro)
 
 
@@ -545,10 +549,13 @@ def _executar_er_produtos() -> None:
         from src.graph.db import GrafoDB
         from src.graph.er_produtos import executar_er_produtos
 
-        with GrafoDB(caminho_grafo) as db:
+        # Transação envolve toda a fase de ER: se um item crashar no meio,
+        # produtos canônicos parciais NÃO ficam no grafo.
+        with GrafoDB(caminho_grafo) as db, db.transaction():
             stats = executar_er_produtos(db)
         logger.info("ER de produtos: %s", stats)
     except Exception as erro:
+        _registrar_falha_pipeline_estruturada("er_produtos", erro)
         logger.warning("ER de produtos falhou: %s", erro)
 
 
@@ -626,10 +633,13 @@ def _executar_item_categorizer() -> None:
         from src.graph.db import GrafoDB
         from src.transform.item_categorizer import categorizar_todos_items_no_grafo
 
-        with GrafoDB(caminho_grafo) as db:
+        # Transação evita categorização parcial de itens (rollback se crash
+        # antes de processar todos os nodes `item`).
+        with GrafoDB(caminho_grafo) as db, db.transaction():
             stats = categorizar_todos_items_no_grafo(db)
         logger.info("Categorização de itens: %s", stats)
     except Exception as erro:
+        _registrar_falha_pipeline_estruturada("item_categorizer", erro)
         logger.warning("Categorização de itens falhou: %s", erro)
 
 
@@ -763,6 +773,52 @@ def _restaurar_grafo_de_backup(
     return 0
 
 
+def _registrar_falha_pipeline_estruturada(estagio: str, erro: Exception) -> Path | None:
+    """Grava ``logs/pipeline_falha_<ts>.json`` com diagnóstico estruturado.
+
+    Sprint INFRA-PIPELINE-TRANSACIONALIDADE (2026-05-15): quando um estágio
+    do pipeline crasha, registramos: estágio canônico, traceback completo,
+    timestamp ISO, e ponteiro para o backup automático mais recente do
+    grafo (sprint INFRA-BACKUP-GRAFO-AUTOMATIZADO). Sprint encadeada
+    INFRA-PIPELINE-TX-RESTORE-AUTOMATICO consome este JSON para decidir
+    rollback global.
+
+    Falha-soft: erro de escrita do log NÃO propaga (não queremos que o
+    log de falha mate o pipeline duas vezes).
+    """
+    try:
+        import json as _json
+        import traceback
+
+        ts = datetime.now().strftime("%Y-%m-%d_%H%M%S")
+        log_dir = RAIZ / "logs"
+        log_dir.mkdir(parents=True, exist_ok=True)
+        destino = log_dir / f"pipeline_falha_{ts}.json"
+        ultimo_backup: str | None = None
+        backups = sorted(DIR_BACKUP_GRAFO.glob(f"{PREFIXO_BACKUP_GRAFO}*.sqlite"))
+        if backups:
+            ultimo_backup = backups[-1].name
+        registro = {
+            "ts": datetime.now().isoformat(),
+            "estagio": estagio,
+            "erro_tipo": type(erro).__name__,
+            "erro_mensagem": str(erro),
+            "traceback": traceback.format_exc(),
+            "ultimo_backup_grafo": ultimo_backup,
+        }
+        destino.write_text(
+            _json.dumps(registro, ensure_ascii=False, indent=2), encoding="utf-8"
+        )
+        logger.info("Falha de pipeline registrada em %s", destino.name)
+        return destino
+    except Exception as registrar_erro:
+        logger.warning(
+            "Falhou ao registrar log estruturado da falha de pipeline: %s",
+            registrar_erro,
+        )
+        return None
+
+
 def executar(mes: str | None = None, processar_tudo: bool = False) -> None:
     """Executa o pipeline completo."""
     logger.info("=== Protocolo Ouroboros -- Pipeline ===")
@@ -847,9 +903,20 @@ def executar(mes: str | None = None, processar_tudo: bool = False) -> None:
     caminho_grafo_hol = caminho_padrao()
     contracheques: list[dict] = []
     if caminho_grafo_hol.exists():
+        # Sprint INFRA-PIPELINE-TRANSACIONALIDADE: criar_schema é DDL
+        # idempotente (fora da transação); processar_holerites é a fase
+        # mutadora que precisa de rollback granular se crashar.
         with GrafoDB(caminho_grafo_hol) as grafo_hol:
             grafo_hol.criar_schema()
-            contracheques = processar_holerites(DIR_RAW / "andre" / "holerites", grafo=grafo_hol)
+            try:
+                with grafo_hol.transaction():
+                    contracheques = processar_holerites(
+                        DIR_RAW / "andre" / "holerites", grafo=grafo_hol
+                    )
+            except Exception as erro:
+                _registrar_falha_pipeline_estruturada("processar_holerites", erro)
+                logger.warning("Holerites com grafo falhou: %s", erro)
+                contracheques = processar_holerites(DIR_RAW / "andre" / "holerites")
     else:
         contracheques = processar_holerites(DIR_RAW / "andre" / "holerites")
 

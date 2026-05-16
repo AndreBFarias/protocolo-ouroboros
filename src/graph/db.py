@@ -17,6 +17,8 @@ Política:
 from __future__ import annotations
 
 import sqlite3
+from collections.abc import Iterator
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 
@@ -70,6 +72,11 @@ class GrafoDB:
         self._conn.execute("PRAGMA foreign_keys = ON")
         # Devolve linhas como tuplas (default); manter explícito por clareza.
         self._conn.row_factory = None
+        # Sprint INFRA-PIPELINE-TRANSACIONALIDADE (2026-05-15): flag interna
+        # que suspende auto-commit das mutações enquanto `transaction()` está
+        # ativo. Sem isso, BEGIN/COMMIT explícito conflitaria com o commit
+        # implícito de cada método (`upsert_node`, `adicionar_edge`, etc).
+        self._em_transacao: bool = False
 
     # ------------------------------------------------------------------------
     # Schema
@@ -79,14 +86,14 @@ class GrafoDB:
         """Aplica schema.sql. Idempotente (CREATE IF NOT EXISTS)."""
         ddl = _PATH_SCHEMA.read_text(encoding="utf-8")
         self._conn.executescript(ddl)
-        self._conn.commit()
+        self._commit()
         logger.debug("schema aplicado em %s", self.caminho)
 
     def limpar(self) -> None:
         """Apaga todo o conteúdo das tabelas. USAR SÓ EM DEV/TESTES."""
         self._conn.execute("DELETE FROM edge")
         self._conn.execute("DELETE FROM node")
-        self._conn.commit()
+        self._commit()
         logger.warning("grafo limpo: %s", self.caminho)
 
     # ------------------------------------------------------------------------
@@ -125,7 +132,7 @@ class GrafoDB:
                     serializar_metadata(meta),
                 ),
             )
-            self._conn.commit()
+            self._commit()
             return int(cursor.lastrowid or 0)
 
         node_id, aliases_raw, metadata_raw = row
@@ -145,7 +152,7 @@ class GrafoDB:
                 node_id,
             ),
         )
-        self._conn.commit()
+        self._commit()
         return int(node_id)
 
     def buscar_node(self, tipo: str, nome_canonico: str) -> Node | None:
@@ -203,7 +210,7 @@ class GrafoDB:
             """,
             (src_id, dst_id, tipo, peso, serializar_metadata(ev)),
         )
-        self._conn.commit()
+        self._commit()
 
     def listar_edges(
         self,
@@ -259,6 +266,57 @@ class GrafoDB:
 
     def __exit__(self, *args: object) -> None:
         self.fechar()
+
+    # ------------------------------------------------------------------------
+    # Transação explícita (Sprint INFRA-PIPELINE-TRANSACIONALIDADE)
+    # ------------------------------------------------------------------------
+
+    def _commit(self) -> None:
+        """Commit auto-condicional. Noop se o GrafoDB está dentro de `transaction()`.
+
+        Cada mutação (upsert_node, adicionar_edge, limpar, criar_schema) chama
+        este helper em vez de `self._conn.commit()` direto. Assim, durante uma
+        transação manual, mutações aninhadas não rompem a fronteira BEGIN/COMMIT.
+        """
+        if not self._em_transacao:
+            self._conn.commit()
+
+    @contextmanager
+    def transaction(self) -> Iterator[GrafoDB]:
+        """Context manager de transação explícita.
+
+        Suspende auto-commit das mutações durante o escopo. Em saída limpa,
+        `COMMIT`; em qualquer exceção, `ROLLBACK` + re-raise.
+
+        Aninhamento não é suportado: levanta `RuntimeError` se ativada dentro
+        de outra `transaction()`. (Para subdivisão lógica use savepoints, fora
+        do escopo desta sprint.)
+
+        Uso típico em `src/pipeline.py`:
+
+            with GrafoDB(caminho_padrao()) as db, db.transaction():
+                _executar_linking_documentos_interno(db)
+                # crash aqui -> ROLLBACK; estágios anteriores intactos.
+        """
+        if self._em_transacao:
+            raise RuntimeError(
+                "transação já ativa neste GrafoDB; aninhamento não suportado"
+            )
+        # SQLite Python autocommit mode: o cursor abre transação implícita na
+        # primeira mutação. Forçamos BEGIN explícito para previsibilidade.
+        self._conn.execute("BEGIN")
+        self._em_transacao = True
+        try:
+            yield self
+            # `transaction()` é o único ponto onde o commit é forçado mesmo
+            # com `_em_transacao` flagged true; usa `_conn.commit()` direto
+            # para fechar a transação que abriu via `BEGIN`.
+            self._conn.commit()
+        except Exception:
+            self._conn.rollback()
+            raise
+        finally:
+            self._em_transacao = False
 
 
 # "O grafo é o esqueleto; as arestas são o que lembra." -- princípio de cartógrafo

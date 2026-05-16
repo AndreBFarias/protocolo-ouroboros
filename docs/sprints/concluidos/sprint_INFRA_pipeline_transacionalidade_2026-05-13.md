@@ -1,8 +1,8 @@
 ---
 id: INFRA-PIPELINE-TRANSACIONALIDADE
 titulo: Transacionalidade SQLite por estágio do pipeline (BEGIN/COMMIT explícito)
-status: backlog
-concluida_em: null
+status: concluída
+concluida_em: 2026-05-15
 prioridade: P0
 data_criacao: 2026-05-13
 fase: PRODUCAO_READY

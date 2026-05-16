@@ -376,4 +376,92 @@ def test_migracao_inicial_xlsx_inexistente_levanta(tmp_path):
         executar(db_path=tmp_path / "g.sqlite", xlsx_path=tmp_path / "inexistente.xlsx")
 
 
+# ---------------------------------------------------------------------------
+# Sprint INFRA-PIPELINE-TRANSACIONALIDADE-2026-05-15: context manager
+# `GrafoDB.transaction()` envolve mutações em BEGIN/COMMIT explícito;
+# rollback em exceção preserva grafo intacto. Padrão (m) reversibilidade.
+# ---------------------------------------------------------------------------
+
+
+def test_transaction_commit_persiste(tmp_path):
+    """Commit dentro de transaction() persiste mutação no disco."""
+    db = GrafoDB(tmp_path / "g.sqlite")
+    db.criar_schema()
+    with db.transaction():
+        db.upsert_node("fornecedor", "TX_COMMIT")
+    n = db.buscar_node("fornecedor", "TX_COMMIT")
+    assert n is not None
+
+
+def test_transaction_rollback_em_exception_descarta_mutacao(tmp_path):
+    """Exceção dentro de transaction() faz ROLLBACK e re-raise."""
+    db = GrafoDB(tmp_path / "g.sqlite")
+    db.criar_schema()
+    with pytest.raises(RuntimeError, match="forcar"):
+        with db.transaction():
+            db.upsert_node("fornecedor", "TX_ROLLBACK")
+            raise RuntimeError("forcar rollback")
+    assert db.buscar_node("fornecedor", "TX_ROLLBACK") is None
+
+
+def test_transaction_preserva_dados_anteriores_em_rollback(tmp_path):
+    """Mutações anteriores à transaction() não são afetadas pelo rollback."""
+    db = GrafoDB(tmp_path / "g.sqlite")
+    db.criar_schema()
+    db.upsert_node("fornecedor", "ANTES_DA_TX")  # auto-commit
+    try:
+        with db.transaction():
+            db.upsert_node("fornecedor", "DENTRO_DA_TX_QUE_VAI_REVERTER")
+            raise ValueError("crash")
+    except ValueError:
+        pass
+    assert db.buscar_node("fornecedor", "ANTES_DA_TX") is not None
+    assert db.buscar_node("fornecedor", "DENTRO_DA_TX_QUE_VAI_REVERTER") is None
+
+
+def test_transaction_aninhamento_proibido(tmp_path):
+    """transaction() dentro de transaction() levanta RuntimeError explícito."""
+    db = GrafoDB(tmp_path / "g.sqlite")
+    db.criar_schema()
+    with db.transaction():
+        with pytest.raises(RuntimeError, match="aninhamento"):
+            with db.transaction():
+                pass
+
+
+def test_transaction_envolve_multiplas_mutacoes_como_unidade(tmp_path):
+    """Múltiplos upsert + edge dentro de transaction() são tudo-ou-nada."""
+    db = GrafoDB(tmp_path / "g.sqlite")
+    db.criar_schema()
+    try:
+        with db.transaction():
+            id_a = db.upsert_node("fornecedor", "EMPRESA_A")
+            id_b = db.upsert_node("fornecedor", "EMPRESA_B")
+            db.adicionar_edge(id_a, id_b, "relacionado_a")
+            db.upsert_node("fornecedor", "EMPRESA_C")
+            raise RuntimeError("forçar antes do edge_a_c")
+    except RuntimeError:
+        pass
+    assert db.buscar_node("fornecedor", "EMPRESA_A") is None
+    assert db.buscar_node("fornecedor", "EMPRESA_B") is None
+    assert db.buscar_node("fornecedor", "EMPRESA_C") is None
+    assert db.estatisticas()["edges_total"] == 0
+
+
+def test_transaction_flag_em_transacao_volta_a_false_apos_excecao(tmp_path):
+    """Após exception, _em_transacao volta a False (cleanup via finally)."""
+    db = GrafoDB(tmp_path / "g.sqlite")
+    db.criar_schema()
+    try:
+        with db.transaction():
+            assert db._em_transacao is True
+            raise RuntimeError("crash")
+    except RuntimeError:
+        pass
+    assert db._em_transacao is False
+    with db.transaction():
+        db.upsert_node("fornecedor", "OK_APOS_CRASH")
+    assert db.buscar_node("fornecedor", "OK_APOS_CRASH") is not None
+
+
 # "O grafo é o esqueleto; as arestas são o que lembra." -- princípio de cartógrafo

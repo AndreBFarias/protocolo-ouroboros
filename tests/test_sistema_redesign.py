@@ -46,9 +46,12 @@ class TestImportacao:
 
 class TestAbasSistema:
     def test_abas_sistema_inclui_skills_d7_e_styleguide(self) -> None:
+        """Sprint UX-DASH-GRADUACAO-TIPOS (2026-05-15) adicionou "Graduação"
+        ao cluster Sistema. Mantemos o nome legado do teste por estabilidade
+        histórica."""
         from src.dashboard.app import ABAS_POR_CLUSTER
 
-        assert ABAS_POR_CLUSTER["Sistema"] == ["Skills D7", "Styleguide"]
+        assert ABAS_POR_CLUSTER["Sistema"] == ["Skills D7", "Styleguide", "Graduação"]
 
     def test_mapa_aba_styleguide_aponta_para_sistema(self) -> None:
         from src.dashboard.componentes.drilldown import MAPA_ABA_PARA_CLUSTER

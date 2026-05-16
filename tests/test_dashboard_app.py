@@ -101,6 +101,9 @@ class TestContratosCanonicos:
             "Skills D7",
             # UX-RD-05: aba Styleguide entra no cluster Sistema.
             "Styleguide",
+            # UX-DASH-GRADUACAO-TIPOS (2026-05-15): aba Graduação no Sistema
+            # mostra tabela viva dos 23 tipos canônicos do YAML.
+            "Graduação",
             # UX-RD-17: 10 abas em Bem-estar com nome canônico curto.
             "Diário",
             "Eventos",
