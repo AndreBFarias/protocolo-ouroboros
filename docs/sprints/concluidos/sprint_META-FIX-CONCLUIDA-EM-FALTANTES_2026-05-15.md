@@ -1,7 +1,7 @@
 ---
-id: META-FIX-CONCLUIDA-EM-FALTANTES
+id: META-FIX-CONCLUIDA-EM-FALTANTES  # noqa: accent
 titulo: Adicionar `concluida_em` em 16 specs de `docs/sprints/concluidos/` sem o campo
-status: concluída  <!-- noqa: accent -->
+status: concluída
 concluida_em: 2026-05-15
 prioridade: P3
 data_criacao: 2026-05-15
@@ -12,7 +12,7 @@ esforco_estimado_horas: 0.5
 origem: "achado colateral da sprint META-SPEC-LINTER (executor `ac4b5956`, 2026-05-15). `scripts/check_concluida_em.py` detectou 16 specs em `docs/sprints/concluidos/` sem frontmatter `concluida_em`. Exemplos: `sprint_DASH_pagamentos_cruzados_casal.md`, `sprint_INFRA_categorizar_salario_g4f_c6.md`."
 ---
 
-# Sprint META-FIX-CONCLUIDA-EM-FALTANTES
+# Sprint META-FIX-CONCLUIDA-EM-FALTANTES <!-- noqa: accent -->
 
 ## Contexto
 

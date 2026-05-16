@@ -1,7 +1,7 @@
 ---
 id: META-CHECK-DADOS-FINANCEIROS-FALSOS-POSITIVOS
 titulo: Revisar 2 falsos-positivos de `check_dados_financeiros` em `src/utils/logger.py`
-status: concluida
+status: concluída
 concluida_em: 2026-05-15
 prioridade: P3
 data_criacao: 2026-05-15
