@@ -427,7 +427,7 @@ Scripts:
 - `scripts/supervisor_contexto.sh` (Sprint 43) -- dumpa estado do projeto para início de sessão
 - `scripts/supervisor_proposta_nova.sh` (Sprint 43) -- abre proposta com template
 - `scripts/supervisor_aprovar.sh` (Sprint 43) -- absorve proposta e atualiza diário
-- `hooks/sprint_auto_move.py` -- pre-commit move automática conforme Status
+- `scripts/sprint_auto_move.py` -- pre-commit move automática conforme Status
 
 ---
 

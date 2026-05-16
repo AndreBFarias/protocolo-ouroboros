@@ -1,8 +1,8 @@
 ---
 id: META-DOC-ROADMAP-PATH-SPRINT-AUTO-MOVE
 titulo: Atualizar referência ao `sprint_auto_move.py` em `docs/ROADMAP.md`
-status: backlog
-concluida_em: null
+status: concluída
+concluida_em: 2026-05-15
 prioridade: P3
 data_criacao: 2026-05-15
 fase: SANEAMENTO
