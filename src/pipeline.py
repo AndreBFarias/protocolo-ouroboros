@@ -19,6 +19,7 @@ from src.transform.categorizer import Categorizer
 from src.transform.deduplicator import deduplicar
 from src.transform.irpf_tagger import aplicar_tags_irpf
 from src.transform.normalizer import normalizar_transacao
+from src.utils.lockfile import Lockfile, LockfileOcupado
 from src.utils.logger import configurar_logger
 
 logger = configurar_logger("pipeline")
@@ -33,6 +34,10 @@ DIR_BACKUP_GRAFO = DIR_OUTPUT / "backup"
 PREFIXO_BACKUP_GRAFO = "grafo_"
 RETENCAO_DIAS_RECENTES = 7
 RETENCAO_SEMANAS_ADICIONAIS = 4
+
+# Sprint INFRA-CONCORRENCIA-PIDFILE (2026-05-16): lock canônico do pipeline.
+# Dashboard consome o mesmo path para detectar pipeline ativo e exibir toast.
+PATH_LOCKFILE = RAIZ / "data" / ".pipeline.lock"
 
 
 def _descobrir_extratores() -> list:
@@ -857,16 +862,33 @@ def executar(mes: str | None = None, processar_tudo: bool = False) -> None:
     global _ESTAGIO_ATUAL
     logger.info("=== Protocolo Ouroboros -- Pipeline ===")
 
-    # 0. Backup automatico do grafo (Sprint INFRA-BACKUP-GRAFO-AUTOMATIZADO).
-    # Padrao (m) branch reversivel: snapshot pre-execucao permite rollback  # noqa: accent
-    # se pipeline crashar mid-ETL.
-    _ESTAGIO_ATUAL = "backup_grafo"
-    backup_destino = _executar_backup_grafo()
-    backup_ts: str | None = None
-    if backup_destino is not None:
-        backup_ts = backup_destino.stem[len(PREFIXO_BACKUP_GRAFO):]
+    # Sprint INFRA-CONCORRENCIA-PIDFILE (2026-05-16): lock exclusivo serializa
+    # escritas concorrentes ao grafo + XLSX. Defesa em camadas com flock no
+    # run.sh (padrao (n)). Falha-fast com mensagem amigavel se outro pipeline
+    # esta rodando.
+    descricao = f"pipeline mes={mes}" if mes else "pipeline tudo" if processar_tudo else "pipeline"
+    try:
+        ctx_lock = Lockfile(PATH_LOCKFILE, descricao)
+        ctx_lock.__enter__()
+    except LockfileOcupado as exc:
+        logger.error(
+            "Pipeline abortado: outra instancia esta rodando (PID=%s). "
+            "Aguarde ou mate o processo dono do lock %s.",
+            exc.pid_dono,
+            exc.path,
+        )
+        sys.exit(2)
 
     try:
+        # 0. Backup automatico do grafo (Sprint INFRA-BACKUP-GRAFO-AUTOMATIZADO).
+        # Padrao (m) branch reversivel: snapshot pre-execucao permite rollback  # noqa: accent
+        # se pipeline crashar mid-ETL.
+        _ESTAGIO_ATUAL = "backup_grafo"
+        backup_destino = _executar_backup_grafo()
+        backup_ts: str | None = None
+        if backup_destino is not None:
+            backup_ts = backup_destino.stem[len(PREFIXO_BACKUP_GRAFO):]
+
         _executar_corpo_pipeline(mes, processar_tudo)
     except Exception as exc:
         _registrar_falha_pipeline_estruturada(_ESTAGIO_ATUAL, exc)
@@ -892,6 +914,9 @@ def executar(mes: str | None = None, processar_tudo: bool = False) -> None:
                 _ESTAGIO_ATUAL,
             )
         raise
+    finally:
+        # Libera lockfile mesmo em caso de exceção. Padrao (m) reversivel.
+        ctx_lock.__exit__(None, None, None)
 
 
 def _executar_corpo_pipeline(mes: str | None, processar_tudo: bool) -> None:
