@@ -66,6 +66,7 @@ from src.dashboard.paginas import (  # noqa: E402
     revisor,
     skills_d7,
     styleguide,
+    tipos_pendentes,
     visao_geral,
 )
 
@@ -148,7 +149,9 @@ ABAS_POR_CLUSTER: dict[str, list[str]] = {
     # consumindo data/output/graduacao_tipos.json.
     # Sprint META-PROPOSTAS-DASHBOARD (2026-05-15) adiciona "Propostas"
     # listando .md pendentes em docs/propostas/<categoria>/.
-    "Sistema": ["Skills D7", "Styleguide", "Graduação", "Propostas"],
+    # Sprint AUTO-TIPO-PROPOSTAS-DASHBOARD (2026-05-16) adiciona "Tipos
+    # por detectar" consumindo data/output/propostas_tipo_novo.json.
+    "Sistema": ["Skills D7", "Styleguide", "Graduação", "Propostas", "Tipos por detectar"],
 }
 
 # Sprint UX-RD-03: mapa cluster -> sprint que vai habilitar suas páginas.
@@ -492,6 +495,8 @@ def main() -> None:
             graduacao_tipos.renderizar(dados, periodo, pessoa, ctx)
         elif aba_sis == "Propostas":
             propostas_pendentes.renderizar(dados, periodo, pessoa, ctx)
+        elif aba_sis == "Tipos por detectar":
+            tipos_pendentes.renderizar(dados, periodo, pessoa, ctx)
         else:
             skills_d7.renderizar(dados, periodo, pessoa, ctx)
 
