@@ -401,9 +401,41 @@ def _renderizar_fallback_cluster(cluster: str) -> None:
     )
 
 
+def _toast_pipeline_ativo() -> None:
+    """Sprint INFRA-CONCORRENCIA-PIDFILE (2026-05-16): mostra toast quando
+    pipeline está rodando em background.
+
+    Lê o lockfile canônico ``data/.pipeline.lock`` via
+    ``src.utils.lockfile.lock_ativo``. Se ativo: render um ``st.warning``
+    no topo do dashboard com PID + sugestão de aguardar antes de tomar
+    decisão sobre dados (podem estar inconsistentes mid-ETL). Falha-soft
+    em qualquer erro (lockfile module ausente, fs inacessível).
+    """
+    try:
+        from src.utils.lockfile import lock_ativo, pid_do_lock
+    except ImportError:
+        return
+    lockpath = RAIZ_PROJETO / "data" / ".pipeline.lock"
+    if not lock_ativo(lockpath):
+        return
+    pid = pid_do_lock(lockpath)
+    pid_txt = f"PID {pid}" if pid else "PID desconhecido"
+    st.warning(
+        f"Pipeline rodando em background ({pid_txt}). Dados exibidos "
+        "podem estar obsoletos ou inconsistentes mid-ETL. Aguarde a "
+        "execução terminar antes de tomar decisões.",
+        icon=":material/sync:",
+    )
+
+
 def main() -> None:
     """Função principal do dashboard."""
     _configurar_pagina()
+
+    # Sprint INFRA-CONCORRENCIA-PIDFILE (2026-05-16): aviso visivel de
+    # pipeline em background (preserva confianca em dados quando dono
+    # roda --tudo enquanto tem dashboard aberto).
+    _toast_pipeline_ativo()
 
     # Sprint 73 (ADR-19): lê filtros de drill-down da URL antes de renderizar
     # qualquer componente, populando session_state com chaves filtro_*.

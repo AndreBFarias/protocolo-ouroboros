@@ -487,8 +487,36 @@ verificar_venv
 
 trap 'echo -e "\n    ${DIM}Até a próxima.${NC}\n"; exit 0' INT
 
+# ─────────────────────────────────────────────────────────
+# Sprint INFRA-CONCORRENCIA-PIDFILE (2026-05-16):
+# Lock canônico via flock para serializar pipelines concorrentes.
+# O lock python em src/utils/lockfile.py usa o mesmo path; estes 2
+# locks são camadas independentes (padrão (n) defesa em camadas).
+# Comandos read-only (--check, --supervisor, --dashboard, --help) não
+# precisam de lock; pipelines mutadores adquirem antes de rodar.
+# ─────────────────────────────────────────────────────────
+LOCKFILE="data/.pipeline.lock"
+
+adquirir_lock_pipeline() {
+    mkdir -p "$(dirname "$LOCKFILE")"
+    exec 200>"$LOCKFILE"
+    if ! flock -n 200; then
+        echo ""
+        msg_erro "Outra instância do pipeline está rodando."
+        if [ -s "$LOCKFILE" ]; then
+            local pid_dono
+            pid_dono=$(head -n1 "$LOCKFILE" 2>/dev/null || echo "?")
+            echo -e "    ${DIM}PID dono:${NC} ${WHITE}$pid_dono${NC}"
+        fi
+        echo -e "    ${DIM}Aguarde finalizar ou mate o processo dono.${NC}"
+        echo ""
+        exit 2
+    fi
+}
+
 case "${1:-}" in
     --inbox)
+        adquirir_lock_pipeline
         msg_info "Processando inbox unificada (vault + legado)..."
         backup_xlsx
         # Sprint 70 (Fase IOTA): adapter varre vault + legado primeiro
@@ -505,6 +533,7 @@ case "${1:-}" in
         exec "$VENV/bin/python" scripts/menu_interativo.py
         ;;
     --mes)
+        adquirir_lock_pipeline
         MES="${2:?Informe o mês no formato YYYY-MM}"
         msg_info "Processando ${MES}..."
         backup_xlsx
@@ -512,12 +541,14 @@ case "${1:-}" in
         msg_ok "Mês ${MES} processado."
         ;;
     --tudo)
+        adquirir_lock_pipeline
         msg_info "Processando todos os dados..."
         backup_xlsx
         python -m src.pipeline --tudo
         msg_ok "Pipeline completo."
         ;;
     --full-cycle)
+        adquirir_lock_pipeline
         # Sprint 101 + 108: rota completa com automacoes Opus encadeadas.
         # Ordem fixa: inbox -> dedup_classificar -> migrar_pessoa -> backfill_arquivo_origem
         # -> pipeline-tudo. Cada automacao tem falha-soft.
@@ -548,6 +579,7 @@ case "${1:-}" in
         msg_ok "Caches do Mobile atualizados."
         ;;
     --reextrair-tudo)
+        adquirir_lock_pipeline
         # Sprint 104 + 108: cleanup automacoes + reextracao completa.
         # AUDIT-MENU-CONFIRMACAO: --sim pula confirmar() (uso pelo menu Python).
         msg_aviso "Reextracao em lote: vai limpar nodes 'documento' do grafo."
@@ -616,6 +648,7 @@ print(f'Salvo em: {saida}')
         bash scripts/supervisor_contexto.sh
         ;;
     --restore-grafo)
+        adquirir_lock_pipeline
         if [ -z "${2:-}" ]; then
             msg_erro "Uso: ./run.sh --restore-grafo YYYY-MM-DD_HHMMSS"
             exit 1

@@ -1,8 +1,8 @@
 ---
 id: INFRA-CONCORRENCIA-PIDFILE
 titulo: Lockfile concorrência (fcntl) + toast no dashboard
-status: backlog
-concluida_em: null
+status: concluída
+concluida_em: 2026-05-16
 prioridade: P1
 data_criacao: 2026-05-15
 fase: PRODUCAO_READY
