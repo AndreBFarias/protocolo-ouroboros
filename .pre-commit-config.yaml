@@ -108,6 +108,7 @@ repos:
         stages: [commit-msg]
 
       - id: remove-coauthor
+        name: Filtrar autoria sintetica e mencoes a IA da mensagem de commit
         entry: bash hooks/remove_coauthor.sh
         language: system
         stages: [commit-msg]
