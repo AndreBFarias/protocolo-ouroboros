@@ -38,10 +38,11 @@ test: ## Executa testes
 test-cov: ## Executa testes com relatório de cobertura
 	$(PYTHON) -m pytest tests/ --cov=src/transform --cov=src/extractors --cov-report=term-missing
 
-lint: ## Verifica código com ruff + acentuação + cobertura total D7
+lint: ## Verifica código com ruff + acentuação + cobertura total D7 + forma das specs
 	$(RUFF) check src/ tests/ scripts/
 	$(PYTHON) scripts/check_acentuacao.py --all
 	$(PYTHON) scripts/check_cobertura_total.py
+	$(PYTHON) scripts/check_spec.py --soft docs/sprints/backlog/
 
 format: ## Formata código com ruff
 	$(RUFF) format src/ tests/ scripts/

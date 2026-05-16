@@ -24,3 +24,9 @@ repos:
             | tests/
             | hooks/check_dados_financeiros\.py
           )
+
+      - id: check-spec
+        name: Validar forma canônica das specs de sprint modificadas
+        entry: python scripts/check_spec.py --files
+        language: system
+        files: ^docs/sprints/backlog/sprint_.*\.md$

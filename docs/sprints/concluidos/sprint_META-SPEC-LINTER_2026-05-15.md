@@ -1,15 +1,15 @@
 ---
 id: META-SPEC-LINTER
 titulo: Linter de specs com estrutura mandatória (`scripts/check_spec.py`)
-status: backlog
-concluida_em: null
+status: concluída
+concluida_em: 2026-05-15
 prioridade: P1
 data_criacao: 2026-05-15
 fase: DX
 epico: 8
 depende_de: []
 esforco_estimado_horas: 2
-origem: auditoria 2026-05-15. 122 specs em `docs/sprints/backlog/` sem validação automática. VALIDATOR_BRIEF padrões `(s/t/u)` exigem "Validação ANTES", "Não-objetivos", "Proof-of-work runtime real". Sem linter, próximo executor pode receber spec frágil. Padrão (ff) descoberto em 2026-05-12: auditoria automática vs supervisor — discrepância de ~30%.
+origem: "auditoria 2026-05-15. 122 specs em `docs/sprints/backlog/` sem validação automática. VALIDATOR_BRIEF padrões `(s/t/u)` exigem 'Validação ANTES', 'Não-objetivos', 'Proof-of-work runtime real'. Sem linter, próximo executor pode receber spec frágil. Padrão (ff) descoberto em 2026-05-12: auditoria automática vs supervisor — discrepância de ~30%."
 ---
 
 # Sprint META-SPEC-LINTER
