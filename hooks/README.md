@@ -2,7 +2,8 @@
 
 Hooks de disciplina de código, portados da infra Luna e adaptados às regras do CLAUDE.md deste projeto.
 
-Executados automaticamente por `scripts/pre-commit-check.sh` (logo após ruff check/format e verificação de acentuação).
+Executados pelo `pre-commit` framework via `.pre-commit-config.yaml`.
+O script manual `scripts/pre-commit-check.sh` segue disponível como fallback.
 
 ---
 
@@ -13,46 +14,61 @@ Executados automaticamente por `scripts/pre-commit-check.sh` (logo após ruff ch
 
 ---
 
-## Inventário
+## Mapa de decisão (auditoria 2026-05-15 -- sprint META-HOOKS-AUDITAR-E-WIRAR)
 
-| Hook | Tipo | Stage | O que valida |
-|------|------|-------|--------------|
-| `check_commit_author.sh` | T1 | pre-commit | Author/email do `git config` não contém nomes de IA (Claude/GPT/Copilot/etc.) |
-| `remove_coauthor.sh` | T1 | commit-msg | Remove `Co-Authored-By:` de IA e bloqueia menções a IA no corpo |
-| `check_commit_msg.py` | T1 | commit-msg | Formato Conventional Commits PT-BR (feat/fix/refactor/docs/test/perf/chore/build/ci) |
-| `check_anonymity.py` | T1 | pre-commit | Auto-corrige (ou reporta em CI) menções a Claude/Anthropic/GPT/OpenAI em arquivos |
-| `check_emojis.py` | T1 | pre-commit | Zero emojis em `.py`, `.sh`, `.md`, `.yaml`, `.toml`, etc. |
-| `check_file_size.py` | T1 | pre-commit | Limite de 800 linhas por `.py` (CLAUDE.md seção 6) |
-| `check_new_prints.py` | T1 | pre-commit | Bloqueia `print()` novos em `src/` (exceto `dashboard/`, `scripts/`, tests) |
-| `check_logger_usage.sh` | T1 | pre-commit | `.py` que usa `print()` também precisa configurar logger |
-| `check_silent_except.sh` | T1 | pre-commit | Proíbe `except:` vazio ou `except: pass` |
-| `check_diff_anti_burla.py` | T1 | pre-commit | Bloqueia TODO/FIXME/HACK, `@pytest.mark.skip`, código comentado em linhas novas |
-| `pre_push_protect_main.sh` | T1 | pre-push | Bloqueia push direto para `main` |
-| `check_complexity.py` | T2 | pre-commit | Avisa quando função tem complexidade ciclomática >15 (bloqueia) ou >10 (warning) |
-| `check_path_consistency.py` | T1 | pre-commit | Bloqueia paths obsoletos (`controle_de_bordo`, `financas.xlsx`, etc.) |
-| `check_citacao_filosofo.py` | T2 | pre-commit | Valida que `.py` em `src/` termina com citação filosófica |
-| `sprint_auto_move.py` | -- | pre-commit | (pré-existente) Move sprints de `proximas/` para `concluidas/` quando marcadas |
+Cada hook recebeu uma decisão clara: **WIRAR** (ativo em `.pre-commit-config.yaml`),
+**ARQUIVAR** (movido para `hooks/_arquivado/`, não executa) ou **MOVER** (não é hook,
+relocado para `scripts/`).
+
+### Hooks ativos -- WIRADOS em `.pre-commit-config.yaml`
+
+- `check_dados_financeiros.py` -- Decisão: WIRAR (já ativo antes desta sprint). Tipo T1, stage pre-commit. Bloqueia CPF/CNPJ/conta/PIX em commits de `.py`. Padrão (e).
+- `check_emojis.py` -- Decisão: WIRAR. Tipo T1, stage pre-commit. Zero emojis em `.py`, `.sh`, `.md`, `.yaml`, `.toml`, etc. Padrão (c).
+- `check_anonymity.py` -- Decisão: WIRAR. Tipo T1, stage pre-commit. Auto-corrige menções a Claude/Anthropic/GPT/OpenAI. Padrão (d).
+- `check_citacao_filosofo.py` -- Decisão: WIRAR. Tipo T2, stage pre-commit, `files: ^src/`. Valida que `.py` em `src/` termina com citação filosófica. Padrão (g).
+- `check_path_consistency.py` -- Decisão: WIRAR. Tipo T1, stage pre-commit. Bloqueia paths obsoletos do projeto (modulos legados pre-rebranding e nomes de output deprecados). Padrão (f).
+- `check_diff_anti_burla.py` -- Decisão: WIRAR. Tipo T1, stage pre-commit. Bloqueia TODO/FIXME/HACK, `@pytest.mark.skip`, código comentado em linhas novas.
+- `check_new_prints.py` -- Decisão: WIRAR. Tipo T1, stage pre-commit, `files: ^src/.*\.py$`. Bloqueia `print()` novos em `src/` (exceto `dashboard/`, `scripts/`, tests). Padrão (e).
+- `check_logger_usage.sh` -- Decisão: WIRAR. Tipo T1, stage pre-commit, `files: ^src/.*\.py$`. `.py` que usa `print()` precisa configurar logger. Padrão (e).
+- `check_silent_except.sh` -- Decisão: WIRAR. Tipo T1, stage pre-commit. Proíbe `except:` vazio ou `except: pass` em `src/`.
+- `check_commit_author.sh` -- Decisão: WIRAR. Tipo T1, stage pre-commit. Author/email do `git config` não contém nomes de IA. Padrão (d).
+- `check_commit_msg.py` -- Decisão: WIRAR. Tipo T1, stage commit-msg. Formato Conventional Commits PT-BR (`feat`, `fix`, `refactor`, etc.).
+- `remove_coauthor.sh` -- Decisão: WIRAR. Tipo T1, stage commit-msg. Remove `Co-Authored-By:` de IA e bloqueia menções a IA no corpo. Padrão (d).
+- `pre_push_protect_main.sh` -- Decisão: WIRAR. Tipo T1, stage pre-push. Bloqueia push direto para `main`.
+
+Total: **13 hooks ativos** (12 novos + 1 já existente).
+
+### Hooks arquivados -- em `hooks/_arquivado/`
+
+- `check_complexity.py` -- Decisão: ARQUIVAR. Métrica de complexidade ciclomática. Faz sentido em equipes grandes; para projeto pessoal de uma pessoa, supervisor humano controla na revisão. Reativável se a equipe crescer.
+- `check_file_size.py` -- Decisão: ARQUIVAR. Regra (h) "800L máximo" formalmente REVOGADA em 2026-05-12 (sessão 14 do supervisor). Coesão semântica supera contagem de linhas.
+
+Ver `hooks/_arquivado/README.md` para detalhes e procedimento de reativação.
+
+### Não é hook -- MOVIDO para `scripts/`
+
+- `hooks/sprint_auto_move.py` -> `scripts/sprint_auto_move.py` -- Decisão: MOVER. Não valida nada (não é um check). É utilitário que move sprints com `**Status:** CONCLUÍDA` de `docs/sprints/producao/` para `docs/sprints/concluidos/`. Pertence a `scripts/`, não a `hooks/`.
 
 ---
 
 ## Integração
 
-O runner principal é `scripts/pre-commit-check.sh`. Ele executa na ordem:
-
-1. `ruff check` e `ruff format --check`
-2. Bloqueio de CPF/CNPJ em arquivos staged
-3. `scripts/check_acentuacao.py` (T1)
-4. Todos os hooks em `hooks/*.sh` e `hooks/*.py` (exceto `sprint_auto_move.py`, que roda no hook real do git)
-5. `scripts/check_gauntlet_freshness.py` (T2)
-
-Para instalar como hook real do git:
+Os 13 hooks são executados pelo `pre-commit` framework conforme suas stages declaradas em `.pre-commit-config.yaml`:
 
 ```bash
-git config core.hooksPath scripts/git-hooks  # se existir setup
-# ou usar pre-commit framework com .pre-commit-config.yaml
+# Instalar uma vez por clone:
+pre-commit install --install-hooks
+pre-commit install --hook-type commit-msg
+pre-commit install --hook-type pre-push
 ```
 
-Atualmente o projeto usa invocação manual/CI de `pre-commit-check.sh`.
+Após isso, todos os 13 hooks rodam automaticamente nos eventos certos:
+
+- **pre-commit:** `check_emojis`, `check_anonymity`, `check_citacao_filosofo`, `check_path_consistency`, `check_diff_anti_burla`, `check_new_prints`, `check_logger_usage`, `check_silent_except`, `check_commit_author`, `check_dados_financeiros`, `ruff`, `ruff-format`.
+- **commit-msg:** `check_commit_msg`, `remove_coauthor`.
+- **pre-push:** `pre_push_protect_main`.
+
+O script `scripts/pre-commit-check.sh` segue disponível como fallback manual (útil para depurar um hook específico fora do framework).
 
 ---
 
@@ -67,12 +83,13 @@ bash scripts/pre-commit-check.sh
 ### Rodar um hook específico
 
 ```bash
-# Hooks Python
-.venv/bin/python hooks/check_file_size.py
+# Via pre-commit framework (recomendado):
+pre-commit run check-emojis --all-files
+pre-commit run check-anonymity --files src/pipeline.py
+
+# Invocação direta (debug):
 .venv/bin/python hooks/check_emojis.py src/pipeline.py
 .venv/bin/python hooks/check_citacao_filosofo.py --all
-
-# Hooks shell
 bash hooks/check_silent_except.sh
 bash hooks/check_commit_author.sh
 ```
@@ -107,19 +124,16 @@ são reconhecidos como legítimos via `TECH_EXCEPTIONS`.
 
 ### Tamanho de arquivo
 
-Não há whitelist. Se um arquivo precisa ultrapassar 800 linhas e é
-legítimo (ex.: schema gerado, registry), refatorar para importar de
-múltiplos módulos menores.
+Regra revogada em 2026-05-12. Hook arquivado em `hooks/_arquivado/check_file_size.py`.
 
 ### Complexidade ciclomática
 
-Atualmente sem whitelist. Funções que passam de 15 devem ser extraídas.
+Hook arquivado em `hooks/_arquivado/check_complexity.py` (over-engineering para projeto pessoal). Revisão de complexidade fica a cargo do supervisor humano.
 
 ---
 
 ## Adaptações ao portar da Luna
 
-- `check_file_size.py`: limite elevado de 300 para **800** (CLAUDE.md Ouroboros seção 6).
 - `check_new_prints.py`: `BLOCKED_DIRS` reescrito para os módulos do Ouroboros (`src/extractors/`, `src/transform/`, `src/load/`, etc.), com isenção explícita para `src/dashboard/` e `scripts/`.
 - `check_anonymity.py`: `EXCLUSIONS` atualizadas para paths do Ouroboros; `TECH_EXCEPTIONS` adicionado para proteger identificadores técnicos (`ANTHROPIC_API_KEY`, `import anthropic`, etc.).
 - `check_path_consistency.py`: regex Luna-specific removidas; adicionados paths obsoletos do Ouroboros (`controle_de_bordo`, `financas.xlsx`).

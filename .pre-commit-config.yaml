@@ -30,3 +30,92 @@ repos:
         entry: python scripts/check_spec.py --files
         language: system
         files: ^docs/sprints/backlog/sprint_.*\.md$
+
+      # ----------------------------------------------------------------
+      # Hooks wirados pela sprint META-HOOKS-AUDITAR-E-WIRAR (2026-05-15).
+      # Mantidos ao final do bloco local: facilita resolução de conflito
+      # de merge com sprints paralelas que tocam este arquivo.
+      # ----------------------------------------------------------------
+
+      - id: check-emojis
+        name: Bloquear emojis em código e docs
+        entry: python hooks/check_emojis.py
+        language: system
+        types_or: [python, shell, markdown, yaml, toml, text, json]
+        exclude: ^hooks/check_emojis\.py$
+
+      - id: check-anonymity
+        name: Auto-corrige menções a IA em código
+        entry: python hooks/check_anonymity.py
+        language: system
+        types_or: [python, shell, markdown, yaml, toml, text]
+        exclude: ^hooks/check_anonymity\.py$
+
+      - id: check-citacao-filosofo
+        name: Valida citação filosófica no final de arquivos .py em src/
+        entry: python hooks/check_citacao_filosofo.py
+        language: system
+        types: [python]
+        files: ^src/
+
+      - id: check-path-consistency
+        name: Bloqueia paths obsoletos (modulos legados pre-rebranding)
+        entry: python hooks/check_path_consistency.py
+        language: system
+        pass_filenames: false
+        types_or: [python, shell, markdown, yaml]
+
+      - id: check-diff-anti-burla
+        name: Bloqueia TODO/FIXME/HACK, except vazio, código comentado em linhas novas
+        entry: python hooks/check_diff_anti_burla.py
+        language: system
+        pass_filenames: false
+        types_or: [python, shell]
+
+      - id: check-new-prints
+        name: Bloqueia print() novos em src/ (exceto dashboard/CLI)
+        entry: python hooks/check_new_prints.py
+        language: system
+        pass_filenames: false
+        files: ^src/.*\.py$
+
+      - id: check-logger-usage
+        name: .py que usa print() precisa configurar logger
+        entry: bash hooks/check_logger_usage.sh
+        language: system
+        pass_filenames: false
+        files: ^src/.*\.py$
+
+      - id: check-silent-except
+        name: Proibe except vazio e except - pass em src/
+        entry: bash hooks/check_silent_except.sh
+        language: system
+        pass_filenames: false
+        files: ^src/.*\.py$
+
+      - id: check-commit-author
+        name: Author do git config não pode ser nome de IA
+        entry: bash hooks/check_commit_author.sh
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
+
+      - id: check-commit-msg
+        name: Mensagem segue Conventional Commits PT-BR
+        entry: python hooks/check_commit_msg.py
+        language: system
+        stages: [commit-msg]
+
+      - id: remove-coauthor
+        entry: bash hooks/remove_coauthor.sh
+        language: system
+        stages: [commit-msg]
+
+      - id: pre-push-protect-main
+        name: Bloqueia push direto para main
+        entry: bash hooks/pre_push_protect_main.sh
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
+        always_run: true

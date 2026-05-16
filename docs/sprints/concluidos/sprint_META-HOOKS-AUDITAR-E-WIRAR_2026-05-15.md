@@ -1,8 +1,8 @@
 ---
 id: META-HOOKS-AUDITAR-E-WIRAR
 titulo: Auditar 16 scripts em `hooks/` e wirar/arquivar/deletar
-status: backlog
-concluida_em: null
+status: concluída
+concluida_em: 2026-05-15
 prioridade: P1
 data_criacao: 2026-05-15
 fase: SANEAMENTO
