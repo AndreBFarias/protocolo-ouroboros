@@ -98,8 +98,8 @@ Cumulativo desde início da sessão. Verificar com `git log --oneline origin/mai
 | Commit | Sprint | Entrega |
 |---|---|---|
 | `b8c1b2b` | META-PROPOSTAS-DASHBOARD | página `propostas_pendentes.py` (330L) + 7 testes verdes + wiring 5ª aba cluster Sistema. **RECUPERAÇÃO MANUAL**: executor `a276e37343092747f` foi disparado em sessão anterior que travou às ~00:53 antes do commit; trabalho ficou no worktree órfão. Supervisor recuperou em 2026-05-16 ~19h validando lint (exit 0), pytest tests/test_propostas_dashboard.py (7/7), `.ouroboros/cache/last_sync.json` revertido, então commit no worktree + cherry-pick + push. |
-| AGUARDA | AUTO-TIPO-PROPOSTAS-DASHBOARD | spec materializada em `sprint_AUTO-TIPO-PROPOSTAS-DASHBOARD_2026-05-16.md`. Pronto para despacho de executor. |
-| AGUARDA | CATEGORIZER-SUGESTAO-TFIDF | spec materializada em `sprint_CATEGORIZER-SUGESTAO-TFIDF_2026-05-16.md`. Depende de AUTO-TIPO merged. |
+| `b131027` + `cf7040d` + `d7440c3` | AUTO-TIPO-PROPOSTAS-DASHBOARD | 3 commits incrementais: (1) `scripts/detectar_tipos_novos.py` (272L) varre `data/raw/_classificar/`, agrupa por tokens >= 4 chars, propõe regex via n-grams; (2) `src/dashboard/paginas/tipos_pendentes.py` (316L) + wiring 6ª aba "Tipos por detectar" no cluster Sistema; (3) 12 testes regressivos verdes (6 do script CLI + 6 da página) + `_path_rel` helper descoberto via testes (padrão cc). Sprint feita pelo supervisor em foreground após dono escolher modo seguro pós-incidente do META-PROPOSTAS. |
+| EM_CURSO | CATEGORIZER-SUGESTAO-TFIDF | supervisor em foreground. Spec em `sprint_CATEGORIZER-SUGESTAO-TFIDF_2026-05-16.md`. |
 
 ### Onda E (supervisor pessoal) — PENDENTE
 
