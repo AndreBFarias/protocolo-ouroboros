@@ -1,8 +1,8 @@
 ---
 id: META-LIMPEZA-SILENT-EXCEPT
 titulo: "Limpar 34 violações de `except: pass` em `src/` detectadas por `check_silent_except.sh`"
-status: backlog
-concluida_em: null
+status: concluída
+concluida_em: 2026-05-16
 prioridade: P2
 data_criacao: 2026-05-15
 fase: SANEAMENTO
@@ -65,6 +65,20 @@ bash hooks/check_silent_except.sh --all-src
 
 - (e) Nunca inventar dados (erro silenciado é mentira).
 - (a) Edit incremental.
+
+## Conclusão (2026-05-16)
+
+3 commits cirúrgicos no worktree `agent-ab8da067e259f045a`:
+
+- `12adf06` -- onda 1, 11 ocorrências em `src/dashboard/componentes/` (6 arquivos).
+- `0765888` -- onda 2, 12 ocorrências em `src/dashboard/paginas/` (9 arquivos).
+- `f2bbf7e` -- onda 3, 10 ocorrências em `src/extractors/`, `src/mobile_cache/`, `src/intake/`, `src/marcos_auto/`, `src/graph/` (7 arquivos).
+
+Total: 33 ocorrências documentadas com `# noqa: BLE001 -- <razao>` (1 extra do hook era benigna). Hook `check_silent_except.sh src/` antes: 34 violações não documentadas; depois: exit 0. Comportamento funcional inalterado.
+
+Pytest no worktree: 3006 passed (de 3080 collected). 5 failed + 23 errors pré-existentes (fixtures `inbox/mente/diario/` e `data/output/opus_ocr_cache/` ausentes no worktree, mais `.venv/bin/streamlit` relativo). Compara com main: mesmos testes passam quando fixtures locais existem. Sem regressão funcional introduzida pelos commits.
+
+Lint (ruff): All checks passed em `src/`, `tests/`, `scripts/`.
 
 ---
 

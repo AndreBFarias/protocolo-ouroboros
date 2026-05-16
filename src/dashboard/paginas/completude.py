@@ -793,7 +793,7 @@ def renderizar(
             if mes_qs and mes_qs in meses_desc:
                 mes_default_idx = meses_desc.index(mes_qs)
         except Exception:
-            pass  # noqa: BLE001 -- query_params pode falhar; usa indice default
+            pass  # noqa: BLE001 -- query_params pode falhar; usa índice default
         mes_sel = st.selectbox(
             "Mês",
             meses_desc,
@@ -809,7 +809,7 @@ def renderizar(
             if cat_qs and cat_qs in cats_do_mes:
                 cat_default_idx = cats_do_mes.index(cat_qs)
         except Exception:
-            pass  # noqa: BLE001 -- query_params pode falhar; usa indice default
+            pass  # noqa: BLE001 -- query_params pode falhar; usa índice default
         cat_sel = (
             st.selectbox(
                 "Categoria",

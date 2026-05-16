@@ -364,7 +364,7 @@ def _resolver_destino_sem_colisao(
             if sha_origem == sha_destino:
                 return destino
         except OSError:
-            pass  # noqa: BLE001 -- leitura sha256 falhou; assume nao-duplicado e gera candidato novo
+            pass  # noqa: BLE001 -- leitura sha256 falhou; assume não-duplicado e gera candidato novo
     stem = destino.stem
     suffix = destino.suffix
     contador = 1
@@ -379,7 +379,7 @@ def _resolver_destino_sem_colisao(
                 if sha_origem == sha_candidato:
                     return candidato
             except OSError:
-                pass  # noqa: BLE001 -- leitura sha256 falhou; assume nao-duplicado e tenta proximo candidato
+                pass  # noqa: BLE001 -- leitura sha256 falhou; assume não-duplicado e tenta proximo candidato
         contador += 1
 
 

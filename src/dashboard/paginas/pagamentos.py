@@ -382,7 +382,7 @@ def renderizar(
             try:
                 db.fechar()
             except Exception:  # noqa: BLE001
-                pass  # noqa: BLE001 -- db.fechar best-effort; conexao ja foi usada
+                pass  # noqa: BLE001 -- db.fechar best-effort; conexão já foi usada
 
     eventos = construir_eventos_calendario(prazos, boletos)
     kpis = calcular_kpis_pagamentos(eventos)

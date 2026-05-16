@@ -78,7 +78,7 @@ def _sha8_de(valor: Any) -> str:
         if pd.isna(valor):  # type: ignore[arg-type]
             return "-"
     except (TypeError, ValueError):
-        pass  # noqa: BLE001 -- pd.isna nao aceita certos tipos; fallback abaixo
+        pass  # noqa: BLE001 -- pd.isna não aceita certos tipos; fallback abaixo
     s = str(valor).strip()
     if not s:
         return "-"

@@ -407,7 +407,7 @@ def ler_atividade_recente(n: int = 6) -> list[TimelineEntry]:
                         )
                     )
         except sqlite3.DatabaseError:
-            pass  # noqa: BLE001 -- registro_eventos pode nao existir; secao atividade degrada
+            pass  # noqa: BLE001 -- registro_eventos pode não existir; secao atividade degrada
 
     # Ordena por timestamp decrescente e devolve os ``n`` mais recentes.
     eventos.sort(key=lambda par: par[0], reverse=True)
