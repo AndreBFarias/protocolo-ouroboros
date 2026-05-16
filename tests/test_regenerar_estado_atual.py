@@ -9,8 +9,6 @@ from __future__ import annotations
 import importlib.util
 from pathlib import Path
 
-import pytest
-
 # Import por path direto (evita conflito com nome de subpacote):
 _SPEC = importlib.util.spec_from_file_location(
     "regenerar_estado_atual",

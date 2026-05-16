@@ -15,7 +15,7 @@ Output:
 Uso:
 
     python scripts/gerar_metricas_prontidao.py            # gera JSON
-    python scripts/gerar_metricas_prontidao.py --apply-roadmap  # gera JSON + aplica tabela no ROADMAP
+    python scripts/gerar_metricas_prontidao.py --apply-roadmap  # JSON + tabela ROADMAP
 """
 
 from __future__ import annotations
@@ -203,12 +203,17 @@ def renderizar_tabela_markdown(m: dict[str, object]) -> str:
         "|---|---|---|\n"
         f"| Tipos GRADUADOS | {m['tipos_graduados']} | >={int(m['tipos_total_canonico']) - 7} |\n"
         f"| Linking `documento_de` | {m['linking_documento_de_pct']}% "
-        f"({m['linking_documento_de_linked']}/{m['linking_documento_de_total_transacoes']}) | >=30% |\n"
+        f"({m['linking_documento_de_linked']}/"
+        f"{m['linking_documento_de_total_transacoes']}) | >=30% |\n"
         f"| Categorização Outros | {m['categorizacao_outros_pct']}% "
-        f"({m['categorizacao_outros_count']}/{m['categorizacao_total_transacoes']}) | <=5% |\n"
-        f"| Backup grafo automático | {'Sim' if m['backup_grafo_automatico'] else 'Não'} | Sim |\n"
-        f"| Transacionalidade pipeline | {'Sim' if m['transacionalidade_pipeline'] else 'Não'} | Sim |\n"
-        f"| Lockfile concorrência | {'Sim' if m['lockfile_concorrencia'] else 'Não'} | Sim |\n"
+        f"({m['categorizacao_outros_count']}/"
+        f"{m['categorizacao_total_transacoes']}) | <=5% |\n"
+        f"| Backup grafo automático | "
+        f"{'Sim' if m['backup_grafo_automatico'] else 'Não'} | Sim |\n"
+        f"| Transacionalidade pipeline | "
+        f"{'Sim' if m['transacionalidade_pipeline'] else 'Não'} | Sim |\n"
+        f"| Lockfile concorrência | "
+        f"{'Sim' if m['lockfile_concorrencia'] else 'Não'} | Sim |\n"
         f"| Páginas dashboard | {m['paginas_dashboard']} | 40+ |\n"
         f"| Pytest passed | {m['pytest_count']} | (estável, sem regressão) |\n"
     )
