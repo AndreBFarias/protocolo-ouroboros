@@ -38,7 +38,7 @@ def _carregar_contadores(vault_root: Path | None) -> list[dict[str, Any]]:
                 dados = json.loads(cache.read_text(encoding="utf-8"))
                 return dados if isinstance(dados, list) else []
             except (Exception,):  # noqa: BLE001
-                pass
+                pass  # noqa: BLE001 -- cache JSON corrompido; fallback para rotina.toml
 
     # Fallback: rotina.toml
     candidatos: list[Path] = []

@@ -1218,7 +1218,7 @@ def _exibir_painel_drill_down(df: pd.DataFrame) -> None:
                 if "transacao_id" in qs:
                     del qs["transacao_id"]
             except Exception:  # noqa: BLE001
-                pass
+                pass  # noqa: BLE001 -- query_params pode falhar em runtime antigo; rerun segue
             st.rerun()
 
 

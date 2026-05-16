@@ -473,7 +473,7 @@ def _registro_para_transacao(registro: dict[str, Any]) -> dict[str, Any]:  # noq
         try:
             confianca_total += float(opus_campos[k][1])
         except (TypeError, ValueError, IndexError):
-            pass
+            pass  # noqa: BLE001 -- confianca opus campo malformado; soma o que conseguir
     confianca = confianca_total / max(1, len(opus_campos))
 
     if humano_bloco.get("validado_em"):

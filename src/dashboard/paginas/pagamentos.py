@@ -382,7 +382,7 @@ def renderizar(
             try:
                 db.fechar()
             except Exception:  # noqa: BLE001
-                pass
+                pass  # noqa: BLE001 -- db.fechar best-effort; conexao ja foi usada
 
     eventos = construir_eventos_calendario(prazos, boletos)
     kpis = calcular_kpis_pagamentos(eventos)
@@ -401,7 +401,7 @@ def renderizar(
                 if 1 <= mes_candidato <= 12:
                     mes = mes_candidato
             except ValueError:
-                pass
+                pass  # noqa: BLE001 -- parse mes_selecionado falhou; usa mes corrente
 
     # UX-V-2.2-FIX: setas de navegação no header do calendário escrevem
     # ``?mes_cal=YYYY-MM``. Quando presente, sobrepõe o filtro global apenas
@@ -416,7 +416,7 @@ def renderizar(
                 if 1 <= mes_qp <= 12:
                     ano, mes = ano_qp, mes_qp
             except ValueError:
-                pass
+                pass  # noqa: BLE001 -- parse mes_cal_qp falhou; mantem mes derivado
 
     # UX-V-2.2.A: enriquece prazos com valor_estimado cruzando com extrato.
     # NÃO modifica o XLSX em disco; é runtime apenas.

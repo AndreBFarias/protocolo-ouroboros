@@ -60,7 +60,7 @@ def _carregar_dados() -> dict[str, Any]:
                 canonicos_yaml.append(cid)
                 aliases_por_canonico[cid] = t.get("aliases_graduacao") or []
         except ImportError:
-            pass
+            pass  # noqa: BLE001 -- PyYAML opcional; fallback usa snap.json apenas
 
     tipos_no_snap = snap.get("tipos", {})
     linhas: list[dict[str, Any]] = []

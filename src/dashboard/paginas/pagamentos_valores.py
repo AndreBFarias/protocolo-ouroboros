@@ -144,7 +144,7 @@ def _estimar_valor(matches: pd.DataFrame) -> tuple[float, str]:
             try:
                 return float(abs(ultimo["valor"])), ORIGEM_ULTIMA_FATURA
             except (TypeError, ValueError):
-                pass
+                pass  # noqa: BLE001 -- valor ultimo boleto invalido; cai para media abaixo
 
     try:
         media = float(matches["valor"].abs().mean())

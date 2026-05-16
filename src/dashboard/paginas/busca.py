@@ -598,7 +598,7 @@ def _contar_universo_busca() -> tuple[int, int, int]:
             finally:
                 conn.close()
         except sqlite3.Error:
-            pass
+            pass  # noqa: BLE001 -- grafo opcional; contadores degradam para 0
 
     # Sidecars: arquivos JSON em data/inbox/sidecars/ (Sprint inbox).
     raiz_sidecars = RAIZ / "data" / "inbox" / "sidecars"
