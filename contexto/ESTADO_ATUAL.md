@@ -293,13 +293,13 @@ Linha de montagem das 14: ~7-8 dias uteis. Onda C1 (FIX-01..06) paralelizavel; C
 
 <!-- BEGIN_AUTO_METRICAS -->
 ```
-TESTES: 3139 tests collected in 3.35s
+TESTES: 3145 tests collected in 4.44s
 SMOKE: 10/10 contratos OK
 LINT: exit 2
 GRAFO: 7639 nodes / 25027 edges
 TIPOS GRADUADOS: 9/23 no mappings/tipos_documento.yaml
 EXTRATORES: 23 em src/extractors/
-ÚLTIMO COMMIT: bfb3999 feat(CATEGORIZER-SUGESTAO-TFIDF): pagina dashboard Sugestor Outros + wiring (3/3)
+ÚLTIMO COMMIT: c57fdd1 test(INFRA-CONCORRENCIA-PIDFILE): atualiza count de abas para 32 pos-Onda D+E
 ```
 <!-- END_AUTO_METRICAS -->
 

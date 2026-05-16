@@ -101,9 +101,11 @@ Cumulativo desde início da sessão. Verificar com `git log --oneline origin/mai
 | `b131027` + `cf7040d` + `d7440c3` | AUTO-TIPO-PROPOSTAS-DASHBOARD | 3 commits incrementais: (1) `scripts/detectar_tipos_novos.py` (272L) varre `data/raw/_classificar/`, agrupa por tokens >= 4 chars, propõe regex via n-grams; (2) `src/dashboard/paginas/tipos_pendentes.py` (316L) + wiring 6ª aba "Tipos por detectar" no cluster Sistema; (3) 12 testes regressivos verdes (6 do script CLI + 6 da página) + `_path_rel` helper descoberto via testes (padrão cc). Sprint feita pelo supervisor em foreground após dono escolher modo seguro pós-incidente do META-PROPOSTAS. |
 | `c45fe35` + `5cd611b` + `bfb3999` | CATEGORIZER-SUGESTAO-TFIDF | 3 commits incrementais: (1) `src/transform/categorizer_suggest.py` (155L) implementa TF-IDF manual + cosseno (sem sklearn) com `gerar_sugestoes(transacoes, top_k=5)`; (2) `scripts/sugerir_categorias.py` (132L) CLI wrapper que lê aba `extrato` do XLSX e gera `data/output/sugestoes_categoria.json`. **Bug descoberto e fixado** durante validação: usava col[2]=`forma_pagamento` em vez de col[3]=`local` como descrição (gerou 1002 sugestões "Água" para "Débito"). Após fix: 5840 transações → 1031 Outros → 863 sugeridas → 319 com conf ≥ 0.85 (5.5%); (3) `src/dashboard/paginas/categorizer_sugestoes.py` (215L) + wiring 7ª aba "Sugestor Outros". Total 15 testes verdes (9 módulo core + 6 página). |
 
-### Onda E (supervisor pessoal) — PENDENTE
+### Onda E (supervisor pessoal) — CONCLUÍDA
 
-- INFRA-CONCORRENCIA-PIDFILE (P1, 3h): `src/utils/lockfile.py` + integração pipeline.py + run.sh + toast dashboard
+| Commits | Sprint | Entrega |
+|---|---|---|
+| `f4798d1` + `0b884da` + `63909aa` + `c57fdd1` | INFRA-CONCORRENCIA-PIDFILE | 4 commits incrementais: (1) `src/utils/lockfile.py` (150L) com Lockfile context manager + LockfileOcupado + lock_ativo + pid_do_lock (fcntl LOCK_EX|LOCK_NB) + 6 testes regressivos incluindo multiprocess; (2) integração em `src/pipeline.py::executar()` envolvendo backup + corpo do pipeline com finally que libera lock mesmo em crash; (3) flock no `run.sh` (helper `adquirir_lock_pipeline()`) em 6 branches mutadores (--inbox, --mes, --tudo, --full-cycle, --reextrair-tudo, --restore-grafo) + toast `st.warning` no dashboard `_toast_pipeline_ativo()`; (4) fix test_dashboard_app contagem de abas (21→32). Defesa em camadas completa (bash + python + UX). |
 
 ### Onda F (último) — PENDENTE
 

@@ -45,9 +45,9 @@ Para chegar la, cada **tipo documental** percorre o ciclo de graduacao:
 | Categorização Outros | 17.7% (1031/5840) | <=5% |
 | Backup grafo automático | Sim | Sim |
 | Transacionalidade pipeline | Sim | Sim |
-| Lockfile concorrência | Não | Sim |
+| Lockfile concorrência | Sim | Sim |
 | Páginas dashboard | 42 | 40+ |
-| Pytest passed | 3139 | (estável, sem regressão) |
+| Pytest passed | 3145 | (estável, sem regressão) |
 <!-- END_AUTO_METRICAS_PRONTIDAO -->
 
 
