@@ -37,6 +37,20 @@ Para chegar la, cada **tipo documental** percorre o ciclo de graduacao:
 
 ## Metricas globais de prontidao (atualizadas continuamente)
 
+<!-- BEGIN_AUTO_METRICAS_PRONTIDAO -->
+| Métrica | Hoje | Meta prod |
+|---|---|---|
+| Tipos GRADUADOS | 9 | >=16 |
+| Linking `documento_de` | 0.41% (25/6086) | >=30% |
+| Categorização Outros | 17.7% (1031/5840) | <=5% |
+| Backup grafo automático | Sim | Sim |
+| Transacionalidade pipeline | Sim | Sim |
+| Lockfile concorrência | Não | Sim |
+| Páginas dashboard | 39 | 40+ |
+| Pytest passed | 3075 | (estável, sem regressão) |
+<!-- END_AUTO_METRICAS_PRONTIDAO -->
+
+
 | Métrica | Hoje (2026-05-13) | Meta prod |
 |---|---|---|
 | Tipos GRADUADOS | 4 (cupom, holerite, das, nfce) | >=15 |

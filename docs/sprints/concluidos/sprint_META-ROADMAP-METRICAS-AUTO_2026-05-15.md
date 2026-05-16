@@ -1,8 +1,8 @@
 ---
 id: META-ROADMAP-METRICAS-AUTO
 titulo: Métricas vivas no ROADMAP_ATE_PROD.md via JSON gerado
-status: backlog
-concluida_em: null
+status: concluída
+concluida_em: 2026-05-15
 prioridade: P1
 data_criacao: 2026-05-15
 fase: SANEAMENTO

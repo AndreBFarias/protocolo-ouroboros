@@ -99,6 +99,9 @@ graduados: ## Tabela viva dos tipos canônicos (graduação Opus/ETL)
 estado-atual-atualizar: ## Regenera bloco de métricas vivas em contexto/ESTADO_ATUAL.md
 	@$(PYTHON) scripts/regenerar_estado_atual.py --apply
 
+metricas: ## Gera data/output/metricas_prontidao.json + atualiza tabela no ROADMAP
+	@$(PYTHON) scripts/gerar_metricas_prontidao.py --apply-roadmap
+
 audit: ## Auditoria rápida (métricas de prontidão; fallback se script não materializado)
 	@if [ -f scripts/gerar_metricas_prontidao.py ]; then \
 		$(PYTHON) scripts/gerar_metricas_prontidao.py; \
