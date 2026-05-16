@@ -18,16 +18,16 @@ def _regenerar_caches_vault_sintetico() -> None:
 
     Sprint META-FIXTURES-CACHE-IGNORE (2026-05-15): os caches em
     ``tests/fixtures/vault_sintetico/.ouroboros/cache/*.json`` (excluindo
-    ``memorias.json``, que vem do app Mobile externo) sao gitignored.
+    ``memorias.json``, que vem do app Mobile externo) são gitignored.
     Esta fixture regenera-os via ``varrer_tudo`` com ``gerado_em`` fixo
     para garantir reprodutibilidade em CI e working tree limpo.
 
-    Vault inexistente ou estrutura incompleta nao quebra: parsers tem
+    Vault inexistente ou estrutura incompleta não quebra: parsers têm
     fallback graceful que produz cache vazio sem crash.
     """
     if not _FIXTURE_VAULT_SINTETICO.exists():
         return
-    # Import tardio: evita custo de import quando subset de testes nao
+    # Import tardio: evita custo de import quando subset de testes não
     # toca caches Mobile (ex.: rodar apenas tests/test_xml_nfe.py).
     from src.mobile_cache.varrer_vault import varrer_tudo
 
