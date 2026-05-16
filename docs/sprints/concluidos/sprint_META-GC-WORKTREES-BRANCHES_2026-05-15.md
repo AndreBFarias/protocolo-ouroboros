@@ -1,15 +1,15 @@
 ---
 id: META-GC-WORKTREES-BRANCHES
 titulo: Garbage collection de worktrees + branches `worktree-agent-*` mergeadas
-status: backlog
-concluida_em: null
+status: concluída
+concluida_em: 2026-05-15
 prioridade: P3
 data_criacao: 2026-05-15
 fase: SANEAMENTO
 epico: 8
 depende_de: []
 esforco_estimado_horas: 1
-origem: "auditoria 2026-05-15. `git worktree list | wc -l` = 75. `git branch --merged main` mostra ~50+ branches mergeadas (worktree-agent-*, sprint/*, ux/*, *-rebase). Polui ergonomia: `git branch` é ilegível, `.claude/worktrees/` ocupa espaço."
+origem: "auditoria 2026-05-15. `git worktree list | wc -l` = 86. `git branch --merged main` mostra ~47 branches mergeadas worktree-agent-*. Polui ergonomia: `git branch` é ilegível, `.claude/worktrees/` ocupa espaço."
 ---
 
 # Sprint META-GC-WORKTREES-BRANCHES

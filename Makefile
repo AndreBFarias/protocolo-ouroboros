@@ -1,4 +1,4 @@
-.PHONY: help process inbox tudo dashboard test lint format docs validate check install clean gauntlet smoke anti-migue sync mobile-cache graduados audit spec health-grafo propostas
+.PHONY: help process inbox tudo dashboard test lint format docs validate check install clean gauntlet smoke anti-migue sync mobile-cache graduados audit spec health-grafo propostas gc-worktrees
 
 SHELL := /bin/bash
 VENV := .venv
@@ -131,5 +131,8 @@ clean: ## Remove artefatos de build (não remove dados)
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
 	find . -type f -name "*.pyc" -delete 2>/dev/null || true
 	rm -rf .ruff_cache .pytest_cache *.egg-info dist build
+
+gc-worktrees: ## Dry-run do GC de worktrees agent-* e branches worktree-agent-* mergeadas
+	@./scripts/limpar_worktrees_agentes.sh
 
 # "O segredo da liberdade é a coragem." -- Péricles
