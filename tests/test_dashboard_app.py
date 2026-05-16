@@ -44,7 +44,7 @@ class TestContratosCanonicos:
         """Acceptance: campo cluster lido da URL via ler_filtros_da_url."""
         assert "cluster" in drilldown.CAMPOS_FILTRO_RECONHECIDOS
 
-    def test_mapa_aba_para_cluster_cobre_21_abas(self) -> None:
+    def test_mapa_aba_para_cluster_cobre_32_abas(self) -> None:
         """Acceptance: todas as 21 abas canônicas (não-homonímia) mapeadas.
 
         Sprint D2 adicionou ``Revisor`` ao cluster Documentos.
@@ -107,6 +107,12 @@ class TestContratosCanonicos:
             # META-PROPOSTAS-DASHBOARD (2026-05-15): aba Propostas no
             # Sistema lista .md pendentes em docs/propostas/<categoria>/.
             "Propostas",
+            # AUTO-TIPO-PROPOSTAS-DASHBOARD (2026-05-16): aba "Tipos por
+            # detectar" no Sistema consome propostas_tipo_novo.json.
+            "Tipos por detectar",
+            # CATEGORIZER-SUGESTAO-TFIDF (2026-05-16): aba "Sugestor Outros"
+            # no Sistema consome sugestoes_categoria.json.
+            "Sugestor Outros",
             # UX-RD-17: 10 abas em Bem-estar com nome canônico curto.
             "Diário",
             "Eventos",
