@@ -129,7 +129,7 @@ def _carregar_fornecedores_e_descricoes(
                     if isinstance(alias, str) and alias.strip():
                         fornecedores.append(alias.strip())
         except sqlite3.Error:
-            pass
+            pass  # noqa: BLE001 -- tabela node pode nao existir em vault novo; busca degrada graciosamente
 
         try:
             cur = conn.execute(
@@ -145,7 +145,7 @@ def _carregar_fornecedores_e_descricoes(
                 if desc:
                     descricoes.append(desc)
         except sqlite3.Error:
-            pass
+            pass  # noqa: BLE001 -- tabela node pode nao existir em vault novo; busca degrada graciosamente
     finally:
         conn.close()
 

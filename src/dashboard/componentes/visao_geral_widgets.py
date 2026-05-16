@@ -182,7 +182,7 @@ def calcular_kpis_agentic() -> KpisAgentic:
                 tipos = int(cur.fetchone()[0] or 0)
                 arquivos_delta = f"{tipos} tipos no grafo"
         except sqlite3.DatabaseError:
-            pass
+            pass  # noqa: BLE001 -- grafo pode estar vazio/ausente; widget mostra "-" como fallback
 
     paridade = "-"
     paridade_meta = "Meta sprint: 90%"
@@ -343,7 +343,7 @@ def ler_atividade_recente(n: int = 6) -> list[TimelineEntry]:
                     )
                 )
     except (subprocess.SubprocessError, OSError):
-        pass
+        pass  # noqa: BLE001 -- git pode estar ausente; secao atividade degrada para vazia
 
     # 3. ADRs recentes (até 2 mais novos).
     adr_dir = _raiz_repo() / "docs" / "adr"
@@ -407,7 +407,7 @@ def ler_atividade_recente(n: int = 6) -> list[TimelineEntry]:
                         )
                     )
         except sqlite3.DatabaseError:
-            pass
+            pass  # noqa: BLE001 -- registro_eventos pode nao existir; secao atividade degrada
 
     # Ordena por timestamp decrescente e devolve os ``n`` mais recentes.
     eventos.sort(key=lambda par: par[0], reverse=True)
@@ -527,7 +527,7 @@ def montar_clusters_canonicos() -> list[dict[str, str]]:
                     if tipo:
                         contadores[str(tipo)] = int(count)
         except sqlite3.DatabaseError:
-            pass
+            pass  # noqa: BLE001 -- grafo opcional; tabela node pode estar ausente em vault novo
 
     fmt = lambda k: str(contadores.get(k, "-"))  # noqa: E731
 

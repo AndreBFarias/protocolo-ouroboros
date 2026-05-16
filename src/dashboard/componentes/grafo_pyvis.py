@@ -137,7 +137,7 @@ def _parse_aliases(aliases: Any) -> list[str]:
             if isinstance(parsed, list):
                 return [str(a) for a in parsed]
         except (ValueError, TypeError):
-            pass
+            pass  # noqa: BLE001 -- aliases malformado em row legacy; retorna [] defensivo
     return []
 
 
@@ -152,7 +152,7 @@ def _parse_metadata(metadata: Any) -> dict[str, Any]:
             if isinstance(parsed, dict):
                 return parsed
         except (ValueError, TypeError):
-            pass
+            pass  # noqa: BLE001 -- metadata malformada em row legacy; retorna {} defensivo
     return {}
 
 

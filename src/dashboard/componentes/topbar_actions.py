@@ -57,7 +57,7 @@ def _renderizar_acao(acao: Acao) -> str:
                     glyph_nome, sorted(GLYPHS_CANONICOS),
                 )
         except Exception:
-            pass
+            pass  # noqa: BLE001 -- catalogo de glyphs eh opcional; warning ja foi tentado
         try:
             from src.dashboard.componentes.glyphs import glyph as _glyph
             glyph_html = (
@@ -108,7 +108,7 @@ def resetar_slot() -> None:
         import streamlit as st
         st.session_state["topbar_acoes_html"] = ""
     except Exception:
-        pass
+        pass  # noqa: BLE001 -- streamlit pode estar ausente em testes; no-op aceitavel
 
 
 # "Aja como o vento e seja como o tempo." -- Sun Tzu (paráfrase)

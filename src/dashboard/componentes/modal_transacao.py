@@ -118,7 +118,7 @@ def mostrar_conteudo(tx: dict[str, Any], docs_vinculados: list[dict[str, Any]]) 
 
         st.divider()
     except ImportError:  # pragma: no cover
-        pass
+        pass  # noqa: BLE001 -- streamlit opcional em testes unitarios
 
     estado = inferir_estado(docs_vinculados)
     _render_estado(estado)
