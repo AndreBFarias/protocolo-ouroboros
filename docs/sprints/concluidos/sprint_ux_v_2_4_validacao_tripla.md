@@ -1,7 +1,8 @@
 ---
 id: UX-V-2.4
 titulo: Validação por Arquivo / Extração Tripla com tabela ETL × Opus × Humano
-status: backlog
+status: concluída  <!-- noqa: accent -->
+concluida_em: 2026-05-07
 prioridade: altissima
 data_criacao: 2026-05-07
 fase: PARIDADE_VISUAL

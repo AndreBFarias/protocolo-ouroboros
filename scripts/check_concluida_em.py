@@ -13,7 +13,10 @@ import sys
 from pathlib import Path
 
 CONCLUIDOS_DIR = Path("docs/sprints/concluidos")
-RE_CONCLUIDA_EM = re.compile(r"^concluida_em:\s*\d{4}-\d{2}-\d{2}\s*$", re.MULTILINE)
+RE_CONCLUIDA_EM = re.compile(
+    r"^concluida_em:\s*\d{4}-\d{2}-\d{2}\s*(?:#.*|<!--.*-->\s*)?$",
+    re.MULTILINE,
+)
 
 logger = logging.getLogger(__name__)
 

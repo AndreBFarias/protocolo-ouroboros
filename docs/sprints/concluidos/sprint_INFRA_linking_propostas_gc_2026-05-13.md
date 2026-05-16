@@ -1,8 +1,8 @@
 ---
 id: INFRA-LINKING-PROPOSTAS-GC
 titulo: Garbage collection de propostas de linking obsoletas em docs/propostas/linking/
-status: backlog
-concluida_em: null
+status: concluída  <!-- noqa: accent -->
+concluida_em: 2026-05-13
 prioridade: P2
 data_criacao: 2026-05-13
 fase: SANEAMENTO

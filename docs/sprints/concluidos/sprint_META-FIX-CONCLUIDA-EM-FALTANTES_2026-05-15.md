@@ -1,8 +1,8 @@
 ---
 id: META-FIX-CONCLUIDA-EM-FALTANTES
 titulo: Adicionar `concluida_em` em 16 specs de `docs/sprints/concluidos/` sem o campo
-status: backlog
-concluida_em: null
+status: concluída  <!-- noqa: accent -->
+concluida_em: 2026-05-15
 prioridade: P3
 data_criacao: 2026-05-15
 fase: SANEAMENTO

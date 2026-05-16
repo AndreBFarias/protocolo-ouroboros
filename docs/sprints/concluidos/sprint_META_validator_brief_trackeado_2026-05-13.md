@@ -1,8 +1,8 @@
 ---
 id: META-VALIDATOR-BRIEF-TRACKEADO
 titulo: Mover padrões canônicos (a..ll) para arquivo trackeado pelo git
-status: backlog
-concluida_em: null
+status: concluída  <!-- noqa: accent -->
+concluida_em: 2026-05-13
 prioridade: P0
 data_criacao: 2026-05-13
 fase: SANEAMENTO
