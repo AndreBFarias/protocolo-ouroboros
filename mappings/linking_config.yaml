@@ -42,11 +42,25 @@ tipos:
     diff_valor_percentual: 0.01
     confidence_minimo: 0.80
   nfce_modelo_65:
-    janela_dias: 1
+    # Sprint LINK-AUDIT-01 (2026-05-15): NFCe emitida pelo varejo geralmente bate
+    # com transacao no mesmo dia, mas em alguns casos (cartao de credito processado
+    # em batch, cancelamento + reemissao) a janela pode chegar a 2-4 dias. Caso
+    # real no grafo: docs 7679/7680 (R$ 595,52 e R$ 629,98) sem tx <= janela=1d,
+    # mas tx 7277 (R$ 590,35 em 23/03) e plausivel candidata humana se janela for
+    # 30d. Subimos janela para 30d para gerar PROPOSTAS em vez de "sem_candidato"
+    # silencioso (visibilidade para o supervisor humano). Tolerancia 1% mantida
+    # estrita -- NFCe imprime ate centavo e divergencia > 1% e link suspeito.
+    janela_dias: 30
     diff_valor_percentual: 0.01
     confidence_minimo: 0.85
   cupom_fiscal:
-    janela_dias: 1
+    # Sprint LINK-AUDIT-01 (2026-05-15): cupom fiscal de cartao de credito pode
+    # ter liquidacao em D+1 ate D+7 dependendo do banco/varejo. Casos reais no
+    # grafo (docs 7584, 7638, 7760) tem tx candidata a 14-19 dias antes da
+    # emissao do cupom -- subir janela para 7d cobre o caso comum sem inflacionar
+    # falsos positivos (cupom a vista continua exigindo tx D+0 para confidence_minimo).
+    # Subir alem disso (>=15d) confunde compras com mesmo varejo em meses diferentes.
+    janela_dias: 7
     diff_valor_percentual: 0.03
     confidence_minimo: 0.70
   cupom_termico:
@@ -124,4 +138,14 @@ default:
 # Margem de empate: se |score_top1 - score_top2| < este valor, gera proposta
 # em vez de linkar. Evita ligar silenciosamente quando ha duas candidatas
 # quase identicas.
-margem_empate: 0.05
+#
+# Sprint LINK-AUDIT-01 (2026-05-15): baixamos de 0.05 para 0.02 com base em
+# analise empirica do grafo (scripts/diagnosticar_linking.py). De 20 propostas
+# de conflito ativas, 14 tem diff(top-1, top-2) = 0 (empate real -- continuam
+# em conflito como deve ser) e 6 tem diff entre 0.011 e 0.022 em que top-1
+# tem clara vantagem (diff_valor menor). Margem 0.02 libera 3 desses 6 casos
+# em que top-1 e objetivamente melhor sem aumentar risco de link errado --
+# os 14 empates reais continuam sendo proposta. Os outros 3 casos (diff entre
+# 0.02 e 0.022) permanecem em conflito como protecao extra (margem aplicada
+# inclusive: top-1 ganha apenas se diff >= 0.02).
+margem_empate: 0.02
