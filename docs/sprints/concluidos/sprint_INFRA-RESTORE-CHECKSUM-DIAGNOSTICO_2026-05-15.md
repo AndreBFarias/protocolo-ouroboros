@@ -1,8 +1,8 @@
 ---
 id: INFRA-RESTORE-CHECKSUM-DIAGNOSTICO
 titulo: Diagnóstico diferenciado em `_restaurar_grafo_de_backup` (truncamento vs corrupção)
-status: backlog
-concluida_em: null
+status: concluida
+concluida_em: 2026-05-15
 prioridade: P3
 data_criacao: 2026-05-15
 fase: SANEAMENTO

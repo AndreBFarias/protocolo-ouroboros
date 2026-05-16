@@ -755,10 +755,26 @@ def _restaurar_grafo_de_backup(
         logger.error("Checksum ausente: %s", sha_path)
         return 1
     sha_gravado = sha_path.read_text(encoding="utf-8").split()[0].strip()
+    if len(sha_gravado) != 64:
+        logger.error(
+            "Checksum malformado: .sha256 tem %d chars (esperado 64). "
+            "Provável write parcial. Regenere com `sha256sum %s > %s`.",
+            len(sha_gravado),
+            backup,
+            sha_path,
+        )
+        return 1
+    if not re.match(r"^[0-9a-f]{64}$", sha_gravado):
+        logger.error(
+            "Checksum corrompido: caracteres inválidos. "
+            "Arquivo .sha256 pode estar comprometido. Tente backup anterior."
+        )
+        return 1
     sha_atual = _sha256_arquivo(backup)
     if sha_gravado != sha_atual:
         logger.error(
-            "Checksum inválido: gravado=%s atual=%s (backup corrompido).",
+            "Conteúdo do backup corrompido: sha gravado=%s vs sha calculado=%s. "
+            "Backup inutilizável. Tente versão anterior.",
             sha_gravado[:12],
             sha_atual[:12],
         )

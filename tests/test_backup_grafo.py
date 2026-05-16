@@ -189,4 +189,67 @@ def test_restaurar_rejeita_sha_ausente(
     assert rc == 1
 
 
+def test_restaurar_diagnostica_sha_truncado(
+    grafo_origem: Path, dir_backup: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    """Sprint INFRA-RESTORE-CHECKSUM-DIAGNOSTICO: .sha256 com ≠64 chars."""
+    backup = pipeline._executar_backup_grafo(grafo_origem, dir_backup)
+    assert backup is not None
+    ts = backup.stem[len(pipeline.PREFIXO_BACKUP_GRAFO):]
+    # Trunca o .sha256 para simular write parcial (disco cheio)
+    sha_path = backup.with_suffix(backup.suffix + ".sha256")
+    sha_path.write_text("abc123", encoding="utf-8")  # 6 chars, longe de 64
+    import logging
+
+    with caplog.at_level(logging.ERROR, logger=pipeline.logger.name):
+        rc = pipeline._restaurar_grafo_de_backup(ts, grafo_origem, dir_backup)
+    assert rc == 1
+    assert any("malformado" in r.getMessage() for r in caplog.records)
+    # Grafo origem intacto
+    assert grafo_origem.read_bytes().startswith(b"SQLite format 3")
+
+
+def test_restaurar_diagnostica_sha_nao_hex(
+    grafo_origem: Path, dir_backup: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    """Sprint INFRA-RESTORE-CHECKSUM-DIAGNOSTICO: .sha256 com 64 chars mas não-hex."""
+    backup = pipeline._executar_backup_grafo(grafo_origem, dir_backup)
+    assert backup is not None
+    ts = backup.stem[len(pipeline.PREFIXO_BACKUP_GRAFO):]
+    # 64 chars 'z' (não-hex)
+    sha_path = backup.with_suffix(backup.suffix + ".sha256")
+    sha_path.write_text("z" * 64, encoding="utf-8")
+    import logging
+
+    with caplog.at_level(logging.ERROR, logger=pipeline.logger.name):
+        rc = pipeline._restaurar_grafo_de_backup(ts, grafo_origem, dir_backup)
+    assert rc == 1
+    msgs = [r.getMessage() for r in caplog.records]
+    # Deve disparar a mensagem de "corrompido" (não-hex) e não a de "malformado" (≠64)
+    assert any("corrompido" in m and "caracteres inválidos" in m for m in msgs)
+    assert not any("malformado" in m for m in msgs)
+    assert grafo_origem.read_bytes().startswith(b"SQLite format 3")
+
+
+def test_restaurar_diagnostica_conteudo_corrompido(
+    grafo_origem: Path, dir_backup: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    """Sprint INFRA-RESTORE-CHECKSUM-DIAGNOSTICO: sha hex válido mas ≠ sha calculado."""
+    backup = pipeline._executar_backup_grafo(grafo_origem, dir_backup)
+    assert backup is not None
+    ts = backup.stem[len(pipeline.PREFIXO_BACKUP_GRAFO):]
+    # Corrompe o backup mantendo o .sha256 antigo (64 hex chars válidos, mas conteúdo difere)
+    backup.write_bytes(b"CONTEUDO_DIFERENTE_DO_ORIGINAL")
+    import logging
+
+    with caplog.at_level(logging.ERROR, logger=pipeline.logger.name):
+        rc = pipeline._restaurar_grafo_de_backup(ts, grafo_origem, dir_backup)
+    assert rc == 1
+    msgs = [r.getMessage() for r in caplog.records]
+    assert any("Conteúdo do backup corrompido" in m for m in msgs)
+    assert not any("malformado" in m for m in msgs)
+    assert not any("caracteres inválidos" in m for m in msgs)
+    assert grafo_origem.read_bytes().startswith(b"SQLite format 3")
+
+
 # "Backup eh o futuro guardando o passado contra o presente." -- principio do arquivista pragmatico
