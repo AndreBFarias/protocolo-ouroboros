@@ -1,8 +1,8 @@
 ---
 id: INFRA-INBOX-WATCHER
 titulo: Watcher systemd dispara `./run.sh --inbox` ao detectar arquivos novos
-status: backlog
-concluida_em: null
+status: concluída
+concluida_em: 2026-05-15
 prioridade: P2
 data_criacao: 2026-05-15
 fase: AUTONOMIA

@@ -1,0 +1,9 @@
+[Unit]
+Description=Watch inbox/ for new files - dispara ouroboros-inbox.service
+
+[Path]
+PathChanged=/home/andrefarias/Desenvolvimento/protocolo-ouroboros/inbox
+Unit=ouroboros-inbox.service
+
+[Install]
+WantedBy=paths.target

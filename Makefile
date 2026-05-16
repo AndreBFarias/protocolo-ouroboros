@@ -1,4 +1,4 @@
-.PHONY: help process inbox tudo dashboard test lint format docs validate check install clean gauntlet smoke anti-migue sync mobile-cache graduados audit spec health-grafo propostas gc-worktrees
+.PHONY: help process inbox tudo dashboard test lint format docs validate check install clean gauntlet smoke anti-migue sync mobile-cache graduados audit spec health-grafo propostas gc-worktrees inbox-watcher-install inbox-watcher-uninstall inbox-watcher-status
 
 SHELL := /bin/bash
 VENV := .venv
@@ -140,5 +140,14 @@ clean: ## Remove artefatos de build (não remove dados)
 
 gc-worktrees: ## Dry-run do GC de worktrees agent-* e branches worktree-agent-* mergeadas
 	@./scripts/limpar_worktrees_agentes.sh
+
+inbox-watcher-install: ## Instala systemd path-unit que dispara ./run.sh --inbox em arquivo novo
+	@./scripts/install_inbox_watcher.sh
+
+inbox-watcher-uninstall: ## Remove systemd path-unit do inbox watcher
+	@./scripts/install_inbox_watcher.sh --uninstall
+
+inbox-watcher-status: ## Mostra status do systemd inbox watcher (se instalado)
+	@systemctl --user status ouroboros-inbox.path --no-pager --lines=15 2>&1 || echo "Watcher nao instalado -- rode 'make inbox-watcher-install'"
 
 # "O segredo da liberdade é a coragem." -- Péricles

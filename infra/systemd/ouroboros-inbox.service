@@ -1,0 +1,14 @@
+[Unit]
+Description=Ouroboros inbox watcher - processa arquivos novos em inbox/
+After=local-fs.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/andrefarias/Desenvolvimento/protocolo-ouroboros
+ExecStart=/home/andrefarias/Desenvolvimento/protocolo-ouroboros/scripts/inbox_watcher.sh
+StandardOutput=append:/home/andrefarias/Desenvolvimento/protocolo-ouroboros/logs/inbox_watcher.log
+StandardError=append:/home/andrefarias/Desenvolvimento/protocolo-ouroboros/logs/inbox_watcher.log
+TimeoutStartSec=1800
+
+[Install]
+WantedBy=default.target
