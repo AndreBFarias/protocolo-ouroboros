@@ -291,6 +291,19 @@ Linha de montagem das 14: ~7-8 dias uteis. Onda C1 (FIX-01..06) paralelizavel; C
 
 ## Versao + saude geral
 
+<!-- BEGIN_AUTO_METRICAS -->
+```
+TESTES: 3070 tests collected in 2.59s
+SMOKE: 10/10 contratos OK
+LINT: exit 0
+GRAFO: 7639 nodes / 25024 edges
+TIPOS GRADUADOS: 9/23 no mappings/tipos_documento.yaml
+EXTRATORES: 23 em src/extractors/
+ÚLTIMO COMMIT: 6cc5b14 chore(lint): acentuacao em tests/conftest.py pos-META-FIXTURES
+```
+<!-- END_AUTO_METRICAS -->
+
+
 ```
 VERSAO: 5.11 | STATUS: PRODUCAO + AUDITORIA HONESTA 46 ACHADOS (plan pure-swinging-mitten aprovado 2026-04-29) | LANG: PT-BR
 TRANSACOES: 6.094 | MESES: 82 (out/2019 a out/2026) | BANCOS: 6 | EXTRATORES: 22

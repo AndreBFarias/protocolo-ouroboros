@@ -96,6 +96,9 @@ conformance-%: ## Gate 4-way >=3 amostras verdes (Sprint ANTI-MIGUE-01)
 graduados: ## Tabela viva dos tipos canônicos (graduação Opus/ETL)
 	@$(PYTHON) scripts/dossie_tipo.py listar-tipos
 
+estado-atual-atualizar: ## Regenera bloco de métricas vivas em contexto/ESTADO_ATUAL.md
+	@$(PYTHON) scripts/regenerar_estado_atual.py --apply
+
 audit: ## Auditoria rápida (métricas de prontidão; fallback se script não materializado)
 	@if [ -f scripts/gerar_metricas_prontidao.py ]; then \
 		$(PYTHON) scripts/gerar_metricas_prontidao.py; \
