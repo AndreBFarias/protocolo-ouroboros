@@ -78,6 +78,20 @@ docs/propostas/er_produtos/
 # Jupyter
 .ipynb_checkpoints/
 
+# Caches sinteticos da fixture vault_sintetico: regerados em conftest.
+# Sprint META-FIXTURES-CACHE-IGNORE (2026-05-15). Mantemos memorias.json
+# versionado porque vem do app Mobile externo (nao gerado por varrer_tudo).
+tests/fixtures/vault_sintetico/.ouroboros/cache/alarmes.json
+tests/fixtures/vault_sintetico/.ouroboros/cache/ciclo.json
+tests/fixtures/vault_sintetico/.ouroboros/cache/contadores.json
+tests/fixtures/vault_sintetico/.ouroboros/cache/diario-emocional.json
+tests/fixtures/vault_sintetico/.ouroboros/cache/eventos.json
+tests/fixtures/vault_sintetico/.ouroboros/cache/humor-heatmap.json
+tests/fixtures/vault_sintetico/.ouroboros/cache/marcos.json
+tests/fixtures/vault_sintetico/.ouroboros/cache/medidas.json
+tests/fixtures/vault_sintetico/.ouroboros/cache/tarefas.json
+tests/fixtures/vault_sintetico/.ouroboros/cache/treinos.json
+
 # Sprint 90: identidade completa do casal (CPFs + CNPJs + razao social)
 mappings/pessoas.yaml
 
@@ -104,3 +118,6 @@ STATE.md
 .aider*
 .continue/
 .github/copilot-instructions.md
+
+# --- anti-IA (anonimato local) ---
+CLAUDE.md

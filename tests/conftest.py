@@ -1,9 +1,42 @@
 """Fixtures e helpers compartilhados para os testes."""
 
-from datetime import date
+from datetime import date, datetime, timezone
+from pathlib import Path
 from typing import Any
 
 import pytest
+
+# Raiz da fixture sintetica usada por testes do cluster Mobile/Bem-estar.
+_FIXTURE_VAULT_SINTETICO = (
+    Path(__file__).resolve().parent / "fixtures" / "vault_sintetico"
+)
+
+
+@pytest.fixture(autouse=True, scope="session")
+def _regenerar_caches_vault_sintetico() -> None:
+    """Regenera os 10 caches do vault_sintetico antes dos testes da sessao.
+
+    Sprint META-FIXTURES-CACHE-IGNORE (2026-05-15): os caches em
+    ``tests/fixtures/vault_sintetico/.ouroboros/cache/*.json`` (excluindo
+    ``memorias.json``, que vem do app Mobile externo) sao gitignored.
+    Esta fixture regenera-os via ``varrer_tudo`` com ``gerado_em`` fixo
+    para garantir reprodutibilidade em CI e working tree limpo.
+
+    Vault inexistente ou estrutura incompleta nao quebra: parsers tem
+    fallback graceful que produz cache vazio sem crash.
+    """
+    if not _FIXTURE_VAULT_SINTETICO.exists():
+        return
+    # Import tardio: evita custo de import quando subset de testes nao
+    # toca caches Mobile (ex.: rodar apenas tests/test_xml_nfe.py).
+    from src.mobile_cache.varrer_vault import varrer_tudo
+
+    gerado_em_fixo = datetime(2026, 1, 1, tzinfo=timezone.utc)
+    varrer_tudo(
+        _FIXTURE_VAULT_SINTETICO,
+        gerado_em=gerado_em_fixo,
+        incluir_humor=True,
+    )
 
 
 def _transacao(
