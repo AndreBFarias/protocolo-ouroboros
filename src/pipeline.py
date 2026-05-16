@@ -819,16 +819,75 @@ def _registrar_falha_pipeline_estruturada(estagio: str, erro: Exception) -> Path
         return None
 
 
+_ESTAGIO_ATUAL: str = "init"
+
+
 def executar(mes: str | None = None, processar_tudo: bool = False) -> None:
-    """Executa o pipeline completo."""
+    """Executa o pipeline completo.
+
+    Sprint INFRA-PIPELINE-TX-RESTORE-AUTOMATICO (2026-05-15): após o backup
+    pré-pipeline, o corpo inteiro roda dentro de `try/except`. Qualquer
+    exceção não-tratada por estágios internos dispara:
+
+    1. Log estruturado em `logs/pipeline_falha_<ts>.json` (com estágio atual).
+    2. Tentativa de restore automático do backup pré-execução (se existe).
+    3. Re-raise da exceção original (falha não fica silenciosa).
+
+    Estágios mutadores do grafo já têm rollback granular via
+    `with db.transaction():` (sprint INFRA-PIPELINE-TRANSACIONALIDADE).
+    Este restore é a defesa em camadas externa para falhas catastróficas
+    (OOM kill, signal interrupt, corrupção SQLite).
+    """
+    global _ESTAGIO_ATUAL
     logger.info("=== Protocolo Ouroboros -- Pipeline ===")
 
     # 0. Backup automatico do grafo (Sprint INFRA-BACKUP-GRAFO-AUTOMATIZADO).
     # Padrao (m) branch reversivel: snapshot pre-execucao permite rollback  # noqa: accent
     # se pipeline crashar mid-ETL.
-    _executar_backup_grafo()
+    _ESTAGIO_ATUAL = "backup_grafo"
+    backup_destino = _executar_backup_grafo()
+    backup_ts: str | None = None
+    if backup_destino is not None:
+        backup_ts = backup_destino.stem[len(PREFIXO_BACKUP_GRAFO):]
+
+    try:
+        _executar_corpo_pipeline(mes, processar_tudo)
+    except Exception as exc:
+        _registrar_falha_pipeline_estruturada(_ESTAGIO_ATUAL, exc)
+        if backup_ts is not None:
+            logger.error(
+                "Pipeline crashou no estágio %s. Tentando restore automático "
+                "do backup %s.",
+                _ESTAGIO_ATUAL,
+                backup_ts,
+            )
+            try:
+                _restaurar_grafo_de_backup(backup_ts)
+            except Exception as restore_erro:
+                logger.error(
+                    "Restore automático falhou: %s. Backup preservado em %s.",
+                    restore_erro,
+                    DIR_BACKUP_GRAFO,
+                )
+        else:
+            logger.error(
+                "Pipeline crashou no estágio %s sem backup pré-execução "
+                "(primeira run). Restore não aplicável.",
+                _ESTAGIO_ATUAL,
+            )
+        raise
+
+
+def _executar_corpo_pipeline(mes: str | None, processar_tudo: bool) -> None:
+    """Corpo do pipeline (estágios 1-16). Separado de `executar()` para
+    permitir `try/except` global com restore automático sem indentar 130
+    linhas. `_ESTAGIO_ATUAL` é atualizado em cada estágio relevante para
+    diagnóstico do log estruturado em caso de crash.
+    """
+    global _ESTAGIO_ATUAL
 
     # 1. Descobrir extratores
+    _ESTAGIO_ATUAL = "descobrir_extratores"
     classes_extratores = _descobrir_extratores()
     logger.info("Extratores disponíveis: %d", len(classes_extratores))
 
@@ -898,6 +957,7 @@ def executar(mes: str | None = None, processar_tudo: bool = False) -> None:
     # 10. Processar holerites (contracheques) -- fonte extra para a aba renda.
     # P3.2 (auditoria 2026-04-23): passa grafo para ingerir cada holerite como
     # node `documento` tipo `holerite` (fecha ADR-20 tracking para folha).
+    _ESTAGIO_ATUAL = "holerites"
     from src.graph.db import GrafoDB, caminho_padrao
 
     caminho_grafo_hol = caminho_padrao()
@@ -921,6 +981,7 @@ def executar(mes: str | None = None, processar_tudo: bool = False) -> None:
         contracheques = processar_holerites(DIR_RAW / "andre" / "holerites")
 
     # 11. Gerar XLSX
+    _ESTAGIO_ATUAL = "gerar_xlsx"
     ano = mes[:4] if mes else str(datetime.now().year)
     caminho_xlsx = DIR_OUTPUT / f"ouroboros_{ano}.xlsx"
     gerar_xlsx(transacoes_filtradas, caminho_xlsx, CONTROLE_ANTIGO, contracheques)
@@ -937,12 +998,14 @@ def executar(mes: str | None = None, processar_tudo: bool = False) -> None:
     # `python -m src.graph.migracao_inicial` e ingestão de documentos pelos
     # extratores fiscais). Ausência do grafo não é erro -- pipeline principal
     # do XLSX segue funcionando sem ele.
+    _ESTAGIO_ATUAL = "linking_documentos"
     _executar_linking_documentos()
 
     # 13. Entity resolution de produtos (Sprint 49): agrupa itens equivalentes
     # (mesma descrição, variações ortográficas) em nodes `produto_canonico`.
     # Roda depois do linking para que itens de documentos ainda por linkar
     # não fiquem pendurados sem agregado. Ausência de grafo é no-op.
+    _ESTAGIO_ATUAL = "er_produtos"
     _executar_er_produtos()
 
     # 14. Categorização de itens (Sprint 50): aplica regras regex em
@@ -951,17 +1014,20 @@ def executar(mes: str | None = None, processar_tudo: bool = False) -> None:
     # no metadata, alinhado ao ADR-14). Roda depois do ER para que a
     # agregação por produto canônico já esteja pronta. Itens em "Outros"
     # com frequência >=3 geram proposta MD para revisão supervisor.
+    _ESTAGIO_ATUAL = "item_categorizer"
     _executar_item_categorizer()
 
     # 15. Snapshot do classificador D7 (Sprint INFRA-SKILLS-D7-LOG): gera
     # `data/output/skill_d7_log.json` consumido por `src/dashboard/paginas/skills_d7.py`.
     # Integração feita em 2026-05-13 após auditoria detectar que o script existia
     # mas não era invocado automaticamente. Falha-soft (sem grafo == no-op).
+    _ESTAGIO_ATUAL = "skill_d7_log"
     _executar_skill_d7_log()
 
     # 16. Snapshot do dossie de graduacao por tipo documental (2026-05-13).
     # Materializa o estado vivo de cada tipo (PENDENTE/CALIBRANDO/GRADUADO/REGREDINDO)
     # consumido pelo dashboard `graduacao_tipos.py`. Ver docs/CICLO_GRADUACAO_OPERACIONAL.md.
+    _ESTAGIO_ATUAL = "dossie_snapshot"
     _executar_dossie_snapshot()
 
     logger.info("=== Pipeline concluído ===")

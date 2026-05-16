@@ -14,6 +14,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+
 from src import pipeline
 from src.graph.db import GrafoDB
 
@@ -136,6 +138,112 @@ def test_executar_er_produtos_rollback_em_crash_interno(tmp_path: Path, monkeypa
     assert len(logs) == 1
     d = json.loads(logs[0].read_text(encoding="utf-8"))
     assert d["estagio"] == "er_produtos"
+
+
+# ---------------------------------------------------------------------------
+# Sprint INFRA-PIPELINE-TX-RESTORE-AUTOMATICO-2026-05-15: try/except global
+# em `executar()` dispara restore automático do backup pré-pipeline +
+# log estruturado quando estágio interno crasha catastroficamente.
+# ---------------------------------------------------------------------------
+
+
+def test_executar_dispara_restore_em_crash_e_re_raise(
+    tmp_path: Path, monkeypatch
+):
+    """Pipeline crasha mid-execução → restore automático chamado + exception re-raised."""
+    monkeypatch.setattr(pipeline, "RAIZ", tmp_path)
+    monkeypatch.setattr(pipeline, "DIR_BACKUP_GRAFO", tmp_path / "_backup")
+
+    # Fake backup retornando path com timestamp determinístico:
+    backup_destino = (
+        tmp_path / "_backup" / f"{pipeline.PREFIXO_BACKUP_GRAFO}2026-05-15_120000.sqlite"
+    )
+    monkeypatch.setattr(pipeline, "_executar_backup_grafo", lambda: backup_destino)
+
+    # Fake corpo crashando após setar _ESTAGIO_ATUAL:
+    def fake_corpo(mes, processar_tudo):
+        pipeline._ESTAGIO_ATUAL = "stage_simulado"
+        raise RuntimeError("crash sintético")
+
+    monkeypatch.setattr(pipeline, "_executar_corpo_pipeline", fake_corpo)
+
+    restore_calls: list[str] = []
+
+    def fake_restore(ts, *args, **kwargs):
+        restore_calls.append(ts)
+        return 0
+
+    monkeypatch.setattr(pipeline, "_restaurar_grafo_de_backup", fake_restore)
+
+    with pytest.raises(RuntimeError, match="crash sintético"):
+        pipeline.executar()
+
+    # Restore foi chamado com o timestamp embutido no nome do backup:
+    assert restore_calls == ["2026-05-15_120000"]
+
+    # Log estruturado registrou o estágio correto:
+    logs = list((tmp_path / "logs").glob("pipeline_falha_*.json"))
+    assert len(logs) == 1
+    d = json.loads(logs[0].read_text(encoding="utf-8"))
+    assert d["estagio"] == "stage_simulado"
+
+
+def test_executar_sem_backup_re_raise_sem_corromper(tmp_path: Path, monkeypatch):
+    """Crash em primeira run (sem backup pré-execução) re-raise sem restore."""
+    monkeypatch.setattr(pipeline, "RAIZ", tmp_path)
+    monkeypatch.setattr(pipeline, "DIR_BACKUP_GRAFO", tmp_path / "_backup")
+
+    monkeypatch.setattr(pipeline, "_executar_backup_grafo", lambda: None)
+
+    def fake_corpo(mes, processar_tudo):
+        pipeline._ESTAGIO_ATUAL = "primeira_run_crash"
+        raise ValueError("forçar")
+
+    monkeypatch.setattr(pipeline, "_executar_corpo_pipeline", fake_corpo)
+
+    restore_called: list[str] = []
+    monkeypatch.setattr(
+        pipeline,
+        "_restaurar_grafo_de_backup",
+        lambda ts, *args, **kwargs: restore_called.append(ts) or 0,
+    )
+
+    with pytest.raises(ValueError, match="forçar"):
+        pipeline.executar()
+
+    # Sem backup → restore NÃO foi chamado:
+    assert restore_called == []
+    # Log estruturado ainda assim foi gravado:
+    logs = list((tmp_path / "logs").glob("pipeline_falha_*.json"))
+    assert len(logs) == 1
+
+
+def test_executar_restore_falha_nao_suprime_excecao_original(
+    tmp_path: Path, monkeypatch
+):
+    """Se o próprio restore crashar, a exceção original do estágio
+    ainda é re-raised (não troca-se um crash pelo outro)."""
+    monkeypatch.setattr(pipeline, "RAIZ", tmp_path)
+    monkeypatch.setattr(pipeline, "DIR_BACKUP_GRAFO", tmp_path / "_backup")
+
+    backup_destino = (
+        tmp_path / "_backup" / f"{pipeline.PREFIXO_BACKUP_GRAFO}2026-05-15_120000.sqlite"
+    )
+    monkeypatch.setattr(pipeline, "_executar_backup_grafo", lambda: backup_destino)
+
+    def fake_corpo(mes, processar_tudo):
+        pipeline._ESTAGIO_ATUAL = "stage_x"
+        raise RuntimeError("erro ORIGINAL do estágio")
+
+    monkeypatch.setattr(pipeline, "_executar_corpo_pipeline", fake_corpo)
+
+    def fake_restore_falha(ts, *args, **kwargs):
+        raise OSError("erro do restore (não deve mascarar o original)")
+
+    monkeypatch.setattr(pipeline, "_restaurar_grafo_de_backup", fake_restore_falha)
+
+    with pytest.raises(RuntimeError, match="erro ORIGINAL"):
+        pipeline.executar()
 
 
 # "Comprometer um pedaço por vez é poder voltar atrás sem perder o resto."

@@ -1,8 +1,8 @@
 ---
 id: INFRA-PIPELINE-TX-RESTORE-AUTOMATICO
 titulo: Restore automático do backup em crash mid-pipeline (complemento à transacionalidade)
-status: backlog
-concluida_em: null
+status: concluída
+concluida_em: 2026-05-15
 prioridade: P0
 data_criacao: 2026-05-15
 fase: PRODUCAO_READY
