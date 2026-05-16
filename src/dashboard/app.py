@@ -62,6 +62,7 @@ from src.dashboard.paginas import (  # noqa: E402
     metas,
     pagamentos,
     projecoes,
+    propostas_pendentes,
     revisor,
     skills_d7,
     styleguide,
@@ -145,7 +146,9 @@ ABAS_POR_CLUSTER: dict[str, list[str]] = {
     # ``paginas/styleguide.py``; dispatcher abaixo monta as abas reais.
     # Sprint UX-DASH-GRADUACAO-TIPOS (2026-05-15) adiciona "Graduação"
     # consumindo data/output/graduacao_tipos.json.
-    "Sistema": ["Skills D7", "Styleguide", "Graduação"],
+    # Sprint META-PROPOSTAS-DASHBOARD (2026-05-15) adiciona "Propostas"
+    # listando .md pendentes em docs/propostas/<categoria>/.
+    "Sistema": ["Skills D7", "Styleguide", "Graduação", "Propostas"],
 }
 
 # Sprint UX-RD-03: mapa cluster -> sprint que vai habilitar suas páginas.
@@ -480,11 +483,15 @@ def main() -> None:
         # TABS-CLUSTER-CLEANUP: dispatcher direto.
         # UX-DASH-GRADUACAO-TIPOS (2026-05-15): aba "Graduação" mostra
         # tabela viva dos 23 tipos canônicos + KPIs + botão snapshot.
+        # META-PROPOSTAS-DASHBOARD (2026-05-15): aba "Propostas" lista
+        # propostas .md pendentes em docs/propostas/<categoria>/.
         aba_sis = aba_requerida_topbar or "Skills D7"
         if aba_sis == "Styleguide":
             styleguide.renderizar(dados, periodo, pessoa, ctx)
         elif aba_sis == "Graduação":
             graduacao_tipos.renderizar(dados, periodo, pessoa, ctx)
+        elif aba_sis == "Propostas":
+            propostas_pendentes.renderizar(dados, periodo, pessoa, ctx)
         else:
             skills_d7.renderizar(dados, periodo, pessoa, ctx)
 

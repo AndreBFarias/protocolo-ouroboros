@@ -109,6 +109,10 @@ MAPA_ABA_PARA_CLUSTER: dict[str, str] = {
     # Sprint UX-DASH-GRADUACAO-TIPOS (2026-05-15): aba "Graduação" mostra
     # tabela viva dos 23 tipos canônicos. N-para-N com app.ABAS_POR_CLUSTER.
     "Graduação": "Sistema",
+    # Sprint META-PROPOSTAS-DASHBOARD (2026-05-15): aba "Propostas" lista
+    # .md pendentes em docs/propostas/<categoria>/. N-para-N com
+    # app.ABAS_POR_CLUSTER["Sistema"].
+    "Propostas": "Sistema",
 }
 
 # Sprint UX-125: tabs do cluster Home com nome igual a cluster próprio.

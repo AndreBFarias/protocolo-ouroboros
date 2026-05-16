@@ -104,6 +104,9 @@ class TestContratosCanonicos:
             # UX-DASH-GRADUACAO-TIPOS (2026-05-15): aba Graduação no Sistema
             # mostra tabela viva dos 23 tipos canônicos do YAML.
             "Graduação",
+            # META-PROPOSTAS-DASHBOARD (2026-05-15): aba Propostas no
+            # Sistema lista .md pendentes em docs/propostas/<categoria>/.
+            "Propostas",
             # UX-RD-17: 10 abas em Bem-estar com nome canônico curto.
             "Diário",
             "Eventos",
