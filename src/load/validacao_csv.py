@@ -149,9 +149,7 @@ def ler_csv(caminho_csv: Path | None = None) -> list[LinhaValidacao]:
             try:
                 linhas.append(LinhaValidacao(**kwargs))
             except TypeError as erro:
-                logger.warning(
-                    "linha invalida no CSV ignorada (%s): %s", caminho_csv.name, erro
-                )
+                logger.warning("linha invalida no CSV ignorada (%s): %s", caminho_csv.name, erro)
     return linhas
 
 
@@ -199,9 +197,7 @@ def gravar_csv(linhas: list[LinhaValidacao], caminho_csv: Path | None = None) ->
     return caminho_csv
 
 
-def _mesclar_preservando_humano(
-    existente: LinhaValidacao, nova: LinhaValidacao
-) -> LinhaValidacao:
+def _mesclar_preservando_humano(existente: LinhaValidacao, nova: LinhaValidacao) -> LinhaValidacao:
     """Mescla linha nova sobre existente, preservando valor/status/obs humanos.
 
     Atualiza ``valor_etl`` e ``status_etl`` se a nova traz valores. Atualiza
@@ -224,9 +220,7 @@ def _mesclar_preservando_humano(
     )
 
 
-def upsert_linhas(
-    novas: list[LinhaValidacao], caminho_csv: Path | None = None
-) -> Path:
+def upsert_linhas(novas: list[LinhaValidacao], caminho_csv: Path | None = None) -> Path:
     """Insere ou atualiza linhas via chave (sha8, campo). Preserva trabalho humano.
 
     Retorna o caminho do CSV escrito.

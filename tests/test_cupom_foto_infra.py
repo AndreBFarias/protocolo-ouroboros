@@ -240,9 +240,9 @@ class TestIngerirCupomFoto:
             n_item = con.execute("SELECT COUNT(*) FROM node WHERE tipo='item'").fetchone()[0]
             n_forn = con.execute("SELECT COUNT(*) FROM node WHERE tipo='fornecedor'").fetchone()[0]
             n_per = con.execute("SELECT COUNT(*) FROM node WHERE tipo='periodo'").fetchone()[0]
-            n_contem = con.execute(
-                "SELECT COUNT(*) FROM edge WHERE tipo='contem_item'"
-            ).fetchone()[0]
+            n_contem = con.execute("SELECT COUNT(*) FROM edge WHERE tipo='contem_item'").fetchone()[
+                0
+            ]
             n_forn_edge = con.execute(
                 "SELECT COUNT(*) FROM edge WHERE tipo='fornecido_por'"
             ).fetchone()[0]
@@ -265,9 +265,7 @@ class TestIngerirCupomFoto:
         ingerir_cupom_foto(grafo_temp, payload)
         con = sqlite3.connect(grafo_temp.caminho)
         try:
-            row = con.execute(
-                "SELECT nome_canonico FROM node WHERE tipo='documento'"
-            ).fetchone()
+            row = con.execute("SELECT nome_canonico FROM node WHERE tipo='documento'").fetchone()
         finally:
             con.close()
         # GrafoDB.upsert_node uppercase nome_canonico (consistencia entre buscas).
@@ -282,9 +280,9 @@ class TestIngerirCupomFoto:
         con = sqlite3.connect(grafo_temp.caminho)
         try:
             n_doc = con.execute("SELECT COUNT(*) FROM node WHERE tipo='documento'").fetchone()[0]
-            n_contem = con.execute(
-                "SELECT COUNT(*) FROM edge WHERE tipo='contem_item'"
-            ).fetchone()[0]
+            n_contem = con.execute("SELECT COUNT(*) FROM edge WHERE tipo='contem_item'").fetchone()[
+                0
+            ]
         finally:
             con.close()
         assert n_doc == 1
@@ -324,9 +322,7 @@ class TestIngerirCupomFoto:
         ingerir_cupom_foto(grafo_temp, payload)
         con = sqlite3.connect(grafo_temp.caminho)
         try:
-            rows = con.execute(
-                "SELECT nome_canonico FROM node WHERE tipo='item'"
-            ).fetchall()
+            rows = con.execute("SELECT nome_canonico FROM node WHERE tipo='item'").fetchall()
         finally:
             con.close()
         nomes = [r[0] for r in rows]
@@ -340,9 +336,7 @@ class TestIngerirCupomFoto:
         ingerir_cupom_foto(grafo_temp, payload)
         con = sqlite3.connect(grafo_temp.caminho)
         try:
-            row = con.execute(
-                "SELECT metadata FROM node WHERE tipo='documento'"
-            ).fetchone()
+            row = con.execute("SELECT metadata FROM node WHERE tipo='documento'").fetchone()
         finally:
             con.close()
         meta = json.loads(row[0])

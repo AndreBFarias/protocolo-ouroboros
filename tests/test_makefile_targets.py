@@ -39,9 +39,7 @@ class TestHelpRegistraNovosTargets:
     @pytest.fixture(scope="class")
     def saida_help(self) -> str:
         resultado = _make("help")
-        assert resultado.returncode == 0, (
-            f"`make help` falhou: stderr={resultado.stderr!r}"
-        )
+        assert resultado.returncode == 0, f"`make help` falhou: stderr={resultado.stderr!r}"
         return resultado.stdout
 
     @pytest.mark.parametrize(
@@ -60,9 +58,7 @@ class TestTargetGraduados:
 
     def test_graduados_exit_zero(self) -> None:
         r = _make("graduados")
-        assert r.returncode == 0, (
-            f"`make graduados` retornou {r.returncode}. stderr={r.stderr!r}"
-        )
+        assert r.returncode == 0, f"`make graduados` retornou {r.returncode}. stderr={r.stderr!r}"
         # Âncora canônica: dossie_tipo.py imprime quantidade de tipos canônicos.
         assert "Tipos canonicos" in r.stdout or "tipos" in r.stdout.lower(), (
             f"Saída inesperada de `make graduados`: {r.stdout!r}"
@@ -74,9 +70,7 @@ class TestTargetAudit:
 
     def test_audit_fallback_graceful(self) -> None:
         r = _make("audit")
-        assert r.returncode == 0, (
-            f"`make audit` retornou {r.returncode}. stderr={r.stderr!r}"
-        )
+        assert r.returncode == 0, f"`make audit` retornou {r.returncode}. stderr={r.stderr!r}"
         script_metricas = _RAIZ / "scripts" / "gerar_metricas_prontidao.py"
         if not script_metricas.exists():
             assert "ainda não materializada" in r.stdout or "pendentes" in r.stdout, (
@@ -90,8 +84,7 @@ class TestTargetSpec:
     def test_spec_sem_nome_falha_com_exit_1(self) -> None:
         r = _make("spec")
         assert r.returncode != 0, (
-            "`make spec` sem NOME deveria falhar; "
-            "exit foi 0 — fail-safe quebrado."
+            "`make spec` sem NOME deveria falhar; exit foi 0 — fail-safe quebrado."
         )
         assert "NOME" in r.stdout or "NOME" in r.stderr
 
@@ -100,9 +93,7 @@ class TestTargetSpec:
         nome_unico = "PYTEST-MAKEFILE-TARGETS-FIXTURE"
         r = _make("spec", f"NOME={nome_unico}")
         try:
-            assert r.returncode == 0, (
-                f"`make spec NOME={nome_unico}` falhou. stderr={r.stderr!r}"
-            )
+            assert r.returncode == 0, f"`make spec NOME={nome_unico}` falhou. stderr={r.stderr!r}"
             # Stdout contém o caminho absoluto do arquivo criado.
             caminho_str = r.stdout.strip().splitlines()[-1]
             caminho = Path(caminho_str)
@@ -111,15 +102,11 @@ class TestTargetSpec:
                 f"Arquivo deve viver em docs/sprints/backlog/, está em {caminho.parent}"
             )
             conteudo = caminho.read_text(encoding="utf-8")
-            assert f"id: {nome_unico}" in conteudo, (
-                "Frontmatter não substituiu placeholder do ID."
-            )
+            assert f"id: {nome_unico}" in conteudo, "Frontmatter não substituiu placeholder do ID."
             assert "status: backlog" in conteudo
         finally:
             # Cleanup determinístico mesmo se assertions falharem.
-            for p in (_RAIZ / "docs" / "sprints" / "backlog").glob(
-                f"sprint_{nome_unico}_*.md"
-            ):
+            for p in (_RAIZ / "docs" / "sprints" / "backlog").glob(f"sprint_{nome_unico}_*.md"):
                 p.unlink()
 
 
@@ -148,14 +135,11 @@ class TestTargetPropostas:
 
     def test_propostas_exit_zero(self) -> None:
         r = _make("propostas")
-        assert r.returncode == 0, (
-            f"`make propostas` retornou {r.returncode}. stderr={r.stderr!r}"
-        )
+        assert r.returncode == 0, f"`make propostas` retornou {r.returncode}. stderr={r.stderr!r}"
         # Aceita dois mundos: zero pendentes ou N pendentes.
-        assert (
-            "Nenhuma proposta pendente." in r.stdout
-            or "propostas pendentes:" in r.stdout
-        ), f"Saída inesperada de `make propostas`: {r.stdout!r}"
+        assert "Nenhuma proposta pendente." in r.stdout or "propostas pendentes:" in r.stdout, (
+            f"Saída inesperada de `make propostas`: {r.stdout!r}"
+        )
 
     def test_propostas_ignora_obsoletas(self) -> None:
         """Propostas em `_obsoletas/` ou `_rejeitadas/` não devem aparecer."""

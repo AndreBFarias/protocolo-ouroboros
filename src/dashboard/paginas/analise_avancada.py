@@ -147,9 +147,7 @@ def calcular_kpis_fluxo(df: pd.DataFrame) -> dict[str, float]:
         # ``Receita`` (que seria contar rendimento como aporte).
         cat_series = df["categoria"].astype(str)
         padrao_inv = r"investimento|aplica[çc][ãa]o|aporte|cdb|rdb|tesouro"
-        eh_investimento = cat_series.str.contains(
-            padrao_inv, case=False, na=False, regex=True
-        )
+        eh_investimento = cat_series.str.contains(padrao_inv, case=False, na=False, regex=True)
         eh_saida = df["tipo"].isin(["Despesa", "Transferência Interna"])
         investido = abs(float(df[eh_saida & eh_investimento]["valor"].sum()))
     else:
@@ -186,10 +184,7 @@ def preparar_dados_sankey(df: pd.DataFrame, top_n: int = 8) -> dict:
 
     # Top categorias
     por_categoria = (
-        df_gastos.groupby("categoria")["valor_abs"]
-        .sum()
-        .sort_values(ascending=False)
-        .head(top_n)
+        df_gastos.groupby("categoria")["valor_abs"].sum().sort_values(ascending=False).head(top_n)
     )
     if por_categoria.empty:
         return {}
@@ -238,15 +233,11 @@ def preparar_dados_sankey(df: pd.DataFrame, top_n: int = 8) -> dict:
         source.append(idx_cat[cat])
         target.append(idx_class[cls])
         value.append(float(row["valor_abs"]))
-        cores_links.append(
-            rgba_cor(MAPA_CLASSIFICACAO_COR.get(str(cls), CORES["texto_sec"]), 0.3)
-        )
+        cores_links.append(rgba_cor(MAPA_CLASSIFICACAO_COR.get(str(cls), CORES["texto_sec"]), 0.3))
 
     # Aresta 2: classificação -> pessoa
     if pessoas:
-        class_pessoa = (
-            df_top.groupby(["classificacao", "quem"])["valor_abs"].sum().reset_index()
-        )
+        class_pessoa = df_top.groupby(["classificacao", "quem"])["valor_abs"].sum().reset_index()
         for _, row in class_pessoa.iterrows():
             cls = row["classificacao"]
             p = row["quem"]
@@ -285,9 +276,7 @@ def preparar_dados_comparativo(df: pd.DataFrame) -> pd.DataFrame:
     if df_validos.empty:
         return pd.DataFrame(columns=["mes_ref", *METRICAS_COMPARATIVO])
 
-    receita_por_mes = (
-        df_validos[df_validos["tipo"] == "Receita"].groupby("mes_ref")["valor"].sum()
-    )
+    receita_por_mes = df_validos[df_validos["tipo"] == "Receita"].groupby("mes_ref")["valor"].sum()
     despesa_por_mes = (
         df_validos[df_validos["tipo"].isin(["Despesa", "Imposto"])]
         .groupby("mes_ref")["valor"]
@@ -459,13 +448,10 @@ def _renderizar_aba_fluxo(
     # do min-width interno dos wrappers Streamlit. Grid ``1fr 1fr 1fr 1fr``
     # espelha o mockup 12-analise.html (.kpi-row).
     cards_html = "".join(
-        _kpi_card_html(label, valor, delta_txt, cor)
-        for label, valor, delta_txt, cor in cards
+        _kpi_card_html(label, valor, delta_txt, cor) for label, valor, delta_txt, cor in cards
     )
     st.markdown(
-        minificar(
-            f'<div class="analise-kpi-row">{cards_html}</div>'
-        ),
+        minificar(f'<div class="analise-kpi-row">{cards_html}</div>'),
         unsafe_allow_html=True,
     )
 
@@ -521,8 +507,7 @@ def _renderizar_sankey_inline(df: pd.DataFrame) -> None:
                     value=dados_sankey["value"],
                     color=dados_sankey["link_colors"],
                     hovertemplate=(
-                        "%{source.label} -> %{target.label}<br>"
-                        "R$ %{value:,.2f}<extra></extra>"
+                        "%{source.label} -> %{target.label}<br>R$ %{value:,.2f}<extra></extra>"
                     ),
                 ),
                 # UX-RD-13 / UX-03: textfont explícito garante labels visíveis
@@ -577,9 +562,7 @@ def _renderizar_aba_comparativo(df: pd.DataFrame) -> None:
                 mode="lines+markers",
                 line=dict(color=cores_metricas[metrica], width=2),
                 marker=dict(size=7),
-                hovertemplate=(
-                    f"{metrica}<br>Mês: %{{x}}<br>R$ %{{y:,.2f}}<extra></extra>"
-                ),
+                hovertemplate=(f"{metrica}<br>Mês: %{{x}}<br>R$ %{{y:,.2f}}<extra></extra>"),
             )
         )
 
@@ -592,9 +575,7 @@ def _renderizar_aba_comparativo(df: pd.DataFrame) -> None:
             line=dict(color=cores_metricas["% Poupança"], width=2, dash="dot"),
             marker=dict(size=6, symbol="diamond"),
             yaxis="y2",
-            hovertemplate=(
-                "% Poupança<br>Mês: %{x}<br>%{y:.1f}%<extra></extra>"
-            ),
+            hovertemplate=("% Poupança<br>Mês: %{x}<br>%{y:.1f}%<extra></extra>"),
         )
     )
 
@@ -663,9 +644,7 @@ def _renderizar_aba_padroes(df: pd.DataFrame) -> None:
             colorscale=escala_cores,
             zmin=0,
             hovertemplate=(
-                "Semana %{x}<br>%{y}<br>"
-                "R$ %{z:,.2f}<br>"
-                "Mês: %{customdata}<extra></extra>"
+                "Semana %{x}<br>%{y}<br>R$ %{z:,.2f}<br>Mês: %{customdata}<extra></extra>"
             ),
             colorbar=dict(
                 title=dict(text="R$", font=dict(size=FONTE_MINIMA)),
@@ -743,9 +722,7 @@ def _delta_periodo_anterior(df: pd.DataFrame, periodo_atual: str) -> dict:
     return {
         "delta_entradas_pct": _pct(ent_atual, ent_ant),
         "delta_saidas_pct": _pct(sai_atual, sai_ant),
-        "delta_saldo_pct": (
-            _pct(saldo_atual, saldo_ant) if saldo_ant != 0 else 0.0
-        ),
+        "delta_saldo_pct": (_pct(saldo_atual, saldo_ant) if saldo_ant != 0 else 0.0),
         "mes_anterior": ant,
     }
 
@@ -776,14 +753,10 @@ def _gerar_insights(df: pd.DataFrame) -> list[tuple[str, str, str]]:
             mes_ant = meses[-2]
             for cat in df["categoria"].dropna().unique():
                 v_atual = abs(
-                    df[(df["mes_ref"] == mes_atual) & (df["categoria"] == cat)][
-                        "valor"
-                    ].sum()
+                    df[(df["mes_ref"] == mes_atual) & (df["categoria"] == cat)]["valor"].sum()
                 )
                 v_ant = abs(
-                    df[(df["mes_ref"] == mes_ant) & (df["categoria"] == cat)][
-                        "valor"
-                    ].sum()
+                    df[(df["mes_ref"] == mes_ant) & (df["categoria"] == cat)]["valor"].sum()
                 )
                 if v_ant > 0:
                     delta = (v_atual - v_ant) / v_ant * 100
@@ -818,20 +791,10 @@ def _gerar_insights(df: pd.DataFrame) -> list[tuple[str, str, str]]:
         meses_recentes = sorted(df["mes_ref"].dropna().unique())[-6:]
         df_recente = df[df["mes_ref"].isin(meses_recentes) & (df["valor"] < 0)]
         if not df_recente.empty:
-            contagem = (
-                df_recente.groupby("local")["mes_ref"]
-                .nunique()
-                .sort_values(ascending=False)
-            )
+            contagem = df_recente.groupby("local")["mes_ref"].nunique().sort_values(ascending=False)
             for local, n_meses in contagem.items():
-                if (
-                    n_meses >= 4
-                    and isinstance(local, str)
-                    and local.strip()
-                ):
-                    valor_medio = abs(
-                        df_recente[df_recente["local"] == local]["valor"].mean()
-                    )
+                if n_meses >= 4 and isinstance(local, str) and local.strip():
+                    valor_medio = abs(df_recente[df_recente["local"] == local]["valor"].mean())
                     insights.append(
                         (
                             "descoberta",
@@ -915,8 +878,7 @@ def _renderizar_aba_pagamentos_cruzados(df: pd.DataFrame) -> None:
         st.markdown(callout_html("warning", alerta), unsafe_allow_html=True)
 
     cruzados = df[
-        df["pessoa_devedora"].notna()
-        & (df["pessoa_pagadora"] != df["pessoa_devedora"])
+        df["pessoa_devedora"].notna() & (df["pessoa_pagadora"] != df["pessoa_devedora"])
     ].copy()
 
     if cruzados.empty:
@@ -931,7 +893,8 @@ def _renderizar_aba_pagamentos_cruzados(df: pd.DataFrame) -> None:
         return
 
     colunas_visiveis = [
-        c for c in (
+        c
+        for c in (
             "data",
             "valor",
             "local",
@@ -957,16 +920,27 @@ def renderizar(
 ) -> None:
     """Renderiza página Análise (UX-RD-12 + UX-T-12)."""
     from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
-    renderizar_grupo_acoes([
-        {"label": "Categorias", "glyph": "list",
-         "href": "?cluster=Análise&tab=Categorias",
-         "title": "Ir para regras de categorias"},
-        {"label": "Exportar relatório", "primary": True, "glyph": "download",
-         "title": "Gerar PDF do relatório"},
-    ])
+
+    renderizar_grupo_acoes(
+        [
+            {
+                "label": "Categorias",
+                "glyph": "list",
+                "href": "?cluster=Análise&tab=Categorias",
+                "title": "Ir para regras de categorias",
+            },
+            {
+                "label": "Exportar relatório",
+                "primary": True,
+                "glyph": "download",
+                "title": "Gerar PDF do relatório",
+            },
+        ]
+    )
 
     # UX-U-03: page-header canônico via helper.
     from src.dashboard.componentes.page_header import renderizar_page_header
+
     st.markdown(
         renderizar_page_header(
             titulo="ANÁLISE",
@@ -1023,9 +997,7 @@ def renderizar(
     )
 
     with aba_fluxo:
-        _renderizar_aba_fluxo(
-            extrato_periodo, delta=delta_kpis, insights=insights_lista
-        )
+        _renderizar_aba_fluxo(extrato_periodo, delta=delta_kpis, insights=insights_lista)
 
     with aba_comparativo:
         # Comparativo usa série histórica completa (não recortada por período)

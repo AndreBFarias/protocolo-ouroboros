@@ -99,12 +99,18 @@ def renderizar(
 ) -> None:
     """Ponto de entrada da página Catalogação (UX-T-07)."""
     from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
-    renderizar_grupo_acoes([
-        {"label": "Reprocessar", "glyph": "refresh",
-         "title": "Re-extrair documentos"},
-        {"label": "Adicionar tipo", "primary": True, "glyph": "plus",
-         "title": "Cadastrar novo tipo de documento"},
-    ])
+
+    renderizar_grupo_acoes(
+        [
+            {"label": "Reprocessar", "glyph": "refresh", "title": "Re-extrair documentos"},
+            {
+                "label": "Adicionar tipo",
+                "primary": True,
+                "glyph": "plus",
+                "title": "Cadastrar novo tipo de documento",
+            },
+        ]
+    )
 
     _ = dados, periodo, pessoa, ctx
 
@@ -431,9 +437,9 @@ def _renderizar_grid_thumbs(docs: pd.DataFrame) -> None:
 
     with col_facetas:
         st.markdown(_facet_card_html("Tipo", contagem_tipo), unsafe_allow_html=True)
-        tipos_ord = ["(todos)"] + [k for k, _ in sorted(
-            contagem_tipo.items(), key=lambda kv: kv[1], reverse=True
-        )]
+        tipos_ord = ["(todos)"] + [
+            k for k, _ in sorted(contagem_tipo.items(), key=lambda kv: kv[1], reverse=True)
+        ]
         tipo_sel = st.selectbox(
             "Tipo",
             tipos_ord,
@@ -445,9 +451,9 @@ def _renderizar_grid_thumbs(docs: pd.DataFrame) -> None:
             _facet_card_html("Período", contagem_periodo),
             unsafe_allow_html=True,
         )
-        periodos_ord = ["(todos)"] + [k for k, _ in sorted(
-            contagem_periodo.items(), key=lambda kv: kv[0], reverse=True
-        )]
+        periodos_ord = ["(todos)"] + [
+            k for k, _ in sorted(contagem_periodo.items(), key=lambda kv: kv[0], reverse=True)
+        ]
         periodo_sel = st.selectbox(
             "Período",
             periodos_ord,
@@ -459,9 +465,9 @@ def _renderizar_grid_thumbs(docs: pd.DataFrame) -> None:
             _facet_card_html("Fonte", contagem_fonte),
             unsafe_allow_html=True,
         )
-        fontes_ord = ["(todos)"] + [k for k, _ in sorted(
-            contagem_fonte.items(), key=lambda kv: kv[1], reverse=True
-        )]
+        fontes_ord = ["(todos)"] + [
+            k for k, _ in sorted(contagem_fonte.items(), key=lambda kv: kv[1], reverse=True)
+        ]
         fonte_sel = st.selectbox(
             "Fonte",
             fontes_ord,
@@ -532,9 +538,7 @@ def _renderizar_grid_thumbs(docs: pd.DataFrame) -> None:
                     key="ux_v33_grid_next",
                     disabled=pagina >= max_paginas,
                 ):
-                    st.session_state["ux_v33_grid_pagina"] = min(
-                        max_paginas, pagina + 1
-                    )
+                    st.session_state["ux_v33_grid_pagina"] = min(max_paginas, pagina + 1)
                     st.rerun()
 
 
@@ -645,9 +649,7 @@ def _grid_cards_html(docs: pd.DataFrame) -> str:
         nome_full_esc = _html.escape(nome_full)
         data_e = str(row.get("data_emissao", "") or "--")
         tipo_tec = str(row.get("tipo_documento", "") or "")
-        tipo_label = (
-            ROTULOS_TIPO_DOCUMENTO.get(tipo_tec) or humanizar(tipo_tec) or "--"
-        )
+        tipo_label = ROTULOS_TIPO_DOCUMENTO.get(tipo_tec) or humanizar(tipo_tec) or "--"
         fonte = str(row.get("__fonte__", "") or "outros")
         # Glyph monoespaçado simples como placeholder visual; não
         # renderiza primeira página do PDF (não-objetivo da spec).
@@ -685,9 +687,7 @@ def _grid_cards_html(docs: pd.DataFrame) -> str:
             </div>
             """
         )
-    return minificar(
-        f"<div class='ouroboros-cat-grid'>{''.join(cards)}</div>"
-    )
+    return minificar(f"<div class='ouroboros-cat-grid'>{''.join(cards)}</div>")
 
 
 # ---------------------------------------------------------------------------
@@ -774,8 +774,7 @@ def _tabela_densa_html(docs: pd.DataFrame) -> str:
         # vinculada? Quando vinculado => marca verde (entidade unicode
         # CHECK MARK escapada via &#x2713;); senão traço.
         check = (
-            "<span style='color:var(--accent-green);'>"
-            "&#x2713;</span>"
+            "<span style='color:var(--accent-green);'>&#x2713;</span>"
             if status == "Vinculado"
             else "<span style='color:var(--text-muted);'>—</span>"
         )

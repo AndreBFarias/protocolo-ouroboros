@@ -5,6 +5,7 @@ Garante que ao rolar dentro da sidebar todos os 8 clusters ficam acessíveis,
 brand é SVG glyph ouroboros (FIX-07), busca placeholder tem kbd, e scrollbar
 respeita tokens canônicos do mockup.
 """
+
 from __future__ import annotations
 
 import subprocess
@@ -52,9 +53,20 @@ def test_sidebar_renderiza_oito_clusters(streamlit_url: str) -> None:
             '[data-testid="stSidebar"] .sidebar-cluster-header',
             "els => els.map(e => e.textContent.trim())",
         )
-        esperados = ["Inbox", "Home", "Finanças", "Documentos", "Análise", "Metas", "Bem-estar", "Sistema"]
+        esperados = [
+            "Inbox",
+            "Home",
+            "Finanças",
+            "Documentos",
+            "Análise",
+            "Metas",
+            "Bem-estar",
+            "Sistema",
+        ]
         for esp in esperados:
-            assert any(esp.lower() in c.lower() for c in clusters), f"cluster {esp} ausente; achei {clusters}"
+            assert any(esp.lower() in c.lower() for c in clusters), (
+                f"cluster {esp} ausente; achei {clusters}"
+            )
         b.close()
 
 
@@ -82,7 +94,9 @@ def test_sidebar_brand_eh_svg_ouroboros(streamlit_url: str) -> None:
         has_svg = page.evaluate(
             "!!document.querySelector('[data-testid=\"stSidebar\"] .sidebar-brand svg')"
         )
-        assert has_svg, "brand glyph SVG ausente; deve usar componentes/glyphs.py:glyph('ouroboros')"
+        assert has_svg, (
+            "brand glyph SVG ausente; deve usar componentes/glyphs.py:glyph('ouroboros')"
+        )
         b.close()
 
 
@@ -96,7 +110,9 @@ def test_sidebar_busca_placeholder_tem_kbd(streamlit_url: str) -> None:
         kbd_text = page.evaluate(
             "document.querySelector('[data-testid=\"stSidebar\"] .sidebar-search kbd')?.textContent"
         )
-        assert kbd_text and kbd_text.strip() == "/", f"kbd da busca deve mostrar /; achei {kbd_text!r}"
+        assert kbd_text and kbd_text.strip() == "/", (
+            f"kbd da busca deve mostrar /; achei {kbd_text!r}"
+        )
         b.close()
 
 
@@ -124,6 +140,7 @@ def test_sidebar_inbox_tem_badge(streamlit_url: str) -> None:
 def test_sidebar_scrollbar_canonica_aplicada(streamlit_url: str) -> None:
     """UX-U-01: regra CSS @import de scrollbar canônica está em tema_css.py."""
     from pathlib import Path
+
     css_text = Path("src/dashboard/tema_css.py").read_text(encoding="utf-8")
     # marcador da regra adicionada na U-01
     assert 'data-testid="stSidebar"' in css_text and "::-webkit-scrollbar" in css_text, (

@@ -217,8 +217,7 @@ def _calcular_paridade(df_arquivo: pd.DataFrame) -> float:
     if df_arquivo.empty:
         return 0.0
     iguais = sum(
-        1 for _, linha in df_arquivo.iterrows()
-        if _classificar_status_campo(linha) == "ok"
+        1 for _, linha in df_arquivo.iterrows() if _classificar_status_campo(linha) == "ok"
     )
     return iguais / len(df_arquivo) * 100
 
@@ -277,20 +276,19 @@ def _agrupar_por_arquivo(df: pd.DataFrame) -> pd.DataFrame:
             )
             if bool(divergencias.any()):
                 status_g = "conflito"
-            elif (
-                (grupo["valor_etl"].astype(str) != "").any()
-                or (grupo["valor_opus"].astype(str) != "").any()
-            ):
+            elif (grupo["valor_etl"].astype(str) != "").any() or (
+                grupo["valor_opus"].astype(str) != ""
+            ).any():
                 status_g = "extraido"
             else:
                 status_g = "aguardando"
 
         n_div = sum(
-            1 for _, linha in grupo.iterrows()
-            if _classificar_status_campo(linha) == "divergente"
+            1 for _, linha in grupo.iterrows() if _classificar_status_campo(linha) == "divergente"
         )
         n_uni = sum(
-            1 for _, linha in grupo.iterrows()
+            1
+            for _, linha in grupo.iterrows()
             if _classificar_status_campo(linha) in {"apenas_etl", "apenas_opus"}
         )
 
@@ -440,14 +438,12 @@ def _lista_arquivos_html(
                 <span>{fmt}</span>
                 <span class="lista-grupo-count">{len(arquivos)}</span>
               </div>
-              <div class="lista-grupo-body">{''.join(items_html)}</div>
+              <div class="lista-grupo-body">{"".join(items_html)}</div>
             </div>
             """
         )
 
-    return minificar(
-        '<div class="lista-arquivos">' + "".join(grupos_html) + "</div>"
-    )
+    return minificar('<div class="lista-arquivos">' + "".join(grupos_html) + "</div>")
 
 
 def _tabela_tripla_html(
@@ -566,7 +562,7 @@ def _tabela_tripla_html(
                 <th class="th-status">STATUS</th>
               </tr>
             </thead>
-            <tbody>{''.join(linhas_html)}</tbody>
+            <tbody>{"".join(linhas_html)}</tbody>
           </table>
         </div>
         """
@@ -629,9 +625,7 @@ def _form_validar_arquivo(
                 )
                 if ok:
                     atualizadas += 1
-            st.success(
-                f"{atualizadas} campo(s) marcado(s) como aprovado(s) por humano."
-            )
+            st.success(f"{atualizadas} campo(s) marcado(s) como aprovado(s) por humano.")
 
 
 # ---------------------------------------------------------------------------
@@ -647,12 +641,18 @@ def renderizar(
 ) -> None:
     """Entry point da aba Extração Tripla (UX-V-2.4)."""
     from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
-    renderizar_grupo_acoes([
-        {"label": "Baixar lote", "glyph": "download",
-         "title": "ZIP com 10 arquivos"},
-        {"label": "Salvar validações", "primary": True, "glyph": "validar",
-         "title": "Persistir flags humanas"},
-    ])
+
+    renderizar_grupo_acoes(
+        [
+            {"label": "Baixar lote", "glyph": "download", "title": "ZIP com 10 arquivos"},
+            {
+                "label": "Salvar validações",
+                "primary": True,
+                "glyph": "validar",
+                "title": "Persistir flags humanas",
+            },
+        ]
+    )
 
     del dados, mes_selecionado, pessoa, ctx
 
@@ -664,6 +664,7 @@ def renderizar(
 
     # UX-U-03: page-header canônico via helper.
     from src.dashboard.componentes.page_header import renderizar_page_header
+
     st.markdown(
         renderizar_page_header(
             titulo="EXTRAÇÃO TRIPLA",
@@ -706,9 +707,7 @@ def renderizar(
     df_grupos = _agrupar_por_arquivo(df)
 
     # Estado de seleção (default: primeiro arquivo)
-    arquivo_selecionado = st.session_state.get(
-        CHAVE_SESSION_ARQUIVO_SELECIONADO, None
-    )
+    arquivo_selecionado = st.session_state.get(CHAVE_SESSION_ARQUIVO_SELECIONADO, None)
     if not arquivo_selecionado and not df_grupos.empty:
         arquivo_selecionado = str(df_grupos.iloc[0]["caminho_relativo"])
         st.session_state[CHAVE_SESSION_ARQUIVO_SELECIONADO] = arquivo_selecionado
@@ -717,9 +716,7 @@ def renderizar(
     n_total = len(df_grupos)
     n_aprovado = int((df_grupos["status_humano"] == "aprovado").sum())
     n_revisao = max(0, n_total - n_aprovado)
-    media_paridade = (
-        float(df_grupos["paridade_pct"].mean()) if not df_grupos.empty else 0.0
-    )
+    media_paridade = float(df_grupos["paridade_pct"].mean()) if not df_grupos.empty else 0.0
     n_divergencias = int(df_grupos["n_divergencias"].sum())
     n_unilaterais = int(df_grupos["n_unilaterais"].sum())
 
@@ -766,11 +763,7 @@ def renderizar(
 
     with col_painel:
         df_arquivo = df[df["caminho_relativo"] == arquivo_selecionado]
-        sha8 = (
-            str(df_arquivo["sha8_arquivo"].iloc[0])
-            if not df_arquivo.empty
-            else ""
-        )
+        sha8 = str(df_arquivo["sha8_arquivo"].iloc[0]) if not df_arquivo.empty else ""
 
         st.markdown(
             _tabela_tripla_html(df_arquivo, extractor_versao=f"sha8 {sha8}"),

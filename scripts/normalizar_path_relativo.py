@@ -81,8 +81,7 @@ def normalizar(grafo_db: Path) -> dict[str, int]:
                 continue
             meta["arquivo_origem"] = ao_rel
             conn.execute(
-                "UPDATE node SET metadata = ?, updated_at = CURRENT_TIMESTAMP "
-                "WHERE id = ?",
+                "UPDATE node SET metadata = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
                 (json.dumps(meta, ensure_ascii=False), int(node_id)),
             )
             contagens["atualizados"] += 1

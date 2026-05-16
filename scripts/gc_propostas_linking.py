@@ -302,10 +302,7 @@ def imprimir_relatorio(
 def montar_parser() -> argparse.ArgumentParser:
     """Constrói argparse para a CLI."""
     parser = argparse.ArgumentParser(
-        description=(
-            "Garbage collection de propostas obsoletas em "
-            "docs/propostas/linking/."
-        ),
+        description=("Garbage collection de propostas obsoletas em docs/propostas/linking/."),
     )
     grupo = parser.add_mutually_exclusive_group()
     grupo.add_argument(

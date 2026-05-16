@@ -170,9 +170,7 @@ def _acao_reextrair() -> bool:
     no grafo. Util quando extratores ganharam campos novos.
     """
     cons = _console()
-    cons.print(
-        "[red]Reextracao em lote vai LIMPAR todos os nodes 'documento' do grafo.[/]"
-    )
+    cons.print("[red]Reextracao em lote vai LIMPAR todos os nodes 'documento' do grafo.[/]")
     cons.print("[dim]Use isto so se voce sabe o que esta fazendo.[/]")
     rc = _rodar_run_sh("--reextrair-tudo")
     return rc == 0
@@ -187,9 +185,7 @@ def _acao_auditoria_opus() -> bool:
     cancelada por stdin redirecionado em subprocess.
     """
     cons = _console()
-    cons.print(
-        "[red]ATENCAO: vai limpar nodes 'documento' do grafo e re-ingerir tudo.[/]"
-    )
+    cons.print("[red]ATENCAO: vai limpar nodes 'documento' do grafo e re-ingerir tudo.[/]")
     cons.print("[dim]Sprint 108 -- ordem: dedup -> migrar pessoa -> backfill -> reextrair[/]")
     confirma = _prompt("Confirma? (s/N)", choices=["s", "n", "S", "N"], default="n")
     if confirma.lower() != "s":

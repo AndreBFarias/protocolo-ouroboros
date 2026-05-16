@@ -470,6 +470,7 @@ def _gravar_last_sync(
     """
     import json
     from datetime import datetime
+
     try:
         override = os.environ.get("OUROBOROS_CACHE_DIR")
         if override:
@@ -510,6 +511,7 @@ def sincronizar_rico(
       (reduz ruído quando grafo tem muito fornecedor isolado).
     """
     import time as _time
+
     _inicio = _time.monotonic()
     grafo = grafo_path or caminho_padrao()
     report = SyncReport()

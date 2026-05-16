@@ -992,9 +992,7 @@ SPECS: list[dict] = [
             "75d 0.005; nfce: janela 5d 0.001 estrita; das: já tem 60d).\n"
             "5. Re-rodar linker e validar 80%+ vinculação por tipo."
         ),
-        "proof": (
-            "Após fix: das_parcsn 26%->=70%; boleto 0%->=80%; nfce 0%->=80%."
-        ),
+        "proof": ("Após fix: das_parcsn 26%->=70%; boleto 0%->=80%; nfce 0%->=80%."),
         "acceptance": [
             "Diagnóstico documentado por tipo.",
             "Config ajustada por tipo.",
@@ -1109,9 +1107,7 @@ SPECS: list[dict] = [
             "4. Relatório mensal com top-N gaps.\n"
             "5. Cache JSON para mobile (vault/.ouroboros/cache/gaps.json)."
         ),
-        "proof": (
-            "Corpus real → detecta >=10 gaps em transações > R$ 100 sem doc."
-        ),
+        "proof": ("Corpus real → detecta >=10 gaps em transações > R$ 100 sem doc."),
         "acceptance": [
             "Módulo + 8 testes.",
             "Aba dashboard.",

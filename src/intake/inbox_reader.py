@@ -541,9 +541,7 @@ def processar_fila(
 
     # Mescla com fila anterior preservando estado.
     fila_anterior = carregar_fila(destino)
-    estados_por_sha: dict[str, dict] = {
-        it["sha256"]: it for it in fila_anterior if "sha256" in it
-    }
+    estados_por_sha: dict[str, dict] = {it["sha256"]: it for it in fila_anterior if "sha256" in it}
 
     fundidos: list[dict] = []
     for novo in itens_novos:

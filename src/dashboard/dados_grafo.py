@@ -27,6 +27,7 @@ CAMINHO_PROPOSTAS_LINKING: Path = (
     Path(__file__).resolve().parents[2] / "docs" / "propostas" / "linking"
 )
 
+
 def _caminho_grafo() -> Path:
     """Resolve CAMINHO_GRAFO honrando monkeypatch em ``src.dashboard.dados``.
 
@@ -50,7 +51,6 @@ def _caminho_propostas_linking() -> Path:
     if isinstance(valor, Path):
         return valor
     return CAMINHO_PROPOSTAS_LINKING
-
 
 
 @st.cache_data(ttl=300)
@@ -549,9 +549,7 @@ def carregar_drill_down_transacao(transacao_id: int) -> dict:
                     "descricao": meta_item.get("descricao")
                     or meta_item.get("nome")
                     or row_item["nome_canonico"],
-                    "quantidade": meta_item.get("quantidade")
-                    or meta_item.get("qtde")
-                    or 0,
+                    "quantidade": meta_item.get("quantidade") or meta_item.get("qtde") or 0,
                     "valor_unitario": meta_item.get("valor_unitario"),
                     "valor_total": meta_item.get("valor_total"),
                     "produto_canonico": meta_item.get("produto_canonico", ""),
@@ -587,8 +585,7 @@ def buscar_transacao_id_por_identificador(identificador: str) -> int | None:
     conn = sqlite3.connect(f"file:{cam_grafo}?mode=ro", uri=True)
     try:
         cur = conn.execute(
-            "SELECT id FROM node WHERE tipo='transacao' "
-            "AND nome_canonico LIKE ? LIMIT 1",
+            "SELECT id FROM node WHERE tipo='transacao' AND nome_canonico LIKE ? LIMIT 1",
             (f"{identificador}%",),
         )
         row = cur.fetchone()

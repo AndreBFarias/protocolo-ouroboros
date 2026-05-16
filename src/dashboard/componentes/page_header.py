@@ -20,6 +20,7 @@ Uso:
         unsafe_allow_html=True,
     )
 """
+
 from __future__ import annotations
 
 import html as _html
@@ -58,15 +59,9 @@ def renderizar_page_header(
         HTML pronto para ``st.markdown(..., unsafe_allow_html=True)``.
     """
     titulo_html = _html.escape(titulo)
-    subtitulo_html = (
-        f'<p class="page-subtitle">{_html.escape(subtitulo)}</p>'
-        if subtitulo
-        else ""
-    )
+    subtitulo_html = f'<p class="page-subtitle">{_html.escape(subtitulo)}</p>' if subtitulo else ""
     sprint_tag_html = (
-        f'<span class="sprint-tag">{_html.escape(sprint_tag)}</span>'
-        if sprint_tag
-        else ""
+        f'<span class="sprint-tag">{_html.escape(sprint_tag)}</span>' if sprint_tag else ""
     )
     pills_html = "".join(_renderizar_pill(p) for p in pills)
     page_meta_html = (

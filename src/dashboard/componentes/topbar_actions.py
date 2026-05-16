@@ -10,6 +10,7 @@ reseta o slot ao início de cada run para evitar leak entre páginas.
 
 Mockup-fonte: ``components.css:.topbar-actions`` e ``00-shell-navegacao.html``.
 """
+
 from __future__ import annotations
 
 import html as _html
@@ -50,32 +51,34 @@ def _renderizar_acao(acao: Acao) -> str:
         # não quebra renderização quando ID novo aparece em runtime).
         try:
             from src.dashboard.componentes.glyphs_canonicos import GLYPHS_CANONICOS
+
             if glyph_nome not in GLYPHS_CANONICOS:
                 import logging
+
                 logging.getLogger(__name__).warning(
                     "Glyph fora do catálogo canônico: %s. IDs válidos: %s",
-                    glyph_nome, sorted(GLYPHS_CANONICOS),
+                    glyph_nome,
+                    sorted(GLYPHS_CANONICOS),
                 )
         except Exception:
             pass  # noqa: BLE001 -- catalogo de glyphs eh opcional; warning ja foi tentado
         try:
             from src.dashboard.componentes.glyphs import glyph as _glyph
-            glyph_html = (
-                f'<span class="btn-glyph">{_glyph(glyph_nome, tamanho_px=14)}</span>'
-            )
+
+            glyph_html = f'<span class="btn-glyph">{_glyph(glyph_nome, tamanho_px=14)}</span>'
         except Exception:
             glyph_html = ""
     title_attr = ""
     if acao.get("title"):
         title_attr = f' title="{_html.escape(str(acao["title"]), quote=True)}"'
-    conteudo = f'{glyph_html}<span>{label}</span>'
+    conteudo = f"{glyph_html}<span>{label}</span>"
     if href:
         href_esc = _html.escape(str(href), quote=True)
         return (
             f'<a class="{classe}" href="{href_esc}"{title_attr} '
             'style="text-decoration:none;display:inline-flex;'
             'align-items:center;gap:6px;">'
-            f'{conteudo}</a>'
+            f"{conteudo}</a>"
         )
     return f'<button class="{classe}" type="button"{title_attr}>{conteudo}</button>'
 
@@ -97,6 +100,7 @@ def consumir_acoes_html() -> str:
     """Lê (sem resetar) o HTML das ações da topbar para esta run."""
     try:
         import streamlit as st
+
         return st.session_state.get("topbar_acoes_html", "")
     except Exception:
         return ""
@@ -106,6 +110,7 @@ def resetar_slot() -> None:
     """Reseta o slot. Chamado por ``main()`` no início de cada run."""
     try:
         import streamlit as st
+
         st.session_state["topbar_acoes_html"] = ""
     except Exception:
         pass  # noqa: BLE001 -- streamlit pode estar ausente em testes; no-op aceitavel

@@ -215,17 +215,8 @@ def aplicar_no_arquivo(conteudo_atual: str, bloco_novo: str) -> str:
     cabecalho = re.compile(r"^## Versao \+ saude geral.*?$", re.MULTILINE)
     match = cabecalho.search(conteudo_atual)
     if match:
-        insercao = (
-            "\n\n"
-            + MARKER_INICIO
-            + "\n"
-            + bloco_novo
-            + MARKER_FIM
-            + "\n"
-        )
-        return (
-            conteudo_atual[: match.end()] + insercao + conteudo_atual[match.end() :]
-        )
+        insercao = "\n\n" + MARKER_INICIO + "\n" + bloco_novo + MARKER_FIM + "\n"
+        return conteudo_atual[: match.end()] + insercao + conteudo_atual[match.end() :]
     # Sem cabeçalho: prepend ao fim
     return conteudo_atual + "\n\n" + MARKER_INICIO + "\n" + bloco_novo + MARKER_FIM + "\n"
 

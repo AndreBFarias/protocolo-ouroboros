@@ -109,9 +109,7 @@ def grafo_4way(tmp_path: Path) -> Path:
         ),
     )
     # Documento ligado a fornecedor sintetico
-    conn.execute(
-        "INSERT INTO edge (src_id, dst_id, tipo) VALUES (100, 101, 'fornecido_por')"
-    )
+    conn.execute("INSERT INTO edge (src_id, dst_id, tipo) VALUES (100, 101, 'fornecido_por')")
     conn.commit()
     conn.close()
     return destino
@@ -134,9 +132,7 @@ class TestMigrarSchema4Way:
         assert "valor_etl" in colunas
         assert "valor_opus" in colunas
 
-    def test_dado_existente_preservado_apos_migracao(
-        self, db_revisao_sem_grafo_real: Path
-    ) -> None:
+    def test_dado_existente_preservado_apos_migracao(self, db_revisao_sem_grafo_real: Path) -> None:
         revisor.garantir_schema(db_revisao_sem_grafo_real)
         marcacoes = revisor.carregar_marcacoes(db_revisao_sem_grafo_real)
         assert len(marcacoes) == 1
@@ -266,9 +262,7 @@ class TestPopularValorGrafoReal:
         )
         assert contagens["total"] == 0  # cedo retorna sem explodir
 
-    def test_idempotente_em_segunda_execucao(
-        self, tmp_path: Path, grafo_4way: Path
-    ) -> None:
+    def test_idempotente_em_segunda_execucao(self, tmp_path: Path, grafo_4way: Path) -> None:
         revisao_db = tmp_path / "rev.sqlite"
         revisor.salvar_marcacao(
             revisao_db,

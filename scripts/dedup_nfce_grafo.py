@@ -183,15 +183,10 @@ def dedup_grafo(
                     vencedor, perdedor, perdedor_meta = id_a, id_b, meta_b
                 else:
                     vencedor, perdedor, perdedor_meta = id_b, id_a, meta_a
-                motivo = (
-                    f"completude vencedor={max(comp_a, comp_b)} "
-                    f"perdedor={min(comp_a, comp_b)}"
-                )
+                motivo = f"completude vencedor={max(comp_a, comp_b)} perdedor={min(comp_a, comp_b)}"
                 fusoes.append((vencedor, perdedor, motivo))
                 if apply:
-                    arestas_redirecionadas += _fundir_par(
-                        db, vencedor, perdedor, perdedor_meta
-                    )
+                    arestas_redirecionadas += _fundir_par(db, vencedor, perdedor, perdedor_meta)
                 ja_perdedores.add(perdedor)
 
     depois = antes - len(fusoes) if apply else antes
@@ -244,9 +239,7 @@ def main() -> int:
 
     db = GrafoDB(caminho)
     try:
-        resultado = dedup_grafo(
-            db, limite_diff_chave=args.max_diff_chave, apply=args.apply
-        )
+        resultado = dedup_grafo(db, limite_diff_chave=args.max_diff_chave, apply=args.apply)
     finally:
         db._conn.close()  # noqa: SLF001
 

@@ -268,6 +268,7 @@ def _card_marcos_html(marcos: list[tuple[str, str, str]]) -> str:
     ``css/paginas/projecoes.css``. Mantém ``border-left:2px solid <hex>``
     inline para retrocompat com testes regressivos (UX-V-2.0).
     """
+
     def _li(nome: str, desc: str, cor: str) -> str:
         cor_hex = CORES.get(cor, CORES["destaque"])
         return (
@@ -300,9 +301,7 @@ def _card_cenario_html(
     ativo: bool = False,
 ) -> str:
     cor = CORES.get(cor_token, CORES["destaque"])
-    box_shadow = (
-        f"box-shadow:0 0 0 1px {cor};" if ativo else "box-shadow:none;"
-    )
+    box_shadow = f"box-shadow:0 0 0 1px {cor};" if ativo else "box-shadow:none;"
     return minificar(
         f"""
         <div style="background:{CORES["card_fundo"]};
@@ -531,12 +530,18 @@ def renderizar(
 ) -> None:
     """Renderiza a página de projeções financeiras (UX-RD-08 + UX-V-2.0)."""
     from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
-    renderizar_grupo_acoes([
-        {"label": "Comparar cenários", "glyph": "diff",
-         "title": "A/B/C lado a lado"},
-        {"label": "Salvar cenário", "primary": True, "glyph": "validar",
-         "title": "Persistir cenário ativo"},
-    ])
+
+    renderizar_grupo_acoes(
+        [
+            {"label": "Comparar cenários", "glyph": "diff", "title": "A/B/C lado a lado"},
+            {
+                "label": "Salvar cenário",
+                "primary": True,
+                "glyph": "validar",
+                "title": "Persistir cenário ativo",
+            },
+        ]
+    )
 
     # CSS dedicado da página (UX-V-2.0).
     st.markdown(minificar(carregar_css_pagina("projecoes")), unsafe_allow_html=True)
@@ -566,13 +571,9 @@ def renderizar(
     st.markdown(_page_header_html(saldo_inicial), unsafe_allow_html=True)
 
     # 2. Bloco de controles interativos (UX-V-2.0)
-    titulo_ctrl = (
-        "Simulador interativo · ajuste e recalcula em tempo real"
-    )
+    titulo_ctrl = "Simulador interativo · ajuste e recalcula em tempo real"
     st.markdown(
-        f'<div class="proj-controls-wrap">'
-        f'<p class="proj-controls-titulo">{titulo_ctrl}</p>'
-        f'</div>',
+        f'<div class="proj-controls-wrap"><p class="proj-controls-titulo">{titulo_ctrl}</p></div>',
         unsafe_allow_html=True,
     )
     col_a, col_t, col_h = st.columns([1, 1, 1])
@@ -626,8 +627,12 @@ def renderizar(
     # 3. KPI strip
     st.markdown(
         _kpi_strip_html(
-            inicial, aporte, realista_final, independencia_label,
-            horizonte_anos, taxa_real,
+            inicial,
+            aporte,
+            realista_final,
+            independencia_label,
+            horizonte_anos,
+            taxa_real,
         ),
         unsafe_allow_html=True,
     )
@@ -652,37 +657,43 @@ def renderizar(
                     grid-template-columns:repeat(3,1fr);
                     gap:16px;
                     margin:18px 0;">
-          {_card_cenario_html(
-            "cenário pessimista",
-            "CDI · Sem risco",
-            float(pess[-1]),
-            f"{taxa_pess * 100:.1f}% a.a.",
-            aporte_ano,
-            float(pess[-1]) - inicial - aporte_ano * horizonte_anos,
-            float(pess[-1]) / inicial if inicial > 0 else 0.0,
-            CENARIO_PESSIMISTA,
-          )}
-          {_card_cenario_html(
-            "cenário realista · ativo",
-            "Carteira balanceada",
-            realista_final,
-            f"{taxa_real * 100:.1f}% a.a.",
-            aporte_ano,
-            realista_final - inicial - aporte_ano * horizonte_anos,
-            realista_final / inicial if inicial > 0 else 0.0,
-            CENARIO_REALISTA,
-            ativo=True,
-          )}
-          {_card_cenario_html(
-            "cenário otimista",
-            "IBOV · Histórico",
-            float(otim[-1]),
-            f"{taxa_otim * 100:.1f}% a.a.",
-            aporte_ano,
-            float(otim[-1]) - inicial - aporte_ano * horizonte_anos,
-            float(otim[-1]) / inicial if inicial > 0 else 0.0,
-            CENARIO_OTIMISTA,
-          )}
+          {
+            _card_cenario_html(
+                "cenário pessimista",
+                "CDI · Sem risco",
+                float(pess[-1]),
+                f"{taxa_pess * 100:.1f}% a.a.",
+                aporte_ano,
+                float(pess[-1]) - inicial - aporte_ano * horizonte_anos,
+                float(pess[-1]) / inicial if inicial > 0 else 0.0,
+                CENARIO_PESSIMISTA,
+            )
+        }
+          {
+            _card_cenario_html(
+                "cenário realista · ativo",
+                "Carteira balanceada",
+                realista_final,
+                f"{taxa_real * 100:.1f}% a.a.",
+                aporte_ano,
+                realista_final - inicial - aporte_ano * horizonte_anos,
+                realista_final / inicial if inicial > 0 else 0.0,
+                CENARIO_REALISTA,
+                ativo=True,
+            )
+        }
+          {
+            _card_cenario_html(
+                "cenário otimista",
+                "IBOV · Histórico",
+                float(otim[-1]),
+                f"{taxa_otim * 100:.1f}% a.a.",
+                aporte_ano,
+                float(otim[-1]) - inicial - aporte_ano * horizonte_anos,
+                float(otim[-1]) / inicial if inicial > 0 else 0.0,
+                CENARIO_OTIMISTA,
+            )
+        }
         </div>
         """
     )
@@ -693,9 +704,7 @@ def renderizar(
     # Subtítulo de seção (substitui hero_titulo_html legado — 2026-05-06).
     # Hero é exclusivo do page-header canônico no topo da página.
     st.markdown(
-        subtitulo_secao_html(
-            "Simulação personalizada — slider de economia adicional (12 meses)."
-        ),
+        subtitulo_secao_html("Simulação personalizada — slider de economia adicional (12 meses)."),
         unsafe_allow_html=True,
     )
     # UX-V-FINAL-FIX defeito 6 (2026-05-08): slider parte de R$ 100

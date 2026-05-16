@@ -128,9 +128,7 @@ class ExtratorComprovantePixFoto(ExtratorBase):
         try:
             with GrafoDB(caminho_padrao()) as db:
                 db.criar_schema()
-                doc_id = ingerir_comprovante_pix_foto(
-                    db, payload, caminho_arquivo=self.caminho
-                )
+                doc_id = ingerir_comprovante_pix_foto(db, payload, caminho_arquivo=self.caminho)
             self.logger.info(
                 "comprovante PIX ingerido no grafo: doc_id=%s sha=%s",
                 doc_id,

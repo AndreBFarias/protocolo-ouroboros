@@ -160,9 +160,7 @@ class TestTituloSemPrefixoSprint:
 class TestChipDisparaBuscaPontaAPonta:
     """Sprint 59 acceptance #1: fluxo completo chip → input → busca."""
 
-    def test_injecao_via_session_state_dispara_busca(
-        self, grafo_minimo, monkeypatch, tmp_path
-    ):
+    def test_injecao_via_session_state_dispara_busca(self, grafo_minimo, monkeypatch, tmp_path):
         """Simula o chip: session_state['busca_termo_input'] = 'neoenergia'
         → renderiza página → resultados aparecem.
         """

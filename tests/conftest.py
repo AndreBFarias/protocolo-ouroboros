@@ -7,9 +7,7 @@ from typing import Any
 import pytest
 
 # Raiz da fixture sintetica usada por testes do cluster Mobile/Bem-estar.
-_FIXTURE_VAULT_SINTETICO = (
-    Path(__file__).resolve().parent / "fixtures" / "vault_sintetico"
-)
+_FIXTURE_VAULT_SINTETICO = Path(__file__).resolve().parent / "fixtures" / "vault_sintetico"
 
 
 @pytest.fixture(autouse=True, scope="session")

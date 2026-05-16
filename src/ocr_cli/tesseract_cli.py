@@ -14,6 +14,7 @@ Fluxo:
 Idioma padrão: ``por``. Tesseract-ocr-por já está instalado no sistema
 (verificado via ``tesseract --list-langs``).
 """
+
 from __future__ import annotations
 
 import logging
@@ -130,9 +131,7 @@ def extrair_com_confidence(
     return _parsear_tsv(proc.stdout, min_confidence_palavra)
 
 
-def _parsear_tsv(
-    tsv: str, min_confidence_palavra: int
-) -> tuple[str, float]:
+def _parsear_tsv(tsv: str, min_confidence_palavra: int) -> tuple[str, float]:
     """Parse manual do TSV do tesseract.
 
     Formato (12 colunas): level, page_num, block_num, par_num, line_num,
@@ -153,9 +152,7 @@ def _parsear_tsv(
         idx_conf = cabecalho.index("conf")
         idx_text = cabecalho.index("text")
     except ValueError as erro:
-        raise RuntimeError(
-            f"Formato TSV tesseract inesperado: cabeçalho {cabecalho}"
-        ) from erro
+        raise RuntimeError(f"Formato TSV tesseract inesperado: cabeçalho {cabecalho}") from erro
 
     confidences: list[int] = []
     texto_linhas: dict[tuple[int, int, int], list[str]] = {}
@@ -189,9 +186,7 @@ def _parsear_tsv(
         texto_linhas[chave].append(texto_palavra)
 
     media = sum(confidences) / len(confidences) if confidences else 0.0
-    texto_final = "\n".join(
-        " ".join(texto_linhas[chave]) for chave in chaves_na_ordem
-    )
+    texto_final = "\n".join(" ".join(texto_linhas[chave]) for chave in chaves_na_ordem)
     return texto_final, media
 
 

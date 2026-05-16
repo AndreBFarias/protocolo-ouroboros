@@ -745,9 +745,7 @@ class ExtratorCupomTermicoFoto(ExtratorBase):
                     "qtde": float(qtde) if isinstance(qtde, (int, float)) else 1.0,
                     "unidade": bruto.get("unidade"),
                     "valor_unit": (
-                        float(valor_unit)
-                        if isinstance(valor_unit, (int, float))
-                        else None
+                        float(valor_unit) if isinstance(valor_unit, (int, float)) else None
                     ),
                     "valor_total": float(valor_total_item),
                 }
@@ -756,9 +754,7 @@ class ExtratorCupomTermicoFoto(ExtratorBase):
         recall = calcular_recall(total_float, itens) if documento else 0.0
         confianca_global = payload.get("confianca_global")
         confidence_pct = (
-            float(confianca_global) * 100.0
-            if isinstance(confianca_global, (int, float))
-            else 100.0
+            float(confianca_global) * 100.0 if isinstance(confianca_global, (int, float)) else 100.0
         )
 
         return {

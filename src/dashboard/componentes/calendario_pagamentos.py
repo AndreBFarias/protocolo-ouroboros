@@ -163,12 +163,7 @@ def _mes_vizinho(ano: int, mes: int, delta: int) -> tuple[int, int]:
 def _link_navegacao_mes(ano: int, mes: int, simbolo: str, titulo: str) -> str:
     """Gera ``<a>`` que navega para outro mês preservando cluster/aba."""
     alvo = f"{ano:04d}-{mes:02d}"
-    href = (
-        "?cluster="
-        + quote("Finanças")
-        + "&tab=Pagamentos&mes_cal="
-        + alvo
-    )
+    href = "?cluster=" + quote("Finanças") + "&tab=Pagamentos&mes_cal=" + alvo
     return (
         f'<a class="cal-nav-btn cal-nav-arrow" href="{href}" '
         f'target="_self" title="{titulo}">{simbolo}</a>'
@@ -222,12 +217,8 @@ def _calendario_html(
 
     ano_prev, mes_prev = _mes_vizinho(ano, mes, -1)
     ano_next, mes_next = _mes_vizinho(ano, mes, 1)
-    seta_prev = _link_navegacao_mes(
-        ano_prev, mes_prev, "<", "mês anterior"
-    )
-    seta_next = _link_navegacao_mes(
-        ano_next, mes_next, ">", "próximo mês"
-    )
+    seta_prev = _link_navegacao_mes(ano_prev, mes_prev, "<", "mês anterior")
+    seta_next = _link_navegacao_mes(ano_next, mes_next, ">", "próximo mês")
 
     return minificar(
         f"""
@@ -275,11 +266,7 @@ def _lista_proximos_html(
     hoje = date.today()
     inicio = hoje - timedelta(days=janela_dias)
     fim = hoje + timedelta(days=janela_dias)
-    candidatos = sorted(
-        (d, pgs)
-        for d, pgs in pagamentos_por_data.items()
-        if inicio <= d <= fim
-    )
+    candidatos = sorted((d, pgs) for d, pgs in pagamentos_por_data.items() if inicio <= d <= fim)
 
     linhas: list[str] = []
     for d, pgs in candidatos:
@@ -309,13 +296,9 @@ def _lista_proximos_html(
             break
 
     if not linhas:
-        return minificar(
-            '<div class="proximos-vazio">Sem vencimentos no período.</div>'
-        )
+        return minificar('<div class="proximos-vazio">Sem vencimentos no período.</div>')
 
-    return minificar(
-        '<div class="proximos-lista">' + "".join(linhas) + "</div>"
-    )
+    return minificar('<div class="proximos-lista">' + "".join(linhas) + "</div>")
 
 
 # "O calendário é o limite onde o esquecimento se rende ao que volta." — Bachelard

@@ -87,14 +87,14 @@ MAPA_CLASSIFICACAO_COR: dict[str, str] = MAPA_CLASSIFICACAO
 # folhas no treemap. Quando há mais de 8 categorias o ciclo se repete; isso
 # é aceitável porque a área e o rótulo da folha continuam diferenciando.
 PALETA_WCAG_AA: tuple[str, ...] = (
-    CORES["destaque"],   # roxo
+    CORES["destaque"],  # roxo
     CORES["superfluo"],  # rosa
-    CORES["neutro"],     # ciano
-    CORES["positivo"],   # verde
-    CORES["alerta"],     # laranja
-    CORES["info"],       # amarelo
+    CORES["neutro"],  # ciano
+    CORES["positivo"],  # verde
+    CORES["alerta"],  # laranja
+    CORES["info"],  # amarelo
     CORES["d7_graduado"],  # verde-musgo
-    CORES["negativo"],   # vermelho
+    CORES["negativo"],  # vermelho
 )
 
 
@@ -429,15 +429,11 @@ def _regras_yaml_html(
     regras: list[dict[str, Any]],
     categoria_filtro: str | None = None,
 ) -> str:
-    titulo = (
-        f"Regras YAML — {categoria_filtro}"
-        if categoria_filtro
-        else "Regras YAML — top hits"
-    )
+    titulo = f"Regras YAML — {categoria_filtro}" if categoria_filtro else "Regras YAML — top hits"
     if not regras:
         corpo = (
             '<div class="ux-rd-12-empty">'
-            f'Sem regras com hits para {"esta categoria" if categoria_filtro else "o período"}.'
+            f"Sem regras com hits para {'esta categoria' if categoria_filtro else 'o período'}."
             "</div>"
         )
     else:
@@ -503,8 +499,7 @@ def _treemap_categorias(df: pd.DataFrame) -> None:
     )
 
     cores_texto_leaf = [
-        _cor_texto_por_fundo(cores_categoria.get(c, CORES["fundo"]))
-        for c in agrupado["categoria"]
+        _cor_texto_por_fundo(cores_categoria.get(c, CORES["fundo"])) for c in agrupado["categoria"]
     ]
     fig.update_traces(
         textinfo="label+value",
@@ -536,11 +531,18 @@ def renderizar(
 ) -> None:
     """Renderiza a página Categorias (UX-RD-12 + UX-T-11)."""
     from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
-    renderizar_grupo_acoes([
-        {"label": "Nova regra", "glyph": "plus", "title": "Adicionar regra YAML"},
-        {"label": "Recategorizar", "primary": True, "glyph": "refresh",
-         "title": "Reclassificar transações"},
-    ])
+
+    renderizar_grupo_acoes(
+        [
+            {"label": "Nova regra", "glyph": "plus", "title": "Adicionar regra YAML"},
+            {
+                "label": "Recategorizar",
+                "primary": True,
+                "glyph": "refresh",
+                "title": "Reclassificar transações",
+            },
+        ]
+    )
 
     st.markdown(minificar(carregar_css_pagina("categorias")), unsafe_allow_html=True)
 
@@ -624,9 +626,8 @@ def renderizar(
 
         # Painel regras YAML — categoria selecionada via session_state ou
         # query_params. Quando não há filtro, mostra top hits global.
-        categoria_filtro = (
-            st.session_state.get("filtro_categoria")
-            or st.query_params.get("categoria")
+        categoria_filtro = st.session_state.get("filtro_categoria") or st.query_params.get(
+            "categoria"
         )
         regras = carregar_regras_yaml()
         regras_aplicadas = agregar_regras_aplicadas(df, regras, categoria_filtro)

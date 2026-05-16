@@ -88,9 +88,7 @@ def _carregar_propostas(
     return propostas, meta
 
 
-def _rejeitar_proposta(
-    proposta: PropostaTipo, path_rejeitadas: Path | None = None
-) -> Path:
+def _rejeitar_proposta(proposta: PropostaTipo, path_rejeitadas: Path | None = None) -> Path:
     """Apenda rejeição em JSON acumulativo. Retorna o path do arquivo."""
     destino = path_rejeitadas if path_rejeitadas is not None else PATH_REJEITADAS
     destino.parent.mkdir(parents=True, exist_ok=True)
@@ -119,9 +117,7 @@ def _rejeitar_proposta(
     return destino
 
 
-def _aceitar_proposta(
-    proposta: PropostaTipo, path_yaml: Path | None = None
-) -> dict:
+def _aceitar_proposta(proposta: PropostaTipo, path_yaml: Path | None = None) -> dict:
     """Apenda entry skeleton em ``tipos_documento.yaml`` com status pendente.
 
     Não substitui regras existentes — apenas adiciona uma entry nova ao
@@ -132,16 +128,17 @@ def _aceitar_proposta(
     Retorna dict com ``yaml_path``, ``id_proposto``, ``linha_apendada``.
     """
     destino = path_yaml if path_yaml is not None else PATH_TIPOS_YAML
-    regex_lista = "\n".join(
-        f'      - "{rgx}"' for rgx in proposta.regex_candidatos
-    ) or '      - "PLACEHOLDER_REGEX"'
+    regex_lista = (
+        "\n".join(f'      - "{rgx}"' for rgx in proposta.regex_candidatos)
+        or '      - "PLACEHOLDER_REGEX"'
+    )
     sufixo_data = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     bloco = (
         f"\n  # AUTO-TIPO-PROPOSTAS-DASHBOARD aceite em {sufixo_data}"
         f" -- revisar antes de habilitar\n"
         f"  - id: {proposta.id_proposto}\n"
         f'    descricao: "[REVISAR] tipo proposto automaticamente a partir de'
-        f" {proposta.n_amostras} amostras\"\n"
+        f' {proposta.n_amostras} amostras"\n'
         f"    prioridade: especifico\n"
         f"    match_mode: any\n"
         f'    mimes: ["{proposta.mime_principal}"]\n'

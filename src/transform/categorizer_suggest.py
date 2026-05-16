@@ -91,9 +91,7 @@ def _cosseno(a: dict[str, float], b: dict[str, float]) -> float:
     return produto / (norm_a * norm_b)
 
 
-def gerar_sugestoes(
-    transacoes: list[Transacao], top_k: int = 5
-) -> dict[str, dict]:
+def gerar_sugestoes(transacoes: list[Transacao], top_k: int = 5) -> dict[str, dict]:
     """Para cada transação "Outros", calcula top-K vizinhos e vota.
 
     Retorna dict {id: {descricao, top1, confianca_top1, sugestoes[]}}.
@@ -118,10 +116,7 @@ def gerar_sugestoes(
         if not vec:
             continue
         # Top-K vizinhos por cosseno:
-        scores = [
-            (_cosseno(vec, vt), treino[i].categoria)
-            for i, vt in enumerate(treino_vetores)
-        ]
+        scores = [(_cosseno(vec, vt), treino[i].categoria) for i, vt in enumerate(treino_vetores)]
         # Filtra zeros para não votar em treino disjunto:
         scores = [s for s in scores if s[0] > 0]
         if not scores:

@@ -135,9 +135,7 @@ def test_grafico_cenarios_marcos_verticais_visiveis() -> None:
     shapes = list(fig.layout.shapes) if fig.layout.shapes else []
     annotations = list(fig.layout.annotations) if fig.layout.annotations else []
     assert len(shapes) >= 2, f"Esperado >=2 vlines, obtido {len(shapes)}"
-    assert len(annotations) >= 2, (
-        f"Esperado >=2 labels de marcos, obtido {len(annotations)}"
-    )
+    assert len(annotations) >= 2, f"Esperado >=2 labels de marcos, obtido {len(annotations)}"
     textos = {a.text for a in annotations if a.text}
     assert "Reserva 100%" in textos
     assert "1ª centena" in textos
@@ -203,6 +201,7 @@ def test_renderizar_assinatura_publica_sem_ctx() -> None:
         for col in mock_st.columns.return_value:
             col.__enter__ = MagicMock(return_value=col)
             col.__exit__ = MagicMock(return_value=False)
+
         # renderizar com 3 colunas também (st.columns([2,1]))
         def _columns(spec: Any, **_: Any) -> tuple[Any, ...]:
             n = len(spec) if isinstance(spec, list) else int(spec)

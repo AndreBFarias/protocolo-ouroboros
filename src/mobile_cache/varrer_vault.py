@@ -113,9 +113,7 @@ def varrer_tudo(
     if incluir_humor:
         if vault_root is not None:
             try:
-                resultado["humor-heatmap"] = gerar_humor_heatmap(
-                    vault_root, gerado_em=gerado_em
-                )
+                resultado["humor-heatmap"] = gerar_humor_heatmap(vault_root, gerado_em=gerado_em)
             except Exception as exc:  # noqa: BLE001
                 logger.error("humor_heatmap falhou: %s", exc)
                 resultado["humor-heatmap"] = None

@@ -64,17 +64,41 @@ def test_be_diario_filtrar_ordena_desc_dentro_do_periodo():
     """Filtro respeita ordenação DESC e janela de período."""
     hoje = date(2026, 5, 5)
     items = [
-        {"data": "2026-04-30", "autor": "pessoa_a", "modo": "trigger",
-         "emocoes": [], "intensidade": 3, "com": [], "texto": "antigo"},
-        {"data": "2026-05-04", "autor": "pessoa_b", "modo": "vitoria",
-         "emocoes": [], "intensidade": 4, "com": [], "texto": "ontem"},
-        {"data": "2025-01-01", "autor": "pessoa_a", "modo": "vitoria",
-         "emocoes": [], "intensidade": 5, "com": [], "texto": "muito antigo"},
+        {
+            "data": "2026-04-30",
+            "autor": "pessoa_a",
+            "modo": "trigger",
+            "emocoes": [],
+            "intensidade": 3,
+            "com": [],
+            "texto": "antigo",
+        },
+        {
+            "data": "2026-05-04",
+            "autor": "pessoa_b",
+            "modo": "vitoria",
+            "emocoes": [],
+            "intensidade": 4,
+            "com": [],
+            "texto": "ontem",
+        },
+        {
+            "data": "2025-01-01",
+            "autor": "pessoa_a",
+            "modo": "vitoria",
+            "emocoes": [],
+            "intensidade": 5,
+            "com": [],
+            "texto": "muito antigo",
+        },
     ]
     # Dentro de 7 dias só os 2 primeiros entram.
     out = be_diario._filtrar(
         sorted(items, key=lambda i: i["data"], reverse=True),
-        modo="todos", periodo_dias=7, pessoa="todos", hoje=hoje,
+        modo="todos",
+        periodo_dias=7,
+        pessoa="todos",
+        hoje=hoje,
     )
     assert [i["data"] for i in out] == ["2026-05-04", "2026-04-30"], out
 
@@ -91,13 +115,31 @@ def test_be_diario_filtrar_ordena_desc_dentro_do_periodo():
 def test_be_diario_filtrar_modo(modo_filtro, esperado_count):
     hoje = date(2026, 5, 5)
     items = [
-        {"data": "2026-05-04", "autor": "pessoa_a", "modo": "trigger",
-         "emocoes": [], "intensidade": 2, "com": [], "texto": "x"},
-        {"data": "2026-05-03", "autor": "pessoa_b", "modo": "vitoria",
-         "emocoes": [], "intensidade": 4, "com": [], "texto": "y"},
+        {
+            "data": "2026-05-04",
+            "autor": "pessoa_a",
+            "modo": "trigger",
+            "emocoes": [],
+            "intensidade": 2,
+            "com": [],
+            "texto": "x",
+        },
+        {
+            "data": "2026-05-03",
+            "autor": "pessoa_b",
+            "modo": "vitoria",
+            "emocoes": [],
+            "intensidade": 4,
+            "com": [],
+            "texto": "y",
+        },
     ]
     out = be_diario._filtrar(
-        items, modo=modo_filtro, periodo_dias=30, pessoa="todos", hoje=hoje,
+        items,
+        modo=modo_filtro,
+        periodo_dias=30,
+        pessoa="todos",
+        hoje=hoje,
     )
     assert len(out) == esperado_count
 
@@ -105,13 +147,31 @@ def test_be_diario_filtrar_modo(modo_filtro, esperado_count):
 def test_be_diario_filtrar_pessoa():
     hoje = date(2026, 5, 5)
     items = [
-        {"data": "2026-05-04", "autor": "pessoa_a", "modo": "trigger",
-         "emocoes": [], "intensidade": 2, "com": [], "texto": "x"},
-        {"data": "2026-05-03", "autor": "pessoa_b", "modo": "vitoria",
-         "emocoes": [], "intensidade": 4, "com": [], "texto": "y"},
+        {
+            "data": "2026-05-04",
+            "autor": "pessoa_a",
+            "modo": "trigger",
+            "emocoes": [],
+            "intensidade": 2,
+            "com": [],
+            "texto": "x",
+        },
+        {
+            "data": "2026-05-03",
+            "autor": "pessoa_b",
+            "modo": "vitoria",
+            "emocoes": [],
+            "intensidade": 4,
+            "com": [],
+            "texto": "y",
+        },
     ]
     out = be_diario._filtrar(
-        items, modo="todos", periodo_dias=30, pessoa="pessoa_a", hoje=hoje,
+        items,
+        modo="todos",
+        periodo_dias=30,
+        pessoa="pessoa_a",
+        hoje=hoje,
     )
     assert len(out) == 1 and out[0]["autor"] == "pessoa_a"
 
@@ -122,8 +182,15 @@ def test_be_diario_filtrar_pessoa():
 
 
 def test_be_diario_card_border_trigger_vermelha():
-    item = {"data": "2026-05-04", "autor": "pessoa_a", "modo": "trigger",
-            "emocoes": ["ansiedade"], "intensidade": 3, "com": [], "texto": "ruim"}
+    item = {
+        "data": "2026-05-04",
+        "autor": "pessoa_a",
+        "modo": "trigger",
+        "emocoes": ["ansiedade"],
+        "intensidade": 3,
+        "com": [],
+        "texto": "ruim",
+    }
     html = be_diario._card_html(item)
     # Cor token "negativo" do tema = #ff5555 (Dracula red).
     assert "border-left:4px solid #ff5555" in html
@@ -132,9 +199,15 @@ def test_be_diario_card_border_trigger_vermelha():
 
 
 def test_be_diario_card_border_vitoria_verde():
-    item = {"data": "2026-05-04", "autor": "pessoa_b", "modo": "vitoria",
-            "emocoes": ["alegria"], "intensidade": 5, "com": ["pessoa_a"],
-            "texto": "consegui"}
+    item = {
+        "data": "2026-05-04",
+        "autor": "pessoa_b",
+        "modo": "vitoria",
+        "emocoes": ["alegria"],
+        "intensidade": 5,
+        "com": ["pessoa_a"],
+        "texto": "consegui",
+    }
     html = be_diario._card_html(item)
     assert "border-left:4px solid #50fa7b" in html
     assert "Vitória" in html
@@ -146,8 +219,15 @@ def test_be_diario_card_border_vitoria_verde():
 
 
 def test_be_diario_card_sem_emocoes_mostra_placeholder():
-    item = {"data": "2026-05-04", "autor": "pessoa_a", "modo": "trigger",
-            "emocoes": [], "intensidade": 1, "com": [], "texto": ""}
+    item = {
+        "data": "2026-05-04",
+        "autor": "pessoa_a",
+        "modo": "trigger",
+        "emocoes": [],
+        "intensidade": 1,
+        "com": [],
+        "texto": "",
+    }
     html = be_diario._card_html(item)
     assert "sem emoções tagueadas" in html
 
@@ -209,17 +289,37 @@ def test_escrever_diario_modo_invalido():
 def test_be_eventos_filtrar_timeline_desc():
     hoje = date(2026, 5, 5)
     items = [
-        {"data": "2026-04-29", "autor": "pessoa_a", "modo": "positivo",
-         "lugar": "padaria", "bairro": "bela vista", "com": [],
-         "categoria": "rolezinho", "fotos": [], "intensidade": 4},
-        {"data": "2026-05-02", "autor": "casal", "modo": "negativo",
-         "lugar": "bar", "bairro": "centro", "com": [],
-         "categoria": "jantar", "fotos": [], "intensidade": 2},
+        {
+            "data": "2026-04-29",
+            "autor": "pessoa_a",
+            "modo": "positivo",
+            "lugar": "padaria",
+            "bairro": "bela vista",
+            "com": [],
+            "categoria": "rolezinho",
+            "fotos": [],
+            "intensidade": 4,
+        },
+        {
+            "data": "2026-05-02",
+            "autor": "casal",
+            "modo": "negativo",
+            "lugar": "bar",
+            "bairro": "centro",
+            "com": [],
+            "categoria": "jantar",
+            "fotos": [],
+            "intensidade": 2,
+        },
     ]
     items_desc = sorted(items, key=lambda i: i["data"], reverse=True)
     out = be_eventos._filtrar(
-        items_desc, modo="todos", periodo_dias=30,
-        categoria="todas", pessoa="todos", hoje=hoje,
+        items_desc,
+        modo="todos",
+        periodo_dias=30,
+        categoria="todas",
+        pessoa="todos",
+        hoje=hoje,
     )
     assert [i["data"] for i in out] == ["2026-05-02", "2026-04-29"]
 
@@ -350,14 +450,9 @@ def test_be_diario_renderiza_sem_crash_vault_ausente():
     assert not at.exception
     # Coleta avisos de qualquer canal: warning, info, ou markdown (callout).
     avisos = (
-        [w.value for w in at.warning]
-        + [i.value for i in at.info]
-        + [m.value for m in at.markdown]
+        [w.value for w in at.warning] + [i.value for i in at.info] + [m.value for m in at.markdown]
     )
-    assert any(
-        ("vault" in str(t).lower() or "configure" in str(t).lower())
-        for t in avisos
-    )
+    assert any(("vault" in str(t).lower() or "configure" in str(t).lower()) for t in avisos)
 
 
 def test_be_eventos_renderiza_sem_crash_vault_ausente():
@@ -373,14 +468,9 @@ def test_be_eventos_renderiza_sem_crash_vault_ausente():
     at.run()
     assert not at.exception
     avisos = (
-        [w.value for w in at.warning]
-        + [i.value for i in at.info]
-        + [m.value for m in at.markdown]
+        [w.value for w in at.warning] + [i.value for i in at.info] + [m.value for m in at.markdown]
     )
-    assert any(
-        ("vault" in str(t).lower() or "configure" in str(t).lower())
-        for t in avisos
-    )
+    assert any(("vault" in str(t).lower() or "configure" in str(t).lower()) for t in avisos)
 
 
 # ===========================================================================

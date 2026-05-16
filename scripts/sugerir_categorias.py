@@ -57,9 +57,7 @@ def _carregar_transacoes_do_xlsx(xlsx: Path) -> list[Transacao]:
         categoria = str(row[5] or "")
         if not descricao or not categoria:
             continue
-        transacoes.append(
-            Transacao(id=f"row_{i + 2}", descricao=descricao, categoria=categoria)
-        )
+        transacoes.append(Transacao(id=f"row_{i + 2}", descricao=descricao, categoria=categoria))
     wb.close()
     return transacoes
 
@@ -83,9 +81,7 @@ def gerar_e_gravar(
         "sugestoes": sugestoes,
     }
     saida_path.parent.mkdir(parents=True, exist_ok=True)
-    saida_path.write_text(
-        json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8"
-    )
+    saida_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
     return payload
 
 
@@ -118,9 +114,7 @@ def main(argv: list[str] | None = None) -> int:
         f"  total Outros:     {payload['total_outros']}\n"
         f"  total sugeridas:  {payload['total_sugeridas']}\n"
     )
-    alta = sum(
-        1 for v in payload["sugestoes"].values() if v.get("confianca_top1", 0) >= 0.85
-    )
+    alta = sum(1 for v in payload["sugestoes"].values() if v.get("confianca_top1", 0) >= 0.85)
     sys.stdout.write(f"  confiança >= 0.85: {alta} (auto-promoção candidata)\n")
     return 0
 

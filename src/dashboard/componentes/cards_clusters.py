@@ -10,6 +10,7 @@ API pública:
     - ``clusters_canonicos_html(cards)`` -> str: 6 cards a partir de lista
       de dicts (formato do ``visao_geral_widgets.montar_clusters_canonicos``).
 """
+
 from __future__ import annotations
 
 
@@ -160,19 +161,19 @@ def clusters_canonicos_html(cards: list[dict]) -> str:
             ' style="text-decoration:none;color:inherit;">'
             '<div class="vg-t01-cluster-head">'
             f'<span class="vg-t01-cluster-ic">{glyph_html}</span>'
-            f'<h3>{c["nome"]}</h3>'
+            f"<h3>{c['nome']}</h3>"
             "</div>"
             f'<div class="desc">{c["descricao"]}</div>'
             '<div class="stats">'
-            f'<span><strong>{c["stat1_value"]}</strong>{c["stat1_label"]}</span>'
-            f'<span><strong>{c["stat2_value"]}</strong>{c["stat2_label"]}</span>'
+            f"<span><strong>{c['stat1_value']}</strong>{c['stat1_label']}</span>"
+            f"<span><strong>{c['stat2_value']}</strong>{c['stat2_label']}</span>"
             "</div>"
             "</a>"
         )
     return minificar(
         '<h2 class="vg-t01-section-label">Os 5 clusters</h2>'
         '<div class="vg-t01-cluster-grid">'
-        f'{"".join(cards_html)}'
+        f"{''.join(cards_html)}"
         "</div>"
     )
 

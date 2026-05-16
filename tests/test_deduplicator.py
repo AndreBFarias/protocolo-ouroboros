@@ -139,9 +139,7 @@ def test_nivel2_mesmo_banco_ofx_xlsx_consolida_via_2b(transacao):
     # Pass 2a normaliza ambos `local` para "x" e a chave 4-tuple casa
     # (mesmo banco "C6"), consolidando direto na fase principal --
     # critério de descrição mais rica preserva o OFX.
-    assert resultado[0]["_arquivo_origem"] == "c6.ofx", (
-        f"esperado OFX preservado: {resultado[0]}"
-    )
+    assert resultado[0]["_arquivo_origem"] == "c6.ofx", f"esperado OFX preservado: {resultado[0]}"
 
 
 def test_nivel3_par_transferencia_marca_ambos_lados(transacao):

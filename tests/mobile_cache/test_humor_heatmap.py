@@ -76,9 +76,7 @@ def test_estatisticas_batem_com_calculo_manual(
         daily_writer(daily_dir, hoje_referencia - timedelta(days=i), autor="pessoa_a", humor=h)
     # 2 dailies pessoa_b com humores 2, 4 -> media = 3.0
     for i, h in enumerate([2, 4]):
-        daily_writer(
-            daily_dir, hoje_referencia - timedelta(days=i + 5), autor="pessoa_b", humor=h
-        )
+        daily_writer(daily_dir, hoje_referencia - timedelta(days=i + 5), autor="pessoa_b", humor=h)
 
     saida = gerar_humor_heatmap(
         vault_temporario,

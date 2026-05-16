@@ -144,9 +144,7 @@ class TestRegistryRoteamento:
         assert decisao.nome_canonico.startswith("PIX_")
         assert decisao.nome_canonico.endswith(".jpg")
 
-    def test_subtipo_mobile_pix_origem_sprint_marca_mob_bridge_4(
-        self, tmp_path: Path
-    ):
+    def test_subtipo_mobile_pix_origem_sprint_marca_mob_bridge_4(self, tmp_path: Path):
         """Auditoria: ``origem_sprint`` permite rastrear que a decisão
         veio do hint mobile (não da cascata YAML pura)."""
         arquivo = tmp_path / "outro.png"
@@ -207,9 +205,7 @@ class TestExtratorCacheHit:
 
 
 class TestIngestorGrafo:
-    def test_payload_minimo_cria_documento_fornecedor_sem_item(
-        self, grafo_temp: GrafoDB
-    ):
+    def test_payload_minimo_cria_documento_fornecedor_sem_item(self, grafo_temp: GrafoDB):
         """PIX é transferência monolítica: cria 1 documento + 1 fornecedor +
         1 período, com arestas ``fornecido_por`` e ``ocorre_em``, mas SEM
         nós ``item`` nem aresta ``contem_item``."""
@@ -219,27 +215,17 @@ class TestIngestorGrafo:
 
         con = sqlite3.connect(grafo_temp.caminho)
         try:
-            n_doc = con.execute(
-                "SELECT COUNT(*) FROM node WHERE tipo='documento'"
-            ).fetchone()[0]
-            n_forn = con.execute(
-                "SELECT COUNT(*) FROM node WHERE tipo='fornecedor'"
-            ).fetchone()[0]
-            n_periodo = con.execute(
-                "SELECT COUNT(*) FROM node WHERE tipo='periodo'"
-            ).fetchone()[0]
-            n_item = con.execute(
-                "SELECT COUNT(*) FROM node WHERE tipo='item'"
-            ).fetchone()[0]
+            n_doc = con.execute("SELECT COUNT(*) FROM node WHERE tipo='documento'").fetchone()[0]
+            n_forn = con.execute("SELECT COUNT(*) FROM node WHERE tipo='fornecedor'").fetchone()[0]
+            n_periodo = con.execute("SELECT COUNT(*) FROM node WHERE tipo='periodo'").fetchone()[0]
+            n_item = con.execute("SELECT COUNT(*) FROM node WHERE tipo='item'").fetchone()[0]
             n_forn_edge = con.execute(
                 "SELECT COUNT(*) FROM edge WHERE tipo='fornecido_por'"
             ).fetchone()[0]
-            n_ocorre = con.execute(
-                "SELECT COUNT(*) FROM edge WHERE tipo='ocorre_em'"
-            ).fetchone()[0]
-            n_contem = con.execute(
-                "SELECT COUNT(*) FROM edge WHERE tipo='contem_item'"
-            ).fetchone()[0]
+            n_ocorre = con.execute("SELECT COUNT(*) FROM edge WHERE tipo='ocorre_em'").fetchone()[0]
+            n_contem = con.execute("SELECT COUNT(*) FROM edge WHERE tipo='contem_item'").fetchone()[
+                0
+            ]
         finally:
             con.close()
 
@@ -270,9 +256,7 @@ class TestIngestorGrafo:
         )
 
         # Determinismo: sha8 derivado da chave_destinatario (email).
-        esperado_sha = hashlib.sha256(
-            "destinatario@email.com".encode("utf-8")
-        ).hexdigest()[:8]
+        esperado_sha = hashlib.sha256("destinatario@email.com".encode("utf-8")).hexdigest()[:8]
         assert nome_canonico.upper() == f"PIX|{esperado_sha}".upper(), (
             f"derivação não determinística: {nome_canonico!r}"
         )
@@ -285,9 +269,7 @@ class TestIngestorGrafo:
 
         con = sqlite3.connect(grafo_temp.caminho)
         try:
-            row = con.execute(
-                "SELECT nome_canonico FROM node WHERE tipo='fornecedor'"
-            ).fetchone()
+            row = con.execute("SELECT nome_canonico FROM node WHERE tipo='fornecedor'").fetchone()
         finally:
             con.close()
         # GrafoDB normaliza nome_canonico em uppercase; CNPJ real sobrevive.
@@ -300,9 +282,7 @@ class TestIngestorGrafo:
         ingerir_comprovante_pix_foto(grafo_temp, payload)
         con = sqlite3.connect(grafo_temp.caminho)
         try:
-            row = con.execute(
-                "SELECT nome_canonico FROM node WHERE tipo='documento'"
-            ).fetchone()
+            row = con.execute("SELECT nome_canonico FROM node WHERE tipo='documento'").fetchone()
         finally:
             con.close()
         # nome_canonico armazenado em uppercase pelo GrafoDB.
@@ -314,9 +294,7 @@ class TestIngestorGrafo:
         ingerir_comprovante_pix_foto(grafo_temp, payload)
         con = sqlite3.connect(grafo_temp.caminho)
         try:
-            row = con.execute(
-                "SELECT metadata FROM node WHERE tipo='documento'"
-            ).fetchone()
+            row = con.execute("SELECT metadata FROM node WHERE tipo='documento'").fetchone()
         finally:
             con.close()
         meta = json.loads(row[0])
@@ -341,9 +319,7 @@ class TestIngestorGrafo:
             ingerir_comprovante_pix_foto(grafo_temp, payload)
 
     @pytest.mark.parametrize("campo", CAMPOS_OBRIGATORIOS_PAYLOAD_PIX)
-    def test_campo_obrigatorio_ausente_levanta(
-        self, grafo_temp: GrafoDB, campo: str
-    ):
+    def test_campo_obrigatorio_ausente_levanta(self, grafo_temp: GrafoDB, campo: str):
         payload = _payload_pix_minimo()
         payload[campo] = None
         with pytest.raises(ValueError, match=campo):
@@ -371,12 +347,8 @@ class TestIdempotencia:
 
         con = sqlite3.connect(grafo_temp.caminho)
         try:
-            n_doc = con.execute(
-                "SELECT COUNT(*) FROM node WHERE tipo='documento'"
-            ).fetchone()[0]
-            n_forn = con.execute(
-                "SELECT COUNT(*) FROM node WHERE tipo='fornecedor'"
-            ).fetchone()[0]
+            n_doc = con.execute("SELECT COUNT(*) FROM node WHERE tipo='documento'").fetchone()[0]
+            n_forn = con.execute("SELECT COUNT(*) FROM node WHERE tipo='fornecedor'").fetchone()[0]
             n_forn_edge = con.execute(
                 "SELECT COUNT(*) FROM edge WHERE tipo='fornecido_por'"
             ).fetchone()[0]
@@ -386,9 +358,7 @@ class TestIdempotencia:
         assert n_forn == 1, "fornecedor duplicado em reprocessamento"
         assert n_forn_edge == 1
 
-    def test_multiplos_pix_mesmo_destinatario_compartilham_fornecedor(
-        self, grafo_temp: GrafoDB
-    ):
+    def test_multiplos_pix_mesmo_destinatario_compartilham_fornecedor(self, grafo_temp: GrafoDB):
         """Dois PIX diferentes para o mesmo destinatário (mesma chave PIX)
         criam 2 documentos mas reutilizam 1 fornecedor."""
         payload_a = _payload_pix_minimo()
@@ -406,18 +376,12 @@ class TestIdempotencia:
 
         con = sqlite3.connect(grafo_temp.caminho)
         try:
-            n_doc = con.execute(
-                "SELECT COUNT(*) FROM node WHERE tipo='documento'"
-            ).fetchone()[0]
-            n_forn = con.execute(
-                "SELECT COUNT(*) FROM node WHERE tipo='fornecedor'"
-            ).fetchone()[0]
+            n_doc = con.execute("SELECT COUNT(*) FROM node WHERE tipo='documento'").fetchone()[0]
+            n_forn = con.execute("SELECT COUNT(*) FROM node WHERE tipo='fornecedor'").fetchone()[0]
         finally:
             con.close()
         assert n_doc == 2
-        assert n_forn == 1, (
-            "PIX para mesmo destinatário (mesma chave) deveria reusar fornecedor"
-        )
+        assert n_forn == 1, "PIX para mesmo destinatário (mesma chave) deveria reusar fornecedor"
 
 
 # ============================================================================
@@ -445,8 +409,7 @@ class TestEndToEnd3CachesReais:
             ingeridos += 1
 
         assert ingeridos >= 3, (
-            f"MOB-bridge-5: ingeri {ingeridos} comprovantes PIX reais "
-            f"(esperado >= 3)"
+            f"MOB-bridge-5: ingeri {ingeridos} comprovantes PIX reais (esperado >= 3)"
         )
 
         con = sqlite3.connect(grafo_temp.caminho)
@@ -455,17 +418,11 @@ class TestEndToEnd3CachesReais:
                 "SELECT COUNT(*) FROM node WHERE tipo='documento' "
                 "AND json_extract(metadata, '$.tipo_documento') = 'comprovante_pix_foto'"
             ).fetchone()[0]
-            n_forn = con.execute(
-                "SELECT COUNT(*) FROM node WHERE tipo='fornecedor'"
-            ).fetchone()[0]
-            n_item = con.execute(
-                "SELECT COUNT(*) FROM node WHERE tipo='item'"
-            ).fetchone()[0]
+            n_forn = con.execute("SELECT COUNT(*) FROM node WHERE tipo='fornecedor'").fetchone()[0]
+            n_item = con.execute("SELECT COUNT(*) FROM node WHERE tipo='item'").fetchone()[0]
         finally:
             con.close()
-        assert n_doc_pix == ingeridos, (
-            f"esperava {ingeridos} documentos PIX, achei {n_doc_pix}"
-        )
+        assert n_doc_pix == ingeridos, f"esperava {ingeridos} documentos PIX, achei {n_doc_pix}"
         # Cada um dos 3 PIX é para destinatário distinto (Panificadora,
         # Wesley, Vitória), então cria 3 fornecedores sintéticos distintos.
         assert n_forn == ingeridos
@@ -495,12 +452,8 @@ class TestEndToEnd3CachesReais:
 
         con = sqlite3.connect(grafo_temp.caminho)
         try:
-            n_doc = con.execute(
-                "SELECT COUNT(*) FROM node WHERE tipo='documento'"
-            ).fetchone()[0]
-            n_forn = con.execute(
-                "SELECT COUNT(*) FROM node WHERE tipo='fornecedor'"
-            ).fetchone()[0]
+            n_doc = con.execute("SELECT COUNT(*) FROM node WHERE tipo='documento'").fetchone()[0]
+            n_forn = con.execute("SELECT COUNT(*) FROM node WHERE tipo='fornecedor'").fetchone()[0]
         finally:
             con.close()
         assert n_doc == len(payloads), "documento duplicado em segunda passada"

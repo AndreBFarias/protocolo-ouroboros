@@ -145,21 +145,17 @@ def construir_eventos_calendario(
             if venc < hoje - timedelta(days=30) or venc > fim:
                 continue
             status = str(row.get("status", "")).lower()
-            atrasado = status == STATUS_ATRASADO or (
-                venc < hoje and status != STATUS_PAGO
-            )
+            atrasado = status == STATUS_ATRASADO or (venc < hoje and status != STATUS_PAGO)
             descricao = str(row.get("fornecedor") or row.get("descricao") or "")
             tipo = "cc" if "fatura" in descricao.lower() else "var"
             if atrasado:
                 tipo = "late"
             banco_raw = row.get("banco_origem", "")
             banco_origem = (
-                "" if pd.isna(banco_raw) else str(banco_raw)
-            ) if banco_raw is not None else ""
-            valor_raw = row.get("valor", 0.0)
-            valor_norm = (
-                0.0 if pd.isna(valor_raw) else float(valor_raw or 0.0)
+                ("" if pd.isna(banco_raw) else str(banco_raw)) if banco_raw is not None else ""
             )
+            valor_raw = row.get("valor", 0.0)
+            valor_norm = 0.0 if pd.isna(valor_raw) else float(valor_raw or 0.0)
             eventos.append(
                 {
                     "data": venc,
@@ -181,9 +177,7 @@ def calcular_kpis_pagamentos(
 ) -> dict[str, float | int]:
     """KPIs para a faixa superior da página."""
     hoje = hoje or date.today()
-    fim_mes = (hoje.replace(day=28) + timedelta(days=4)).replace(day=1) - timedelta(
-        days=1
-    )
+    fim_mes = (hoje.replace(day=28) + timedelta(days=4)).replace(day=1) - timedelta(days=1)
 
     a_pagar_mes = sum(
         float(e["valor"])  # type: ignore[arg-type]
@@ -191,10 +185,14 @@ def calcular_kpis_pagamentos(
         if isinstance(e["data"], date) and e["data"] <= fim_mes  # type: ignore[arg-type]
     )
     em_atraso = sum(
-        float(e["valor"]) for e in eventos if e.get("atraso")  # type: ignore[arg-type]
+        float(e["valor"])
+        for e in eventos
+        if e.get("atraso")  # type: ignore[arg-type]
     )
     faturas_cc = sum(
-        float(e["valor"]) for e in eventos if e.get("tipo") == "cc"  # type: ignore[arg-type]
+        float(e["valor"])
+        for e in eventos
+        if e.get("tipo") == "cc"  # type: ignore[arg-type]
     )
     fixos = sum(1 for e in eventos if e.get("tipo") == "fix")
 
@@ -239,9 +237,7 @@ def gerar_celulas_calendario(
 
 def _page_header_html(qtd_eventos: int, em_atraso: int) -> str:
     pill_classe = "pill-d7-regredindo" if em_atraso else "pill-d7-graduado"
-    pill_texto = (
-        f"{em_atraso} em atraso" if em_atraso else f"{qtd_eventos} próximos 14d"
-    )
+    pill_texto = f"{em_atraso} em atraso" if em_atraso else f"{qtd_eventos} próximos 14d"
     return minificar(
         f"""
         <div class="page-header">
@@ -314,7 +310,7 @@ def _kpi_row_html(kpis: dict[str, float | int]) -> str:
                     grid-template-columns:repeat(4, minmax(0,1fr));
                     gap:14px;
                     margin-bottom:18px;">
-          {''.join(cells)}
+          {"".join(cells)}
         </div>
         """
     )
@@ -349,12 +345,13 @@ def renderizar(
     del ctx
 
     from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
-    renderizar_grupo_acoes([
-        {"label": "Marcar pago", "glyph": "check",
-         "title": "Marcar pagamentos selecionados"},
-        {"label": "Adicionar", "primary": True, "glyph": "plus",
-         "title": "Novo pagamento"},
-    ])
+
+    renderizar_grupo_acoes(
+        [
+            {"label": "Marcar pago", "glyph": "check", "title": "Marcar pagamentos selecionados"},
+            {"label": "Adicionar", "primary": True, "glyph": "plus", "title": "Novo pagamento"},
+        ]
+    )
 
     if "extrato" not in dados:
         st.markdown(
@@ -364,9 +361,7 @@ def renderizar(
         return
 
     # CSS dedicado da página (UX-V-2.2)
-    st.markdown(
-        minificar(carregar_css_pagina("pagamentos")), unsafe_allow_html=True
-    )
+    st.markdown(minificar(carregar_css_pagina("pagamentos")), unsafe_allow_html=True)
 
     extrato = filtrar_por_forma_pagamento(
         filtrar_por_pessoa(dados["extrato"], pessoa),
@@ -579,9 +574,7 @@ def _renderizar_credito(extrato: pd.DataFrame) -> None:
             unsafe_allow_html=True,
         )
         total = float(df_banco["valor_total"].sum())
-        st.caption(
-            f"{len(df_banco)} meses — total {formatar_moeda(total)}"
-        )
+        st.caption(f"{len(df_banco)} meses — total {formatar_moeda(total)}")
         st.dataframe(df_banco, use_container_width=True, hide_index=True)
 
 

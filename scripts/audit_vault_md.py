@@ -51,9 +51,7 @@ _RAIZ_REPO: Path = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(_RAIZ_REPO))
 
 # Regex canônico de filename: YYYY-MM-DD-HHmmss[-slug].<ext>
-FILENAME_REGEX: re.Pattern[str] = re.compile(
-    r"^\d{4}-\d{2}-\d{2}-\d{6}(-[a-z0-9-]+)?\.[a-z0-9]+$"
-)
+FILENAME_REGEX: re.Pattern[str] = re.compile(r"^\d{4}-\d{2}-\d{2}-\d{6}(-[a-z0-9-]+)?\.[a-z0-9]+$")
 
 # Extensões consideradas binários elegíveis a companion .md.
 EXTENSOES_BINARIAS: frozenset[str] = frozenset(
@@ -112,9 +110,7 @@ def carregar_mapping(path_mapping: Path) -> dict[str, list[str]]:
     with path_mapping.open("r", encoding="utf-8") as fh:
         dados = yaml.safe_load(fh)
     if not isinstance(dados, dict):
-        raise ValueError(
-            f"mapping inválido em {path_mapping}: raiz precisa ser dict de áreas"
-        )
+        raise ValueError(f"mapping inválido em {path_mapping}: raiz precisa ser dict de áreas")
     return {area: list(subtipos) for area, subtipos in dados.items()}
 
 
@@ -278,11 +274,7 @@ class AuditorVault:
                 )
                 continue
 
-            ausentes = [
-                campo
-                for campo in FRONTMATTER_OBRIGATORIOS
-                if campo not in frontmatter
-            ]
+            ausentes = [campo for campo in FRONTMATTER_OBRIGATORIOS if campo not in frontmatter]
             if ausentes:
                 self.relatorio.adicionar(
                     "frontmatter",
@@ -352,10 +344,7 @@ class AuditorVault:
                 self.relatorio.adicionar(
                     "companion",
                     self._path_relativo(md_path),
-                    (
-                        f".md referencia 'arquivo: {campo_arquivo}' mas binário "
-                        f"não existe ao lado"
-                    ),
+                    (f".md referencia 'arquivo: {campo_arquivo}' mas binário não existe ao lado"),
                 )
 
 
@@ -416,27 +405,18 @@ def _recomendacoes(relatorio: Relatorio) -> list[str]:
         contagem[violacao.categoria] = contagem.get(violacao.categoria, 0) + 1
     prioridade = sorted(contagem.items(), key=lambda x: -x[1])
     mapa = {
-        "estrutura": (
-            "Mover arquivos para `inbox/<area>/<subtipo>/` conforme mapping "
-            "canônico."
-        ),
-        "filename": (
-            "Renomear binários para o regex `YYYY-MM-DD-HHmmss[-slug].<ext>`."
-        ),
+        "estrutura": ("Mover arquivos para `inbox/<area>/<subtipo>/` conforme mapping canônico."),
+        "filename": ("Renomear binários para o regex `YYYY-MM-DD-HHmmss[-slug].<ext>`."),
         "frontmatter": (
             "Reescrever frontmatter dos .md companions com `_schema_version=1` "
             "+ campos obrigatórios."
         ),
-        "companion": (
-            "Gerar .md companion para cada binário (ou remover binário solto)."
-        ),
+        "companion": ("Gerar .md companion para cada binário (ou remover binário solto)."),
     }
     bullets: list[str] = []
     for categoria, total in prioridade[:5]:
         sufixo = "caso" if total == 1 else "casos"
-        bullets.append(
-            f"- ({total} {sufixo}) {mapa.get(categoria, categoria)}"
-        )
+        bullets.append(f"- ({total} {sufixo}) {mapa.get(categoria, categoria)}")
     while len(bullets) < 5:
         bullets.append("- (sem mais categorias com violação)")
     return bullets[:5]
@@ -487,11 +467,7 @@ def main(argv: list[str] | None = None) -> int:
     auditor = AuditorVault(vault, mapping)
     relatorio = auditor.executar()
 
-    path_saida = (
-        Path(args.relatorio).expanduser()
-        if args.relatorio
-        else _path_relatorio_padrao()
-    )
+    path_saida = Path(args.relatorio).expanduser() if args.relatorio else _path_relatorio_padrao()
     gerar_relatorio_md(relatorio, path_saida)
 
     print(

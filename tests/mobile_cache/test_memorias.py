@@ -22,9 +22,7 @@ from src.mobile_cache.memorias import (
     validar,
 )
 
-FIXTURE_VAULT = (
-    Path(__file__).resolve().parents[1] / "fixtures" / "vault_sintetico"
-)
+FIXTURE_VAULT = Path(__file__).resolve().parents[1] / "fixtures" / "vault_sintetico"
 
 
 def _payload_fixture() -> dict:
@@ -106,9 +104,7 @@ def test_carregar_validado_payload_invalido_modo_estrito_levanta(
     payload["items"][0]["tipo"] = "foo"
     cache = tmp_path / ".ouroboros" / "cache"
     cache.mkdir(parents=True)
-    (cache / "memorias.json").write_text(
-        json.dumps(payload), encoding="utf-8"
-    )
+    (cache / "memorias.json").write_text(json.dumps(payload), encoding="utf-8")
     with pytest.raises(ValidationError):
         carregar_validado(tmp_path, estrito=True)
 
@@ -120,9 +116,7 @@ def test_carregar_validado_payload_invalido_modo_lenient_cai_em_skeleton(
     payload["items"][0]["tipo"] = "foo"
     cache = tmp_path / ".ouroboros" / "cache"
     cache.mkdir(parents=True)
-    (cache / "memorias.json").write_text(
-        json.dumps(payload), encoding="utf-8"
-    )
+    (cache / "memorias.json").write_text(json.dumps(payload), encoding="utf-8")
     items, gerado_em = carregar_validado(tmp_path)
     assert items == []
     assert gerado_em == payload["gerado_em"]

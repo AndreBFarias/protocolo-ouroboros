@@ -218,8 +218,8 @@ def logo_sidebar_html(largura_px: int = 120) -> str:
         f'style="display:block; margin:0 auto;" '
         f'alt="Protocolo Ouroboros"/>'
         f'<div class="sidebar-brand-text" style="margin-top:{SPACING["sm"]}px; '
-        f'font-family:var(--ff-mono); font-size:13px; font-weight:500; '
-        f'letter-spacing:0.04em; text-transform:uppercase; '
+        f"font-family:var(--ff-mono); font-size:13px; font-weight:500; "
+        f"letter-spacing:0.04em; text-transform:uppercase; "
         f"color:{CORES['destaque']}; "
         f'text-align:center;">Protocolo Ouroboros</div>'
         f"</div>"

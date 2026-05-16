@@ -12,9 +12,7 @@ from pathlib import Path
 # Import por path direto (evita conflito com nome de subpacote):
 _SPEC = importlib.util.spec_from_file_location(
     "regenerar_estado_atual",
-    Path(__file__).resolve().parents[1]
-    / "scripts"
-    / "regenerar_estado_atual.py",
+    Path(__file__).resolve().parents[1] / "scripts" / "regenerar_estado_atual.py",
 )
 assert _SPEC and _SPEC.loader
 regen = importlib.util.module_from_spec(_SPEC)
@@ -64,12 +62,7 @@ def test_aplicar_no_arquivo_substitui_entre_markers() -> None:
 def test_aplicar_no_arquivo_insere_markers_quando_ausentes() -> None:
     """Sem markers: insere logo após cabeçalho `## Versao + saude geral`."""
     md_sem_markers = (
-        "# Doc\n\n"
-        "## Versao + saude geral\n\n"
-        "```\n"
-        "TEXTO ESTÁTICO HISTÓRICO\n"
-        "```\n\n"
-        "## outra seção\n"
+        "# Doc\n\n## Versao + saude geral\n\n```\nTEXTO ESTÁTICO HISTÓRICO\n```\n\n## outra seção\n"
     )
     novo_bloco = "```\nBLOCO NOVO\n```\n"
     resultado = regen.aplicar_no_arquivo(md_sem_markers, novo_bloco)
@@ -82,10 +75,7 @@ def test_aplicar_no_arquivo_insere_markers_quando_ausentes() -> None:
 def test_aplicar_no_arquivo_idempotente(monkeypatch, tmp_path: Path) -> None:
     """Aplicar 2× consecutivas com mesmas métricas produz mesmo arquivo."""
     md_inicial = (
-        "## Versao + saude geral\n\n"
-        f"{regen.MARKER_INICIO}\n"
-        "```\nOLD\n```\n"
-        f"{regen.MARKER_FIM}\n"
+        f"## Versao + saude geral\n\n{regen.MARKER_INICIO}\n```\nOLD\n```\n{regen.MARKER_FIM}\n"
     )
     bloco_fixo = "```\nFIXED\n```\n"
     primeira = regen.aplicar_no_arquivo(md_inicial, bloco_fixo)
@@ -96,13 +86,9 @@ def test_aplicar_no_arquivo_idempotente(monkeypatch, tmp_path: Path) -> None:
 def test_tipos_graduados_lê_canonico_do_yaml(monkeypatch, tmp_path: Path) -> None:
     """`_tipos_graduados` usa total do YAML (não count do JSON)."""
     yaml_path = tmp_path / "tipos.yaml"
-    yaml_path.write_text(
-        "tipos:\n  - id: a\n  - id: b\n  - id: c\n", encoding="utf-8"
-    )
+    yaml_path.write_text("tipos:\n  - id: a\n  - id: b\n  - id: c\n", encoding="utf-8")
     json_path = tmp_path / "graduacao.json"
-    json_path.write_text(
-        '{"totais": {"GRADUADO": 1, "PENDENTE": 0}}', encoding="utf-8"
-    )
+    json_path.write_text('{"totais": {"GRADUADO": 1, "PENDENTE": 0}}', encoding="utf-8")
     monkeypatch.setattr(regen, "PATH_GRADUACAO", json_path)
     monkeypatch.setattr(regen, "_RAIZ", tmp_path)
     # PATH_GRADUACAO é resolvido em runtime mas _RAIZ não — precisamos do yaml path:

@@ -562,14 +562,12 @@ def main() -> None:
         }
         secao_orfa = str(st.query_params.get("secao", ""))
         if secao_orfa and secao_orfa in _SECOES_ORFAS_BEM_ESTAR:
-            _SECOES_ORFAS_BEM_ESTAR[secao_orfa].renderizar(
-                dados, periodo, pessoa, ctx
-            )
+            _SECOES_ORFAS_BEM_ESTAR[secao_orfa].renderizar(dados, periodo, pessoa, ctx)
             st.markdown(
                 '<a class="btn btn-ghost btn-sm" href="?cluster=Bem-estar&tab=Recap" '
                 'style="margin-top:var(--sp-4); display:inline-block; '
-                'text-decoration:none; color:var(--text-muted); '
-                'border:1px solid var(--border-subtle); padding:6px 12px; '
+                "text-decoration:none; color:var(--text-muted); "
+                "border:1px solid var(--border-subtle); padding:6px 12px; "
                 'border-radius:var(--r-sm);">'
                 "&larr; Voltar para Recap"
                 "</a>",

@@ -67,9 +67,7 @@ def gerar_cache(
     gerado_em: datetime | None = None,
 ) -> Path:
     payload = varrer(vault_root, gerado_em=gerado_em)
-    return gerar_cache_schema(
-        schema=SCHEMA, payload=payload, vault_root=vault_root, saida=saida
-    )
+    return gerar_cache_schema(schema=SCHEMA, payload=payload, vault_root=vault_root, saida=saida)
 
 
 def cli(argv: list[str] | None = None) -> int:

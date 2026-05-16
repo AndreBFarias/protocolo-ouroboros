@@ -77,9 +77,7 @@ def test_limpar_documentos_apaga_3_docs_e_4_edges(grafo_com_docs: GrafoDB):
     assert resultado["edges_total"] == 4
 
     cur = grafo_com_docs._conn.cursor()  # noqa: SLF001
-    docs_restantes = cur.execute(
-        "SELECT COUNT(*) FROM node WHERE tipo='documento'"
-    ).fetchone()[0]
+    docs_restantes = cur.execute("SELECT COUNT(*) FROM node WHERE tipo='documento'").fetchone()[0]
     assert docs_restantes == 0
 
 

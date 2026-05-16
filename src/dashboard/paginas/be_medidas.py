@@ -108,11 +108,7 @@ def _comparativo(items: list[dict[str, Any]]) -> dict[str, dict[str, float | Non
     ordenados = sorted(items, key=lambda i: str(i.get("data") or ""))
     saida: dict[str, dict[str, float | None]] = {}
     for campo in CAMPOS:
-        primeiros = [
-            float(i[campo])
-            for i in ordenados
-            if isinstance(i.get(campo), (int, float))
-        ]
+        primeiros = [float(i[campo]) for i in ordenados if isinstance(i.get(campo), (int, float))]
         if len(primeiros) < 1:
             saida[campo] = {"primeiro": None, "ultimo": None, "delta": None}
             continue
@@ -121,7 +117,6 @@ def _comparativo(items: list[dict[str, Any]]) -> dict[str, dict[str, float | Non
         delta = round(ultimo - primeiro, 2)
         saida[campo] = {"primeiro": primeiro, "ultimo": ultimo, "delta": delta}
     return saida
-
 
 
 def _serie_30d(items: list[dict[str, Any]], campo: str) -> list[float]:
@@ -145,9 +140,7 @@ def _formatar_delta(delta: float, unidade: str) -> tuple[str, str]:
     return (f"{sinal} {sinal_num}{unidade} / 30d", classe)
 
 
-def _card_medida_html(
-    items: list[dict[str, Any]], campo: str
-) -> str:
+def _card_medida_html(items: list[dict[str, Any]], campo: str) -> str:
     """UX-V-2.12: card com label + valor + delta 30d + sparkline.
 
     Quando ``items`` tem 0 pontos do campo, renderiza placeholder ``--``.
@@ -165,32 +158,26 @@ def _card_medida_html(
             f'<div class="med-card" style="--med-cor:{cor};">'
             f'<div class="med-head">'
             f'<span class="med-label">{label}</span>'
-            f'</div>'
+            f"</div>"
             f'<span class="med-vazio">--</span>'
-            f'</div>'
+            f"</div>"
         )
 
     valor = pontos[-1]
     delta = pontos[-1] - pontos[0] if len(pontos) >= 2 else 0.0
     delta_txt, delta_cls = _formatar_delta(delta, unidade)
-    sparkline = (
-        sparkline_html(pontos, cor=cor, largura=240, altura=32)
-        if len(pontos) >= 2
-        else ""
-    )
-    spark_block = (
-        f'<div class="med-sparkline">{sparkline}</div>' if sparkline else ""
-    )
+    sparkline = sparkline_html(pontos, cor=cor, largura=240, altura=32) if len(pontos) >= 2 else ""
+    spark_block = f'<div class="med-sparkline">{sparkline}</div>' if sparkline else ""
     return minificar(
         f'<div class="med-card" style="--med-cor:{cor};">'
         f'<div class="med-head">'
         f'<span class="med-label">{label}</span>'
-        f'</div>'
+        f"</div>"
         f'<div class="med-valor">{valor:.1f}'
         f'<span class="med-unid">{unidade}</span></div>'
         f'<div class="med-delta {delta_cls}">{delta_txt}</div>'
-        f'{spark_block}'
-        f'</div>'
+        f"{spark_block}"
+        f"</div>"
     )
 
 
@@ -209,19 +196,15 @@ def _toggle_pessoa_html(pessoa_atual: str) -> str:
         f'<a class="{classe_b}" '
         f'href="?cluster=Bem-estar&tab=Medidas&pessoa=pessoa_b" '
         f'style="text-decoration:none;">PESSOA B</a>'
-        f'</div>'
+        f"</div>"
     )
 
 
-def _agrupar_semanas(
-    items: list[dict[str, Any]], n: int = 6
-) -> list[dict[str, Any]]:
+def _agrupar_semanas(items: list[dict[str, Any]], n: int = 6) -> list[dict[str, Any]]:
     """Retorna até ``n`` itens mais recentes (1 por semana ISO), DESC."""
     if not items:
         return []
-    ordenados = sorted(
-        items, key=lambda i: str(i.get("data") or ""), reverse=True
-    )
+    ordenados = sorted(items, key=lambda i: str(i.get("data") or ""), reverse=True)
     vistos: dict[str, dict[str, Any]] = {}
     for item in ordenados:
         data_str = str(item.get("data") or "")
@@ -242,8 +225,18 @@ def _agrupar_semanas(
 def _formatar_data_pt(data_str: str) -> str:
     """Converte ``2026-04-01`` em ``01 abr 26`` (PT-BR)."""
     meses = {
-        1: "jan", 2: "fev", 3: "mar", 4: "abr", 5: "mai", 6: "jun",
-        7: "jul", 8: "ago", 9: "set", 10: "out", 11: "nov", 12: "dez",
+        1: "jan",
+        2: "fev",
+        3: "mar",
+        4: "abr",
+        5: "mai",
+        6: "jun",
+        7: "jul",
+        8: "ago",
+        9: "set",
+        10: "out",
+        11: "nov",
+        12: "dez",
     }
     try:
         ts = pd.Timestamp(data_str)
@@ -257,9 +250,7 @@ def _coluna_tem_dado(items: list[dict[str, Any]], campo: str) -> bool:
     return any(isinstance(i.get(campo), (int, float)) for i in items)
 
 
-def _tabela_historico_html(
-    items: list[dict[str, Any]], pessoa: str
-) -> str:
+def _tabela_historico_html(items: list[dict[str, Any]], pessoa: str) -> str:
     """UX-V-2.12: tabela das 6 semanas mais recentes.
 
     UX-V-2.12.A: colunas fisiológicas (gordura_pct, pressao, freq_card,
@@ -270,8 +261,7 @@ def _tabela_historico_html(
     if not semanas:
         return ""
     pessoa_label = (
-        "Pessoa A" if pessoa == "pessoa_a"
-        else ("Pessoa B" if pessoa == "pessoa_b" else "Casal")
+        "Pessoa A" if pessoa == "pessoa_a" else ("Pessoa B" if pessoa == "pessoa_b" else "Casal")
     )
 
     def _cel(v: Any, unidade: str = "") -> str:
@@ -303,9 +293,7 @@ def _tabela_historico_html(
     linhas: list[str] = []
     for item in semanas:
         data_pt = _formatar_data_pt(str(item.get("data") or ""))
-        celulas = "".join(
-            _cel(item.get(campo), unidade) for campo, _, unidade in colunas
-        )
+        celulas = "".join(_cel(item.get(campo), unidade) for campo, _, unidade in colunas)
         linhas.append(f"<tr><td>{data_pt}</td>{celulas}</tr>")
     cabecalho = "".join(f"<th>{header}</th>" for _, header, _ in colunas)
     return minificar(
@@ -320,9 +308,7 @@ def _tabela_historico_html(
     )
 
 
-def _comparativo_card_html(
-    campo: str, dados: dict[str, float | None]
-) -> str:
+def _comparativo_card_html(campo: str, dados: dict[str, float | None]) -> str:
     label = LABEL_CAMPO[campo]
     unidade = UNIDADES[campo]
     primeiro = dados["primeiro"]
@@ -345,10 +331,10 @@ def _comparativo_card_html(
             cor_delta = CORES["positivo"] if campo == "peso" else CORES["alerta"]
     return (
         f'<div style="background:{CORES["card_fundo"]};'
-        f'border:1px solid {CORES["texto_sec"]}33;border-radius:6px;'
+        f"border:1px solid {CORES['texto_sec']}33;border-radius:6px;"
         f'padding:14px;">'
         f'  <div style="font-family:ui-monospace,monospace;font-size:10px;'
-        f'                letter-spacing:0.10em;text-transform:uppercase;'
+        f"                letter-spacing:0.10em;text-transform:uppercase;"
         f'                color:{CORES["texto_muted"]};margin-bottom:8px;">{label}</div>'
         f'  <div style="font-size:20px;font-weight:500;color:{CORES["texto"]};'
         f'                font-variant-numeric:tabular-nums;">{valor_str}</div>'
@@ -400,17 +386,13 @@ def _skeleton_mockup_html() -> str:
             f"</div>"
         )
 
-    grid_cards = (
-        f'<div class="med-grid med-grid-skeleton">{"".join(cards)}</div>'
-    )
+    grid_cards = f'<div class="med-grid med-grid-skeleton">{"".join(cards)}</div>'
 
     colunas = ("data", "peso", "bf%", "cintura", "pressão", "sono médio")
     cabecalho = "".join(f"<th>{c}</th>" for c in colunas)
     linhas: list[str] = []
     for _ in range(6):
-        celulas = "".join(
-            '<td><span class="v">--</span></td>' for _ in colunas
-        )
+        celulas = "".join('<td><span class="v">--</span></td>' for _ in colunas)
         linhas.append(f"<tr>{celulas}</tr>")
     tabela = (
         '<div class="med-hist-card med-hist-card-skeleton">'
@@ -431,10 +413,7 @@ def _page_header_html(qtd: int) -> str:
 
     return renderizar_page_header(
         titulo="MEDIDAS · CORPO",
-        subtitulo=(
-            "Métricas físicas registradas no vault. "
-            "Comparativo última vs primeira."
-        ),
+        subtitulo=("Métricas físicas registradas no vault. Comparativo última vs primeira."),
         sprint_tag="UX-RD-19",
         pills=[{"texto": f"{qtd} registros", "tipo": "generica"}],
     )
@@ -449,19 +428,18 @@ def renderizar(
     """Renderiza Bem-estar / Medidas (UX-T-24 + UX-V-2.12)."""
     from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
     from src.dashboard.componentes.ui import carregar_css_pagina
-    renderizar_grupo_acoes([
-        {"label": "Importar Mi Fit", "glyph": "upload",
-         "title": "Balança Xiaomi"},
-        {"label": "Registrar", "primary": True, "glyph": "plus",
-         "title": "Peso, BF%, cintura"},
-    ])
+
+    renderizar_grupo_acoes(
+        [
+            {"label": "Importar Mi Fit", "glyph": "upload", "title": "Balança Xiaomi"},
+            {"label": "Registrar", "primary": True, "glyph": "plus", "title": "Peso, BF%, cintura"},
+        ]
+    )
 
     del dados, periodo, ctx
 
     # UX-V-2.12: CSS dedicado da página (tokens via components.css).
-    st.markdown(
-        minificar(carregar_css_pagina("be_medidas")), unsafe_allow_html=True
-    )
+    st.markdown(minificar(carregar_css_pagina("be_medidas")), unsafe_allow_html=True)
 
     vault_root = descobrir_vault_root()
     items = _carregar_medidas(vault_root)
@@ -475,8 +453,7 @@ def renderizar(
 
     if vault_root is None:
         st.warning(
-            "Vault Bem-estar não encontrado. Configure `OUROBOROS_VAULT` "
-            "para visualizar medidas."
+            "Vault Bem-estar não encontrado. Configure `OUROBOROS_VAULT` para visualizar medidas."
         )
         return
 
@@ -485,6 +462,7 @@ def renderizar(
             fallback_estado_inicial_html,
             ler_sync_info,
         )
+
         # UX-V-2.12-FIX: toggle Pessoa A/B sempre presente, mesmo no fallback.
         st.markdown(_toggle_pessoa_html(pessoa), unsafe_allow_html=True)
         st.markdown(
@@ -511,9 +489,7 @@ def renderizar(
     # UX-V-2.12: grid de 6 cards (peso/cintura/quadril/peito/braço/coxa)
     # com sparkline 30d + variação. ``_comparativo`` antigo é mantido
     # para retrocompatibilidade dos testes em test_be_resto.py.
-    cards_html = "".join(
-        _card_medida_html(items_filtrados, campo) for campo in CAMPOS
-    )
+    cards_html = "".join(_card_medida_html(items_filtrados, campo) for campo in CAMPOS)
     st.markdown(
         f'<div class="med-grid">{cards_html}</div>',
         unsafe_allow_html=True,
@@ -534,7 +510,7 @@ def renderizar(
             df_peso = df_peso.sort_values("data").set_index("data")
             st.markdown(
                 f'<h3 style="font-family:ui-monospace,monospace;font-size:11px;'
-                f'letter-spacing:0.10em;text-transform:uppercase;'
+                f"letter-spacing:0.10em;text-transform:uppercase;"
                 f'color:{CORES["texto_muted"]};margin:0 0 8px;">'
                 f"Histórico de peso</h3>",
                 unsafe_allow_html=True,
@@ -553,7 +529,7 @@ def renderizar(
     if fotos_paths:
         st.markdown(
             f'<h3 style="font-family:ui-monospace,monospace;font-size:11px;'
-            f'letter-spacing:0.10em;text-transform:uppercase;'
+            f"letter-spacing:0.10em;text-transform:uppercase;"
             f'color:{CORES["texto_muted"]};margin:18px 0 8px;">'
             f"Fotos comparativas</h3>",
             unsafe_allow_html=True,
@@ -566,8 +542,8 @@ def renderizar(
                         f'<div style="background:{CORES["fundo_inset"]};'
                         f"height:160px;display:flex;align-items:center;"
                         f"justify-content:center;border-radius:4px;"
-                        f'border:1px solid {CORES["texto_sec"]}33;'
-                        f'color:{CORES["texto_muted"]};'
+                        f"border:1px solid {CORES['texto_sec']}33;"
+                        f"color:{CORES['texto_muted']};"
                         f"font-family:ui-monospace,monospace;font-size:10px;"
                         f'text-align:center;padding:6px;">{p}</div>'
                     ),

@@ -702,7 +702,7 @@ def _aplicar_retencao_backups_grafo(dir_backup: Path) -> list[Path]:
         return []
     candidatos: list[tuple[datetime, Path]] = []
     for p in dir_backup.glob(f"{PREFIXO_BACKUP_GRAFO}*.sqlite"):
-        ts_str = p.stem[len(PREFIXO_BACKUP_GRAFO):]
+        ts_str = p.stem[len(PREFIXO_BACKUP_GRAFO) :]
         ts = _ts_to_timestamp(ts_str)
         if ts is None:
             continue
@@ -827,9 +827,7 @@ def _registrar_falha_pipeline_estruturada(estagio: str, erro: Exception) -> Path
             "traceback": traceback.format_exc(),
             "ultimo_backup_grafo": ultimo_backup,
         }
-        destino.write_text(
-            _json.dumps(registro, ensure_ascii=False, indent=2), encoding="utf-8"
-        )
+        destino.write_text(_json.dumps(registro, ensure_ascii=False, indent=2), encoding="utf-8")
         logger.info("Falha de pipeline registrada em %s", destino.name)
         return destino
     except Exception as registrar_erro:
@@ -887,15 +885,14 @@ def executar(mes: str | None = None, processar_tudo: bool = False) -> None:
         backup_destino = _executar_backup_grafo()
         backup_ts: str | None = None
         if backup_destino is not None:
-            backup_ts = backup_destino.stem[len(PREFIXO_BACKUP_GRAFO):]
+            backup_ts = backup_destino.stem[len(PREFIXO_BACKUP_GRAFO) :]
 
         _executar_corpo_pipeline(mes, processar_tudo)
     except Exception as exc:
         _registrar_falha_pipeline_estruturada(_ESTAGIO_ATUAL, exc)
         if backup_ts is not None:
             logger.error(
-                "Pipeline crashou no estágio %s. Tentando restore automático "
-                "do backup %s.",
+                "Pipeline crashou no estágio %s. Tentando restore automático do backup %s.",
                 _ESTAGIO_ATUAL,
                 backup_ts,
             )

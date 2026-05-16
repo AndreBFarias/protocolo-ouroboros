@@ -218,9 +218,7 @@ def popular(
     conn_grafo = sqlite3.connect(f"file:{grafo_db}?mode=ro", uri=True)
     conn_rev = sqlite3.connect(revisao_db)
     try:
-        cur_rev = conn_rev.execute(
-            "SELECT item_id, dimensao, valor_grafo_real FROM revisao"
-        )
+        cur_rev = conn_rev.execute("SELECT item_id, dimensao, valor_grafo_real FROM revisao")
         marcacoes = cur_rev.fetchall()
         contagens["total"] = len(marcacoes)
 
@@ -260,8 +258,7 @@ def popular(
                 continue
 
             conn_rev.execute(
-                "UPDATE revisao SET valor_grafo_real = ? "
-                "WHERE item_id = ? AND dimensao = ?",
+                "UPDATE revisao SET valor_grafo_real = ? WHERE item_id = ? AND dimensao = ?",
                 (valor_grafo, item_id, dimensão),
             )
             contagens["atualizadas"] += 1

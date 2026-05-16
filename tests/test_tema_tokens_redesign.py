@@ -112,9 +112,9 @@ class TestStreamlitConfigMigrado:
         path = Path(__file__).resolve().parents[1] / ".streamlit" / "config.toml"
         texto_toml = path.read_text(encoding="utf-8")
         # Match case-insensitive porque hex pode ser escrito com letras maiúsculas
-        assert re.search(
-            r'backgroundColor\s*=\s*"#0e0f15"', texto_toml, flags=re.IGNORECASE
-        ), "backgroundColor do Streamlit deve ser #0e0f15 (bg-base)"
+        assert re.search(r'backgroundColor\s*=\s*"#0e0f15"', texto_toml, flags=re.IGNORECASE), (
+            "backgroundColor do Streamlit deve ser #0e0f15 (bg-base)"
+        )
         assert re.search(
             r'secondaryBackgroundColor\s*=\s*"#1a1d28"',
             texto_toml,

@@ -144,21 +144,14 @@ def test_secoes_legadas_renderizam_sem_warnings_proprios(
     no topo. Garantia anti-regressão para evitar duplicação."""
     with patch.object(pagina_contas, "st") as mock_st:
         mock_st.columns.return_value = (MagicMock(), MagicMock(), MagicMock())
-        pagina_contas._secao_dividas(
-            dados_minimos["dividas_ativas"], "2026-04", "Todos"
-        )
+        pagina_contas._secao_dividas(dados_minimos["dividas_ativas"], "2026-04", "Todos")
         pagina_contas._secao_inventario(dados_minimos["inventario"])
         pagina_contas._secao_prazos(dados_minimos["prazos"])
 
     mensagens = _coletar_warnings(mock_st)
-    callouts_snapshot = [
-        m
-        for m in mensagens
-        if "snapshot" in m.lower() and "warning" in m.lower()
-    ]
+    callouts_snapshot = [m for m in mensagens if "snapshot" in m.lower() and "warning" in m.lower()]
     assert not callouts_snapshot, (
-        f"Subseções não devem mais emitir callout próprio de snapshot: "
-        f"{callouts_snapshot}"
+        f"Subseções não devem mais emitir callout próprio de snapshot: {callouts_snapshot}"
     )
 
 
@@ -206,12 +199,16 @@ def test_aviso_snapshot_dinamico_via_mtime(tmp_path) -> None:  # type: ignore[no
     # A constante histórica continua exportada (sem 2023, já adaptada
     # em UX-RD-07) -- retrocompatibilidade de imports.
     assert "snapshot" in pagina_contas.AVISO_SNAPSHOT.lower()
-    assert dashboard_dados.CAMINHO_XLSX.name in (
-        # caminho_xlsx.name aparece dentro de aviso quando XLSX existe;
-        # no aviso constante, mencionamos o XLSX consolidado por nome
-        # genérico ("XLSX consolidado") -- aceitamos ambos os formatos.
-        pagina_contas.AVISO_SNAPSHOT + " " + aviso
-    ) or "XLSX" in pagina_contas.AVISO_SNAPSHOT
+    assert (
+        dashboard_dados.CAMINHO_XLSX.name
+        in (
+            # caminho_xlsx.name aparece dentro de aviso quando XLSX existe;
+            # no aviso constante, mencionamos o XLSX consolidado por nome
+            # genérico ("XLSX consolidado") -- aceitamos ambos os formatos.
+            pagina_contas.AVISO_SNAPSHOT + " " + aviso
+        )
+        or "XLSX" in pagina_contas.AVISO_SNAPSHOT
+    )
 
 
 # "Vazio não é nulo: é espaço para o que ainda virá." -- Lao Tzu

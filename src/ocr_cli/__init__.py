@@ -20,6 +20,7 @@ Uso típico::
 Padrões VALIDATOR_BRIEF: (a) edit incremental, (b) acentuação PT-BR,
 (g) citação filosófica no rodapé, (e) sem `pip install` para OCR.
 """
+
 from src.ocr_cli.pdf_cli import (
     extrair_imagens_embutidas,
     extrair_pdf_texto_nativo,

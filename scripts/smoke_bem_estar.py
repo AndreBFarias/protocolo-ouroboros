@@ -110,9 +110,7 @@ def main(argv: list[str] | None = None) -> int:
             violacoes.append(f"{schema}: cache ausente/inválido ({cache_path})")
             continue
         if cache_count != fs_count:
-            violacoes.append(
-                f"{schema}: cache={cache_count} filesystem={fs_count}"
-            )
+            violacoes.append(f"{schema}: cache={cache_count} filesystem={fs_count}")
         detalhes.append(f"  {schema}: cache={cache_count} fs={fs_count}")
 
     if violacoes:

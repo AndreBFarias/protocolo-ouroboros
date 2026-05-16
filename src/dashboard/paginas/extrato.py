@@ -209,8 +209,11 @@ def calcular_saldo_topo(df: pd.DataFrame) -> dict[str, float]:
     """
     if df.empty:
         return {
-            "saldo": 0.0, "receita": 0.0, "despesa": 0.0,
-            "investido": 0.0, "transacoes": 0,
+            "saldo": 0.0,
+            "receita": 0.0,
+            "despesa": 0.0,
+            "investido": 0.0,
+            "transacoes": 0,
         }
 
     if "tipo" in df.columns:
@@ -377,22 +380,29 @@ def _filt_bar_canonica(
     col_c, col_cat, col_per, col_busca = st.columns([1, 1, 1, 1.5])
     with col_c:
         conta_sel = st.selectbox(
-            "Conta", contas_opcoes, key="t02_filt_conta",
+            "Conta",
+            contas_opcoes,
+            key="t02_filt_conta",
         )
     with col_cat:
         categoria_sel = st.selectbox(
-            "Categoria", categorias_opcoes, key="t02_filt_categoria",
+            "Categoria",
+            categorias_opcoes,
+            key="t02_filt_categoria",
         )
     with col_per:
         # Período é informativo aqui (a sprint usa o ctx global do dashboard);
         # exibido para casar com o mockup. Não filtra por enquanto.
         st.selectbox(
-            "Período", ["período do dashboard"], key="t02_filt_periodo",
+            "Período",
+            ["período do dashboard"],
+            key="t02_filt_periodo",
             disabled=True,
         )
     with col_busca:
         busca_local = st.text_input(
-            "Busca", key="t02_filt_busca",
+            "Busca",
+            key="t02_filt_busca",
             placeholder="descrição, sha8, valor",
         )
 
@@ -403,13 +413,13 @@ def _filt_bar_canonica(
         com_sidecar = st.checkbox("com sidecar", key="t02_chip_sidecar")
     with col_chip3:
         nao_categorizadas = st.checkbox(
-            "não categorizadas", key="t02_chip_naocat",
+            "não categorizadas",
+            key="t02_chip_naocat",
         )
     with col_count:
         n_total = int(len(df))
         st.markdown(
-            f'<span class="t02-filt-counter">{n_total} '
-            f"transações</span>",
+            f'<span class="t02-filt-counter">{n_total} transações</span>',
             unsafe_allow_html=True,
         )
 
@@ -439,8 +449,16 @@ def _aplicar_filt_bar(df: pd.DataFrame, filtros: dict[str, Any]) -> pd.DataFrame
 
     busca = str(filtros.get("busca", "")).strip()
     if busca and "local" in resultado.columns:
-        mascara = resultado["local"].fillna("").astype(str).str.contains(
-            busca, case=False, na=False, regex=False,
+        mascara = (
+            resultado["local"]
+            .fillna("")
+            .astype(str)
+            .str.contains(
+                busca,
+                case=False,
+                na=False,
+                regex=False,
+            )
         )
         resultado = resultado[mascara]
 
@@ -458,7 +476,13 @@ def _aplicar_filt_bar(df: pd.DataFrame, filtros: dict[str, Any]) -> pd.DataFrame
 
 
 _DIAS_SEMANA_ABREV = {
-    0: "SEG", 1: "TER", 2: "QUA", 3: "QUI", 4: "SEX", 5: "SAB", 6: "DOM",
+    0: "SEG",
+    1: "TER",
+    2: "QUA",
+    3: "QUI",
+    4: "SEX",
+    5: "SAB",
+    6: "DOM",
 }
 
 
@@ -469,17 +493,13 @@ def _lista_por_dia_html(df: pd.DataFrame, limite: int = 50) -> str:
     sprint: paginação completa fica para depois).
     """
     if df.empty or "data" not in df.columns:
-        return minificar(
-            '<div class="t02-lista-vazia">Sem transações para exibir.</div>'
-        )
+        return minificar('<div class="t02-lista-vazia">Sem transações para exibir.</div>')
 
     df_local = df.copy()
     df_local["__data_dt"] = pd.to_datetime(df_local["data"], errors="coerce")
     df_local = df_local.dropna(subset=["__data_dt"])
     if df_local.empty:
-        return minificar(
-            '<div class="t02-lista-vazia">Sem transações para exibir.</div>'
-        )
+        return minificar('<div class="t02-lista-vazia">Sem transações para exibir.</div>')
 
     # Ordena DESC por data e limita.
     df_local = df_local.sort_values("__data_dt", ascending=False).head(limite)
@@ -499,9 +519,11 @@ def _lista_por_dia_html(df: pd.DataFrame, limite: int = 50) -> str:
         # Total do dia: receitas positivas, despesas negativas.
         if "tipo" in bloco.columns:
             valores_signed = bloco.apply(
-                lambda r: float(pd.to_numeric(r.get("valor"), errors="coerce") or 0.0)
-                if str(r.get("tipo", "")) == "Receita"
-                else -abs(float(pd.to_numeric(r.get("valor"), errors="coerce") or 0.0)),
+                lambda r: (
+                    float(pd.to_numeric(r.get("valor"), errors="coerce") or 0.0)
+                    if str(r.get("tipo", "")) == "Receita"
+                    else -abs(float(pd.to_numeric(r.get("valor"), errors="coerce") or 0.0))
+                ),
                 axis=1,
             )
         else:
@@ -568,12 +590,7 @@ def _lista_por_dia_html(df: pd.DataFrame, limite: int = 50) -> str:
             )
             linhas.append(linha)
 
-        grupo = (
-            '<div class="t02-day-group">'
-            + head_html
-            + "".join(linhas)
-            + "</div>"
-        )
+        grupo = '<div class="t02-day-group">' + head_html + "".join(linhas) + "</div>"
         grupos_html.append(grupo)
 
     return minificar("".join(grupos_html))
@@ -597,9 +614,7 @@ def _saldo_topo_html(metricas: dict[str, float], periodo_rotulo: str) -> str:
     n = int(metricas["transacoes"])
 
     investido = float(metricas.get("investido", 0.0))
-    pct_investido = (
-        (investido / receita * 100.0) if receita > 0 else 0.0
-    )
+    pct_investido = (investido / receita * 100.0) if receita > 0 else 0.0
 
     return minificar(
         f"""
@@ -673,10 +688,7 @@ def _tabela_densa_html(df: pd.DataFrame, idx_drawer: int | None = None) -> str:
         # Marcador "Doc?" — vem de _marcar_tracking se a coluna existir
         tracking = str(row.get("__tracking", "") or "")
         if tracking == "Doc ok":
-            doc_cell = (
-                '<span class="extrato-doc-ok" title="Documento vinculado no grafo">'
-                "+</span>"
-            )
+            doc_cell = '<span class="extrato-doc-ok" title="Documento vinculado no grafo">+</span>'
         elif tracking == "Faltando":
             doc_cell = (
                 '<span class="extrato-doc-faltando" '
@@ -701,14 +713,14 @@ def _tabela_densa_html(df: pd.DataFrame, idx_drawer: int | None = None) -> str:
         linhas.append(linha)
 
     cabecalho = (
-        '<thead><tr>'
-        '<th>Data</th>'
-        '<th>Descrição</th>'
-        '<th>Categoria</th>'
+        "<thead><tr>"
+        "<th>Data</th>"
+        "<th>Descrição</th>"
+        "<th>Categoria</th>"
         '<th class="col-num">Valor</th>'
-        '<th>Forma</th>'
-        '<th>Pessoa</th>'
-        '<th>Doc?</th>'
+        "<th>Forma</th>"
+        "<th>Pessoa</th>"
+        "<th>Doc?</th>"
         "</tr></thead>"
     )
     corpo = "<tbody>" + "".join(linhas) + "</tbody>"
@@ -719,11 +731,7 @@ def _tabela_densa_html(df: pd.DataFrame, idx_drawer: int | None = None) -> str:
 
 def _escape(texto: str) -> str:
     """Escape mínimo para evitar quebra de tags via < ou > em descrição."""
-    return (
-        texto.replace("&", "&amp;")
-        .replace("<", "&lt;")
-        .replace(">", "&gt;")
-    )
+    return texto.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
 
 def _breakdown_lateral_html(top_categorias: list[dict[str, Any]]) -> str:
@@ -774,9 +782,7 @@ def _breakdown_lateral_html(top_categorias: list[dict[str, Any]]) -> str:
         '<div class="extrato-breakdown">'
         '<span class="extrato-breakdown-titulo">'
         "BREAKDOWN · TOP 5 CATEGORIAS"
-        "</span>"
-        + "".join(barras)
-        + "</div>"
+        "</span>" + "".join(barras) + "</div>"
     )
 
 
@@ -823,6 +829,7 @@ def renderizar(
     st.markdown(minificar(carregar_css_pagina("extrato")), unsafe_allow_html=True)
     # UX-U-03 + UX-T-02: page-header canônico via helper.
     from src.dashboard.componentes.page_header import renderizar_page_header
+
     st.markdown(
         renderizar_page_header(
             titulo="EXTRATO",
@@ -872,11 +879,13 @@ def renderizar(
     # ---------- UX-V-3.1: filt-bar canônica (entre KPIs e right-cards) -------
     contas_disp = (
         sorted(df["banco_origem"].dropna().astype(str).unique().tolist())
-        if "banco_origem" in df.columns else []
+        if "banco_origem" in df.columns
+        else []
     )
     categorias_disp = (
         sorted(df["categoria"].dropna().astype(str).unique().tolist())
-        if "categoria" in df.columns else []
+        if "categoria" in df.columns
+        else []
     )
     filtros_canonicos = _filt_bar_canonica(df, contas_disp, categorias_disp)
     df_filtrado_canon = _aplicar_filt_bar(df, filtros_canonicos)
@@ -1016,12 +1025,12 @@ def _exibir_layout(df: pd.DataFrame, breakdown: list[dict[str, Any]]) -> None:
     icone_falt = icon_html("alert-triangle", tamanho=14, cor=CORES["alerta"])
     legenda_doc_html = minificar(
         f"""
-        <p class="extrato-legenda-doc" style="color:{CORES['texto_sec']};
+        <p class="extrato-legenda-doc" style="color:{CORES["texto_sec"]};
             font-size:{FONTE_CORPO}px; margin: 4px 0 12px 0;">
             Coluna 'Doc?':
-            <span style="color:{CORES['positivo']};">{icone_ok} Doc ok</span>
+            <span style="color:{CORES["positivo"]};">{icone_ok} Doc ok</span>
             = documento vinculado no grafo;
-            <span style="color:{CORES['alerta']};">{icone_falt} Faltando</span>
+            <span style="color:{CORES["alerta"]};">{icone_falt} Faltando</span>
             = categoria obrigatória sem comprovante; vazio = sem tracking.
         </p>
         """
@@ -1143,9 +1152,7 @@ def _ler_query_param_transacao_id() -> str | None:
     return valor_str
 
 
-def _localizar_linha_transacao(
-    df: pd.DataFrame, identificador: str
-) -> pd.Series | None:
+def _localizar_linha_transacao(df: pd.DataFrame, identificador: str) -> pd.Series | None:
     """Encontra a linha do DF cujo ``identificador`` casa com prefix.
 
     O sha256 da transação é guardado em ``df['identificador']``. Aceita
@@ -1190,9 +1197,7 @@ def _exibir_painel_drill_down(df: pd.DataFrame) -> None:
     transacao_dict = transacao_para_dict(linha)
     documento, itens = _buscar_drill_down_grafo(identificador)
 
-    painel_html = renderizar_painel_drill_down(
-        transacao_dict, documento=documento, itens=itens
-    )
+    painel_html = renderizar_painel_drill_down(transacao_dict, documento=documento, itens=itens)
     st.markdown(painel_html, unsafe_allow_html=True)
 
     # Botão "marcar revisado" -- best-effort em revisao_humana.sqlite.
@@ -1360,7 +1365,7 @@ def _saldo_90d_svg(saldos: list[float], w: int = 540, h: int = 120) -> str:
         '<defs><linearGradient id="t02sg" x1="0" x2="0" y1="0" y2="1">'
         '<stop offset="0%" stop-color="#bd93f9" stop-opacity="0.4"/>'
         '<stop offset="100%" stop-color="#bd93f9" stop-opacity="0.02"/>'
-        '</linearGradient></defs>'
+        "</linearGradient></defs>"
         f'<polygon points="{area}" fill="url(#t02sg)"/>'
         f'<polyline points="{pts}" fill="none" '
         'stroke="var(--accent-purple)" stroke-width="1.4"/>'
@@ -1379,9 +1384,11 @@ def _calcular_saldo_90d(extrato_full: pd.DataFrame) -> list[float]:
     if df.empty:
         return []
     df["__valor_signed"] = df.apply(
-        lambda r: float(r.get("valor", 0))
-        if str(r.get("tipo", "")) == "Receita"
-        else -abs(float(r.get("valor", 0))),
+        lambda r: (
+            float(r.get("valor", 0))
+            if str(r.get("tipo", "")) == "Receita"
+            else -abs(float(r.get("valor", 0)))
+        ),
         axis=1,
     )
     df = df.sort_values("__data")
@@ -1408,9 +1415,9 @@ def _t02_right_cards_html(
             f'<div style="display:flex;gap:12px;margin-top:8px;'
             'font-family:var(--ff-mono);font-size:11px;">'
             f'<div><span style="color:var(--text-muted);">mín</span> '
-            f'{_formatar_brl(minimo)}</div>'
+            f"{_formatar_brl(minimo)}</div>"
             f'<div><span style="color:var(--text-muted);">máx</span> '
-            f'{_formatar_brl(maximo)}</div>'
+            f"{_formatar_brl(maximo)}</div>"
             f'<div style="margin-left:auto;color:'
             f'{"var(--d7-graduado)" if delta >= 0 else "var(--accent-red)"};">'
             f"{'+' if delta >= 0 else ''}{_formatar_brl(delta)}</div>"
@@ -1434,23 +1441,20 @@ def _t02_right_cards_html(
             )
     else:
         bd_html = (
-            '<div style="color:var(--text-muted);font-size:12px;">'
-            "Sem despesas no período."
-            "</div>"
+            '<div style="color:var(--text-muted);font-size:12px;">Sem despesas no período.</div>'
         )
 
     bancos: dict[str, int] = {}
     if "banco_origem" in df_filtrado.columns and not df_filtrado.empty:
-        bancos = (
-            df_filtrado["banco_origem"]
-            .fillna("—")
-            .astype(str)
-            .value_counts()
-            .to_dict()
-        )
+        bancos = df_filtrado["banco_origem"].fillna("—").astype(str).value_counts().to_dict()
     total_origens = sum(int(v) for v in bancos.values()) or 1
-    cores = ["var(--d7-graduado)", "var(--accent-purple)", "var(--accent-pink)",
-             "var(--accent-yellow)", "var(--accent-cyan)"]
+    cores = [
+        "var(--d7-graduado)",
+        "var(--accent-purple)",
+        "var(--accent-pink)",
+        "var(--accent-yellow)",
+        "var(--accent-cyan)",
+    ]
     origens_html = ""
     for i, (banco, count) in enumerate(list(bancos.items())[:5]):
         pct = (count / total_origens) * 100
@@ -1470,24 +1474,22 @@ def _t02_right_cards_html(
         )
     if not origens_html:
         origens_html = (
-            '<div style="color:var(--text-muted);font-size:12px;">'
-            "Sem origens no período."
-            "</div>"
+            '<div style="color:var(--text-muted);font-size:12px;">Sem origens no período.</div>'
         )
 
     return minificar(
         '<div style="display:grid;grid-template-columns:repeat(3,1fr);'
         'gap:12px;margin-bottom:16px;">'
         '<div class="t02-right-card">'
-        '<h3>Saldo · 90 dias</h3>'
+        "<h3>Saldo · 90 dias</h3>"
         f"{saldo_chart}{saldo_meta}"
         "</div>"
         '<div class="t02-right-card">'
-        '<h3>Breakdown · saída do período</h3>'
+        "<h3>Breakdown · saída do período</h3>"
         f"{bd_html}"
         "</div>"
         '<div class="t02-right-card">'
-        '<h3>Origens dos dados</h3>'
+        "<h3>Origens dos dados</h3>"
         f"{origens_html}"
         "</div>"
         "</div>"

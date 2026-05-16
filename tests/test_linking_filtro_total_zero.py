@@ -117,13 +117,10 @@ class TestCandidatasFiltroTotalVazio:
 
         candidatas = linking.candidatas_para_documento(db, doc)
         assert candidatas == [], (
-            "documento com total=0.0 NÃO deve gerar candidatas "
-            "(heurística proporcional indefinida)"
+            "documento com total=0.0 NÃO deve gerar candidatas (heurística proporcional indefinida)"
         )
 
-    def test_total_meio_centavo_nao_gera_candidatas(
-        self, grafo_com_transacao_pequena
-    ) -> None:
+    def test_total_meio_centavo_nao_gera_candidatas(self, grafo_com_transacao_pequena) -> None:
         db, _tx_id = grafo_com_transacao_pequena
         doc_id = _adicionar_documento(db, nome="dirpf-meio-centavo", total=0.005)
         doc = db.buscar_node_por_id(doc_id)
@@ -141,9 +138,7 @@ class TestCandidatasFiltroTotalVazio:
         candidatas = linking.candidatas_para_documento(db, doc)
         assert candidatas == []
 
-    def test_total_dois_centavos_entra_no_funil(
-        self, grafo_com_transacao_pequena
-    ) -> None:
+    def test_total_dois_centavos_entra_no_funil(self, grafo_com_transacao_pequena) -> None:
         """Acima do limiar o documento entra normalmente no funil; pode ou
         não casar (depende da janela), mas o filtro de total não barra."""
         db, _tx_id = grafo_com_transacao_pequena
@@ -164,8 +159,7 @@ class TestCandidatasFiltroTotalVazio:
 
         candidatas = linking.candidatas_para_documento(db, doc)
         assert candidatas, (
-            "documento com total=0.02 (acima do mínimo elegível) DEVE entrar "
-            "no funil heurístico"
+            "documento com total=0.02 (acima do mínimo elegível) DEVE entrar no funil heurístico"
         )
 
 
@@ -182,9 +176,7 @@ class TestLinkagemFiltraTotalVazio:
         _adicionar_documento(db, nome="dirpf-total-zero-stats", total=0.0)
 
         propostas = tmp_path / "propostas"
-        stats = linking.linkar_documentos_a_transacoes(
-            db, caminho_propostas=propostas
-        )
+        stats = linking.linkar_documentos_a_transacoes(db, caminho_propostas=propostas)
 
         assert stats["total_vazio"] == 1
         assert stats["conflitos"] == 0
@@ -199,9 +191,7 @@ class TestLinkagemFiltraTotalVazio:
         _adicionar_documento(db, nome="dirpf-null-stats", total=None)
 
         propostas = tmp_path / "propostas"
-        stats = linking.linkar_documentos_a_transacoes(
-            db, caminho_propostas=propostas
-        )
+        stats = linking.linkar_documentos_a_transacoes(db, caminho_propostas=propostas)
 
         assert stats["total_vazio"] == 1
         assert stats["conflitos"] == 0
@@ -223,9 +213,7 @@ class TestLinkagemFiltraTotalVazio:
         _adicionar_documento(db, nome="dirpf-com-valor", total=123.45)
 
         propostas = tmp_path / "propostas"
-        stats = linking.linkar_documentos_a_transacoes(
-            db, caminho_propostas=propostas
-        )
+        stats = linking.linkar_documentos_a_transacoes(db, caminho_propostas=propostas)
 
         assert stats["total_vazio"] == 0
 

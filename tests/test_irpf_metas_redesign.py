@@ -183,9 +183,7 @@ def test_irpf_totalizadores_batem_com_dataset(extrato_irpf: pd.DataFrame) -> Non
 # ---------------------------------------------------------------------------
 
 
-def test_gerar_pacote_produz_quatro_artefatos(
-    extrato_irpf: pd.DataFrame, tmp_path: Path
-) -> None:
+def test_gerar_pacote_produz_quatro_artefatos(extrato_irpf: pd.DataFrame, tmp_path: Path) -> None:
     """Pacote contém relatorio.pdf, dados.xlsx, dados.json e originais/."""
     diretorio = gerar_pacote(2026, dados={"extrato": extrato_irpf}, diretorio_base=tmp_path)
     assert diretorio.exists()

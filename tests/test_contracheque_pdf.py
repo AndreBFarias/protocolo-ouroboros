@@ -294,8 +294,15 @@ def test_retrocompat_dict_g4f_tem_14_campos_minimo():
     # 8 campos antigos (Sprint AUDIT2): mes_ref, fonte, bruto, inss, irrf,
     # vr_va, liquido, banco, itens.
     chaves_antigas = {
-        "mes_ref", "fonte", "bruto", "inss", "irrf", "vr_va", "liquido",
-        "banco", "itens",
+        "mes_ref",
+        "fonte",
+        "bruto",
+        "inss",
+        "irrf",
+        "vr_va",
+        "liquido",
+        "banco",
+        "itens",
     }
     assert chaves_antigas.issubset(set(resultado.keys()))
     # ≥14 chaves totais (bases novas).
@@ -307,8 +314,15 @@ def test_retrocompat_dict_infobase_tem_14_campos_minimo():
     resultado = _parse_infobase(TEXTO_INFOBASE_REAL_FEV2026)
     assert resultado is not None
     chaves_antigas = {
-        "mes_ref", "fonte", "bruto", "inss", "irrf", "vr_va", "liquido",
-        "banco", "itens",
+        "mes_ref",
+        "fonte",
+        "bruto",
+        "inss",
+        "irrf",
+        "vr_va",
+        "liquido",
+        "banco",
+        "itens",
     }
     assert chaves_antigas.issubset(set(resultado.keys()))
     assert len(resultado) >= 14

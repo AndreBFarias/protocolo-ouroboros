@@ -49,9 +49,7 @@ from pathlib import Path
 from typing import Any
 
 # Caminho canônico do JSON, relativo à raiz do repo.
-CAMINHO_PADRAO = (
-    Path(__file__).resolve().parents[2] / "data" / "output" / "extracao_tripla.json"
-)
+CAMINHO_PADRAO = Path(__file__).resolve().parents[2] / "data" / "output" / "extracao_tripla.json"
 
 
 def carregar_extracoes_triplas(

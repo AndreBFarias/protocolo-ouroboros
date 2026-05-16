@@ -299,9 +299,7 @@ class GrafoDB:
                 # crash aqui -> ROLLBACK; estágios anteriores intactos.
         """
         if self._em_transacao:
-            raise RuntimeError(
-                "transação já ativa neste GrafoDB; aninhamento não suportado"
-            )
+            raise RuntimeError("transação já ativa neste GrafoDB; aninhamento não suportado")
         # SQLite Python autocommit mode: o cursor abre transação implícita na
         # primeira mutação. Forçamos BEGIN explícito para previsibilidade.
         self._conn.execute("BEGIN")

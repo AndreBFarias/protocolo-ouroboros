@@ -298,10 +298,7 @@ def test_be_hoje_renderiza_sem_crash_quando_vault_ausente(
     # Callout warning canônico emite via st.markdown com HTML contendo o
     # tipo + mensagem do vault. Procuramos a string de aviso emitida.
     htmls = [str(c[1]) for c in chamadas if c[0] == "markdown"]
-    achou_aviso_vault = any(
-        ("vault" in h.lower() or "OUROBOROS_VAULT" in h)
-        for h in htmls
-    )
+    achou_aviso_vault = any(("vault" in h.lower() or "OUROBOROS_VAULT" in h) for h in htmls)
     assert achou_aviso_vault, (
         f"esperava callout com aviso de vault quando vault=None, "
         f"obtive {len(chamadas)} chamadas markdown sem aviso"
@@ -349,16 +346,11 @@ def test_invariante_n_para_n_bem_estar() -> None:
     from src.dashboard.componentes.drilldown import MAPA_ABA_PARA_CLUSTER
 
     abas_bem_estar = ABAS_POR_CLUSTER["Bem-estar"]
-    assert len(abas_bem_estar) == 12, (
-        f"esperava 12 abas em Bem-estar, obtive {len(abas_bem_estar)}"
-    )
+    assert len(abas_bem_estar) == 12, f"esperava 12 abas em Bem-estar, obtive {len(abas_bem_estar)}"
     for aba in abas_bem_estar:
-        assert aba in MAPA_ABA_PARA_CLUSTER, (
-            f"aba '{aba}' do cluster Bem-estar ausente do mapa"
-        )
+        assert aba in MAPA_ABA_PARA_CLUSTER, f"aba '{aba}' do cluster Bem-estar ausente do mapa"
         assert MAPA_ABA_PARA_CLUSTER[aba] == "Bem-estar", (
-            f"aba '{aba}' aponta para "
-            f"'{MAPA_ABA_PARA_CLUSTER[aba]}' em vez de 'Bem-estar'"
+            f"aba '{aba}' aponta para '{MAPA_ABA_PARA_CLUSTER[aba]}' em vez de 'Bem-estar'"
         )
 
 

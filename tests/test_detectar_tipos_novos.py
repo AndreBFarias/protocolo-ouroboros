@@ -50,9 +50,7 @@ def test_agrupar_arquivos_min_amostras(tmp_path: Path) -> None:
     assert "boleto" not in grupos  # só 1 ocorrência
 
 
-def test_gerar_propostas_diretorio_vazio_devolve_estrutura(
-    monkeypatch, tmp_path: Path
-) -> None:
+def test_gerar_propostas_diretorio_vazio_devolve_estrutura(monkeypatch, tmp_path: Path) -> None:
     """Diretório ausente/vazio → payload estrutural válido."""
     monkeypatch.setattr(dtn, "DIR_CLASSIFICAR", tmp_path / "nao_existe")
     payload = dtn.gerar_propostas()

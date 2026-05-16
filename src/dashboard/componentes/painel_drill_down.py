@@ -58,12 +58,7 @@ def _formatar_brl(valor: float) -> str:
 
 def _escape(texto: str) -> str:
     """Escape HTML mínimo para evitar quebra de tags."""
-    return (
-        str(texto)
-        .replace("&", "&amp;")
-        .replace("<", "&lt;")
-        .replace(">", "&gt;")
-    )
+    return str(texto).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
 
 def _sha8_de(valor: Any) -> str:
@@ -223,7 +218,7 @@ def _itens_html(itens: list[dict[str, Any]]) -> str:
         except (TypeError, ValueError):
             total_str = "-"
         linhas.append(
-            f'<tr>'
+            f"<tr>"
             f'<td class="col-mono">{codigo}</td>'
             f"<td>{descricao}</td>"
             f'<td class="col-num">{qtd}</td>'
@@ -246,7 +241,7 @@ def _itens_html(itens: list[dict[str, Any]]) -> str:
         '<span class="painel-drill-bloco-titulo">ITENS</span>'
         '<div class="painel-drill-itens-wrap">'
         f'<table class="painel-drill-itens">{cabecalho}'
-        f'<tbody>{"".join(linhas)}</tbody>'
+        f"<tbody>{''.join(linhas)}</tbody>"
         "</table>"
         "</div>"
         "</div>"
@@ -295,7 +290,7 @@ def _cruzamentos_html(cruzamentos: list[dict[str, Any]]) -> str:
         '<span class="painel-drill-bloco-titulo">CRUZAMENTOS · MESMO ITEM</span>'
         '<div class="painel-drill-itens-wrap">'
         f'<table class="painel-drill-itens">{cabecalho}'
-        f'<tbody>{"".join(linhas)}</tbody>'
+        f"<tbody>{''.join(linhas)}</tbody>"
         "</table>"
         "</div>"
         "</div>"
@@ -352,8 +347,7 @@ def renderizar_painel_drill_down(
     bloco_cruzamentos = _cruzamentos_html(cruzamentos or [])
 
     abertura = minificar(
-        '<aside class="painel-drill-down" '
-        'role="dialog" aria-label="Drill-down da transação">'
+        '<aside class="painel-drill-down" role="dialog" aria-label="Drill-down da transação">'
     )
     fechamento = "</aside>"
     return abertura + cabecalho + bloco_doc + bloco_itens + bloco_cruzamentos + fechamento

@@ -306,9 +306,7 @@ def test_top_categorias_max_5_com_percentual_correto(
     inicio_semana = referencia - timedelta(days=referencia.weekday())
     valores = [200.0, 150.0, 100.0, 80.0, 50.0, 20.0, 10.0]
     nomes = ["mercado", "transporte", "lazer", "saude", "moradia", "outros", "extras"]
-    transacoes = [
-        _tx(data_obj=inicio_semana, valor=v, categoria=n) for v, n in zip(valores, nomes)
-    ]
+    transacoes = [_tx(data_obj=inicio_semana, valor=v, categoria=n) for v, n in zip(valores, nomes)]
     xlsx = xlsx_factory(transacoes)
     saida = gerar_financas_cache(vault_temporario, xlsx_path=xlsx, referencia=referencia)
     payload = _ler(saida)

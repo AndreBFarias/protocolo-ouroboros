@@ -322,9 +322,7 @@ def test_mapa_aba_nao_tem_mais_validacao_por_arquivo():
 
 
 def test_aba_aliases_legacy_resolve_validacao_para_extracao():
-    assert (
-        drilldown.ABA_ALIASES_LEGACY["Validação por Arquivo"] == "Extração Tripla"
-    )
+    assert drilldown.ABA_ALIASES_LEGACY["Validação por Arquivo"] == "Extração Tripla"
 
 
 def test_ler_filtros_da_url_resolve_alias_legacy(monkeypatch: pytest.MonkeyPatch):
@@ -338,13 +336,9 @@ def test_ler_filtros_da_url_resolve_alias_legacy(monkeypatch: pytest.MonkeyPatch
     fake = _FakeSt({"tab": "Validação por Arquivo"})
     monkeypatch.setitem(sys.modules, "streamlit", fake)
     drilldown.ler_filtros_da_url()
-    assert (
-        fake.session_state[drilldown.CHAVE_SESSION_ABA_ATIVA] == "Extração Tripla"
-    )
+    assert fake.session_state[drilldown.CHAVE_SESSION_ABA_ATIVA] == "Extração Tripla"
     # Cluster inferido também resolve para Documentos via mapa novo
-    assert (
-        fake.session_state[drilldown.CHAVE_SESSION_CLUSTER_ATIVO] == "Documentos"
-    )
+    assert fake.session_state[drilldown.CHAVE_SESSION_CLUSTER_ATIVO] == "Documentos"
 
 
 def test_ler_filtros_da_url_aceita_tab_extracao_tripla(
@@ -360,12 +354,8 @@ def test_ler_filtros_da_url_aceita_tab_extracao_tripla(
     fake = _FakeSt({"tab": "Extração Tripla"})
     monkeypatch.setitem(sys.modules, "streamlit", fake)
     drilldown.ler_filtros_da_url()
-    assert (
-        fake.session_state[drilldown.CHAVE_SESSION_ABA_ATIVA] == "Extração Tripla"
-    )
-    assert (
-        fake.session_state[drilldown.CHAVE_SESSION_CLUSTER_ATIVO] == "Documentos"
-    )
+    assert fake.session_state[drilldown.CHAVE_SESSION_ABA_ATIVA] == "Extração Tripla"
+    assert fake.session_state[drilldown.CHAVE_SESSION_CLUSTER_ATIVO] == "Documentos"
 
 
 # ----------------------------------------------------------------------------
@@ -384,9 +374,7 @@ def test_atualizar_validacao_opus_assinatura_posicional_preservada(
     csv_path = tmp_path / "v.csv"
     arquivo = tmp_path / "x.pdf"
     arquivo.write_bytes(b"hello")
-    vc.registrar_extracao(
-        arquivo, tipo_arquivo="pdf", campos={"a": "1"}, caminho_csv=csv_path
-    )
+    vc.registrar_extracao(arquivo, tipo_arquivo="pdf", campos={"a": "1"}, caminho_csv=csv_path)
     sha8 = vc.calcular_sha8(arquivo)
     # Assinatura legacy: 5 posicionais
     ok = vc.atualizar_validacao_opus(sha8, "a", "1", "ok", csv_path)
@@ -401,13 +389,9 @@ def test_atualizar_validacao_opus_aceita_confianca_opus_kwarg(tmp_path: Path):
     csv_path = tmp_path / "v.csv"
     arquivo = tmp_path / "x.pdf"
     arquivo.write_bytes(b"hello")
-    vc.registrar_extracao(
-        arquivo, tipo_arquivo="pdf", campos={"a": "1"}, caminho_csv=csv_path
-    )
+    vc.registrar_extracao(arquivo, tipo_arquivo="pdf", campos={"a": "1"}, caminho_csv=csv_path)
     sha8 = vc.calcular_sha8(arquivo)
-    ok = vc.atualizar_validacao_opus(
-        sha8, "a", "1", "ok", csv_path, confianca_opus=0.85
-    )
+    ok = vc.atualizar_validacao_opus(sha8, "a", "1", "ok", csv_path, confianca_opus=0.85)
     assert ok
     linhas = vc.ler_csv(csv_path)
     assert linhas[0].confianca_opus == "0.85"

@@ -59,12 +59,8 @@ def migrar_xlsx(arquivo: Path, dry_run: bool) -> dict[str, int]:
     for nome_aba in wb.sheetnames:
         ws = wb[nome_aba]
         # Detecta coluna quem pelo cabeçalho.
-        cabecalho = [
-            (cell.value, cell.column) for cell in ws[1] if isinstance(cell.value, str)
-        ]
-        idx_quem = next(
-            (col for valor, col in cabecalho if valor.strip().lower() == "quem"), None
-        )
+        cabecalho = [(cell.value, cell.column) for cell in ws[1] if isinstance(cell.value, str)]
+        idx_quem = next((col for valor, col in cabecalho if valor.strip().lower() == "quem"), None)
         if idx_quem is None:
             continue
         estat["abas_visitadas"] += 1
@@ -122,8 +118,7 @@ def main() -> int:
 
     if dry:
         print(
-            f"[dry-run] {total_linhas} linha(s) seriam migradas. "
-            "Rode com --executar para aplicar."
+            f"[dry-run] {total_linhas} linha(s) seriam migradas. Rode com --executar para aplicar."
         )
     else:
         print(f"[ok] migração aplicada -- {total_linhas} linha(s) atualizada(s).")

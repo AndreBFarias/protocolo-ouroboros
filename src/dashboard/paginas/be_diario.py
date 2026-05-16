@@ -107,14 +107,24 @@ def renderizar(  # noqa: accent
 ) -> None:
     """Renderiza Bem-estar / Diário emocional (UX-V-3.7)."""
     from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
-    renderizar_grupo_acoes([
-        {"label": "Heatmap", "glyph": "analise",
-         "href": "?cluster=Bem-estar&tab=Humor",
-         "title": "Ver humor 91 dias"},
-        {"label": "Hoje", "primary": True, "glyph": "calendar",
-         "href": "?cluster=Bem-estar&tab=Hoje",
-         "title": "Registrar humor de hoje"},
-    ])
+
+    renderizar_grupo_acoes(
+        [
+            {
+                "label": "Heatmap",
+                "glyph": "analise",
+                "href": "?cluster=Bem-estar&tab=Humor",
+                "title": "Ver humor 91 dias",
+            },
+            {
+                "label": "Hoje",
+                "primary": True,
+                "glyph": "calendar",
+                "href": "?cluster=Bem-estar&tab=Hoje",
+                "title": "Registrar humor de hoje",
+            },
+        ]
+    )
 
     del dados, periodo, ctx  # noqa: accent
 
@@ -147,7 +157,8 @@ def renderizar(  # noqa: accent
         items,
         modo=st.session_state.get("be_diario_modo", modo_atual),
         periodo_dias=_PERIODOS.get(
-            st.session_state.get("be_diario_periodo", periodo_atual), 30,
+            st.session_state.get("be_diario_periodo", periodo_atual),
+            30,
         ),
         pessoa=st.session_state.get("be_diario_pessoa", pessoa_atual),
         hoje=date.today(),
@@ -179,6 +190,7 @@ def renderizar(  # noqa: accent
                 fallback_estado_inicial_html,
                 ler_sync_info,
             )
+
             skeleton = (
                 '<div style="display:flex;flex-direction:column;gap:10px;">'
                 '<div style="display:flex;align-items:center;gap:10px;">'
@@ -187,15 +199,15 @@ def renderizar(  # noqa: accent
                 '<div style="flex:1;display:flex;flex-direction:column;gap:6px;">'
                 '<span class="skel-bloco" style="width:60%;"></span>'
                 '<span class="skel-bloco" style="width:90%;height:0.9em;"></span>'
-                '</div></div>'
+                "</div></div>"
                 '<div style="display:flex;align-items:center;gap:10px;">'
                 '<span class="skel-bloco" style="width:40px;height:40px;'
                 'border-radius:50%;"></span>'
                 '<div style="flex:1;display:flex;flex-direction:column;gap:6px;">'
                 '<span class="skel-bloco" style="width:50%;"></span>'
                 '<span class="skel-bloco" style="width:80%;height:0.9em;"></span>'
-                '</div></div>'
-                '</div>'
+                "</div></div>"
+                "</div>"
             )
             st.markdown(
                 fallback_estado_inicial_html(
@@ -331,7 +343,7 @@ def _counts_facetas(
 
     tags_counter: Counter[str] = Counter()
     for it in items:
-        for emo in (it.get("emocoes") or []):
+        for emo in it.get("emocoes") or []:
             tags_counter[str(emo).strip()] += 1
     tags_top = dict(tags_counter.most_common(8))
 
@@ -370,7 +382,7 @@ def _renderizar_facetas(counts: dict[str, dict[str, int]]) -> None:
         key="be_diario_modo",
         label_visibility="collapsed",
     )
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)
 
     # Card Para quem (autor).
     st.markdown('<div class="filtro-card"><h3>Para quem</h3>', unsafe_allow_html=True)
@@ -388,7 +400,7 @@ def _renderizar_facetas(counts: dict[str, dict[str, int]]) -> None:
         key="be_diario_pessoa",
         label_visibility="collapsed",
     )
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)
 
     # Card Período.
     st.markdown('<div class="filtro-card"><h3>Período</h3>', unsafe_allow_html=True)
@@ -405,21 +417,20 @@ def _renderizar_facetas(counts: dict[str, dict[str, int]]) -> None:
         key="be_diario_periodo",
         label_visibility="collapsed",
     )
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)
 
     # Card Tags populares.
     tags_top = counts.get("tags_top", {})
     if tags_top:
         chips = "".join(
-            f'<span class="pill">{_escape(tag)} · {qtd}</span>'
-            for tag, qtd in tags_top.items()
+            f'<span class="pill">{_escape(tag)} · {qtd}</span>' for tag, qtd in tags_top.items()
         )
         st.markdown(
             minificar(
                 f'<div class="filtro-card filtro-card-inset">'
-                f'<h3>Tags populares</h3>'
+                f"<h3>Tags populares</h3>"
                 f'<div class="filtro-tags-top">{chips}</div>'
-                f'</div>'
+                f"</div>"
             ),
             unsafe_allow_html=True,
         )
@@ -465,7 +476,7 @@ def _renderizar_form_tab(
     # Subtítulo descritivo do tipo.
     st.markdown(
         f'<div class="novo-tab-subtitulo" style="border-left:3px solid {cor};">'
-        f'{_escape(sub)}</div>',
+        f"{_escape(sub)}</div>",
         unsafe_allow_html=True,
     )
 
@@ -521,9 +532,7 @@ def _renderizar_form_tab(
         c1, c2 = st.columns(2, gap="medium")
         with c1:
             pessoas_form = ("pessoa_a", "pessoa_b", "casal")
-            autor_default = (
-                pessoa_default if pessoa_default in pessoas_form else "pessoa_a"
-            )
+            autor_default = pessoa_default if pessoa_default in pessoas_form else "pessoa_a"
             autor = st.selectbox(
                 "Esse registro é para",
                 options=pessoas_form,
@@ -588,9 +597,7 @@ def _renderizar_form_tab(
                 frase=(titulo or "") + ("\n\n" + corpo if corpo else ""),
                 pessoa=autor,
             )
-            st.session_state[_KEY_FLASH] = (
-                f"{rotulo} gravado em {arquivo.name}."
-            )
+            st.session_state[_KEY_FLASH] = f"{rotulo} gravado em {arquivo.name}."
         except (OSError, ValueError) as exc:
             st.error(f"Falha ao gravar: {exc}")
             return
@@ -620,13 +627,14 @@ def _placeholder_titulo(tipo: str) -> str:
 
 def _timeline_header_html(modo_atual: str, periodo_atual: str) -> str:
     rotulo_modo = (
-        "todos os tipos" if modo_atual == "todos"
+        "todos os tipos"
+        if modo_atual == "todos"
         else _TIPOS_LABEL.get(modo_atual, modo_atual).lower()
     )
     return minificar(
         f'<div class="timeline-head">'
-        f'<h3>Timeline · {_escape(rotulo_modo)} · {_escape(periodo_atual)}</h3>'
-        f'</div>'
+        f"<h3>Timeline · {_escape(rotulo_modo)} · {_escape(periodo_atual)}</h3>"
+        f"</div>"
     )
 
 
@@ -661,10 +669,7 @@ def _card_html(item: dict[str, Any]) -> str:
     """
     modo = str(item.get("modo", ""))
     cor_borda = _cor_tipo(modo)
-    classe_modo = (
-        f"diario-card-{modo}" if modo in _TIPOS_ORDEM
-        else "diario-card-default"
-    )
+    classe_modo = f"diario-card-{modo}" if modo in _TIPOS_ORDEM else "diario-card-default"
     rotulo_modo = _TIPOS_LABEL.get(modo, modo or "—")
 
     autor = str(item.get("autor", "—"))
@@ -677,22 +682,20 @@ def _card_html(item: dict[str, Any]) -> str:
     intensidade_int = max(0, min(5, intensidade_int))
 
     emocoes = item.get("emocoes") or []
-    chips_emo = "".join(
-        f'<span class="chip-emo">{_escape(str(e))}</span>'
-        for e in emocoes
-    ) or '<span class="chip-emo chip-vazio">sem emoções tagueadas</span>'
+    chips_emo = (
+        "".join(f'<span class="chip-emo">{_escape(str(e))}</span>' for e in emocoes)
+        or '<span class="chip-emo chip-vazio">sem emoções tagueadas</span>'
+    )
 
     com = item.get("com") or []
     com_html = (
-        "<span class=\"diario-com\">com "
-        + ", ".join(_escape(str(c)) for c in com)
-        + "</span>"
-        if com else ""
+        '<span class="diario-com">com ' + ", ".join(_escape(str(c)) for c in com) + "</span>"
+        if com
+        else ""
     )
 
     barra_int = "".join(
-        f'<span class="dot {"on" if i < intensidade_int else "off"}"></span>'
-        for i in range(5)
+        f'<span class="dot {"on" if i < intensidade_int else "off"}"></span>' for i in range(5)
     )
 
     texto = _escape(str(item.get("texto") or "")) or "<em>(sem frase)</em>"
@@ -721,10 +724,7 @@ def _card_html(item: dict[str, Any]) -> str:
 
 def _escape(texto: str) -> str:
     return (
-        texto.replace("&", "&amp;")
-        .replace("<", "&lt;")
-        .replace(">", "&gt;")
-        .replace('"', "&quot;")
+        texto.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
     )
 
 

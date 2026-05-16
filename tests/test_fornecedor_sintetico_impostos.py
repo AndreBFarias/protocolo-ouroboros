@@ -80,9 +80,7 @@ def test_ingerir_das_parcsn_aponta_para_receita_federal(tmp_path: Path):
     ingerir_documento_fiscal(db, documento, itens=[])
 
     # Confirma node fornecedor RECEITA_FEDERAL
-    cur = db._conn.execute(
-        "SELECT nome_canonico, metadata FROM node WHERE tipo='fornecedor'"
-    )
+    cur = db._conn.execute("SELECT nome_canonico, metadata FROM node WHERE tipo='fornecedor'")
     fornecedores = list(cur.fetchall())
     nomes = {f[0] for f in fornecedores}
     # nome_canonico de fornecedor é o CNPJ canônico (com leading zeros, 14 dígitos)

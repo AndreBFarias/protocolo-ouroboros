@@ -5,6 +5,7 @@ Sprint INFRA-PROCESSAR-INBOX-MASSA -- valida que o wrapper:
 - captura estado antes/depois do grafo,
 - respeita ``--sem-backup`` e ``--dry-run``.
 """
+
 from __future__ import annotations
 
 import sqlite3
@@ -67,6 +68,7 @@ def test_contar_grafo_estado_inicial(grafo_temporario: Path):
     sys.path.insert(0, str(SCRIPT.parent))
     try:
         from processar_inbox_massa import contar_grafo
+
         d = contar_grafo(grafo_temporario)
         assert d["nodes"]["documento"] == 1
         assert d["nodes"]["transacao"] == 1
@@ -80,6 +82,7 @@ def test_contar_grafo_inexistente(tmp_path: Path):
     sys.path.insert(0, str(SCRIPT.parent))
     try:
         from processar_inbox_massa import contar_grafo
+
         d = contar_grafo(tmp_path / "nao-existe.sqlite")
         assert d == {"nodes": {}, "edges": {}}
     finally:
@@ -91,6 +94,7 @@ def test_fazer_backup_cria_copia(grafo_temporario: Path):
     sys.path.insert(0, str(SCRIPT.parent))
     try:
         from processar_inbox_massa import fazer_backup
+
         destino = fazer_backup(grafo_temporario, "20260508T120000")
         assert destino is not None
         assert destino.exists()
@@ -104,6 +108,7 @@ def test_fazer_backup_grafo_inexistente(tmp_path: Path):
     sys.path.insert(0, str(SCRIPT.parent))
     try:
         from processar_inbox_massa import fazer_backup
+
         assert fazer_backup(tmp_path / "x.sqlite", "ts") is None
     finally:
         sys.path.pop(0)

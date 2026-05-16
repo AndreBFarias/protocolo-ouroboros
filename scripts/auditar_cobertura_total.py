@@ -62,9 +62,7 @@ def coletar_violacoes_lint() -> list[dict]:
 def coletar_extratores() -> list[str]:
     """Lista os extratores reais (excluindo ``__init__``, ``base``, ``_ocr_comum``)."""
     excluir = {"__init__.py", "base.py", "_ocr_comum.py"}
-    return sorted(
-        f.stem for f in _DIR_EXTRATORES.glob("*.py") if f.name not in excluir
-    )
+    return sorted(f.stem for f in _DIR_EXTRATORES.glob("*.py") if f.name not in excluir)
 
 
 def coletar_cobertura_grafo() -> dict[str, dict]:
@@ -147,9 +145,7 @@ def montar_relatorio(
         linhas.append("| Arquivo | Função | Linha | Motivo |")
         linhas.append("|---|---|---:|---|")
         for v in violacoes:
-            linhas.append(
-                f"| `{v['arquivo']}` | `{v['funcao']}` | {v['linha']} | {v['motivo']} |"
-            )
+            linhas.append(f"| `{v['arquivo']}` | `{v['funcao']}` | {v['linha']} | {v['motivo']} |")
     else:
         linhas.append("Sem violações detectadas pelo lint estático.")
     linhas.append("")
@@ -172,8 +168,7 @@ def montar_relatorio(
     linhas.append("## Extratores em src/extractors/")
     linhas.append("")
     linhas.append(
-        "Lista canônica para a Sprint RETRABALHO-EXTRATORES-01 "
-        "ramificar em tiers A/B/C/D:"
+        "Lista canônica para a Sprint RETRABALHO-EXTRATORES-01 ramificar em tiers A/B/C/D:"
     )
     linhas.append("")
     for extrator in extratores:
@@ -183,8 +178,7 @@ def montar_relatorio(
     linhas.append("## Próximos passos")
     linhas.append("")
     linhas.append(
-        "1. Cada extrator listado acima passa por triagem na Sprint "
-        "RETRABALHO-EXTRATORES-01."
+        "1. Cada extrator listado acima passa por triagem na Sprint RETRABALHO-EXTRATORES-01."
     )
     linhas.append(
         "2. Se o lint detectar nova violação no futuro, abrir sprint-filha "
@@ -226,8 +220,10 @@ def main() -> int:
         print(f"[D7] relatório gravado em {caminho.relative_to(_RAIZ_REPO)}")
     else:
         print("[D7] dry-run -- use --executar para gravar relatório")
-        print(f"[D7] {len(extratores)} extratores | {len(violacoes)} violacoes | "
-              f"{len(cobertura)} tipos no grafo")
+        print(
+            f"[D7] {len(extratores)} extratores | {len(violacoes)} violacoes | "
+            f"{len(cobertura)} tipos no grafo"
+        )
     return 0
 
 

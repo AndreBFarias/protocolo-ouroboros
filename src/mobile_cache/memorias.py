@@ -58,9 +58,7 @@ def _carregar_schema() -> dict[str, Any]:
     """Carrega o JSON Schema oficial uma única vez por processo."""
     caminho = _raiz_repo() / _SCHEMA_PATH_RELATIVA
     if not caminho.exists():
-        raise FileNotFoundError(
-            f"schema_memorias.json não encontrado em {caminho}"
-        )
+        raise FileNotFoundError(f"schema_memorias.json não encontrado em {caminho}")
     return json.loads(caminho.read_text(encoding="utf-8"))
 
 
@@ -134,12 +132,8 @@ def carregar_validado(
     if erros:
         resumo = "; ".join(erros[:5])
         if estrito:
-            raise ValidationError(
-                f"memorias.json inválido ({len(erros)} erro(s)): {resumo}"
-            )
-        logger.warning(
-            "memorias.json inválido (%d erro(s)): %s", len(erros), resumo
-        )
+            raise ValidationError(f"memorias.json inválido ({len(erros)} erro(s)): {resumo}")
+        logger.warning("memorias.json inválido (%d erro(s)): %s", len(erros), resumo)
         gerado_em = payload.get("gerado_em") if isinstance(payload, dict) else None
         return [], gerado_em if isinstance(gerado_em, str) else None
 

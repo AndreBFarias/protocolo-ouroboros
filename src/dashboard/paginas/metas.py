@@ -133,8 +133,7 @@ def _calcular_metricas_operacionais(dados: dict) -> list[dict[str, Any]]:
     n_categorizadas = 0
     if extrato is not None and not extrato.empty and "categoria" in extrato.columns:
         n_categorizadas = int(
-            extrato["categoria"].notna().sum()
-            - (extrato["categoria"] == "Outros").sum()
+            extrato["categoria"].notna().sum() - (extrato["categoria"] == "Outros").sum()
         )
     pct_categ = (n_categorizadas / n_total) if n_total else 0.0
     metricas.append(
@@ -327,8 +326,8 @@ def _card_meta_financeira_header_html(meta: dict[str, Any]) -> str:
     return minificar(
         f"""
         <div style="
-            background: {CORES['card_fundo']};
-            border: 1px solid {CORES['texto_sec']}33;
+            background: {CORES["card_fundo"]};
+            border: 1px solid {CORES["texto_sec"]}33;
             border-left: 4px solid {cor};
             border-radius: 8px;
             padding: 16px;
@@ -337,7 +336,7 @@ def _card_meta_financeira_header_html(meta: dict[str, Any]) -> str:
           <div style="
               font-size: 16px;
               font-weight: 600;
-              color: {CORES['texto']};
+              color: {CORES["texto"]};
               margin-bottom: 4px;
           ">{nome}</div>
           <div style="
@@ -346,7 +345,7 @@ def _card_meta_financeira_header_html(meta: dict[str, Any]) -> str:
               color: {cor};
               font-variant-numeric: tabular-nums;
           ">{valor_atual_fmt}
-            <span style="color: {CORES['texto_sec']}; font-size: 12px;">
+            <span style="color: {CORES["texto_sec"]}; font-size: 12px;">
               / {valor_alvo_fmt}
             </span>
           </div>
@@ -391,14 +390,14 @@ def _card_meta_binaria_html(meta: dict[str, Any]) -> str:
     return minificar(
         f"""
         <div style="
-            background: {CORES['card_fundo']};
-            border: 1px solid {CORES['texto_sec']}33;
-            border-left: 4px solid {CORES['destaque']};
+            background: {CORES["card_fundo"]};
+            border: 1px solid {CORES["texto_sec"]}33;
+            border-left: 4px solid {CORES["destaque"]};
             border-radius: 8px;
             padding: 14px 16px;
             margin: 6px 0;
         ">
-          <div style="font-weight: 600; color: {CORES['texto']};">{nome}</div>
+          <div style="font-weight: 600; color: {CORES["texto"]};">{nome}</div>
           <div style="
               font-family: ui-monospace, 'JetBrains Mono', monospace;
               font-size: 11px;
@@ -416,8 +415,8 @@ def _card_metrica_op_html(metrica: dict[str, Any]) -> str:
     return minificar(
         f"""
         <div style="
-            background: {CORES['card_fundo']};
-            border: 1px solid {CORES['texto_sec']}33;
+            background: {CORES["card_fundo"]};
+            border: 1px solid {CORES["texto_sec"]}33;
             border-radius: 8px;
             padding: 12px 16px 6px;
             margin-bottom: 4px;
@@ -425,16 +424,16 @@ def _card_metrica_op_html(metrica: dict[str, Any]) -> str:
           <div style="
               font-family: ui-monospace, 'JetBrains Mono', monospace;
               font-size: 13px;
-              color: {CORES['texto']};
+              color: {CORES["texto"]};
               text-transform: uppercase;
               letter-spacing: 0.04em;
-          ">{metrica['label']}</div>
+          ">{metrica["label"]}</div>
           <div style="
               font-family: ui-monospace, 'JetBrains Mono', monospace;
               font-size: 11px;
-              color: {CORES['texto_sec']};
+              color: {CORES["texto_sec"]};
               margin-top: 2px;
-          ">{metrica['meta']}</div>
+          ">{metrica["meta"]}</div>
         </div>
         """
     )
@@ -446,8 +445,18 @@ def _card_metrica_op_html(metrica: dict[str, Any]) -> str:
 
 
 _PT_BR_MES_ABREV: dict[int, str] = {
-    1: "jan", 2: "fev", 3: "mar", 4: "abr", 5: "mai", 6: "jun",
-    7: "jul", 8: "ago", 9: "set", 10: "out", 11: "nov", 12: "dez",
+    1: "jan",
+    2: "fev",
+    3: "mar",
+    4: "abr",
+    5: "mai",
+    6: "jun",
+    7: "jul",
+    8: "ago",
+    9: "set",
+    10: "out",
+    11: "nov",
+    12: "dez",
 }
 
 
@@ -601,10 +610,7 @@ def _card_meta_operacional_v25_html(metrica: dict[str, Any]) -> str:
             f'<strong style="color: var(--text-primary);">{valor}</strong></span>'
             for (label, valor, _cor) in stats
         )
-        stats_html = (
-            '<div class="meta-card-valores" style="gap: var(--sp-3);">'
-            f'{chips}</div>'
-        )
+        stats_html = f'<div class="meta-card-valores" style="gap: var(--sp-3);">{chips}</div>'
 
     return minificar(
         f"""
@@ -631,18 +637,26 @@ def _card_meta_operacional_v25_html(metrica: dict[str, Any]) -> str:
 def renderizar(dados: dict, mes_selecionado: str, pessoa: str) -> None:
     """Renderiza a página Metas (UX-RD-14 + UX-T-13)."""
     from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
-    renderizar_grupo_acoes([
-        {"label": "Skills D7", "glyph": "list",
-         "href": "?cluster=Sistema&tab=Skills+D7",
-         "title": "Ver skills operacionais"},
-        {"label": "Nova meta", "primary": True, "glyph": "plus",
-         "title": "Wizard de nova meta"},
-    ])
+
+    renderizar_grupo_acoes(
+        [
+            {
+                "label": "Skills D7",
+                "glyph": "list",
+                "href": "?cluster=Sistema&tab=Skills+D7",
+                "title": "Ver skills operacionais",
+            },
+            {
+                "label": "Nova meta",
+                "primary": True,
+                "glyph": "plus",
+                "title": "Wizard de nova meta",
+            },
+        ]
+    )
 
     # CSS dedicado da página (UX-V-2.5)
-    st.markdown(
-        minificar(carregar_css_pagina("metas")), unsafe_allow_html=True
-    )
+    st.markdown(minificar(carregar_css_pagina("metas")), unsafe_allow_html=True)
 
     metas = _carregar_metas()
     metas = _atualizar_valor_atual(metas, dados, mes_selecionado, pessoa)

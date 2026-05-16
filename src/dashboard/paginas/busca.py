@@ -394,9 +394,7 @@ def _highlight_termo(texto: str, termo: str, *, max_chars: int = 140) -> str:
     janela_escapada = _html.escape(janela_str)
     termo_escapado = _html.escape(termo_seguro)
     padrao_escape = re.compile(re.escape(termo_escapado), re.IGNORECASE)
-    realcado = padrao_escape.sub(
-        lambda m: f"<mark>{m.group(0)}</mark>", janela_escapada
-    )
+    realcado = padrao_escape.sub(lambda m: f"<mark>{m.group(0)}</mark>", janela_escapada)
     return f"{prefixo}{realcado}{sufixo}"
 
 
@@ -413,13 +411,22 @@ def renderizar(
 ) -> None:
     """Ponto de entrada da página Busca Global (UX-RD-09 + UX-T-06)."""
     from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
-    renderizar_grupo_acoes([
-        {"label": "Filtros avançados", "glyph": "filter",
-         "title": "Painel de filtros avançados"},
-        {"label": "Catalogação", "primary": True,
-         "href": "?cluster=Documentos&tab=Catalogação",
-         "title": "Ir para Catalogação"},
-    ])
+
+    renderizar_grupo_acoes(
+        [
+            {
+                "label": "Filtros avançados",
+                "glyph": "filter",
+                "title": "Painel de filtros avançados",
+            },
+            {
+                "label": "Catalogação",
+                "primary": True,
+                "href": "?cluster=Documentos&tab=Catalogação",
+                "title": "Ir para Catalogação",
+            },
+        ]
+    )
 
     _ = dados
     ctx = ctx or {}
@@ -431,9 +438,7 @@ def renderizar(
     # (substitui template estático UX-RD-09).
     n_docs_universo, n_tx_universo, n_sidecars_universo = _contar_universo_busca()
     st.markdown(
-        _page_header_html(
-            n_docs_universo, n_tx_universo, n_sidecars_universo
-        ),
+        _page_header_html(n_docs_universo, n_tx_universo, n_sidecars_universo),
         unsafe_allow_html=True,
     )
 
@@ -583,17 +588,11 @@ def _contar_universo_busca() -> tuple[int, int, int]:
 
     if _dados.CAMINHO_GRAFO.exists():
         try:
-            conn = sqlite3.connect(
-                f"file:{_dados.CAMINHO_GRAFO}?mode=ro", uri=True
-            )
+            conn = sqlite3.connect(f"file:{_dados.CAMINHO_GRAFO}?mode=ro", uri=True)
             try:
-                row = conn.execute(
-                    "SELECT COUNT(*) FROM node WHERE tipo = 'documento'"
-                ).fetchone()
+                row = conn.execute("SELECT COUNT(*) FROM node WHERE tipo = 'documento'").fetchone()
                 n_docs = int(row[0]) if row else 0
-                row = conn.execute(
-                    "SELECT COUNT(*) FROM node WHERE tipo = 'transacao'"
-                ).fetchone()
+                row = conn.execute("SELECT COUNT(*) FROM node WHERE tipo = 'transacao'").fetchone()
                 n_tx = int(row[0]) if row else 0
             finally:
                 conn.close()
@@ -616,9 +615,7 @@ def _formatar_milhar(n: int) -> str:
     return f"{n:,}".replace(",", ".")
 
 
-def _page_header_html(
-    n_docs: int = 0, n_tx: int = 0, n_sidecars: int = 0
-) -> str:
+def _page_header_html(n_docs: int = 0, n_tx: int = 0, n_sidecars: int = 0) -> str:
     """HTML do page-header UX-V-3.2 (título + subtítulo com counters reais).
 
     Counters em ``<strong>`` espelham mockup ``06-busca-global.html``:
@@ -745,9 +742,7 @@ def _renderizar_controles(indice: dict[str, list[str]]) -> str:
     return (termo or "").strip()
 
 
-def _renderizar_facetas_laterais(
-    resultados: dict, docs_filtrados: list[dict]
-) -> None:
+def _renderizar_facetas_laterais(resultados: dict, docs_filtrados: list[dict]) -> None:
     """Renderiza facetas laterais (paridade visual mockup UX-V-3.2).
 
     Mockup ``06-busca-global.html`` define 4 facetas: **Tipo**, **Período**,
@@ -883,11 +878,7 @@ def _renderizar_grupo_transacoes(transacoes: list[dict], termo: str) -> None:
         local = _mascarar_pii(str(t.get("local", "--"))) or "--"
         valor = float(t.get("valor", 0.0) or 0.0)
         valor_str = formatar_moeda(valor)
-        cor_valor = (
-            "var(--accent-red)"
-            if valor < 0
-            else "var(--accent-green)"
-        )
+        cor_valor = "var(--accent-red)" if valor < 0 else "var(--accent-green)"
         data = str(t.get("data", "--"))
         banco = _html.escape(str(t.get("banco_origem", "--")))
         descricao = str(t.get("_descricao_original") or t.get("descricao") or local)

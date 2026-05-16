@@ -61,12 +61,8 @@ def test_carregar_rotinas_agrega_multiplos_arquivos(tmp_path):
 def test_carregar_rotinas_ignora_toml_invalido(tmp_path):
     pasta = tmp_path / ".ouroboros" / "rotina"
     pasta.mkdir(parents=True)
-    (pasta / "valido.toml").write_text(
-        '[[alarme]]\nid="x"\nhora="07:00"\n', encoding="utf-8"
-    )
-    (pasta / "quebrado.toml").write_text(
-        "[[alarme\nfaltando_fechar = 1", encoding="utf-8"
-    )
+    (pasta / "valido.toml").write_text('[[alarme]]\nid="x"\nhora="07:00"\n', encoding="utf-8")
+    (pasta / "quebrado.toml").write_text("[[alarme\nfaltando_fechar = 1", encoding="utf-8")
     res = be_rotina._carregar_rotinas_toml(tmp_path)
     # arquivo quebrado é ignorado silenciosamente, válido carrega.
     assert len(res["alarmes"]) == 1
@@ -129,9 +125,7 @@ def test_kpis_rotina_html_calcula_concluidas_e_total():
 def test_ler_rotina_legado_preservado(tmp_path):
     """Garante que UX-V-2.10 não quebra contrato de _ler_rotina (UX-RD-19)."""
     arquivo = tmp_path / "rotina.toml"
-    arquivo.write_text(
-        '[[alarme]]\nid="x"\nnome="X"\nhora="07:00"\n', encoding="utf-8"
-    )
+    arquivo.write_text('[[alarme]]\nid="x"\nnome="X"\nhora="07:00"\n', encoding="utf-8")
     cfg = be_rotina._ler_rotina(arquivo)
     assert cfg is not None
     assert len(cfg["alarme"]) == 1

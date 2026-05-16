@@ -49,6 +49,7 @@ Imports canônicos das páginas (sub-sprints UX-M-02.A..D fazem migração)::
 Padrões aplicados: VALIDATOR_BRIEF (b) acentuação PT-BR, (g) citação de
 filósofo no rodapé, (h) limite 800 linhas.
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -707,7 +708,7 @@ def group_card(
         f" align-items: center;"
         f" justify-content: space-between;"
         f" margin-bottom: {SPACING['sm']}px;"
-        f' padding-bottom: {SPACING["sm"]}px;'
+        f" padding-bottom: {SPACING['sm']}px;"
         f' border-bottom: 1px solid {rgba_cor_inline(CORES["texto_sec"], 0.2)};">'
         f'<h4 style="'
         f"color: {CORES['texto']};"
@@ -987,6 +988,7 @@ def ler_sync_info() -> dict | None:
     devem tratar ambos os casos como "nunca sincronizado" (graceful, ADR-10).
     """
     import json
+
     try:
         raiz = Path(__file__).resolve().parents[3]
         arquivo = raiz / ".ouroboros" / "cache" / "last_sync.json"
@@ -1041,9 +1043,7 @@ def sync_indicator_html(sync_info: dict | None = None) -> str:
     n = sync_info.get("n_arquivos", "?")
     titulo = f"Última sync: {sync_info['data']} · {n} arquivos"
     classe_final = f"sync-indicator {classe}".strip()
-    return (
-        f'<span class="{classe_final}" title="{titulo}">{rotulo}</span>'
-    )
+    return f'<span class="{classe_final}" title="{titulo}">{rotulo}</span>'
 
 
 # ---------------------------------------------------------------------------
@@ -1150,7 +1150,9 @@ def chip_bar_filtros_globais(dados: dict) -> tuple[str, str, str]:
                     semanas = obter_semanas_do_mes(dados, mes_base)
                     periodo = (  # noqa: accent
                         st.selectbox(
-                            "Semana", semanas, index=0,
+                            "Semana",
+                            semanas,
+                            index=0,
                             key="seletor_detalhe",
                         )
                         if semanas
@@ -1160,7 +1162,9 @@ def chip_bar_filtros_globais(dados: dict) -> tuple[str, str, str]:
                     dias = obter_dias_do_mes(dados, mes_base)
                     periodo = (  # noqa: accent
                         st.selectbox(
-                            "Dia", dias, index=0,
+                            "Dia",
+                            dias,
+                            index=0,
                             key="seletor_detalhe",
                         )
                         if dias
@@ -1192,9 +1196,7 @@ def chip_bar_filtros_globais(dados: dict) -> tuple[str, str, str]:
                 index=0,
                 key="seletor_forma_pagamento",
             )
-            st.session_state["filtro_forma"] = (
-                None if forma_sel == "Todas" else forma_sel
-            )
+            st.session_state["filtro_forma"] = None if forma_sel == "Todas" else forma_sel
 
     return periodo, pessoa, granularidade  # noqa: accent
 
@@ -1284,15 +1286,11 @@ def fallback_estado_inicial_html(
         Bloco HTML minificado, pronto para ``st.markdown(...,
         unsafe_allow_html=True)``.
     """
-    skeleton = (
-        f'<div class="fallback-skeleton">{skeleton_html}</div>'
-        if skeleton_html
-        else ""
-    )
+    skeleton = f'<div class="fallback-skeleton">{skeleton_html}</div>' if skeleton_html else ""
     if sync_info and "data" in sync_info:
         sync_str = (
-            f'Última sync: <strong>{sync_info["data"]}</strong>'
-            f' · {sync_info.get("n_arquivos", "?")} arquivos lidos do vault'
+            f"Última sync: <strong>{sync_info['data']}</strong>"
+            f" · {sync_info.get('n_arquivos', '?')} arquivos lidos do vault"
         )
     else:
         sync_str = (
@@ -1317,6 +1315,3 @@ def fallback_estado_inicial_html(
         </div>
         """
     )
-
-
-

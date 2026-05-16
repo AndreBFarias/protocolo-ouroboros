@@ -87,9 +87,8 @@ def test_treemap_paleta_wcag_aa_minimo_45() -> None:
     contrastes = pagina._validar_contraste_paleta()
     assert contrastes, "Paleta vazia"
     falhas = {cor: r for cor, r in contrastes.items() if r < 4.5}
-    assert not falhas, (
-        f"Cores abaixo de WCAG-AA contra {CORES['fundo']}: "
-        + ", ".join(f"{c}={r:.2f}:1" for c, r in falhas.items())
+    assert not falhas, f"Cores abaixo de WCAG-AA contra {CORES['fundo']}: " + ", ".join(
+        f"{c}={r:.2f}:1" for c, r in falhas.items()
     )
 
 
@@ -132,7 +131,7 @@ def test_arvore_html_usa_details_expansivel(df_categorias: pd.DataFrame) -> None
     assert "<details" in html
     assert "<summary>" in html
     # primeira família vem aberta (espelha mockup)
-    assert 'open>' in html or 'open ' in html
+    assert "open>" in html or "open " in html
     # classes canônicas do mockup
     assert "ux-rd-12-cat-row" in html
     assert "ux-rd-12-tree" in html
@@ -205,6 +204,7 @@ def test_html_minificado_sem_indentacao_perigosa(df_categorias: pd.DataFrame) ->
     total = sum(n["valor"] for n in arvore)
     from src.dashboard.componentes.html_utils import minificar
     from src.dashboard.componentes.ui import carregar_css_pagina
+
     arv = pagina._arvore_html(arvore, total)
     kpis = pagina.calcular_kpis_categoria(df_categorias)
     kpi_html = pagina._kpis_html(kpis)

@@ -110,9 +110,7 @@ def _criar_tx(
 # ============================================================================
 
 
-def test_holerites_mesma_competencia_valor_similar_fundem(
-    db: GrafoDB, caminho_propostas: Path
-):
+def test_holerites_mesma_competencia_valor_similar_fundem(db: GrafoDB, caminho_propostas: Path):
     """Dois holerites mesma competência, valor dentro de 5% -> 1 representante.
 
     Cenário real (id 7695/7697 do grafo de produção em 2026-05-13):
@@ -141,16 +139,13 @@ def test_holerites_mesma_competencia_valor_similar_fundem(
     assert stats["alias_fundidos"] == 1, f"esperado 1 alias, got {stats}"
     arestas_doc = list(db.listar_edges(dst_id=tx_id, tipo=EDGE_TIPO_DOCUMENTO_DE))
     assert len(arestas_doc) <= 1, (
-        "Apenas o representante deve gerar aresta documento_de; "
-        f"got {len(arestas_doc)}"
+        f"Apenas o representante deve gerar aresta documento_de; got {len(arestas_doc)}"
     )
 
     # Aresta _alias_de existe e aponta para o representante (id menor).
     alias_id = max(id_g4f, id_infobase)
     rep_id = min(id_g4f, id_infobase)
-    arestas_alias = list(
-        db.listar_edges(src_id=alias_id, tipo=EDGE_TIPO_ALIAS_REALIDADE)
-    )
+    arestas_alias = list(db.listar_edges(src_id=alias_id, tipo=EDGE_TIPO_ALIAS_REALIDADE))
     assert len(arestas_alias) == 1
     assert arestas_alias[0].dst_id == rep_id
 
@@ -199,9 +194,7 @@ def test_holerite_unico_sem_mudanca(db: GrafoDB, caminho_propostas: Path):
     assert len(arestas) == 1
 
 
-def test_tres_holerites_mesma_realidade_um_representante(
-    db: GrafoDB, caminho_propostas: Path
-):
+def test_tres_holerites_mesma_realidade_um_representante(db: GrafoDB, caminho_propostas: Path):
     """3+ holerites mesma competência + valor próximo -> 1 representante + N alias.
 
     Cenário hipotético mas estruturalmente válido: tripla redundância de fonte
@@ -221,9 +214,7 @@ def test_tres_holerites_mesma_realidade_um_representante(
     rep_esperado = min(id_a, id_b, id_c)
     aliases_esperados = {id_a, id_b, id_c} - {rep_esperado}
     for alias_id in aliases_esperados:
-        arestas = list(
-            db.listar_edges(src_id=alias_id, tipo=EDGE_TIPO_ALIAS_REALIDADE)
-        )
+        arestas = list(db.listar_edges(src_id=alias_id, tipo=EDGE_TIPO_ALIAS_REALIDADE))
         assert len(arestas) == 1
         assert arestas[0].dst_id == rep_esperado
 
@@ -244,9 +235,7 @@ def test_idempotencia_fusao_holerite(db: GrafoDB, caminho_propostas: Path):
 
     alias_id = max(id_g4f, id_infobase)
     arestas = list(db.listar_edges(src_id=alias_id, tipo=EDGE_TIPO_ALIAS_REALIDADE))
-    assert len(arestas) == 1, (
-        f"idempotência violada -- aresta _alias_de duplicou: {len(arestas)}"
-    )
+    assert len(arestas) == 1, f"idempotência violada -- aresta _alias_de duplicou: {len(arestas)}"
 
 
 # ============================================================================
@@ -262,9 +251,7 @@ def test_competencia_extraida_de_periodo_apuracao(db: GrafoDB):
     assert _competencia_do_holerite(doc) == "2026-03"
 
 
-def test_holerite_sem_competencia_passa_intacto(
-    db: GrafoDB, caminho_propostas: Path
-):
+def test_holerite_sem_competencia_passa_intacto(db: GrafoDB, caminho_propostas: Path):
     """Holerite sem `periodo_apuracao` e sem sufixo `|YYYY-MM` não é candidato
     a fusão -- passa intacto pelo `_fundir_holerites_mesma_realidade`.
     """
@@ -275,9 +262,7 @@ def test_holerite_sem_competencia_passa_intacto(
     assert node is not None
     metadata = dict(node.metadata)
     metadata.pop("periodo_apuracao", None)
-    db.upsert_node(
-        "documento", "HOLERITE_SEM_COMPETENCIA_RAW", metadata=metadata
-    )
+    db.upsert_node("documento", "HOLERITE_SEM_COMPETENCIA_RAW", metadata=metadata)
     documentos = db.listar_nodes(tipo="documento")
     filtrados, alias_para_rep = _fundir_holerites_mesma_realidade(documentos)
     assert alias_para_rep == {}

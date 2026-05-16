@@ -55,13 +55,7 @@ def test_marcos_manuais_nao_sao_sobrescritos(vault_rico: Path):
     # tecnica que e contrato N-para-N (ver BRIEF padrao acentuacao).
     campo = "descri" + "cao"
     conteudo_manual = (
-        "---\n"
-        "tipo: marco\n"
-        "data: 2026-04-20\n"
-        "autor: pessoa_a\n"
-        f"{campo}: Manual.\n"
-        "auto: false\n"
-        "---\n"
+        f"---\ntipo: marco\ndata: 2026-04-20\nautor: pessoa_a\n{campo}: Manual.\nauto: false\n---\n"
     )
     manual.write_text(conteudo_manual, encoding="utf-8")
     conteudo_antes = manual.read_text(encoding="utf-8")

@@ -98,9 +98,7 @@ def _proximo_alarme(alarmes: list[dict[str, Any]]) -> str:
     """Retorna a próxima hora futura (HH:MM) ou ``--`` se nada agendado."""
     agora = datetime.now().strftime("%H:%M")
     horas_validas = [
-        str(a.get("hora", "")).strip()
-        for a in alarmes
-        if isinstance(a, dict) and a.get("hora")
+        str(a.get("hora", "")).strip() for a in alarmes if isinstance(a, dict) and a.get("hora")
     ]
     futuros = [h for h in horas_validas if h > agora]
     if futuros:
@@ -168,20 +166,20 @@ def _alarme_row_html(a: dict[str, Any]) -> str:
     bg_toggle = CORES["destaque"] if ativo else CORES["fundo_inset"]
     return (
         f'<div style="display:grid;grid-template-columns:auto 1fr auto;gap:10px;'
-        f'align-items:center;padding:10px;background:{CORES["fundo_inset"]};'
-        f'border:1px solid {CORES["texto_sec"]}33;border-left:3px solid '
+        f"align-items:center;padding:10px;background:{CORES['fundo_inset']};"
+        f"border:1px solid {CORES['texto_sec']}33;border-left:3px solid "
         f'{CORES["destaque"]};border-radius:4px;margin-bottom:6px;">'
         f'  <div style="font-family:ui-monospace,monospace;font-size:20px;'
         f'              font-weight:500;color:{CORES["texto"]};line-height:1;">{hora}</div>'
         f'  <div style="display:flex;flex-direction:column;gap:2px;min-width:0;">'
         f'    <span style="font-size:13px;color:{CORES["texto"]};'
-        f'font-weight:500;overflow:hidden;text-overflow:ellipsis;'
+        f"font-weight:500;overflow:hidden;text-overflow:ellipsis;"
         f'white-space:nowrap;">{titulo}</span>'
         f'    <span style="font-family:ui-monospace,monospace;font-size:10px;'
         f'                  color:{CORES["texto_muted"]};">{meta}</span>'
         f"  </div>"
         f'  <div class="alarme-toggle {toggle_estado}" style="position:relative;'
-        f'width:36px;height:20px;background:{bg_toggle};border-radius:999px;'
+        f"width:36px;height:20px;background:{bg_toggle};border-radius:999px;"
         f'border:1px solid {CORES["texto_sec"]}33;"></div>'
         f"</div>"
     )
@@ -217,18 +215,18 @@ def _tarefa_row_html(t: dict[str, Any]) -> str:
     fundo_check = CORES["destaque"] if concluida else "transparent"
     return (
         f'<div style="display:grid;grid-template-columns:auto 1fr;gap:10px;'
-        f'align-items:center;padding:10px;background:{CORES["fundo_inset"]};'
-        f'border:1px solid {CORES["texto_sec"]}33;border-radius:4px;margin-bottom:6px;'
+        f"align-items:center;padding:10px;background:{CORES['fundo_inset']};"
+        f"border:1px solid {CORES['texto_sec']}33;border-radius:4px;margin-bottom:6px;"
         f'{"opacity:0.55;" if concluida else ""}">'
         f'  <div class="checkbox {classe_check}" style="width:18px;height:18px;'
-        f'border:1.5px solid {cor_prio};border-radius:3px;flex-shrink:0;'
+        f"border:1.5px solid {cor_prio};border-radius:3px;flex-shrink:0;"
         f'background:{fundo_check};"></div>'
         f'  <div style="display:flex;flex-direction:column;gap:2px;min-width:0;">'
         f'    <span style="font-size:13px;{estilo_titulo}">{titulo}</span>'
         f'    <span style="font-family:ui-monospace,monospace;font-size:10px;'
         f'                  color:{CORES["texto_muted"]};">'
         f'      <span style="color:{cor_prio};">{rotulo_prio}</span>'
-        f'      {(" · " + extras) if extras else ""}'
+        f"      {(' · ' + extras) if extras else ''}"
         f"    </span>"
         f"  </div>"
         f"</div>"
@@ -253,18 +251,18 @@ def _contador_row_html(c: dict[str, Any]) -> str:
     reset = str(c.get("reset") or "diário").strip()
     return (
         f'<div style="padding:14px;background:{CORES["fundo_inset"]};'
-        f'border:1px solid {CORES["texto_sec"]}33;border-left:3px solid '
-        f'{CORES["destaque"]};border-radius:4px;display:flex;flex-direction:column;'
+        f"border:1px solid {CORES['texto_sec']}33;border-left:3px solid "
+        f"{CORES['destaque']};border-radius:4px;display:flex;flex-direction:column;"
         f'gap:8px;margin-bottom:8px;">'
         f'  <div style="display:flex;align-items:baseline;justify-content:space-between;">'
         f'    <span style="font-size:13px;color:{CORES["texto"]};font-weight:500;">{titulo}</span>'
         f'    <span style="font-family:ui-monospace,monospace;font-size:10px;'
-        f'                  color:{CORES["destaque"]};letter-spacing:0.10em;'
+        f"                  color:{CORES['destaque']};letter-spacing:0.10em;"
         f'                  text-transform:uppercase;">{tipo}</span>'
         f"  </div>"
         f'  <div style="font-family:ui-monospace,monospace;font-size:28px;'
         f'              font-weight:500;color:{CORES["destaque"]};line-height:1;">'
-        f'    {valor_str}'
+        f"    {valor_str}"
         f'    <small style="font-size:13px;color:{CORES["texto_muted"]};'
         f'                   font-weight:400;"> {unidade}</small>'
         f"  </div>"
@@ -274,9 +272,9 @@ def _contador_row_html(c: dict[str, Any]) -> str:
         f'background:{CORES["destaque"]};border-radius:999px;display:block;"></span>'
         f"  </div>"
         f'  <div style="display:flex;justify-content:space-between;'
-        f'              font-family:ui-monospace,monospace;font-size:10px;'
+        f"              font-family:ui-monospace,monospace;font-size:10px;"
         f'              color:{CORES["texto_muted"]};">'
-        f'    <span>{meta_legenda}</span><span>reset {reset}</span>'
+        f"    <span>{meta_legenda}</span><span>reset {reset}</span>"
         f"  </div>"
         f"</div>"
     )
@@ -286,15 +284,15 @@ def _coluna_html(titulo: str, contagem: int, conteudo_rows: str) -> str:
     """Encapsula uma coluna em card com header (titulo + contagem)."""
     return (
         f'<div style="background:{CORES["card_fundo"]};border:1px solid '
-        f'{CORES["texto_sec"]}33;border-radius:6px;padding:14px;display:flex;'
+        f"{CORES['texto_sec']}33;border-radius:6px;padding:14px;display:flex;"
         f'flex-direction:column;">'
         f'  <div style="display:flex;align-items:center;justify-content:space-between;'
-        f'              margin-bottom:12px;padding-bottom:8px;'
+        f"              margin-bottom:12px;padding-bottom:8px;"
         f'              border-bottom:1px solid {CORES["texto_sec"]}33;">'
         f'    <span style="font-family:ui-monospace,monospace;font-size:12px;'
-        f'                  letter-spacing:0.10em;text-transform:uppercase;'
+        f"                  letter-spacing:0.10em;text-transform:uppercase;"
         f'                  color:{CORES["destaque"]};font-weight:600;">'
-        f'      {titulo} · {contagem}</span>'
+        f"      {titulo} · {contagem}</span>"
         f"  </div>"
         f'  <div style="display:flex;flex-direction:column;gap:6px;">{conteudo_rows}</div>'
         f"</div>"
@@ -308,17 +306,17 @@ def _page_header_html(qtd_alarmes: int, qtd_tarefas: int, qtd_contadores: int) -
     return renderizar_page_header(
         titulo="ROTINA",
         subtitulo=(
-            "Alarmes recorrentes, tarefas e contadores diários. "
-            "Persiste em .ouroboros/rotina.toml."
+            "Alarmes recorrentes, tarefas e contadores diários. Persiste em .ouroboros/rotina.toml."
         ),
         sprint_tag="UX-RD-19",
-        pills=[{
-            "texto": (
-                f"{qtd_alarmes} alarmes · {qtd_tarefas} tarefas · "
-                f"{qtd_contadores} contadores"
-            ),
-            "tipo": "generica",
-        }],
+        pills=[
+            {
+                "texto": (
+                    f"{qtd_alarmes} alarmes · {qtd_tarefas} tarefas · {qtd_contadores} contadores"
+                ),
+                "tipo": "generica",
+            }
+        ],
     )
 
 
@@ -332,7 +330,7 @@ def _alarme_card_html(alarme: dict[str, Any]) -> str:
         f'<span style="display:inline-block;width:18px;height:18px;'
         f"line-height:18px;text-align:center;font-family:ui-monospace,monospace;"
         f"font-size:10px;border-radius:3px;margin-right:2px;"
-        f'background:{CORES["destaque"] if d in dias else CORES["fundo_inset"]};'
+        f"background:{CORES['destaque'] if d in dias else CORES['fundo_inset']};"
         f'color:{CORES["fundo"] if d in dias else CORES["texto_muted"]};">'
         f"{_DIAS_LABEL.get(d, d[:1].upper())}</span>"
         for d in _ORDEM_DIAS
@@ -342,7 +340,7 @@ def _alarme_card_html(alarme: dict[str, Any]) -> str:
         tags = []
     chips_tags = "".join(
         f'<span style="display:inline-block;background:{CORES["fundo_inset"]};'
-        f'color:{CORES["texto_sec"]};font-family:ui-monospace,monospace;'
+        f"color:{CORES['texto_sec']};font-family:ui-monospace,monospace;"
         f"font-size:10px;padding:2px 8px;border-radius:10px;margin-right:4px;"
         f'border:1px solid {CORES["texto_sec"]}33;">'
         f"{tag}</span>"
@@ -350,7 +348,7 @@ def _alarme_card_html(alarme: dict[str, Any]) -> str:
     )
     return (
         f'<div style="background:{CORES["card_fundo"]};'
-        f'border:1px solid {CORES["texto_sec"]}33;border-radius:6px;'
+        f"border:1px solid {CORES['texto_sec']}33;border-radius:6px;"
         f'padding:14px;margin-bottom:10px;">'
         f'  <div style="display:flex;justify-content:space-between;'
         f'              align-items:center;margin-bottom:8px;">'
@@ -371,11 +369,11 @@ def _tarefa_card_html(tarefa: dict[str, Any]) -> str:
     tipo = str(tarefa.get("tipo") or "geral").strip()
     return (
         f'<div style="background:{CORES["card_fundo"]};'
-        f'border:1px solid {CORES["texto_sec"]}33;border-radius:6px;'
-        f'padding:12px 14px;margin-bottom:8px;'
+        f"border:1px solid {CORES['texto_sec']}33;border-radius:6px;"
+        f"padding:12px 14px;margin-bottom:8px;"
         f'display:flex;align-items:center;gap:10px;">'
         f'  <div style="width:14px;height:14px;'
-        f'              border:1.5px solid {CORES["destaque"]};'
+        f"              border:1.5px solid {CORES['destaque']};"
         f'              border-radius:3px;flex-shrink:0;"></div>'
         f'  <div style="flex:1;color:{CORES["texto"]};font-size:13px;">{nome}'
         f'    <span style="font-family:ui-monospace,monospace;font-size:10px;'
@@ -394,7 +392,7 @@ def _contador_card_html(contador: dict[str, Any]) -> str:
     reset = str(contador.get("reset") or "diario").strip()
     return (
         f'<div style="background:{CORES["card_fundo"]};'
-        f'border:1px solid {CORES["texto_sec"]}33;border-radius:6px;'
+        f"border:1px solid {CORES['texto_sec']}33;border-radius:6px;"
         f'padding:12px 14px;margin-bottom:8px;">'
         f'  <div style="color:{CORES["texto"]};font-size:14px;">{nome}</div>'
         f'  <div style="font-family:ui-monospace,monospace;font-size:11px;'
@@ -483,11 +481,7 @@ def _skeleton_3_colunas_html() -> str:
         "&mdash; 0",
         skel_contador,
     )
-    return (
-        f'<div class="rotina-grid">'
-        f"{col_alarmes}{col_tarefas}{col_contadores}"
-        f"</div>"
-    )
+    return f'<div class="rotina-grid">{col_alarmes}{col_tarefas}{col_contadores}</div>'
 
 
 def renderizar(
@@ -498,20 +492,24 @@ def renderizar(
 ) -> None:
     """Renderiza Bem-estar / Rotina (UX-T-20)."""
     from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
-    renderizar_grupo_acoes([
-        {"label": "Hoje", "glyph": "calendar",
-         "href": "?cluster=Bem-estar&tab=Hoje"},
-        {"label": "Novo", "primary": True, "glyph": "plus",
-         "title": "Wizard alarme/tarefa/contador"},
-    ])
+
+    renderizar_grupo_acoes(
+        [
+            {"label": "Hoje", "glyph": "calendar", "href": "?cluster=Bem-estar&tab=Hoje"},
+            {
+                "label": "Novo",
+                "primary": True,
+                "glyph": "plus",
+                "title": "Wizard alarme/tarefa/contador",
+            },
+        ]
+    )
 
     del dados, periodo, pessoa, ctx
 
     # UX-V-2.10-FIX: carrega CSS dedicado (.rotina-grid, .rot-card,
     # .skeleton-card etc.). Idêntico ao padrão das demais páginas Bem-estar.
-    st.markdown(
-        minificar(carregar_css_pagina("be_rotina")), unsafe_allow_html=True
-    )
+    st.markdown(minificar(carregar_css_pagina("be_rotina")), unsafe_allow_html=True)
 
     # Caminho 1 (UX-V-2.10): diretório <vault>/.ouroboros/rotina/*.toml.
     # Caminho 2 (legado UX-RD-19): arquivo único <vault>/.ouroboros/rotina.toml.
@@ -533,12 +531,8 @@ def renderizar(
         contadores_legado = []
 
     # União: formato novo precede legado (mais recente vence visualmente).
-    alarmes = list(rotinas_dir["alarmes"]) + [
-        a for a in alarmes_legado if isinstance(a, dict)
-    ]
-    tarefas = list(rotinas_dir["tarefas"]) + [
-        t for t in tarefas_legado if isinstance(t, dict)
-    ]
+    alarmes = list(rotinas_dir["alarmes"]) + [a for a in alarmes_legado if isinstance(a, dict)]
+    tarefas = list(rotinas_dir["tarefas"]) + [t for t in tarefas_legado if isinstance(t, dict)]
     contadores = list(rotinas_dir["contadores"]) + [
         c for c in contadores_legado if isinstance(c, dict)
     ]
@@ -555,21 +549,16 @@ def renderizar(
     # KPIs renderizam quando há qualquer dado (novo ou legado).
     if alarmes or tarefas or contadores:
         st.markdown(
-            _kpis_rotina_html(
-                {"alarmes": alarmes, "tarefas": tarefas, "contadores": contadores}
-            ),
+            _kpis_rotina_html({"alarmes": alarmes, "tarefas": tarefas, "contadores": contadores}),
             unsafe_allow_html=True,
         )
 
     # Quando o diretório novo existe, renderizar 3 colunas estilo mockup.
     if tem_dados_novos:
-        col_alarmes, col_tarefas, col_contadores = st.columns(
-            [1, 1, 1], gap="medium"
-        )
+        col_alarmes, col_tarefas, col_contadores = st.columns([1, 1, 1], gap="medium")
         with col_alarmes:
             rows_a = "".join(_alarme_row_html(a) for a in alarmes) or (
-                f'<div style="color:{CORES["texto_muted"]};font-size:12px;">'
-                "Nenhum alarme.</div>"
+                f'<div style="color:{CORES["texto_muted"]};font-size:12px;">Nenhum alarme.</div>'
             )
             st.markdown(
                 minificar(_coluna_html("Alarmes", len(alarmes), rows_a)),
@@ -577,8 +566,7 @@ def renderizar(
             )
         with col_tarefas:
             rows_t = "".join(_tarefa_row_html(t) for t in tarefas) or (
-                f'<div style="color:{CORES["texto_muted"]};font-size:12px;">'
-                "Nenhuma tarefa.</div>"
+                f'<div style="color:{CORES["texto_muted"]};font-size:12px;">Nenhuma tarefa.</div>'
             )
             st.markdown(
                 minificar(_coluna_html("Tarefas Hoje", len(tarefas), rows_t)),
@@ -586,8 +574,7 @@ def renderizar(
             )
         with col_contadores:
             rows_c = "".join(_contador_row_html(c) for c in contadores) or (
-                f'<div style="color:{CORES["texto_muted"]};font-size:12px;">'
-                "Nenhum contador.</div>"
+                f'<div style="color:{CORES["texto_muted"]};font-size:12px;">Nenhum contador.</div>'
             )
             st.markdown(
                 minificar(_coluna_html("Contadores", len(contadores), rows_c)),
@@ -600,6 +587,7 @@ def renderizar(
             fallback_estado_inicial_html,
             ler_sync_info,
         )
+
         skeleton = _skeleton_3_colunas_html()
         st.markdown(
             fallback_estado_inicial_html(
@@ -625,7 +613,7 @@ def renderizar(
     with col_alarmes:
         st.markdown(
             f'<h3 style="font-family:ui-monospace,monospace;font-size:11px;'
-            f'letter-spacing:0.10em;text-transform:uppercase;'
+            f"letter-spacing:0.10em;text-transform:uppercase;"
             f'color:{CORES["texto_muted"]};margin:0 0 12px;">Alarmes</h3>',
             unsafe_allow_html=True,
         )
@@ -638,7 +626,7 @@ def renderizar(
     with col_tarefas:
         st.markdown(
             f'<h3 style="font-family:ui-monospace,monospace;font-size:11px;'
-            f'letter-spacing:0.10em;text-transform:uppercase;'
+            f"letter-spacing:0.10em;text-transform:uppercase;"
             f'color:{CORES["texto_muted"]};margin:0 0 12px;">Tarefas</h3>',
             unsafe_allow_html=True,
         )
@@ -651,7 +639,7 @@ def renderizar(
     with col_contadores:
         st.markdown(
             f'<h3 style="font-family:ui-monospace,monospace;font-size:11px;'
-            f'letter-spacing:0.10em;text-transform:uppercase;'
+            f"letter-spacing:0.10em;text-transform:uppercase;"
             f'color:{CORES["texto_muted"]};margin:0 0 12px;">Contadores</h3>',
             unsafe_allow_html=True,
         )

@@ -157,9 +157,7 @@ def _contar_pendentes(diretorio: Path | None = None) -> int:
     return len(_listar_pendentes(diretorio))
 
 
-def _mover_para_destino(
-    proposta: Proposta, decisao: str, data_iso: str | None = None
-) -> Path:
+def _mover_para_destino(proposta: Proposta, decisao: str, data_iso: str | None = None) -> Path:
     """Move proposta para ``<categoria>/_<decisao>/<data>/<filename>``.
 
     ``decisao`` em {"aprovadas", "rejeitadas"}. Cria diretório destino se
@@ -310,9 +308,7 @@ def renderizar(
     st.subheader("Detalhe e ação")
     for p in filtradas:
         rotulo_idade_p, cor_idade = _classificar_idade(p.idade_dias)
-        titulo = (
-            f"{p.proposta_id} — {p.tipo} — {p.idade_dias}d ({rotulo_idade_p})"
-        )
+        titulo = f"{p.proposta_id} — {p.tipo} — {p.idade_dias}d ({rotulo_idade_p})"
         with st.expander(titulo):
             st.markdown(
                 f"<div style='color:{cor_idade};font-size:.85em;'>"

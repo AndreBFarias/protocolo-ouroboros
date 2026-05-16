@@ -79,9 +79,7 @@ def _aplicar_filtros(
     return out
 
 
-def _promover_para_overrides(
-    descricao: str, categoria: str, path_yaml: Path | None = None
-) -> dict:
+def _promover_para_overrides(descricao: str, categoria: str, path_yaml: Path | None = None) -> dict:
     """Apenda entry em overrides.yaml com `match`, `categoria`, `origem`.
 
     O override usa match exato pelo `local`. Para regras mais amplas

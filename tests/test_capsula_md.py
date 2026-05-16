@@ -82,9 +82,7 @@ def test_carregar_capsulas_ordena_data_desc() -> None:
 def test_carregar_capsulas_resolve_companions_para_paths() -> None:
     """`companions_resolvidos` aponta para arquivos ao lado do `.md`."""
     capsulas = carregar_capsulas(FIXTURES)
-    aniversario = next(
-        c for c in capsulas if c.frontmatter["slug"] == "aniversario-vitoria"
-    )
+    aniversario = next(c for c in capsulas if c.frontmatter["slug"] == "aniversario-vitoria")
     assert len(aniversario.companions_resolvidos) == 3
     for path in aniversario.companions_resolvidos:
         assert isinstance(path, Path)

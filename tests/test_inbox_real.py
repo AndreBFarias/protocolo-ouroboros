@@ -209,9 +209,7 @@ def test_contar_estados_soma_igual_total(tmp_path: Path) -> None:
 
     _gravar_sidecar(sidecar_dir, sha_por_nome["b.pdf"], {"tipo_arquivo": "x"})
     _gravar_sidecar(sidecar_dir, sha_por_nome["c.pdf"], {"erro": "y"})
-    _gravar_sidecar(
-        sidecar_dir, sha_por_nome["d.pdf"], {"duplicado_de": sha_por_nome["a.pdf"]}
-    )
+    _gravar_sidecar(sidecar_dir, sha_por_nome["d.pdf"], {"duplicado_de": sha_por_nome["a.pdf"]})
 
     itens = listar_inbox(inbox)
     cont = contar_estados(itens)
@@ -250,9 +248,7 @@ def test_dropzone_aceita_seis_formatos_canonicos(tmp_path: Path, ext: str) -> No
 
 def test_gravar_arquivo_inbox_escreve_em_disco(tmp_path: Path) -> None:
     inbox = tmp_path / "inbox"
-    destino = gravar_arquivo_inbox(
-        "novo.pdf", b"%PDF-1.4 placeholder", inbox_path=inbox
-    )
+    destino = gravar_arquivo_inbox("novo.pdf", b"%PDF-1.4 placeholder", inbox_path=inbox)
     assert destino.exists()
     assert destino.read_bytes() == b"%PDF-1.4 placeholder"
     assert destino.parent == inbox

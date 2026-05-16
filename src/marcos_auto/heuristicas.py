@@ -165,10 +165,7 @@ def tres_treinos_em_sete_dias(
             count = sum(
                 1
                 for outro in lista_ordenada
-                if (
-                    (do := _data_de(outro)) is not None
-                    and d_inicio <= do <= d_fim
-                )
+                if ((do := _data_de(outro)) is not None and d_inicio <= do <= d_fim)
             )
             if count >= 3 and not ja_emitiu:
                 marcos.append(
@@ -242,9 +239,7 @@ def sete_dias_humor(
         # Procura primeira janela de 7 dias consecutivos.
         for i in range(len(datas_unicas) - 6):
             janela = datas_unicas[i : i + 7]
-            consecutivos = all(
-                (janela[j + 1] - janela[j]).days == 1 for j in range(6)
-            )
+            consecutivos = all((janela[j + 1] - janela[j]).days == 1 for j in range(6))
             if consecutivos:
                 marcos.append(
                     _marco(
@@ -279,9 +274,7 @@ def trinta_dias_sem_trigger(
         if not ordenados:
             continue
         primeira = _data_de(ordenados[0])
-        triggers = [
-            _data_de(ev) for ev in ordenados if ev.get("modo") == "trigger"
-        ]
+        triggers = [_data_de(ev) for ev in ordenados if ev.get("modo") == "trigger"]
         triggers = [t for t in triggers if t is not None]
         ja_emitiu = False
         if not triggers:
@@ -302,11 +295,7 @@ def trinta_dias_sem_trigger(
                 ja_emitiu = True
         else:
             # Antes do primeiro trigger.
-            if (
-                primeira is not None
-                and (triggers[0] - primeira).days >= 30
-                and not ja_emitiu
-            ):
+            if primeira is not None and (triggers[0] - primeira).days >= 30 and not ja_emitiu:
                 marcos.append(
                     _marco(
                         data_iso=(triggers[0] - timedelta(days=1)).isoformat(),

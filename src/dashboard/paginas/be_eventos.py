@@ -70,11 +70,13 @@ def renderizar(
 ) -> None:
     """Renderiza Bem-estar / Eventos (UX-T-22)."""
     from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
-    renderizar_grupo_acoes([
-        {"label": "Calendário", "glyph": "calendar", "title": "Vista mensal"},
-        {"label": "Novo evento", "primary": True, "glyph": "plus",
-         "title": "Wizard de evento"},
-    ])
+
+    renderizar_grupo_acoes(
+        [
+            {"label": "Calendário", "glyph": "calendar", "title": "Vista mensal"},
+            {"label": "Novo evento", "primary": True, "glyph": "plus", "title": "Wizard de evento"},
+        ]
+    )
 
     del dados, periodo, ctx
 
@@ -154,6 +156,7 @@ def renderizar(
                 fallback_estado_inicial_html,
                 ler_sync_info,
             )
+
             skeleton = (
                 '<div style="display:flex;flex-direction:column;gap:14px;">'
                 '<div style="display:flex;gap:10px;align-items:flex-start;">'
@@ -161,20 +164,20 @@ def renderizar(
                 '<div style="flex:1;display:flex;flex-direction:column;gap:6px;">'
                 '<span class="skel-bloco" style="width:55%;"></span>'
                 '<span class="skel-bloco" style="width:75%;height:0.85em;"></span>'
-                '</div></div>'
+                "</div></div>"
                 '<div style="display:flex;gap:10px;align-items:flex-start;">'
                 '<span class="skel-bloco" style="width:60px;height:0.9em;"></span>'
                 '<div style="flex:1;display:flex;flex-direction:column;gap:6px;">'
                 '<span class="skel-bloco" style="width:45%;"></span>'
                 '<span class="skel-bloco" style="width:65%;height:0.85em;"></span>'
-                '</div></div>'
+                "</div></div>"
                 '<div style="display:flex;gap:10px;align-items:flex-start;">'
                 '<span class="skel-bloco" style="width:60px;height:0.9em;"></span>'
                 '<div style="flex:1;display:flex;flex-direction:column;gap:6px;">'
                 '<span class="skel-bloco" style="width:60%;"></span>'
                 '<span class="skel-bloco" style="width:80%;height:0.85em;"></span>'
-                '</div></div>'
-                '</div>'
+                "</div></div>"
+                "</div>"
             )
             st.markdown(
                 fallback_estado_inicial_html(
@@ -311,8 +314,10 @@ def _page_header_canonico(qtd: int) -> str:
 def _card_html(item: dict[str, Any]) -> str:
     modo = str(item.get("modo", ""))
     cor_borda = (
-        CORES.get("positivo", "#27ae60") if modo == "positivo"
-        else CORES.get("negativo", "#c0392b") if modo == "negativo"
+        CORES.get("positivo", "#27ae60")
+        if modo == "positivo"
+        else CORES.get("negativo", "#c0392b")
+        if modo == "negativo"
         else CORES.get("texto_muted", "#888")
     )
     rotulo_modo = {"positivo": "Positivo", "negativo": "Negativo"}.get(modo, modo or "—")
@@ -330,29 +335,29 @@ def _card_html(item: dict[str, Any]) -> str:
         intensidade_int = 0
     intensidade_int = max(0, min(5, intensidade_int))
     barra_int = "".join(
-        f'<span class="dot {"on" if i < intensidade_int else "off"}"></span>'
-        for i in range(5)
+        f'<span class="dot {"on" if i < intensidade_int else "off"}"></span>' for i in range(5)
     )
 
     fotos = item.get("fotos") or []
     thumbs_html = ""
     if fotos:
-        thumbs_html = '<div class="evento-thumbs">' + "".join(
-            f'<span class="thumb-mini" title="{_escape(str(f))}">{_escape(str(f)[:14])}</span>'
-            for f in fotos
-        ) + "</div>"
+        thumbs_html = (
+            '<div class="evento-thumbs">'
+            + "".join(
+                f'<span class="thumb-mini" title="{_escape(str(f))}">{_escape(str(f)[:14])}</span>'
+                for f in fotos
+            )
+            + "</div>"
+        )
 
     com = item.get("com") or []
     com_html = (
-        '<span class="evento-com">com '
-        + ", ".join(_escape(str(c)) for c in com)
-        + "</span>"
-        if com else ""
+        '<span class="evento-com">com ' + ", ".join(_escape(str(c)) for c in com) + "</span>"
+        if com
+        else ""
     )
 
-    categoria_html = (
-        f'<span class="evento-cat-pill">{categoria}</span>' if categoria else ""
-    )
+    categoria_html = f'<span class="evento-cat-pill">{categoria}</span>' if categoria else ""
 
     return minificar(
         f"""
@@ -365,8 +370,8 @@ def _card_html(item: dict[str, Any]) -> str:
             <span class="evento-autor">{_escape(autor)}</span>
           </div>
           <div class="evento-lugar">
-            <strong>{lugar or '—'}</strong>
-            {f'<span class="evento-bairro">· {bairro}</span>' if bairro else ''}
+            <strong>{lugar or "—"}</strong>
+            {f'<span class="evento-bairro">· {bairro}</span>' if bairro else ""}
           </div>
           <div class="evento-intens">
             <span class="evento-intens-label">intensidade</span>
@@ -381,13 +386,25 @@ def _card_html(item: dict[str, Any]) -> str:
 
 
 _MESES_PT = (
-    "janeiro", "fevereiro", "março", "abril", "maio", "junho",
-    "julho", "agosto", "setembro", "outubro", "novembro", "dezembro",
+    "janeiro",
+    "fevereiro",
+    "março",
+    "abril",
+    "maio",
+    "junho",
+    "julho",
+    "agosto",
+    "setembro",
+    "outubro",
+    "novembro",
+    "dezembro",
 )
 
 
 def _calendario_visual_html(
-    eventos: list[dict[str, Any]], ano: int, mes: int,
+    eventos: list[dict[str, Any]],
+    ano: int,
+    mes: int,
 ) -> str:
     """Calendário 5x7 com pontos coloridos em datas com eventos.
 
@@ -422,14 +439,9 @@ def _calendario_visual_html(
             classes.append("tem-evento")
         if d == hoje:
             classes.append("hoje")
-        celulas.append(
-            f'<div class="{" ".join(classes)}">{d.day}</div>'
-        )
+        celulas.append(f'<div class="{" ".join(classes)}">{d.day}</div>')
 
-    cabec = "".join(
-        f'<span class="dlabel">{d}</span>'
-        for d in ("D", "S", "T", "Q", "Q", "S", "S")
-    )
+    cabec = "".join(f'<span class="dlabel">{d}</span>' for d in ("D", "S", "T", "Q", "Q", "S", "S"))
     return minificar(
         f'<div class="calendario-visual">'
         f'<div class="cal-mini">{cabec}{"".join(celulas)}</div>'
@@ -438,7 +450,9 @@ def _calendario_visual_html(
 
 
 def _visao_mes_html(
-    eventos: list[dict[str, Any]], ano: int, mes: int,
+    eventos: list[dict[str, Any]],
+    ano: int,
+    mes: int,
 ) -> str:
     """Card com KPIs do mês corrente + calendário 5x7 embutido."""
     eventos_no_mes = []
@@ -569,10 +583,7 @@ def _bairros_html(top_bairros: list[tuple[str, int]]) -> str:
 
 def _escape(texto: str) -> str:
     return (
-        texto.replace("&", "&amp;")
-        .replace("<", "&lt;")
-        .replace(">", "&gt;")
-        .replace('"', "&quot;")
+        texto.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
     )
 
 
@@ -586,9 +597,11 @@ def _renderizar_form(vault_root: Path | None, pessoa_default: str) -> None:
     titulo = "Registrar evento"
     dialog = getattr(st, "dialog", None)
     if dialog is not None:
+
         @dialog(titulo)
         def _modal():
             _form_corpo(vault_root, pessoa_default)
+
         _modal()
     else:
         with st.expander(titulo, expanded=True):
@@ -597,9 +610,7 @@ def _renderizar_form(vault_root: Path | None, pessoa_default: str) -> None:
 
 def _form_corpo(vault_root: Path | None, pessoa_default: str) -> None:
     if vault_root is None:
-        st.warning(
-            "Vault não encontrado. Configure `OUROBOROS_VAULT` antes de registrar."
-        )
+        st.warning("Vault não encontrado. Configure `OUROBOROS_VAULT` antes de registrar.")
         if st.button("Fechar", key="be_eventos_form_fechar"):
             st.session_state.pop("be_eventos_form_aberto", None)
             st.rerun()
@@ -679,9 +690,7 @@ def _form_corpo(vault_root: Path | None, pessoa_default: str) -> None:
                 pessoa=autor,
                 texto=texto or "",
             )
-            st.session_state[_KEY_FLASH] = (
-                f"Evento gravado em {arquivo.name}."
-            )
+            st.session_state[_KEY_FLASH] = f"Evento gravado em {arquivo.name}."
         except (OSError, ValueError) as exc:
             st.error(f"Falha ao gravar: {exc}")
             return

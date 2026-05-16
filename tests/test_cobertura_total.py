@@ -66,10 +66,7 @@ def test_validar_reprova_e_emite_warning(caplog):
     with caplog.at_level(logging.WARNING, logger="teste_d7"):
         ok = r.validar(logger=logger)
     assert ok is False
-    assert any(
-        "[D7] cobertura abaixo do mínimo" in registro.message
-        for registro in caplog.records
-    )
+    assert any("[D7] cobertura abaixo do mínimo" in registro.message for registro in caplog.records)
 
 
 def test_validar_aprova_quando_potencial_zero():

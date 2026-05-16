@@ -4,6 +4,7 @@ Não renderiza no Streamlit; valida apenas que retornam HTML não vazio
 com classes esperadas e que ``minificar()`` foi aplicado (resultado
 em uma única linha, sem indentação Python crua).
 """
+
 from __future__ import annotations
 
 import pytest
@@ -78,12 +79,15 @@ def test_insight_card_tipo_invalido_cai_em_descoberta() -> None:
     assert "insight-descoberta" in html
 
 
-@pytest.mark.parametrize("tipo,label_esperado", [
-    ("positivo", "POSITIVO"),
-    ("atencao", "ATENÇÃO"),
-    ("descoberta", "DESCOBERTA"),
-    ("previsao", "PREVISÃO"),
-])
+@pytest.mark.parametrize(
+    "tipo,label_esperado",
+    [
+        ("positivo", "POSITIVO"),
+        ("atencao", "ATENÇÃO"),
+        ("descoberta", "DESCOBERTA"),
+        ("previsao", "PREVISÃO"),
+    ],
+)
 def test_insight_card_tipos_validos(tipo: str, label_esperado: str) -> None:
     """UX-V-2.6 fix: rótulo PT-BR canônico (não tipo.upper() ASCII)."""
     html = insight_card_html(tipo, "Título", "Corpo")

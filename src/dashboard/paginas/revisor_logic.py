@@ -155,10 +155,7 @@ def carregar_marcacoes(caminho: Path, item_id: str | None = None) -> list[dict]:
     conn = sqlite3.connect(caminho)
     conn.row_factory = sqlite3.Row
     try:
-        colunas = (
-            "item_id, dimensao, ok, observacao, ts, valor_etl, valor_opus, "
-            "valor_grafo_real"
-        )
+        colunas = "item_id, dimensao, ok, observacao, ts, valor_etl, valor_opus, valor_grafo_real"
         if item_id is not None:
             cursor = conn.execute(
                 f"SELECT {colunas} FROM revisao WHERE item_id = ?",
@@ -283,9 +280,9 @@ def gerar_ground_truth_csv(caminho_db: Path, caminho_csv: Path) -> int:
             valor_opus = mascarar_pii(m.get("valor_opus") or "")
             valor_grafo = mascarar_pii(m.get("valor_grafo_real") or "")
             valor_humano = rotulo_humano.get(m.get("ok"), "Não-aplicável")
-            divergencia = "1" if (
-                _comparar_canonico(valor_etl, valor_opus) or m.get("ok") == 0
-            ) else "0"
+            divergencia = (
+                "1" if (_comparar_canonico(valor_etl, valor_opus) or m.get("ok") == 0) else "0"
+            )
             div_etl_grafo = "1" if _comparar_canonico(valor_etl, valor_grafo) else "0"
             div_grafo_opus = "1" if _comparar_canonico(valor_grafo, valor_opus) else "0"
             writer.writerow(

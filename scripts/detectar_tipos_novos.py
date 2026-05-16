@@ -257,9 +257,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     PATH_PROPOSTAS.parent.mkdir(parents=True, exist_ok=True)
-    PATH_PROPOSTAS.write_text(
-        json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8"
-    )
+    PATH_PROPOSTAS.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
     sys.stdout.write(
         f"Propostas em {PATH_PROPOSTAS}\n"
         f"  total analisados: {payload['total_arquivos_analisados']}\n"

@@ -176,9 +176,7 @@ def test_pix_isolado_data_valor_exatos_linka(db: GrafoDB, caminho_propostas: Pat
     assert arestas[0].evidencia.get("tipo_documento") == "comprovante_pix_foto"
 
 
-def test_pix_sem_transacao_correspondente_nao_cria_aresta(
-    db: GrafoDB, caminho_propostas: Path
-):
+def test_pix_sem_transacao_correspondente_nao_cria_aresta(db: GrafoDB, caminho_propostas: Path):
     """PIX sem transação no extrato -> sem candidata, sem aresta, sem proposta.
 
     Caso: foto do comprovante chegou ao vault antes do extrato bancário ser
@@ -235,9 +233,7 @@ def test_boost_e2e_literal_eleva_score_a_um(db: GrafoDB, caminho_propostas: Path
     assert float(arestas[0].evidencia.get("confidence")) == 1.0
 
 
-def test_boost_textual_marcador_pix_mais_nome_soma_010(
-    db: GrafoDB, caminho_propostas: Path
-):
+def test_boost_textual_marcador_pix_mais_nome_soma_010(db: GrafoDB, caminho_propostas: Path):
     """Sem E2E na descrição, mas com marcador PIX/TRANSF + token >=4 chars do
     nome do destinatário -> heurística ``pix_marcador_textual`` e +0.10 ao
     score canônico.
@@ -267,9 +263,7 @@ def test_boost_textual_marcador_pix_mais_nome_soma_010(
     assert arestas[0].evidencia.get("heuristica") == "pix_marcador_textual"
 
 
-def test_empate_sem_boost_gera_proposta_de_conflito(
-    db: GrafoDB, caminho_propostas: Path
-):
+def test_empate_sem_boost_gera_proposta_de_conflito(db: GrafoDB, caminho_propostas: Path):
     """Duas transações com data/valor idênticos e nenhum boost discriminador
     -> top-1 e top-2 empatam dentro de margem_empate -> proposta de conflito
     em vez de aresta.
@@ -311,9 +305,7 @@ def test_empate_sem_boost_gera_proposta_de_conflito(
     assert len(propostas) == 1, f"esperado 1 proposta conflito, got {propostas}"
 
 
-def test_idempotencia_nao_duplica_aresta_em_segunda_rodada(
-    db: GrafoDB, caminho_propostas: Path
-):
+def test_idempotencia_nao_duplica_aresta_em_segunda_rodada(db: GrafoDB, caminho_propostas: Path):
     """Rodar ``linkar_pix_transacao`` duas vezes mantém exatamente 1 aresta
     ``documento_de`` por par (UNIQUE(src,dst,tipo) no schema).
     """

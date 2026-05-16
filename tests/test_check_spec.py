@@ -11,6 +11,7 @@ Cobre o linter `scripts/check_spec.py`:
 Padrões VALIDATOR_BRIEF aplicados: (b) acentuação PT-BR, (g) citação no
 rodapé, (n) defesa em camadas (testa default + auto-completar + soft).
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -117,9 +118,7 @@ def test_falta_campo_origem_no_frontmatter(tmp_path: Path) -> None:
     conteudo = SPEC_VALIDA.replace('origem: "teste unitário do linter de specs"\n', "")
     spec = _gravar(tmp_path, "sprint_SEM_ORIGEM_2026-05-15.md", conteudo)
     problemas = validar_spec(spec)
-    assert "campo_faltante:origem" in problemas, (
-        f"esperado campo_faltante:origem em {problemas}"
-    )
+    assert "campo_faltante:origem" in problemas, f"esperado campo_faltante:origem em {problemas}"
 
 
 # ---------------------------------------------------------------------------

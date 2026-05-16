@@ -39,6 +39,7 @@ logger = configurar_logger("intake.ocr_fallback_similar")
 _RAIZ_REPO: Path = Path(__file__).resolve().parents[2]
 _PATH_CONFIG: Path = _RAIZ_REPO / "mappings" / "ocr_fallback_config.yaml"
 
+
 def _config_default() -> dict[str, Any]:
     return {
         "limiar_chars_uteis_por_tipo": {"default": 50},
@@ -68,24 +69,81 @@ def _resetar_cache_config() -> None:
 _PALAVRAS_PT_BR_COMUNS: frozenset[str] = frozenset(
     {
         # Substantivos específicos de documentos fiscais/financeiros
-        "valor", "total", "pagamento", "forma", "documento", "data",
-        "nota", "fiscal", "consumidor", "cnpj", "cpf", "loja", "endereco",
-        "produto", "quantidade", "unidade", "preco", "compra", "boleto",
-        "vencimento", "beneficiario", "pagador", "banco", "conta",
-        "agencia", "codigo", "numero", "serie", "emissao", "protocolo",
-        "autorizacao", "consulta", "chave", "acesso", "filial",
-        "subtotal", "desconto", "imposto", "trib", "tributo",
+        "valor",
+        "total",
+        "pagamento",
+        "forma",
+        "documento",
+        "data",
+        "nota",
+        "fiscal",
+        "consumidor",
+        "cnpj",
+        "cpf",
+        "loja",
+        "endereco",
+        "produto",
+        "quantidade",
+        "unidade",
+        "preco",
+        "compra",
+        "boleto",
+        "vencimento",
+        "beneficiario",
+        "pagador",
+        "banco",
+        "conta",
+        "agencia",
+        "codigo",
+        "numero",
+        "serie",
+        "emissao",
+        "protocolo",
+        "autorizacao",
+        "consulta",
+        "chave",
+        "acesso",
+        "filial",
+        "subtotal",
+        "desconto",
+        "imposto",
+        "trib",
+        "tributo",
         # Variantes com acento
-        "endereço", "código", "número", "série", "emissão",
-        "agência", "preço", "cnpj", "tributário", "vencimento",
+        "endereço",
+        "código",
+        "número",
+        "série",
+        "emissão",
+        "agência",
+        "preço",
+        "cnpj",
+        "tributário",
+        "vencimento",
         # Indicadores monetários
-        "r$", "rs",
+        "r$",
+        "rs",
         # Verbos comuns em recibos
-        "pagar", "pago", "receber", "recebido", "emitir", "emitido",
+        "pagar",
+        "pago",
+        "receber",
+        "recebido",
+        "emitir",
+        "emitido",
         # Tipos de pagamento
-        "pix", "credito", "debito", "dinheiro", "transferencia", "tef",
+        "pix",
+        "credito",
+        "debito",
+        "dinheiro",
+        "transferencia",
+        "tef",
         # Loja/empresarial
-        "ltda", "americanas", "filial", "matriz", "razao", "social",
+        "ltda",
+        "americanas",
+        "filial",
+        "matriz",
+        "razao",
+        "social",
     }
 )
 
@@ -189,9 +247,22 @@ def _score_temporal(falho_mtime: float, candidato_data: str | None, janela_dias:
 # qualquer cupom (BANCO, EMPRESA, COMERCIO, SA, LTDA, etc.).
 _PALAVRAS_GENERICAS_FORNECEDOR: frozenset[str] = frozenset(
     {
-        "BANCO", "EMPRESA", "COMERCIO", "SA", "S.A.", "S/A", "LTDA",
-        "INDUSTRIA", "SERVICOS", "DISTRIBUIDORA", "CONSULTORIA",
-        "DE", "DA", "DO", "DAS", "DOS",  # preposicoes
+        "BANCO",
+        "EMPRESA",
+        "COMERCIO",
+        "SA",
+        "S.A.",
+        "S/A",
+        "LTDA",
+        "INDUSTRIA",
+        "SERVICOS",
+        "DISTRIBUIDORA",
+        "CONSULTORIA",
+        "DE",
+        "DA",
+        "DO",
+        "DAS",
+        "DOS",  # preposicoes
     }
 )
 
@@ -201,9 +272,7 @@ def _palavras_especificas_fornecedor(razao: str) -> list[str]:
     nao-genericas).
     """
     return [
-        p
-        for p in razao.upper().split()
-        if p not in _PALAVRAS_GENERICAS_FORNECEDOR and len(p) >= 4
+        p for p in razao.upper().split() if p not in _PALAVRAS_GENERICAS_FORNECEDOR and len(p) >= 4
     ]
 
 
@@ -276,9 +345,7 @@ def buscar_similar(
     melhor: dict[str, Any] | None = None
     for cand in candidatos:
         s_phash = _score_phash(arquivo_falho, cand["arquivo_origem"])
-        s_temp = _score_temporal(
-            falho_mtime, cand["metadata"].get("data_emissao"), janela
-        )
+        s_temp = _score_temporal(falho_mtime, cand["metadata"].get("data_emissao"), janela)
         s_text = _score_textual(falho_nome, texto_falho, cand["metadata"])
 
         # Reescala pesos quando phash é 0 (lib ausente ou conteúdo não-imagem)
@@ -292,9 +359,7 @@ def buscar_similar(
                 score = s_temp * p_temp + s_text * p_text
         else:
             score = (
-                s_phash * pesos["phash"]
-                + s_temp * pesos["temporal"]
-                + s_text * pesos["textual"]
+                s_phash * pesos["phash"] + s_temp * pesos["temporal"] + s_text * pesos["textual"]
             )
 
         evidencia = {
@@ -490,10 +555,7 @@ def main(argv: list[str] | None = None) -> int:
     if rel["matches"]:
         print("  Matches (5 primeiros):")
         for m in rel["matches"][:5]:
-            print(
-                f"    - {Path(m['arquivo']).name} -> {m['similar_id']} "
-                f"(score={m['score']:.3f})"
-            )
+            print(f"    - {Path(m['arquivo']).name} -> {m['similar_id']} (score={m['score']:.3f})")
     return 0
 
 

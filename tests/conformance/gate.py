@@ -128,10 +128,7 @@ def validar(db_path: Path, tipo: str, limiar: int = LIMIAR_AMOSTRAS_4WAY) -> int
     """
     verdes = contar_amostras_verdes(db_path, tipo)
     if verdes >= limiar:
-        print(
-            f"[CONFORMANCE-OK] tipo={tipo}: {verdes} amostras 4-way verdes "
-            f"(limiar={limiar})."
-        )
+        print(f"[CONFORMANCE-OK] tipo={tipo}: {verdes} amostras 4-way verdes (limiar={limiar}).")
         return 0
     print(
         f"[CONFORMANCE-FAIL] tipo={tipo}: apenas {verdes} amostras 4-way "

@@ -63,6 +63,7 @@ def resolver_razao_social_canonica(sigla: str) -> tuple[str, str]:
         str(entrada.get("cnpj") or ""),
     )
 
+
 if TYPE_CHECKING:
     from src.graph.db import GrafoDB
 
@@ -89,21 +90,13 @@ REGEX_G4F_DESCONTO = re.compile(r"-\s+(.+?)\s+[\d.,]+\s+\(R\$\s*([\d.,]+)\)")
 REGEX_G4F_LIQUIDO = re.compile(r"Valor l[ií]quido a receber:\s*R\$\s*([\d.,]+)")
 
 # Sprint INFRA-CONTRACHEQUE-EXTRAIR-BASES: bases fiscais e metadata canônica.
-REGEX_G4F_BASE_INSS = re.compile(
-    r"Base de c[aá]lculo INSS:?\s*R?\$?\s*([\d.,]+)", re.IGNORECASE
-)
+REGEX_G4F_BASE_INSS = re.compile(r"Base de c[aá]lculo INSS:?\s*R?\$?\s*([\d.,]+)", re.IGNORECASE)
 REGEX_G4F_BASE_IRRF = re.compile(
     r"Base de c[aá]lculo (?:IR|IRRF):?\s*R?\$?\s*([\d.,]+)", re.IGNORECASE
 )
-REGEX_G4F_BASE_FGTS = re.compile(
-    r"Base de c[aá]lculo FGTS:?\s*R?\$?\s*([\d.,]+)", re.IGNORECASE
-)
-REGEX_G4F_FGTS_MES = re.compile(
-    r"FGTS do m[eê]s:?\s*R?\$?\s*([\d.,]+)", re.IGNORECASE
-)
-REGEX_G4F_DEP_IR = re.compile(
-    r"N[ºo°]?\s*de dependentes IR:?\s*(\d+)", re.IGNORECASE
-)
+REGEX_G4F_BASE_FGTS = re.compile(r"Base de c[aá]lculo FGTS:?\s*R?\$?\s*([\d.,]+)", re.IGNORECASE)
+REGEX_G4F_FGTS_MES = re.compile(r"FGTS do m[eê]s:?\s*R?\$?\s*([\d.,]+)", re.IGNORECASE)
+REGEX_G4F_DEP_IR = re.compile(r"N[ºo°]?\s*de dependentes IR:?\s*(\d+)", re.IGNORECASE)
 REGEX_G4F_DEP_SALFAM = re.compile(
     r"N[ºo°]?\s*dependentes? Sal[aá]rio Fam[ií]lia:?\s*(\d+)", re.IGNORECASE
 )
@@ -116,9 +109,7 @@ REGEX_G4F_CARGO = re.compile(r"Cargo:?\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ][^\n,]+?)(?
 REGEX_G4F_DATA_ADM = re.compile(
     r"(?:Data de admiss[aã]o|Admiss[aã]o):?\s*(\d{2}/\d{2}/\d{4})", re.IGNORECASE
 )
-REGEX_G4F_DATA_PAG = re.compile(
-    r"Data de pagamento:?\s*(\d{2}/\d{2}/\d{4})", re.IGNORECASE
-)
+REGEX_G4F_DATA_PAG = re.compile(r"Data de pagamento:?\s*(\d{2}/\d{2}/\d{4})", re.IGNORECASE)
 REGEX_G4F_BANCO = re.compile(
     r"(?:Conta|Banco):?\s*Banco\s*(\d{2,3})\s*-?\s*([^,\n]+?),?\s*"
     r"Ag[eê]ncia\s*(\d+)[,\s]+CC\s*([\d\-]+)",
@@ -133,25 +124,15 @@ REGEX_INFOBASE_VALOR = re.compile(r"[\d.]+,\d{2}")
 # Valores monetários BR sempre terminam em ",DD" — ancorar para evitar comer
 # vírgula separadora subsequente ("Base_INSS 8.475,55, Base_IRRF" → captura
 # apenas "8.475,55", sem o sinal).
-REGEX_INFOBASE_BASE_INSS = re.compile(
-    r"Base[_\s]?INSS:?\s*R?\$?\s*([\d.]+,\d{2})", re.IGNORECASE
-)
-REGEX_INFOBASE_BASE_IRRF = re.compile(
-    r"Base[_\s]?IRRF:?\s*R?\$?\s*([\d.]+,\d{2})", re.IGNORECASE
-)
-REGEX_INFOBASE_BASE_FGTS = re.compile(
-    r"Base[_\s]?FGTS:?\s*R?\$?\s*([\d.]+,\d{2})", re.IGNORECASE
-)
+REGEX_INFOBASE_BASE_INSS = re.compile(r"Base[_\s]?INSS:?\s*R?\$?\s*([\d.]+,\d{2})", re.IGNORECASE)
+REGEX_INFOBASE_BASE_IRRF = re.compile(r"Base[_\s]?IRRF:?\s*R?\$?\s*([\d.]+,\d{2})", re.IGNORECASE)
+REGEX_INFOBASE_BASE_FGTS = re.compile(r"Base[_\s]?FGTS:?\s*R?\$?\s*([\d.]+,\d{2})", re.IGNORECASE)
 REGEX_INFOBASE_FGTS_MES = re.compile(
     r"(?<!Base[_\s])FGTS[:\s]+(?!do m[eê]s)R?\$?\s*([\d.]+,\d{2})", re.IGNORECASE
 )
 REGEX_INFOBASE_CNPJ = re.compile(r"CNPJ:?\s*(\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2})")
-REGEX_INFOBASE_RAZAO = re.compile(
-    r"(INFOBASE[^\n,]*?(?:LTDA|ME|S\.?A\.?|EIRELI))", re.IGNORECASE
-)
-REGEX_INFOBASE_CARGO = re.compile(
-    r"Cargo:?\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ][^\n,]+?)(?=\s*[,\n])"
-)
+REGEX_INFOBASE_RAZAO = re.compile(r"(INFOBASE[^\n,]*?(?:LTDA|ME|S\.?A\.?|EIRELI))", re.IGNORECASE)
+REGEX_INFOBASE_CARGO = re.compile(r"Cargo:?\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ][^\n,]+?)(?=\s*[,\n])")
 REGEX_INFOBASE_DATA_ADM = re.compile(
     r"(?:Data de admiss[aã]o|Admiss[aã]o):?\s*(\d{2}/\d{2}/\d{4})", re.IGNORECASE
 )
@@ -202,6 +183,7 @@ def _extrair_bases_g4f(texto: str) -> dict:
     Campos ausentes recebem None (numéricos) ou "" (strings). Não quebra
     parse principal — falha-soft.
     """
+
     def _num(pat: re.Pattern, src: str) -> Optional[float]:
         m = pat.search(src)
         return parse_valor_br_float(m.group(1)) if m else None
@@ -243,6 +225,7 @@ def _extrair_bases_infobase(texto: str) -> dict:
     razão social, cargo, data admissão) via regex sobre texto bruto do
     rodapé. Falha-soft: campos ausentes viram None ou "".
     """
+
     def _num(pat: re.Pattern, src: str) -> Optional[float]:
         m = pat.search(src)
         return parse_valor_br_float(m.group(1)) if m else None
@@ -281,9 +264,7 @@ def _parse_g4f(texto: str) -> Optional[dict]:
         valor_num = parse_valor_br_float(valor)
         bruto += valor_num
         descricao_norm = descricao.strip()
-        itens_holerite.append(
-            {"descricao": descricao_norm, "valor": valor_num, "tipo": "provento"}
-        )
+        itens_holerite.append({"descricao": descricao_norm, "valor": valor_num, "tipo": "provento"})
         if "13" in descricao_norm and "Adiantado" in descricao_norm:
             tipo = "13º Adiantamento"
         elif "13" in descricao_norm and "Integral" in descricao_norm:
@@ -400,21 +381,15 @@ def _parse_infobase(texto: str) -> Optional[dict]:
     # principais como pseudo-itens).
     itens_infobase: list[dict] = []
     if bruto > 0:
-        itens_infobase.append(
-            {"descricao": "SALARIO BRUTO", "valor": bruto, "tipo": "provento"}
-        )
+        itens_infobase.append({"descricao": "SALARIO BRUTO", "valor": bruto, "tipo": "provento"})
     if adiantamento > 0:
         itens_infobase.append(
             {"descricao": "ADIANTAMENTO 13", "valor": adiantamento, "tipo": "provento"}
         )
     if inss > 0:
-        itens_infobase.append(
-            {"descricao": "INSS", "valor": inss, "tipo": "desconto"}
-        )
+        itens_infobase.append({"descricao": "INSS", "valor": inss, "tipo": "desconto"})
     if irrf > 0:
-        itens_infobase.append(
-            {"descricao": "IRRF", "valor": irrf, "tipo": "desconto"}
-        )
+        itens_infobase.append({"descricao": "IRRF", "valor": irrf, "tipo": "desconto"})
 
     # Sprint INFRA-CONTRACHEQUE-EXTRAIR-BASES: bases fiscais + metadata.
     bases = _extrair_bases_infobase(texto)
@@ -487,9 +462,7 @@ def _ingerir_holerite_no_grafo(
     ):
         # 'razao_social_extraida' lê 'razao_social' do registro (o do grafo
         # usa razao_social_oficial via mapping; mantemos os dois sem colisão).
-        chave_registro = (
-            "razao_social" if chave_base == "razao_social_extraida" else chave_base
-        )
+        chave_registro = "razao_social" if chave_base == "razao_social_extraida" else chave_base
         valor = registro.get(chave_registro)
         if valor is None or valor == "":
             continue

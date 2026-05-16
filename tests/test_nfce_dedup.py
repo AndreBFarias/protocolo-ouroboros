@@ -230,17 +230,13 @@ def test_completude_nfce_conta_apenas_itens_com_qtde_positiva():
 def test_ingestor_funde_nfce_irma_quando_completude_nova_eh_maior(db_tmp):
     # 1º: ingere NFCe parcial (poucos itens, OCR ruim)
     doc_parcial = _documento(CHAVE_595B, 595.52, [1.0, 1.0])
-    id_parcial = ingerir_documento_fiscal(
-        db_tmp, doc_parcial, _itens_para_ingestor(doc_parcial)
-    )
+    id_parcial = ingerir_documento_fiscal(db_tmp, doc_parcial, _itens_para_ingestor(doc_parcial))
 
     # 2º: ingere a mesma NFCe (chave diff 9) com mais itens.
     # Com limite default = 4, o ingestor NÃO funde -- documentamos esse
     # comportamento conservador: por padrão prefere não-fundir a fundir errado.
     doc_completo = _documento(CHAVE_595A, 595.52, [1.0, 1.0, 1.0, 1.0, 1.0])
-    id_completo = ingerir_documento_fiscal(
-        db_tmp, doc_completo, _itens_para_ingestor(doc_completo)
-    )
+    id_completo = ingerir_documento_fiscal(db_tmp, doc_completo, _itens_para_ingestor(doc_completo))
     # Default conservador -> nodes separados
     assert id_completo != id_parcial
 
@@ -252,14 +248,10 @@ def test_ingestor_funde_quando_diff_chave_pequeno(db_tmp):
     assert _distancia_chave(chave_a, chave_b) == 3
 
     doc_parcial = _documento(chave_a, 100.00, [1.0])
-    id_parcial = ingerir_documento_fiscal(
-        db_tmp, doc_parcial, _itens_para_ingestor(doc_parcial)
-    )
+    id_parcial = ingerir_documento_fiscal(db_tmp, doc_parcial, _itens_para_ingestor(doc_parcial))
 
     doc_completo = _documento(chave_b, 100.00, [1.0, 1.0, 1.0])
-    id_completo = ingerir_documento_fiscal(
-        db_tmp, doc_completo, _itens_para_ingestor(doc_completo)
-    )
+    id_completo = ingerir_documento_fiscal(db_tmp, doc_completo, _itens_para_ingestor(doc_completo))
     # Mesmo node (fusão por completude)
     assert id_completo == id_parcial
     # Metadata reflete a versão mais completa (3 itens)

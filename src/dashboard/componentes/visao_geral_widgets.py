@@ -7,6 +7,7 @@ docs/sprints/) e devolvem estruturas para a renderização HTML em
 estiver ausente, devolvem placeholders ('-' ou listas vazias) sem
 inventar dados (regra inviolável #6 do CLAUDE.md).
 """
+
 from __future__ import annotations
 
 import re
@@ -173,9 +174,7 @@ def calcular_kpis_agentic() -> KpisAgentic:
     if grafo_path.exists():
         try:
             with sqlite3.connect(str(grafo_path)) as conn:
-                cur = conn.execute(
-                    "SELECT COUNT(*) FROM node WHERE tipo='documento'"
-                )
+                cur = conn.execute("SELECT COUNT(*) FROM node WHERE tipo='documento'")
                 total = int(cur.fetchone()[0] or 0)
                 arquivos = str(total)
                 cur = conn.execute("SELECT COUNT(DISTINCT tipo) FROM node WHERE tipo IS NOT NULL")
@@ -226,8 +225,7 @@ def calcular_kpis_agentic() -> KpisAgentic:
             paridade = f"{int(round(pct))}%"
             aguardando = str(divergencias_sem_humano + baixa_confianca)
             aguardando_breakdown = (
-                f"{divergencias_sem_humano} divergências · "
-                f"{baixa_confianca} baixa confiança"
+                f"{divergencias_sem_humano} divergências · {baixa_confianca} baixa confiança"
             )
             # Skills regredindo: tipos com paridade abaixo de 60%.
             regredindo = [
@@ -295,9 +293,7 @@ def ler_atividade_recente(n: int = 6) -> list[TimelineEntry]:
                     {
                         "when": mtime.strftime("%d/%m %H:%M"),
                         "glyph": "check",
-                        "what_html": (
-                            f"Sprint <strong>{_html.escape(nome)}</strong> concluída"
-                        ),
+                        "what_html": (f"Sprint <strong>{_html.escape(nome)}</strong> concluída"),
                     },
                 )
             )
@@ -336,9 +332,7 @@ def ler_atividade_recente(n: int = 6) -> list[TimelineEntry]:
                         {
                             "when": dt.strftime("%d/%m %H:%M"),
                             "glyph": "diff",
-                            "what_html": (
-                                f"Commit <code>{sha8}</code> · {msg_curta}"
-                            ),
+                            "what_html": (f"Commit <code>{sha8}</code> · {msg_curta}"),
                         },
                     )
                 )
@@ -362,9 +356,7 @@ def ler_atividade_recente(n: int = 6) -> list[TimelineEntry]:
                     {
                         "when": mtime.strftime("%d/%m %H:%M"),
                         "glyph": "info",
-                        "what_html": (
-                            f"<strong>{_html.escape(id_adr)}</strong> registrado"
-                        ),
+                        "what_html": (f"<strong>{_html.escape(id_adr)}</strong> registrado"),
                     },
                 )
             )
@@ -445,10 +437,7 @@ def ler_sprint_atual() -> SprintAtual | None:
     # ``status: em_execucao`` -- só cai no fallback quando NENHUMA spec
     # tem esse status declarado.
     if backlog.exists():
-        em_execucao = [
-            p for p in backlog.glob("*.md")
-            if _spec_em_execucao(p)
-        ]
+        em_execucao = [p for p in backlog.glob("*.md") if _spec_em_execucao(p)]
         if em_execucao:
             em_execucao.sort(key=lambda p: p.stat().st_mtime, reverse=True)
             candidato = em_execucao[0]
@@ -480,7 +469,9 @@ def ler_sprint_atual() -> SprintAtual | None:
     titulo_match = re.search(r"title:\s*\"([^\"]+)\"|title:\s*'([^']+)'|title:\s*([^\n]+)", texto)
     titulo = ""
     if titulo_match:
-        titulo = (titulo_match.group(1) or titulo_match.group(2) or titulo_match.group(3) or "").strip()
+        titulo = (
+            titulo_match.group(1) or titulo_match.group(2) or titulo_match.group(3) or ""
+        ).strip()
     # Detectar placeholders de template comuns para evitar vazamento
     # de "<Nome da tela>" ou "UX-T-NN" no hero. Quando detectado, usar
     # fallback canônico VALIDAÇÃO-CSV-01.
@@ -520,9 +511,7 @@ def montar_clusters_canonicos() -> list[dict[str, str]]:
     if grafo_path.exists():
         try:
             with sqlite3.connect(str(grafo_path)) as conn:
-                cur = conn.execute(
-                    "SELECT tipo, COUNT(*) FROM node GROUP BY tipo"
-                )
+                cur = conn.execute("SELECT tipo, COUNT(*) FROM node GROUP BY tipo")
                 for tipo, count in cur.fetchall():
                     if tipo:
                         contadores[str(tipo)] = int(count)
@@ -607,9 +596,9 @@ def _fmt_compact(n: int) -> str:
     if n is None or n == 0:
         return "0"
     if n >= 1_000_000:
-        return f"{n/1_000_000:.1f}M".replace(".0M", "M")
+        return f"{n / 1_000_000:.1f}M".replace(".0M", "M")
     if n >= 1_000:
-        return f"{n/1_000:.1f}k".replace(".0k", "k")
+        return f"{n / 1_000:.1f}k".replace(".0k", "k")
     return str(n)
 
 

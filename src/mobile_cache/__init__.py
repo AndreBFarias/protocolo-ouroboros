@@ -68,9 +68,7 @@ def gerar_todos(
     except Exception as exc:  # noqa: BLE001 -- defesa em depth
         from src.utils.logger import configurar_logger
 
-        configurar_logger("mobile_cache").warning(
-            "marcos_auto falhou (caches seguem): %s", exc
-        )
+        configurar_logger("mobile_cache").warning("marcos_auto falhou (caches seguem): %s", exc)
     paths.append(
         gerar_humor_heatmap(
             vault,

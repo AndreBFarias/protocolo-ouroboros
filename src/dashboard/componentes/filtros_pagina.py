@@ -12,6 +12,7 @@ Mockup-fonte: cada tela do redesign tem dropdowns de filtro próprios visíveis
 no header (ex.: ``02-extrato.html`` tem período + categoria; ``22-eventos.html``
 tem Modo + Período + Pessoa + Categoria).
 """
+
 from __future__ import annotations
 
 from typing import Iterable
@@ -64,16 +65,12 @@ def renderizar_filtro_periodo(
         opcoes = obter_meses_disponiveis(dados) or ["2026-04"]
     elif granularidade == "Semana":
         mes_base = (
-            obter_meses_disponiveis(dados)[0]
-            if obter_meses_disponiveis(dados)
-            else "2026-04"
+            obter_meses_disponiveis(dados)[0] if obter_meses_disponiveis(dados) else "2026-04"
         )
         opcoes = obter_semanas_do_mes(dados, mes_base) or ["S1"]
     else:
         mes_base = (
-            obter_meses_disponiveis(dados)[0]
-            if obter_meses_disponiveis(dados)
-            else "2026-04"
+            obter_meses_disponiveis(dados)[0] if obter_meses_disponiveis(dados) else "2026-04"
         )
         opcoes = obter_dias_do_mes(dados, mes_base) or ["2026-04-01"]
 
@@ -98,6 +95,7 @@ def renderizar_filtro_pessoa(
     import streamlit as st
 
     from src.utils.pessoas import nome_de
+
     if opcoes is None:
         nome_a = nome_de("pessoa_a")
         nome_b = nome_de("pessoa_b")

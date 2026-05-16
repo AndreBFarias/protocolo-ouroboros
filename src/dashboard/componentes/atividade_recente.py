@@ -10,6 +10,7 @@ API pública:
     - ``sprint_atual_html(meta)`` -> str: card "Sprint atual" com pill
       de status (em execução / em calibração / concluída).
 """
+
 from __future__ import annotations
 
 

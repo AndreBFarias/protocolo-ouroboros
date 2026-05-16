@@ -7,6 +7,7 @@
 - ``main()`` em ``app.py`` reseta o slot antes de cada run (anti-leak).
 - Página de teste com helper popula slot e shell injeta no DOM.
 """
+
 from __future__ import annotations
 
 import re
@@ -51,9 +52,7 @@ def test_topbar_tem_slot_actions(streamlit_url: str) -> None:
         page = b.new_context(viewport={"width": 1440, "height": 900}).new_page()
         page.goto(streamlit_url)
         page.wait_for_timeout(5000)
-        tem = page.evaluate(
-            "!!document.querySelector('.topbar .topbar-actions')"
-        )
+        tem = page.evaluate("!!document.querySelector('.topbar .topbar-actions')")
         assert tem, ".topbar-actions slot ausente; renderizar_topbar não está emitindo o div"
         b.close()
 
@@ -71,7 +70,9 @@ def test_topbar_breadcrumb_clicavel(streamlit_url: str) -> None:
         assert len(segs) >= 2, f"breadcrumb deve ter >=2 segmentos; achei {segs}"
         for s in segs[:-1]:
             assert s["tag"] == "A", f"segmento não-current deve ser <a>; achei {s}"
-        assert segs[-1]["tag"] == "SPAN" and segs[-1]["current"], f"último segmento deve ser <span class=current>; achei {segs[-1]}"
+        assert segs[-1]["tag"] == "SPAN" and segs[-1]["current"], (
+            f"último segmento deve ser <span class=current>; achei {segs[-1]}"
+        )
         b.close()
 
 
@@ -87,6 +88,7 @@ def test_helper_renderizar_grupo_acoes_grava_session_state() -> None:
     ]
     with patch.dict("sys.modules", {"streamlit": fake_st}):
         from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
+
         renderizar_grupo_acoes(acoes)
     html = fake_state.get("topbar_acoes_html", "")
     assert "Atualizar" in html
@@ -113,6 +115,7 @@ def test_main_reseta_slot_topbar_em_cada_run() -> None:
 def test_topbar_actions_helper_existe() -> None:
     """UX-U-02: módulo ``componentes/topbar_actions.py`` exporta os helpers canônicos."""
     from src.dashboard.componentes import topbar_actions
+
     assert hasattr(topbar_actions, "renderizar_grupo_acoes")
     assert hasattr(topbar_actions, "consumir_acoes_html")
     assert hasattr(topbar_actions, "Acao")

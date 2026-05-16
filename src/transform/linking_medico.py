@@ -234,9 +234,7 @@ def linkar_dedutivel_medico(
             continue
         stats["documentos_analisados"] += 1
 
-        candidatas = _candidatas_transacao(
-            db, documento, janela_dias, diff_valor_pct
-        )
+        candidatas = _candidatas_transacao(db, documento, janela_dias, diff_valor_pct)
         if not candidatas:
             stats["sem_candidata"] += 1
             continue

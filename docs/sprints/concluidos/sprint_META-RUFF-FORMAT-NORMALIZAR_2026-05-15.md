@@ -1,8 +1,8 @@
 ---
 id: META-RUFF-FORMAT-NORMALIZAR
 titulo: Rodar `ruff format` em `src/ tests/ scripts/` (186 arquivos com formatação pendente)
-status: backlog
-concluida_em: null
+status: concluída
+concluida_em: 2026-05-16
 prioridade: P3
 data_criacao: 2026-05-15
 fase: SANEAMENTO

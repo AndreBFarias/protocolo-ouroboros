@@ -60,9 +60,7 @@ def _normalizar_data(serie: pd.Series) -> pd.Series:
     return pd.to_datetime(serie, errors="coerce")
 
 
-def _filtrar_extrato_recente(
-    extrato: pd.DataFrame, hoje: date | None = None
-) -> pd.DataFrame:
+def _filtrar_extrato_recente(extrato: pd.DataFrame, hoje: date | None = None) -> pd.DataFrame:
     """Recorta extrato para Despesa/Imposto dos últimos 12 meses."""
     if extrato is None or extrato.empty:
         return pd.DataFrame()
@@ -88,9 +86,7 @@ def _conta_parece_cartao(conta: str) -> bool:
     return any(p in chave for p in PALAVRAS_CARTAO)
 
 
-def _matches_da_conta(
-    df_recente: pd.DataFrame, conta: str
-) -> pd.DataFrame:
+def _matches_da_conta(df_recente: pd.DataFrame, conta: str) -> pd.DataFrame:
     """Devolve linhas que casam a conta por categoria OU por local fuzzy.
 
     Igualdade case-insensitive na coluna ``categoria`` tem prioridade.

@@ -133,9 +133,7 @@ def escrever_evento(
 
     modo_norm = str(modo).strip().lower()
     if modo_norm not in MODOS_VALIDOS:
-        raise ValueError(
-            f"modo inválido: {modo!r}. Esperado um de {sorted(MODOS_VALIDOS)}"
-        )
+        raise ValueError(f"modo inválido: {modo!r}. Esperado um de {sorted(MODOS_VALIDOS)}")
     intens = _coerce_int_1_5(intensidade, "intensidade")
 
     lugar_strip = (lugar or "").strip()
@@ -184,7 +182,10 @@ def escrever_evento(
     arquivo.write_text(conteudo, encoding="utf-8")
     logger.info(
         "registro de evento gravado: %s (autor=%s, modo=%s, lugar=%s)",
-        arquivo, pessoa_id, modo_norm, lugar_strip,
+        arquivo,
+        pessoa_id,
+        modo_norm,
+        lugar_strip,
     )
 
     if regenerar_cache:

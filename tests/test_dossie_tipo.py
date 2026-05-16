@@ -50,11 +50,7 @@ def test_abrir_cria_estrutura_idempotente(isolar_paths: Path) -> None:
 def test_prova_artesanal_cria_stub_canonico(isolar_paths: Path) -> None:
     rc = dossie_tipo.cmd_prova_artesanal("test_tipo", "a" * 64)
     assert rc == 0
-    stub = (
-        dossie_tipo._dir_tipo("test_tipo")
-        / "provas_artesanais"
-        / f"{'a' * 64}.json"
-    )
+    stub = dossie_tipo._dir_tipo("test_tipo") / "provas_artesanais" / f"{'a' * 64}.json"
     assert stub.exists()
     dados = json.loads(stub.read_text())
     assert dados["sha256"] == "a" * 64
@@ -122,9 +118,7 @@ def test_comparar_divergente_gera_relatorio(isolar_paths: Path) -> None:
     assert sha in estado["divergencias_ativas"]
     assert sha in estado["_historico_divergencias"]
     # Relatorio MD gerado  # noqa: accent
-    divs = list(
-        (dossie_tipo._dir_tipo("test_tipo") / "divergencias").glob("*.md")
-    )
+    divs = list((dossie_tipo._dir_tipo("test_tipo") / "divergencias").glob("*.md"))
     assert len(divs) == 1
     md = divs[0].read_text()
     assert "valor_diverge" in md or "Divergencia" in md
@@ -428,9 +422,7 @@ def test_aliases_map_le_yaml(isolar_paths: Path, yaml_com_alias: Path) -> None:
     }
 
 
-def test_resolver_canonico_alias_e_canonico(
-    isolar_paths: Path, yaml_com_alias: Path
-) -> None:
+def test_resolver_canonico_alias_e_canonico(isolar_paths: Path, yaml_com_alias: Path) -> None:
     """`_resolver_canonico` mapeia alias -> canonico e preserva canonico/desconhecido."""  # noqa: accent
     canonico = "nfce_consumidor_eletronica"
     assert dossie_tipo._resolver_canonico("nfce_modelo_65") == canonico
@@ -476,10 +468,7 @@ def test_snapshot_usa_chave_canonica_com_dossie_path(
     # nfce_modelo_65 (alias) agregado sob chave canonica:  # noqa: accent
     assert "nfce_consumidor_eletronica" in snap["tipos"]
     assert "nfce_modelo_65" not in snap["tipos"]
-    assert (
-        snap["tipos"]["nfce_consumidor_eletronica"]["dossie_path"]
-        == "nfce_modelo_65"
-    )
+    assert snap["tipos"]["nfce_consumidor_eletronica"]["dossie_path"] == "nfce_modelo_65"
     # holerite (canonico) agregado sob seu proprio nome:  # noqa: accent
     assert "holerite" in snap["tipos"]
     assert snap["tipos"]["holerite"]["dossie_path"] == "holerite"

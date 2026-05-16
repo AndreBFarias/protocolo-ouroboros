@@ -116,10 +116,10 @@ def _highlight_json(obj: dict[str, Any]) -> str:
     # número, true/false, null.
     padrao = re.compile(
         r'(?P<key>"(?:[^"\\]|\\.)*")\s*:'  # chave + :
-        r'|(?P<str>"(?:[^"\\]|\\.)*")'      # string-valor (sem : depois)
-        r"|(?P<num>-?\b\d+(?:\.\d+)?\b)"   # número
-        r"|(?P<bool>\btrue\b|\bfalse\b)"    # bool
-        r"|(?P<null>\bnull\b)"              # null
+        r'|(?P<str>"(?:[^"\\]|\\.)*")'  # string-valor (sem : depois)
+        r"|(?P<num>-?\b\d+(?:\.\d+)?\b)"  # número
+        r"|(?P<bool>\btrue\b|\bfalse\b)"  # bool
+        r"|(?P<null>\bnull\b)"  # null
     )
 
     saida: list[str] = []
@@ -217,11 +217,7 @@ def renderizar_drawer(
     # internos em ``[object Object]``. Usamos ``<div>`` com
     # ``white-space: pre`` no CSS (.drawer-json) para preservar quebras de
     # linha sem disparar o caminho do code-block do parser.
-    bloco_pre = (
-        '<div class="drawer-json">'
-        + json_html
-        + "</div>"
-    )
+    bloco_pre = '<div class="drawer-json">' + json_html + "</div>"
 
     return cabecalho_minificado + bloco_pre + doc_html + rodape_minificado
 

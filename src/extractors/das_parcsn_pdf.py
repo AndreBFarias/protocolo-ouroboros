@@ -134,9 +134,7 @@ _RE_TOTAIS_COMPOSICAO = re.compile(
 # Linha digitável: 47 dígitos no padrão "11d esp 1d esp 11d esp 1d esp 11d
 # esp 1d esp 11d esp 1d" (com tolerância a espaços simples ou duplos entre
 # blocos -- alguns PDFs renderizam com gaps adicionais).
-_RE_CODIGO_BARRAS = re.compile(
-    r"(\d{11}\s+\d\s+\d{11}\s+\d\s+\d{11}\s+\d\s+\d{11}\s+\d)"
-)
+_RE_CODIGO_BARRAS = re.compile(r"(\d{11}\s+\d\s+\d{11}\s+\d\s+\d{11}\s+\d\s+\d{11}\s+\d)")
 
 
 def _parse_data_iso(data_br: str | None) -> str | None:

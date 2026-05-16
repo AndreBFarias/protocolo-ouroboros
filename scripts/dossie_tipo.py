@@ -197,9 +197,7 @@ def _gravar_estado(tipo: str, estado: dict) -> None:
 
 
 def _registrar_evento(estado: dict, mensagem: str) -> None:
-    estado.setdefault("historico", []).append(
-        {"ts": _agora_iso(), "mensagem": mensagem}
-    )
+    estado.setdefault("historico", []).append({"ts": _agora_iso(), "mensagem": mensagem})
 
 
 def _calcular_sha256(caminho: Path) -> str:
@@ -341,14 +339,10 @@ def cmd_prova_artesanal(tipo: str, sha256: str) -> int:
             "preencha campos_canonicos conforme o schema do tipo. Salve este "
             "arquivo. Depois rode `--comparar` para confrontar com ETL."
         ),
-        "campos_canonicos": {
-            "PREENCHER": "valores que voce leu da imagem com seus olhos"
-        },
+        "campos_canonicos": {"PREENCHER": "valores que voce leu da imagem com seus olhos"},
         "_notas_supervisor": "",
     }
-    destino.write_text(
-        json.dumps(template, ensure_ascii=False, indent=2), encoding="utf-8"
-    )
+    destino.write_text(json.dumps(template, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"Stub criado em {destino}")
     print("Edite o arquivo preenchendo `campos_canonicos`, depois rode --comparar.")
     return 0
@@ -389,9 +383,7 @@ def _carregar_etl_output(sha256: str) -> dict | None:
     return None
 
 
-def _comparar_dicts(
-    prova: dict, etl: dict, prefixo: str = ""
-) -> list[dict[str, Any]]:
+def _comparar_dicts(prova: dict, etl: dict, prefixo: str = "") -> list[dict[str, Any]]:
     """Diff campo-a-campo entre prova artesanal e output do ETL.
 
     Retorna lista de divergencias com {campo, esperado, obtido, tipo_divergencia}.
@@ -528,8 +520,7 @@ def cmd_comparar(tipo: str, sha256: str) -> int:
         ]
         for d in divergencias:
             linhas.append(
-                f"| `{d['campo']}` | `{d['esperado']!r}` | `{d['obtido']!r}` | "
-                f"{d['tipo']} |"
+                f"| `{d['campo']}` | `{d['esperado']!r}` | `{d['obtido']!r}` | {d['tipo']} |"
             )
         linhas.append("")
         linhas.append("## Acao sugerida")
@@ -623,12 +614,8 @@ def cmd_snapshot() -> int:
         if not estado_path.exists():
             continue
         # Migrador idempotente persiste schema novo nos dossies legados.  # noqa: accent
-        estado = _migrar_estado_schema(
-            json.loads(estado_path.read_text(encoding="utf-8"))
-        )
-        estado_path.write_text(
-            json.dumps(estado, ensure_ascii=False, indent=2), encoding="utf-8"
-        )
+        estado = _migrar_estado_schema(json.loads(estado_path.read_text(encoding="utf-8")))
+        estado_path.write_text(json.dumps(estado, ensure_ascii=False, indent=2), encoding="utf-8")
         # Sprint META-TIPOS-ALIAS-BIDIRECIONAL: chave do snapshot eh canonico
         # do YAML (resolve alias). Dossie fisico pode estar em path com nome
         # de alias por razoes historicas; campo `dossie_path` preserva isso.  # noqa: accent
@@ -644,9 +631,7 @@ def cmd_snapshot() -> int:
         }
         agregado["totais"][status] = agregado["totais"].get(status, 0) + 1
 
-    PATH_GRADUACAO.write_text(
-        json.dumps(agregado, ensure_ascii=False, indent=2), encoding="utf-8"
-    )
+    PATH_GRADUACAO.write_text(json.dumps(agregado, ensure_ascii=False, indent=2), encoding="utf-8")
     print(
         f"Snapshot: {PATH_GRADUACAO} (GRADUADOS: {agregado['totais'][STATUS_GRADUADO]}, "
         f"CALIBRANDO: {agregado['totais'][STATUS_CALIBRANDO]}, "
@@ -700,9 +685,7 @@ def main(argv: list[str] | None = None) -> int:
     p_cmp.add_argument("tipo")
     p_cmp.add_argument("sha256")
 
-    p_gr = sub.add_parser(
-        "graduar-se-pronto", help="avalia transicao de status do tipo"
-    )
+    p_gr = sub.add_parser("graduar-se-pronto", help="avalia transicao de status do tipo")
     p_gr.add_argument("tipo")
 
     sub.add_parser("snapshot", help="regenera graduacao_tipos.json global")
@@ -710,9 +693,7 @@ def main(argv: list[str] | None = None) -> int:
 
     # Tambem aceita flags --xxx (sintaxe alternativa) para retrocompat com o doc  # noqa: accent
     parser.add_argument("--abrir", dest="flag_abrir", help=argparse.SUPPRESS)
-    parser.add_argument(
-        "--listar-candidatos", dest="flag_listar_cand", help=argparse.SUPPRESS
-    )
+    parser.add_argument("--listar-candidatos", dest="flag_listar_cand", help=argparse.SUPPRESS)
     parser.add_argument(
         "--listar-tipos",
         dest="flag_listar_tipos",

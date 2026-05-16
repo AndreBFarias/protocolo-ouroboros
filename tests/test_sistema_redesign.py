@@ -108,9 +108,7 @@ class TestStyleguideCobreTodasAsCores:
             "humano_revisar",
             "humano_pendente",
         ):
-            assert f'data-token="{chave}"' in html, (
-                f"Token '{chave}' deve aparecer no styleguide"
-            )
+            assert f'data-token="{chave}"' in html, f"Token '{chave}' deve aparecer no styleguide"
 
 
 # ============================================================================
@@ -414,9 +412,7 @@ class TestRenderizarEndToEnd:
         joined = " ".join(textos)
         # Numeração canônica das seções 01..09
         for n in ("01", "02", "03", "04", "05", "06", "07", "08", "09"):
-            assert f">{n}<" in joined or f"num\">{n}" in joined, (
-                f"Seção {n} ausente do styleguide"
-            )
+            assert f">{n}<" in joined or f'num">{n}' in joined, f"Seção {n} ausente do styleguide"
 
 
 # ----------------------------------------------------------------------------

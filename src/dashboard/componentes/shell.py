@@ -60,9 +60,7 @@ GLYPH_POR_CLUSTER: dict[str, str] = {
 CLUSTERS_REDESIGN: tuple[dict, ...] = (
     {
         "nome": "Inbox",
-        "abas": (
-            {"nome": "Inbox", "implementada": False, "sprint_alvo": "UX-RD-15"},
-        ),
+        "abas": ({"nome": "Inbox", "implementada": False, "sprint_alvo": "UX-RD-15"},),
     },
     {
         "nome": "Home",
@@ -128,9 +126,7 @@ CLUSTERS_REDESIGN: tuple[dict, ...] = (
     },
     {
         "nome": "Sistema",
-        "abas": (
-            {"nome": "Skills D7", "implementada": False, "sprint_alvo": "UX-RD-05"},
-        ),
+        "abas": ({"nome": "Skills D7", "implementada": False, "sprint_alvo": "UX-RD-05"},),
     },
 )
 
@@ -159,7 +155,7 @@ def _renderizar_brand_html() -> str:
     return (
         '<a class="sidebar-brand" href="?cluster=Home" '
         'style="text-decoration:none;color:inherit;">'
-        f'{glyph("ouroboros", tamanho_px=20, classe="sidebar-brand-glyph")}'
+        f"{glyph('ouroboros', tamanho_px=20, classe='sidebar-brand-glyph')}"
         "<span>Ouroboros</span>"
         "</a>"
     )
@@ -177,7 +173,7 @@ def _renderizar_busca_html() -> str:
     return (
         '<div class="sidebar-search">'
         '<span class="sidebar-search-icon" aria-hidden="true">'
-        f'{glyph("search", tamanho_px=14)}'
+        f"{glyph('search', tamanho_px=14)}"
         "</span>"
         '<input type="text" placeholder="Buscar" '
         'aria-label="Buscar (atalho: tecla /)" '
@@ -187,9 +183,7 @@ def _renderizar_busca_html() -> str:
     )
 
 
-def _renderizar_cluster_html(
-    cluster: dict, cluster_ativo: str, aba_ativa: str
-) -> str:
+def _renderizar_cluster_html(cluster: dict, cluster_ativo: str, aba_ativa: str) -> str:
     """Bloco de um cluster: header + lista de itens (abas)."""
     # Importação atrasada para evitar ciclo (drilldown -> shell).
     from src.dashboard.componentes.drilldown import (  # noqa: PLC0415
@@ -251,6 +245,7 @@ def _renderizar_cluster_html(
     # do nome (mockup 00-shell-navegacao.html). Mapeamento extraído de
     # _visao-render.js linha 130 + atribuições convencionais.
     from src.dashboard.componentes.glyphs import glyph  # noqa: PLC0415
+
     glyph_nome = GLYPH_POR_CLUSTER.get(nome_cluster, "")
     glyph_html = glyph(glyph_nome, tamanho_px=14) if glyph_nome else ""
 
@@ -260,9 +255,7 @@ def _renderizar_cluster_html(
         f'<span style="display:inline-flex;align-items:center;gap:8px;">'
         f"{glyph_html}{nome_seguro}</span>"
         f"{badge_cluster_html}"
-        "</div>"
-        + "".join(itens_html)
-        + "</div>"
+        "</div>" + "".join(itens_html) + "</div>"
     )
 
 
@@ -284,9 +277,7 @@ def renderizar_sidebar(cluster_ativo: str, aba_ativa: str = "") -> str:
     # FIX-12: skip-link no início da sidebar (WCAG 2.4.1 Bypass Blocks).
     # Invisível por padrão; aparece quando recebe foco via Tab.
     blocos.append(
-        '<a class="skip-link sr-only-focusable" href="#main-root">'
-        "Pular para conteúdo principal"
-        "</a>"
+        '<a class="skip-link sr-only-focusable" href="#main-root">Pular para conteúdo principal</a>'
     )
     blocos.append(_renderizar_brand_html())
     blocos.append(_renderizar_busca_html())
@@ -309,9 +300,7 @@ def renderizar_sidebar(cluster_ativo: str, aba_ativa: str = "") -> str:
     )
 
 
-def renderizar_topbar(
-    breadcrumb: Iterable[str], acoes: Iterable[dict] | None = None
-) -> str:
+def renderizar_topbar(breadcrumb: Iterable[str], acoes: Iterable[dict] | None = None) -> str:
     """Devolve o HTML completo da topbar com breadcrumb + slot de ações.
 
     Args:
@@ -354,7 +343,7 @@ def renderizar_topbar(
             partes_seg.append(
                 f'<a class="seg" href="{href_pai}" '
                 'style="text-decoration:none;color:inherit;">'
-                f'{rotulo}</a>{sep}'
+                f"{rotulo}</a>{sep}"
             )
 
     partes_acoes: list[str] = []
@@ -380,6 +369,7 @@ def renderizar_topbar(
     acoes_session_html = ""
     try:
         import streamlit as _st
+
         acoes_session_html = _st.session_state.get("topbar_acoes_html", "")
     except Exception:
         acoes_session_html = ""

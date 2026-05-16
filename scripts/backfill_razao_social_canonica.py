@@ -59,8 +59,7 @@ def backfill(grafo_db: Path, dry_run: bool = False) -> dict[str, int]:
                 meta["cnpj_oficial"] = cnpj_oficial
             if not dry_run:
                 conn.execute(
-                    "UPDATE node SET metadata = ?, updated_at = CURRENT_TIMESTAMP "
-                    "WHERE id = ?",
+                    "UPDATE node SET metadata = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
                     (json.dumps(meta, ensure_ascii=False), int(node_id)),
                 )
             contagens["atualizados"] += 1

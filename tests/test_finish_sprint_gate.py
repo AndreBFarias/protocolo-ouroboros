@@ -46,7 +46,7 @@ def workspace_isolado(tmp_path: Path) -> Path:
 
     # Stub de python no .venv que apenas executa stdlib
     venv_python = raiz / ".venv" / "bin" / "python"
-    venv_python.write_text("#!/bin/bash\nexec /usr/bin/env python3 \"$@\"\n", encoding="utf-8")
+    venv_python.write_text('#!/bin/bash\nexec /usr/bin/env python3 "$@"\n', encoding="utf-8")
     venv_python.chmod(0o755)
 
     return raiz
@@ -59,14 +59,14 @@ def _criar_mocks_verde(workspace: Path, pytest_passed: int = 3050) -> Path:
 
     # make: aceita qualquer alvo e imprime sucesso
     (mockbin / "make").write_text(
-        "#!/bin/bash\necho \"mock make $*: OK\"\nexit 0\n", encoding="utf-8"
+        '#!/bin/bash\necho "mock make $*: OK"\nexit 0\n', encoding="utf-8"
     )
     (mockbin / "make").chmod(0o755)
 
     # pytest: imprime resumo no formato esperado pelo grep do script
     pytest_stub = workspace / ".venv" / "bin" / "pytest"
     pytest_stub.write_text(
-        f"#!/bin/bash\necho \"{pytest_passed} passed, 0 failed in 1.0s\"\nexit 0\n",
+        f'#!/bin/bash\necho "{pytest_passed} passed, 0 failed in 1.0s"\nexit 0\n',
         encoding="utf-8",
     )
     pytest_stub.chmod(0o755)

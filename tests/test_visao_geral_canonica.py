@@ -7,6 +7,7 @@ Cobertura:
 - Topbar-actions populada com 2 botões (Atualizar + Ir para Validação).
 - Cluster Home não tem mais st.tabs duplicadas.
 """
+
 from __future__ import annotations
 
 import subprocess
@@ -48,12 +49,17 @@ def streamlit_url() -> Iterator[str]:
 def test_calcular_kpis_agentic_retorna_chaves_esperadas() -> None:
     """KPIs canônicos devem ter as 4 chaves: arquivos, paridade, aguardando, regredindo."""
     from src.dashboard.componentes.visao_geral_widgets import calcular_kpis_agentic
+
     kpis = calcular_kpis_agentic()
     for k in [
-        "arquivos_catalogados", "arquivos_delta",
-        "paridade_pct", "paridade_meta",
-        "aguardando_humano", "aguardando_breakdown",
-        "skills_regredindo", "skills_nomes",
+        "arquivos_catalogados",
+        "arquivos_delta",
+        "paridade_pct",
+        "paridade_meta",
+        "aguardando_humano",
+        "aguardando_breakdown",
+        "skills_regredindo",
+        "skills_nomes",
     ]:
         assert k in kpis, f"chave {k} ausente em calcular_kpis_agentic"
 
@@ -61,6 +67,7 @@ def test_calcular_kpis_agentic_retorna_chaves_esperadas() -> None:
 def test_montar_clusters_canonicos_retorna_seis_cards() -> None:
     """Mockup canônico tem 6 cards (Inbox, Finanças, Documentos, Análise, Metas, Sistema)."""
     from src.dashboard.componentes.visao_geral_widgets import montar_clusters_canonicos
+
     cards = montar_clusters_canonicos()
     assert len(cards) == 6, f"esperado 6 cards, achou {len(cards)}"
     nomes = [c["nome"] for c in cards]
@@ -70,6 +77,7 @@ def test_montar_clusters_canonicos_retorna_seis_cards() -> None:
 def test_ler_atividade_recente_devolve_lista() -> None:
     """``ler_atividade_recente`` devolve lista (vazia ou com TimelineEntry)."""
     from src.dashboard.componentes.visao_geral_widgets import ler_atividade_recente
+
     entries = ler_atividade_recente(n=6)
     assert isinstance(entries, list)
     for e in entries:
@@ -79,6 +87,7 @@ def test_ler_atividade_recente_devolve_lista() -> None:
 def test_ler_sprint_atual_devolve_dict_ou_none() -> None:
     """``ler_sprint_atual`` devolve dict com chaves canônicas ou None."""
     from src.dashboard.componentes.visao_geral_widgets import ler_sprint_atual
+
     meta = ler_sprint_atual()
     if meta is not None:
         for k in ["sprint_numero", "periodo", "titulo", "descricao", "pill_texto", "pill_tipo"]:
@@ -91,6 +100,7 @@ def test_ler_sprint_atual_devolve_dict_ou_none() -> None:
 def test_app_home_nao_tem_st_tabs_duplicadas() -> None:
     """UX-T-01: cluster Home renderiza visao_geral diretamente, sem st.tabs."""
     from pathlib import Path
+
     texto = Path("src/dashboard/app.py").read_text(encoding="utf-8")
     inicio = texto.find('if cluster == "Home":')
     fim = texto.find('elif cluster == "Finanças":')
@@ -113,7 +123,9 @@ def test_visao_geral_renderiza_kpis_agentic(streamlit_url: str) -> None:
         labels = page.evaluate(
             "Array.from(document.querySelectorAll('.vg-t01-kpi .l')).map(e => e.textContent.trim())"
         )
-        assert "Arquivos catalogados" in labels, f"label Arquivos catalogados ausente; achei {labels}"
+        assert "Arquivos catalogados" in labels, (
+            f"label Arquivos catalogados ausente; achei {labels}"
+        )
         assert "Paridade ETL ↔ Opus" in labels
         assert "Aguardando humano" in labels
         assert "Skills regredindo" in labels
@@ -127,9 +139,7 @@ def test_visao_geral_renderiza_clusters_canonicos(streamlit_url: str) -> None:
         page = b.new_context().new_page()
         page.goto(streamlit_url + "/?cluster=Home&tab=Vis%C3%A3o+Geral")
         page.wait_for_timeout(8000)
-        n = page.evaluate(
-            "document.querySelectorAll('.vg-t01-cluster-card').length"
-        )
+        n = page.evaluate("document.querySelectorAll('.vg-t01-cluster-card').length")
         assert n == 6, f"esperado 6 cluster cards, achou {n}"
         b.close()
 
@@ -141,9 +151,7 @@ def test_visao_geral_renderiza_atividade_recente(streamlit_url: str) -> None:
         page = b.new_context().new_page()
         page.goto(streamlit_url + "/?cluster=Home&tab=Vis%C3%A3o+Geral")
         page.wait_for_timeout(8000)
-        n = page.evaluate(
-            "document.querySelectorAll('.vg-t01-tl-item').length"
-        )
+        n = page.evaluate("document.querySelectorAll('.vg-t01-tl-item').length")
         assert n >= 1, f"esperado >=1 timeline item, achou {n}"
         b.close()
 
@@ -155,9 +163,7 @@ def test_visao_geral_renderiza_sprint_atual(streamlit_url: str) -> None:
         page = b.new_context().new_page()
         page.goto(streamlit_url + "/?cluster=Home&tab=Vis%C3%A3o+Geral")
         page.wait_for_timeout(8000)
-        tem_card = page.evaluate(
-            "!!document.querySelector('.vg-t01-sprint-card')"
-        )
+        tem_card = page.evaluate("!!document.querySelector('.vg-t01-sprint-card')")
         assert tem_card, "card .vg-t01-sprint-card ausente"
         b.close()
 
@@ -177,7 +183,9 @@ def test_visao_geral_topbar_tem_botoes(streamlit_url: str) -> None:
                 return {n: btns.length, labels: Array.from(btns).map(b => b.textContent.trim().slice(0,30))};
             }"""
         )
-        assert info["n"] == 2, f"esperado 2 botões topbar, achou {info['n']}; labels={info['labels']}"
+        assert info["n"] == 2, (
+            f"esperado 2 botões topbar, achou {info['n']}; labels={info['labels']}"
+        )
         joined = " ".join(info["labels"]).lower()
         assert "atualizar" in joined
         assert "validação" in joined or "validacao" in joined
@@ -192,7 +200,7 @@ def test_visao_geral_zero_st_tabs_no_main(streamlit_url: str) -> None:
         page.goto(streamlit_url + "/?cluster=Home&tab=Vis%C3%A3o+Geral")
         page.wait_for_timeout(8000)
         n = page.evaluate(
-            "document.querySelectorAll('section[data-testid=\"stMain\"] [data-baseweb=\"tab-list\"], section.main [data-baseweb=\"tab-list\"]').length"
+            'document.querySelectorAll(\'section[data-testid="stMain"] [data-baseweb="tab-list"], section.main [data-baseweb="tab-list"]\').length'
         )
         assert n == 0, f"st.tabs ainda presente no cluster Home: {n} encontradas"
         b.close()

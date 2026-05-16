@@ -330,9 +330,7 @@ def _modo_estender(destino: Path, limit: int) -> int:
 
     # Fase A: pendências do Revisor não-visitadas (27 da Sprint 103 + futuras).
     pendencias = listar_pendencias_revisao()
-    novas_pendencias_revisor = [
-        p for p in pendencias if (p.get("caminho") or "") not in visitados
-    ]
+    novas_pendencias_revisor = [p for p in pendencias if (p.get("caminho") or "") not in visitados]
     print(
         f"[estender] {len(novas_pendencias_revisor)} pendências Revisor novas",
         file=sys.stderr,

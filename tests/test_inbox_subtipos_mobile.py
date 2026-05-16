@@ -48,9 +48,7 @@ def test_processar_inbox_walk_recursivo_descobre_subpastas(tmp_path: Path) -> No
     arquivos = sorted(
         f
         for f in inbox.rglob("*")
-        if f.is_file()
-        and f.suffix.lower() in EXTENSOES_SUPORTADAS
-        and ".extracted" not in f.parts
+        if f.is_file() and f.suffix.lower() in EXTENSOES_SUPORTADAS and ".extracted" not in f.parts
     )
 
     nomes = [a.name for a in arquivos]

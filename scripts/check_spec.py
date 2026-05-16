@@ -162,7 +162,7 @@ def validar_spec(caminho: Path) -> list[str]:
         for campo in _campos_frontmatter_faltantes(dados):
             problemas.append(f"campo_faltante:{campo}")
     match = RE_FRONTMATTER.match(conteudo)
-    corpo = conteudo[match.end():] if match else conteudo
+    corpo = conteudo[match.end() :] if match else conteudo
     problemas.extend(_secoes_faltantes_ou_vazias(corpo))
     return problemas
 

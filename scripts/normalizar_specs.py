@@ -57,9 +57,7 @@ RE_FRONTMATTER = re.compile(r"\A---\n(.*?)\n---\n", re.DOTALL)
 RE_COMENTARIO_HTML = re.compile(r"<!--.*?-->")
 
 # Inferência de prioridade quando o corpo cita ``Prioridade: PN``.
-RE_PRIORIDADE_INLINE = re.compile(
-    r"prioridade\s*[:=]\s*[\"']?(P[0-3])[\"']?", re.IGNORECASE
-)
+RE_PRIORIDADE_INLINE = re.compile(r"prioridade\s*[:=]\s*[\"']?(P[0-3])[\"']?", re.IGNORECASE)
 
 
 @dataclass
@@ -125,7 +123,7 @@ def inferir_id(path: Path) -> str:
     """Deriva ``id`` canônico do nome do arquivo (slug em CAIXA ALTA)."""
     nome = path.stem
     if nome.startswith("sprint_"):
-        nome = nome[len("sprint_"):]
+        nome = nome[len("sprint_") :]
     # Remove sufixo de data ``_YYYY-MM-DD`` quando presente.
     nome = re.sub(r"_\d{4}-\d{2}-\d{2}$", "", nome)
     return nome.replace("_", "-").upper()
@@ -227,9 +225,7 @@ def serializar_frontmatter(dados: dict) -> str:
     for chave, valor in dados.items():
         if chave not in ordenado:
             ordenado[chave] = valor
-    return yaml.safe_dump(
-        ordenado, allow_unicode=True, sort_keys=False, default_flow_style=False
-    )
+    return yaml.safe_dump(ordenado, allow_unicode=True, sort_keys=False, default_flow_style=False)
 
 
 def aplicar_frontmatter(path: Path, fallback_data: str) -> bool:
@@ -304,9 +300,7 @@ def cmd_validar(args: argparse.Namespace) -> int:
 
 def construir_parser() -> argparse.ArgumentParser:
     """Define o CLI argparse com 3 subcomandos."""
-    parser = argparse.ArgumentParser(
-        description="Normaliza frontmatter de specs de sprint."
-    )
+    parser = argparse.ArgumentParser(description="Normaliza frontmatter de specs de sprint.")
     parser.add_argument(
         "--excluir",
         action="append",
@@ -319,9 +313,7 @@ def construir_parser() -> argparse.ArgumentParser:
     p_aud = subs.add_parser("auditar", help="Lista specs com problemas.")
     p_aud.set_defaults(func=cmd_auditar)
 
-    p_norm = subs.add_parser(
-        "normalizar", help="Adiciona frontmatter inferido onde necessário."
-    )
+    p_norm = subs.add_parser("normalizar", help="Adiciona frontmatter inferido onde necessário.")
     p_norm.add_argument(
         "--data-fallback",
         default="2026-05-13",

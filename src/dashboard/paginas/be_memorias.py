@@ -113,7 +113,7 @@ def _parsear_capsula_md(texto: str) -> tuple[dict[str, Any], str]:
     if fechamento < 0:
         raise ValueError("capsula.md sem delimitador final '---'")
     frente_raw = resto[:fechamento]
-    corpo = resto[fechamento + 4:].lstrip("\n")
+    corpo = resto[fechamento + 4 :].lstrip("\n")
     frontmatter = yaml.safe_load(frente_raw) or {}
     if not isinstance(frontmatter, dict):
         raise ValueError("frontmatter de capsula.md deve ser dicionário YAML")
@@ -151,11 +151,7 @@ def _validar_capsula_frontmatter(frontmatter: dict[str, Any]) -> None:
     """
     import jsonschema
 
-    schema_path = (
-        Path(__file__).resolve().parents[3]
-        / "mappings"
-        / "schema_memorias.json"
-    )
+    schema_path = Path(__file__).resolve().parents[3] / "mappings" / "schema_memorias.json"
     schema_completo = json.loads(schema_path.read_text(encoding="utf-8"))
     subschema = {
         "$schema": schema_completo["$schema"],
@@ -276,11 +272,11 @@ def _foto_card_html(foto_path: str, evento: dict[str, Any]) -> str:
     data = str(evento.get("data") or "").strip()
     return (
         f'<div style="background:{CORES["card_fundo"]};'
-        f'border:1px solid {CORES["texto_sec"]}33;border-radius:6px;'
+        f"border:1px solid {CORES['texto_sec']}33;border-radius:6px;"
         f'padding:10px;text-align:center;">'
         f'  <div style="background:{CORES["fundo_inset"]};height:120px;'
-        f'              display:flex;align-items:center;justify-content:center;'
-        f'              color:{CORES["texto_muted"]};font-family:ui-monospace,monospace;'
+        f"              display:flex;align-items:center;justify-content:center;"
+        f"              color:{CORES['texto_muted']};font-family:ui-monospace,monospace;"
         f'              font-size:10px;border-radius:4px;margin-bottom:6px;">'
         f"{foto_path}"
         f"  </div>"
@@ -302,8 +298,8 @@ def _marco_card_html(marco: dict[str, Any]) -> str:
         tags = []
     chips_tags = "".join(
         f'<span style="display:inline-block;background:{CORES["fundo_inset"]};'
-        f'color:{CORES["texto_sec"]};font-family:ui-monospace,monospace;'
-        f'font-size:10px;padding:2px 8px;border-radius:10px;margin-right:4px;'
+        f"color:{CORES['texto_sec']};font-family:ui-monospace,monospace;"
+        f"font-size:10px;padding:2px 8px;border-radius:10px;margin-right:4px;"
         f'border:1px solid {CORES["texto_sec"]}33;">{tag}</span>'
         for tag in tags
     )
@@ -315,8 +311,8 @@ def _marco_card_html(marco: dict[str, Any]) -> str:
     )
     return (
         f'<div style="background:{CORES["card_fundo"]};'
-        f'border:1px solid {CORES["texto_sec"]}33;'
-        f'border-left:3px solid {CORES["destaque"]};'
+        f"border:1px solid {CORES['texto_sec']}33;"
+        f"border-left:3px solid {CORES['destaque']};"
         f'border-radius:6px;padding:14px;margin-bottom:10px;">'
         f'  <div style="display:flex;justify-content:space-between;'
         f'              align-items:flex-start;margin-bottom:6px;">'
@@ -360,9 +356,7 @@ def _capsula_html(memoria: dict[str, Any], idx: int) -> str:
             vinculo_curto = f"{duracao_seg}s"
     else:
         local = str(memoria.get("local") or "").strip()
-        vinculo_legado = str(
-            memoria.get("vinculo") or memoria.get("duracao") or ""
-        ).strip()
+        vinculo_legado = str(memoria.get("vinculo") or memoria.get("duracao") or "").strip()
         bruto = local or vinculo_legado
         # Mostra apenas o primeiro segmento antes do " · " (mockup faz idem).
         vinculo_curto = bruto.split(" · ")[0] if bruto else ""
@@ -370,10 +364,7 @@ def _capsula_html(memoria: dict[str, Any], idx: int) -> str:
     tags_raw = memoria.get("tags") or []
     if not isinstance(tags_raw, list):
         tags_raw = []
-    tags_html = "".join(
-        f'<span class="pill">{str(t)[:18]}</span>'
-        for t in tags_raw[:4]
-    )
+    tags_html = "".join(f'<span class="pill">{str(t)[:18]}</span>' for t in tags_raw[:4])
 
     return (
         f'<div class="mem-card" style="--cor:{cor2};">'
@@ -396,9 +387,7 @@ def _capsula_html(memoria: dict[str, Any], idx: int) -> str:
 def _grid_memorias_html(memorias: list[dict[str, Any]], limite: int = 12) -> str:
     """Grid de cápsulas (até ``limite`` itens, mockup mostra 12 = 4×3)."""
     cartoes = "".join(
-        _capsula_html(m, i)
-        for i, m in enumerate(memorias[:limite])
-        if isinstance(m, dict)
+        _capsula_html(m, i) for i, m in enumerate(memorias[:limite]) if isinstance(m, dict)
     )
     return f'<div class="mem-grid">{cartoes}</div>'
 
@@ -473,19 +462,19 @@ def _kpis_memorias_skeleton_html() -> str:
         '<div class="mem-stat">'
         '<div class="l">por tipo</div>'
         '<div class="mem-stat-tipos">'
-        '<div>'
+        "<div>"
         '<div class="v" style="color:var(--accent-cyan);">--</div>'
         '<div class="sub">fotos</div>'
         "</div>"
-        '<div>'
+        "<div>"
         '<div class="v" style="color:var(--accent-pink);">--</div>'
         '<div class="sub">áudios</div>'
         "</div>"
-        '<div>'
+        "<div>"
         '<div class="v" style="color:var(--accent-yellow);">--</div>'
         '<div class="sub">textos</div>'
         "</div>"
-        '<div>'
+        "<div>"
         '<div class="v" style="color:var(--accent-green);">--</div>'
         '<div class="sub">vídeos</div>'
         "</div>"
@@ -511,9 +500,7 @@ def _kpis_memorias_html(memorias: list[dict[str, Any]]) -> str:
 
     n = len(memorias)
     tipos = Counter(
-        str(m.get("tipo", "?")).lower().strip()
-        for m in memorias
-        if isinstance(m, dict)
+        str(m.get("tipo", "?")).lower().strip() for m in memorias if isinstance(m, dict)
     )
     n_fotos = tipos.get("foto", 0)
     n_audios = tipos.get("voz", 0) + tipos.get("audio", 0)
@@ -523,8 +510,10 @@ def _kpis_memorias_html(memorias: list[dict[str, Any]]) -> str:
     # evento_vinculado OU diario_vinculado. Retrocompat com chaves
     # antigas (evento_id/vinculo) preservada (padrão (o)).
     n_vinculadas = sum(
-        1 for m in memorias
-        if isinstance(m, dict) and (
+        1
+        for m in memorias
+        if isinstance(m, dict)
+        and (
             m.get("evento_vinculado")
             or m.get("diario_vinculado")
             or m.get("evento_id")
@@ -533,10 +522,7 @@ def _kpis_memorias_html(memorias: list[dict[str, Any]]) -> str:
     )
     pct_contexto = (n_vinculadas * 100 // n) if n else 0
     # ``para_abrir`` é flag canônica do schema; quando ausente, deriva.
-    n_para_abrir = sum(
-        1 for m in memorias
-        if isinstance(m, dict) and bool(m.get("para_abrir"))
-    )
+    n_para_abrir = sum(1 for m in memorias if isinstance(m, dict) and bool(m.get("para_abrir")))
     if n_para_abrir == 0:
         n_para_abrir = max(0, n - n_vinculadas)
 
@@ -550,23 +536,23 @@ def _kpis_memorias_html(memorias: list[dict[str, Any]]) -> str:
         '<div class="mem-stat">'
         '<div class="l">por tipo</div>'
         '<div class="mem-stat-tipos">'
-        '<div>'
+        "<div>"
         f'<div class="v" style="color:var(--accent-cyan);">{n_fotos}</div>'
         '<div class="sub">fotos</div>'
-        '</div>'
-        '<div>'
+        "</div>"
+        "<div>"
         f'<div class="v" style="color:var(--accent-pink);">{n_audios}</div>'
         '<div class="sub">áudios</div>'
-        '</div>'
-        '<div>'
+        "</div>"
+        "<div>"
         f'<div class="v" style="color:var(--accent-yellow);">{n_textos}</div>'
         '<div class="sub">textos</div>'
-        '</div>'
-        '<div>'
+        "</div>"
+        "<div>"
         f'<div class="v" style="color:var(--accent-green);">{n_videos}</div>'
         '<div class="sub">vídeos</div>'
-        '</div>'
-        '</div>'
+        "</div>"
+        "</div>"
         "</div>"
         '<div class="mem-stat">'
         '<div class="l">vinculadas a eventos</div>'
@@ -606,11 +592,18 @@ def renderizar(
 ) -> None:
     """Renderiza Bem-estar / Memórias (UX-T-23)."""
     from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
-    renderizar_grupo_acoes([
-        {"label": "Random", "glyph": "refresh", "title": "Memória aleatória"},
-        {"label": "Capturar", "primary": True, "glyph": "plus",
-         "title": "Foto/áudio/texto/vídeo"},
-    ])
+
+    renderizar_grupo_acoes(
+        [
+            {"label": "Random", "glyph": "refresh", "title": "Memória aleatória"},
+            {
+                "label": "Capturar",
+                "primary": True,
+                "glyph": "plus",
+                "title": "Foto/áudio/texto/vídeo",
+            },
+        ]
+    )
 
     del dados, periodo, pessoa, ctx
 
@@ -623,6 +616,7 @@ def renderizar(
             fallback_estado_inicial_html,
             ler_sync_info,
         )
+
         skeleton = (
             '<div style="display:grid;grid-template-columns:repeat(4,1fr);'
             'gap:10px;margin-bottom:12px;">'
@@ -634,15 +628,15 @@ def renderizar(
             '<span class="kpi-value">--</span></div>'
             '<div class="kpi"><span class="kpi-label">SEMANAS</span>'
             '<span class="kpi-value">--</span></div>'
-            '</div>'
+            "</div>"
             '<div style="display:grid;grid-template-columns:repeat(4,1fr);'
             'gap:8px;">'
-            + ''.join(
+            + "".join(
                 '<span class="skel-bloco" style="height:60px;min-width:0;'
                 'border-radius:6px;"></span>'
                 for _ in range(8)
             )
-            + '</div>'
+            + "</div>"
         )
         st.markdown(
             fallback_estado_inicial_html(
@@ -663,6 +657,7 @@ def renderizar(
 
     # CSS dedicado da página (UX-V-2.11).
     from src.dashboard.componentes.ui import carregar_css_pagina
+
     st.markdown(
         minificar(carregar_css_pagina("be_memorias")),
         unsafe_allow_html=True,
@@ -722,9 +717,7 @@ def _renderizar_secao_treinos_retro(vault_root: Path) -> None:
         if not treinos:
             st.info("Nenhuma sessão de treino encontrada no cache.")
         else:
-            st.markdown(
-                _heatmap_treinos_html(treinos, date.today()), unsafe_allow_html=True
-            )
+            st.markdown(_heatmap_treinos_html(treinos, date.today()), unsafe_allow_html=True)
             st.markdown(
                 f'<div style="font-family:ui-monospace,monospace;font-size:11px;'
                 f'color:{CORES["texto_muted"]};margin-top:10px;">'
@@ -756,9 +749,7 @@ def _renderizar_secao_treinos_retro(vault_root: Path) -> None:
         if not marcos:
             st.info("Nenhum marco registrado.")
         else:
-            ordenados = sorted(
-                marcos, key=lambda m: str(m.get("data") or ""), reverse=True
-            )
+            ordenados = sorted(marcos, key=lambda m: str(m.get("data") or ""), reverse=True)
             html = "".join(_marco_card_html(m) for m in ordenados if isinstance(m, dict))
             st.markdown(minificar(html), unsafe_allow_html=True)
 

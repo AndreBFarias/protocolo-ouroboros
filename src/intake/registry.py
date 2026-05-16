@@ -95,12 +95,12 @@ _ASSINATURAS_HOLERITE: tuple[str, ...] = (
 # Santander e é mais precisa do que um hint genérico.
 _MAPPING_SUBTIPO_MOBILE_TO_TIPO: dict[str, str] = {
     "pix": "comprovante_pix_foto",
-    "nota": "cupom_fiscal_foto",      # refinado por MIME (PDF -> nfce_modelo_65)
-    "exame": "exame_medico",           # DOC-09
-    "receita": "receita_medica",       # DOC-10
+    "nota": "cupom_fiscal_foto",  # refinado por MIME (PDF -> nfce_modelo_65)
+    "exame": "exame_medico",  # DOC-09
+    "receita": "receita_medica",  # DOC-10
     "garantia": "cupom_garantia_estendida_pdf",
-    "contrato": "contrato_locacao",    # DOC-21
-    "outro": "indeterminado",          # cai em _classificar/
+    "contrato": "contrato_locacao",  # DOC-21
+    "outro": "indeterminado",  # cai em _classificar/
     # 'extrato': deliberadamente não mapeado -- cascata bancária legada decide
 }
 

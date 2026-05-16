@@ -140,9 +140,7 @@ def escrever_diario(
 
     modo_norm = str(modo).strip().lower()
     if modo_norm not in MODOS_VALIDOS:
-        raise ValueError(
-            f"modo inválido: {modo!r}. Esperado um de {sorted(MODOS_VALIDOS)}"
-        )
+        raise ValueError(f"modo inválido: {modo!r}. Esperado um de {sorted(MODOS_VALIDOS)}")
     intens = _coerce_int_1_5(intensidade, "intensidade")
 
     emocoes_list = [str(e).strip() for e in (emocoes or []) if str(e).strip()]

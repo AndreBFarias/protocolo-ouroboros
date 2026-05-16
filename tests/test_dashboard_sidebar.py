@@ -231,9 +231,7 @@ class TestDefaultLeQueryParams:
         cluster = app_mod._selecionar_cluster()
         assert cluster == "Documentos"
 
-    def test_sem_query_params_default_e_home(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_sem_query_params_default_e_home(self, monkeypatch: pytest.MonkeyPatch) -> None:
         from src.dashboard import app as app_mod
 
         fake = _FakeStSidebar()

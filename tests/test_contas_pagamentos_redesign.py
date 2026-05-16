@@ -137,15 +137,11 @@ def prazos_minimo() -> pd.DataFrame:
 
 def test_card_banco_renderiza_com_saldo(extrato_minimo: pd.DataFrame) -> None:
     """Teste #1 — cards de contas renderizam com saldo formatado em R$."""
-    info = calcular_saldo_por_banco(
-        extrato_minimo, [b[0] for b in BANCOS_CONTAS]
-    )
+    info = calcular_saldo_por_banco(extrato_minimo, [b[0] for b in BANCOS_CONTAS])
     assert "Itaú" in info, "Itaú deve aparecer no resumo por banco"
     assert "Nubank" in info
 
-    html = _card_banco_html(
-        "Itaú", "IT", "destaque", "Corrente · CC", info["Itaú"]
-    )
+    html = _card_banco_html("Itaú", "IT", "destaque", "Corrente · CC", info["Itaú"])
     assert "Itaú" in html
     assert "R$" in html, "Cards devem mostrar valores monetários em R$"
     assert "page-header" not in html, "Card é fragmento, não a página inteira"
@@ -240,9 +236,7 @@ def test_calculo_utilizacao_cartoes_inclui_classe_d7(
 
 def test_calendario_tem_14_cells(prazos_minimo: pd.DataFrame) -> None:
     """Teste #5 — gerar_celulas_calendario retorna exatamente 14 cells."""
-    eventos = construir_eventos_calendario(
-        prazos_minimo, pd.DataFrame(), hoje=date(2026, 5, 1)
-    )
+    eventos = construir_eventos_calendario(prazos_minimo, pd.DataFrame(), hoje=date(2026, 5, 1))
     celulas = gerar_celulas_calendario(eventos, hoje=date(2026, 5, 1))
     assert len(celulas) == CAL_DIAS == 14
     # Primeira cell é hoje

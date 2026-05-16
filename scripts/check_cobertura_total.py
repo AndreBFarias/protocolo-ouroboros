@@ -76,10 +76,7 @@ def _ha_chamada_logger(node: ast.AST) -> bool:
                     "self",
                 }:
                     return True
-                if (
-                    isinstance(sub.func.value, ast.Attribute)
-                    and sub.func.value.attr == "logger"
-                ):
+                if isinstance(sub.func.value, ast.Attribute) and sub.func.value.attr == "logger":
                     return True
     return False
 

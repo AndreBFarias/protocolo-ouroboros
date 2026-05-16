@@ -103,9 +103,7 @@ def cobertura_por_pessoa(conn: sqlite3.Connection) -> list[tuple[str, int, int, 
 
 def documentos_orfaos(conn: sqlite3.Connection) -> tuple[int, int]:
     """Retorna (total_documentos, documentos_sem_aresta_documento_de)."""
-    total = int(
-        conn.execute("SELECT COUNT(*) FROM node WHERE tipo='documento'").fetchone()[0]
-    )
+    total = int(conn.execute("SELECT COUNT(*) FROM node WHERE tipo='documento'").fetchone()[0])
     orfaos = int(
         conn.execute(
             "SELECT COUNT(*) FROM node WHERE tipo='documento' AND id NOT IN "
@@ -201,10 +199,7 @@ def montar_relatorio(grafo: Path, periodo: str, total_regras_yaml: int) -> str:
     linhas.append("")
 
     proximos_passos = [
-        (
-            "Revisar top fornecedores em OUTROS — os 5 primeiros tipicamente "
-            "concentram >30% do gap."
-        ),
+        ("Revisar top fornecedores em OUTROS — os 5 primeiros tipicamente concentram >30% do gap."),
         (
             "Para cada fornecedor recorrente, decidir: criar regra em "
             "`mappings/categorias.yaml` OU usar `/propor-extrator` se faltar "

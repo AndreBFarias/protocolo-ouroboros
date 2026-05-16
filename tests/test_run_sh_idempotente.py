@@ -78,9 +78,7 @@ def test_reprocessamento_com_forcar_converge(ambiente_isolado: tuple[Path, Path]
     assert rc_a == 0
     snapshot_apos_1 = _contagens(grafo)
 
-    rc_b = reprocessar_main(
-        ["--raiz", str(raw), "--grafo", str(grafo), "--forcar-reextracao"]
-    )
+    rc_b = reprocessar_main(["--raiz", str(raw), "--grafo", str(grafo), "--forcar-reextracao"])
     assert rc_b == 0
     snapshot_apos_forcar = _contagens(grafo)
 

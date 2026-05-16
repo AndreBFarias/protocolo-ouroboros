@@ -203,10 +203,7 @@ def _ultimos_eventos(extrato: pd.DataFrame, n: int = 5) -> list[dict[str, str]]:
         categoria = str(row.get("categoria", ""))[:18] or "---"
 
         ic = "upload" if tipo_t == "Receita" else ("warn" if tipo_t == "Imposto" else "diff")
-        what = (
-            f"<strong>{local}</strong> · "
-            f"<code>{categoria}</code> · {valor}"
-        )
+        what = f"<strong>{local}</strong> · <code>{categoria}</code> · {valor}"
 
         eventos.append({"when": when_str, "ic": ic, "what": what})
 
@@ -473,7 +470,7 @@ def _hero_html(sprint_atual_titulo: str = "") -> str:
     sprint_html = ""
     if sprint_atual_titulo:
         sprint_html = (
-            " Sprint atual: <code style=\"color:var(--accent-purple);\">"
+            ' Sprint atual: <code style="color:var(--accent-purple);">'
             f"{sprint_atual_titulo}</code> — medindo paridade entre as duas extrações."
         )
     subt = (
@@ -605,29 +602,59 @@ def _cluster_grid_html(dados: dict[str, pd.DataFrame]) -> str:
 
     # Cluster slug coincide com o roteador do shell global (UX-RD-03).
     cards = [
-        ("Inbox", "?cluster=Inbox", "Entrada de dados. Drop por sha8.",
-         ("aguardando", "0"), ("na fila", "0")),
-        ("Finanças", "?cluster=Finanças", "Extrato, contas, pagamentos, projeções.",
-         ("contas", str(n_contas)), ("txns", _fmt_compact(n_txns))),
-        ("Documentos", "?cluster=Documentos", "Busca, catálogo, completude, revisor.",
-         ("arquivos", _fmt_compact(n_txns)), ("revisor", "ativo")),
-        ("Análise", "?cluster=Análise", "Categorias, multi-perspectiva, IRPF.",
-         ("categorias", "24"), ("IRPF", "ativo")),
-        ("Metas", "?cluster=Metas", "Financeiras + operacionais (skills D7).",
-         ("financeiras", str(n_metas)), ("operacionais", "—")),
-        ("Sistema", "?cluster=Sistema", "Skills D7, runs, ADRs, configuração.",
-         ("skills", "—"), ("ADRs", "20")),
+        (
+            "Inbox",
+            "?cluster=Inbox",
+            "Entrada de dados. Drop por sha8.",
+            ("aguardando", "0"),
+            ("na fila", "0"),
+        ),
+        (
+            "Finanças",
+            "?cluster=Finanças",
+            "Extrato, contas, pagamentos, projeções.",
+            ("contas", str(n_contas)),
+            ("txns", _fmt_compact(n_txns)),
+        ),
+        (
+            "Documentos",
+            "?cluster=Documentos",
+            "Busca, catálogo, completude, revisor.",
+            ("arquivos", _fmt_compact(n_txns)),
+            ("revisor", "ativo"),
+        ),
+        (
+            "Análise",
+            "?cluster=Análise",
+            "Categorias, multi-perspectiva, IRPF.",
+            ("categorias", "24"),
+            ("IRPF", "ativo"),
+        ),
+        (
+            "Metas",
+            "?cluster=Metas",
+            "Financeiras + operacionais (skills D7).",
+            ("financeiras", str(n_metas)),
+            ("operacionais", "—"),
+        ),
+        (
+            "Sistema",
+            "?cluster=Sistema",
+            "Skills D7, runs, ADRs, configuração.",
+            ("skills", "—"),
+            ("ADRs", "20"),
+        ),
     ]
 
     body = "".join(
         f'<a class="vg-cluster-card" href="{href}">'
-        f'<h3>{nome}</h3>'
+        f"<h3>{nome}</h3>"
         f'<div class="desc">{desc}</div>'
         f'<div class="stats">'
-        f'<span><strong>{s1[1]}</strong>{s1[0]}</span>'
-        f'<span><strong>{s2[1]}</strong>{s2[0]}</span>'
-        f'</div>'
-        f'</a>'
+        f"<span><strong>{s1[1]}</strong>{s1[0]}</span>"
+        f"<span><strong>{s2[1]}</strong>{s2[0]}</span>"
+        f"</div>"
+        f"</a>"
         for nome, href, desc, s1, s2 in cards
     )
 
@@ -766,14 +793,34 @@ def _kpis_agentic_html(kpis: dict) -> str:
 
     return minificar(
         '<div class="vg-t01-kpis">'
-        + _card("up", "?cluster=Documentos&tab=Catalogação",
-                "Arquivos catalogados", kpis["arquivos_catalogados"], kpis["arquivos_delta"])
-        + _card("", "?cluster=Documentos&tab=Extra%C3%A7%C3%A3o+Tripla",
-                "Paridade ETL ↔ Opus", kpis["paridade_pct"], kpis["paridade_meta"])
-        + _card("warn", "?cluster=Documentos&tab=Revisor",
-                "Aguardando humano", kpis["aguardando_humano"], kpis["aguardando_breakdown"])
-        + _card("bad", "?cluster=Sistema&tab=Skills+D7",
-                "Skills regredindo", kpis["skills_regredindo"], kpis["skills_nomes"])
+        + _card(
+            "up",
+            "?cluster=Documentos&tab=Catalogação",
+            "Arquivos catalogados",
+            kpis["arquivos_catalogados"],
+            kpis["arquivos_delta"],
+        )
+        + _card(
+            "",
+            "?cluster=Documentos&tab=Extra%C3%A7%C3%A3o+Tripla",
+            "Paridade ETL ↔ Opus",
+            kpis["paridade_pct"],
+            kpis["paridade_meta"],
+        )
+        + _card(
+            "warn",
+            "?cluster=Documentos&tab=Revisor",
+            "Aguardando humano",
+            kpis["aguardando_humano"],
+            kpis["aguardando_breakdown"],
+        )
+        + _card(
+            "bad",
+            "?cluster=Sistema&tab=Skills+D7",
+            "Skills regredindo",
+            kpis["skills_regredindo"],
+            kpis["skills_nomes"],
+        )
         + "</div>"
     )
 

@@ -91,7 +91,7 @@ def test_painel_sem_vinculo_mostra_callout(transacao_drogasil: dict) -> None:
     assert "Sem documento vinculado" in html
     assert "INFRA-LINKING-NFE-TRANSACAO" in html
     # Não pode haver tabela de itens
-    assert "<table class=\"painel-drill-itens\">" not in html
+    assert '<table class="painel-drill-itens">' not in html
 
 
 def test_painel_com_documento_e_itens_renderiza_tabela(
@@ -116,9 +116,7 @@ def test_painel_com_documento_e_itens_renderiza_tabela(
 def test_painel_documento_sem_itens_emite_mensagem(
     transacao_drogasil: dict, documento_nfce: dict
 ) -> None:
-    html = renderizar_painel_drill_down(
-        transacao_drogasil, documento=documento_nfce, itens=[]
-    )
+    html = renderizar_painel_drill_down(transacao_drogasil, documento=documento_nfce, itens=[])
     assert "DOCUMENTO VINCULADO" in html
     assert "nfce_modelo_65" in html
     # mensagem de itens vazios
@@ -225,9 +223,7 @@ def test_persistir_revisao_idempotente(tmp_path: Path) -> None:
     assert persistir_revisao(transacao_id=7, db_path=db) is True
     conn = sqlite3.connect(str(db))
     try:
-        cur = conn.execute(
-            "SELECT COUNT(*) FROM revisao_drill_down WHERE transacao_id=?", (7,)
-        )
+        cur = conn.execute("SELECT COUNT(*) FROM revisao_drill_down WHERE transacao_id=?", (7,))
         assert cur.fetchone()[0] == 1
     finally:
         conn.close()

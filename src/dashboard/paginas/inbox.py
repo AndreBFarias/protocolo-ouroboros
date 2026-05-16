@@ -76,12 +76,18 @@ def renderizar(
         ctx: Contexto extra (granularidade etc., ignorado).
     """
     from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
-    renderizar_grupo_acoes([
-        {"label": "Abrir pasta", "glyph": "docs",
-         "title": "Abrir ~/Ouroboros/inbox"},
-        {"label": "Atualizar fila", "primary": True, "glyph": "refresh",
-         "title": "Verificar novos arquivos"},
-    ])
+
+    renderizar_grupo_acoes(
+        [
+            {"label": "Abrir pasta", "glyph": "docs", "title": "Abrir ~/Ouroboros/inbox"},
+            {
+                "label": "Atualizar fila",
+                "primary": True,
+                "glyph": "refresh",
+                "title": "Verificar novos arquivos",
+            },
+        ]
+    )
 
     del dados, periodo, pessoa, ctx
 
@@ -130,8 +136,12 @@ def _renderizar_dropzone() -> None:
                 são detectados antes da extração pelo pipeline.
               </p>
               <div class="inbox-tipo-chips">
-                {''.join(f'<span class="inbox-tipo-chip">{t}</span>' for t in
-                  ["PDF","CSV","XLSX","OFX","JPG","PNG","HTML","TXT","JSON"])}
+                {
+                "".join(
+                    f'<span class="inbox-tipo-chip">{t}</span>'
+                    for t in ["PDF", "CSV", "XLSX", "OFX", "JPG", "PNG", "HTML", "TXT", "JSON"]
+                )
+            }
               </div>
             </div>
             """
@@ -187,9 +197,7 @@ def _renderizar_fila(itens: list[dict[str, Any]]) -> None:
     st.markdown(_fila_html(itens), unsafe_allow_html=True)
 
     opcoes_sha = [it["sha8"] for it in itens]
-    rotulos = {
-        it["sha8"]: f"{it['sha8']} · {it['filename']}" for it in itens
-    }
+    rotulos = {it["sha8"]: f"{it['sha8']} · {it['filename']}" for it in itens}
 
     sha_atual = st.session_state.get(_SESSION_DRAWER)
     if sha_atual not in opcoes_sha:
@@ -397,7 +405,7 @@ def _fila_html(itens: list[dict[str, Any]]) -> str:
                 </tr>
               </thead>
               <tbody>
-                {''.join(linhas)}
+                {"".join(linhas)}
               </tbody>
             </table>
           </div>
@@ -461,7 +469,7 @@ def _drawer_html(item: dict[str, Any]) -> str:
             <div>
               <div class="inbox-drawer-rotulo">SIDECAR</div>
               <div class="inbox-drawer-sha">{sha8}</div>
-              <div class="inbox-drawer-filename">{item['filename']}</div>
+              <div class="inbox-drawer-filename">{item["filename"]}</div>
             </div>
           </div>
           <div class="drawer-body">
@@ -487,22 +495,22 @@ def _sidecar_pre_html(sidecar: dict[str, Any]) -> str:
 
     s = _html.escape(raw)
     s = _re.sub(
-        r'(&quot;[^&]+?&quot;)(\s*:)',
+        r"(&quot;[^&]+?&quot;)(\s*:)",
         rf'<span style="color:{cor_chave};">\1</span>\2',
         s,
     )
     s = _re.sub(
-        r':\s*(&quot;[^&]*?&quot;)',
+        r":\s*(&quot;[^&]*?&quot;)",
         rf': <span style="color:{cor_string};">\1</span>',
         s,
     )
     s = _re.sub(
-        r':\s*(-?\d+\.?\d*)',
+        r":\s*(-?\d+\.?\d*)",
         rf': <span style="color:{cor_numero};">\1</span>',
         s,
     )
     s = _re.sub(
-        r':\s*(true|false|null)',
+        r":\s*(true|false|null)",
         rf': <span style="color:{cor_bool};">\1</span>',
         s,
     )

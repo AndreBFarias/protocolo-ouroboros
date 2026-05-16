@@ -235,7 +235,10 @@ def test_filtros_sidebar_pessoa_impacta() -> None:
         {"id": 2, "data": "2026-04-02", "pessoa": "Vitoria"},  # anonimato-allow: fixture de matcher
     ]
     saida = pag._aplicar_filtros_sidebar(
-        docs, periodo=None, pessoa="Vitoria", forma=None,  # anonimato-allow
+        docs,
+        periodo=None,
+        pessoa="Vitoria",
+        forma=None,  # anonimato-allow
     )
     assert len(saida) == 1
     assert saida[0]["id"] == 2

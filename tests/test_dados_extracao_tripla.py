@@ -79,9 +79,7 @@ def test_carregar_canonico_real_tem_3_ou_mais_registros() -> None:
     registros = carregar_extracoes_triplas()
     assert len(registros) >= 3, f"esperado >=3 registros, achei {len(registros)}"
     com_opus = [r for r in registros if r.get("opus", {}).get("campos")]
-    assert len(com_opus) >= 3, (
-        f"esperado >=3 registros com Opus populado, achei {len(com_opus)}"
-    )
+    assert len(com_opus) >= 3, f"esperado >=3 registros com Opus populado, achei {len(com_opus)}"
 
 
 def test_carregar_canonico_real_tem_divergencia_em_cada_registro() -> None:
@@ -92,9 +90,7 @@ def test_carregar_canonico_real_tem_divergencia_em_cada_registro() -> None:
         pytest.skip("data/output/extracao_tripla.json ausente neste ambiente.")
     registros = carregar_extracoes_triplas()
     for r in registros[:3]:
-        assert contar_divergencias(r) >= 1, (
-            f"sha256={r.get('sha256')} sem divergência ETL×Opus"
-        )
+        assert contar_divergencias(r) >= 1, f"sha256={r.get('sha256')} sem divergência ETL×Opus"
 
 
 # ----------------------------------------------------------------------------

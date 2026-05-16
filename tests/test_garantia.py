@@ -412,9 +412,7 @@ class TestAlertaIngestor:
             f"esperava warning de 'expira em ... <=30 dias', mas só tenho: {mensagens}"
         )
 
-    def test_ingestor_nao_loga_warning_quando_vigente_acima_30d(
-        self, grafo_temp, caplog
-    ):
+    def test_ingestor_nao_loga_warning_quando_vigente_acima_30d(self, grafo_temp, caplog):
         """Garantia com >30 dias restantes não dispara warning de proximidade.
 
         Acceptance #3 da sub-sprint GARANTIA-EXPIRANDO-01: confirma o
@@ -428,9 +426,9 @@ class TestAlertaIngestor:
         assert parsed is not None and parsed["expirando"] is False
         ingerir_garantia(grafo_temp, parsed, caminho_arquivo=ELECTROLUX_12M)
         mensagens = [r.message for r in caplog.records]
-        assert not any(
-            "expira em" in m and "<=30 dias" in m for m in mensagens
-        ), f"warning de proximidade não deveria disparar: {mensagens}"
+        assert not any("expira em" in m and "<=30 dias" in m for m in mensagens), (
+            f"warning de proximidade não deveria disparar: {mensagens}"
+        )
 
 
 # ============================================================================

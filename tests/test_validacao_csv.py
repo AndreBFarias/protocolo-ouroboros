@@ -92,7 +92,10 @@ def test_atualizar_validacao_opus_preserva_etl(tmp_path: Path):
     )
     sha8 = vc.calcular_sha8(arquivo)
     ok = vc.atualizar_validacao_opus(
-        sha8=sha8, campo="salario_base", valor_opus="5000,00", status_opus="ok",
+        sha8=sha8,
+        campo="salario_base",
+        valor_opus="5000,00",
+        status_opus="ok",
         caminho_csv=csv_path,
     )
     assert ok is True
@@ -147,8 +150,12 @@ def test_re_registro_etl_preserva_trabalho_humano(tmp_path: Path):
     )
     sha8 = vc.calcular_sha8(arquivo)
     vc.atualizar_validacao_humana(
-        sha8=sha8, campo="valor_total", valor_humano="100,00",
-        status_humano="ok", observacoes="conferido", caminho_csv=csv_path,
+        sha8=sha8,
+        campo="valor_total",
+        valor_humano="100,00",
+        status_humano="ok",
+        observacoes="conferido",
+        caminho_csv=csv_path,
     )
     # Re-extração com valor revisto pelo extrator
     vc.registrar_extracao(

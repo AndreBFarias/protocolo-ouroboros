@@ -129,9 +129,7 @@ def test_cache_miss_cria_pedido_pendente(
 ) -> None:
     """Sem cache, registra pedido em ``<dir_pendentes>/<sha>.txt`` com path."""
     cache, pendentes = diretorios_tmp
-    resultado = extrair_via_opus(
-        CUPOM_NSP, dir_cache=cache, dir_pendentes=pendentes
-    )
+    resultado = extrair_via_opus(CUPOM_NSP, dir_cache=cache, dir_pendentes=pendentes)
 
     assert resultado["aguardando_supervisor"] is True
     assert resultado["tipo_documento"] == "pendente"
@@ -163,9 +161,7 @@ def test_supervisor_processa_pedido_e_segunda_chamada_ve_cache(
     cache, pendentes = diretorios_tmp
 
     # 1. primeira chamada: gera pedido
-    primeiro = extrair_via_opus(
-        CUPOM_NSP, dir_cache=cache, dir_pendentes=pendentes
-    )
+    primeiro = extrair_via_opus(CUPOM_NSP, dir_cache=cache, dir_pendentes=pendentes)
     assert primeiro["aguardando_supervisor"] is True
 
     # 2. supervisor humano transcreve a imagem para o cache
@@ -173,9 +169,7 @@ def test_supervisor_processa_pedido_e_segunda_chamada_ve_cache(
     shutil.copy(CACHE_CANONICO_NSP, cache / f"{SHA_NSP}.json")
 
     # 3. segunda chamada: cache hit, retorna dados canônicos
-    segundo = extrair_via_opus(
-        CUPOM_NSP, dir_cache=cache, dir_pendentes=pendentes
-    )
+    segundo = extrair_via_opus(CUPOM_NSP, dir_cache=cache, dir_pendentes=pendentes)
     assert segundo.get("aguardando_supervisor") is None
     assert segundo["total"] == 513.31
 
@@ -208,9 +202,7 @@ def test_opus_api_key_levanta_notimplemented(
     cache, pendentes = diretorios_tmp
     monkeypatch.setenv("OPUS_API_KEY", "fake-para-teste")
     with pytest.raises(NotImplementedError, match="produção"):
-        extrair_via_opus(
-            CUPOM_NSP, dir_cache=cache, dir_pendentes=pendentes
-        )
+        extrair_via_opus(CUPOM_NSP, dir_cache=cache, dir_pendentes=pendentes)
 
 
 # ---------------------------------------------------------------------------

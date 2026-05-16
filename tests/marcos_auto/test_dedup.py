@@ -26,9 +26,7 @@ def test_hash_deterministico():
 
 def test_hash_e_doze_chars_hex():
     """Hash tem exatamente 12 caracteres hexadecimais minúsculos."""
-    h = hash_marco(
-        {"tipo": "marco", "data": "2026-04-29", "descricao": "Tres treinos."}
-    )
+    h = hash_marco({"tipo": "marco", "data": "2026-04-29", "descricao": "Tres treinos."})
     assert len(h) == 12
     assert re.fullmatch(r"[0-9a-f]{12}", h) is not None
 

@@ -96,12 +96,17 @@ def renderizar(
     """Renderiza a página IRPF (UX-RD-14 + UX-V-3.4)."""
     from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
 
-    renderizar_grupo_acoes([
-        {"label": "Recalcular", "glyph": "refresh",
-         "title": "Recalcular IRPF do ano"},
-        {"label": "Gerar pacote", "primary": True, "glyph": "download",
-         "title": "DEC + DARF + PDFs"},
-    ])
+    renderizar_grupo_acoes(
+        [
+            {"label": "Recalcular", "glyph": "refresh", "title": "Recalcular IRPF do ano"},
+            {
+                "label": "Gerar pacote",
+                "primary": True,
+                "glyph": "download",
+                "title": "DEC + DARF + PDFs",
+            },
+        ]
+    )
 
     st.markdown(
         minificar(carregar_css_pagina("irpf")),
@@ -115,9 +120,7 @@ def renderizar(
     # 3) selectbox secundário só aparece se houver múltiplos anos no extrato.
     ano_global = _ano_do_periodo(ctx)
     ano_corrente = _dt.date.today().year
-    ano_default = ano_global or (
-        anos_disponiveis[0] if anos_disponiveis else str(ano_corrente)
-    )
+    ano_default = ano_global or (anos_disponiveis[0] if anos_disponiveis else str(ano_corrente))
 
     if not anos_disponiveis:
         st.markdown(_page_header_html(ano_default, 0, 0, 0.0), unsafe_allow_html=True)
@@ -160,19 +163,15 @@ def renderizar(
     # para que o grid CSS controle o layout (Streamlit columns quebram o
     # sticky-positioning do card lateral).
     linhas_html = "".join(
-        _row_categoria_html(cat, totais.get(cat, {"valor": 0.0, "count": 0}),
-                            _calcular_completude(eventos, cat))
+        _row_categoria_html(
+            cat, totais.get(cat, {"valor": 0.0, "count": 0}), _calcular_completude(eventos, cat)
+        )
         for cat in CATEGORIAS_IRPF
     )
     card_html = _card_pacote_html(ano_int, soma_total, n_eventos, totais, eventos)
 
     st.markdown(
-        minificar(
-            f'<div class="irpf-grid">'
-            f'<div>{linhas_html}</div>'
-            f'{card_html}'
-            f'</div>'
-        ),
+        minificar(f'<div class="irpf-grid"><div>{linhas_html}</div>{card_html}</div>'),
         unsafe_allow_html=True,
     )
 

@@ -42,9 +42,7 @@ from src.dashboard.componentes.html_utils import minificar
 from src.dashboard.componentes.ui import carregar_css_pagina
 from src.dashboard.tema import CORES
 
-CAMINHO_LOG_D7: Path = (
-    Path(__file__).resolve().parents[3] / "data" / "output" / "skill_d7_log.json"
-)
+CAMINHO_LOG_D7: Path = Path(__file__).resolve().parents[3] / "data" / "output" / "skill_d7_log.json"
 
 
 def renderizar(
@@ -55,12 +53,13 @@ def renderizar(
 ) -> None:
     """Renderiza a página Skills D7 (UX-RD-05 + UX-T-14)."""
     from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
-    renderizar_grupo_acoes([
-        {"label": "Recalibrar", "glyph": "refresh",
-         "title": "Recalibrar 18 skills"},
-        {"label": "Logs", "primary": True, "glyph": "list",
-         "title": "Abrir terminal de logs"},
-    ])
+
+    renderizar_grupo_acoes(
+        [
+            {"label": "Recalibrar", "glyph": "refresh", "title": "Recalibrar 18 skills"},
+            {"label": "Logs", "primary": True, "glyph": "list", "title": "Abrir terminal de logs"},
+        ]
+    )
 
     del dados, periodo, pessoa, ctx
 
@@ -197,9 +196,7 @@ def _fallback_estado_inicial_html() -> str:
     # Classe ``fallback-estado`` mantida para retrocompatibilidade com
     # testes regressivos UX-V-03 (test_skills_d7_sem_snapshot_emite_fallback).
     return _minificar(
-        f'<div class="s7-skeleton fallback-estado" data-secao="skills-d7">'
-        f'{skeleton}{rodape}'
-        f'</div>'
+        f'<div class="s7-skeleton fallback-estado" data-secao="skills-d7">{skeleton}{rodape}</div>'
     )
 
 
@@ -227,7 +224,7 @@ def _skeleton_kpis_html() -> str:
             f'<div class="kpi-label">{label}</div>'
             f'<div class="kpi-value"{estilo}>{valor}</div>'
             f'<div class="kpi-delta flat">{hint}</div>'
-            f'</div>'
+            f"</div>"
         )
     return _minificar('<div class="s7-kpi5">' + "".join(pieces) + "</div>")
 
@@ -241,12 +238,12 @@ def _skeleton_inventario_html() -> str:
     """
     cabecalho = (
         '<div class="s7-row s7-head">'
-        '<div>skill</div>'
-        '<div>D7</div>'
-        '<div>confiança</div>'
-        '<div>execuções</div>'
-        '<div>último</div>'
-        '</div>'
+        "<div>skill</div>"
+        "<div>D7</div>"
+        "<div>confiança</div>"
+        "<div>execuções</div>"
+        "<div>último</div>"
+        "</div>"
     )
     linhas = []
     for i in range(1, 19):
@@ -254,16 +251,16 @@ def _skeleton_inventario_html() -> str:
         linha = (
             f'<div class="s7-row">'
             f'<div class="s7-name">'
-            f'<strong>{sid}</strong>'
+            f"<strong>{sid}</strong>"
             f'<span class="skel-bloco" style="width:70%;height:1.1em;"></span>'
-            f'</div>'
+            f"</div>"
             f'<div class="s7-pill">'
             f'<span class="skel-bloco" style="width:60px;height:1.1em;"></span>'
-            f'</div>'
+            f"</div>"
             f'<div class="s7-conf">--</div>'
             f'<div class="s7-runs">--</div>'
             f'<div class="s7-when">--</div>'
-            f'</div>'
+            f"</div>"
         )
         linhas.append(linha)
     return _minificar(
@@ -293,14 +290,12 @@ def _skeleton_distribuicao_html() -> str:
             f'<div class="s7-dist-cell">'
             f'<div class="s7-dist-num" style="color:{cor};">--</div>'
             f'<div class="s7-dist-lab">{label}</div>'
-            f'</div>'
+            f"</div>"
         )
     return _minificar(
         '<div class="s7-dist">'
         '<div class="s7-grid-head">Distribuição por estado</div>'
-        '<div class="s7-dist-grid">'
-        + "".join(blocos)
-        + "</div></div>"
+        '<div class="s7-dist-grid">' + "".join(blocos) + "</div></div>"
     )
 
 
@@ -322,26 +317,26 @@ def _skeleton_cobertura_cluster_html() -> str:
             f'<div class="s7-cluster-track">'
             f'<span class="skel-bloco" style="width:100%;height:14px;'
             f'border-radius:0;"></span>'
-            f'</div>'
+            f"</div>"
             f'<span class="s7-cluster-pct">--</span>'
-            f'</div>'
+            f"</div>"
         )
         linhas.append(linha)
     legenda = (
         '<div class="s7-cluster-legenda">'
         f'<span class="s7-legenda-item">'
         f'<span class="s7-legenda-sw" style="background:{cor_grad};"></span>'
-        f'graduado</span>'
+        f"graduado</span>"
         f'<span class="s7-legenda-item">'
         f'<span class="s7-legenda-sw" style="background:{cor_cal};"></span>'
-        f'calibrando</span>'
+        f"calibrando</span>"
         f'<span class="s7-legenda-item">'
         f'<span class="s7-legenda-sw" style="background:{cor_reg};"></span>'
-        f'regredindo</span>'
+        f"regredindo</span>"
         f'<span class="s7-legenda-item">'
         f'<span class="s7-legenda-sw" style="background:'
         f'{CORES["d7_pendente"]};"></span>pendente</span>'
-        '</div>'
+        "</div>"
     )
     return _minificar(
         '<div class="s7-cluster">'
@@ -355,11 +350,12 @@ def _skeleton_cobertura_cluster_html() -> str:
 def _skeleton_rodape_cta_html() -> str:
     """CTA no rodapé do skeleton apontando para ``./run.sh --tudo``."""
     from src.dashboard.componentes.ui import ler_sync_info
+
     sync_info = ler_sync_info()
     if sync_info and "data" in sync_info:
         sync_str = (
-            f'Última sync: <strong>{sync_info["data"]}</strong>'
-            f' · {sync_info.get("n_arquivos", "?")} arquivos lidos do vault'
+            f"Última sync: <strong>{sync_info['data']}</strong>"
+            f" · {sync_info.get('n_arquivos', '?')} arquivos lidos do vault"
         )
     else:
         sync_str = (
@@ -370,13 +366,13 @@ def _skeleton_rodape_cta_html() -> str:
     return _minificar(
         f'<div class="s7-skeleton-rodape">'
         f'<p class="s7-skeleton-cta">'
-        f'Snapshot estruturado em '
-        f'<code>data/output/skill_d7_log.json</code> ainda não foi '
-        f'emitido nesta máquina. Rode '
-        f'<code>./run.sh --tudo</code> para popular o painel.'
-        f'</p>'
+        f"Snapshot estruturado em "
+        f"<code>data/output/skill_d7_log.json</code> ainda não foi "
+        f"emitido nesta máquina. Rode "
+        f"<code>./run.sh --tudo</code> para popular o painel."
+        f"</p>"
         f'<p class="s7-skeleton-sync">{sync_str}</p>'
-        f'</div>'
+        f"</div>"
     )
 
 
@@ -407,9 +403,7 @@ def _fallback_graceful_html() -> str:
     )
 
 
-def _kpis_d7_html(
-    snapshot: dict, contagens: dict[str, int], total: int
-) -> str:
+def _kpis_d7_html(snapshot: dict, contagens: dict[str, int], total: int) -> str:
     """5 KPIs do mockup ``14-skills-d7.html`` (UX-V-2.8).
 
     Layout: COBERTURA D7 · TAXA DE GRADUAÇÃO · REGRESSÕES 30D ·
@@ -431,9 +425,7 @@ def _kpis_d7_html(
     taxa_q = snapshot.get("taxa_graduacao_q")
     if taxa_q is None:
         taxa_q = grad
-    taxa_label = (
-        f"+{int(taxa_q)} / Q1" if isinstance(taxa_q, int | float) else str(taxa_q)
-    )
+    taxa_label = f"+{int(taxa_q)} / Q1" if isinstance(taxa_q, int | float) else str(taxa_q)
 
     # Regressões 30d: prioriza campo do snapshot, senão usa contagem atual.
     regressoes_30d = int(snapshot.get("regressoes_30d", reg))
@@ -533,9 +525,7 @@ def _distribuicao_estados_html(contagens: dict[str, int]) -> str:
     return _minificar(
         '<div class="s7-dist">'
         '<div class="s7-grid-head">Distribuição por estado</div>'
-        '<div class="s7-dist-grid">'
-        + "".join(blocos)
-        + "</div></div>"
+        '<div class="s7-dist-grid">' + "".join(blocos) + "</div></div>"
     )
 
 
@@ -766,10 +756,7 @@ def _lista_skills_html(skills: list[dict]) -> str:
     )
     return _minificar(
         '<div class="s7-grid">'
-        '<div class="s7-grid-head">Inventário</div>'
-        + cabecalho
-        + "".join(linhas)
-        + "</div>"
+        '<div class="s7-grid-head">Inventário</div>' + cabecalho + "".join(linhas) + "</div>"
     )
 
 

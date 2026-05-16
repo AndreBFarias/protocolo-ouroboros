@@ -70,9 +70,7 @@ def test_listar_orfaos_preserva_path_e_node_valido(
     assert "raw/_classificar/X.pdf" not in ids
 
 
-def test_dry_run_nao_altera_db(
-    grafo_com_um_documento: Path, revisao_com_orfaos: Path
-) -> None:
+def test_dry_run_nao_altera_db(grafo_com_um_documento: Path, revisao_com_orfaos: Path) -> None:
     limpar_revisao_orfaos.main(
         [
             "--grafo-db",
@@ -108,9 +106,7 @@ def test_executar_remove_orfaos_e_cria_backup(
     assert backup.exists()
 
 
-def test_executar_idempotente(
-    grafo_com_um_documento: Path, revisao_com_orfaos: Path
-) -> None:
+def test_executar_idempotente(grafo_com_um_documento: Path, revisao_com_orfaos: Path) -> None:
     args = [
         "--grafo-db",
         str(grafo_com_um_documento),

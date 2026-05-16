@@ -101,11 +101,15 @@ def test_vault_limpo_zero_violacoes(tmp_path: Path) -> None:
 
 def test_par_em_cada_area_canonica_e_aceito(tmp_path: Path) -> None:
     _criar_par_valido(
-        tmp_path, area="saude", subtipo="exame",
+        tmp_path,
+        area="saude",
+        subtipo="exame",
         basename="2026-05-12-090000-exame",
     )
     _criar_par_valido(
-        tmp_path, area="casa", subtipo="garantia",
+        tmp_path,
+        area="casa",
+        subtipo="garantia",
         basename="2026-05-12-090001-tv",
     )
     auditor = AuditorVault(tmp_path, MAPPING_TESTE)
@@ -115,7 +119,9 @@ def test_par_em_cada_area_canonica_e_aceito(tmp_path: Path) -> None:
 
 def test_filename_sem_slug_e_aceito(tmp_path: Path) -> None:
     _criar_par_valido(
-        tmp_path, basename="2026-05-12-153014", ext_binario=".pdf",
+        tmp_path,
+        basename="2026-05-12-153014",
+        ext_binario=".pdf",
     )
     auditor = AuditorVault(tmp_path, MAPPING_TESTE)
     relatorio = auditor.executar()
@@ -151,9 +157,12 @@ def test_exit_code_zero_em_vault_limpo(tmp_path: Path) -> None:
     )
     exit_code = main(
         [
-            "--vault-path", str(tmp_path),
-            "--mapping", str(mapping_path),
-            "--relatorio", str(relatorio_md),
+            "--vault-path",
+            str(tmp_path),
+            "--mapping",
+            str(mapping_path),
+            "--relatorio",
+            str(relatorio_md),
         ]
     )
     assert exit_code == 0
@@ -187,19 +196,14 @@ def test_area_fora_do_mapping_e_violacao(tmp_path: Path) -> None:
     )
     auditor = AuditorVault(tmp_path, MAPPING_TESTE)
     relatorio = auditor.executar()
-    assert any(
-        v.categoria == "estrutura" and "mente" in v.detalhe
-        for v in relatorio.violacoes
-    )
+    assert any(v.categoria == "estrutura" and "mente" in v.detalhe for v in relatorio.violacoes)
 
 
 def test_filename_em_formato_brasileiro_e_violacao(tmp_path: Path) -> None:
     pasta = tmp_path / "inbox" / "financeiro" / "pix"
     pasta.mkdir(parents=True)
     (pasta / "12-05-2026.jpg").write_bytes(b"\x00")
-    (pasta / "12-05-2026.md").write_text(
-        _md_canonico(arquivo="12-05-2026.jpg"), encoding="utf-8"
-    )
+    (pasta / "12-05-2026.md").write_text(_md_canonico(arquivo="12-05-2026.jpg"), encoding="utf-8")
     auditor = AuditorVault(tmp_path, MAPPING_TESTE)
     relatorio = auditor.executar()
     violacoes_filename = [v for v in relatorio.violacoes if v.categoria == "filename"]
@@ -225,8 +229,7 @@ def test_frontmatter_sem_schema_version_e_violacao(tmp_path: Path) -> None:
     auditor = AuditorVault(tmp_path, MAPPING_TESTE)
     relatorio = auditor.executar()
     assert any(
-        v.categoria == "frontmatter" and "_schema_version" in v.detalhe
-        for v in relatorio.violacoes
+        v.categoria == "frontmatter" and "_schema_version" in v.detalhe for v in relatorio.violacoes
     )
 
 
@@ -237,8 +240,7 @@ def test_binario_sem_md_companion_e_violacao(tmp_path: Path) -> None:
     auditor = AuditorVault(tmp_path, MAPPING_TESTE)
     relatorio = auditor.executar()
     assert any(
-        v.categoria == "companion" and "sem .md companion" in v.detalhe
-        for v in relatorio.violacoes
+        v.categoria == "companion" and "sem .md companion" in v.detalhe for v in relatorio.violacoes
     )
 
 
@@ -251,17 +253,12 @@ def test_subtipo_fora_do_mapping_e_violacao(tmp_path: Path) -> None:
     )
     auditor = AuditorVault(tmp_path, MAPPING_TESTE)
     relatorio = auditor.executar()
-    assert any(
-        v.categoria == "estrutura" and "boleto" in v.detalhe
-        for v in relatorio.violacoes
-    )
+    assert any(v.categoria == "estrutura" and "boleto" in v.detalhe for v in relatorio.violacoes)
 
 
 def test_schema_version_diferente_de_1_e_violacao(tmp_path: Path) -> None:
     md, _ = _criar_par_valido(tmp_path)
-    md.write_text(
-        _md_canonico(schema_version=2), encoding="utf-8"
-    )
+    md.write_text(_md_canonico(schema_version=2), encoding="utf-8")
     auditor = AuditorVault(tmp_path, MAPPING_TESTE)
     relatorio = auditor.executar()
     assert any(
@@ -298,10 +295,7 @@ def test_areas_subtipos_alinhadas_com_app() -> None:
 def test_extrair_frontmatter_retorna_none_quando_malformado() -> None:
     assert extrair_frontmatter("") is None
     assert extrair_frontmatter("sem frontmatter algum") is None
-    assert (
-        extrair_frontmatter("---\nfrontmatter sem fechar\n# corpo")
-        is None
-    )
+    assert extrair_frontmatter("---\nfrontmatter sem fechar\n# corpo") is None
 
 
 def test_relatorio_md_lista_categorias_em_ordem(tmp_path: Path) -> None:
@@ -339,12 +333,8 @@ def test_filename_regex_aceita_canonico_rejeita_outros(
     arq.write_bytes(b"\x00")
     auditor = AuditorVault(tmp_path, MAPPING_TESTE)
     relatorio = auditor.executar()
-    violacoes_filename = [
-        v for v in relatorio.violacoes if v.categoria == "filename"
-    ]
+    violacoes_filename = [v for v in relatorio.violacoes if v.categoria == "filename"]
     if valido:
-        assert violacoes_filename == [] or all(
-            arq.name not in v.path for v in violacoes_filename
-        )
+        assert violacoes_filename == [] or all(arq.name not in v.path for v in violacoes_filename)
     else:
         assert any(arq.name in v.path for v in violacoes_filename)

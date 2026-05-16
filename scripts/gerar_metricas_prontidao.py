@@ -69,9 +69,7 @@ def _linking_pct() -> tuple[float, int, int]:
     try:
         con = sqlite3.connect(str(PATH_GRAFO))
         try:
-            total_tx = con.execute(
-                "SELECT COUNT(*) FROM node WHERE tipo='transacao'"
-            ).fetchone()[0]
+            total_tx = con.execute("SELECT COUNT(*) FROM node WHERE tipo='transacao'").fetchone()[0]
             if total_tx == 0:
                 return 0.0, 0, 0
             edges_doc = con.execute(
@@ -230,15 +228,11 @@ def aplicar_no_roadmap(conteudo_atual: str, tabela: str) -> str:
             MARKER_INICIO + "\n" + tabela + MARKER_FIM,
             conteudo_atual,
         )
-    cabecalho = re.compile(
-        r"^## Metricas globais de prontidao.*?$", re.MULTILINE
-    )
+    cabecalho = re.compile(r"^## Metricas globais de prontidao.*?$", re.MULTILINE)
     match = cabecalho.search(conteudo_atual)
     if match:
         insercao = "\n\n" + MARKER_INICIO + "\n" + tabela + MARKER_FIM + "\n"
-        return (
-            conteudo_atual[: match.end()] + insercao + conteudo_atual[match.end() :]
-        )
+        return conteudo_atual[: match.end()] + insercao + conteudo_atual[match.end() :]
     return conteudo_atual + "\n\n" + MARKER_INICIO + "\n" + tabela + MARKER_FIM + "\n"
 
 

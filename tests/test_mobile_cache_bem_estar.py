@@ -117,8 +117,15 @@ def test_varrer_tudo_invoca_todos_9_parsers(tmp_path, monkeypatch):
     resultado = varrer_vault.varrer_tudo(FIXTURE_VAULT, incluir_humor=True)
     assert len(resultado) == 10
     bem_estar = [
-        "diario-emocional", "eventos", "treinos", "medidas",
-        "marcos", "alarmes", "contadores", "ciclo", "tarefas",
+        "diario-emocional",
+        "eventos",
+        "treinos",
+        "medidas",
+        "marcos",
+        "alarmes",
+        "contadores",
+        "ciclo",
+        "tarefas",
     ]
     for schema in bem_estar:
         assert schema in resultado, f"schema {schema} ausente"
@@ -135,8 +142,15 @@ def test_varrer_tudo_vault_none_nao_crasheia(tmp_path, monkeypatch):
     # 9 parsers Bem-estar + humor (que será None pois vault ausente)
     assert resultado["humor-heatmap"] is None
     for schema in [
-        "diario-emocional", "eventos", "treinos", "medidas",
-        "marcos", "alarmes", "contadores", "ciclo", "tarefas",
+        "diario-emocional",
+        "eventos",
+        "treinos",
+        "medidas",
+        "marcos",
+        "alarmes",
+        "contadores",
+        "ciclo",
+        "tarefas",
     ]:
         path = resultado[schema]
         assert path is not None
@@ -210,8 +224,15 @@ def test_smoke_bem_estar_exit_zero(tmp_path):
     # Primeiro gerar caches no tmp_path
     cache_dir = tmp_path / "cache"
     for parser_mod in [
-        diario_emocional, eventos, treinos, medidas, marcos,
-        alarmes, contadores, ciclo, tarefas,
+        diario_emocional,
+        eventos,
+        treinos,
+        medidas,
+        marcos,
+        alarmes,
+        contadores,
+        ciclo,
+        tarefas,
     ]:
         schema = parser_mod.SCHEMA
         parser_mod.gerar_cache(FIXTURE_VAULT, saida=cache_dir / f"{schema}.json")
@@ -238,8 +259,14 @@ def test_smoke_bem_estar_detecta_violacao(tmp_path):
     cache_dir.mkdir()
     # Gera todos com fixture exceto treinos: forja cache com 0 items
     for parser_mod in [
-        diario_emocional, eventos, medidas, marcos,
-        alarmes, contadores, ciclo, tarefas,
+        diario_emocional,
+        eventos,
+        medidas,
+        marcos,
+        alarmes,
+        contadores,
+        ciclo,
+        tarefas,
     ]:
         schema = parser_mod.SCHEMA
         parser_mod.gerar_cache(FIXTURE_VAULT, saida=cache_dir / f"{schema}.json")
@@ -272,10 +299,14 @@ def test_smoke_bem_estar_detecta_violacao(tmp_path):
 def test_cli_diario_emocional(tmp_path):
     """CLI ``python -m src.mobile_cache.diario_emocional`` deve gerar JSON."""
     saida = tmp_path / "out.json"
-    rc = diario_emocional.cli([
-        "--vault-root", str(FIXTURE_VAULT),
-        "--cache", str(saida),
-    ])
+    rc = diario_emocional.cli(
+        [
+            "--vault-root",
+            str(FIXTURE_VAULT),
+            "--cache",
+            str(saida),
+        ]
+    )
     assert rc == 0
     assert saida.exists()
     payload = json.loads(saida.read_text(encoding="utf-8"))
@@ -285,9 +316,12 @@ def test_cli_diario_emocional(tmp_path):
 def test_cli_varrer_vault(tmp_path, monkeypatch):
     """CLI varrer_vault deve invocar todos parsers e logar resumo."""
     monkeypatch.chdir(tmp_path)
-    rc = varrer_vault.cli([
-        "--vault-root", str(FIXTURE_VAULT),
-    ])
+    rc = varrer_vault.cli(
+        [
+            "--vault-root",
+            str(FIXTURE_VAULT),
+        ]
+    )
     # Pode retornar 0 ou 1 dependendo de o humor passar (FIXTURE não tem daily/);
     # o critério aqui é que rodou sem exception
     assert rc in (0, 1)

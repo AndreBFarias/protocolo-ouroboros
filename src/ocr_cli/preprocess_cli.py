@@ -19,6 +19,7 @@ Variante cupom térmico (mais agressiva):
         -unsharp 0x1.0+1.0+0.01 \\
         -threshold 45% <out>
 """
+
 from __future__ import annotations
 
 import logging
@@ -40,9 +41,7 @@ def _localizar_convert() -> str:
     return caminho
 
 
-def preprocessar_canonico(
-    entrada: Path, saida: Path | None = None
-) -> Path:
+def preprocessar_canonico(entrada: Path, saida: Path | None = None) -> Path:
     """Pipeline universal de pré-processamento OCR.
 
     Aplica: auto-orient → grayscale → deskew → despeckle → level/contrast →
@@ -66,21 +65,24 @@ def preprocessar_canonico(
         binario,
         str(entrada),
         "-auto-orient",
-        "-colorspace", "Gray",
-        "-deskew", "40%",
+        "-colorspace",
+        "Gray",
+        "-deskew",
+        "40%",
         "-despeckle",
-        "-level", "10%,90%,1.0",
-        "-unsharp", "0x0.75+0.75+0.008",
-        "-threshold", "50%",
+        "-level",
+        "10%,90%,1.0",
+        "-unsharp",
+        "0x0.75+0.75+0.008",
+        "-threshold",
+        "50%",
         str(saida),
     ]
     subprocess.run(cmd, check=True, capture_output=True)  # noqa: S603
     return saida
 
 
-def preprocessar_cupom_termico(
-    entrada: Path, saida: Path | None = None
-) -> Path:
+def preprocessar_cupom_termico(entrada: Path, saida: Path | None = None) -> Path:
     """Variante mais agressiva para papel térmico fotografado.
 
     Diferenças vs canônico:
@@ -100,13 +102,18 @@ def preprocessar_cupom_termico(
         binario,
         str(entrada),
         "-auto-orient",
-        "-colorspace", "Gray",
-        "-deskew", "40%",
+        "-colorspace",
+        "Gray",
+        "-deskew",
+        "40%",
         "-despeckle",
         "-despeckle",
-        "-level", "5%,95%,1.2",
-        "-unsharp", "0x1.0+1.0+0.01",
-        "-threshold", "45%",
+        "-level",
+        "5%,95%,1.2",
+        "-unsharp",
+        "0x1.0+1.0+0.01",
+        "-threshold",
+        "45%",
         str(saida),
     ]
     subprocess.run(cmd, check=True, capture_output=True)  # noqa: S603

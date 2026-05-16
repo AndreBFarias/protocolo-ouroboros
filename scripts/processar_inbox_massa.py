@@ -21,6 +21,7 @@ Argumentos:
 Padrões: VALIDATOR_BRIEF (b) acentuação, (e) data/ no .gitignore, (f)
 paths relativos via ``Path``, (u) proof-of-work runtime real.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -45,14 +46,10 @@ def contar_grafo(grafo: Path) -> dict:
         return {"nodes": {}, "edges": {}}
     with sqlite3.connect(grafo) as con:
         nodes = OrderedDict()
-        for tipo, n in con.execute(
-            "SELECT tipo, COUNT(*) FROM node GROUP BY tipo ORDER BY 2 DESC"
-        ):
+        for tipo, n in con.execute("SELECT tipo, COUNT(*) FROM node GROUP BY tipo ORDER BY 2 DESC"):
             nodes[tipo] = n
         edges = OrderedDict()
-        for tipo, n in con.execute(
-            "SELECT tipo, COUNT(*) FROM edge GROUP BY tipo ORDER BY 2 DESC"
-        ):
+        for tipo, n in con.execute("SELECT tipo, COUNT(*) FROM edge GROUP BY tipo ORDER BY 2 DESC"):
             edges[tipo] = n
     return {"nodes": dict(nodes), "edges": dict(edges)}
 
@@ -70,12 +67,13 @@ def main() -> int:
     parser = argparse.ArgumentParser(
         description="Wrapper sobre reprocessar_documentos com backup + log."
     )
-    parser.add_argument("--dry-run", action="store_true",
-                        help="Repassa --dry-run ao reprocessar.")
-    parser.add_argument("--forcar-reextracao", action="store_true",
-                        help="Repassa --forcar-reextracao (limpa documentos).")
-    parser.add_argument("--sem-backup", action="store_true",
-                        help="Não faz backup do grafo.")
+    parser.add_argument("--dry-run", action="store_true", help="Repassa --dry-run ao reprocessar.")
+    parser.add_argument(
+        "--forcar-reextracao",
+        action="store_true",
+        help="Repassa --forcar-reextracao (limpa documentos).",
+    )
+    parser.add_argument("--sem-backup", action="store_true", help="Não faz backup do grafo.")
     args = parser.parse_args()
 
     LOGS_DIR.mkdir(exist_ok=True)
@@ -97,9 +95,7 @@ def main() -> int:
     if args.forcar_reextracao:
         cmd.append("--forcar-reextracao")
 
-    proc = subprocess.run(
-        cmd, cwd=RAIZ, capture_output=True, text=True, check=False
-    )
+    proc = subprocess.run(cmd, cwd=RAIZ, capture_output=True, text=True, check=False)
 
     # Depois
     depois = contar_grafo(GRAFO_PATH)
@@ -130,19 +126,16 @@ def main() -> int:
         "stdout_resumo": proc.stdout[-2000:] if proc.stdout else "",
         "stderr_resumo": proc.stderr[-2000:] if proc.stderr else "",
     }
-    log_path.write_text(json.dumps(log, indent=2, ensure_ascii=False),
-                        encoding="utf-8")
+    log_path.write_text(json.dumps(log, indent=2, ensure_ascii=False), encoding="utf-8")
 
     # Resumo no console
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"INBOX MASSA -- timestamp {ts}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     print(f"Backup: {backup_path or '(pulado)'}")
     print(f"Reprocessar exit: {proc.returncode}")
-    print(f"\nAntes: {sum(antes['nodes'].values())} nodes, "
-          f"{sum(antes['edges'].values())} edges")
-    print(f"Depois: {sum(depois['nodes'].values())} nodes, "
-          f"{sum(depois['edges'].values())} edges")
+    print(f"\nAntes: {sum(antes['nodes'].values())} nodes, {sum(antes['edges'].values())} edges")
+    print(f"Depois: {sum(depois['nodes'].values())} nodes, {sum(depois['edges'].values())} edges")
     if delta_nodes:
         print("\nDelta nodes:")
         for tipo, d in sorted(delta_nodes.items(), key=lambda x: -abs(x[1])):

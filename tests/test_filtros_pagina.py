@@ -8,6 +8,7 @@
   O ``st.expander("Filtros globais")`` legado foi substituído.
 - Helper ``componentes/filtros_pagina.py`` exporta os 4 helpers canônicos.
 """
+
 from __future__ import annotations
 
 import subprocess
@@ -51,7 +52,7 @@ def test_sidebar_zero_selectbox(streamlit_url: str) -> None:
         page.goto(streamlit_url)
         page.wait_for_timeout(6000)
         n = page.evaluate(
-            "document.querySelectorAll('[data-testid=\"stSidebar\"] [data-testid=\"stSelectbox\"]').length"
+            'document.querySelectorAll(\'[data-testid="stSidebar"] [data-testid="stSelectbox"]\').length'
         )
         assert n == 0, f"esperado 0 selectbox na sidebar; achou {n}"
         b.close()
@@ -65,7 +66,7 @@ def test_sidebar_zero_text_input(streamlit_url: str) -> None:
         page.goto(streamlit_url)
         page.wait_for_timeout(6000)
         n = page.evaluate(
-            "document.querySelectorAll('[data-testid=\"stSidebar\"] [data-testid=\"stTextInput\"]').length"
+            'document.querySelectorAll(\'[data-testid="stSidebar"] [data-testid="stTextInput"]\').length'
         )
         assert n == 0, f"esperado 0 text_input na sidebar; achou {n}"
         b.close()
@@ -81,9 +82,20 @@ def test_sidebar_continua_com_8_clusters(streamlit_url: str) -> None:
         clusters = page.evaluate(
             "Array.from(document.querySelectorAll('[data-testid=\"stSidebar\"] .sidebar-cluster-header')).map(e => e.textContent.trim())"
         )
-        esperados = ["Inbox", "Home", "Finanças", "Documentos", "Análise", "Metas", "Bem-estar", "Sistema"]
+        esperados = [
+            "Inbox",
+            "Home",
+            "Finanças",
+            "Documentos",
+            "Análise",
+            "Metas",
+            "Bem-estar",
+            "Sistema",
+        ]
         for esp in esperados:
-            assert any(esp.lower() in c.lower() for c in clusters), f"cluster {esp} ausente; achei {clusters}"
+            assert any(esp.lower() in c.lower() for c in clusters), (
+                f"cluster {esp} ausente; achei {clusters}"
+            )
         b.close()
 
 
@@ -127,7 +139,9 @@ def test_filtros_globais_main_tem_chip_bar(streamlit_url: str) -> None:
                 };
             }"""
         )
-        assert info["sidebar_selects"] == 0, f"esperado 0 selectbox sidebar; achou {info['sidebar_selects']}"
+        assert info["sidebar_selects"] == 0, (
+            f"esperado 0 selectbox sidebar; achou {info['sidebar_selects']}"
+        )
         assert info["popovers_main"] >= 4, (
             f"esperado >=4 popovers no main (granularidade/periodo/pessoa/forma); achou {info['popovers_main']}"
         )
@@ -144,6 +158,7 @@ def test_filtros_globais_main_tem_chip_bar(streamlit_url: str) -> None:
 def test_helper_filtros_pagina_existe() -> None:
     """UX-U-04: módulo ``componentes/filtros_pagina.py`` exporta helpers canônicos."""
     from src.dashboard.componentes import filtros_pagina
+
     assert hasattr(filtros_pagina, "renderizar_filtro_periodo")
     assert hasattr(filtros_pagina, "renderizar_filtro_pessoa")
     assert hasattr(filtros_pagina, "renderizar_filtro_forma_pagamento")
@@ -159,12 +174,14 @@ def test_helper_filtro_pessoa_devolve_string() -> None:
 
     class FakeSt:
         session_state: dict = {}
+
         @staticmethod
         def selectbox(label, opcoes, index=0, key=None):
             return opcoes[index]
 
     with patch.dict(sys.modules, {"streamlit": FakeSt()}):
         from src.dashboard.componentes.filtros_pagina import renderizar_filtro_pessoa
+
         valor = renderizar_filtro_pessoa(opcoes=["Todos", "André", "Vitória"])
         assert valor == "Todos"
 
@@ -176,6 +193,7 @@ def test_helper_filtro_forma_atualiza_session_state() -> None:
 
     class FakeSt:
         session_state: dict = {}
+
         @staticmethod
         def selectbox(label, opcoes, index=0, key=None):
             return opcoes[1]  # Pix
@@ -183,6 +201,7 @@ def test_helper_filtro_forma_atualiza_session_state() -> None:
     fake = FakeSt()
     with patch.dict(sys.modules, {"streamlit": fake}):
         from src.dashboard.componentes.filtros_pagina import renderizar_filtro_forma_pagamento
+
         valor = renderizar_filtro_forma_pagamento()
         assert valor == "Pix"
         assert fake.session_state["filtro_forma"] == "Pix"

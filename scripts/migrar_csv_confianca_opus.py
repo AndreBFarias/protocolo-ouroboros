@@ -48,9 +48,7 @@ def _ler_header(caminho: Path) -> list[str]:
             return []
 
 
-def _inserir_coluna(
-    cabecalho_atual: list[str], nova: str, ancora: str
-) -> list[str]:
+def _inserir_coluna(cabecalho_atual: list[str], nova: str, ancora: str) -> list[str]:
     """Devolve novo cabeçalho com ``nova`` logo após ``ancora``.
 
     Se ``ancora`` ausente, anexa ao final. Se ``nova`` já presente, devolve
@@ -68,9 +66,7 @@ def _inserir_coluna(
     return saida
 
 
-def _migrar_arquivo(
-    caminho: Path, novo_cabecalho: list[str], antigo_cabecalho: list[str]
-) -> None:
+def _migrar_arquivo(caminho: Path, novo_cabecalho: list[str], antigo_cabecalho: list[str]) -> None:
     """Reescreve o CSV com a nova coluna preenchida com VALOR_DEFAULT.
 
     Atômico via .tmp + rename. Backup ``.bak`` mantido por segurança.
@@ -79,9 +75,10 @@ def _migrar_arquivo(
     shutil.copy2(caminho, backup)
 
     tmp = caminho.with_suffix(caminho.suffix + ".tmp")
-    with caminho.open("r", encoding="utf-8", newline="") as fin, tmp.open(
-        "w", encoding="utf-8", newline=""
-    ) as fout:
+    with (
+        caminho.open("r", encoding="utf-8", newline="") as fin,
+        tmp.open("w", encoding="utf-8", newline="") as fout,
+    ):
         reader = csv.DictReader(fin, fieldnames=antigo_cabecalho)
         # Pula header original
         next(reader, None)
@@ -118,10 +115,7 @@ def migrar(caminho: Path, executar: bool) -> int:
 
     novo = _inserir_coluna(cabecalho_atual, NOVA_COLUNA, ANCORA)
     _migrar_arquivo(caminho, novo, cabecalho_atual)
-    print(
-        f"{prefixo} migração concluída: "
-        f"{len(cabecalho_atual)} -> {len(novo)} colunas"
-    )
+    print(f"{prefixo} migração concluída: {len(cabecalho_atual)} -> {len(novo)} colunas")
     return 0
 
 

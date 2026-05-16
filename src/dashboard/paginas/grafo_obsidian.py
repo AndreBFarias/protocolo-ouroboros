@@ -77,6 +77,7 @@ def renderizar(
 
     # UX-U-03: page-header canônico via helper.
     from src.dashboard.componentes.page_header import renderizar_page_header
+
     st.markdown(
         renderizar_page_header(
             titulo="GRAFO VISUAL + OBSIDIAN",

@@ -68,9 +68,7 @@ class TestSnippetHighlight:
 
     def test_highlight_aplica_mark_em_match(self) -> None:
         """Texto com termo casado retorna ``<mark>...</mark>`` ao redor."""
-        saida = pag_busca._highlight_termo(
-            "Pagamento de aluguel mensal recorrente", "aluguel"
-        )
+        saida = pag_busca._highlight_termo("Pagamento de aluguel mensal recorrente", "aluguel")
         assert "<mark>" in saida
         assert "</mark>" in saida
         assert "aluguel" in saida.lower()
@@ -246,14 +244,22 @@ class TestCatalogacaoTabelaDensa:
         amostra = pd.DataFrame(
             [
                 {
-                    "sha8": "aa", "tipo_documento": "boleto_servico",
-                    "razao_social": "X", "data_emissao": "2026-04-01",
-                    "status_linking": "Vinculado", "total": 10.0, "quem": "casal",
+                    "sha8": "aa",
+                    "tipo_documento": "boleto_servico",
+                    "razao_social": "X",
+                    "data_emissao": "2026-04-01",
+                    "status_linking": "Vinculado",
+                    "total": 10.0,
+                    "quem": "casal",
                 },
                 {
-                    "sha8": "bb", "tipo_documento": "boleto_servico",
-                    "razao_social": "Y", "data_emissao": "2026-04-02",
-                    "status_linking": "Sem transação", "total": 20.0, "quem": "casal",
+                    "sha8": "bb",
+                    "tipo_documento": "boleto_servico",
+                    "razao_social": "Y",
+                    "data_emissao": "2026-04-02",
+                    "status_linking": "Sem transação",
+                    "total": 20.0,
+                    "quem": "casal",
                 },
             ]
         )
@@ -299,9 +305,7 @@ class TestSmokeRedesign:
         """Página Busca renderiza sem crash quando o grafo não existe."""
         from streamlit.testing.v1 import AppTest
 
-        monkeypatch.setattr(
-            pag_busca._dados, "CAMINHO_GRAFO", tmp_path / "_falso.sqlite"
-        )
+        monkeypatch.setattr(pag_busca._dados, "CAMINHO_GRAFO", tmp_path / "_falso.sqlite")
 
         script = (
             "import sys\n"
@@ -325,9 +329,7 @@ class TestSmokeRedesign:
         """Página Catalogação renderiza sem crash quando o grafo não existe."""
         from streamlit.testing.v1 import AppTest
 
-        monkeypatch.setattr(
-            pag_cat._dados, "CAMINHO_GRAFO", tmp_path / "_falso.sqlite"
-        )
+        monkeypatch.setattr(pag_cat._dados, "CAMINHO_GRAFO", tmp_path / "_falso.sqlite")
 
         script = (
             "import sys\n"

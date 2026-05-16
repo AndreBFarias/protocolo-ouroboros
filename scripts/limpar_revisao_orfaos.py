@@ -35,14 +35,10 @@ def listar_orfaos(grafo_db: Path, revisao_db: Path) -> list[tuple[str, int]]:
     conn_r = sqlite3.connect(f"file:{revisao_db}?mode=ro", uri=True)
     try:
         ids_validos = {
-            int(row[0])
-            for row in conn_g.execute(
-                "SELECT id FROM node WHERE tipo='documento'"
-            )
+            int(row[0]) for row in conn_g.execute("SELECT id FROM node WHERE tipo='documento'")
         }
         cur = conn_r.execute(
-            "SELECT item_id, COUNT(*) FROM revisao "
-            "WHERE item_id LIKE 'node_%' GROUP BY item_id"
+            "SELECT item_id, COUNT(*) FROM revisao WHERE item_id LIKE 'node_%' GROUP BY item_id"
         )
         orfaos: list[tuple[str, int]] = []
         for item_id, n in cur:

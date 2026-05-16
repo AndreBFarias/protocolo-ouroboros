@@ -305,9 +305,7 @@ def test_holerite_sem_tx_proxima_nao_gera_falso_positivo(db: GrafoDB, caminho_pr
 # ============================================================================
 
 
-def test_sprint_95b_das_parcsn_usa_vencimento_como_ancora(
-    db: GrafoDB, caminho_propostas: Path
-):
+def test_sprint_95b_das_parcsn_usa_vencimento_como_ancora(db: GrafoDB, caminho_propostas: Path):
     """DAS PARCSN com data_emissao=2025-02-28 e vencimento=2025-04-30 e
     tx PIX RECEITA FEDERAL em 2025-04-25.
 
@@ -346,9 +344,7 @@ def test_sprint_95b_das_parcsn_usa_vencimento_como_ancora(
     )
 
 
-def test_sprint_95b_holerite_default_ainda_usa_data_emissao(
-    db: GrafoDB, caminho_propostas: Path
-):
+def test_sprint_95b_holerite_default_ainda_usa_data_emissao(db: GrafoDB, caminho_propostas: Path):
     """Holerite não declara ancora_temporal no config -- continua usando
     data_emissao como centro da janela. Garante backward-compat.
     """

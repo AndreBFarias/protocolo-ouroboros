@@ -181,8 +181,11 @@ def _bloco_fontes_html(
         <div class="revisor-card-fontes">
           {_renderizar(valor_etl, "revisor-fonte-etl", "ETL", div_etl_opus or div_etl_grafo)}
           {_renderizar(valor_opus, "revisor-fonte-opus", "Opus", div_etl_opus or div_grafo_opus)}
-          {_renderizar(valor_grafo, "revisor-fonte-grafo", "Grafo",
-                       div_etl_grafo or div_grafo_opus)}
+          {
+            _renderizar(
+                valor_grafo, "revisor-fonte-grafo", "Grafo", div_etl_grafo or div_grafo_opus
+            )
+        }
           {_renderizar(valor_humano_label, "revisor-fonte-humano", "Humano", False)}
         </div>
         """
@@ -221,8 +224,7 @@ def _renderizar_painel_item(pendencia: dict, marcacoes_item: list[dict]) -> dict
                 st.markdown(
                     callout_html(
                         "info",
-                        f"Pendência é um diretório com fallback de "
-                        f"supervisor: `{caminho.name}`",
+                        f"Pendência é um diretório com fallback de supervisor: `{caminho.name}`",
                     ),
                     unsafe_allow_html=True,
                 )
@@ -317,9 +319,7 @@ def _renderizar_painel_item(pendencia: dict, marcacoes_item: list[dict]) -> dict
 
         col_radio, col_obs = st.columns([1, 2])
         with col_radio:
-            obs_existente = (
-                estados_existentes.get(dimensao, {}).get("observacao") or ""
-            )
+            obs_existente = estados_existentes.get(dimensao, {}).get("observacao") or ""
             indice_default = 2  # Não-aplicável
             if valor_humano_existente == 1:
                 indice_default = 0
@@ -367,11 +367,7 @@ def _gravar_decisao_global(
         estado_final = estado_radio if estado_radio is not None else decisao
         obs_final = obs
         if observacao_global:
-            obs_final = (
-                f"{obs} | {observacao_global}".strip(" |")
-                if obs
-                else observacao_global
-            )
+            obs_final = f"{obs} | {observacao_global}".strip(" |") if obs else observacao_global
         salvar_marcacao(
             CAMINHO_REVISAO_HUMANA,
             item_id,
@@ -530,7 +526,8 @@ def _estado_pill_html(estado: str) -> str:
 
 
 def _transacao_row_html(  # noqa: accent
-    transacao: dict[str, Any], selecionada: bool  # noqa: accent
+    transacao: dict[str, Any],
+    selecionada: bool,  # noqa: accent
 ) -> str:
     """HTML de uma linha da lista lateral de transações."""
     cls_sel = " sel" if selecionada else ""
@@ -553,9 +550,7 @@ def _transacao_row_html(  # noqa: accent
     )
 
 
-def _campos_card_html(
-    campos: dict[str, Any], destacar_diff: tuple[str, ...] = ()
-) -> str:
+def _campos_card_html(campos: dict[str, Any], destacar_diff: tuple[str, ...] = ()) -> str:
     """Renderiza dict de campos do schema (chave -> [valor, conf]) como linhas."""
     if not campos:
         return (
@@ -579,9 +574,7 @@ def _campos_card_html(
     return "".join(linhas)
 
 
-def _humano_inputs_html(
-    humano_campos: dict[str, str], campos_referencia: list[str]
-) -> str:
+def _humano_inputs_html(humano_campos: dict[str, str], campos_referencia: list[str]) -> str:
     """HTML que exibe campos do humano (placeholder UX-V-4 sem persistência)."""
     if not campos_referencia:
         return (
@@ -663,8 +656,7 @@ def _trace_raciocinio_html(registro: dict[str, Any]) -> str:
             f'vs Opus=<span class="destaque-amarelo">{escape(str(v_opus))}</span>.</div>'
         )
     linhas.append(
-        "<div>Hipótese: divergência aritmética ou de formato. "
-        "Revisor humano deve apurar.</div>"
+        "<div>Hipótese: divergência aritmética ou de formato. Revisor humano deve apurar.</div>"
     )
     return f'<div class="revisor-trace-corpo">{"".join(linhas)}</div>'
 
@@ -761,8 +753,7 @@ def _renderizar_layout_4way(registros: list[dict[str, Any]]) -> None:
 
             with col_centro:
                 opcoes_select = [
-                    f"{t.get('sha8') or '—'} · "
-                    f"{t.get('descricao') or '(sem descrição)'}"
+                    f"{t.get('sha8') or '—'} · {t.get('descricao') or '(sem descrição)'}"
                     for t in transacoes_filtradas
                 ]
                 idx_selecionada = st.selectbox(
@@ -799,20 +790,12 @@ def _renderizar_layout_4way(registros: list[dict[str, Any]]) -> None:
                 opus_campos = (registro.get("opus") or {}).get("campos") or {}
                 humano_campos = (registro.get("humano") or {}).get("campos") or {}
                 ofx_corpo = _campos_card_html(etl_campos, destacar_diff=())
-                rascunho_corpo = _campos_card_html(
-                    etl_campos, destacar_diff=divergentes
-                )
-                opus_corpo = _campos_card_html(
-                    opus_campos, destacar_diff=divergentes
-                )
-                campos_referencia = sorted(
-                    set(etl_campos.keys()) | set(opus_campos.keys())
-                )
+                rascunho_corpo = _campos_card_html(etl_campos, destacar_diff=divergentes)
+                opus_corpo = _campos_card_html(opus_campos, destacar_diff=divergentes)
+                campos_referencia = sorted(set(etl_campos.keys()) | set(opus_campos.keys()))
                 humano_corpo = _humano_inputs_html(humano_campos, campos_referencia)
 
-                etl_versao = (
-                    (registro.get("etl") or {}).get("extractor_versao") or "—"
-                )
+                etl_versao = (registro.get("etl") or {}).get("extractor_versao") or "—"
                 opus_versao = (registro.get("opus") or {}).get("versao") or "—"
 
                 cards_html = (
@@ -884,12 +867,22 @@ def renderizar(
 ) -> None:
     """Ponto de entrada da página Revisor (UX-T-09 + UX-V-4)."""
     from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
-    renderizar_grupo_acoes([
-        {"label": "Próxima divergência", "glyph": "diff",
-         "title": "Pular para próxima divergência"},
-        {"label": "Aprovar Opus & avançar", "primary": True, "glyph": "validar",
-         "title": "Aceitar extração Opus para a transação corrente"},
-    ])
+
+    renderizar_grupo_acoes(
+        [
+            {
+                "label": "Próxima divergência",
+                "glyph": "diff",
+                "title": "Pular para próxima divergência",
+            },
+            {
+                "label": "Aprovar Opus & avançar",
+                "primary": True,
+                "glyph": "validar",
+                "title": "Aceitar extração Opus para a transação corrente",
+            },
+        ]
+    )
 
     _ = dados, periodo, pessoa, ctx
 
@@ -1070,8 +1063,7 @@ def renderizar(
                     st.markdown(
                         callout_html(
                             "success",
-                            f"Marcações de `{len(coletadas)}` dimensões "
-                            "persistidas.",
+                            f"Marcações de `{len(coletadas)}` dimensões persistidas.",
                         ),
                         unsafe_allow_html=True,
                     )
@@ -1082,9 +1074,7 @@ def renderizar(
                     key=f"revisor_aprovar_{item_id}",
                     help="Marca todas as dimensões 'Não-aplicáveis' como OK.",
                 ):
-                    _gravar_decisao_global(
-                        item_id, coletadas, ESTADO_OK, "aprovado-via-atalho"
-                    )
+                    _gravar_decisao_global(item_id, coletadas, ESTADO_OK, "aprovado-via-atalho")
                     st.markdown(
                         callout_html(
                             "success",
@@ -1099,9 +1089,7 @@ def renderizar(
                     key=f"revisor_rejeitar_{item_id}",
                     help="Marca todas as dimensões 'Não-aplicáveis' como Erro.",
                 ):
-                    _gravar_decisao_global(
-                        item_id, coletadas, ESTADO_ERRO, "rejeitado-via-atalho"
-                    )
+                    _gravar_decisao_global(item_id, coletadas, ESTADO_ERRO, "rejeitado-via-atalho")
                     st.markdown(
                         callout_html(
                             "warning",

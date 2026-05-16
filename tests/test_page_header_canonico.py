@@ -7,6 +7,7 @@
   ``st.markdown("# X")`` (regra de unicidade).
 - 6 telas amostra: ``h1.page-title`` visível com ``text-transform: uppercase``.
 """
+
 from __future__ import annotations
 
 import os
@@ -28,42 +29,49 @@ PORT = 8772
 
 def test_helper_emite_h1_page_title() -> None:
     from src.dashboard.componentes.page_header import renderizar_page_header
+
     html = renderizar_page_header("EXTRATO")
     assert '<h1 class="page-title">EXTRATO</h1>' in html
 
 
 def test_helper_inclui_subtitulo_quando_dado() -> None:
     from src.dashboard.componentes.page_header import renderizar_page_header
+
     html = renderizar_page_header("CONTAS", subtitulo="Saldos por banco")
     assert '<p class="page-subtitle">Saldos por banco</p>' in html
 
 
 def test_helper_omite_subtitulo_quando_vazio() -> None:
     from src.dashboard.componentes.page_header import renderizar_page_header
+
     html = renderizar_page_header("CONTAS")
     assert "page-subtitle" not in html
 
 
 def test_helper_inclui_sprint_tag() -> None:
     from src.dashboard.componentes.page_header import renderizar_page_header
+
     html = renderizar_page_header("X", sprint_tag="UX-T-01")
     assert '<span class="sprint-tag">UX-T-01</span>' in html
 
 
 def test_helper_inclui_pills() -> None:
     from src.dashboard.componentes.page_header import renderizar_page_header
+
     html = renderizar_page_header("X", pills=[{"texto": "439 docs", "tipo": "d7-graduado"}])
     assert '<span class="pill pill-d7-graduado">439 docs</span>' in html
 
 
 def test_helper_omite_page_meta_quando_vazio() -> None:
     from src.dashboard.componentes.page_header import renderizar_page_header
+
     html = renderizar_page_header("X")
     assert "page-meta" not in html
 
 
 def test_helper_escapa_html_no_titulo() -> None:
     from src.dashboard.componentes.page_header import renderizar_page_header
+
     html = renderizar_page_header("<script>alert(1)</script>")
     assert "&lt;script&gt;" in html
     assert "<script>alert(1)</script>" not in html
@@ -78,7 +86,7 @@ def test_zero_st_title_em_paginas() -> None:
         if not arq.endswith(".py") or arq.startswith("_"):
             continue
         texto = Path(f"src/dashboard/paginas/{arq}").read_text(encoding="utf-8")
-        if re.search(r'^\s*st\.title\(', texto, re.MULTILINE):
+        if re.search(r"^\s*st\.title\(", texto, re.MULTILINE):
             infratores.append(arq)
     assert not infratores, f"st.title() ainda presente em: {infratores}; migrar para page_header"
 
@@ -133,11 +141,15 @@ TELAS_AMOSTRA = [
 
 
 @pytest.mark.parametrize("cluster,tab,h1_esperado", TELAS_AMOSTRA)
-def test_pagina_renderiza_h1_page_title(cluster: str, tab: str, h1_esperado: str, streamlit_url: str) -> None:
+def test_pagina_renderiza_h1_page_title(
+    cluster: str, tab: str, h1_esperado: str, streamlit_url: str
+) -> None:
     with sync_playwright() as p:
         b = p.chromium.launch()
         page = b.new_context(viewport={"width": 1440, "height": 900}).new_page()
-        url = f"{streamlit_url}/?cluster={urllib.parse.quote(cluster)}&tab={urllib.parse.quote(tab)}"
+        url = (
+            f"{streamlit_url}/?cluster={urllib.parse.quote(cluster)}&tab={urllib.parse.quote(tab)}"
+        )
         page.goto(url)
         page.wait_for_timeout(6000)
         info = page.evaluate(
@@ -146,7 +158,9 @@ def test_pagina_renderiza_h1_page_title(cluster: str, tab: str, h1_esperado: str
                 return h1s.map(h => ({txt: h.textContent.trim().toUpperCase(), tt: getComputedStyle(h).textTransform}));
             }"""
         )
-        assert len(info) >= 1, f"esperado >=1 h1.page-title visível em {cluster}/{tab}; achou {len(info)}"
+        assert len(info) >= 1, (
+            f"esperado >=1 h1.page-title visível em {cluster}/{tab}; achou {len(info)}"
+        )
         # text-transform deve ser uppercase
         assert info[0]["tt"] == "uppercase", f"page-title deve ser UPPERCASE; tt={info[0]['tt']}"
         # texto inclui marcador esperado

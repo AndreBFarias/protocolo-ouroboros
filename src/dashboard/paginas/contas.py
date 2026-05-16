@@ -200,9 +200,9 @@ def calcular_utilizacao_cartoes(
         else:
             # heurística: limite ~ 1.5x maior fatura histórica do banco
             todo_credito_banco = creditos[creditos["banco_origem"] == banco]
-            por_mes = todo_credito_banco.groupby(
-                todo_credito_banco["data"].dt.to_period("M")
-            )["valor"].apply(lambda s: s.abs().sum())
+            por_mes = todo_credito_banco.groupby(todo_credito_banco["data"].dt.to_period("M"))[
+                "valor"
+            ].apply(lambda s: s.abs().sum())
             base = float(por_mes.max()) if not por_mes.empty else usado
             limite = max(base * 1.5, usado, 1000.0)
         percentual = usado / limite if limite > 0 else 0.0
@@ -225,9 +225,7 @@ def calcular_utilizacao_cartoes(
 # ---------------------------------------------------------------------------
 
 
-def _sparkline_saldo_30d(
-    extrato, banco: str, *, cor=None
-) -> str:
+def _sparkline_saldo_30d(extrato, banco: str, *, cor=None) -> str:
     """Sparkline com saldo cumulativo dos últimos 30 dias para um banco.
 
     UX-V-2.1: agrupa por dia, ``cumsum`` e tail(30). Retorna string vazia
@@ -235,6 +233,7 @@ def _sparkline_saldo_30d(
     ``sparkline_html`` da fronteira ``componentes.ui`` (UX-V-02).
     """
     import pandas as _pd  # local para evitar reorg do header
+
     if extrato.empty or "banco_origem" not in extrato.columns:
         return ""
     df_banco = extrato[extrato["banco_origem"] == banco].copy()
@@ -244,9 +243,7 @@ def _sparkline_saldo_30d(
     df_banco = df_banco.dropna(subset=["data"]).sort_values("data")
     if len(df_banco) < 2:
         return ""
-    saldo_diario = (
-        df_banco.groupby(df_banco["data"].dt.date)["valor"].sum().cumsum()
-    )
+    saldo_diario = df_banco.groupby(df_banco["data"].dt.date)["valor"].sum().cumsum()
     if len(saldo_diario) < 2:
         return ""
     valores = [float(v) for v in saldo_diario.tail(30).tolist()]
@@ -282,9 +279,7 @@ def _page_header_html(num_contas: int, num_cartoes: int) -> str:
     )
 
 
-def _patrimonio_strip_html(
-    saldo_total: float, fatura_aberta: float, ultima_sync: str
-) -> str:
+def _patrimonio_strip_html(saldo_total: float, fatura_aberta: float, ultima_sync: str) -> str:
     fatura_cor = CORES["alerta"] if fatura_aberta > 0 else CORES["texto_sec"]
     return minificar(
         f"""
@@ -371,18 +366,10 @@ def _card_banco_html(
     saldo = float(info["saldo"])
     delta = float(info["delta_30d"])
     txns = int(info["txns_30d"])
-    delta_cor = (
-        CORES["d7_graduado"]
-        if delta >= 0
-        else CORES["negativo"]
-    )
+    delta_cor = CORES["d7_graduado"] if delta >= 0 else CORES["negativo"]
     delta_sinal = "+" if delta >= 0 else "−"
     delta_str = f"{delta_sinal} {formatar_moeda(abs(delta))} · 30d"
-    bloco_sparkline = (
-        f'<div class="conta-sparkline">{sparkline_svg}</div>'
-        if sparkline_svg
-        else ""
-    )
+    bloco_sparkline = f'<div class="conta-sparkline">{sparkline_svg}</div>' if sparkline_svg else ""
     return minificar(
         f"""
         <div class="acc conta-card"
@@ -531,12 +518,18 @@ def renderizar(dados: dict[str, pd.DataFrame], mes_selecionado: str, pessoa: str
     Sincronizar OFX).
     """
     from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
-    renderizar_grupo_acoes([
-        {"label": "Adicionar conta", "glyph": "plus",
-         "title": "Cadastrar nova conta bancária"},
-        {"label": "Sincronizar OFX", "primary": True, "glyph": "refresh",
-         "title": "Reprocessar OFX e atualizar saldos"},
-    ])
+
+    renderizar_grupo_acoes(
+        [
+            {"label": "Adicionar conta", "glyph": "plus", "title": "Cadastrar nova conta bancária"},
+            {
+                "label": "Sincronizar OFX",
+                "primary": True,
+                "glyph": "refresh",
+                "title": "Reprocessar OFX e atualizar saldos",
+            },
+        ]
+    )
 
     # UX-V-2.1: CSS dedicado da página. ``carregar_css_pagina`` retorna
     # string vazia (no-op) quando o arquivo não existe.
@@ -545,20 +538,14 @@ def renderizar(dados: dict[str, pd.DataFrame], mes_selecionado: str, pessoa: str
         st.markdown(minificar(css_pagina), unsafe_allow_html=True)
 
     extrato = dados.get("extrato", pd.DataFrame())
-    extrato_pessoa = (
-        filtrar_por_pessoa(extrato, pessoa) if not extrato.empty else extrato
-    )
+    extrato_pessoa = filtrar_por_pessoa(extrato, pessoa) if not extrato.empty else extrato
 
-    contas_info = calcular_saldo_por_banco(
-        extrato_pessoa, [b[0] for b in BANCOS_CONTAS]
-    )
+    contas_info = calcular_saldo_por_banco(extrato_pessoa, [b[0] for b in BANCOS_CONTAS])
     cartoes = calcular_utilizacao_cartoes(extrato_pessoa)
 
     saldo_total = sum(float(info["saldo"]) for info in contas_info.values())
     fatura_aberta = sum(float(c["usado"]) for c in cartoes)  # type: ignore[arg-type]
-    ultima_sync = (
-        calcular_data_snapshot(CAMINHO_XLSX) or "indisponível"
-    )
+    ultima_sync = calcular_data_snapshot(CAMINHO_XLSX) or "indisponível"
 
     st.markdown(
         _page_header_html(len(contas_info), len(cartoes)),
@@ -598,7 +585,7 @@ def renderizar(dados: dict[str, pd.DataFrame], mes_selecionado: str, pessoa: str
                         grid-template-columns:repeat(3, minmax(0,1fr));
                         gap:14px;
                         margin-bottom:18px;">
-              {''.join(cards)}
+              {"".join(cards)}
             </div>
             """
         )
@@ -629,7 +616,7 @@ def renderizar(dados: dict[str, pd.DataFrame], mes_selecionado: str, pessoa: str
                         grid-template-columns:repeat(2, minmax(0,1fr));
                         gap:14px;
                         margin-bottom:18px;">
-              {''.join(cards_cc)}
+              {"".join(cards_cc)}
             </div>
             """
         )
@@ -646,9 +633,7 @@ def renderizar(dados: dict[str, pd.DataFrame], mes_selecionado: str, pessoa: str
         return
 
     st.markdown(
-        _section_bar_html(
-            "Snapshot histórico (XLSX legado)", "atualização manual"
-        ),
+        _section_bar_html("Snapshot histórico (XLSX legado)", "atualização manual"),
         unsafe_allow_html=True,
     )
     # Subtítulo de seção (substitui hero_titulo_html legado — 2026-05-06).
@@ -685,9 +670,7 @@ def _secao_dividas(df: pd.DataFrame, mes: str, pessoa: str) -> None:
             (df["recorrente"] == True) & (df["status"] != "Pago")  # noqa: E712
         ]
         df_mes = pd.concat([df_mes, df_recorrentes]).drop_duplicates()
-    df_mes = filtrar_por_forma_pagamento(
-        filtrar_por_pessoa(df_mes, pessoa), filtro_forma_ativo()
-    )
+    df_mes = filtrar_por_forma_pagamento(filtrar_por_pessoa(df_mes, pessoa), filtro_forma_ativo())
 
     if df_mes.empty:
         st.markdown(
@@ -743,7 +726,7 @@ def _secao_dividas(df: pd.DataFrame, mes: str, pessoa: str) -> None:
                          color: {CORES["texto_sec"]}; font-size: {FONTE_MINIMA}px;">Obs</th>
             </tr>
           </thead>
-          <tbody>{''.join(linhas_html)}</tbody>
+          <tbody>{"".join(linhas_html)}</tbody>
         </table>
         """
     )
@@ -848,7 +831,7 @@ def _secao_prazos(df: pd.DataFrame) -> None:
                          color: {CORES["texto_sec"]}; font-size: {FONTE_MINIMA}px;">Urgência</th>
             </tr>
           </thead>
-          <tbody>{''.join(linhas_html)}</tbody>
+          <tbody>{"".join(linhas_html)}</tbody>
         </table>
         """
     )

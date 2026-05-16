@@ -78,16 +78,14 @@ def test_renderizar_sidebar_destaca_aba_ativa() -> None:
     # Existe pelo menos um item com classe active e ele aponta para Revisor.
     assert 'class="sidebar-item active"' in html
     # E especificamente referência a Revisor com active.
-    trecho_ativo = (
-        'class="sidebar-item active" href="?cluster=Documentos&amp;tab=Revisor"'
-    )
+    trecho_ativo = 'class="sidebar-item active" href="?cluster=Documentos&amp;tab=Revisor"'
     # O urllib usa & cru e o html.escape transforma em &amp; -- testamos o
     # bruto antes da renderização. Ambos os formatos podem ocorrer; o
     # importante é o link conter cluster=Documentos e tab=Revisor.
-    assert ('cluster=Documentos' in html) and ('tab=Revisor' in html)
+    assert ("cluster=Documentos" in html) and ("tab=Revisor" in html)
     # E que ele veio como item ativo (busca o segmento ``active``).
-    bloco_revisor_ativo = html.split('tab=Revisor')[0].split('class="')[-1]
-    assert 'active' in bloco_revisor_ativo, (
+    bloco_revisor_ativo = html.split("tab=Revisor")[0].split('class="')[-1]
+    assert "active" in bloco_revisor_ativo, (
         f"Item Revisor não está marcado active no bloco: {bloco_revisor_ativo!r}"
     )
     _ = trecho_ativo  # silencia ruff sobre var não usada (referência docs)
@@ -98,14 +96,11 @@ def test_renderizar_sidebar_emite_href_query_string() -> None:
     html = renderizar_sidebar(cluster_ativo="Home", aba_ativa="Visão Geral")
     # Itens implementados sempre têm tab=...
     assert 'href="?cluster=Inbox&amp;tab=Inbox"' in html or (
-        'cluster=Inbox' in html and 'tab=Inbox' in html
+        "cluster=Inbox" in html and "tab=Inbox" in html
     )
     # Acentos em "Análise" devem ser URL-escapados (urllib quote para %C3%A1)
     # ou aparecer como ``An%C3%A1lise`` -- ambos válidos.
-    assert (
-        'cluster=An%C3%A1lise' in html
-        or 'cluster=Análise' in html
-    )
+    assert "cluster=An%C3%A1lise" in html or "cluster=Análise" in html
 
 
 def test_renderizar_topbar_breadcrumb_marca_ultimo_segmento() -> None:
@@ -131,6 +126,7 @@ def test_renderizar_topbar_acoes_vazias_emite_slot() -> None:
     """
     try:
         import streamlit as _st
+
         _st.session_state["topbar_acoes_html"] = ""
     except Exception:
         pass

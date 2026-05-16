@@ -11,6 +11,7 @@ Cobre:
 
 Testes não instalam o watcher no sistema real; tudo via subprocess + --dry-run.
 """
+
 from __future__ import annotations
 
 import os
@@ -69,17 +70,13 @@ def test_installer_eh_executavel() -> None:
 
 
 def test_watcher_help_retorna_zero() -> None:
-    res = subprocess.run(
-        [str(WATCHER), "--help"], capture_output=True, text=True, timeout=10
-    )
+    res = subprocess.run([str(WATCHER), "--help"], capture_output=True, text=True, timeout=10)
     assert res.returncode == 0
     assert "inbox_watcher" in res.stdout.lower() or "debounce" in res.stdout.lower()
 
 
 def test_installer_help_retorna_zero() -> None:
-    res = subprocess.run(
-        [str(INSTALLER), "--help"], capture_output=True, text=True, timeout=10
-    )
+    res = subprocess.run([str(INSTALLER), "--help"], capture_output=True, text=True, timeout=10)
     assert res.returncode == 0
     assert "install" in res.stdout.lower()
 
@@ -97,9 +94,7 @@ def test_installer_dry_run_nao_modifica_sistema(tmp_path: Path) -> None:
         timeout=15,
         env=env,
     )
-    assert res.returncode == 0, (
-        f"installer dry-run falhou stdout={res.stdout} stderr={res.stderr}"
-    )
+    assert res.returncode == 0, f"installer dry-run falhou stdout={res.stdout} stderr={res.stderr}"
     assert "DRY-RUN" in res.stdout
 
 
@@ -211,9 +206,7 @@ def test_watcher_debounce_detecta_arquivo_chegando(tmp_path: Path) -> None:
 
 
 @pytest.mark.skipif(
-    subprocess.run(
-        ["which", "systemd-analyze"], capture_output=True
-    ).returncode != 0,
+    subprocess.run(["which", "systemd-analyze"], capture_output=True).returncode != 0,
     reason="systemd-analyze não disponível",
 )
 def test_systemd_analyze_verifica_units() -> None:
@@ -228,9 +221,13 @@ def test_systemd_analyze_verifica_units() -> None:
         shutil.copy(UNIT_SERVICE, tmp_path / "ouroboros-inbox.service")
         shutil.copy(UNIT_PATH, tmp_path / "ouroboros-inbox.path")
         res = subprocess.run(
-            ["systemd-analyze", "verify", "--user",
-             str(tmp_path / "ouroboros-inbox.service"),
-             str(tmp_path / "ouroboros-inbox.path")],
+            [
+                "systemd-analyze",
+                "verify",
+                "--user",
+                str(tmp_path / "ouroboros-inbox.service"),
+                str(tmp_path / "ouroboros-inbox.path"),
+            ],
             capture_output=True,
             text=True,
             timeout=15,
@@ -241,14 +238,13 @@ def test_systemd_analyze_verifica_units() -> None:
         # Aceitamos exit 0 ou stderr que só cite WorkingDirectory/path inexistente.
         if res.returncode != 0:
             erros_sintaxe = [
-                linha for linha in res.stderr.splitlines()
+                linha
+                for linha in res.stderr.splitlines()
                 if "unknown" in linha.lower()
                 or "invalid" in linha.lower()
                 or "failed to parse" in linha.lower()
             ]
-            assert not erros_sintaxe, (
-                f"systemd-analyze acusou erros de sintaxe:\n{res.stderr}"
-            )
+            assert not erros_sintaxe, f"systemd-analyze acusou erros de sintaxe:\n{res.stderr}"
 
 
 # "A liberdade não consiste em fazer o que se quer, mas em saber o que se quer fazer." -- Hegel

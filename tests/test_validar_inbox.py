@@ -54,9 +54,7 @@ def _criar_csv_com_pendencias(tmp_path: Path, registros: list[tuple]) -> Path:
 def _executar_cli(args: list[str], cwd: Path | None = None) -> tuple[int, str]:
     """Executa o CLI via subprocess e retorna (exit_code, stdout)."""
     cmd = [sys.executable, str(_RAIZ_REPO / "scripts" / "validar_inbox.py")] + args
-    resultado = subprocess.run(
-        cmd, capture_output=True, text=True, cwd=cwd or _RAIZ_REPO
-    )
+    resultado = subprocess.run(cmd, capture_output=True, text=True, cwd=cwd or _RAIZ_REPO)
     return resultado.returncode, resultado.stdout
 
 
@@ -73,12 +71,16 @@ def test_filtro_tipo_seleciona_apenas_tipo_pedido(tmp_path, monkeypatch):
     buffer = io.StringIO()
     with redirect_stdout(buffer):
         validar_inbox.comando_principal(
-            type("Args", (), {
-                "tipo": "nfce_modelo_65",
-                "mes": None,
-                "apenas_divergentes": False,
-                "limite": 50,
-            })()
+            type(
+                "Args",
+                (),
+                {
+                    "tipo": "nfce_modelo_65",
+                    "mes": None,
+                    "apenas_divergentes": False,
+                    "limite": 50,
+                },
+            )()
         )
     saida = buffer.getvalue()
     assert "2 arquivo(s) pendente(s)" in saida
@@ -100,12 +102,16 @@ def test_filtro_mes_extrai_de_ts_processado(tmp_path, monkeypatch):
     buffer = io.StringIO()
     with redirect_stdout(buffer):
         validar_inbox.comando_principal(
-            type("Args", (), {
-                "tipo": None,
-                "mes": "2026-04",
-                "apenas_divergentes": False,
-                "limite": 50,
-            })()
+            type(
+                "Args",
+                (),
+                {
+                    "tipo": None,
+                    "mes": "2026-04",
+                    "apenas_divergentes": False,
+                    "limite": 50,
+                },
+            )()
         )
     saida = buffer.getvalue()
     assert "1 arquivo(s) pendente(s)" in saida
@@ -129,12 +135,16 @@ def test_apenas_divergentes_seleciona_arquivos_com_divergencia_humana(tmp_path, 
     buffer = io.StringIO()
     with redirect_stdout(buffer):
         validar_inbox.comando_principal(
-            type("Args", (), {
-                "tipo": None,
-                "mes": None,
-                "apenas_divergentes": True,
-                "limite": 50,
-            })()
+            type(
+                "Args",
+                (),
+                {
+                    "tipo": None,
+                    "mes": None,
+                    "apenas_divergentes": True,
+                    "limite": 50,
+                },
+            )()
         )
     saida = buffer.getvalue()
     assert "1 arquivo(s) pendente(s)" in saida
@@ -145,7 +155,7 @@ def test_apenas_divergentes_seleciona_arquivos_com_divergencia_humana(tmp_path, 
 def test_limite_respeitado(tmp_path, monkeypatch):
     """`--limite N` limita lista a N primeiros sha8."""
     registros = [
-        (f"sha{i:05d}", "nfce_modelo_65", "total", f"{i*10}.00", "pendente", _TS, "")
+        (f"sha{i:05d}", "nfce_modelo_65", "total", f"{i * 10}.00", "pendente", _TS, "")
         for i in range(15)
     ]
     caminho = _criar_csv_com_pendencias(tmp_path, registros)
@@ -154,12 +164,16 @@ def test_limite_respeitado(tmp_path, monkeypatch):
     buffer = io.StringIO()
     with redirect_stdout(buffer):
         validar_inbox.comando_principal(
-            type("Args", (), {
-                "tipo": None,
-                "mes": None,
-                "apenas_divergentes": False,
-                "limite": 5,
-            })()
+            type(
+                "Args",
+                (),
+                {
+                    "tipo": None,
+                    "mes": None,
+                    "apenas_divergentes": False,
+                    "limite": 5,
+                },
+            )()
         )
     saida = buffer.getvalue()
     # 5 arquivos listados (15 pendentes, limite 5)
@@ -186,12 +200,16 @@ def test_agrupamento_por_sha8(tmp_path, monkeypatch):
     buffer = io.StringIO()
     with redirect_stdout(buffer):
         validar_inbox.comando_principal(
-            type("Args", (), {
-                "tipo": None,
-                "mes": None,
-                "apenas_divergentes": False,
-                "limite": 50,
-            })()
+            type(
+                "Args",
+                (),
+                {
+                    "tipo": None,
+                    "mes": None,
+                    "apenas_divergentes": False,
+                    "limite": 50,
+                },
+            )()
         )
     saida = buffer.getvalue()
     assert "1 arquivo(s) pendente(s)" in saida
@@ -209,12 +227,16 @@ def test_csv_vazio_imprime_mensagem_e_sai_zero(tmp_path, monkeypatch):
     buffer = io.StringIO()
     with redirect_stdout(buffer):
         codigo = validar_inbox.comando_principal(
-            type("Args", (), {
-                "tipo": None,
-                "mes": None,
-                "apenas_divergentes": False,
-                "limite": 50,
-            })()
+            type(
+                "Args",
+                (),
+                {
+                    "tipo": None,
+                    "mes": None,
+                    "apenas_divergentes": False,
+                    "limite": 50,
+                },
+            )()
         )
     assert codigo == 0
     assert "sem pendencias" in buffer.getvalue()
@@ -223,8 +245,15 @@ def test_csv_vazio_imprime_mensagem_e_sai_zero(tmp_path, monkeypatch):
 def test_progresso_reportado_a_cada_5(tmp_path, monkeypatch):
     """Linha `=== progresso: N/M ===` aparece a cada 5 arquivos."""
     registros = [
-        (f"s{i:07d}", "nfce_modelo_65", "total", f"{i*10}.00", "pendente",
-         "2026-04-29T10:00:00", "")
+        (
+            f"s{i:07d}",
+            "nfce_modelo_65",
+            "total",
+            f"{i * 10}.00",
+            "pendente",
+            "2026-04-29T10:00:00",
+            "",
+        )
         for i in range(12)
     ]
     caminho = _criar_csv_com_pendencias(tmp_path, registros)
@@ -233,12 +262,16 @@ def test_progresso_reportado_a_cada_5(tmp_path, monkeypatch):
     buffer = io.StringIO()
     with redirect_stdout(buffer):
         validar_inbox.comando_principal(
-            type("Args", (), {
-                "tipo": None,
-                "mes": None,
-                "apenas_divergentes": False,
-                "limite": 50,
-            })()
+            type(
+                "Args",
+                (),
+                {
+                    "tipo": None,
+                    "mes": None,
+                    "apenas_divergentes": False,
+                    "limite": 50,
+                },
+            )()
         )
     saida = buffer.getvalue()
     # com 12 arquivos, progresso aparece em 5 e 10

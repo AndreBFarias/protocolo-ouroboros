@@ -228,9 +228,7 @@ def gerar_diagnostico(grafo_path: Path) -> dict[str, Any]:
     total_linkados = sum(linkados_por_tipo.values())
     total_transacoes = len(transacoes)
     pct_docs_linkados = (total_linkados / total_docs * 100) if total_docs else 0.0
-    pct_transacoes_com_doc = (
-        (total_linkados / total_transacoes * 100) if total_transacoes else 0.0
-    )
+    pct_transacoes_com_doc = (total_linkados / total_transacoes * 100) if total_transacoes else 0.0
 
     return {
         "total_documentos": total_docs,
@@ -282,7 +280,7 @@ def imprimir_relatorio(diag: dict[str, Any]) -> None:
                 f"  doc_id={it['doc_id']} total={it.get('total')} "
                 f"data={it.get('data_emissao')} venc={it.get('vencimento')}: "
                 f"janela_min={it['janela_dias_minima']}d "
-                f"tol_min={it['tolerancia_pct_minima']*100:.1f}% "
+                f"tol_min={it['tolerancia_pct_minima'] * 100:.1f}% "
                 f"qtd={it['qtd_candidatas']} "
                 f"top=(tid={primeira.get('tid')}, delta={primeira.get('delta_dias')}d, "
                 f"diff_v={primeira.get('diff_valor')})"

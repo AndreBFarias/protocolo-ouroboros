@@ -57,9 +57,7 @@ def _carregar_cache(vault_root: Path | None, nome: str) -> list[dict[str, Any]]:
     return items if isinstance(items, list) else []
 
 
-def _filtrar_periodo(
-    items: list[dict[str, Any]], dias: int, hoje: date
-) -> list[dict[str, Any]]:
+def _filtrar_periodo(items: list[dict[str, Any]], dias: int, hoje: date) -> list[dict[str, Any]]:
     limite = hoje - timedelta(days=dias - 1)
     saida: list[dict[str, Any]] = []
     for it in items:
@@ -87,9 +85,7 @@ def _agregados_eventos(items: list[dict[str, Any]]) -> dict[str, Any]:
     pos = sum(1 for it in items if str(it.get("modo") or "").lower() == "positivo")
     neg = sum(1 for it in items if str(it.get("modo") or "").lower() == "negativo")
     bairros = Counter(
-        str(it.get("bairro") or "").strip()
-        for it in items
-        if str(it.get("bairro") or "").strip()
+        str(it.get("bairro") or "").strip() for it in items if str(it.get("bairro") or "").strip()
     )
     return {
         "qtd": len(items),
@@ -101,14 +97,10 @@ def _agregados_eventos(items: list[dict[str, Any]]) -> dict[str, Any]:
 
 def _agregados_treinos(items: list[dict[str, Any]]) -> dict[str, Any]:
     rotinas = Counter(
-        str(it.get("rotina") or "").strip()
-        for it in items
-        if str(it.get("rotina") or "").strip()
+        str(it.get("rotina") or "").strip() for it in items if str(it.get("rotina") or "").strip()
     )
     duracoes = [
-        float(it["duracao_min"])
-        for it in items
-        if isinstance(it.get("duracao_min"), (int, float))
+        float(it["duracao_min"]) for it in items if isinstance(it.get("duracao_min"), (int, float))
     ]
     return {
         "qtd": len(items),
@@ -181,8 +173,11 @@ def _humor_intervalo(
     para auxiliar :func:`_agregados_humor` (min/max).
     """
     vazio: dict[str, Any] = {
-        "media": None, "qtd": 0,
-        "ansiedade_media": None, "foco_media": None, "energia_media": None,
+        "media": None,
+        "qtd": 0,
+        "ansiedade_media": None,
+        "foco_media": None,
+        "energia_media": None,
     }
     if _retornar_brutos:
         vazio["_brutos"] = []
@@ -198,9 +193,7 @@ def _humor_intervalo(
     celulas = payload.get("celulas") or []
     if not isinstance(celulas, list):
         return dict(vazio)
-    acc: dict[str, list[float]] = {
-        "humor": [], "ansiedade": [], "foco": [], "energia": []
-    }
+    acc: dict[str, list[float]] = {"humor": [], "ansiedade": [], "foco": [], "energia": []}
     for c in celulas:
         try:
             d = date.fromisoformat(str(c.get("data") or ""))
@@ -341,9 +334,7 @@ def _formatar_delta(delta: float, formato: str) -> str:
     return f"{delta:+.2f}"
 
 
-def _comparativo_html(
-    metricas_atual: dict[str, float], metricas_ant: dict[str, float]
-) -> str:
+def _comparativo_html(metricas_atual: dict[str, float], metricas_ant: dict[str, float]) -> str:
     """Tabela `vs 30D anteriores` com 9 métricas e delta colorido por sinal.
 
     Métricas em que "menor é melhor" (ansiedade, eventos negativos)
@@ -363,16 +354,14 @@ def _comparativo_html(
         else:
             subiu = delta > 0
             seta = "↗" if subiu else "↘"
-            classe = (
-                "delta-pos" if (subiu != menor_eh_melhor) else "delta-neg"
-            )
+            classe = "delta-pos" if (subiu != menor_eh_melhor) else "delta-neg"
             sinal = f'<span class="{classe}">{seta} {delta_str}</span>'
         valor_str = _formatar_valor(atual, formato)
         linhas.append(
             '<div class="comparativo-linha">'
             f'<span class="comp-label">{label}</span>'
             f'<span class="comp-valor">{valor_str}</span>'
-            f'{sinal}'
+            f"{sinal}"
             "</div>"
         )
     if not linhas:
@@ -380,13 +369,11 @@ def _comparativo_html(
             '<div class="comparativo-bloco">'
             '<h3 class="comp-titulo">COMPARATIVO · vs 30D ANTERIORES</h3>'
             '<p class="destaques-vazio">Sem dado suficiente para comparar.</p>'
-            '</div>'
+            "</div>"
         )
     return minificar(
         '<div class="comparativo-bloco">'
-        '<h3 class="comp-titulo">COMPARATIVO · vs 30D ANTERIORES</h3>'
-        + "".join(linhas)
-        + '</div>'
+        '<h3 class="comp-titulo">COMPARATIVO · vs 30D ANTERIORES</h3>' + "".join(linhas) + "</div>"
     )
 
 
@@ -429,9 +416,7 @@ def _maior_streak_humor_alto(
     return melhor
 
 
-def _gerar_destaques(
-    vault_root: Path | None, inicio: date, fim: date
-) -> list[dict[str, str]]:
+def _gerar_destaques(vault_root: Path | None, inicio: date, fim: date) -> list[dict[str, str]]:
     """Gera até 5 destaques determinísticos da janela ``[início, fim]``.
 
     Heurísticas (todas sobre caches reais, ADR-13 compliant):
@@ -452,44 +437,41 @@ def _gerar_destaques(
     medidas = _filtrar_intervalo(_carregar_cache(vault_root, "medidas"), inicio, fim)
 
     # Viagens
-    viagens = [
-        e for e in eventos
-        if "viagem" in str(e.get("categoria") or "").lower()
-    ]
+    viagens = [e for e in eventos if "viagem" in str(e.get("categoria") or "").lower()]
     if viagens:
         primeiro = viagens[0]
         lugar = (
-            primeiro.get("lugar")
-            or primeiro.get("bairro")
-            or primeiro.get("titulo")
-            or "destino"
+            primeiro.get("lugar") or primeiro.get("bairro") or primeiro.get("titulo") or "destino"
         )
-        destaques.append({
-            "tipo": "social",
-            "rotulo": f"Viagem · {lugar}",
-            "data": str(primeiro.get("data") or ""),
-        })
+        destaques.append(
+            {
+                "tipo": "social",
+                "rotulo": f"Viagem · {lugar}",
+                "data": str(primeiro.get("data") or ""),
+            }
+        )
 
     # Streak de humor alto (>=5 dias seguidos com humor >=4)
     streak = _maior_streak_humor_alto(vault_root, inicio, fim)
     if streak >= 5:
-        destaques.append({
-            "tipo": "vitoria",
-            "rotulo": f"Streak de {streak} dias seguidos com humor ≥ 4",
-            "data": "",
-        })
+        destaques.append(
+            {
+                "tipo": "vitoria",
+                "rotulo": f"Streak de {streak} dias seguidos com humor ≥ 4",
+                "data": "",
+            }
+        )
 
     # Rotina dominante
     agg_treinos = _agregados_treinos(treinos)
     if agg_treinos["qtd"] >= 3 and agg_treinos["rotina_dominante"] != "--":
-        destaques.append({
-            "tipo": "vitoria",
-            "rotulo": (
-                f"{agg_treinos['rotina_dominante']} · "
-                f"{agg_treinos['qtd']} treinos"
-            ),
-            "data": "",
-        })
+        destaques.append(
+            {
+                "tipo": "vitoria",
+                "rotulo": (f"{agg_treinos['rotina_dominante']} · {agg_treinos['qtd']} treinos"),
+                "data": "",
+            }
+        )
 
     # Melhora de humor entre janela anterior e atual
     dias = (fim - inicio).days + 1
@@ -501,45 +483,50 @@ def _gerar_destaques(
         and h_ant["media"] is not None
         and h_atual["media"] - h_ant["media"] >= 0.5
     ):
-        destaques.append({
-            "tipo": "conquista",
-            "rotulo": (
-                f"humor melhorou +{h_atual['media'] - h_ant['media']:.1f} "
-                "vs janela anterior"
-            ),
-            "data": "",
-        })
+        destaques.append(
+            {
+                "tipo": "conquista",
+                "rotulo": (
+                    f"humor melhorou +{h_atual['media'] - h_ant['media']:.1f} vs janela anterior"
+                ),
+                "data": "",
+            }
+        )
 
     # Perda de peso saudavel
     agg_medidas = _agregados_medidas(medidas)
     delta_peso = agg_medidas.get("delta_peso")
     if delta_peso is not None and -2.0 <= delta_peso <= -0.1:
-        destaques.append({
-            "tipo": "vitoria",
-            "rotulo": f"peso · {delta_peso:+.1f} kg na janela",
-            "data": "",
-        })
+        destaques.append(
+            {
+                "tipo": "vitoria",
+                "rotulo": f"peso · {delta_peso:+.1f} kg na janela",
+                "data": "",
+            }
+        )
 
     # Top bairro
     agg_eventos = _agregados_eventos(eventos)
     if agg_eventos["top_bairros"]:
         bairro, qtd = agg_eventos["top_bairros"][0]
         if qtd >= 3:
-            destaques.append({
-                "tipo": "social",
-                "rotulo": f"{bairro} · {qtd} eventos",
-                "data": "",
-            })
+            destaques.append(
+                {
+                    "tipo": "social",
+                    "rotulo": f"{bairro} · {qtd} eventos",
+                    "data": "",
+                }
+            )
 
     # Risco: eventos negativos
     if agg_eventos["negativos"] >= 2:
-        destaques.append({
-            "tipo": "risco",
-            "rotulo": (
-                f"{agg_eventos['negativos']} eventos negativos no período"
-            ),
-            "data": "",
-        })
+        destaques.append(
+            {
+                "tipo": "risco",
+                "rotulo": (f"{agg_eventos['negativos']} eventos negativos no período"),
+                "data": "",
+            }
+        )
 
     return destaques[:5]
 
@@ -551,7 +538,7 @@ def _destaques_html(destaques: list[dict[str, str]]) -> str:
             '<div class="destaques-bloco">'
             '<h3 class="destaques-titulo">DESTAQUES DO MÊS</h3>'
             '<p class="destaques-vazio">Sem destaques no período.</p>'
-            '</div>'
+            "</div>"
         )
 
     cards: list[str] = []
@@ -568,10 +555,8 @@ def _destaques_html(destaques: list[dict[str, str]]) -> str:
     return minificar(
         '<div class="destaques-bloco">'
         f'<h3 class="destaques-titulo">DESTAQUES DO MÊS · {len(destaques)}</h3>'
-        '<div class="destaques-grid">'
-        + "".join(cards)
-        + '</div>'
-        '</div>'
+        '<div class="destaques-grid">' + "".join(cards) + "</div>"
+        "</div>"
     )
 
 
@@ -595,28 +580,28 @@ def _narrativa_manual_html(periodo: str) -> str:
                 '<div class="narrativa-bloco">'
                 f'<h3 class="narrativa-titulo">NARRATIVA · {periodo}</h3>'
                 f'<div class="narrativa-corpo">{md}</div>'
-                '</div>'
+                "</div>"
             )
 
     return minificar(
         '<div class="narrativa-bloco narrativa-vazia">'
         f'<h3 class="narrativa-titulo">NARRATIVA · {periodo}</h3>'
-        '<p>Nenhuma narrativa gerada para este período. Use a skill canônica '
-        f'<code>/gerar-recap {periodo}</code> no Claude Code interativo '
-        '(Opus principal) para registrar a narrativa do mês em '
-        f'<code>docs/recaps/{periodo}.md</code>. ADR-13: nenhum LLM via '
-        'API é chamado pelo dashboard.</p>'
-        '</div>'
+        "<p>Nenhuma narrativa gerada para este período. Use a skill canônica "
+        f"<code>/gerar-recap {periodo}</code> no Claude Code interativo "
+        "(Opus principal) para registrar a narrativa do mês em "
+        f"<code>docs/recaps/{periodo}.md</code>. ADR-13: nenhum LLM via "
+        "API é chamado pelo dashboard.</p>"
+        "</div>"
     )
 
 
 def _kpi_card_html(titulo: str, valor: str, subtitulo: str) -> str:
     return (
         f'<div style="background:{CORES["card_fundo"]};'
-        f'border:1px solid {CORES["texto_sec"]}33;border-radius:6px;'
+        f"border:1px solid {CORES['texto_sec']}33;border-radius:6px;"
         f'padding:16px;">'
         f'  <div style="font-family:ui-monospace,monospace;font-size:10px;'
-        f'                letter-spacing:0.10em;text-transform:uppercase;'
+        f"                letter-spacing:0.10em;text-transform:uppercase;"
         f'                color:{CORES["texto_muted"]};margin-bottom:8px;">'
         f"{titulo}</div>"
         f'  <div style="font-size:24px;font-weight:500;color:{CORES["texto"]};'
@@ -634,8 +619,7 @@ def _page_header_html(periodo_label: str) -> str:
     return renderizar_page_header(
         titulo=f"RECAP · {periodo_label.upper()}",
         subtitulo=(
-            "Resumo agregado determinístico sobre os caches do vault. "
-            "Sem narrativa LLM (ADR-13)."
+            "Resumo agregado determinístico sobre os caches do vault. Sem narrativa LLM (ADR-13)."
         ),
         sprint_tag="UX-RD-19",
     )
@@ -649,12 +633,17 @@ def renderizar(
 ) -> None:
     """Renderiza Bem-estar / Recap (UX-T-21)."""
     from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
-    renderizar_grupo_acoes([
-        {"label": "Re-gerar agora", "glyph": "refresh",
-         "title": "Gerar Recap do período"},
-        {"label": "Compartilhar com Pessoa B", "primary": True,
-         "title": "Vista resumida sem trechos íntimos"},
-    ])
+
+    renderizar_grupo_acoes(
+        [
+            {"label": "Re-gerar agora", "glyph": "refresh", "title": "Gerar Recap do período"},
+            {
+                "label": "Compartilhar com Pessoa B",
+                "primary": True,
+                "title": "Vista resumida sem trechos íntimos",
+            },
+        ]
+    )
 
     del dados, periodo, pessoa, ctx
 
@@ -669,6 +658,7 @@ def renderizar(
 
     # CSS dedicado dos blocos UX-V-2.17 (comparativo/destaques/narrativa).
     from src.dashboard.componentes.ui import carregar_css_pagina
+
     css_recap = carregar_css_pagina("be_recap")
     if css_recap:
         st.markdown(minificar(css_recap), unsafe_allow_html=True)
@@ -683,6 +673,7 @@ def renderizar(
             fallback_estado_inicial_html,
             ler_sync_info,
         )
+
         skeleton = (
             '<div style="display:grid;grid-template-columns:repeat(4,1fr);'
             'gap:10px;margin-bottom:12px;">'
@@ -694,12 +685,12 @@ def renderizar(
             '<span class="kpi-value">--</span></div>'
             '<div class="kpi"><span class="kpi-label">MEDIDAS</span>'
             '<span class="kpi-value">--</span></div>'
-            '</div>'
+            "</div>"
             '<div style="display:flex;flex-direction:column;gap:6px;">'
             '<span class="skel-bloco" style="width:80%;"></span>'
             '<span class="skel-bloco" style="width:65%;"></span>'
             '<span class="skel-bloco" style="width:90%;height:0.9em;"></span>'
-            '</div>'
+            "</div>"
         )
         st.markdown(
             fallback_estado_inicial_html(
@@ -729,9 +720,7 @@ def renderizar(
 
     col1, col2, col3, col4 = st.columns(4)
     media_humor_str = f"{h['media']:.2f}" if h["media"] is not None else "--"
-    delta_peso_str = (
-        f"{m['delta_peso']:+.1f} kg" if m["delta_peso"] is not None else "--"
-    )
+    delta_peso_str = f"{m['delta_peso']:+.1f} kg" if m["delta_peso"] is not None else "--"
 
     with col1:
         st.markdown(
@@ -798,7 +787,7 @@ def renderizar(
     st.markdown("###### ")
     st.markdown(
         f'<h3 style="font-family:ui-monospace,monospace;font-size:11px;'
-        f'letter-spacing:0.10em;text-transform:uppercase;'
+        f"letter-spacing:0.10em;text-transform:uppercase;"
         f'color:{CORES["texto_muted"]};margin:0 0 8px;">'
         f"Bairros mais frequentes</h3>",
         unsafe_allow_html=True,
@@ -810,8 +799,8 @@ def renderizar(
             st.markdown(
                 minificar(
                     f'<div style="background:{CORES["fundo_inset"]};'
-                    f'border:1px solid {CORES["texto_sec"]}33;'
-                    f'border-radius:4px;padding:8px 12px;margin-bottom:6px;'
+                    f"border:1px solid {CORES['texto_sec']}33;"
+                    f"border-radius:4px;padding:8px 12px;margin-bottom:6px;"
                     f'display:flex;justify-content:space-between;">'
                     f'<span style="color:{CORES["texto"]};font-size:13px;">{bairro}</span>'
                     f'<span style="font-family:ui-monospace,monospace;font-size:11px;'

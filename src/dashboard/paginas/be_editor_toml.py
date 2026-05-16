@@ -71,6 +71,7 @@ _NOME_PADRAO = "manha.toml"
 # Helpers de filesystem
 # ---------------------------------------------------------------------------
 
+
 def _resolver_pasta_rotina() -> Path:
     """Resolve a pasta canônica que abriga ``*.toml`` de rotina.
 
@@ -129,6 +130,7 @@ def _salvar(caminho: Path, texto: str) -> None:
 # Validação semântica
 # ---------------------------------------------------------------------------
 
+
 def _validar_toml(texto: str) -> tuple[bool, str]:
     """Tenta parsear o texto como TOML.
 
@@ -177,6 +179,7 @@ def _validar_com_avisos(texto: str) -> tuple[int, int, list[tuple[str, str]]]:
 # Preview ao vivo
 # ---------------------------------------------------------------------------
 
+
 def _preview_visual_cards_html(conteudo: str) -> str:
     """Renderiza HTML rico do preview Visual (cards de alarme/tarefa/contador).
 
@@ -197,15 +200,11 @@ def _preview_visual_cards_html(conteudo: str) -> str:
 
     if not (alarmes or tarefas or contadores):
         return minificar(
-            '<div class="preview-vazio">Sem alarmes, tarefas ou contadores '
-            "para mostrar.</div>"
+            '<div class="preview-vazio">Sem alarmes, tarefas ou contadores para mostrar.</div>'
         )
 
     partes: list[str] = []
-    resumo = (
-        f"{len(alarmes)} alarme(s) - {len(tarefas)} tarefa(s) - "
-        f"{len(contadores)} contador(es)"
-    )
+    resumo = f"{len(alarmes)} alarme(s) - {len(tarefas)} tarefa(s) - {len(contadores)} contador(es)"
     partes.append(f'<div class="preview-resumo">{html.escape(resumo)}</div>')
 
     dias_canon = ["seg", "ter", "qua", "qui", "sex", "sab", "dom"]
@@ -219,13 +218,10 @@ def _preview_visual_cards_html(conteudo: str) -> str:
             ativos = {str(x).lower() for x in (a.get("dias") or [])}
             tags = a.get("tags") or []
             bolinhas = "".join(
-                f'<div class="d {"on" if dias_canon[i] in ativos else ""}">'
-                f"{rotulos[i]}</div>"
+                f'<div class="d {"on" if dias_canon[i] in ativos else ""}">{rotulos[i]}</div>'
                 for i in range(7)
             )
-            tags_html = "".join(
-                f'<span class="t">{html.escape(str(t))}</span>' for t in tags
-            )
+            tags_html = "".join(f'<span class="t">{html.escape(str(t))}</span>' for t in tags)
             partes.append(
                 '<div class="alarme-card">'
                 f'<div class="alarme-hr">{hora}</div>'
@@ -238,16 +234,12 @@ def _preview_visual_cards_html(conteudo: str) -> str:
             )
 
     if tarefas:
-        partes.append(
-            '<div class="preview-secao">Tarefas geradas em "Hoje"</div>'
-        )
+        partes.append('<div class="preview-secao">Tarefas geradas em "Hoje"</div>')
         for t in tarefas:
             nome = html.escape(str(t.get("nome", "(sem nome)")))
             tipo = html.escape(str(t.get("tipo", "?")))
             duracao = t.get("duracao_min") or t.get("duracao") or ""
-            duracao_txt = (
-                f' <span class="meta">~{duracao}min</span>' if duracao else ""
-            )
+            duracao_txt = f' <span class="meta">~{duracao}min</span>' if duracao else ""
             partes.append(
                 '<div class="tarefa-card">'
                 '<div class="checkbox"></div>'
@@ -320,9 +312,7 @@ def _preview_diff_html(caminho: Path, texto_atual: str) -> str:
         )
 
     if head == texto_atual:
-        return minificar(
-            '<div class="preview-vazio">Sem alterações vs HEAD.</div>'
-        )
+        return minificar('<div class="preview-vazio">Sem alterações vs HEAD.</div>')
 
     linhas: list[str] = []
     diff = difflib.unified_diff(
@@ -343,13 +333,8 @@ def _preview_diff_html(caminho: Path, texto_atual: str) -> str:
         else:
             linhas.append(f'<span class="ctx">{html.escape(ln[1:])}</span>')
 
-    rodape = (
-        f'<div class="diff-rodape">vs HEAD - '
-        f"{html.escape(caminho.name)} - não commitado</div>"
-    )
-    return minificar(
-        f'<div class="diff">{"".join(linhas)}</div>{rodape}'
-    )
+    rodape = f'<div class="diff-rodape">vs HEAD - {html.escape(caminho.name)} - não commitado</div>'
+    return minificar(f'<div class="diff">{"".join(linhas)}</div>{rodape}')
 
 
 def _preview_schema_html() -> str:
@@ -395,9 +380,7 @@ def _preview_schema_html() -> str:
     for titulo, campos in secoes:
         items: list[str] = []
         for k, t, req, desc in campos:
-            req_html = (
-                '<span class="req">obrigatório</span>' if req else ""
-            )
+            req_html = '<span class="req">obrigatório</span>' if req else ""
             items.append(
                 '<div class="campo">'
                 f'<span class="k">{html.escape(k)}</span>'
@@ -417,9 +400,8 @@ def _preview_schema_html() -> str:
 # Editor: header com badges + linhas numeradas
 # ---------------------------------------------------------------------------
 
-def _editor_header_html(
-    caminho: Path, modificado: bool, schema_ok: bool
-) -> str:
+
+def _editor_header_html(caminho: Path, modificado: bool, schema_ok: bool) -> str:
     """Renderiza tools/header do editor (path + status MODIFICADO/SCHEMA OK).
 
     Espelha ``.editor-tools`` do mockup 28-rotina-toml.html.
@@ -443,47 +425,30 @@ def _editor_header_html(
     )
 
 
-def _renderizar_validacao_rodape(
-    erros: int, avisos: int, msgs: list[tuple[str, str]]
-) -> str:
+def _renderizar_validacao_rodape(erros: int, avisos: int, msgs: list[tuple[str, str]]) -> str:
     """Renderiza bloco Validação de rodapé (3-col, abaixo das colunas).
 
     Mostra título `Validação - N erros, M avisos`, lista de mensagens
     e bloco final OK quando schema válido sem avisos.
     """
     titulo_txt = f"Validação - {erros} erro(s), {avisos} aviso(s)"
-    cabecalho = (
-        '<div class="rv-bloco-titulo">'
-        f"{html.escape(titulo_txt)}"
-        "</div>"
-    )
+    cabecalho = f'<div class="rv-bloco-titulo">{html.escape(titulo_txt)}</div>'
     if not msgs:
-        corpo = (
-            '<div class="rv-bloco-vazio">'
-            "Schema bate - sem alertas."
-            "</div>"
-        )
-        return minificar(
-            f'<div class="rv-bloco">{cabecalho}{corpo}</div>'
-        )
+        corpo = '<div class="rv-bloco-vazio">Schema bate - sem alertas.</div>'
+        return minificar(f'<div class="rv-bloco">{cabecalho}{corpo}</div>')
 
     items = []
     for nivel, texto in msgs:
         cls = "err-item erro" if nivel == "erro" else "err-item aviso"
-        items.append(
-            f'<div class="{cls}">'
-            f'<span class="msg">{html.escape(texto)}</span>'
-            "</div>"
-        )
+        items.append(f'<div class="{cls}"><span class="msg">{html.escape(texto)}</span></div>')
     corpo = f'<div class="err-list">{"".join(items)}</div>'
-    return minificar(
-        f'<div class="rv-bloco">{cabecalho}{corpo}</div>'
-    )
+    return minificar(f'<div class="rv-bloco">{cabecalho}{corpo}</div>')
 
 
 # ---------------------------------------------------------------------------
 # Cabeçalho e painel
 # ---------------------------------------------------------------------------
+
 
 def _page_header_html(pasta: Path, n_arquivos: int) -> str:
     """UX-U-03: usa helper canônico ``componentes/page_header``."""
@@ -507,8 +472,7 @@ def _renderizar_lista_arquivos(arquivos: list[dict[str, object]], nome_sel: str)
     """Renderiza HTML da lista visual de arquivos (coluna 1)."""
     if not arquivos:
         return minificar(
-            '<div class="lista-vazia">Sem arquivos .toml em '
-            "&lt;vault&gt;/.ouroboros/rotina/</div>"
+            '<div class="lista-vazia">Sem arquivos .toml em &lt;vault&gt;/.ouroboros/rotina/</div>'
         )
     linhas = ['<div class="toml-files-titulo">Arquivos</div>']
     for arq in arquivos:
@@ -527,6 +491,7 @@ def _renderizar_lista_arquivos(arquivos: list[dict[str, object]], nome_sel: str)
 # ---------------------------------------------------------------------------
 # Página
 # ---------------------------------------------------------------------------
+
 
 def renderizar(
     dados: dict[str, pd.DataFrame],
@@ -623,9 +588,7 @@ def renderizar(
             unsafe_allow_html=True,
         )
 
-        st.markdown(
-            '<div class="toml-editor-wrap">', unsafe_allow_html=True
-        )
+        st.markdown('<div class="toml-editor-wrap">', unsafe_allow_html=True)
         texto = st.text_area(
             "Conteúdo do TOML",
             key=_KEY_CONTEUDO,
@@ -684,9 +647,7 @@ def renderizar(
                 key="be_editor_toml_btn_recarregar",
                 use_container_width=True,
             ):
-                st.session_state[_KEY_CONTEUDO] = _carregar_conteudo_inicial(
-                    caminho_sel
-                )
+                st.session_state[_KEY_CONTEUDO] = _carregar_conteudo_inicial(caminho_sel)
                 st.session_state[_KEY_FLASH] = (
                     "info",
                     "Conteúdo recarregado do disco.",
@@ -699,9 +660,7 @@ def renderizar(
             minificar('<div class="preview-titulo">Preview ao vivo</div>'),
             unsafe_allow_html=True,
         )
-        tab_visual, tab_diff, tab_schema = st.tabs(
-            ["Visual", "Diff vs HEAD", "Schema"]
-        )
+        tab_visual, tab_diff, tab_schema = st.tabs(["Visual", "Diff vs HEAD", "Schema"])
         with tab_visual:
             st.markdown(
                 _preview_visual_cards_html(texto),

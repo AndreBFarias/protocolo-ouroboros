@@ -46,9 +46,7 @@ EDGE_DOCUMENTO_DE: str = "documento_de"
 EDGE_CONTEM_ITEM: str = "contem_item"
 
 
-def obter_documentos_da_transacao(
-    db: GrafoDB, transacao_id: int
-) -> list[Node]:
+def obter_documentos_da_transacao(db: GrafoDB, transacao_id: int) -> list[Node]:
     """Lista os documentos vinculados à transação via aresta ``documento_de``.
 
     Walk de 1 salto da transação ao documento via aresta ``documento_de``.

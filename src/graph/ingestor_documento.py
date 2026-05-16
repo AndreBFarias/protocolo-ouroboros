@@ -67,10 +67,9 @@ def _inferir_pessoa_canonica(
     Heuristica leve (sem invocar OCR ou pessoa_detector cheio) — o
     documento ja foi parseado pelo extractor e tem campos relevantes.
     """
-    contribuinte = (
-        str(documento.get("__contribuinte_original") or documento.get("contribuinte") or "")
-        .upper()
-    )
+    contribuinte = str(
+        documento.get("__contribuinte_original") or documento.get("contribuinte") or ""
+    ).upper()
     if "ANDRE" in contribuinte or "ANDRÉ" in contribuinte:
         return "andre"
     if "VITORIA" in contribuinte or "VITÓRIA" in contribuinte:
@@ -84,6 +83,7 @@ def _inferir_pessoa_canonica(
         if "casal" in partes:
             return "casal"
     return "casal"
+
 
 # ============================================================================
 # Sprint 107: fornecedores sintéticos para impostos
@@ -581,11 +581,7 @@ def _completude_nfce(meta: dict[str, Any]) -> int:
     itens = meta.get("itens") if isinstance(meta, dict) else None
     if not isinstance(itens, list):
         return 0
-    return sum(
-        1
-        for it in itens
-        if isinstance(it, dict) and float(it.get("qtde") or 0.0) > 0.0
-    )
+    return sum(1 for it in itens if isinstance(it, dict) and float(it.get("qtde") or 0.0) > 0.0)
 
 
 def upsert_item(
@@ -723,9 +719,7 @@ def ingerir_documento_fiscal(
                 # para não criar node novo.
                 chave_irma = irma.nome_canonico if irma else documento["chave_44"]
                 # registra a chave alternativa no metadata e nos aliases
-                metadata["chave_44_alternativa"] = (
-                    irma.metadata.get("chave_44") if irma else None
-                )
+                metadata["chave_44_alternativa"] = irma.metadata.get("chave_44") if irma else None
                 documento_id = db.upsert_node(
                     "documento",
                     chave_irma,
@@ -741,9 +735,7 @@ def ingerir_documento_fiscal(
                 )
                 documento_id = irma_id
     if documento_id is None:
-        documento_id = db.upsert_node(
-            "documento", documento["chave_44"], metadata=metadata
-        )
+        documento_id = db.upsert_node("documento", documento["chave_44"], metadata=metadata)
 
     fornecedor_id = upsert_fornecedor(
         db,
@@ -867,16 +859,13 @@ def ingerir_cupom_foto(
     for campo in CAMPOS_OBRIGATORIOS_PAYLOAD_OPUS:
         if not payload_opus.get(campo):
             raise ValueError(
-                f"payload_opus sem '{campo}' -- não respeita schema_opus_ocr; "
-                "ingestão abortada"
+                f"payload_opus sem '{campo}' -- não respeita schema_opus_ocr; ingestão abortada"
             )
 
     estabelecimento = payload_opus.get("estabelecimento") or {}
     cnpj = estabelecimento.get("cnpj") or ""
     if not cnpj:
-        raise ValueError(
-            "payload_opus.estabelecimento.cnpj vazio -- nó fornecedor ficaria órfão"
-        )
+        raise ValueError("payload_opus.estabelecimento.cnpj vazio -- nó fornecedor ficaria órfão")
 
     sha = payload_opus["sha256"]
     documento: dict[str, Any] = {

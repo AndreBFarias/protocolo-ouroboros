@@ -154,20 +154,22 @@ def test_pacote_irpf_pessoa_a_inclui_imposto_pago_por_pessoa_b():
 
 def test_pacote_irpf_fallback_para_quem_quando_devedora_ausente():
     """Transações sem pessoa_devedora caem em quem (retrocompat)."""
-    df = pd.DataFrame([
-        {
-            "quem": "pessoa_a",
-            "pessoa_devedora": None,
-            "valor": 100.00,
-            "mes_ref": "2025-01",
-        },
-        {
-            "quem": "pessoa_b",
-            "pessoa_devedora": None,
-            "valor": 200.00,
-            "mes_ref": "2025-01",
-        },
-    ])
+    df = pd.DataFrame(
+        [
+            {
+                "quem": "pessoa_a",
+                "pessoa_devedora": None,
+                "valor": 100.00,
+                "mes_ref": "2025-01",
+            },
+            {
+                "quem": "pessoa_b",
+                "pessoa_devedora": None,
+                "valor": 200.00,
+                "mes_ref": "2025-01",
+            },
+        ]
+    )
     df_a = _filtrar_por_devedora(df, "pessoa_a")
     df_b = _filtrar_por_devedora(df, "pessoa_b")
     assert len(df_a) == 1 and df_a.iloc[0]["valor"] == 100.00
@@ -254,29 +256,29 @@ def test_sentinela_alerta_quando_drift_acima_do_limiar():
 def test_sentinela_silenciosa_quando_universo_vazio():
     """Sentinela retorna None quando não há impostos no recorte."""
     assert sentinela_drift_impostos([], limiar_percentual=5.0) is None
-    assert sentinela_drift_impostos(
-        [{"categoria": "Alimentação"}], limiar_percentual=5.0
-    ) is None
+    assert sentinela_drift_impostos([{"categoria": "Alimentação"}], limiar_percentual=5.0) is None
 
 
 def test_pacote_irpf_compilar_eventos_funciona_com_campos_novos():
     """compilar_eventos não quebra com colunas pessoa_pagadora/pessoa_devedora."""
-    df = pd.DataFrame([
-        {
-            "tag_irpf": "imposto_pago",
-            "valor": 324.31,
-            "local": "DAS RECEITA FEDERAL",
-            "_descricao_original": "DAS",
-            "obs": "",
-            "mes_ref": "2025-04",
-            "data": "2025-04-16",
-            "cnpj_cpf": "45.850.636/0001-00",
-            "banco_origem": "Nubank (PF)",
-            "quem": "pessoa_b",
-            "pessoa_pagadora": "pessoa_b",
-            "pessoa_devedora": "pessoa_a",
-        },
-    ])
+    df = pd.DataFrame(
+        [
+            {
+                "tag_irpf": "imposto_pago",
+                "valor": 324.31,
+                "local": "DAS RECEITA FEDERAL",
+                "_descricao_original": "DAS",
+                "obs": "",
+                "mes_ref": "2025-04",
+                "data": "2025-04-16",
+                "cnpj_cpf": "45.850.636/0001-00",
+                "banco_origem": "Nubank (PF)",
+                "quem": "pessoa_b",
+                "pessoa_pagadora": "pessoa_b",
+                "pessoa_devedora": "pessoa_a",
+            },
+        ]
+    )
     eventos = compilar_eventos(df)
     assert len(eventos) == 1
     assert eventos[0]["tag"] == "imposto_pago"

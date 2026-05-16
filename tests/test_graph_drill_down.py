@@ -71,9 +71,7 @@ def grafo_sintetico(tmp_path: Path) -> GrafoDB:
 
 def test_walk_1_salto_retorna_documento(grafo_sintetico):
     """Transação -> documento_de -> documento."""
-    tx_id = grafo_sintetico.buscar_node(
-        "transacao", "tx_2026-04-19_atacadao"
-    ).id
+    tx_id = grafo_sintetico.buscar_node("transacao", "tx_2026-04-19_atacadao").id
     documentos = obter_documentos_da_transacao(grafo_sintetico, tx_id)
 
     assert len(documentos) == 1
@@ -83,9 +81,7 @@ def test_walk_1_salto_retorna_documento(grafo_sintetico):
 
 def test_walk_2_saltos_retorna_items_granulares(grafo_sintetico):
     """Transação -> documento -> contem_item -> item (3 items)."""
-    tx_id = grafo_sintetico.buscar_node(
-        "transacao", "tx_2026-04-19_atacadao"
-    ).id
+    tx_id = grafo_sintetico.buscar_node("transacao", "tx_2026-04-19_atacadao").id
     items = obter_items_da_transacao(grafo_sintetico, tx_id)
 
     assert len(items) == 3
@@ -138,9 +134,7 @@ def test_dois_documentos_mesmo_item_dedup(tmp_path):
     """2 NFCe vinculados a 1 transação apontando para mesmo item: dedup."""
     db = GrafoDB(tmp_path / "grafo_dedup.sqlite")
     db.criar_schema()
-    tx_id = db.upsert_node(
-        tipo="transacao", nome_canonico="tx_dup", metadata={"valor": 100.0}
-    )
+    tx_id = db.upsert_node(tipo="transacao", nome_canonico="tx_dup", metadata={"valor": 100.0})
     doc_a_id = db.upsert_node(
         tipo="documento",
         nome_canonico="nfce_a",
@@ -151,9 +145,7 @@ def test_dois_documentos_mesmo_item_dedup(tmp_path):
         nome_canonico="nfce_b",
         metadata={"tipo_documento": "nfce_modelo_65"},
     )
-    item_id = db.upsert_node(
-        tipo="item", nome_canonico="produto_x", metadata={"valor": 50.0}
-    )
+    item_id = db.upsert_node(tipo="item", nome_canonico="produto_x", metadata={"valor": 50.0})
     db.adicionar_edge(tx_id, doc_a_id, "documento_de")
     db.adicionar_edge(tx_id, doc_b_id, "documento_de")
     db.adicionar_edge(doc_a_id, item_id, "contem_item")
@@ -168,9 +160,7 @@ def test_apenas_arestas_documento_de_consideradas(tmp_path):
     """Outras arestas (contraparte, ocorre_em) não viram documento."""
     db = GrafoDB(tmp_path / "grafo_arestas_extras.sqlite")
     db.criar_schema()
-    tx_id = db.upsert_node(
-        tipo="transacao", nome_canonico="tx_x", metadata={"valor": 100.0}
-    )
+    tx_id = db.upsert_node(tipo="transacao", nome_canonico="tx_x", metadata={"valor": 100.0})
     fornecedor_id = db.upsert_node(
         tipo="fornecedor",
         nome_canonico="atacadao",
@@ -202,9 +192,7 @@ def test_contar_drill_down_em_grafo_sintetico(grafo_sintetico):
     assert stats["nfce_com_documento_de"] == 1
 
 
-@pytest.mark.skipif(
-    not caminho_padrao().exists(), reason="grafo real ainda não existe"
-)
+@pytest.mark.skipif(not caminho_padrao().exists(), reason="grafo real ainda não existe")
 def test_corpus_real_estado_atual_2026_04_30():
     """Snapshot honesto do estado real em 2026-04-30.
 
@@ -225,9 +213,9 @@ def test_corpus_real_estado_atual_2026_04_30():
         # NFCe com documento_de pode crescer quando NFCe reais aparecerem.
         # Hoje (2026-04-30): 0. Asserção solta para não quebrar quando crescer.
         assert stats["nfce_com_documento_de"] >= 0
-        assert (
-            stats["nfce_com_documento_de"] <= stats["nfce_no_grafo"]
-        ), "linkados não podem exceder total"
+        assert stats["nfce_com_documento_de"] <= stats["nfce_no_grafo"], (
+            "linkados não podem exceder total"
+        )
     finally:
         db.fechar()
 

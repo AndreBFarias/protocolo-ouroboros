@@ -219,7 +219,8 @@ class ExtratorNfcePDF(ExtratorBase):
                 # de falha (princípio D7: cobertura observável, não gate).
                 try:
                     campos_canonicos = {
-                        chave: doc.get(chave, "") for chave in (
+                        chave: doc.get(chave, "")
+                        for chave in (
                             "chave_44",
                             "cnpj_emitente",
                             "razao_social",
@@ -238,9 +239,7 @@ class ExtratorNfcePDF(ExtratorBase):
                         campos=campos_canonicos,
                     )
                 except Exception as erro:  # noqa: BLE001
-                    self.logger.warning(
-                        "validacao_csv falhou em %s: %s", self.caminho.name, erro
-                    )
+                    self.logger.warning("validacao_csv falhou em %s: %s", self.caminho.name, erro)
         finally:
             if criou_grafo_localmente:
                 grafo.fechar()

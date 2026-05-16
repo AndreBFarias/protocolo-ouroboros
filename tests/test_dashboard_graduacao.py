@@ -76,10 +76,7 @@ def test_carregar_dados_total_e_kpis_consistentes(fixtures_minimas: Path) -> Non
     assert d["calibrando"] == 0
     assert d["regredindo"] == 0
     # KPIs somam total
-    assert (
-        d["graduados"] + d["pendentes"] + d["calibrando"] + d["regredindo"]
-        == d["total"]
-    )
+    assert d["graduados"] + d["pendentes"] + d["calibrando"] + d["regredindo"] == d["total"]
 
 
 def test_carregar_dados_resolve_alias_no_listing(fixtures_minimas: Path) -> None:
@@ -89,9 +86,7 @@ def test_carregar_dados_resolve_alias_no_listing(fixtures_minimas: Path) -> None
     assert linha_a["alias"] == "tipo_a_legacy"
     assert linha_a["dossie_path"] == "tipo_a_legacy"
     # Tipo sem dossiê e sem alias: campo alias mostra travessão.
-    linha_sem = next(
-        linha for linha in d["linhas"] if linha["tipo"] == "tipo_sem_dossie"
-    )
+    linha_sem = next(linha for linha in d["linhas"] if linha["tipo"] == "tipo_sem_dossie")
     assert linha_sem["alias"] == "—"
     assert linha_sem["status"] == "PENDENTE"
 
@@ -100,12 +95,8 @@ def test_carregar_dados_grad_json_ausente_devolve_zero(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Quando snapshot não existe ainda, _carregar_dados retorna estrutura vazia."""
-    monkeypatch.setattr(
-        graduacao_tipos, "PATH_GRADUACAO", tmp_path / "nao_existe.json"
-    )
-    monkeypatch.setattr(
-        graduacao_tipos, "PATH_TIPOS_YAML", tmp_path / "nao_existe.yaml"
-    )
+    monkeypatch.setattr(graduacao_tipos, "PATH_GRADUACAO", tmp_path / "nao_existe.json")
+    monkeypatch.setattr(graduacao_tipos, "PATH_TIPOS_YAML", tmp_path / "nao_existe.yaml")
     d = graduacao_tipos._carregar_dados()
     assert d["total"] == 0
     assert d["graduados"] == 0

@@ -22,6 +22,7 @@ Uso:
     python scripts/popular_extracao_tripla.py
     python scripts/popular_extracao_tripla.py --csv outro.csv --out tripla.json
 """
+
 from __future__ import annotations
 
 import argparse
@@ -149,11 +150,7 @@ def construir_registro(
 
 def construir_documento(grupos: dict[str, list[dict[str, str]]]) -> dict[str, Any]:
     """Constrói o documento JSON canônico completo."""
-    registros = [
-        construir_registro(sha8, linhas)
-        for sha8, linhas in grupos.items()
-        if linhas
-    ]
+    registros = [construir_registro(sha8, linhas) for sha8, linhas in grupos.items() if linhas]
     return {
         "$schema": "https://ouroboros/schemas/extracao_tripla/v1.json",
         "registros": registros,
@@ -179,9 +176,7 @@ def main(argv: list[str] | None = None) -> int:
 
     grupos = _ler_csv(args.csv)
     if not grupos:
-        sys.stderr.write(
-            f"[popular_extracao_tripla] CSV vazio ou inexistente: {args.csv}\n"
-        )
+        sys.stderr.write(f"[popular_extracao_tripla] CSV vazio ou inexistente: {args.csv}\n")
         return 1
 
     documento = construir_documento(grupos)

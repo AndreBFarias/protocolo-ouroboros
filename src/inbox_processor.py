@@ -211,9 +211,7 @@ def processar_inbox(diretorio_inbox: Path, diretorio_raw: Path | None = None) ->
     arquivos = sorted(
         f
         for f in diretorio_inbox.rglob("*")
-        if f.is_file()
-        and f.suffix.lower() in EXTENSOES_SUPORTADAS
-        and ".extracted" not in f.parts
+        if f.is_file() and f.suffix.lower() in EXTENSOES_SUPORTADAS and ".extracted" not in f.parts
     )
 
     if not arquivos:

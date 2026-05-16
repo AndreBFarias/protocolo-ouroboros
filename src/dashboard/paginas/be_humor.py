@@ -56,13 +56,19 @@ def renderizar(  # noqa: accent
 ) -> None:
     """Renderiza Bem-estar / Humor (UX-T-18)."""
     from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
-    renderizar_grupo_acoes([
-        {"label": "Exportar 90d", "glyph": "download",
-         "title": "CSV de humor 91 dias"},
-        {"label": "Registrar agora", "primary": True, "glyph": "plus",
-         "href": "?cluster=Bem-estar&tab=Hoje",
-         "title": "Voltar para Hoje e registrar humor"},
-    ])
+
+    renderizar_grupo_acoes(
+        [
+            {"label": "Exportar 90d", "glyph": "download", "title": "CSV de humor 91 dias"},
+            {
+                "label": "Registrar agora",
+                "primary": True,
+                "glyph": "plus",
+                "href": "?cluster=Bem-estar&tab=Hoje",
+                "title": "Voltar para Hoje e registrar humor",
+            },
+        ]
+    )
 
     del dados, periodo, ctx  # noqa: accent
 
@@ -101,15 +107,16 @@ def renderizar(  # noqa: accent
             fallback_estado_inicial_html,
             ler_sync_info,
         )
+
         skeleton = (
             '<div style="display:grid;grid-template-columns:repeat(13,1fr);'
             'gap:3px;margin-bottom:12px;">'
-            + ''.join(
+            + "".join(
                 '<span class="skel-bloco" style="height:18px;min-width:0;'
                 'border-radius:3px;"></span>'
                 for _ in range(13 * 7)
             )
-            + '</div>'
+            + "</div>"
             '<div style="display:grid;grid-template-columns:repeat(4,1fr);'
             'gap:8px;">'
             '<div class="kpi"><span class="kpi-label">MÉDIA</span>'
@@ -120,7 +127,7 @@ def renderizar(  # noqa: accent
             '<span class="kpi-value">--</span></div>'
             '<div class="kpi"><span class="kpi-label">VALE</span>'
             '<span class="kpi-value">--</span></div>'
-            '</div>'
+            "</div>"
         )
         st.markdown(
             fallback_estado_inicial_html(
@@ -469,11 +476,7 @@ def _card_media_humor_html(
     else:
         valor_html = '<span class="humor-card-valor-vazio">—</span>'
 
-    delta = (
-        media_30d - media_anterior
-        if (media_anterior is not None and media_30d)
-        else None
-    )
+    delta = media_30d - media_anterior if (media_anterior is not None and media_30d) else None
     delta_txt, delta_cls = _formatar_delta_humor(delta)
 
     spark = (
@@ -486,16 +489,14 @@ def _card_media_humor_html(
         if len(serie) >= 2
         else ""
     )
-    spark_block = (
-        f'<div class="humor-card-spark">{spark}</div>' if spark else ""
-    )
+    spark_block = f'<div class="humor-card-spark">{spark}</div>' if spark else ""
     return minificar(
         f'<div class="humor-card humor-card-media">'
         f'<div class="humor-card-label">média 30 dias</div>'
         f'<div class="humor-card-valor">{valor_html}</div>'
         f'<div class="humor-card-delta {delta_cls}">{delta_txt}</div>'
-        f'{spark_block}'
-        f'</div>'
+        f"{spark_block}"
+        f"</div>"
     )
 
 
@@ -508,17 +509,17 @@ def _card_streak_humor_html(
         valor_html = (
             f'<span class="humor-card-valor-num">{streak_recorde}</span>'
             f'<span class="humor-card-valor-unid">'
-            f' dia{"s" if streak_recorde != 1 else ""}'
-            f'</span>'
+            f" dia{'s' if streak_recorde != 1 else ''}"
+            f"</span>"
         )
     else:
         valor_html = '<span class="humor-card-valor-vazio">—</span>'
 
     if streak_atual > 0:
         sub = (
-            f'sequência ativa: {streak_atual} '
-            f'dia{"s" if streak_atual != 1 else ""} · '
-            f'recorde da janela 30d'
+            f"sequência ativa: {streak_atual} "
+            f"dia{'s' if streak_atual != 1 else ''} · "
+            f"recorde da janela 30d"
         )
     else:
         sub = "recorde da janela 30d"
@@ -528,7 +529,7 @@ def _card_streak_humor_html(
         f'<div class="humor-card-label">streak humor ≥ 4</div>'
         f'<div class="humor-card-valor">{valor_html}</div>'
         f'<div class="humor-card-delta humor-delta-flat">{sub}</div>'
-        f'</div>'
+        f"</div>"
     )
 
 

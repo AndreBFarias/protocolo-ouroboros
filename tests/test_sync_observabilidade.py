@@ -11,6 +11,7 @@ Cobre o pipeline vault -> cache -> ui:
 Padrões VALIDATOR_BRIEF aplicados: (b) acentuação PT-BR, (g) citação no
 rodapé, (n) defesa em camadas (testa escritor + leitor + renderer).
 """
+
 from __future__ import annotations
 
 import json
@@ -77,8 +78,13 @@ def test_gravar_last_sync_resiliente_a_erro_io(
         vault_path="/tmp/x",
     )
     # Log warning emitido
-    assert any("falha ao gravar last_sync.json" in rec.message.lower() or
-               "last_sync" in rec.message for rec in caplog.records) or True
+    assert (
+        any(
+            "falha ao gravar last_sync.json" in rec.message.lower() or "last_sync" in rec.message
+            for rec in caplog.records
+        )
+        or True
+    )
     # Critério mínimo: não levantou.
 
 

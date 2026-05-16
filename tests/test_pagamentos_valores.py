@@ -40,29 +40,57 @@ def _extrato_sintetico(hoje: date) -> pd.DataFrame:
     return pd.DataFrame(
         [
             # Internet -- categoria casa, 2 lançamentos -> média
-            {"data": base, "valor": 200.0, "tipo": "Despesa",
-             "categoria": "Internet", "local": "TG BRASIL",
-             "forma_pagamento": "Pix"},
-            {"data": base + pd.Timedelta(days=30), "valor": 180.0,
-             "tipo": "Despesa", "categoria": "Internet",
-             "local": "TG BRASIL", "forma_pagamento": "Pix"},
+            {
+                "data": base,
+                "valor": 200.0,
+                "tipo": "Despesa",
+                "categoria": "Internet",
+                "local": "TG BRASIL",
+                "forma_pagamento": "Pix",
+            },
+            {
+                "data": base + pd.Timedelta(days=30),
+                "valor": 180.0,
+                "tipo": "Despesa",
+                "categoria": "Internet",
+                "local": "TG BRASIL",
+                "forma_pagamento": "Pix",
+            },
             # Natação -- categoria + 2 boletos -> última fatura
-            {"data": base, "valor": 100.0, "tipo": "Despesa",
-             "categoria": "Natação", "local": "SESC",
-             "forma_pagamento": "Boleto"},
-            {"data": base + pd.Timedelta(days=30), "valor": 105.0,
-             "tipo": "Despesa", "categoria": "Natação",
-             "local": "SESC", "forma_pagamento": "Boleto"},
+            {
+                "data": base,
+                "valor": 100.0,
+                "tipo": "Despesa",
+                "categoria": "Natação",
+                "local": "SESC",
+                "forma_pagamento": "Boleto",
+            },
+            {
+                "data": base + pd.Timedelta(days=30),
+                "valor": 105.0,
+                "tipo": "Despesa",
+                "categoria": "Natação",
+                "local": "SESC",
+                "forma_pagamento": "Boleto",
+            },
             # Nubank -- só Pix para pessoa, deve cair em "sem dado"
-            {"data": base, "valor": 50.0, "tipo": "Despesa",
-             "categoria": "Pessoal",
-             "local": "Joao - Nubank Agência: 1 Conta: 123",
-             "forma_pagamento": "Pix"},
+            {
+                "data": base,
+                "valor": 50.0,
+                "tipo": "Despesa",
+                "categoria": "Pessoal",
+                "local": "Joao - Nubank Agência: 1 Conta: 123",
+                "forma_pagamento": "Pix",
+            },
             # Lançamento muito antigo, fora da janela -- ignorar
-            {"data": pd.Timestamp(hoje) - pd.Timedelta(days=400),
-             "valor": 999.0, "tipo": "Despesa",
-             "categoria": "Aluguel", "local": "ANTIGO",
-             "forma_pagamento": "Pix"},
+            {
+                "data": pd.Timestamp(hoje) - pd.Timedelta(days=400),
+                "valor": 999.0,
+                "tipo": "Despesa",
+                "categoria": "Aluguel",
+                "local": "ANTIGO",
+                "forma_pagamento": "Pix",
+            },
         ]
     )
 
@@ -122,26 +150,20 @@ def test_sem_match_mantem_zero_e_sem_dado() -> None:
 
 
 def test_prazos_vazio_retorna_dataframe_vazio() -> None:
-    enriquecido = enriquecer_prazos_com_valor(
-        pd.DataFrame(), _extrato_sintetico(date(2026, 5, 8))
-    )
+    enriquecido = enriquecer_prazos_com_valor(pd.DataFrame(), _extrato_sintetico(date(2026, 5, 8)))
     assert enriquecido.empty
 
 
 def test_prazos_sem_coluna_conta_nao_quebra() -> None:
     df = pd.DataFrame([{"dia_vencimento": 10}])
-    enriquecido = enriquecer_prazos_com_valor(
-        df, _extrato_sintetico(date(2026, 5, 8))
-    )
+    enriquecido = enriquecer_prazos_com_valor(df, _extrato_sintetico(date(2026, 5, 8)))
     assert "valor_estimado" in enriquecido.columns
     assert enriquecido.iloc[0]["valor_estimado"] == 0.0
     assert enriquecido.iloc[0]["origem_valor"] == ORIGEM_SEM_DADO
 
 
 def test_extrato_vazio_resulta_em_sem_dado_para_tudo() -> None:
-    enriquecido = enriquecer_prazos_com_valor(
-        _prazos_basicos(), pd.DataFrame()
-    )
+    enriquecido = enriquecer_prazos_com_valor(_prazos_basicos(), pd.DataFrame())
     assert all(enriquecido["origem_valor"] == ORIGEM_SEM_DADO)
     assert (enriquecido["valor_estimado"] == 0.0).all()
 

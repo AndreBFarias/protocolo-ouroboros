@@ -52,9 +52,7 @@ logger: logging.Logger = logging.getLogger("opus_fallback_comum")
 # Sufixos que o Opus visão hoje processa (calcula sha256 e busca cache).
 # PDFs também passam (sha256 do binário), mas cache canônico Opus para
 # PDFs não foi populado em modo supervisor artesanal nesta fase.
-SUFIXOS_IMAGEM_OPUS: frozenset[str] = frozenset(
-    {".jpg", ".jpeg", ".png", ".heic", ".heif"}
-)
+SUFIXOS_IMAGEM_OPUS: frozenset[str] = frozenset({".jpg", ".jpeg", ".png", ".heic", ".heif"})
 
 
 def tentar_fallback_opus(caminho: Path) -> dict[str, Any] | None:
@@ -99,8 +97,7 @@ def tentar_fallback_opus(caminho: Path) -> dict[str, Any] | None:
 
     if payload.get("aguardando_supervisor"):
         logger.info(
-            "fallback Opus pendente: %s (sha=%s) -- supervisor artesanal "
-            "ainda não preencheu cache",
+            "fallback Opus pendente: %s (sha=%s) -- supervisor artesanal ainda não preencheu cache",
             caminho.name,
             (payload.get("sha256") or "")[:8],
         )

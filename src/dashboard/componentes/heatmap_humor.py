@@ -38,16 +38,22 @@ from src.dashboard.tema import CORES
 
 # Cores indexadas por humor 1..5 (índice 0 = sem registro).
 _CORES_HUMOR: tuple[str, ...] = (
-    "transparent",        # 0 = sem registro (overrided por classe .vazio)
-    CORES["negativo"],    # 1 = #ff5555 (red)
-    CORES["alerta"],      # 2 = #ffb86c (orange)
-    CORES["info"],        # 3 = #f1fa8c (yellow)
-    CORES["neutro"],      # 4 = #8be9fd (cyan)
-    CORES["positivo"],    # 5 = #50fa7b (green)
+    "transparent",  # 0 = sem registro (overrided por classe .vazio)
+    CORES["negativo"],  # 1 = #ff5555 (red)
+    CORES["alerta"],  # 2 = #ffb86c (orange)
+    CORES["info"],  # 3 = #f1fa8c (yellow)
+    CORES["neutro"],  # 4 = #8be9fd (cyan)
+    CORES["positivo"],  # 5 = #50fa7b (green)
 )
 
 _LABEL_DIAS_SEMANA: tuple[str, ...] = (
-    "seg", "ter", "qua", "qui", "sex", "sáb", "dom",
+    "seg",
+    "ter",
+    "qua",
+    "qui",
+    "sex",
+    "sáb",
+    "dom",
 )
 
 
@@ -103,31 +109,16 @@ def _cell_html(
     if pessoa == "pessoa_a":
         bg = cor_a if cor_a != "transparent" else "transparent"
         if bg == "transparent":
-            return (
-                f'<div class="cell vazio {classe_extra}" '
-                f'title="{titulo}"></div>'
-            )
-        return (
-            f'<div class="cell {classe_extra}" '
-            f'style="background:{bg};" title="{titulo}"></div>'
-        )
+            return f'<div class="cell vazio {classe_extra}" title="{titulo}"></div>'
+        return f'<div class="cell {classe_extra}" style="background:{bg};" title="{titulo}"></div>'
     if pessoa == "pessoa_b":
         bg = cor_b if cor_b != "transparent" else "transparent"
         if bg == "transparent":
-            return (
-                f'<div class="cell vazio {classe_extra}" '
-                f'title="{titulo}"></div>'
-            )
-        return (
-            f'<div class="cell {classe_extra}" '
-            f'style="background:{bg};" title="{titulo}"></div>'
-        )
+            return f'<div class="cell vazio {classe_extra}" title="{titulo}"></div>'
+        return f'<div class="cell {classe_extra}" style="background:{bg};" title="{titulo}"></div>'
     # ambos -- overlay 50% via linear-gradient diagonal
     if cor_a == "transparent" and cor_b == "transparent":
-        return (
-            f'<div class="cell vazio {classe_extra}" '
-            f'title="{titulo}"></div>'
-        )
+        return f'<div class="cell vazio {classe_extra}" title="{titulo}"></div>'
     cor_a_render = cor_a if cor_a != "transparent" else "rgba(0,0,0,0)"
     cor_b_render = cor_b if cor_b != "transparent" else "rgba(0,0,0,0)"
     return (
@@ -200,9 +191,7 @@ def gerar_heatmap_html(
             if humor_a is None and humor_b is None:
                 partes_titulo.append("sem registro")
             titulo = " · ".join(partes_titulo)
-            cells_html.append(
-                _cell_html(cor_a, cor_b, pessoa_norm, titulo, classe_extra)
-            )
+            cells_html.append(_cell_html(cor_a, cor_b, pessoa_norm, titulo, classe_extra))
 
     labels_dias = "".join(
         f'<span class="heatmap-dia-label">{dia}</span>' for dia in _LABEL_DIAS_SEMANA
@@ -210,8 +199,18 @@ def gerar_heatmap_html(
 
     # Cabeçalho de meses: marca a 1ª coluna em que o mês muda.
     meses_pt = [
-        "JAN", "FEV", "MAR", "ABR", "MAI", "JUN",
-        "JUL", "AGO", "SET", "OUT", "NOV", "DEZ",
+        "JAN",
+        "FEV",
+        "MAR",
+        "ABR",
+        "MAI",
+        "JUN",
+        "JUL",
+        "AGO",
+        "SET",
+        "OUT",
+        "NOV",
+        "DEZ",
     ]
     cabecalho_meses: list[str] = []
     ultimo_mes = -1
@@ -222,9 +221,7 @@ def gerar_heatmap_html(
             continue
         dia_ref = dias[idx_dia]
         if dia_ref.month != ultimo_mes:
-            cabecalho_meses.append(
-                f'<span class="mes-label">{meses_pt[dia_ref.month - 1]}</span>'
-            )
+            cabecalho_meses.append(f'<span class="mes-label">{meses_pt[dia_ref.month - 1]}</span>')
             ultimo_mes = dia_ref.month
         else:
             cabecalho_meses.append('<span class="mes-label"></span>')
@@ -234,14 +231,14 @@ def gerar_heatmap_html(
     html = f"""
     <div class="humor-heatmap" data-pessoa="{pessoa_norm}" data-periodo="{periodo_dias}">
       <div class="heatmap-meses-host" style="grid-template-columns: {grid_template};">
-        {''.join(cabecalho_meses)}
+        {"".join(cabecalho_meses)}
       </div>
       <div class="heatmap-corpo">
         <div class="heatmap-dias-labels-coluna">{labels_dias}</div>
         <div class="heatmap-grid"
              style="grid-template-columns: {grid_template};
                     grid-template-rows: repeat(7, minmax(20px, 1fr));">
-          {''.join(cells_html)}
+          {"".join(cells_html)}
         </div>
       </div>
     </div>
@@ -258,7 +255,7 @@ def gerar_estilos_heatmap() -> str:
         f"""
         <style>
           .humor-heatmap {{
-            background: {CORES['card_fundo']};
+            background: {CORES["card_fundo"]};
             border: 1px solid {border_subtle};
             border-radius: 6px;
             padding: 16px;
@@ -308,7 +305,7 @@ def gerar_estilos_heatmap() -> str:
           }}
           .humor-heatmap .cell:hover {{
             transform: scale(1.15);
-            border-color: {CORES['texto']};
+            border-color: {CORES["texto"]};
             z-index: 5;
           }}
           .humor-heatmap .cell.vazio {{
@@ -316,7 +313,7 @@ def gerar_estilos_heatmap() -> str:
             border-color: {border_subtle};
           }}
           .humor-heatmap .cell.hoje {{
-            box-shadow: 0 0 0 1px {CORES['neutro']};
+            box-shadow: 0 0 0 1px {CORES["neutro"]};
           }}
           .humor-heatmap .cell.heatmap-overlay {{
             /* opacity já fica em 0.5 via inline; classe serve de marker
@@ -350,8 +347,7 @@ def gerar_estilos_heatmap() -> str:
 def gerar_legenda_html() -> str:
     """Faixa "menos -> mais" abaixo do heatmap."""
     swatches = "".join(
-        f'<span class="swatch" style="background:{_CORES_HUMOR[v]};"></span>'
-        for v in range(1, 6)
+        f'<span class="swatch" style="background:{_CORES_HUMOR[v]};"></span>' for v in range(1, 6)
     )
     return minificar(
         f"""

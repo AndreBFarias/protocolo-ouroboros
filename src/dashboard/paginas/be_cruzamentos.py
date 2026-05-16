@@ -90,14 +90,10 @@ def _correlacao_humor_eventos(
     """Humor medio agrupado por modo do evento no mesmo dia."""
     grupos: dict[str, list[float]] = {"positivo": [], "negativo": [], "sem evento": []}
     datas_com_evento_pos = {
-        str(e.get("data") or "")
-        for e in eventos
-        if str(e.get("modo") or "").lower() == "positivo"
+        str(e.get("data") or "") for e in eventos if str(e.get("modo") or "").lower() == "positivo"
     }
     datas_com_evento_neg = {
-        str(e.get("data") or "")
-        for e in eventos
-        if str(e.get("modo") or "").lower() == "negativo"
+        str(e.get("data") or "") for e in eventos if str(e.get("modo") or "").lower() == "negativo"
     }
     for ds, h in humor_dia.items():
         if ds in datas_com_evento_pos:
@@ -212,9 +208,7 @@ def _classificar_correlacao(r: float) -> str:
     return "negligivel"
 
 
-def _scatter_correlacao(
-    serie_a: pd.Series, serie_b: pd.Series
-) -> tuple[float, str]:
+def _scatter_correlacao(serie_a: pd.Series, serie_b: pd.Series) -> tuple[float, str]:
     """Pearson correlation. Retorna (r, classificação_texto)."""
     if len(serie_a) < 3 or len(serie_b) < 3:
         return 0.0, "amostra insuficiente"
@@ -254,17 +248,15 @@ def _perguntas_html() -> str:
             f'data-metrica="{metrica}" data-cruza="{cruza}" data-janela="{janela}">'
             f'<span class="cz-pergunta-texto">{texto}</span>'
             f'<span class="cz-pergunta-meta">{metrica} x {cruza} - {janela}</span>'
-            f'</div>'
+            f"</div>"
         )
     bloco = (
         '<div class="cz-perguntas-bloco">'
         '<h3 class="cz-perguntas-titulo">'
-        'PERGUNTAS PRE-PRONTAS - clique para rodar'
-        '</h3>'
-        '<div class="cz-perguntas-grid">'
-        + "".join(items)
-        + '</div>'
-        '</div>'
+        "PERGUNTAS PRE-PRONTAS - clique para rodar"
+        "</h3>"
+        '<div class="cz-perguntas-grid">' + "".join(items) + "</div>"
+        "</div>"
     )
     return minificar(bloco)
 
@@ -410,12 +402,16 @@ def renderizar(
     from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
     from src.dashboard.componentes.ui import carregar_css_pagina
 
-    renderizar_grupo_acoes([
-        {"label": "Salvar como bloco do Recap", "glyph": "validar",
-         "title": "Padrão vai aparecer no Recap mensal"},
-        {"label": "Voltar ao Recap", "primary": True,
-         "href": "?cluster=Bem-estar&tab=Recap"},
-    ])
+    renderizar_grupo_acoes(
+        [
+            {
+                "label": "Salvar como bloco do Recap",
+                "glyph": "validar",
+                "title": "Padrão vai aparecer no Recap mensal",
+            },
+            {"label": "Voltar ao Recap", "primary": True, "href": "?cluster=Bem-estar&tab=Recap"},
+        ]
+    )
 
     del dados, periodo, pessoa, ctx
 
@@ -432,15 +428,16 @@ def renderizar(
             fallback_estado_inicial_html,
             ler_sync_info,
         )
+
         skeleton = (
             '<div style="display:flex;flex-direction:column;gap:10px;">'
             '<div style="display:flex;gap:10px;">'
             '<span class="skel-bloco" style="width:30%;height:36px;"></span>'
             '<span class="skel-bloco" style="width:30%;height:36px;"></span>'
             '<span class="skel-bloco" style="width:30%;height:36px;"></span>'
-            '</div>'
+            "</div>"
             '<span class="skel-bloco" style="width:100%;height:160px;"></span>'
-            '</div>'
+            "</div>"
         )
         st.markdown(
             fallback_estado_inicial_html(
@@ -505,12 +502,8 @@ def renderizar(
             unsafe_allow_html=True,
         )
 
-        serie_a = _serie_metrica_por_dia(
-            humor_dia, eventos, treinos, medidas, metrica
-        )
-        serie_b = _serie_cruza_por_dia(
-            humor_dia, eventos, treinos, medidas, cruza
-        )
+        serie_a = _serie_metrica_por_dia(humor_dia, eventos, treinos, medidas, metrica)
+        serie_b = _serie_cruza_por_dia(humor_dia, eventos, treinos, medidas, cruza)
         df_scatter = _scatter_dataframe(serie_a, serie_b)
         r, classe = _scatter_correlacao(df_scatter["metrica"], df_scatter["cruza"])
 
@@ -563,9 +556,7 @@ def renderizar(
             sinal = "+" if r >= 0 else ""
             st.markdown(
                 _insight_html(
-                    titulo=(
-                        f"correlação {classe} entre {metrica} e {cruza}"
-                    ),
+                    titulo=(f"correlação {classe} entre {metrica} e {cruza}"),
                     classe=classe,
                     corpo=(
                         f"Pearson r = {sinal}{r:.2f} sobre n = "

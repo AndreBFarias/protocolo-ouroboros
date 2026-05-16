@@ -97,6 +97,7 @@ def _consolidar_historico_com_real(transacoes: list[dict]) -> list[dict]:
     `test_deduplicar_orquestra_tres_niveis` quebrariam porque "Histórico"
     e "Nubank (PF)" caem em buckets distintos na chave 4-tuple.
     """
+
     def _chave_3tuple(t: dict) -> tuple:
         d = t["data"]
         data_str = d.isoformat() if hasattr(d, "isoformat") else str(d)

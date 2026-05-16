@@ -187,8 +187,7 @@ def extrair_via_opus(
 
     if os.environ.get("OPUS_API_KEY"):
         logger.warning(
-            "modo API ainda não implementado — sprint futura. "
-            "Caindo em modo supervisor artesanal."
+            "modo API ainda não implementado — sprint futura. Caindo em modo supervisor artesanal."
         )
         raise NotImplementedError(
             "Modo produção (chamada Anthropic API) não implementado nesta sprint. "

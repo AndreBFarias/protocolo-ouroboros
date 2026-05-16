@@ -160,9 +160,7 @@ def test_excluir_arquivo_pula_normalizacao(vault):
     incluida = vault.backlog / "sprint_incluida.md"
     _escrever(excluida, SPEC_SEM_FM)
     _escrever(incluida, SPEC_SEM_FM)
-    args = SimpleNamespace(
-        excluir=["sprint_excluida.md"], data_fallback="2026-05-13"
-    )
+    args = SimpleNamespace(excluir=["sprint_excluida.md"], data_fallback="2026-05-13")
     with patch.object(norm, "inferir_data_criacao", return_value="2026-05-13"):
         norm.cmd_normalizar(args)
     # Excluída permanece sem frontmatter.

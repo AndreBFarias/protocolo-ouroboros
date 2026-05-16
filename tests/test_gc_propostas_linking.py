@@ -173,20 +173,20 @@ def test_dry_run_nao_move_arquivos(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     """executar sem --mover-obsoletos deixa arquivos no lugar."""
-    (pasta_propostas / "9999_conflito.md").write_text(
-        _proposta_texto(9999), encoding="utf-8"
-    )
+    (pasta_propostas / "9999_conflito.md").write_text(_proposta_texto(9999), encoding="utf-8")
     (pasta_propostas / "0001_conflito.md").write_text(
         _proposta_texto(1, "doc_vivo_a"), encoding="utf-8"
     )
 
-    exit_code = executar([
-        "--auditar-atual",
-        "--pasta",
-        str(pasta_propostas),
-        "--db",
-        str(grafo_db),
-    ])
+    exit_code = executar(
+        [
+            "--auditar-atual",
+            "--pasta",
+            str(pasta_propostas),
+            "--db",
+            str(grafo_db),
+        ]
+    )
     assert exit_code == 0
     # Arquivos continuam onde estavam.
     assert (pasta_propostas / "9999_conflito.md").exists()
@@ -225,9 +225,7 @@ def test_idempotencia_re_rodar_nao_duplica(
     grafo_db: Path,
 ) -> None:
     """Re-rodar mover_obsoletos não move o que já foi arquivado."""
-    (pasta_propostas / "9999_conflito.md").write_text(
-        _proposta_texto(9999), encoding="utf-8"
-    )
+    (pasta_propostas / "9999_conflito.md").write_text(_proposta_texto(9999), encoding="utf-8")
 
     ids_vivos = carregar_ids_documento(grafo_db)
 
@@ -310,20 +308,18 @@ def test_executar_mover_obsoletos_integracao(
     (pasta_propostas / "0001_conflito.md").write_text(
         _proposta_texto(1, "doc_vivo_a"), encoding="utf-8"
     )
-    (pasta_propostas / "9999_conflito.md").write_text(
-        _proposta_texto(9999), encoding="utf-8"
-    )
-    (pasta_propostas / "8888_conflito.md").write_text(
-        _proposta_texto(8888), encoding="utf-8"
-    )
+    (pasta_propostas / "9999_conflito.md").write_text(_proposta_texto(9999), encoding="utf-8")
+    (pasta_propostas / "8888_conflito.md").write_text(_proposta_texto(8888), encoding="utf-8")
 
-    exit_code = executar([
-        "--mover-obsoletos",
-        "--pasta",
-        str(pasta_propostas),
-        "--db",
-        str(grafo_db),
-    ])
+    exit_code = executar(
+        [
+            "--mover-obsoletos",
+            "--pasta",
+            str(pasta_propostas),
+            "--db",
+            str(grafo_db),
+        ]
+    )
     assert exit_code == 0
 
     # Raiz: ficou apenas o atual.

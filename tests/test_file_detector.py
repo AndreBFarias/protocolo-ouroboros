@@ -83,8 +83,7 @@ def test_holerite_com_mencao_itau_no_rodape_nao_casa(tmp_path: Path):
     # 'agência:'). Sem o nome 'ITAÚ UNIBANCO' (so 'ITAU' sem til), o detector
     # tem no máximo 1 âncora -- não deve casar.
     assert deteccao is None or deteccao.banco != "itau", (
-        f"holerite com mencao Itau no rodape não deveria casar como extrato; "
-        f"deteccao={deteccao}"
+        f"holerite com mencao Itau no rodape não deveria casar como extrato; deteccao={deteccao}"
     )
 
 
@@ -102,8 +101,7 @@ def test_recibo_ted_itau_nao_casa(tmp_path: Path):
     )
     deteccao = _detectar_pdf(arq)
     assert deteccao is None, (
-        f"Recibo TED com so o nome do banco não deveria casar como extrato; "
-        f"deteccao={deteccao}"
+        f"Recibo TED com so o nome do banco não deveria casar como extrato; deteccao={deteccao}"
     )
 
 
@@ -175,8 +173,7 @@ def test_pdf_so_com_nome_santander_nao_casa(tmp_path: Path):
     )
     deteccao = _detectar_pdf(arq)
     assert deteccao is None, (
-        f"unica ancora SANTANDER (sem outras palavras-chave) não deveria casar; "
-        f"deteccao={deteccao}"
+        f"unica ancora SANTANDER (sem outras palavras-chave) não deveria casar; deteccao={deteccao}"
     )
 
 

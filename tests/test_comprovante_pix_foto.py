@@ -239,9 +239,7 @@ class TestExtrairClasse:
         imagem_nova.write_bytes(b"fake-bytes-2")
 
         # Redirecionar diretórios padrão para tmp_path
-        monkeypatch.setattr(
-            "src.extractors.opus_visao.DIR_CACHE_PADRAO", tmp_path / "cache"
-        )
+        monkeypatch.setattr("src.extractors.opus_visao.DIR_CACHE_PADRAO", tmp_path / "cache")
         monkeypatch.setattr(
             "src.extractors.opus_visao.DIR_PENDENTES_PADRAO", tmp_path / "pendentes"
         )

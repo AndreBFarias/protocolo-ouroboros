@@ -133,9 +133,7 @@ def renderizar(dados, periodo, pessoa, ctx) -> None:
                 feita = bool(t.get("feita"))
                 prazo = t.get("prazo", "")
                 check = "[x]" if feita else "[ ]"
-                style_feita = (
-                    "opacity: 0.55; text-decoration: line-through;" if feita else ""
-                )
+                style_feita = "opacity: 0.55; text-decoration: line-through;" if feita else ""
                 linhas.append(
                     f'<article class="card" style="display: grid; grid-template-columns: 24px 1fr auto; gap: var(--sp-3); align-items: center; margin-bottom: var(--sp-2); {style_feita}">'
                     f'<div class="mono" style="font-size: var(--fs-14); color: var(--text-muted);">{check}</div>'

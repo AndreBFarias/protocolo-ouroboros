@@ -1,4 +1,5 @@
 """Testes para fronteira `src/ocr_cli/` (Sprint INFRA-OCR-CLI-NATIVO)."""
+
 from __future__ import annotations
 
 import shutil
@@ -83,7 +84,10 @@ def test_pdf_para_imagens_renderiza_primeira_pagina(tmp_path: Path):
     if not holerites:
         pytest.skip("Sem holerites em data/raw/")
     imagens = pdf_para_imagens(
-        holerites[0], dpi=150, primeira_pagina=1, ultima_pagina=1,
+        holerites[0],
+        dpi=150,
+        primeira_pagina=1,
+        ultima_pagina=1,
         diretorio_saida=tmp_path,
     )
     assert len(imagens) == 1

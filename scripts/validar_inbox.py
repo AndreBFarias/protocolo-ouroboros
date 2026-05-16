@@ -69,9 +69,7 @@ def _aplicar_filtros(
     if tipo:
         pendentes = [linha for linha in pendentes if linha.tipo_arquivo == tipo]
     if mes:
-        pendentes = [
-            linha for linha in pendentes if linha.ts_processado.startswith(mes)
-        ]
+        pendentes = [linha for linha in pendentes if linha.ts_processado.startswith(mes)]
     if apenas_divergentes:
         # apenas-divergentes requer linha onde humano JÁ preencheu valor
         # diferente do ETL. Pendentes do Opus que também são divergentes
@@ -79,13 +77,9 @@ def _aplicar_filtros(
         sha8s_divergentes = {
             linha.sha8_arquivo
             for linha in todas
-            if linha.valor_humano
-            and linha.valor_etl
-            and linha.valor_humano != linha.valor_etl
+            if linha.valor_humano and linha.valor_etl and linha.valor_humano != linha.valor_etl
         }
-        pendentes = [
-            linha for linha in pendentes if linha.sha8_arquivo in sha8s_divergentes
-        ]
+        pendentes = [linha for linha in pendentes if linha.sha8_arquivo in sha8s_divergentes]
     return pendentes
 
 
@@ -118,9 +112,7 @@ def comando_principal(args: argparse.Namespace) -> int:
         filtro_resumo.append(f"mes={args.mes}")
     if args.apenas_divergentes:
         filtro_resumo.append("apenas-divergentes")
-    descritor_filtro = (
-        f" (filtro: {', '.join(filtro_resumo)})" if filtro_resumo else ""
-    )
+    descritor_filtro = f" (filtro: {', '.join(filtro_resumo)})" if filtro_resumo else ""
 
     print(f"[VAL-BATCH] {total} arquivo(s) pendente(s){descritor_filtro}")
 
@@ -136,10 +128,7 @@ def comando_principal(args: argparse.Namespace) -> int:
         print(f"[VAL-BATCH] tipo: {primeira.tipo_arquivo}")
         print(f"[VAL-BATCH] caminho: {primeira.caminho_relativo}")
         print(f"[VAL-BATCH] campos pendentes ({len(linhas_arquivo)}): {campos_pendentes}")
-        print(
-            f"[VAL-BATCH] aguardando Opus -- chame "
-            f"/validar-arquivo --sha8 {sha8}"
-        )
+        print(f"[VAL-BATCH] aguardando Opus -- chame /validar-arquivo --sha8 {sha8}")
         if indice % PROGRESSO_CADA_N == 0 and indice < total:
             print(f"[VAL-BATCH] === progresso: {indice}/{total} ===")
 
@@ -149,9 +138,7 @@ def comando_principal(args: argparse.Namespace) -> int:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(
-        description=__doc__.split("\n")[0] if __doc__ else ""
-    )
+    parser = argparse.ArgumentParser(description=__doc__.split("\n")[0] if __doc__ else "")
     parser.add_argument("--tipo", help="filtra por tipo_arquivo")
     parser.add_argument("--mes", help="filtra por ts_processado iniciando com YYYY-MM")
     parser.add_argument(

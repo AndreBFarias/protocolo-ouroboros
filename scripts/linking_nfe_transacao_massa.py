@@ -346,9 +346,7 @@ def main(argv: list[str] | None = None) -> int:
         stats = processar(db, tipos_documento=tipos, dry_run=args.dry_run)
         edges_depois = contar_edges_documento_de(db)
 
-    relatorio = _formatar_relatorio(
-        stats, edges_antes, edges_depois, dry_run=args.dry_run
-    )
+    relatorio = _formatar_relatorio(stats, edges_antes, edges_depois, dry_run=args.dry_run)
     sys.stdout.write(relatorio + "\n")
     return 0
 

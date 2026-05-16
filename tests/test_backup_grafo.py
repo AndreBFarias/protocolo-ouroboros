@@ -36,9 +36,7 @@ def dir_backup(tmp_path: Path) -> Path:
     return d
 
 
-def test_executar_backup_grafo_cria_arquivo_e_sha(
-    grafo_origem: Path, dir_backup: Path
-) -> None:
+def test_executar_backup_grafo_cria_arquivo_e_sha(grafo_origem: Path, dir_backup: Path) -> None:
     backup = pipeline._executar_backup_grafo(grafo_origem, dir_backup)
     assert backup is not None
     assert backup.exists()
@@ -55,9 +53,7 @@ def test_executar_backup_grafo_cria_arquivo_e_sha(
     assert all(c in "0123456789abcdef" for c in sha_hex)
 
 
-def test_executar_backup_grafo_skip_quando_origem_ausente(
-    tmp_path: Path, dir_backup: Path
-) -> None:
+def test_executar_backup_grafo_skip_quando_origem_ausente(tmp_path: Path, dir_backup: Path) -> None:
     """Pipeline em estado inicial (sem grafo) -- backup eh no-op silencioso."""
     sem_grafo = tmp_path / "nao_existe.sqlite"
     r = pipeline._executar_backup_grafo(sem_grafo, dir_backup)
@@ -131,12 +127,10 @@ def test_retencao_apaga_sha_junto(dir_backup: Path) -> None:
     assert not sha_path.exists()
 
 
-def test_restaurar_grafo_de_backup_valido(
-    grafo_origem: Path, dir_backup: Path
-) -> None:
+def test_restaurar_grafo_de_backup_valido(grafo_origem: Path, dir_backup: Path) -> None:
     backup = pipeline._executar_backup_grafo(grafo_origem, dir_backup)
     assert backup is not None
-    ts = backup.stem[len(pipeline.PREFIXO_BACKUP_GRAFO):]
+    ts = backup.stem[len(pipeline.PREFIXO_BACKUP_GRAFO) :]
 
     # Modifica o grafo apos backup
     grafo_origem.write_bytes(b"ALTERADO")
@@ -154,21 +148,15 @@ def test_restaurar_grafo_de_backup_valido(
     assert len(recuos) == 1
 
 
-def test_restaurar_rejeita_backup_inexistente(
-    grafo_origem: Path, dir_backup: Path
-) -> None:
-    rc = pipeline._restaurar_grafo_de_backup(
-        "2000-01-01_000000", grafo_origem, dir_backup
-    )
+def test_restaurar_rejeita_backup_inexistente(grafo_origem: Path, dir_backup: Path) -> None:
+    rc = pipeline._restaurar_grafo_de_backup("2000-01-01_000000", grafo_origem, dir_backup)
     assert rc == 1
 
 
-def test_restaurar_rejeita_checksum_invalido(
-    grafo_origem: Path, dir_backup: Path
-) -> None:
+def test_restaurar_rejeita_checksum_invalido(grafo_origem: Path, dir_backup: Path) -> None:
     backup = pipeline._executar_backup_grafo(grafo_origem, dir_backup)
     assert backup is not None
-    ts = backup.stem[len(pipeline.PREFIXO_BACKUP_GRAFO):]
+    ts = backup.stem[len(pipeline.PREFIXO_BACKUP_GRAFO) :]
     # Corrompe o backup mantendo sha antigo
     backup.write_bytes(b"CORROMPIDO")
     rc = pipeline._restaurar_grafo_de_backup(ts, grafo_origem, dir_backup)
@@ -177,12 +165,10 @@ def test_restaurar_rejeita_checksum_invalido(
     assert grafo_origem.read_bytes().startswith(b"SQLite format 3")
 
 
-def test_restaurar_rejeita_sha_ausente(
-    grafo_origem: Path, dir_backup: Path
-) -> None:
+def test_restaurar_rejeita_sha_ausente(grafo_origem: Path, dir_backup: Path) -> None:
     backup = pipeline._executar_backup_grafo(grafo_origem, dir_backup)
     assert backup is not None
-    ts = backup.stem[len(pipeline.PREFIXO_BACKUP_GRAFO):]
+    ts = backup.stem[len(pipeline.PREFIXO_BACKUP_GRAFO) :]
     # Deleta o sha
     backup.with_suffix(backup.suffix + ".sha256").unlink()
     rc = pipeline._restaurar_grafo_de_backup(ts, grafo_origem, dir_backup)
@@ -195,7 +181,7 @@ def test_restaurar_diagnostica_sha_truncado(
     """Sprint INFRA-RESTORE-CHECKSUM-DIAGNOSTICO: .sha256 com ≠64 chars."""
     backup = pipeline._executar_backup_grafo(grafo_origem, dir_backup)
     assert backup is not None
-    ts = backup.stem[len(pipeline.PREFIXO_BACKUP_GRAFO):]
+    ts = backup.stem[len(pipeline.PREFIXO_BACKUP_GRAFO) :]
     # Trunca o .sha256 para simular write parcial (disco cheio)
     sha_path = backup.with_suffix(backup.suffix + ".sha256")
     sha_path.write_text("abc123", encoding="utf-8")  # 6 chars, longe de 64
@@ -215,7 +201,7 @@ def test_restaurar_diagnostica_sha_nao_hex(
     """Sprint INFRA-RESTORE-CHECKSUM-DIAGNOSTICO: .sha256 com 64 chars mas não-hex."""
     backup = pipeline._executar_backup_grafo(grafo_origem, dir_backup)
     assert backup is not None
-    ts = backup.stem[len(pipeline.PREFIXO_BACKUP_GRAFO):]
+    ts = backup.stem[len(pipeline.PREFIXO_BACKUP_GRAFO) :]
     # 64 chars 'z' (não-hex)
     sha_path = backup.with_suffix(backup.suffix + ".sha256")
     sha_path.write_text("z" * 64, encoding="utf-8")
@@ -237,7 +223,7 @@ def test_restaurar_diagnostica_conteudo_corrompido(
     """Sprint INFRA-RESTORE-CHECKSUM-DIAGNOSTICO: sha hex válido mas ≠ sha calculado."""
     backup = pipeline._executar_backup_grafo(grafo_origem, dir_backup)
     assert backup is not None
-    ts = backup.stem[len(pipeline.PREFIXO_BACKUP_GRAFO):]
+    ts = backup.stem[len(pipeline.PREFIXO_BACKUP_GRAFO) :]
     # Corrompe o backup mantendo o .sha256 antigo (64 hex chars válidos, mas conteúdo difere)
     backup.write_bytes(b"CONTEUDO_DIFERENTE_DO_ORIGINAL")
     import logging

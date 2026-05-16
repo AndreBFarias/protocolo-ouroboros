@@ -191,7 +191,7 @@ def _classificar_estado(nome: str) -> str:
 
 def _confianca_para(estado: str, nome: str) -> float:
     """Confiança derivada do estado + jitter determinístico."""
-    jitter = (_hash_estavel(nome + "conf", 600) / 10_000)  # 0.0000 .. 0.0599
+    jitter = _hash_estavel(nome + "conf", 600) / 10_000  # 0.0000 .. 0.0599
     base = {
         "graduado": 0.92,
         "calibrando": 0.74,
@@ -220,7 +220,7 @@ def _runs_para(estado: str, nome: str) -> int:
 def _stab_para(estado: str, conf: float, nome: str) -> float:
     """Estabilidade (proxy de variância inversa). Graduados têm stab ~ conf,
     calibrando ligeiramente abaixo, regredindo bem abaixo."""
-    jitter = (_hash_estavel(nome + "stab", 50) / 1000)  # 0.000 .. 0.049
+    jitter = _hash_estavel(nome + "stab", 50) / 1000  # 0.000 .. 0.049
     if estado == "graduado":
         return round(min(conf - 0.01 + jitter, 0.99), 3)
     if estado == "calibrando":
@@ -296,8 +296,7 @@ def _agregar_clusters(skills: list[dict]) -> list[dict]:
         nome = s["cluster"]
         bucket = clusters.setdefault(
             nome,
-            {"total": 0, "graduado": 0, "calibrando": 0,
-             "regredindo": 0, "pendente": 0},
+            {"total": 0, "graduado": 0, "calibrando": 0, "regredindo": 0, "pendente": 0},
         )
         bucket["total"] += 1
         bucket[s["estado"]] += 1
@@ -321,7 +320,7 @@ def _evolucao_semanal(skills: list[dict]) -> list[dict]:
         # Crescimento linear com pequenos pulsos para parecer orgânico.
         progresso = semana / 6.0
         base = round(grad_atual * (0.70 + 0.30 * progresso))
-        pulso = (_hash_estavel(f"semana{semana}", 3) - 1)  # -1, 0, +1
+        pulso = _hash_estavel(f"semana{semana}", 3) - 1  # -1, 0, +1
         valor = max(0, base + pulso)
         if semana == 6:
             valor = grad_atual  # ancorada na realidade atual
@@ -353,9 +352,7 @@ def _construir_kpis(skills: list[dict]) -> dict:
         "confianca_media": confianca_media,
         "execucoes_30d": execucoes_30d,
         "p95_segundos": 2.4,
-        "regressao_destaque": (
-            "atenção sazonal" if reg > 0 else "sem regressões recentes"
-        ),
+        "regressao_destaque": ("atenção sazonal" if reg > 0 else "sem regressões recentes"),
     }
 
 

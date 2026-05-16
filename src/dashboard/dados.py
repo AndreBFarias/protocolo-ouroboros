@@ -1,6 +1,5 @@
 """Módulo de carregamento e cache de dados do Protocolo Ouroboros."""
 
-
 from pathlib import Path
 
 import pandas as pd
@@ -301,8 +300,6 @@ def formatar_moeda(valor: float) -> str:
     return f"{sinal}R$ {valor_abs:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
 
-
-
 @st.cache_data(ttl=60)
 def obter_fluxo_receita_categoria_fornecedor(mes_ref: str) -> dict:
     """Agrega valores do extrato em três séries (para 3 bar charts).
@@ -374,8 +371,6 @@ def obter_fluxo_receita_categoria_fornecedor(mes_ref: str) -> dict:
         "fornecedor": fornecedor_list,
         "mes_ref": mes_ref,
     }
-
-
 
 
 # Sprint INFRA-D2a: re-export de listar_pendencias_revisao + constantes de

@@ -191,9 +191,7 @@ def _str_seguro(valor: Any) -> str:
 
 def compilar_totais(eventos: Iterable[dict[str, Any]]) -> dict[str, dict[str, float]]:
     """Compila totais por categoria, sempre incluindo as 8 canônicas."""
-    base: dict[str, dict[str, float]] = {
-        cat: {"valor": 0.0, "count": 0} for cat in CATEGORIAS_IRPF
-    }
+    base: dict[str, dict[str, float]] = {cat: {"valor": 0.0, "count": 0} for cat in CATEGORIAS_IRPF}
     for evento in eventos:
         tag = evento.get("tag")
         if tag not in base:
@@ -327,8 +325,7 @@ def _escrever_pdf(totais: dict, eventos: list[dict[str, Any]], ano: int, destino
     flow.append(Spacer(1, 16))
     flow.append(
         Paragraph(
-            f"Eventos compilados: {len(eventos)}. "
-            f"Pacote completo em data/aplicacoes/irpf_{ano}/.",
+            f"Eventos compilados: {len(eventos)}. Pacote completo em data/aplicacoes/irpf_{ano}/.",
             corpo,
         )
     )

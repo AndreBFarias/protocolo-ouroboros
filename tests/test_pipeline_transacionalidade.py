@@ -70,9 +70,7 @@ def test_log_estruturado_aponta_backup_mais_recente(tmp_path: Path, monkeypatch)
     assert d["ultimo_backup_grafo"] == f"{pipeline.PREFIXO_BACKUP_GRAFO}2026-05-15_080000.sqlite"
 
 
-def test_executar_linking_documentos_rollback_em_crash_interno(
-    tmp_path: Path, monkeypatch
-):
+def test_executar_linking_documentos_rollback_em_crash_interno(tmp_path: Path, monkeypatch):
     """Crash mid-linking faz rollback completo: nenhum node/edge criado."""
     grafo_path = _setup_grafo_minimo(tmp_path)
     monkeypatch.setattr(pipeline, "RAIZ", tmp_path)
@@ -91,9 +89,7 @@ def test_executar_linking_documentos_rollback_em_crash_interno(
         raise RuntimeError("crash mid-linking")
 
     monkeypatch.setattr(linking_mod, "linkar_documentos_a_transacoes", fake_link)
-    monkeypatch.setattr(
-        linking_mod, "linkar_pix_transacao", lambda db: {"chamado": False}
-    )
+    monkeypatch.setattr(linking_mod, "linkar_pix_transacao", lambda db: {"chamado": False})
 
     pipeline._executar_linking_documentos()  # captura exception internamente
 
@@ -147,9 +143,7 @@ def test_executar_er_produtos_rollback_em_crash_interno(tmp_path: Path, monkeypa
 # ---------------------------------------------------------------------------
 
 
-def test_executar_dispara_restore_em_crash_e_re_raise(
-    tmp_path: Path, monkeypatch
-):
+def test_executar_dispara_restore_em_crash_e_re_raise(tmp_path: Path, monkeypatch):
     """Pipeline crasha mid-execução → restore automático chamado + exception re-raised."""
     monkeypatch.setattr(pipeline, "RAIZ", tmp_path)
     monkeypatch.setattr(pipeline, "DIR_BACKUP_GRAFO", tmp_path / "_backup")
@@ -218,9 +212,7 @@ def test_executar_sem_backup_re_raise_sem_corromper(tmp_path: Path, monkeypatch)
     assert len(logs) == 1
 
 
-def test_executar_restore_falha_nao_suprime_excecao_original(
-    tmp_path: Path, monkeypatch
-):
+def test_executar_restore_falha_nao_suprime_excecao_original(tmp_path: Path, monkeypatch):
     """Se o próprio restore crashar, a exceção original do estágio
     ainda é re-raised (não troca-se um crash pelo outro)."""
     monkeypatch.setattr(pipeline, "RAIZ", tmp_path)

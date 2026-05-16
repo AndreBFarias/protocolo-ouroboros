@@ -179,9 +179,7 @@ def test_gerar_ground_truth_csv_export_completo(tmp_path: Path):
     """3 marcações no DB -> 3 linhas no CSV + cabeçalho. Divergência calculada."""
     caminho_db = tmp_path / "rev.sqlite"
     # Marcação OK (sem divergência).
-    salvar_marcacao(
-        caminho_db, "doc/a.pdf", "valor", ok=1, observacao="", valor_etl="100.00"
-    )
+    salvar_marcacao(caminho_db, "doc/a.pdf", "valor", ok=1, observacao="", valor_etl="100.00")
     # Marcação humano marcou Erro (divergência por humano).
     salvar_marcacao(
         caminho_db, "doc/b.pdf", "data", ok=0, observacao="data errada", valor_etl="2026-01-01"

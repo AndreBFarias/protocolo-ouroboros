@@ -69,8 +69,7 @@ def montar_proposta(tipo: str, amostra: Path | None, hoje: str) -> str:
         + ".md"
     )
     placeholder_tipo = (
-        "<regra_categoria | extracao | resolver | classificação | er_produtos"
-        " | linking | outro>"
+        "<regra_categoria | extracao | resolver | classificação | er_produtos | linking | outro>"
     )
     placeholder_sha = (
         "<sha256 da hipotese normalizada -- preencher antes de gerar; "

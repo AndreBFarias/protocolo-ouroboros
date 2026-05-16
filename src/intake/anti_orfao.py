@@ -106,9 +106,7 @@ def varrer_arquivos_inbox(raw: Path = RAW_PADRAO, abrangente: bool = False) -> l
 
 
 def _listar_recursivo(pasta: Path) -> list[Path]:
-    return [
-        c for c in pasta.rglob("*") if c.is_file() and c.suffix.lower() in EXTENSOES_VALIDAS
-    ]
+    return [c for c in pasta.rglob("*") if c.is_file() and c.suffix.lower() in EXTENSOES_VALIDAS]
 
 
 def mapear_documentos_no_grafo(db: Path = DB_PADRAO) -> dict[str, dict]:

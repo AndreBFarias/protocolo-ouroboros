@@ -135,12 +135,7 @@ def test_parser_strip_comentario_trailing(tmp_path: Path) -> None:
     pasta.mkdir()
     path = pasta / "antiga.md"
     path.write_text(
-        "---\n"
-        "id: antiga-x\n"
-        "tipo: classificacao  # noqa: accent\n"
-        "status: aberta\n"
-        "---\n\n"
-        "Corpo.\n",
+        "---\nid: antiga-x\ntipo: classificacao  # noqa: accent\nstatus: aberta\n---\n\nCorpo.\n",
         encoding="utf-8",
     )
     propostas = propostas_pendentes._listar_pendentes(tmp_path)

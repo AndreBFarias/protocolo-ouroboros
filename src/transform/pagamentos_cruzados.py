@@ -135,9 +135,7 @@ def _documento_casa_transacao(
     data_tx = _parse_data(transacao.get("data"))
     if data_tx is None:
         return False
-    referencia = _parse_data(
-        documento_meta.get("vencimento") or documento_meta.get("data_emissao")
-    )
+    referencia = _parse_data(documento_meta.get("vencimento") or documento_meta.get("data_emissao"))
     if referencia is None:
         return False
     delta = abs((data_tx - referencia).days)

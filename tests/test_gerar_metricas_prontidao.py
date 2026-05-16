@@ -11,9 +11,7 @@ from pathlib import Path
 
 _SPEC = importlib.util.spec_from_file_location(
     "gerar_metricas_prontidao",
-    Path(__file__).resolve().parents[1]
-    / "scripts"
-    / "gerar_metricas_prontidao.py",
+    Path(__file__).resolve().parents[1] / "scripts" / "gerar_metricas_prontidao.py",
 )
 assert _SPEC and _SPEC.loader
 gm = importlib.util.module_from_spec(_SPEC)

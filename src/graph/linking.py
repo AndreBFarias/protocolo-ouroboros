@@ -1002,9 +1002,7 @@ def linkar_pix_transacao(
                 evid_novo["pix_boost"] = "textual"
             candidatas_boostadas.append((tid, evid_novo))
 
-        candidatas_boostadas.sort(
-            key=lambda par: float(par[1]["confidence"]), reverse=True
-        )
+        candidatas_boostadas.sort(key=lambda par: float(par[1]["confidence"]), reverse=True)
 
         top_id, top_evidencia = candidatas_boostadas[0]
         parametros = _parametros_para_tipo("comprovante_pix_foto", config)

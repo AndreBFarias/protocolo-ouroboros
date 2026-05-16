@@ -9,6 +9,7 @@ API:
 - ``extrair_imagens_embutidas(pdf)``: pdfimages, retorna lista de paths.
 - ``info_pdf(pdf)``: pdfinfo, retorna dict de metadados.
 """
+
 from __future__ import annotations
 
 import logging
@@ -30,9 +31,7 @@ def _localizar(binario: str) -> str:
     return caminho
 
 
-def extrair_pdf_texto_nativo(
-    caminho: Path, *, layout: bool = True, encoding: str = "UTF-8"
-) -> str:
+def extrair_pdf_texto_nativo(caminho: Path, *, layout: bool = True, encoding: str = "UTF-8") -> str:
     """Executa ``pdftotext -layout <pdf> -`` e devolve texto.
 
     Para PDFs com texto nativo (NFCe, holerite, fatura): muito mais rápido

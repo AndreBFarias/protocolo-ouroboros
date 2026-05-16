@@ -234,11 +234,7 @@ def test_sankey_renderizacao_aplica_textfont_visivel(
     _renderizar_aba_fluxo(df_multi_mes)
 
     # Pelo menos uma figura é Sankey
-    sankey_figs = [
-        f
-        for f in figs_capturadas
-        if f.data and f.data[0].type == "sankey"
-    ]
+    sankey_figs = [f for f in figs_capturadas if f.data and f.data[0].type == "sankey"]
     assert len(sankey_figs) == 1
     sankey = sankey_figs[0].data[0]
     # textfont explícito não-nulo
@@ -276,9 +272,7 @@ def test_heatmap_colorscale_nao_comeca_no_fundo_para_evitar_cell_invisivel(
 
     _renderizar_aba_padroes(df_multi_mes)
 
-    heatmaps = [
-        f for f in figs_capturadas if f.data and f.data[0].type == "heatmap"
-    ]
+    heatmaps = [f for f in figs_capturadas if f.data and f.data[0].type == "heatmap"]
     assert len(heatmaps) == 1
     heatmap = heatmaps[0].data[0]
     colorscale = heatmap.colorscale

@@ -79,13 +79,23 @@ def renderizar(  # noqa: accent
         ctx: contexto extra (granularidade etc., ignorado).
     """
     from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
-    renderizar_grupo_acoes([
-        {"label": "Diário emocional", "glyph": "heart",
-         "href": "?cluster=Bem-estar&tab=Diário",
-         "title": "Ir para o diário"},
-        {"label": "Salvar humor", "primary": True, "glyph": "validar",
-         "title": "Persistir registro de humor de hoje"},
-    ])
+
+    renderizar_grupo_acoes(
+        [
+            {
+                "label": "Diário emocional",
+                "glyph": "heart",
+                "href": "?cluster=Bem-estar&tab=Diário",
+                "title": "Ir para o diário",
+            },
+            {
+                "label": "Salvar humor",
+                "primary": True,
+                "glyph": "validar",
+                "title": "Persistir registro de humor de hoje",
+            },
+        ]
+    )
 
     del dados, periodo, ctx  # noqa: accent
 
@@ -148,19 +158,19 @@ def _renderizar_fallback_vault() -> None:
         fallback_estado_inicial_html,
         ler_sync_info,
     )
+
     skeleton = (
         '<div style="display:grid;grid-template-columns:1.4fr 1fr;gap:14px;">'
         '<div style="display:flex;flex-direction:column;gap:8px;">'
         '<span class="skel-bloco" style="width:40%;height:0.8em;"></span>'
         '<div style="display:flex;gap:6px;flex-wrap:wrap;">'
-        + ''.join(
-            '<span class="skel-bloco" style="width:38px;height:38px;'
-            'border-radius:6px;"></span>'
+        + "".join(
+            '<span class="skel-bloco" style="width:38px;height:38px;border-radius:6px;"></span>'
             for _ in range(7)
         )
-        + '</div>'
+        + "</div>"
         '<span class="skel-bloco" style="width:80%;height:60px;"></span>'
-        '</div>'
+        "</div>"
         '<div style="display:flex;flex-direction:column;gap:8px;">'
         '<div class="kpi"><span class="kpi-label">EVENTOS HOJE</span>'
         '<span class="kpi-value">--</span></div>'
@@ -168,7 +178,7 @@ def _renderizar_fallback_vault() -> None:
         '<span class="kpi-value">--</span></div>'
         '<div class="kpi"><span class="kpi-label">STREAK</span>'
         '<span class="kpi-value">--</span></div>'
-        '</div></div>'
+        "</div></div>"
     )
     st.markdown(
         fallback_estado_inicial_html(
@@ -195,10 +205,10 @@ def _renderizar_fallback_vault() -> None:
 
 def _cores_sliders() -> dict[str, str]:
     return {
-        "humor": CORES["superfluo"],     # pink
-        "energia": CORES["info"],        # yellow
-        "ansiedade": CORES["alerta"],    # orange
-        "foco": CORES["neutro"],         # cyan
+        "humor": CORES["superfluo"],  # pink
+        "energia": CORES["info"],  # yellow
+        "ansiedade": CORES["alerta"],  # orange
+        "foco": CORES["neutro"],  # cyan
     }
 
 
@@ -234,7 +244,7 @@ def _renderizar_hero_humor(
             <div class="hero-humor-marker">
               <div class="hero-head">
                 <h2 class="hero-titulo">Como você está agora?</h2>
-                <span class="hero-data">{hoje.strftime('%A · %d %b')}</span>
+                <span class="hero-data">{hoje.strftime("%A · %d %b")}</span>
               </div>
               <div class="hero-legend">
                 4 sliders 1..5 · multi-tag · sono · medicação · frase do dia
@@ -379,7 +389,7 @@ def _card_para_quem(pessoa_default: str) -> None:
         minificar(
             '<div class="bloco-para-marker">'
             '<h3 class="bloco-para-titulo">Esse registro é para…</h3>'
-            '</div>'
+            "</div>"
         ),
         unsafe_allow_html=True,
     )
@@ -445,27 +455,24 @@ def _card_status_casal(vault_root: Path, hoje: date) -> None:
                 registros += 1
         media = round(soma / registros, 1) if registros else 0.0
         media_str = f"{media:.1f}" if registros else "—"
-        barras = "".join(
-            f'<span class="pmini-bar" style="--p:{v};"></span>'
-            for v in valores
-        )
+        barras = "".join(f'<span class="pmini-bar" style="--p:{v};"></span>' for v in valores)
         cards_html.append(
             f'<div class="pessoa-card" style="--cor:{cor};">'
             f'  <div class="pnome">{rotulo}</div>'
             f'  <div class="pmedia">{media_str}'
             f'<span class="pmedia-suffix">/5</span></div>'
             f'  <div class="pdetalhe">{registros} registro'
-            f'{"s" if registros != 1 else ""} · 7d</div>'
+            f"{'s' if registros != 1 else ''} · 7d</div>"
             f'  <div class="pmini">{barras}</div>'
-            f'</div>'
+            f"</div>"
         )
 
     st.markdown(
         minificar(
             '<div class="bloco-status">'
-            '  <h3>Status do casal · últimos 7 dias</h3>'
+            "  <h3>Status do casal · últimos 7 dias</h3>"
             f'  <div class="casal-grid">{"".join(cards_html)}</div>'
-            '</div>'
+            "</div>"
         ),
         unsafe_allow_html=True,
     )
@@ -537,10 +544,7 @@ def _card_proximos(vault_root: Path, hoje: date) -> None:
             "casal": "casal",
         }.get(autor, autor)
         tag = bairro or rotulo_autor
-        linhas.append(
-            _evt_html("evento", cor_evento, ds[5:] if len(ds) >= 10 else ds,
-                      lugar, tag)
-        )
+        linhas.append(_evt_html("evento", cor_evento, ds[5:] if len(ds) >= 10 else ds, lugar, tag))
         break
 
     # 1 contador ativo (mostra dias decorridos desde data_inicio/ultima_reset)
@@ -558,16 +562,14 @@ def _card_proximos(vault_root: Path, hoje: date) -> None:
         break
 
     if not linhas:
-        linhas.append(
-            '<div class="evt-vazio">Nada pendente nos próximos dias.</div>'
-        )
+        linhas.append('<div class="evt-vazio">Nada pendente nos próximos dias.</div>')
 
     st.markdown(
         minificar(
             '<div class="bloco-proximos">'
-            '  <h3>Próximos · alarmes & tarefas</h3>'
+            "  <h3>Próximos · alarmes & tarefas</h3>"
             f'  <div class="evt-lista">{"".join(linhas[:5])}</div>'
-            '</div>'
+            "</div>"
         ),
         unsafe_allow_html=True,
     )
@@ -581,7 +583,7 @@ def _evt_html(tipo: str, cor: str, hora: str, titulo: str, tag: str) -> str:
         f'  <span class="evt-hora">{hora}</span>'
         f'  <span class="evt-titulo">{titulo}</span>'
         f'  <span class="evt-tag">{tag}</span>'
-        f'</div>'
+        f"</div>"
     )
 
 

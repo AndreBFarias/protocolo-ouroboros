@@ -134,15 +134,16 @@ NIVEIS_DESC: dict[str, str] = {
 # 9 campos agrupados em 6 seções (chave canônica, label, seção, fonte).
 CAMPOS: tuple[tuple[str, str, str, str], ...] = (
     ("humor.base", "humor base", "HUMOR", ".ouroboros/humor.json"),
-    ("humor.extras", "energia / ansiedade / foco", "HUMOR",
-     ".ouroboros/humor.json (extras)"),
-    ("diario.entradas_para_b", "entradas marcadas como 'para B'",
-     "DIÁRIO EMOCIONAL", "diario/*.md"),
-    ("diario.privadas", "entradas privadas",
-     "DIÁRIO EMOCIONAL", "diario/*.md (private)"),
+    ("humor.extras", "energia / ansiedade / foco", "HUMOR", ".ouroboros/humor.json (extras)"),
+    (
+        "diario.entradas_para_b",
+        "entradas marcadas como 'para B'",
+        "DIÁRIO EMOCIONAL",
+        "diario/*.md",
+    ),
+    ("diario.privadas", "entradas privadas", "DIÁRIO EMOCIONAL", "diario/*.md (private)"),
     ("eventos.lugar", "lugar do evento", "EVENTOS", "eventos/*.json"),
-    ("eventos.detalhes", "detalhes (foto, descrição)",
-     "EVENTOS", "eventos/*.json (detalhe)"),
+    ("eventos.detalhes", "detalhes (foto, descrição)", "EVENTOS", "eventos/*.json (detalhe)"),
     ("medidas.peso", "peso", "MEDIDAS", "medidas/*.json"),
     ("treinos.tipo", "tipo de treino", "TREINOS", "treinos/*.json"),
     ("ciclo", "ciclo menstrual", "CICLO MENSTRUAL", "ciclo/*.json"),
@@ -196,19 +197,11 @@ def _radio_html(direcao: str, chave: str, nivel: str, selecionado: str) -> str:
     """Render de uma célula de radio circular (não-interativo nesta sprint)."""
     cor = NIVEIS_COR[nivel]
     classe = "priv-radio sel" if selecionado == nivel else "priv-radio"
-    titulo = (
-        f"{NIVEIS_LABEL[nivel]} -- {NIVEIS_DESC[nivel]} "
-        f"(direção {direcao}, campo {chave})"
-    )
-    return (
-        f'<div class="{classe}" style="--priv-cor: {cor};" '
-        f'title="{titulo}"></div>'
-    )
+    titulo = f"{NIVEIS_LABEL[nivel]} -- {NIVEIS_DESC[nivel]} (direção {direcao}, campo {chave})"
+    return f'<div class="{classe}" style="--priv-cor: {cor};" title="{titulo}"></div>'
 
 
-def _renderizar_grade_permissoes(
-    direcao: str, perms: dict[str, dict[str, str]]
-) -> str:
+def _renderizar_grade_permissoes(direcao: str, perms: dict[str, dict[str, str]]) -> str:
     """Renderiza a matriz 9 campos x 4 níveis (HTML estático).
 
     Esta sprint entrega visual e leitura; persistência completa via
@@ -222,9 +215,7 @@ def _renderizar_grade_permissoes(
     partes.append('<div class="h label-col">CAMPO / FONTE</div>')
     for nivel in NIVEIS:
         cor = NIVEIS_COR[nivel]
-        partes.append(
-            f'<div class="h" style="color: {cor};">{NIVEIS_LABEL[nivel]}</div>'
-        )
+        partes.append(f'<div class="h" style="color: {cor};">{NIVEIS_LABEL[nivel]}</div>')
     partes.append("</div>")
 
     # Linhas agrupadas por seção
@@ -244,9 +235,7 @@ def _renderizar_grade_permissoes(
             f"</div>"
         )
         for nivel in NIVEIS:
-            partes.append(
-                f'<div class="c">{_radio_html(direcao, chave, nivel, atual)}</div>'
-            )
+            partes.append(f'<div class="c">{_radio_html(direcao, chave, nivel, atual)}</div>')
         partes.append("</div>")
 
     partes.append("</div>")
@@ -261,7 +250,7 @@ def _legenda_html() -> str:
         blocos.append(
             f'<div class="lvl" style="--priv-cor: {cor};">'
             f'<span class="n">{NIVEIS_LABEL[nivel]}</span>'
-            f'{NIVEIS_DESC[nivel]}'
+            f"{NIVEIS_DESC[nivel]}"
             f"</div>"
         )
     blocos.append("</div>")
@@ -276,13 +265,13 @@ def _dir_tabs_html(direcao_ativa: str) -> str:
         '<div class="priv-dir-tabs">'
         f'<div class="priv-dir-tab {a_active}">'
         '<span>A (você)</span><span class="seta">→</span>'
-        '<span>B (parceira)</span>'
-        '</div>'
+        "<span>B (parceira)</span>"
+        "</div>"
         f'<div class="priv-dir-tab {b_active}">'
         '<span>B (parceira)</span><span class="seta">→</span>'
-        '<span>A (você)</span>'
-        '</div>'
-        '</div>'
+        "<span>A (você)</span>"
+        "</div>"
+        "</div>"
     )
 
 
@@ -299,8 +288,7 @@ def _card_pessoa_html(
     partes.append(f"<h4>{titulo}</h4>")
     partes.append('<div class="priv-pessoa-id">')
     partes.append(
-        f'<div class="priv-pessoa-avatar" style="--priv-avatar: {avatar_cor};">'
-        f"{avatar_letra}</div>"
+        f'<div class="priv-pessoa-avatar" style="--priv-avatar: {avatar_cor};">{avatar_letra}</div>'
     )
     partes.append(
         f'<div class="priv-pessoa-meta">'
@@ -311,10 +299,7 @@ def _card_pessoa_html(
     partes.append("</div>")
     for k, v in chaves_valores:
         partes.append(
-            f'<div class="priv-kv">'
-            f'<span class="k">{k}</span>'
-            f'<span class="v">{v}</span>'
-            f"</div>"
+            f'<div class="priv-kv"><span class="k">{k}</span><span class="v">{v}</span></div>'
         )
     partes.append("</div>")
     return "".join(partes)
@@ -326,7 +311,7 @@ def _aviso_default_html() -> str:
         '<div class="priv-aviso">'
         '<span class="ico">!</span>'
         '<span class="t">'
-        '<strong>Default conservador:</strong> tudo começa em <em>oculto</em> '
+        "<strong>Default conservador:</strong> tudo começa em <em>oculto</em> "
         "ao convidar a outra pessoa. Você precisa explicitamente liberar campo "
         "a campo. <strong>Nada vaza por configuração padrão.</strong> "
         "Mudanças geram entrada no audit log no próximo sync."
@@ -365,12 +350,17 @@ def renderizar(
     """Renderiza Bem-estar / Privacidade granular (UX-V-2.15)."""
     from src.dashboard.componentes.topbar_actions import renderizar_grupo_acoes
 
-    renderizar_grupo_acoes([
-        {"label": "Audit log", "glyph": "list",
-         "title": "Abrir audit log de privacidade"},
-        {"label": "Salvar permissões", "primary": True, "glyph": "validar",
-         "title": "Persistir permissoes.toml (placeholder UX-V-2.15)"},
-    ])
+    renderizar_grupo_acoes(
+        [
+            {"label": "Audit log", "glyph": "list", "title": "Abrir audit log de privacidade"},
+            {
+                "label": "Salvar permissões",
+                "primary": True,
+                "glyph": "validar",
+                "title": "Persistir permissoes.toml (placeholder UX-V-2.15)",
+            },
+        ]
+    )
 
     del dados, periodo, pessoa, ctx
 
@@ -480,8 +470,7 @@ def renderizar(
                 else:
                     st.session_state[_KEY_FLASH] = (
                         "ok",
-                        "Permissões registradas (granular: placeholder; "
-                        "legado: ok).",
+                        "Permissões registradas (granular: placeholder; legado: ok).",
                     )
                 st.rerun()
 

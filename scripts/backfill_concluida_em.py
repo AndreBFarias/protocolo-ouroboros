@@ -59,7 +59,7 @@ def aplicar_frontmatter(conteudo: str, data_iso: str) -> str:
     matches = list(RE_FRONTMATTER_INICIO.finditer(conteudo))
     if len(matches) >= 2 and matches[0].start() == 0:
         primeiro_fim = matches[1].start()
-        bloco_frontmatter = conteudo[: primeiro_fim]
+        bloco_frontmatter = conteudo[:primeiro_fim]
         resto = conteudo[primeiro_fim:]
         if "concluida_em:" in bloco_frontmatter:
             return conteudo
