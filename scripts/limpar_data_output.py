@@ -5,9 +5,11 @@ acúmulo de diretórios pós-sprint sem política de retenção:
 
 | Diretório | Origem | Política |
 |---|---|---|
-| `opus_ocr_pendentes_lixo_*` | resíduos pytest vazaram | DELETE |
-| `opus_ocr_cache_sintetico_backup` | backup pré-substituição Sprint Fase A | MOVE → `_arquivo_historico/` |
-| `_backup_pre_migracao_quem` | backup pré-migração de tipo_documento | MOVE → `_arquivo_historico/` |
+| `opus_ocr_pendentes_lixo_*` | pytest residual | DELETE |
+| `opus_ocr_cache_sintetico_backup` | Sprint Fase A | MOVE |
+| `_backup_pre_migracao_quem` | Sprint META-NORMALIZAR | MOVE |
+
+Destino dos MOVE: `data/_arquivo_historico/<YYYY-MM-DD>/`.
 
 Idempotente: rodar 2× consecutivas não duplica trabalho.
 
