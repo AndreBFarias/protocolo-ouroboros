@@ -3,9 +3,9 @@
 > Atualizado automaticamente pelo Opus principal a cada avanço.
 > **Se sessão cair, próximo Opus retoma daqui.** Não editar manualmente.
 
-**Última atualização**: 2026-05-16 ~22:30
-**HEAD atual**: `2c46ddf` (pushed em `origin/main`)
-**Working tree**: arquivos modificados aguardando commit (README + métricas vivas)
+**Última atualização**: 2026-05-16 ~23:30
+**HEAD atual**: `89a03f7` (pushed em `origin/main`)
+**Working tree**: docs vivas modificadas (métricas regeneradas)
 
 ---
 
@@ -82,6 +82,7 @@ Plano original: `~/.claude/plans/recursive-whistling-goblet.md` (aprovado)
 - **META-AUDITORIA-CRUZADA-XLSX** (`98fb902`): `scripts/exportar_auditoria_cruzada.py` (380L) + `make auditoria-xlsx`. Gera XLSX com 5 abas. 8 testes verdes. **ACHADO**: ETL grava nomes de tipo_documento divergentes do YAML canônico.
 - **META-NORMALIZAR-TIPO-DOCUMENTO-ETL** (`c22aeb5`): script de migração retroativa + 3 extratores atualizados (cupom_termico_foto, nfce_pdf, das_parcsn_pdf). 24 nodes migrados no grafo de produção (das_parcsn_andre→das_parcsn+pessoa, cupom_fiscal→cupom_fiscal_foto, nfce_modelo_65→nfce_consumidor_eletronica). 6 testes do migrador + 3 testes de extrator atualizados. **0 nodes divergentes restantes**.
 - **Aba amostras_faltantes + cruzamento por sha8 + promotor (dry-run)** (`2c46ddf`): exportador agora cruza Opus × ETL via sha8 (regex no nome do arquivo). 40 linhas: 5 matches + 19 órfãos ETL + 16 órfãos Opus + 0 divergente. Aba nova `amostras_faltantes` lista 14 tipos PENDENTE/SEM_DOSSIE por prioridade de coleta. `scripts/promover_sugestoes_categoria.py` em dry-run. **ACHADO CRÍTICO**: 319 sugestões com conf≥0.85 têm ruído inaceitável mesmo em conf=1.0 (`Lab Pat e Prev do Cancer → Natação`, `Mp *Barbearia → Bebidas`). Promoção em batch NÃO aplicada. Sprint-filha `CATEGORIZER-SUGESTAO-AUDITORIA-RUIDO` (P2, 2h) materializada.
+- **CATEGORIZER-SUGESTAO-AUDITORIA-RUIDO** (`89a03f7`): `mappings/dominio_categorias.yaml` (250L, 22 categorias com tokens_obrigatorios/proibitivos/valor_min_max) + `_avaliar_dominio()` em 4 níveis (BAIXO/MEDIO/ALTO/DESCONHECIDO). 22 sugestões ALTO bloqueadas (incluindo "Tarifa Saque", "Lab Cancer", "Mp Barbearia"). 94 BAIXO seguros, deduplicados em 43 overrides únicos. **Promoção aplicada em `mappings/overrides.yaml`** (17 → 54 entries). Impacto estimado: ~100 transações saem de "Outros" no próximo pipeline. 7 testes regressivos novos.
 
 ### Sprint-filhas materializadas dos achados (8 no backlog)
 - LINK-AUDIT-02-BOOST-DIFF-VALOR-ZERO
@@ -91,7 +92,7 @@ Plano original: `~/.claude/plans/recursive-whistling-goblet.md` (aprovado)
 - META-HOOK-SESSION-DINAMICO-RESOLVER-BLACKLIST (BLOQUEADA — aguarda decisão)
 - INFRA-TEST-LAST-SYNC-GUARD
 - ~~META-NORMALIZAR-TIPO-DOCUMENTO-ETL~~ — **CONCLUÍDA** em `c22aeb5`
-- **CATEGORIZER-SUGESTAO-AUDITORIA-RUIDO** (P2, 2h) — TF-IDF tem ruído inaceitável em conf=1.0
+- ~~CATEGORIZER-SUGESTAO-AUDITORIA-RUIDO~~ — **CONCLUÍDA** em `89a03f7` (43 overrides promovidos)
 
 ---
 
