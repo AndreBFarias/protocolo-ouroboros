@@ -3,9 +3,9 @@
 > Atualizado automaticamente pelo Opus principal a cada avanço.
 > **Se sessão cair, próximo Opus retoma daqui.** Não editar manualmente.
 
-**Última atualização**: 2026-05-16 ~23:45
-**HEAD atual**: `cca2dde` (pushed em `origin/main`)
-**Working tree**: limpo (lint exit 0, acentuação OK)
+**Última atualização**: 2026-05-17 ~01:50
+**HEAD atual**: `be27700` + 15 specs novas pendentes commit
+**Working tree**: 15 novas specs em `docs/sprints/backlog/*2026-05-17*.md`
 
 ---
 
@@ -93,6 +93,35 @@ Plano original: `~/.claude/plans/recursive-whistling-goblet.md` (aprovado)
 - INFRA-TEST-LAST-SYNC-GUARD
 - ~~META-NORMALIZAR-TIPO-DOCUMENTO-ETL~~ — **CONCLUÍDA** em `c22aeb5`
 - ~~CATEGORIZER-SUGESTAO-AUDITORIA-RUIDO~~ — **CONCLUÍDA** em `89a03f7` (43 overrides promovidos)
+
+### Auditoria independente 2026-05-17 (15 specs novas)
+
+3 Explore agents em paralelo + validação manual revelou **1 bug P0 crítico** + 14 oportunidades:
+
+**Categoria A — Código/Pipeline:**
+- **`AUDIT-CATEGORIA-REGRA-VALOR-SINAL` (P0!)** — `_verificar_regra_valor` usa `valor < 800` com sinal: TODA despesa KI-SABOR vira Padaria, nunca Aluguel. Bug afeta TODAS regras com `regra_valor` (>=, <, etc).
+- `INFRA-DESCOBRIR-EXTRATORES-REFATORA` (P2) — 166L com 23 try/except idênticos → 30L via pkgutil + env var
+- `INFRA-PIPELINE-FASES-ISOLADAS` (P2) — `_executar_corpo_pipeline` 156L → 16 fases isoladas com stats
+- `INFRA-SCRIPTS-CLI-PADRAO` (P3) — 15+ scripts com `sys.path.insert` hardcoded + 10 sem --help
+- `AUDIT-TI-RECLASSIFICA-RASTREAMENTO` (P1) — `_reclassificar_ti_orfas` muta silenciosamente sem log granular
+- `INFRA-PDF-TIMEOUT` (P2) — pdfplumber sem timeout pode hangar pipeline
+
+**Categoria B — Dashboard/UX/Testes:**
+- `UX-CACHE-BUSCA-TTL-CURTO` (P2) — busca.py ttl=300s causa dados obsoletos 5min
+- `UX-SPINNER-PROGRESS-FEEDBACK` (P3) — só 2/42 páginas com `st.spinner` em operações lentas
+- `UX-BE-SESSION-STATE-SAFE` (P2) — `pop()` sem default crash em deep-link primeira visita
+- `TEST-EXTRAIR-HELPERS-PUROS` (P3) — 10+ testes importam Streamlit desnecessariamente
+
+**Categoria C — Dados/Limpeza:**
+- `SEC-SENHAS-PARA-ENV` (P1) — migrar `mappings/senhas.yaml` para `.env` + python-dotenv
+- `INTAKE-FALLBACK-CPFS-AUSENTE` (P1) — `pessoa_detector` falha silenciosa se YAML ausente
+- `GRAFO-AUDIT-ORPHAN-NODES` (P3) — 3 nodes fornecedor sem edges (1 BIR COMERCIO, 1 DIRPF, 1 CNPJ MEI)
+- `CLEANUP-DATA-OUTPUT-DIRETORIOS` (P3) — 3 diretórios obsoletos em `data/output/` acumulando
+- `META-REGEN-INDICE-BACKLOG` (P3) — INDICE_2026-05-12 declara 113 specs, real são 145 hoje
+
+**2 achados eram FALSO POSITIVO** (validados manualmente):
+- `pagamentos_valores.py` órfão → NEGADO (importado em `pagamentos.py:52`)
+- `dominio_categorias.yaml` não consumido → NEGADO (consumido em `categorizer_suggest.py` 10x)
 
 ---
 
