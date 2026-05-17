@@ -1277,7 +1277,8 @@ def _exibir_drawer(df: pd.DataFrame) -> None:
         return
     if idx_int < 0 or idx_int >= len(df):
         # índice obsoleto (filtro mudou); limpa silenciosamente.
-        del st.session_state[_CHAVE_DRAWER_IDX]
+        # Sprint UX-BE-SESSION-STATE-SAFE (2026-05-17): pop seguro vs del.
+        st.session_state.pop(_CHAVE_DRAWER_IDX, None)
         return
 
     row = df.iloc[idx_int]
@@ -1290,7 +1291,8 @@ def _exibir_drawer(df: pd.DataFrame) -> None:
     st.markdown(drawer_html, unsafe_allow_html=True)
 
     if st.button("Fechar drawer", key="extrato_btn_fechar_drawer"):
-        del st.session_state[_CHAVE_DRAWER_IDX]
+        # Sprint UX-BE-SESSION-STATE-SAFE (2026-05-17): pop seguro vs del.
+        st.session_state.pop(_CHAVE_DRAWER_IDX, None)
         st.rerun()
 
 
