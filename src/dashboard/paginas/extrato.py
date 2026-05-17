@@ -854,11 +854,14 @@ def renderizar(
     periodo = ctx.get("periodo", mes_selecionado) if ctx else mes_selecionado
 
     extrato = dados["extrato"]
-    df = filtrar_por_periodo(extrato, gran, periodo)
-    df = filtrar_por_pessoa(df, pessoa)
-    df = filtrar_por_forma_pagamento(df, filtro_forma_ativo())
-    # Sprint 73 (ADR-19): aplica filtros vindos de drill-down.
-    df, filtros_drilldown = _aplicar_drilldown(df)
+    # Sprint UX-SPINNER-PROGRESS-FEEDBACK (2026-05-17): chain de filtros sobre
+    # extrato XLSX pode levar ~500ms-1s em datasets grandes (4k+ transações).
+    with st.spinner("Filtrando extrato..."):
+        df = filtrar_por_periodo(extrato, gran, periodo)
+        df = filtrar_por_pessoa(df, pessoa)
+        df = filtrar_por_forma_pagamento(df, filtro_forma_ativo())
+        # Sprint 73 (ADR-19): aplica filtros vindos de drill-down.
+        df, filtros_drilldown = _aplicar_drilldown(df)
     _renderizar_breadcrumb(filtros_drilldown)
 
     if df.empty:

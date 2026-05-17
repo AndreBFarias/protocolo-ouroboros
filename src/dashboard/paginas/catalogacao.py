@@ -131,8 +131,12 @@ def renderizar(
         )
         return
 
-    docs = carregar_documentos_grafo()
-    propostas_abertas = contar_propostas_linking()
+    # Sprint UX-SPINNER-PROGRESS-FEEDBACK (2026-05-17): carregar documentos
+    # do grafo SQLite + contagem de propostas pode levar ~1s em catálogos
+    # grandes; sem spinner, dono vê tela branca e tende a re-clicar.
+    with st.spinner("Carregando catálogo de documentos..."):
+        docs = carregar_documentos_grafo()
+        propostas_abertas = contar_propostas_linking()
 
     st.markdown(_page_header_html(num_arquivos=len(docs)), unsafe_allow_html=True)
     st.markdown(_toolbar_html(len(docs)), unsafe_allow_html=True)

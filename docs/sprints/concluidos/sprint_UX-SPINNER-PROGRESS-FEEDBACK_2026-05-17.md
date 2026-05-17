@@ -1,8 +1,8 @@
 ---
 id: UX-SPINNER-PROGRESS-FEEDBACK
 titulo: "Adicionar `st.spinner` em operações lentas no dashboard (atualmente só 2/42 páginas)"
-status: backlog
-concluida_em: null
+status: concluída
+concluida_em: 2026-05-17
 prioridade: P3
 data_criacao: 2026-05-17
 fase: UX

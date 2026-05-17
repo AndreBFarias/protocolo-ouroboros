@@ -446,8 +446,11 @@ def renderizar(
     # mesmo se o grafo não existir.
     # Sprint UX-CACHE-BUSCA-TTL-CURTO (2026-05-17): cache invalida automaticamente
     # quando XLSX muda (via mtime na key).
+    # Sprint UX-SPINNER-PROGRESS-FEEDBACK (2026-05-17): spinner em volta da
+    # primeira chamada da sessão (~1-2s) -- cache TTL=60s posterior é instantâneo.
     try:
-        indice = _indice_cached(_mtime_xlsx_atual())
+        with st.spinner("Carregando índice de busca..."):
+            indice = _indice_cached(_mtime_xlsx_atual())
         indice_ok = bool(indice and any(indice.values()))
     except Exception:  # noqa: BLE001 -- defensivo; falha única = índice vazio
         indice = {"fornecedores": [], "descricoes": [], "tipos_doc": [], "abas": []}

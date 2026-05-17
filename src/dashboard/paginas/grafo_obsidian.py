@@ -227,18 +227,21 @@ def _renderizar_subgrafo() -> None:
     if id_selecionado is None:
         return
 
-    sub = carregar_subgrafo(int(id_selecionado), radius=1)
-    nodes = sub.get("nodes", [])
-    edges = sub.get("edges", [])
+    # Sprint UX-SPINNER-PROGRESS-FEEDBACK (2026-05-17): spinner em volta da
+    # consulta SQLite do subgrafo + construção da figura plotly (~1-3s).
+    with st.spinner("Renderizando subgrafo do fornecedor..."):
+        sub = carregar_subgrafo(int(id_selecionado), radius=1)
+        nodes = sub.get("nodes", [])
+        edges = sub.get("edges", [])
 
-    if not nodes:
-        st.markdown(
-            callout_html("info", "Nenhum vizinho encontrado para este fornecedor."),
-            unsafe_allow_html=True,
-        )
-        return
+        if not nodes:
+            st.markdown(
+                callout_html("info", "Nenhum vizinho encontrado para este fornecedor."),
+                unsafe_allow_html=True,
+            )
+            return
 
-    fig = _construir_figura_grafo(nodes, edges, int(id_selecionado))
+        fig = _construir_figura_grafo(nodes, edges, int(id_selecionado))
     st_plotly_chart_dracula(fig, key="grafo_subgrafo")
 
     _renderizar_legenda_tipos(nodes)

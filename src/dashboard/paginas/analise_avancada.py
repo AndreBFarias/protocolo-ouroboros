@@ -971,10 +971,14 @@ def renderizar(
     periodo_filtro = ctx.get("periodo", periodo) if ctx else periodo
 
     extrato = dados["extrato"]
-    extrato_pessoa = filtrar_por_forma_pagamento(
-        filtrar_por_pessoa(extrato, pessoa), filtro_forma_ativo()
-    )
-    extrato_periodo = filtrar_por_periodo(extrato_pessoa, gran, periodo_filtro)
+    # Sprint UX-SPINNER-PROGRESS-FEEDBACK (2026-05-17): chain de filtros +
+    # agregações plotly (Sankey, comparativo, heatmap) leva ~1-2s; spinner
+    # cobre os filtros, plotly inline tem render próprio.
+    with st.spinner("Preparando análise..."):
+        extrato_pessoa = filtrar_por_forma_pagamento(
+            filtrar_por_pessoa(extrato, pessoa), filtro_forma_ativo()
+        )
+        extrato_periodo = filtrar_por_periodo(extrato_pessoa, gran, periodo_filtro)
 
     # UX-V-2.6-FIX: a barra HTML estática ``<div class="analise-tabs">`` foi
     # removida porque renderizava counters DUPLICADOS sobre o ``st.tabs``
