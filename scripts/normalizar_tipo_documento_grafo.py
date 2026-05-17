@@ -225,7 +225,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     if args.apply and args.reverter:
-        sys.stderr.write("Erro: --apply e --reverter sao mutuamente exclusivos.\n")
+        sys.stderr.write("Erro: --apply e --reverter são mutuamente exclusivos.\n")
         return 1
 
     resultado = executar(apply=args.apply, reverter=args.reverter)
@@ -254,4 +254,4 @@ if __name__ == "__main__":
     sys.exit(main())
 
 
-# "Duas fontes de verdade sao uma fonte e um boato." -- principio
+# "Duas fontes de verdade são uma fonte e um boato." -- princípio

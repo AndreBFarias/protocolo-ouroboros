@@ -30,10 +30,10 @@ def test_tokens_nome_filtra_curtos_e_stopwords() -> None:
 
 def test_tokens_conteudo_extrai_palavras() -> None:
     """Extração de tokens >= 4 chars do texto."""
-    texto = "Nota Fiscal de Servicos Eletronica NFS-e numero 12345"
+    texto = "Nota Fiscal de Serviços Eletrônica NFS-e número 12345"
     tokens = dtn._tokens_conteudo(texto)
     assert "nota" in tokens
-    assert "servicos" in tokens or "servi" not in " ".join(tokens)
+    assert "serviços" in tokens
     assert "nfs" not in tokens  # < 4 chars
 
 
@@ -63,9 +63,9 @@ def test_gerar_propostas_agrupa_amostras_reais(monkeypatch, tmp_path: Path) -> N
     """Cria fixtures sintéticas e confirma proposta estruturada."""
     dir_class = tmp_path / "_classificar"
     dir_class.mkdir()
-    (dir_class / "recibo_aluguel_001.txt").write_text("conteudo a", encoding="utf-8")
-    (dir_class / "recibo_aluguel_002.txt").write_text("conteudo b", encoding="utf-8")
-    (dir_class / "aluguel_xpto.txt").write_text("conteudo c", encoding="utf-8")
+    (dir_class / "recibo_aluguel_001.txt").write_text("conteúdo a", encoding="utf-8")
+    (dir_class / "recibo_aluguel_002.txt").write_text("conteúdo b", encoding="utf-8")
+    (dir_class / "aluguel_xpto.txt").write_text("conteúdo c", encoding="utf-8")
     monkeypatch.setattr(dtn, "DIR_CLASSIFICAR", dir_class)
     payload = dtn.gerar_propostas(min_amostras=2)
     assert payload["total_arquivos_analisados"] == 3

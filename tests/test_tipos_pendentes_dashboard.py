@@ -131,4 +131,4 @@ def test_aceitar_proposta_apenda_yaml(tmp_path: Path) -> None:
     assert "AUTO-TIPO-PROPOSTAS-DASHBOARD" in conteudo
 
 
-# "Cada arquivo em _classificar/ é uma pergunta nao respondida." -- principio
+# "Cada arquivo em _classificar/ é uma pergunta não respondida." -- princípio

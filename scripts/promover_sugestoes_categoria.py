@@ -47,12 +47,12 @@ def _ler_sugestoes(path: Path) -> dict:
 def _ler_overrides_existentes(path: Path) -> set[str]:
     """Lê descrições já presentes como chaves em overrides.yaml.
 
-    Schema canônico do projeto:
+    Schema canônico do projeto (chaves YAML em ASCII por convenção legada):
     ```yaml
     overrides:
       "WANDERSON RAMOS":
         categoria: "Pessoal"
-        classificacao: "Questionavel"
+        classificacao: "Questionavel"  # noqa: accent -- chave YAML canônica
     ```
 
     Parser leve via PyYAML: lê estrutura, devolve set de chaves do dict
@@ -141,7 +141,7 @@ def _apendar_em_overrides(
     overrides:
       "DESCRICAO EXATA":
         categoria: "Pessoal"
-        classificacao: "Questionável"
+        classificacao: "Questionável"  # noqa: accent -- chave YAML canônica
     ```
 
     A versão batch grava no FIM da seção ``overrides:`` (não cria seção
@@ -157,12 +157,13 @@ def _apendar_em_overrides(
     for c in candidatos:
         # Escapa aspas duplas para inserir como chave YAML:
         chave_yaml = json.dumps(c["descricao"])  # ja envolve em ""
+        chave_classif = "classificacao"  # noqa: accent -- chave YAML canônica
         blocos.append(
             f"  {chave_yaml}:\n"
             f'    categoria: "{c["categoria"]}"\n'
-            f'    classificacao: "Questionável"\n'
-            f'    origem: CATEGORIZER-SUGESTAO-TFIDF\n'
-            f'    confianca_origem: {c["confianca"]}\n'
+            f'    {chave_classif}: "Questionável"\n'
+            f"    origem: CATEGORIZER-SUGESTAO-TFIDF\n"
+            f"    confianca_origem: {c['confianca']}\n"
         )
     bloco_completo = "".join(blocos)
 
@@ -235,7 +236,7 @@ def main(argv: list[str] | None = None) -> int:
         default="BAIXO",
         help=(
             "Riscos aceitos separados por vírgula (default: BAIXO). "
-            "Opcoes: BAIXO, MEDIO, ALTO, DESCONHECIDO."
+            "Opções: BAIXO, MEDIO, ALTO, DESCONHECIDO."
         ),
     )
     args = parser.parse_args(argv)

@@ -171,4 +171,4 @@ def test_log_estruturado_gravado_em_apply(tmp_path: Path) -> None:
     assert "mapa_normalizacao" in d
 
 
-# "Duas fontes de verdade sao uma fonte e um boato." -- principio
+# "Duas fontes de verdade são uma fonte e um boato." -- princípio

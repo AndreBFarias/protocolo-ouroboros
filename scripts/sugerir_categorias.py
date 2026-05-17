@@ -31,7 +31,7 @@ def _carregar_transacoes_do_xlsx(xlsx: Path) -> list[Transacao]:
 
     Schema das colunas (XLSX `extrato`):
         0: data, 1: valor, 2: forma_pagamento, 3: local, 4: quem,
-        5: categoria, 6: classificacao, 7: banco_origem, 8: tipo, ...
+        5: categoria, 6: classificacao, 7: banco_origem, 8: tipo, ...  # noqa: accent
 
     Descrição da transação = `local` (col 3) — campo livre com nome do
     estabelecimento / contraparte do PIX / descrição do extrato.

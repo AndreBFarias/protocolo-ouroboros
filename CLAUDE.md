@@ -23,8 +23,10 @@ O projeto chega em "prod" quando: dono joga arquivo em `inbox/`, roda `./run.sh 
 - `./run.sh --full-cycle` -- inbox + automações Opus + pipeline (recomendado para uso diário)
 - `make smoke` -- 10 contratos aritméticos
 - `make lint` -- ruff + check_acentuacao + cobertura D7
-- `python -m pytest tests/ -q` -- suite completa (2975+ testes)
+- `python -m pytest tests/ -q` -- suite completa (3180+ testes em 2026-05-16)
 - `scripts/dossie_tipo.py listar-tipos` -- inventário dos 22 tipos documentais canônicos
+- `make auditoria-xlsx` -- planilha cruzando Opus × ETL × Graduação (6 abas)
+- `make metricas` + `make estado-atual-atualizar` -- regenera métricas vivas em ROADMAP e ESTADO_ATUAL
 
 ## Regras invioláveis
 

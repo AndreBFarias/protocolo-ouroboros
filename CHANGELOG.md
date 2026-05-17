@@ -4,9 +4,35 @@ Todas as alterações relevantes do projeto estão documentadas aqui.
 
 ---
 
-## [Unreleased]
+## [2026-05-16] — Auditoria + remediação completa (Onda α-F) + análise cruzada Opus × ETL
+
+Sessão grande de auditoria do projeto identificou 21 achados (4 P0 + 8 P1 + 5 P2 + 4 P3) e executou plano completo de remediação em 6 ondas + onda pós-sessão reaberta. **65+ commits**. Pytest cresceu de 3019 → 3181 (+162 testes).
+
+### Adicionado
+- **`mappings/dominio_categorias.yaml`** (250L, 22 categorias) — Filtros semânticos por categoria (tokens_obrigatorios, tokens_proibitivos, valor_min/max) para reduzir ruído do sugestor TF-IDF.
+- **`src/utils/lockfile.py`** (150L) — Lockfile via `fcntl.flock` para serializar escritas no grafo + XLSX. Defesa em camadas com `flock` no `run.sh` + toast no dashboard.
+- **`src/transform/categorizer_suggest.py`** — Sugestor TF-IDF + cosseno (sem sklearn). Output enriquecido com `risco_estimado` (BAIXO/MEDIO/ALTO/DESCONHECIDO).
+- **`scripts/`** com 7 ferramentas CLI novas: `regenerar_estado_atual.py`, `gerar_metricas_prontidao.py`, `exportar_auditoria_cruzada.py`, `normalizar_tipo_documento_grafo.py`, `detectar_tipos_novos.py`, `sugerir_categorias.py`, `promover_sugestoes_categoria.py`.
+- **3 páginas dashboard novas** no cluster Sistema (5ª, 6ª, 7ª abas): "Propostas", "Tipos por detectar", "Sugestor Outros".
+- **`make` targets** novos: `auditoria-xlsx`, `metricas`, `estado-atual-atualizar`, `graduados`, `spec NOME=`, `health-grafo`.
+- **`docs/CICLO_GRADUACAO_OPERACIONAL.md`** documenta o ritual artesanal de 6 fases.
+- **`CHECKPOINT.md` vivo** na raiz — atualizado a cada avanço material para resiliência entre sessões.
+
+### Mudado
+- **Pipeline transacional** (`src/pipeline.py`) com `GrafoDB.transaction()` context manager + restore automático em crash. Lockfile envolve `executar()`.
+- **Dedup nível-2** (`src/transform/deduplicator.py`) usa chave 4-tuple `(data, valor, local_normalizado, banco_origem)` para evitar colisão cross-bank.
+- **Backup automático do grafo** antes de cada `./run.sh --tudo` (retenção 7d + 1/semana das 4 anteriores). `--restore-grafo <ts>` reverte.
+- **`tipo_documento` no grafo migrado** para IDs canônicos do YAML: `cupom_fiscal` → `cupom_fiscal_foto` (3 nodes), `das_parcsn_andre` → `das_parcsn` + `metadata.pessoa: pessoa_a` (19 nodes), `nfce_modelo_65` → `nfce_consumidor_eletronica` (2 nodes). Extratores atualizados para gravar canônico daqui pra frente.
+- **`mappings/overrides.yaml`** ganhou 43 entries promovidas automaticamente pelo sugestor TF-IDF (filtros de domínio bloquearam 22 erros gritantes; 94 BAIXO → 43 únicos após dedup).
+- **Hooks órfãos** (`hooks/`) auditados — 15 dos 16 movidos para `_arquivado/` por estarem inativos.
+- **`fcntl` no `run.sh`** em 6 branches mutadores (`--inbox`, `--mes`, `--tudo`, `--full-cycle`, `--reextrair-tudo`, `--restore-grafo`).
+- **Hook SessionStart** local agora injeta baseline runtime + working tree + branches órfãs dinamicamente (status: BLOQUEADO no remoto por blacklist de anonimato global do dono — sprint-filha aguarda decisão).
+- **`ruff format` repo-wide** — 206 arquivos reformatados em commit `style:` único.
 
 ### Investigated
+
+- **Sprint MICRO-01a-FOLLOWUP-NFCE-REAIS: validação executada em 2026-05-01,
+  spec permanece em backlog com escopo refinado.**
 
 - **Sprint MICRO-01a-FOLLOWUP-NFCE-REAIS: validação executada em 2026-05-01,
   spec permanece em backlog com escopo refinado.**

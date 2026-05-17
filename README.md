@@ -43,9 +43,9 @@ O projeto se autogerencia via dossiês por tipo documental. Toda spec que toca e
 
 Consolida dados bancários de múltiplas fontes (CSVs, XLSX, XLS, PDFs protegidos, imagens via OCR) em um XLSX unificado com 8 abas, relatórios mensais em Markdown e dashboard Streamlit com 42 páginas interativas.
 
-| Transações | Meses | Bancos | Regras | Tags IRPF | Pytest | Tipos GRADUADOS |
-|:----------:|:-----:|:------:|:------:|:---------:|:------:|:---------------:|
-| 6.086 | 82 | 6 | 111 | 164 | 3.145 | 9/22 |
+| Transações | Meses | Bancos | Regras | Overrides | Tags IRPF | Pytest | Tipos GRADUADOS |
+|:----------:|:-----:|:------:|:------:|:---------:|:---------:|:------:|:---------------:|
+| 6.086 | 82 | 6 | 111 | 54 | 164 | 3.181 | 9/22 |
 
 ---
 

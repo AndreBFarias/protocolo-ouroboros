@@ -133,12 +133,13 @@ def _aceitar_proposta(proposta: PropostaTipo, path_yaml: Path | None = None) -> 
         or '      - "PLACEHOLDER_REGEX"'
     )
     sufixo_data = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    chave_desc = "descricao"  # noqa: accent -- chave YAML canônica do schema
     bloco = (
         f"\n  # AUTO-TIPO-PROPOSTAS-DASHBOARD aceite em {sufixo_data}"
         f" -- revisar antes de habilitar\n"
         f"  - id: {proposta.id_proposto}\n"
-        f'    descricao: "[REVISAR] tipo proposto automaticamente a partir de'
-        f' {proposta.n_amostras} amostras"\n'
+        f'    {chave_desc}: "[REVISAR] tipo proposto automaticamente '
+        f'a partir de {proposta.n_amostras} amostras"\n'
         f"    prioridade: especifico\n"
         f"    match_mode: any\n"
         f'    mimes: ["{proposta.mime_principal}"]\n'
@@ -300,4 +301,4 @@ def renderizar(dados=None, periodo=None, pessoa=None, ctx=None) -> None:  # noqa
                     st.info(f"Marcada em {dest.name}")
 
 
-# "Cada arquivo em _classificar/ é uma pergunta nao respondida." -- principio da curadoria assistida
+# "Cada arquivo em _classificar/ é uma pergunta não respondida." -- princípio da curadoria assistida
