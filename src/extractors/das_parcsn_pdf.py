@@ -272,14 +272,18 @@ def _montar_documento(texto: str, caminho: Path) -> dict[str, Any]:
     )
     data_emissao = _parse_data_iso(venc_original_br)
 
-    # tipo_documento discriminado por CNPJ canônico da pessoa_a (auditoria 2026-04-23).
-    tipo_doc = "das_parcsn_andre" if cnpj.startswith("45.850.636") else "das_parcsn"
+    # Sprint META-NORMALIZAR-TIPO-DOCUMENTO-ETL (2026-05-16): tipo_documento
+    # agora segue canônico do YAML ("das_parcsn"). Discriminação por pessoa
+    # foi movida para metadata.pessoa (preservada na migração retroativa
+    # via MAPA_METADATA_EXTRA do scripts/normalizar_tipo_documento_grafo.py).
+    pessoa = "pessoa_a" if cnpj.startswith("45.850.636") else "pessoa_b"
 
     documento: dict[str, Any] = {
         "chave_44": re.sub(r"\D", "", numero),
         "cnpj_emitente": cnpj,
         "data_emissao": data_emissao or vencimento or "",
-        "tipo_documento": tipo_doc,
+        "tipo_documento": "das_parcsn",
+        "pessoa": pessoa,
         "total": valor,
         "razao_social": razao,
         "numero": numero,

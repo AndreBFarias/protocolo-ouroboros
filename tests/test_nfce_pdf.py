@@ -132,7 +132,8 @@ class TestParserCabecalho:
         doc = _parse_cabecalho_nfce(_carregar("nfce_americanas_compra.txt"))
         assert doc is not None
         assert doc["chave_44"] == "53260400776574016079653040000432601123456788"
-        assert doc["tipo_documento"] == "nfce_modelo_65"
+        # Sprint META-NORMALIZAR-TIPO-DOCUMENTO-ETL: ID canônico do YAML.
+        assert doc["tipo_documento"] == "nfce_consumidor_eletronica"
         assert doc["cnpj_emitente"] == "00.776.574/0160-79"
         assert "americanas" in (doc["razao_social"] or "").lower()
         assert doc["numero"] == "43260"

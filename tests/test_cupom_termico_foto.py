@@ -183,9 +183,10 @@ class TestCabecalho:
         c2 = _parse_cabecalho_cupom(_ler(AMERICANAS))
         assert c1["chave_44"] == c2["chave_44"]
 
-    def test_tipo_documento_e_cupom_fiscal(self):
+    def test_tipo_documento_e_cupom_fiscal_foto(self):
+        """Sprint META-NORMALIZAR-TIPO-DOCUMENTO-ETL: ID canônico do YAML."""
         cab = _parse_cabecalho_cupom(_ler(AMERICANAS))
-        assert cab["tipo_documento"] == "cupom_fiscal"
+        assert cab["tipo_documento"] == "cupom_fiscal_foto"
 
     def test_cabecalho_mercado(self):
         cab = _parse_cabecalho_cupom(_ler(MERCADO))

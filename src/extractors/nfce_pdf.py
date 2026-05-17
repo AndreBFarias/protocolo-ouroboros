@@ -388,7 +388,8 @@ def _parse_cabecalho_nfce(texto: str) -> dict[str, Any] | None:
 
     return {
         "chave_44": chave,
-        "tipo_documento": "nfce_modelo_65",
+        # Sprint META-NORMALIZAR-TIPO-DOCUMENTO-ETL (2026-05-16): canônico do YAML.
+        "tipo_documento": "nfce_consumidor_eletronica",
         "cnpj_emitente": cnpj_emitente,
         "razao_social": razao_social,
         "endereco": _extrair_endereco(texto),

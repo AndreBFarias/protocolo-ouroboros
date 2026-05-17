@@ -253,7 +253,9 @@ def _parse_cabecalho_cupom(texto: str) -> dict[str, Any]:
         "chave_44": chave_sintetica,
         "cnpj_emitente": cnpj,
         "data_emissao": data_iso,
-        "tipo_documento": "cupom_fiscal",
+        # Sprint META-NORMALIZAR-TIPO-DOCUMENTO-ETL (2026-05-16): grava
+        # ID canônico do YAML (era "cupom_fiscal", migrou para canônico).
+        "tipo_documento": "cupom_fiscal_foto",
         "razao_social": razao,
         "total": total,
         "numero": coo,
@@ -710,7 +712,8 @@ class ExtratorCupomTermicoFoto(ExtratorBase):
             "chave_44": chave_sintetica,
             "cnpj_emitente": cnpj,
             "data_emissao": data_iso,
-            "tipo_documento": "cupom_fiscal",
+            # Sprint META-NORMALIZAR-TIPO-DOCUMENTO-ETL (2026-05-16): canônico do YAML.
+            "tipo_documento": "cupom_fiscal_foto",
             "razao_social": razao,
             "total": total_float,
             "numero": None,

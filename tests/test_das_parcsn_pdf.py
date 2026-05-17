@@ -125,14 +125,19 @@ class TestExtratorDASPARCSN:
         assert doc["numero"] == "07.18.25105.7231382-8"
         assert doc["parcela_atual"] == 4
         assert doc["parcela_total"] == 25
-        assert doc["tipo_documento"] == "das_parcsn_andre"
+        # Sprint META-NORMALIZAR-TIPO-DOCUMENTO-ETL: ID canônico unificado,
+        # discriminação por pessoa em metadata.pessoa.
+        assert doc["tipo_documento"] == "das_parcsn"
+        assert doc["pessoa"] == "pessoa_a"
 
-    def test_cnpj_diferente_nao_vira_andre(self, tmp_path: Path) -> None:
+    def test_cnpj_diferente_grava_pessoa_b(self, tmp_path: Path) -> None:
+        """Sprint META-NORMALIZAR-TIPO-DOCUMENTO-ETL: CNPJ não-andre vira pessoa_b."""
         arq = tmp_path / "das.pdf"
         arq.write_bytes(b"x")
         ext = ExtratorDASPARCSNPDF(arq)
         result = ext.extrair_das(arq, texto_override=DAS_TEXTO_OUTRO_CNPJ)
         assert result["documento"]["tipo_documento"] == "das_parcsn"
+        assert result["documento"]["pessoa"] == "pessoa_b"
         assert result["documento"]["cnpj_emitente"] == "99.999.999/0001-99"
 
     def test_documento_nao_das_retorna_vazio(self, tmp_path: Path) -> None:

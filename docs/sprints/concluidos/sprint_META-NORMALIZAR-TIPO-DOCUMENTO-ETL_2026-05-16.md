@@ -1,8 +1,8 @@
 ---
 id: META-NORMALIZAR-TIPO-DOCUMENTO-ETL
 titulo: "ETL grava `metadata.tipo_documento` com nomes divergentes do YAML canônico"
-status: backlog
-concluida_em: null
+status: concluída
+concluida_em: 2026-05-16
 prioridade: P1
 data_criacao: 2026-05-16
 fase: QUALIDADE
