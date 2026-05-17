@@ -39,7 +39,13 @@ MAPPINGS_OBRIGATORIOS: tuple[str, ...] = (
     "metas.yaml",
 )
 
-MAPPINGS_OPCIONAIS: tuple[str, ...] = ("senhas.yaml",)
+MAPPINGS_OPCIONAIS: tuple[str, ...] = (
+    "senhas.yaml",
+    # Sprint INTAKE-FALLBACK-CPFS-AUSENTE (2026-05-17): smoke check
+    # avisa quando ausente. Roteamento por CPF na camada 1 fica inativo
+    # (fallback pessoas.yaml cobre razao_social/alias).
+    "cpfs_pessoas.yaml",
+)
 
 
 @dataclass(frozen=True)

@@ -395,4 +395,42 @@ def test_cpf_literal_ainda_vence_cnpj(tmp_path, monkeypatch):
     assert "CPF" in fonte
 
 
+# ============================================================================
+# Sprint INTAKE-FALLBACK-CPFS-AUSENTE (2026-05-17)
+# Quando cpfs_pessoas.yaml ausente mas .example existe (clone novo
+# típico), detector deve logar WARNING explicito.
+# ============================================================================
+
+
+def test_yaml_ausente_com_example_loga_warning(tmp_path, monkeypatch, caplog):
+    """Clone novo: .yaml ausente + .example presente → WARNING explicito."""
+    import logging
+
+    yaml_inexistente = tmp_path / "cpfs_pessoas.yaml"
+    yaml_example = tmp_path / "cpfs_pessoas.yaml.example"
+    yaml_example.write_text('cpfs:\n  "00000000000": pessoa_a\n', encoding="utf-8")
+
+    monkeypatch.setattr(pd, "_PATH_MAPPING", yaml_inexistente)
+    pd._CACHE_CPFS = None
+    with caplog.at_level(logging.WARNING, logger="pessoa_detector"):
+        resultado = pd.recarregar_mapeamento()
+    assert resultado == {}
+    assert any("cpfs_pessoas.yaml AUSENTE" in r.message for r in caplog.records)
+
+
+def test_yaml_ausente_sem_example_apenas_debug(tmp_path, monkeypatch, caplog):
+    """Estado anômalo: nem .yaml nem .example. Loga DEBUG (não warning)."""
+    import logging
+
+    yaml_inexistente = tmp_path / "cpfs_pessoas.yaml"
+    monkeypatch.setattr(pd, "_PATH_MAPPING", yaml_inexistente)
+    pd._CACHE_CPFS = None
+    with caplog.at_level(logging.WARNING, logger="pessoa_detector"):
+        resultado = pd.recarregar_mapeamento()
+    assert resultado == {}
+    # Nenhum WARNING (porque nem .example existe — estado totalmente novo):
+    msgs_warning = [r.message for r in caplog.records if r.levelname == "WARNING"]
+    assert not any("AUSENTE" in m for m in msgs_warning)
+
+
 # "Onde não há prova, não há acusação." -- princípio do direito civilizado

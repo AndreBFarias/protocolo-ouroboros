@@ -130,10 +130,25 @@ def recarregar_mapeamento(path: Path | None = None) -> dict[str, str]:
     arquivo = path or _PATH_MAPPING
 
     if not arquivo.exists():
-        logger.debug(
-            "mappings/cpfs_pessoas.yaml ausente -- camada 1 inativa, pessoas.yaml "
-            "cobre CPF/CNPJ/razao/alias via _casar_via_pessoas_yaml."
-        )
+        # Sprint INTAKE-FALLBACK-CPFS-AUSENTE (2026-05-17): eleva visibilidade
+        # do aviso. Se .example existe (clone novo provavelmente), loga WARNING
+        # explicito incentivando criacao. Caso contrario, mantem em DEBUG.
+        path_example = arquivo.with_suffix(arquivo.suffix + ".example")
+        if path_example.exists():
+            logger.warning(
+                "mappings/cpfs_pessoas.yaml AUSENTE (mas %s existe). "
+                "Roteamento por CPF na camada 1 esta INATIVO -- fallback "
+                "via pessoas.yaml cobre apenas razao_social/alias. Para "
+                "ativar roteamento direto por CPF: cp %s mappings/cpfs_pessoas.yaml "
+                "e edite com os CPFs reais (gitignored).",
+                path_example.name,
+                path_example.name,
+            )
+        else:
+            logger.debug(
+                "mappings/cpfs_pessoas.yaml ausente -- camada 1 inativa, pessoas.yaml "
+                "cobre CPF/CNPJ/razao/alias via _casar_via_pessoas_yaml."
+            )
         _CACHE_CPFS = {}
         return _CACHE_CPFS
 

@@ -1,8 +1,8 @@
 ---
 id: INTAKE-FALLBACK-CPFS-AUSENTE
 titulo: "`pessoa_detector` falha silenciosamente se `mappings/cpfs_pessoas.yaml` ausente"
-status: backlog
-concluida_em: null
+status: concluída
+concluida_em: 2026-05-17
 prioridade: P1
 data_criacao: 2026-05-17
 fase: ROBUSTEZ
