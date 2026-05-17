@@ -1,8 +1,8 @@
 ---
 id: AUDIT-TI-RECLASSIFICA-RASTREAMENTO
 titulo: "Rastreamento granular de `_reclassificar_ti_orfas` (hoje só conta, não loga quais)"
-status: backlog
-concluida_em: null
+status: concluída
+concluida_em: 2026-05-17
 prioridade: P1
 data_criacao: 2026-05-17
 fase: QUALIDADE

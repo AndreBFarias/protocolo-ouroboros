@@ -478,4 +478,73 @@ class TestReclassificarTIOrfas:
         assert resultado[1]["tipo"] == "Despesa"
 
 
+# ============================================================================
+# Sprint AUDIT-TI-RECLASSIFICA-RASTREAMENTO (2026-05-17)
+# Transações reclassificadas ganham flag + log estruturado.
+# ============================================================================
+
+
+class TestRastreamentoReclassificacao:
+    """Sprint AUDIT-TI-RECLASSIFICA-RASTREAMENTO: cada TI degradada ganha
+    flag `_reclassificada_68b` + razão + entry no JSON estruturado.
+    """
+
+    def test_marca_flag_reclassificada(self) -> None:
+        """Transação reclassificada ganha _reclassificada_68b=True."""
+        ts = [
+            {
+                "tipo": "Transferência Interna",
+                "valor": -100.0,
+                "banco_origem": "Nubank",
+                "_descricao_original": "Beltrano Desconhecido",
+                "local": "Beltrano",
+            }
+        ]
+        r = _reclassificar_ti_orfas(ts)
+        assert r[0]["_reclassificada_68b"] is True
+        assert r[0]["_tipo_anterior"] == "Transferência Interna"
+        assert r[0]["_razao_reclassificacao"] == "nao_bate_casal_nem_regex_operacional"
+
+    def test_nao_marca_flag_se_preservada(self) -> None:
+        """TI legítima (casal) não recebe flag de reclassificação."""
+        ts = [
+            {
+                "tipo": "Transferência Interna",
+                "valor": -100.0,
+                "banco_origem": "Nubank",
+                "_descricao_original": "ANDRE DA SILVA BATISTA DE FARIAS",
+                "local": "ANDRE",
+            }
+        ]
+        r = _reclassificar_ti_orfas(ts)
+        # Não foi reclassificada — sem flag:
+        assert not r[0].get("_reclassificada_68b")
+
+    def test_grava_log_estruturado(self, tmp_path, monkeypatch) -> None:
+        """Quando há reclassificadas, grava JSON em data/output/."""
+        import src.pipeline as pipeline_mod
+
+        monkeypatch.setattr(pipeline_mod, "DIR_OUTPUT", tmp_path)
+        ts = [
+            {
+                "tipo": "Transferência Interna",
+                "valor": -50.0,
+                "banco_origem": "C6",
+                "_descricao_original": "Joao Pessoa Random",
+                "local": "Joao",
+                "data": "2026-05-17",
+            }
+        ]
+        _reclassificar_ti_orfas(ts)
+        arquivos = list(tmp_path.glob("reclassificacao_ti_orfas_*.json"))
+        assert len(arquivos) == 1
+        import json
+
+        d = json.loads(arquivos[0].read_text(encoding="utf-8"))
+        assert d["total_revertidas"] == 1
+        assert d["amostras"][0]["tipo_novo"] == "Despesa"
+        assert d["amostras"][0]["tipo_anterior"] == "Transferência Interna"
+        assert "Joao" in d["amostras"][0]["local"]
+
+
 # "A regra sem exceção é cega; a exceção sem regra é caos." -- autor anônimo

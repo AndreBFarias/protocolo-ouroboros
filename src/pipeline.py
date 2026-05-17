@@ -404,7 +404,12 @@ def _reclassificar_ti_orfas(transacoes: list[dict]) -> list[dict]:
         re.IGNORECASE,
     )
 
+    # Sprint AUDIT-TI-RECLASSIFICA-RASTREAMENTO (2026-05-17): rastreamento
+    # granular para auditoria. Cada transação reclassificada ganha flag
+    # `_reclassificada_68b=True` + `_tipo_anterior` + amostras gravadas em
+    # log estruturado data/output/reclassificacao_ti_orfas_<ts>.json.
     reclassificadas = 0
+    amostras_log: list[dict] = []
     for t in transacoes:
         if t.get("tipo") != "Transferência Interna":
             continue
@@ -429,15 +434,70 @@ def _reclassificar_ti_orfas(transacoes: list[dict]) -> list[dict]:
             valor = 0.0
 
         novo_tipo = "Receita" if valor > 0 else "Despesa"
+        t["_tipo_anterior"] = "Transferência Interna"
+        t["_reclassificada_68b"] = True
+        t["_razao_reclassificacao"] = "nao_bate_casal_nem_regex_operacional"
         t["tipo"] = novo_tipo
         reclassificadas += 1
+
+        # Amostra para log (max 100 para não explodir JSON):
+        if len(amostras_log) < 100:
+            amostras_log.append(
+                {
+                    "data": (
+                        t["data"].isoformat()
+                        if hasattr(t.get("data"), "isoformat")
+                        else str(t.get("data", ""))
+                    ),
+                    "valor": valor,
+                    "local": descricao[:80],
+                    "banco_origem": t.get("banco_origem", ""),
+                    "tipo_anterior": "Transferência Interna",
+                    "tipo_novo": novo_tipo,
+                    "razao": "nao_bate_casal_nem_regex_operacional",
+                }
+            )
 
     if reclassificadas:
         logger.info(
             "Sprint 68b: %d TI órfãs reclassificadas (sem match casal + sem regra operacional)",
             reclassificadas,
         )
+        _gravar_log_reclassificacao_ti_orfas(reclassificadas, amostras_log)
     return transacoes
+
+
+def _gravar_log_reclassificacao_ti_orfas(total: int, amostras: list[dict]) -> Path | None:
+    """Grava log estruturado de reclassificação TI órfã.
+
+    Sprint AUDIT-TI-RECLASSIFICA-RASTREAMENTO (2026-05-17): rastreabilidade
+    para auditoria humana. Arquivo gitignored (sob data/output/).
+    """
+    import json
+
+    ts = datetime.now().strftime("%Y-%m-%d_%H%M%S")
+    destino = DIR_OUTPUT / f"reclassificacao_ti_orfas_{ts}.json"
+    payload = {
+        "executado_em": datetime.now().isoformat(),
+        "total_revertidas": total,
+        "amostras": amostras,
+        "_doc": (
+            "Transferências Internas que NÃO bateram nem e_transferencia_do_casal "
+            "nem regex_operacional foram degradadas para Despesa/Receita. Revisar "
+            "amostras para confirmar que não há transferência legítima sendo "
+            "degradada falsamente."
+        ),
+    }
+    try:
+        destino.parent.mkdir(parents=True, exist_ok=True)
+        destino.write_text(
+            json.dumps(payload, ensure_ascii=False, indent=2, default=str),
+            encoding="utf-8",
+        )
+        return destino
+    except OSError as exc:
+        logger.warning("Falha ao gravar log reclassificacao_ti_orfas: %s", exc)
+        return None
 
 
 def _promover_variantes_para_ti(transacoes: list[dict]) -> list[dict]:
