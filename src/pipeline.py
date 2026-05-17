@@ -2,6 +2,7 @@
 
 import argparse
 import hashlib
+import os
 import re
 import shutil
 import sys
@@ -40,170 +41,68 @@ RETENCAO_SEMANAS_ADICIONAIS = 4
 PATH_LOCKFILE = RAIZ / "data" / ".pipeline.lock"
 
 
-def _descobrir_extratores() -> list:
-    """Importa e retorna instâncias de todos os extratores disponíveis."""
+# Sprint INFRA-DESCOBRIR-EXTRATORES-REFATORA (2026-05-17): lista declarativa
+# canônica substitui ~140 linhas de try/except idênticos. Ordem importa
+# (pipeline serial), por isso lista explícita em vez de pkgutil.walk.
+# Suporte a desabilitar via env: OUROBOROS_EXTRATORES_DESABILITADOS=nubank_cartao,c6_cc
+EXTRATORES_CANONICOS: list[tuple[str, str]] = [
+    # (módulo, nome_classe) — ordem é a mesma de antes da refatora
+    ("src.extractors.nubank_cartao", "ExtratorNubankCartao"),
+    ("src.extractors.nubank_cc", "ExtratorNubankCC"),
+    ("src.extractors.c6_cc", "ExtratorC6CC"),
+    ("src.extractors.c6_cartao", "ExtratorC6Cartao"),
+    ("src.extractors.itau_pdf", "ExtratorItauPDF"),
+    ("src.extractors.santander_pdf", "ExtratorSantanderPDF"),
+    ("src.extractors.energia_ocr", "ExtratorEnergiaOCR"),
+    ("src.extractors.ofx_parser", "ExtratorOFX"),
+    ("src.extractors.cupom_garantia_estendida_pdf", "ExtratorCupomGarantiaEstendida"),
+    ("src.extractors.nfce_pdf", "ExtratorNfcePDF"),
+    ("src.extractors.danfe_pdf", "ExtratorDanfePDF"),
+    ("src.extractors.cupom_termico_foto", "ExtratorCupomTermicoFoto"),
+    ("src.extractors.comprovante_pix_foto", "ExtratorComprovantePixFoto"),
+    ("src.extractors.xml_nfe", "ExtratorXmlNFe"),
+    ("src.extractors.receita_medica", "ExtratorReceitaMedica"),
+    ("src.extractors.garantia", "ExtratorGarantiaFabricante"),
+    ("src.extractors.das_parcsn_pdf", "ExtratorDASPARCSNPDF"),
+    ("src.extractors.dirpf_dec", "ExtratorDIRPFDec"),
+    ("src.extractors.boleto_pdf", "ExtratorBoletoPDF"),
+    ("src.extractors.recibo_nao_fiscal", "ExtratorReciboNaoFiscal"),
+]
+
+
+def _descobrir_extratores(desabilitados: set[str] | None = None) -> list:
+    """Importa e retorna classes de extratores canônicas.
+
+    Sprint INFRA-DESCOBRIR-EXTRATORES-REFATORA (2026-05-17): substitui
+    ~140 linhas de try/except por iteração sobre `EXTRATORES_CANONICOS`.
+    Mantém falha-soft: extrator não-importável é apenas logado.
+
+    Args:
+        desabilitados: nomes curtos de módulos (ex: ``{"nubank_cartao"}``)
+            a pular. Se ``None``, lê de ``OUROBOROS_EXTRATORES_DESABILITADOS``
+            (CSV em env var). Útil para debug isolado de outros extratores.
+
+    Returns:
+        Lista de classes de extrator na ordem canônica (pipeline depende dela).
+    """
+    import importlib
+
+    if desabilitados is None:
+        env_val = os.environ.get("OUROBOROS_EXTRATORES_DESABILITADOS", "")
+        desabilitados = {x.strip() for x in env_val.split(",") if x.strip()}
+
     extratores = []
-
-    try:
-        from src.extractors.nubank_cartao import ExtratorNubankCartao
-
-        extratores.append(ExtratorNubankCartao)
-    except ImportError as e:
-        logger.warning("Extrator nubank_cartao indisponível: %s", e)
-
-    try:
-        from src.extractors.nubank_cc import ExtratorNubankCC
-
-        extratores.append(ExtratorNubankCC)
-    except ImportError as e:
-        logger.warning("Extrator nubank_cc indisponível: %s", e)
-
-    try:
-        from src.extractors.c6_cc import ExtratorC6CC
-
-        extratores.append(ExtratorC6CC)
-    except ImportError as e:
-        logger.warning("Extrator c6_cc indisponível: %s", e)
-
-    try:
-        from src.extractors.c6_cartao import ExtratorC6Cartao
-
-        extratores.append(ExtratorC6Cartao)
-    except ImportError as e:
-        logger.warning("Extrator c6_cartao indisponível: %s", e)
-
-    try:
-        from src.extractors.itau_pdf import ExtratorItauPDF
-
-        extratores.append(ExtratorItauPDF)
-    except ImportError as e:
-        logger.warning("Extrator itau_pdf indisponível: %s", e)
-
-    try:
-        from src.extractors.santander_pdf import ExtratorSantanderPDF
-
-        extratores.append(ExtratorSantanderPDF)
-    except ImportError as e:
-        logger.warning("Extrator santander_pdf indisponível: %s", e)
-
-    try:
-        from src.extractors.energia_ocr import ExtratorEnergiaOCR
-
-        extratores.append(ExtratorEnergiaOCR)
-    except ImportError as e:
-        logger.warning("Extrator energia_ocr indisponível: %s", e)
-
-    try:
-        from src.extractors.ofx_parser import ExtratorOFX
-
-        extratores.append(ExtratorOFX)
-    except ImportError as e:
-        logger.warning("Extrator ofx_parser indisponível: %s", e)
-
-    try:
-        from src.extractors.cupom_garantia_estendida_pdf import (
-            ExtratorCupomGarantiaEstendida,
-        )
-
-        extratores.append(ExtratorCupomGarantiaEstendida)
-    except ImportError as e:
-        logger.warning("Extrator cupom_garantia_estendida_pdf indisponível: %s", e)
-
-    try:
-        from src.extractors.nfce_pdf import ExtratorNfcePDF
-
-        extratores.append(ExtratorNfcePDF)
-    except ImportError as e:
-        logger.warning("Extrator nfce_pdf indisponível: %s", e)
-
-    try:
-        from src.extractors.danfe_pdf import ExtratorDanfePDF
-
-        extratores.append(ExtratorDanfePDF)
-    except ImportError as e:
-        logger.warning("Extrator danfe_pdf indisponível: %s", e)
-
-    try:
-        from src.extractors.cupom_termico_foto import ExtratorCupomTermicoFoto
-
-        extratores.append(ExtratorCupomTermicoFoto)
-    except ImportError as e:
-        logger.warning("Extrator cupom_termico_foto indisponível: %s", e)
-
-    try:
-        from src.extractors.comprovante_pix_foto import ExtratorComprovantePixFoto
-
-        extratores.append(ExtratorComprovantePixFoto)
-    except ImportError as e:
-        logger.warning("Extrator comprovante_pix_foto indisponível: %s", e)
-
-    try:
-        from src.extractors.xml_nfe import ExtratorXmlNFe
-
-        extratores.append(ExtratorXmlNFe)
-    except ImportError as e:
-        logger.warning("Extrator xml_nfe indisponível: %s", e)
-
-    # Receita médica entra ANTES do catch-all recibo_nao_fiscal e DEPOIS
-    # dos extratores fiscais: receita em foto/PDF tem marcadores específicos
-    # (CRM, receituário, prescrição) que não colidem com cupom/NFC-e/DANFE,
-    # mas um comprovante Pix fotografado poderia cair em recibo genérico
-    # caso a receita fosse avaliada por último.
-    try:
-        from src.extractors.receita_medica import ExtratorReceitaMedica
-
-        extratores.append(ExtratorReceitaMedica)
-    except ImportError as e:
-        logger.warning("Extrator receita_medica indisponível: %s", e)
-
-    # Garantia de fabricante (Sprint 47b). Prioridade baixa: registrada
-    # ANTES do catch-all recibo_nao_fiscal e DEPOIS da receita médica.
-    # Pistas específicas (`termo_garantia`, `certificado_garantia`,
-    # `garantia_fabricante`) evitam colisão com apólice estendida (47c).
-    try:
-        from src.extractors.garantia import ExtratorGarantiaFabricante
-
-        extratores.append(ExtratorGarantiaFabricante)
-    except ImportError as e:
-        logger.warning("Extrator garantia_fabricante indisponível: %s", e)
-
-    # DAS PARCSN (P1.1 2026-04-23). Registrado antes do catch-all para
-    # capturar arquivos em `casal/impostos/das_parcsn/` e `_envelopes/originais/`.
-    try:
-        from src.extractors.das_parcsn_pdf import ExtratorDASPARCSNPDF
-
-        extratores.append(ExtratorDASPARCSNPDF)
-    except ImportError as e:
-        logger.warning("Extrator das_parcsn_pdf indisponível: %s", e)
-
-    # DIRPF .DEC (P3.1 2026-04-23). Extensão única .DEC, não colide com outros.
-    try:
-        from src.extractors.dirpf_dec import ExtratorDIRPFDec
-
-        extratores.append(ExtratorDIRPFDec)
-    except ImportError as e:
-        logger.warning("Extrator dirpf_dec indisponível: %s", e)
-
-    # Boleto PDF (Sprint 87.3 / 87e 2026-04-24). Registrado antes do catch-all
-    # recibo_nao_fiscal para que `./run.sh --tudo` ingira boletos no grafo sem
-    # depender de reprocessar_documentos.py manual.
-    try:
-        from src.extractors.boleto_pdf import ExtratorBoletoPDF
-
-        extratores.append(ExtratorBoletoPDF)
-    except ImportError as e:
-        logger.warning("Extrator boleto_pdf indisponível: %s", e)
-
-    # Recibo não-fiscal é catch-all de baixa prioridade (Sprint 47):
-    # registrado depois dos extratores fiscais para não capturar arquivo
-    # que pertence a cupom térmico, NFC-e ou DANFE.
-    try:
-        from src.extractors.recibo_nao_fiscal import ExtratorReciboNaoFiscal
-
-        extratores.append(ExtratorReciboNaoFiscal)
-    except ImportError as e:
-        logger.warning("Extrator recibo_nao_fiscal indisponível: %s", e)
-
+    for modulo, classname in EXTRATORES_CANONICOS:
+        nome_curto = modulo.rsplit(".", 1)[-1]
+        if nome_curto in desabilitados:
+            logger.info("Extrator %s desabilitado via env.", nome_curto)
+            continue
+        try:
+            mod = importlib.import_module(modulo)
+            cls = getattr(mod, classname)
+            extratores.append(cls)
+        except (ImportError, AttributeError) as e:
+            logger.warning("Extrator %s indisponível: %s", nome_curto, e)
     return extratores
 
 

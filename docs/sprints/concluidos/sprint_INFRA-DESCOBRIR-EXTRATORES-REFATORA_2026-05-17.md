@@ -1,8 +1,8 @@
 ---
 id: INFRA-DESCOBRIR-EXTRATORES-REFATORA
 titulo: "Refatorar `_descobrir_extratores()` 166L com 23 try/except idênticos"
-status: backlog
-concluida_em: null
+status: concluída
+concluida_em: 2026-05-17
 prioridade: P2
 data_criacao: 2026-05-17
 fase: SANEAMENTO
