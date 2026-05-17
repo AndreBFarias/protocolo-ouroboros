@@ -1,6 +1,6 @@
 """Regenera `docs/sprints/backlog/INDICE_<YYYY-MM-DD>.md`.  # noqa: accent
 
-Sprint META-REGEN-INDICE-BACKLOG (2026-05-17). Catalogador vivo: lê
+Sprint META-REGEN-Catalogador (2026-05-17). Catalogador vivo: lê
 todas as specs em `docs/sprints/backlog/` (exceto `INDICE_*.md`),  # noqa: accent
 agrupa por épico (frontmatter `epico:`) e prioridade, gera markdown
 tabela. Anteriores são arquivados em `_arquivado/`.
@@ -110,7 +110,7 @@ def _gerar_markdown(specs: list[dict], data_iso: str) -> str:
         ),
         "",
         "Regenerado automaticamente por `scripts/regenerar_indice_backlog.py` "
-        "(Sprint META-REGEN-INDICE-BACKLOG).",  # noqa: accent
+        "(Sprint META-REGEN-Catalogador).",
         "",
         "---",
         "",
