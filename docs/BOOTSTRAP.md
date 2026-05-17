@@ -38,7 +38,14 @@ Qualquer um falhar: revisite §1 (deps faltando) antes de mexer em código.
 3. Rode `./run.sh --tudo` — pipeline completo gera `data/output/ouroboros_2026.xlsx`.
 4. Rode `./run.sh --dashboard` — dashboard Streamlit em `localhost:8501`.
 
-PDFs protegidos exigem senha em `mappings/senhas.yaml` (gitignored, criar sob demanda).
+PDFs protegidos exigem senha em `.env` (gitignored). Template em `.env.example`:
+
+```bash
+cp .env.example .env
+# Edite .env e preencha PDF_SENHA_PRIMARIA, PDF_SENHA_SECUNDARIA, PDF_SENHA_CPF
+```
+
+Sprint SEC-SENHAS-PARA-ENV (2026-05-17) migrou `mappings/senhas.yaml` (legado) para `.env`. YAML continua funcionando como fallback durante transição. Para migrar local: copiar valores de `senhas.yaml::senhas_pdf` para `.env` como `PDF_SENHA_*`.
 
 ## 4 — Hooks git (opcional, mas recomendado)
 
