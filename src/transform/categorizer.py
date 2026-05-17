@@ -105,7 +105,15 @@ class Categorizer:
         logger.info("Carregadas %d regras de categorização", len(self.regras))
 
     def _verificar_regra_valor(self, regra_valor: Optional[str], valor: float) -> bool:
-        """Verifica se o valor atende à regra de valor (ex: '>=800', '<100')."""
+        """Verifica se o valor atende à regra de valor (ex: '>=800', '<100').
+
+        Sprint AUDIT-CATEGORIA-REGRA-VALOR-SINAL (2026-05-17): usa
+        ``abs(valor)`` na comparação. ``regra_valor`` no YAML representa
+        magnitude da transação (R$ 800), não sinal. Sem ``abs``,
+        ``valor=-1000`` casava ``<800`` (porque -1000 < 800), fazendo TODA
+        despesa KI-SABOR virar Padaria, nunca Aluguel. Despesa de R$ 1000
+        e receita de R$ 1000 devem casar igualmente regras como ``>=800``.
+        """
         if regra_valor is None:
             return True
 
@@ -115,14 +123,15 @@ class Categorizer:
 
         operador, limite = match.groups()
         limite_float = float(limite)
+        valor_abs = abs(valor)
 
         operacoes: dict[str, bool] = {
-            ">=": valor >= limite_float,
-            "<=": valor <= limite_float,
-            ">": valor > limite_float,
-            "<": valor < limite_float,
-            "==": valor == limite_float,
-            "!=": valor != limite_float,
+            ">=": valor_abs >= limite_float,
+            "<=": valor_abs <= limite_float,
+            ">": valor_abs > limite_float,
+            "<": valor_abs < limite_float,
+            "==": valor_abs == limite_float,
+            "!=": valor_abs != limite_float,
         }
 
         return operacoes.get(operador, True)

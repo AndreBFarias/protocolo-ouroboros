@@ -112,8 +112,60 @@ def test_break_apos_match_garante_fallback(transacao):
     # Cenário: Despesa sem match -> fallback Questionável
     t = transacao(local="Qualquer texto sem match", valor=50.0, tipo="Despesa")
     cat.categorizar(t)
-    # Despesa nunca fica com classificação None após categorizar
+    # Despesa nunca fica com classificação None após categorizer
     assert t["classificacao"] is not None
+
+
+# ============================================================================
+# Sprint AUDIT-CATEGORIA-REGRA-VALOR-SINAL (2026-05-17)
+# Regressão: regra_valor (>=800, <800, etc) deve usar abs(valor).
+# Bug original: -1000 < 800 = True, despesa virava Padaria, nunca Aluguel.
+# ============================================================================
+
+
+def test_regra_valor_kisabor_despesa_1000_vira_aluguel(transacao):
+    """Sprint AUDIT-CATEGORIA-REGRA-VALOR-SINAL: despesa R$ 1000 KISABOR vira Aluguel.
+
+    Antes do fix: -1000 < 800 = True, casava Padaria primeiro. Pos-fix:
+    abs(-1000) = 1000 >= 800, casa Aluguel.
+    """
+    cat = Categorizer()
+    t = transacao(local="PANIFICADORA KI-SABOR", valor=-1000.0)
+    cat.categorizar(t)
+    assert t["categoria"] == "Aluguel", (
+        f"Despesa R$ 1000 KISABOR deveria ser Aluguel, virou {t['categoria']}"
+    )
+
+
+def test_regra_valor_kisabor_despesa_500_vira_padaria(transacao):
+    """Sprint AUDIT-CATEGORIA-REGRA-VALOR-SINAL: despesa R$ 500 KISABOR continua Padaria."""
+    cat = Categorizer()
+    t = transacao(local="PANIFICADORA KI-SABOR", valor=-500.0)
+    cat.categorizar(t)
+    assert t["categoria"] == "Padaria"
+
+
+def test_regra_valor_funciona_para_receita(transacao):
+    """Sprint AUDIT-CATEGORIA-REGRA-VALOR-SINAL: receita R$ 1000 KISABOR também vira Aluguel.
+
+    Magnitude (R$ 1000) é o que importa, não sinal. abs(1000) >= 800 OK.
+    """
+    cat = Categorizer()
+    t = transacao(local="PANIFICADORA KI-SABOR", valor=1000.0)
+    cat.categorizar(t)
+    assert t["categoria"] == "Aluguel"
+
+
+def test_regra_valor_sinal_negativo_nao_quebra_outras_regras(transacao):
+    """Sprint AUDIT-CATEGORIA-REGRA-VALOR-SINAL: outras regras com regra_valor não regridem.
+
+    Padaria (`<800`) continua casando despesa R$ 500 (abs(500) < 800).
+    """
+    cat = Categorizer()
+    t = transacao(local="PANIFICADORA KI-SABOR", valor=-50.0)
+    cat.categorizar(t)
+    # abs(-50) = 50 < 800, casa Padaria
+    assert t["categoria"] == "Padaria"
 
 
 # "A ordem não é do tempo, mas do entendimento." -- Espinosa

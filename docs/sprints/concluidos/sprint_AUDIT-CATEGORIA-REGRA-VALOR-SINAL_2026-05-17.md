@@ -1,8 +1,8 @@
 ---
 id: AUDIT-CATEGORIA-REGRA-VALOR-SINAL
 titulo: "Bug P0: `_verificar_regra_valor` usa valor com sinal, regra `<800` casa toda despesa"
-status: backlog
-concluida_em: null
+status: concluída
+concluida_em: 2026-05-17
 prioridade: P0
 data_criacao: 2026-05-17
 fase: QUALIDADE
