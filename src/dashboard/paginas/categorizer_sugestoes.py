@@ -51,8 +51,12 @@ def _carregar_sugestoes(path: Path | None = None) -> tuple[list[dict], dict]:
             {
                 "id": tx_id,
                 "descricao": item.get("descricao", ""),
+                "valor": float(item.get("valor", 0.0) or 0.0),
                 "top1": item.get("top1", ""),
                 "confianca_top1": float(item.get("confianca_top1", 0.0)),
+                # Sprint CATEGORIZER-SUGESTAO-AUDITORIA-RUIDO:
+                "risco_estimado": item.get("risco_estimado", "DESCONHECIDO"),
+                "filtros_aplicados": item.get("filtros_aplicados", []),
                 "sugestoes_detalhes": item.get("sugestoes", []),
             }
         )
@@ -70,12 +74,16 @@ def _aplicar_filtros(
     lista: list[dict],
     confianca_minima: float,
     categorias_selecionadas: list[str],
+    riscos_aceitos: list[str] | None = None,
 ) -> list[dict]:
+    """Sprint CATEGORIZER-SUGESTAO-AUDITORIA-RUIDO: aceita filtro de risco."""
     out = lista
     if confianca_minima > 0:
         out = [i for i in out if i["confianca_top1"] >= confianca_minima]
     if categorias_selecionadas:
         out = [i for i in out if i["top1"] in categorias_selecionadas]
+    if riscos_aceitos:
+        out = [i for i in out if i.get("risco_estimado", "DESCONHECIDO") in riscos_aceitos]
     return out
 
 
@@ -123,17 +131,31 @@ def _regenerar() -> tuple[int, str]:
 
 
 def _renderizar_kpis(lista: list[dict], meta: dict) -> None:
-    total_alta = sum(1 for i in lista if i["confianca_top1"] >= 0.85)
-    total_med = sum(1 for i in lista if 0.6 <= i["confianca_top1"] < 0.85)
-    total_baixa = sum(1 for i in lista if i["confianca_top1"] < 0.6)
-    c1, c2, c3, c4 = st.columns(4)
+    """Sprint CATEGORIZER-SUGESTAO-AUDITORIA-RUIDO: KPIs por risco_estimado."""
+    total_baixo = sum(1 for i in lista if i.get("risco_estimado") == "BAIXO")
+    total_medio = sum(1 for i in lista if i.get("risco_estimado") == "MEDIO")
+    total_alto = sum(1 for i in lista if i.get("risco_estimado") == "ALTO")
+    total_desconhecido = sum(
+        1 for i in lista if i.get("risco_estimado") == "DESCONHECIDO"
+    )
+    c1, c2, c3, c4, c5 = st.columns(5)
     c1.metric("Outros no XLSX", meta.get("total_outros", 0))
-    c2.metric("Alta confiança (≥ 0.85)", total_alta)
-    c3.metric("Média (0.6-0.85)", total_med)
-    c4.metric("Baixa (< 0.6)", total_baixa)
+    c2.metric("Risco BAIXO", total_baixo, help="Filtro de domínio aprovou — candidato seguro")
+    c3.metric("Risco MEDIO", total_medio, help="1 filtro falhou — revisar")
+    c4.metric(
+        "Risco ALTO",
+        total_alto,
+        help="Token proibitivo OU 2+ filtros falharam — rejeitar",
+    )
+    c5.metric(
+        "Desconhecido",
+        total_desconhecido,
+        help="Categoria sem entry em dominio_categorias.yaml",
+    )
 
 
 def _renderizar_tabela(lista: list[dict]) -> pd.DataFrame:
+    """Tabela com coluna risco. Para colorir, usa emoji só nesse contexto."""
     if not lista:
         st.info("Nenhuma sugestão — rode `Regenerar` para gerar a partir do XLSX.")
         return pd.DataFrame()
@@ -142,8 +164,10 @@ def _renderizar_tabela(lista: list[dict]) -> pd.DataFrame:
             {
                 "id": i["id"],
                 "descricao": i["descricao"][:60],
+                "valor": round(i.get("valor", 0.0), 2),
                 "sugestao_top1": i["top1"],
                 "confianca": round(i["confianca_top1"], 2),
+                "risco": i.get("risco_estimado", "DESCONHECIDO"),
             }
             for i in lista
         ]
@@ -177,6 +201,13 @@ def renderizar(dados=None, periodo=None, pessoa=None, ctx=None) -> None:  # noqa
             step=0.05,
             key="sugestor_conf",
         )
+        riscos_sel = st.multiselect(
+            "Risco estimado (filtro de domínio)",
+            options=["BAIXO", "MEDIO", "ALTO", "DESCONHECIDO"],
+            default=["BAIXO"],
+            key="sugestor_risco",
+            help="BAIXO = filtro de domínio aprovou. Recomendado promover apenas BAIXO.",
+        )
         categorias_disponiveis = sorted(Counter(i["top1"] for i in lista).keys())
         categorias_sel = st.multiselect(
             "Categoria sugerida (top1)",
@@ -194,15 +225,19 @@ def renderizar(dados=None, periodo=None, pessoa=None, ctx=None) -> None:  # noqa
             else:
                 st.error(f"Falha rc={rc}: {out[:300]}")
 
-    filtradas = _aplicar_filtros(lista, confianca_minima, categorias_sel)
+    filtradas = _aplicar_filtros(lista, confianca_minima, categorias_sel, riscos_sel)
     st.write(f"**{len(filtradas)} sugestões após filtros.**")
     _renderizar_tabela(filtradas)
 
     # Expander por sugestão (máx 50 pra não pesar):
     for item in filtradas[:50]:
+        risco = item.get("risco_estimado", "DESCONHECIDO")
         with st.expander(
-            f"{item['descricao'][:60]} → {item['top1']} ({item['confianca_top1']:.2f})"
+            f"[{risco}] {item['descricao'][:60]} → {item['top1']} "
+            f"({item['confianca_top1']:.2f}) — R$ {item.get('valor', 0):.2f}"
         ):
+            filtros_str = ", ".join(item.get("filtros_aplicados", []) or ["(nenhum)"])
+            st.write(f"**Filtros aplicados**: `{filtros_str}`")
             for s in item["sugestoes_detalhes"]:
                 st.write(
                     f"  - **{s.get('categoria')}** · "

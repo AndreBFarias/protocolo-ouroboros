@@ -66,3 +66,220 @@ overrides:
 
 
 # "O que sabemos e uma gota; o que ignoramos e um oceano." -- Isaac Newton
+
+  # CATEGORIZER-SUGESTAO-TFIDF: promocao em lote 2026-05-17 (43 entries)
+  "Eduardo Fernandes de O":
+    categoria: "Pessoal"
+    classificacao: "Questionável"
+    origem: CATEGORIZER-SUGESTAO-TFIDF
+    confianca_origem: 1.0
+  "Acougue Valente":
+    categoria: "Pessoal"
+    classificacao: "Questionável"
+    origem: CATEGORIZER-SUGESTAO-TFIDF
+    confianca_origem: 1.0
+  "Bola da Vez":
+    categoria: "Transferência"
+    classificacao: "Questionável"
+    origem: CATEGORIZER-SUGESTAO-TFIDF
+    confianca_origem: 1.0
+  "Ki Lanchonete do Minei":
+    categoria: "Padaria"
+    classificacao: "Questionável"
+    origem: CATEGORIZER-SUGESTAO-TFIDF
+    confianca_origem: 1.0
+  "Erivaldo Pereira Lopes":
+    categoria: "Pessoal"
+    classificacao: "Questionável"
+    origem: CATEGORIZER-SUGESTAO-TFIDF
+    confianca_origem: 1.0
+  "Pagamento da fatura - Cart\u00e3o Nubank":
+    categoria: "Pagamento de Fatura"
+    classificacao: "Questionável"
+    origem: CATEGORIZER-SUGESTAO-TFIDF
+    confianca_origem: 1.0
+  "ADRIANA P DA SILVA DOS SANTOS":
+    categoria: "Transferência"
+    classificacao: "Questionável"
+    origem: CATEGORIZER-SUGESTAO-TFIDF
+    confianca_origem: 1.0
+  "FIXTELL INTERNET LTDA - ME":
+    categoria: "Internet"
+    classificacao: "Questionável"
+    origem: CATEGORIZER-SUGESTAO-TFIDF
+    confianca_origem: 1.0
+  "Panif Confeit Itatiana":
+    categoria: "Padaria"
+    classificacao: "Questionável"
+    origem: CATEGORIZER-SUGESTAO-TFIDF
+    confianca_origem: 1.0
+  "Rosenice Magalh\u00e3es Ramos - \u2022\u2022\u2022.841.431-\u2022\u2022 - MERCADO PAGO (0323) Ag\u00eancia: 1 Conta: 2422427373":
+    categoria: "Pessoal"
+    classificacao: "Questionável"
+    origem: CATEGORIZER-SUGESTAO-TFIDF
+    confianca_origem: 1.0
+  "ALEXANDRE SANTANA DO LAGO - \u2022\u2022\u2022.181.023-\u2022\u2022 - BCO SANTANDER (BRASIL) S.A. (0033) Ag\u00eancia: 3971 Conta: 1064600":
+    categoria: "Transferência"
+    classificacao: "Questionável"
+    origem: CATEGORIZER-SUGESTAO-TFIDF
+    confianca_origem: 1.0
+  "SILVANIA PEREIRA CABRAL 70430454104":
+    categoria: "Pessoal"
+    classificacao: "Questionável"
+    origem: CATEGORIZER-SUGESTAO-TFIDF
+    confianca_origem: 1.0
+  "Pg *Silvania Pereira C":
+    categoria: "Pessoal"
+    classificacao: "Questionável"
+    origem: CATEGORIZER-SUGESTAO-TFIDF
+    confianca_origem: 1.0
+  "TATIANY OLIVEIRA DE SOUSA - \u2022\u2022\u2022.826.001-\u2022\u2022 - BANCO INTER (0077) Ag\u00eancia: 1 Conta: 9079744":
+    categoria: "Pessoal"
+    classificacao: "Questionável"
+    origem: CATEGORIZER-SUGESTAO-TFIDF
+    confianca_origem: 1.0
+  "VICTOR H Q S BARBOSA - \u2022\u2022\u2022.428.291-\u2022\u2022 - BANCO INTER (0077) Ag\u00eancia: 1 Conta: 9003589":
+    categoria: "Pessoal"
+    classificacao: "Questionável"
+    origem: CATEGORIZER-SUGESTAO-TFIDF
+    confianca_origem: 1.0
+  "Marcos Patr\u00edcio de Aguiar Medeiros - \u2022\u2022\u2022.140.953-\u2022\u2022 - PICPAY (0380) Ag\u00eancia: 1 Conta: 55567765":
+    categoria: "Pessoal"
+    classificacao: "Questionável"
+    origem: CATEGORIZER-SUGESTAO-TFIDF
+    confianca_origem: 1.0
+  "Suely Silva de Freita":
+    categoria: "Transferência"
+    classificacao: "Questionável"
+    origem: CATEGORIZER-SUGESTAO-TFIDF
+    confianca_origem: 1.0
+  "Pg *Mana'S Lanches":
+    categoria: "Alimentação"
+    classificacao: "Questionável"
+    origem: CATEGORIZER-SUGESTAO-TFIDF
+    confianca_origem: 1.0
+  "Lucas Ribeiro Dos Santos - \u2022\u2022\u2022.714.121-\u2022\u2022 - PICPAY (0380) Ag\u00eancia: 1 Conta: 852512":
+    categoria: "Pessoal"
+    classificacao: "Questionável"
+    origem: CATEGORIZER-SUGESTAO-TFIDF
+    confianca_origem: 1.0
+  "David \u00edtalo":
+    categoria: "Pessoal"
+    classificacao: "Questionável"
+    origem: CATEGORIZER-SUGESTAO-TFIDF
+    confianca_origem: 1.0
+  "Vin\u00edcius Mendes Saldanha - \u2022\u2022\u2022.594.291-\u2022\u2022 - BCO C6 S.A. (0336) Ag\u00eancia: 1 Conta: 6373263":
+    categoria: "Transferência"
+    classificacao: "Questionável"
+    origem: CATEGORIZER-SUGESTAO-TFIDF
+    confianca_origem: 1.0
+  "ELIAS DA TRINDADE LOURENCO - \u2022\u2022\u2022.813.961-\u2022\u2022 - BANCO INTER (0077) Ag\u00eancia: 1 Conta: 10168167":
+    categoria: "Pessoal"
+    classificacao: "Questionável"
+    origem: CATEGORIZER-SUGESTAO-TFIDF
+    confianca_origem: 1.0
+  "Elidiane Pereira da Silva - \u2022\u2022\u2022.920.914-\u2022\u2022 - MERCADO PAGO IP LTDA. (0323) Ag\u00eancia: 1 Conta: 8695724887":
+    categoria: "Pessoal"
+    classificacao: "Questionável"
+    origem: CATEGORIZER-SUGESTAO-TFIDF
+    confianca_origem: 1.0
+  "Felipe Rodrigues Barbosa - \u2022\u2022\u2022.502.921-\u2022\u2022 - PICPAY (0380) Ag\u00eancia: 1 Conta: 58269208":
+    categoria: "Pessoal"
+    classificacao: "Questionável"
+    origem: CATEGORIZER-SUGESTAO-TFIDF
+    confianca_origem: 1.0
+  "Mercado da Economia":
+    categoria: "Mercado"
+    classificacao: "Questionável"
+    origem: CATEGORIZER-SUGESTAO-TFIDF
+    confianca_origem: 1.0
+  "MARYANE ALVES FERNANDES - \u2022\u2022\u2022.323.861-\u2022\u2022 - BCO C6 S.A. (0336) Ag\u00eancia: 1 Conta: 24128782":
+    categoria: "Transferência"
+    classificacao: "Questionável"
+    origem: CATEGORIZER-SUGESTAO-TFIDF
+    confianca_origem: 1.0
+  "Pg *Ton Maestro Food":
+    categoria: "Alimentação"
+    classificacao: "Questionável"
+    origem: CATEGORIZER-SUGESTAO-TFIDF
+    confianca_origem: 1.0
+  "WALLACE DA SILVA DANTAS - \u2022\u2022\u2022.811.541-\u2022\u2022 - BANCO INTER Ag\u00eancia: 1 Conta: 26922349":
+    categoria: "Pessoal"
+    classificacao: "Questionável"
+    origem: CATEGORIZER-SUGESTAO-TFIDF
+    confianca_origem: 1.0
+  "FILLIPE OLIVEIRA - \u2022\u2022\u2022.129.091-\u2022\u2022 - BANCO INTER (0077) Ag\u00eancia: 1 Conta: 6227102":
+    categoria: "Pessoal"
+    classificacao: "Questionável"
+    origem: CATEGORIZER-SUGESTAO-TFIDF
+    confianca_origem: 1.0
+  "WALLACE DA SILVA DANTAS - \u2022\u2022\u2022.811.541-\u2022\u2022 - BANCO INTER (0077) Ag\u00eancia: 1 Conta: 26922349":
+    categoria: "Pessoal"
+    classificacao: "Questionável"
+    origem: CATEGORIZER-SUGESTAO-TFIDF
+    confianca_origem: 1.0
+  "SARAH YUKARI SANTOS UEMA - \u2022\u2022\u2022.822.491-\u2022\u2022 - BCO C6 S.A. (0336) Ag\u00eancia: 1 Conta: 22024587":
+    categoria: "Transferência"
+    classificacao: "Questionável"
+    origem: CATEGORIZER-SUGESTAO-TFIDF
+    confianca_origem: 1.0
+  "Igor de Castro Silva - \u2022\u2022\u2022.582.741-\u2022\u2022 - MERCADO PAGO IP LTDA. (0323) Ag\u00eancia: 1 Conta: 8209268809":
+    categoria: "Pessoal"
+    classificacao: "Questionável"
+    origem: CATEGORIZER-SUGESTAO-TFIDF
+    confianca_origem: 1.0
+  "JULIA RODRIGUES GOMES - \u2022\u2022\u2022.330.471-\u2022\u2022 - BANCO INTER (0077) Ag\u00eancia: 1 Conta: 20821458":
+    categoria: "Pessoal"
+    classificacao: "Questionável"
+    origem: CATEGORIZER-SUGESTAO-TFIDF
+    confianca_origem: 1.0
+  "Ta Na Mao Ferragens":
+    categoria: "Transferência"
+    classificacao: "Questionável"
+    origem: CATEGORIZER-SUGESTAO-TFIDF
+    confianca_origem: 1.0
+  "David \u00cdtalo":
+    categoria: "Pessoal"
+    classificacao: "Questionável"
+    origem: CATEGORIZER-SUGESTAO-TFIDF
+    confianca_origem: 1.0
+  "Jovanildo dos Anjos":
+    categoria: "Transferência"
+    classificacao: "Questionável"
+    origem: CATEGORIZER-SUGESTAO-TFIDF
+    confianca_origem: 1.0
+  "Aryadnne da Silva Batista de Farias - \u2022\u2022\u2022.824.701-\u2022\u2022 - Nubank (0260) Ag\u00eancia: 1 Conta: 89796202":
+    categoria: "Pagamento de Fatura"
+    classificacao: "Questionável"
+    origem: CATEGORIZER-SUGESTAO-TFIDF
+    confianca_origem: 1.0
+  "FERNANDO SOUZA - \u2022\u2022\u2022.262.506-\u2022\u2022 - BCO SANTANDER (BRASIL) S.A. (0033) Ag\u00eancia: 2980 Conta: 2024270":
+    categoria: "Transferência"
+    classificacao: "Questionável"
+    origem: CATEGORIZER-SUGESTAO-TFIDF
+    confianca_origem: 1.0
+  "Rony Uemura da Costa - \u2022\u2022\u2022.294.278-\u2022\u2022 - MERCADO PAGO IP LTDA. (0323) Ag\u00eancia: 1 Conta: 2033924766":
+    categoria: "Pessoal"
+    classificacao: "Questionável"
+    origem: CATEGORIZER-SUGESTAO-TFIDF
+    confianca_origem: 1.0
+  "Wesdras Dicson Ibiapina Andrade - \u2022\u2022\u2022.572.281-\u2022\u2022 - MERCADO PAGO IP LTDA. (0323) Ag\u00eancia: 1 Conta: 5852379617":
+    categoria: "Pessoal"
+    classificacao: "Questionável"
+    origem: CATEGORIZER-SUGESTAO-TFIDF
+    confianca_origem: 1.0
+  "Mateus Franco Dos Santos - \u2022\u2022\u2022.718.741-\u2022\u2022 - PICPAY (0380) Ag\u00eancia: 1 Conta: 10333925":
+    categoria: "Pessoal"
+    classificacao: "Questionável"
+    origem: CATEGORIZER-SUGESTAO-TFIDF
+    confianca_origem: 1.0
+  "Victor Fortunato Fermi - \u2022\u2022\u2022.134.898-\u2022\u2022 - BCO SANTANDER (BRASIL) S.A. (0033) Ag\u00eancia: 1652 Conta: 1003511":
+    categoria: "Transferência"
+    classificacao: "Questionável"
+    origem: CATEGORIZER-SUGESTAO-TFIDF
+    confianca_origem: 1.0
+  "JONILDA FERNANDES DA SILVEIRA PANIFICADORA LTDA (Transfer\u00eancia enviada)":
+    categoria: "Pessoal"
+    classificacao: "Questionável"
+    origem: CATEGORIZER-SUGESTAO-TFIDF
+    confianca_origem: 1.0

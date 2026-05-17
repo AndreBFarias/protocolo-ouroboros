@@ -1,8 +1,8 @@
 ---
 id: CATEGORIZER-SUGESTAO-AUDITORIA-RUIDO
 titulo: "Sugestor TF-IDF tem ruído alto mesmo em confiança 1.0 — auditoria + threshold ajustado"
-status: backlog
-concluida_em: null
+status: concluída
+concluida_em: 2026-05-16
 prioridade: P2
 data_criacao: 2026-05-16
 fase: QUALIDADE

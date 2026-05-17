@@ -55,9 +55,20 @@ def _carregar_transacoes_do_xlsx(xlsx: Path) -> list[Transacao]:
             continue
         descricao = str(row[3] or "")  # col[3] = local (descrição livre)
         categoria = str(row[5] or "")
+        try:
+            valor = abs(float(row[1])) if row[1] is not None else 0.0
+        except (ValueError, TypeError):
+            valor = 0.0
         if not descricao or not categoria:
             continue
-        transacoes.append(Transacao(id=f"row_{i + 2}", descricao=descricao, categoria=categoria))
+        transacoes.append(
+            Transacao(
+                id=f"row_{i + 2}",
+                descricao=descricao,
+                categoria=categoria,
+                valor=valor,
+            )
+        )
     wb.close()
     return transacoes
 

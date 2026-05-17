@@ -1,0 +1,351 @@
+# Domínio semântico por categoria — Sprint CATEGORIZER-SUGESTAO-AUDITORIA-RUIDO (2026-05-16)
+#
+# Para cada categoria, declara:
+# - `tokens_obrigatorios`: pelo menos 1 desses tokens (substring case-insensitive)
+#   precisa aparecer na descrição para a sugestão ser ELEGÍVEL para alta confiança.
+#   Se ausente: confiança é multiplicada por penalidade.
+# - `tokens_proibitivos`: se qualquer aparece, sugestão NÃO é elegível para alta
+#   confiança (risco_estimado=ALTO).
+# - `valor_min` / `valor_max`: faixa típica em reais. Fora dela = risco MÉDIO.
+#
+# Filosofia: filtros de domínio são apenas para classificar RISCO. Não bloqueiam
+# a sugestão — sinalizam para revisão humana. Decisão final é do supervisor.
+#
+# Curadoria humana validada no dataset 2026-05-16 (1031 transações "Outros").
+
+categorias:
+
+  Mercado:
+    tokens_obrigatorios:
+      - mercado
+      - supermerca
+      - hortifruti
+      - sacolao
+      - extra
+      - carrefour
+      - pao de acucar
+      - assai
+      - atacadao
+      - dia
+      - dia%
+      - big
+    tokens_proibitivos: []
+    valor_min: 5
+    valor_max: 2000
+
+  Padaria:
+    tokens_obrigatorios:
+      - padaria
+      - panif
+      - pao
+      - lanchonete
+      - cafeteria
+      - cafe
+      - donut
+      - doce
+    tokens_proibitivos:
+      - sushi
+      - hamburg
+    valor_min: 2
+    valor_max: 300
+
+  Alimentação:
+    tokens_obrigatorios:
+      - sushi
+      - restaurante
+      - pizzaria
+      - pizza
+      - acougue
+      - churrasc
+      - burger
+      - hamburg
+      - lanche
+      - comida
+      - food
+      - kitchen
+      - bistro
+    tokens_proibitivos: []
+    valor_min: 5
+    valor_max: 500
+
+  Delivery:
+    tokens_obrigatorios:
+      - ifood
+      - ifd
+      - rappi
+      - uber eats
+      - delivery
+      - daki
+      - 99 food
+    tokens_proibitivos: []
+    valor_min: 5
+    valor_max: 300
+
+  Farmácia:
+    tokens_obrigatorios:
+      - farmacia
+      - drogaria
+      - drogasil
+      - droga
+      - rd-
+      - panvel
+      - pague menos
+      - araujo
+      - venancio
+    tokens_proibitivos: []
+    valor_min: 2
+    valor_max: 1000
+
+  Saúde:
+    tokens_obrigatorios:
+      - clinica
+      - hospital
+      - laboratori
+      - lab pat
+      - exame
+      - consulta
+      - medico
+      - dentista
+      - psicolog
+      - fisioterap
+      - oftalmolog
+      - cardiolog
+      - dermatolog
+      - ginecolog
+      - pediatra
+      - cancer
+      - oncolog
+    tokens_proibitivos: []
+    valor_min: 10
+    valor_max: 10000
+
+  Transporte:
+    tokens_obrigatorios:
+      - uber
+      - 99
+      - taxi
+      - 99app
+      - cabify
+      - posto
+      - shell
+      - ipiranga
+      - petrobr
+      - br distribu
+      - gasolina
+      - etanol
+      - pedagio
+      - estacionament
+      - pavimentado
+    tokens_proibitivos:
+      - tarifa
+    valor_min: 2
+    valor_max: 500
+
+  Bebidas:
+    tokens_obrigatorios:
+      - bar
+      - cerveja
+      - cerveja
+      - vinho
+      - drink
+      - chope
+      - bebida
+      - boteco
+      - botequim
+      - pub
+      - cervecer
+    tokens_proibitivos:
+      - barbear
+      - barbe
+    valor_min: 5
+    valor_max: 500
+
+  Pets:
+    tokens_obrigatorios:
+      - pet
+      - cobasi
+      - petz
+      - cao
+      - cachorr
+      - gato
+      - veterinari
+      - racao
+      - racao
+    tokens_proibitivos: []
+    valor_min: 5
+    valor_max: 2000
+
+  Celular:
+    tokens_obrigatorios:
+      - vivo
+      - claro
+      - tim
+      - oi
+      - chip
+      - celular
+      - recarga
+    tokens_proibitivos: []
+    valor_min: 10
+    valor_max: 500
+
+  Internet:
+    tokens_obrigatorios:
+      - net
+      - vivo fibra
+      - tim live
+      - claro net
+      - oi fibra
+      - sky
+      - algar
+      - banda larga
+      - operador
+    tokens_proibitivos: []
+    valor_min: 30
+    valor_max: 500
+
+  Energia:
+    tokens_obrigatorios:
+      - neoenergia
+      - light
+      - cemig
+      - enel
+      - cpfl
+      - eletric
+      - energia
+      - kwh
+    tokens_proibitivos: []
+    valor_min: 20
+    valor_max: 2000
+
+  Água:
+    tokens_obrigatorios:
+      - caesb
+      - sabesp
+      - copasa
+      - agua
+      - water
+      - aguas de
+    tokens_proibitivos: []
+    valor_min: 15
+    valor_max: 500
+
+  Aluguel:
+    tokens_obrigatorios:
+      - aluguel
+      - locacao
+      - imobiliar
+      - aluguel
+    tokens_proibitivos: []
+    valor_min: 300
+    valor_max: 10000
+
+  Natação:
+    # Categoria muito específica (academia de natação). Tokens estreitos.
+    tokens_obrigatorios:
+      - natacao
+      - piscina
+      - academia
+      - swim
+    tokens_proibitivos:
+      - cancer
+      - clinica
+      - hospital
+      - lab
+      - exame
+      - consulta
+    valor_min: 50
+    valor_max: 1000
+
+  Impostos:
+    tokens_obrigatorios:
+      - das
+      - darf
+      - irrf
+      - irpf
+      - inss
+      - iptu
+      - ipva
+      - receita federal
+      - prefeitura
+      - tributo
+    tokens_proibitivos: []
+    valor_min: 5
+    valor_max: 50000
+
+  Juros/Encargos:
+    tokens_obrigatorios:
+      - juros
+      - encargos
+      - multa
+      - rendimento
+      - tarifa
+      - taxa
+      - anuidade
+      - cdb
+      - poupanca
+    tokens_proibitivos: []
+    valor_min: 0
+    valor_max: 5000
+
+  "Pagamento de Fatura":
+    tokens_obrigatorios:
+      - pagamento da fatura
+      - fatura
+      - cartao
+      - nubank
+      - cobranca
+    tokens_proibitivos: []
+    valor_min: 10
+    valor_max: 50000
+
+  Pessoal:
+    # Categoria flexivel (pagamentos a pessoas fisicas via PIX/transferencia).
+    # Sem tokens obrigatorios; risco baixo se nada bloqueia.
+    tokens_obrigatorios: []
+    tokens_proibitivos: []
+    valor_min: 1
+    valor_max: 10000
+
+  Insumos:
+    tokens_obrigatorios:
+      - insumos
+      - papelaria
+      - utens
+      - ferramentas
+      - kalunga
+    tokens_proibitivos: []
+    valor_min: 2
+    valor_max: 2000
+
+  "Compras Online":
+    tokens_obrigatorios:
+      - mercadolivre
+      - magazine
+      - amazon
+      - aliexpress
+      - shopee
+      - americanas
+      - submarino
+      - shein
+      - netshoes
+      - centauro
+      - kabum
+      - lojas
+      - magalu
+      - paypal
+      - pagseguro
+    tokens_proibitivos: []
+    valor_min: 5
+    valor_max: 5000
+
+  Transferência:
+    # Categoria intencionalmente larga - serve para PIX/TED sem semântica forte.
+    tokens_obrigatorios: []
+    tokens_proibitivos: []
+    valor_min: 0
+    valor_max: 50000
+
+# Categorias sem entry abaixo NÃO recebem filtro de dominio — risco estimado
+# fica em "DESCONHECIDO" (não eleva nem rebaixa a confiança original).
+
+# "Domínio sem token e palpite; com token e evidencia." -- princípio do filtro semântico

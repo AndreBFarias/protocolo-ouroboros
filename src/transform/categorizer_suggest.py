@@ -9,24 +9,38 @@ Implementação manual (sem sklearn) — leve, sem dependência adicional.
 Para datasets grandes (~10000 transações), runtime ~3-5s. Para uso
 diário do dashboard, aceitável.
 
+Sprint CATEGORIZER-SUGESTAO-AUDITORIA-RUIDO (2026-05-16): adicionado
+filtro de domínio + risco_estimado. Auditoria do dataset 2026-05-16
+mostrou ruído inaceitável em conf=1.0 (`Lab Pat e Prev do Cancer → Natação`).
+Filtros baseados em `mappings/dominio_categorias.yaml` reclassificam
+sugestões em 4 níveis de risco:
+
+- BAIXO: passa filtro de domínio (tokens obrigatórios presentes E nenhum
+  proibitivo) + valor dentro da faixa típica + confiança >=0.85.
+- MEDIO: confiança alta mas falha 1 das condições acima.
+- ALTO: falha 2+ condições OU token proibitivo presente.
+- DESCONHECIDO: categoria sem entry em dominio_categorias.yaml.
+
 Schema do output:
 
 ```python
 {
     "<id_transacao>": {
         "descricao": "...",
+        "valor": 50.0,
         "top1": "ALIMENTACAO",
         "confianca_top1": 0.78,
+        "risco_estimado": "BAIXO",
+        "filtros_aplicados": ["dominio_ok", "valor_ok"],
         "sugestoes": [
             {"categoria": "ALIMENTACAO", "confianca": 0.78, "votos": 4},
-            {"categoria": "TRANSPORTE", "confianca": 0.12, "votos": 1},
         ],
     },
-    ...
 }
 ```
 
-Threshold de confiança recomendado para auto-promoção: ≥ 0.85.
+Threshold de confiança recomendado para auto-promoção: ≥ 0.85 E
+``risco_estimado == "BAIXO"``.
 """
 
 from __future__ import annotations
@@ -35,17 +49,110 @@ import math
 import re
 from collections import Counter
 from dataclasses import dataclass
+from pathlib import Path
 
 CATEGORIA_OUTROS = "Outros"
+PATH_DOMINIO_YAML = Path(__file__).resolve().parents[2] / "mappings" / "dominio_categorias.yaml"
+
+RISCO_BAIXO = "BAIXO"
+RISCO_MEDIO = "MEDIO"
+RISCO_ALTO = "ALTO"
+RISCO_DESCONHECIDO = "DESCONHECIDO"
 
 
 @dataclass(frozen=True)
 class Transacao:
-    """View mínima sobre transação para sugestão."""
+    """View mínima sobre transação para sugestão.
+
+    Sprint CATEGORIZER-SUGESTAO-AUDITORIA-RUIDO: `valor` opcional para
+    filtros de domínio (categoria X tem faixa típica de valor).
+    """
 
     id: str
     descricao: str
     categoria: str
+    valor: float = 0.0
+
+
+def _carregar_dominio(path: Path | None = None) -> dict:
+    """Lê `mappings/dominio_categorias.yaml`. Falha-soft: dict vazio."""
+    p = path if path is not None else PATH_DOMINIO_YAML
+    if not p.exists():
+        return {}
+    try:
+        import yaml  # type: ignore[import-untyped]
+    except ImportError:
+        return {}
+    try:
+        doc = yaml.safe_load(p.read_text(encoding="utf-8")) or {}
+    except yaml.YAMLError:
+        return {}
+    return doc.get("categorias", {}) or {}
+
+
+def _avaliar_dominio(
+    descricao: str,
+    categoria: str,
+    valor: float,
+    dominio: dict,
+) -> tuple[str, list[str]]:
+    """Avalia risco da sugestão com base em filtros de domínio.
+
+    Retorna (risco, filtros_aplicados). Filtros possíveis:
+    - "dominio_ok": tokens obrigatórios encontrados (ou lista vazia)
+    - "dominio_faltando_tokens": tokens obrigatórios não encontrados
+    - "dominio_proibitivo": token proibitivo encontrado (eleva ALTO)
+    - "valor_ok": valor dentro de [min, max]
+    - "valor_fora_faixa": valor fora da faixa
+    - "sem_dominio_definido": categoria não tem entry no YAML
+    """
+    cat_info = dominio.get(categoria)
+    if not cat_info:
+        return RISCO_DESCONHECIDO, ["sem_dominio_definido"]
+
+    desc_lower = (descricao or "").lower()
+    filtros: list[str] = []
+    falhas = 0
+
+    obrigatorios = cat_info.get("tokens_obrigatorios") or []
+    proibitivos = cat_info.get("tokens_proibitivos") or []
+    valor_min = cat_info.get("valor_min")
+    valor_max = cat_info.get("valor_max")
+
+    # Tokens proibitivos elevam ALTO imediatamente:
+    for token in proibitivos:
+        t_str = str(token).lower() if token is not None else ""
+        if t_str and t_str in desc_lower:
+            filtros.append(f"dominio_proibitivo:{t_str}")
+            return RISCO_ALTO, filtros
+
+    # Tokens obrigatórios: ao menos 1 precisa estar presente (se lista existe):
+    if obrigatorios:
+        achou = any(
+            str(t).lower() in desc_lower for t in obrigatorios if t is not None
+        )
+        if achou:
+            filtros.append("dominio_ok")
+        else:
+            filtros.append("dominio_faltando_tokens")
+            falhas += 1
+    else:
+        # Categoria intencionalmente larga (Pessoal, Transferência): aceita.
+        filtros.append("dominio_aberto")
+
+    # Filtro de valor:
+    if valor_min is not None and valor_max is not None and valor > 0:
+        if valor_min <= valor <= valor_max:
+            filtros.append("valor_ok")
+        else:
+            filtros.append("valor_fora_faixa")
+            falhas += 1
+
+    if falhas == 0:
+        return RISCO_BAIXO, filtros
+    if falhas == 1:
+        return RISCO_MEDIO, filtros
+    return RISCO_ALTO, filtros
 
 
 def _tokenizar(texto: str) -> list[str]:
@@ -91,11 +198,20 @@ def _cosseno(a: dict[str, float], b: dict[str, float]) -> float:
     return produto / (norm_a * norm_b)
 
 
-def gerar_sugestoes(transacoes: list[Transacao], top_k: int = 5) -> dict[str, dict]:
+def gerar_sugestoes(
+    transacoes: list[Transacao],
+    top_k: int = 5,
+    dominio: dict | None = None,
+) -> dict[str, dict]:
     """Para cada transação "Outros", calcula top-K vizinhos e vota.
 
-    Retorna dict {id: {descricao, top1, confianca_top1, sugestoes[]}}.
-    Apenas transações com categoria "Outros" entram no output.
+    Sprint CATEGORIZER-SUGESTAO-AUDITORIA-RUIDO: enriquece output com
+    ``risco_estimado`` e ``filtros_aplicados`` baseado em
+    ``mappings/dominio_categorias.yaml``. Sem arg ``dominio``: carrega do
+    arquivo canônico. Para testes: passe dict customizado.
+
+    Retorna dict {id: {descricao, valor, top1, confianca_top1,
+    risco_estimado, filtros_aplicados, sugestoes[]}}.
     """
     if not transacoes:
         return {}
@@ -104,6 +220,9 @@ def gerar_sugestoes(transacoes: list[Transacao], top_k: int = 5) -> dict[str, di
     alvo = [t for t in transacoes if t.categoria == CATEGORIA_OUTROS]
     if not treino or not alvo:
         return {}
+
+    if dominio is None:
+        dominio = _carregar_dominio()
 
     treino_tokens = [_tokenizar(t.descricao) for t in treino]
     alvo_tokens = [_tokenizar(t.descricao) for t in alvo]
@@ -143,10 +262,15 @@ def gerar_sugestoes(transacoes: list[Transacao], top_k: int = 5) -> dict[str, di
         ]
         if not sugestoes:
             continue
+        top1 = sugestoes[0]["categoria"]
+        risco, filtros = _avaliar_dominio(tx.descricao, top1, tx.valor, dominio)
         saida[tx.id] = {
             "descricao": tx.descricao,
-            "top1": sugestoes[0]["categoria"],
+            "valor": tx.valor,
+            "top1": top1,
             "confianca_top1": sugestoes[0]["confianca"],
+            "risco_estimado": risco,
+            "filtros_aplicados": filtros,
             "sugestoes": sugestoes,
         }
     return saida
