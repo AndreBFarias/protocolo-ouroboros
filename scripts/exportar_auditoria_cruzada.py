@@ -138,11 +138,31 @@ def _carregar_provas_e_comparacoes() -> dict[str, dict]:
     return out
 
 
-def _carregar_nodes_documento() -> dict[str, dict]:
-    """Devolve dict {sha256_curto OU arquivo_origem: {node_id, metadata}}.
+_REGEX_SHA8 = __import__("re").compile(
+    r"_([0-9a-f]{8,16})\.(pdf|jpeg|jpg|png|xml)", __import__("re").IGNORECASE
+)
 
-    Grafo SQLite armazena sha256 dentro de metadata.sha256 quando o ETL
-    grava. Indexamos por sha256 quando disponível, fallback no arquivo.
+
+def _extrair_sha_do_arquivo_origem(arquivo: str) -> str:
+    """Heurística: extrai hash hex do nome do arquivo.
+
+    Padrão canônico do projeto: ``<TIPO>_<data>_<sha8>.<ext>`` OU
+    ``<TIPO>_<sha8>.<ext>``. Devolve o hash (até 16 chars) ou "" se
+    não encontrar.
+    """
+    if not arquivo:
+        return ""
+    match = _REGEX_SHA8.search(arquivo)
+    return match.group(1).lower() if match else ""
+
+
+def _carregar_nodes_documento() -> dict[str, dict]:
+    """Devolve dict indexado por sha8 OU sha completo do node.
+
+    O grafo NÃO grava ``sha256`` completo em metadata — só ``arquivo_origem``
+    com hash truncado embutido no nome (padrão ``<TIPO>_<sha8>.ext``).
+    Para cruzar com provas (que têm sha256 completo), indexamos por sha8
+    (primeiros 8-12 chars) extraído do arquivo_origem.
     """
     out: dict[str, dict] = {}
     if not PATH_GRAFO.exists():
@@ -158,15 +178,18 @@ def _carregar_nodes_documento() -> dict[str, dict]:
                     meta = json.loads(meta_str) if meta_str else {}
                 except json.JSONDecodeError:
                     meta = {}
-                sha = meta.get("sha256") or ""
+                sha_completo = meta.get("sha256") or ""
                 arquivo = meta.get("arquivo_origem", "")
-                chave = sha if sha else f"_path:{arquivo}"
+                sha8 = _extrair_sha_do_arquivo_origem(arquivo)
+                # Indexa por sha8 quando arquivo segue o padrão; senão por path:
+                chave = sha8 if sha8 else (sha_completo if sha_completo else f"_path:{arquivo}")
                 out[chave] = {
                     "node_id": node_id,
                     "nome_canonico": nome,
                     "metadata": meta,
                     "arquivo_origem": arquivo,
-                    "sha256": sha,
+                    "sha256": sha_completo,
+                    "sha8": sha8,
                 }
         finally:
             con.close()
@@ -205,22 +228,53 @@ def _resumir_divergencias(comp: dict | None) -> str:
     return " | ".join(partes)
 
 
+def _buscar_node_por_sha(
+    sha_completo: str, nodes: dict[str, dict]
+) -> dict | None:
+    """Procura node compatível: testa sha completo, sha8 (primeiros 8 chars),
+    sha12, depois fallback por path.
+    """
+    if not sha_completo:
+        return None
+    candidatos = [sha_completo, sha_completo[:12], sha_completo[:8]]
+    for c in candidatos:
+        if c in nodes:
+            return nodes[c]
+    return None
+
+
 def montar_aba_auditoria_cruzada(
     provas: dict[str, dict], nodes: dict[str, dict]
 ) -> list[dict]:
-    """Uma linha por sha256 com prova OU node no grafo (full outer join)."""
+    """Uma linha por arquivo (full outer join entre provas e nodes)."""
+    # Coleta chaves canônicas (sha completo se possível):
     chaves_sha = set(provas.keys())
-    # Inclui nodes que têm sha mas não têm prova (ETL processou, Opus não revisou):
-    for chave, node in nodes.items():
-        sha = node.get("sha256")
-        if sha:
-            chaves_sha.add(sha)
+    sha8_para_node: dict[str, dict] = {n["sha8"]: n for n in nodes.values() if n.get("sha8")}
+
+    # Nodes sem prova correspondente: chave = sha8 (não temos sha completo do ETL).
+    # Para não duplicar, filtra nodes cujo sha8 bate algum prefixo de prova existente.
+    sha8s_com_prova = set()
+    for sha_prova in chaves_sha:
+        sha8_prefix = sha_prova[:8] if sha_prova else ""
+        if sha8_prefix in sha8_para_node:
+            sha8s_com_prova.add(sha8_prefix)
+
+    # Adiciona nodes órfãos (sem prova) usando sha8 como chave:
+    for sha8, node in sha8_para_node.items():
+        if sha8 not in sha8s_com_prova:
+            chaves_sha.add(f"_orfao:{sha8}")
 
     linhas = []
     for sha in sorted(chaves_sha):
-        prova_info = provas.get(sha)
-        # Match com node: pelo sha256 direto
-        node_info = nodes.get(sha)
+        if sha.startswith("_orfao:"):
+            sha8 = sha[len("_orfao:"):]
+            prova_info = None
+            node_info = sha8_para_node.get(sha8)
+            sha_display = sha8 + " (orfao)"
+        else:
+            prova_info = provas.get(sha)
+            node_info = _buscar_node_por_sha(sha, nodes)
+            sha_display = sha[:16] + "..." if len(sha) > 16 else sha
 
         tipo_opus = prova_info["tipo"] if prova_info else ""
         tipo_etl = ""
@@ -229,8 +283,8 @@ def montar_aba_auditoria_cruzada(
 
         linhas.append(
             {
-                "sha256": sha[:16] + "..." if len(sha) > 16 else sha,
-                "sha256_completo": sha,
+                "sha256": sha_display,
+                "sha256_completo": sha if not sha.startswith("_orfao:") else "",
                 "tipo_opus": tipo_opus,
                 "tipo_etl": tipo_etl,
                 "tipo_match": tipo_opus == tipo_etl if tipo_opus and tipo_etl else "",
@@ -352,6 +406,117 @@ def montar_aba_outros_com_sugestao(top_n: int = 100) -> list[dict]:
     return linhas
 
 
+def montar_aba_amostras_faltantes(
+    tipos_canonicos: list[str],
+    graduacao: dict | None,
+    provas: dict[str, dict],
+) -> list[dict]:
+    """Lista tipos que precisam de coleta humana para chegar à meta ≥15 GRADUADOS.
+
+    Para cada tipo PENDENTE ou SEM_DOSSIE no YAML:
+    - tipo_id, descricao_humanizada
+    - amostras_faltantes (até 2 para graduar — meta inicial)
+    - prioridade_coleta (alta/média/baixa baseado em probabilidade
+      do dono ter o documento)
+    - exemplo_de_pasta (onde dono pode procurar)
+    """
+    grad_tipos = (graduacao or {}).get("tipos", {}) if isinstance(graduacao, dict) else {}
+
+    # Probabilidade do dono ter o documento (curadoria manual baseada em
+    # FASE-A-AGUARDA-AMOSTRAS-2026-05-14):
+    prioridade: dict[str, tuple[str, str, str]] = {
+        # tipo_id: (prioridade, descricao_humana, exemplo_pasta)
+        "das_mei": (
+            "alta",
+            "DAS do MEI (mensal). Andre tem MEI ativo.",
+            "Receita Federal / app MEI",
+        ),
+        "irpf_parcela": (
+            "alta",
+            "Parcela do IRPF (DARF emitido pela DIRPF).",
+            "Receita Federal / app DIRPF",
+        ),
+        "comprovante_cpf": (
+            "média",
+            "Comprovante CPF (1 vez na vida).",
+            "Receita Federal / app",
+        ),
+        "certidao_receita_cnpj": (
+            "média",
+            "Certidão negativa de débitos do CNPJ MEI.",
+            "Receita Federal / app",
+        ),
+        "conta_luz": (
+            "alta",
+            "Conta de energia Neoenergia DF (mensal).",
+            "app Neoenergia / email",
+        ),
+        "conta_agua": (
+            "alta",
+            "Conta de água CAESB (mensal).",
+            "app CAESB / email",
+        ),
+        "recibo_nao_fiscal": (
+            "média",
+            "Recibo de serviço sem nota fiscal (ex: serviços eventuais).",
+            "celular / impressos",
+        ),
+        "receita_medica": (
+            "média",
+            "Receita médica (dedutível IRPF se for de saúde).",
+            "celular / consultórios",
+        ),
+        "garantia_fabricante": (
+            "baixa",
+            "Termo de garantia do fabricante (≠ cupom_garantia_estendida).",
+            "manuais de produtos comprados",
+        ),
+        "contrato": (
+            "baixa",
+            "Contrato genérico (locação, serviços).",
+            "arquivo doméstico",
+        ),
+        "danfe_nfe55": (
+            "baixa",
+            "NFE modelo 55 (DANFE) - notas eletrônicas full.",
+            "compras online / fornecedores",
+        ),
+        "xml_nfe": (
+            "baixa",
+            "XML da NFE (recebimento por email após compra).",
+            "email após compra B2B",
+        ),
+        "extrato_c6_pdf": (
+            "média",
+            "Extrato C6 em PDF (alternativo ao XLSX/OFX). Já há extrato_bancario GRADUADO.",
+            "app C6 export",
+        ),
+    }
+    linhas = []
+    for tipo in sorted(tipos_canonicos):
+        grad_info = grad_tipos.get(tipo, {})
+        status = grad_info.get("status", "SEM_DOSSIE")
+        if status == "GRADUADO":
+            continue
+        amostras_ok = grad_info.get("amostras_ok", 0)
+        if isinstance(amostras_ok, list):
+            amostras_ok = len(amostras_ok)
+        faltam = max(2 - amostras_ok, 0)
+        pri, desc, exemplo = prioridade.get(tipo, ("baixa", "", ""))
+        linhas.append(
+            {
+                "tipo": tipo,
+                "status_atual": status,
+                "amostras_atuais": amostras_ok,
+                "amostras_faltantes": faltam,
+                "prioridade_coleta": pri,
+                "descricao": desc,
+                "onde_buscar": exemplo,
+            }
+        )
+    return linhas
+
+
 def montar_aba_stats_globais() -> list[dict]:
     """KPIs consolidados em uma linha."""
     m = _ler_json(PATH_METRICAS)
@@ -412,6 +577,7 @@ def gerar_xlsx(saida: Path) -> dict:
     abas = {
         "auditoria_cruzada": montar_aba_auditoria_cruzada(provas, nodes),
         "tipos_resumo": montar_aba_tipos_resumo(tipos, graduacao, provas, nodes),
+        "amostras_faltantes": montar_aba_amostras_faltantes(tipos, graduacao, provas),
         "divergencias_detalhe": montar_aba_divergencias_detalhe(provas),
         "outros_com_sugestao": montar_aba_outros_com_sugestao(top_n=100),
         "stats_globais": montar_aba_stats_globais(),
