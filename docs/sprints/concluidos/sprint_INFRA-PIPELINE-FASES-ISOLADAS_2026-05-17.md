@@ -1,8 +1,8 @@
 ---
 id: INFRA-PIPELINE-FASES-ISOLADAS
 titulo: "Split `_executar_corpo_pipeline` (156L) em fases isoladas com stats"
-status: backlog
-concluida_em: null
+status: concluída
+concluida_em: 2026-05-17
 prioridade: P2
 data_criacao: 2026-05-17
 fase: SANEAMENTO

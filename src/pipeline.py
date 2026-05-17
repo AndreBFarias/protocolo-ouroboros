@@ -6,8 +6,10 @@ import os
 import re
 import shutil
 import sys
+import time
 from datetime import datetime, timedelta
 from pathlib import Path
+from typing import Any
 
 from src.extractors.contracheque_pdf import processar_holerites
 from src.load.relatorio import gerar_relatorios
@@ -875,36 +877,70 @@ def executar(mes: str | None = None, processar_tudo: bool = False) -> None:
         ctx_lock.__exit__(None, None, None)
 
 
-def _executar_corpo_pipeline(mes: str | None, processar_tudo: bool) -> None:
-    """Corpo do pipeline (estágios 1-16). Separado de `executar()` para
-    permitir `try/except` global com restore automático sem indentar 130
-    linhas. `_ESTAGIO_ATUAL` é atualizado em cada estágio relevante para
-    diagnóstico do log estruturado em caso de crash.
-    """
-    global _ESTAGIO_ATUAL
+# ---------------------------------------------------------------------------
+# Sprint INFRA-PIPELINE-FASES-ISOLADAS (2026-05-17): split do corpo do pipeline
+# em 17 fases isoladas. Cada fase recebe um `ctx: dict` mutável compartilhado
+# e devolve um dict de `stats` para o log estruturado. Ordem é preservada
+# bit-a-bit em relação à versão monolítica (pipeline serial depende disso).
+#
+# Contrato de uma fase: `fase_xxx(ctx: dict) -> dict[str, Any]`.
+# Chaves esperadas em `ctx` ao longo da execução:
+#   - mes: str | None
+#   - processar_tudo: bool
+#   - classes_extratores: list (após fase 1)
+#   - arquivos: list[Path] (após fase 2)
+#   - transacoes: list[dict] (mutada do passo 3 em diante)
+#   - transacoes_filtradas: list[dict] (após fase 8)
+#   - contracheques: list[dict] (após fase 10)
+#   - caminho_xlsx: Path (após fase 11)
+# ---------------------------------------------------------------------------
 
-    # 1. Descobrir extratores
+
+def fase_descobrir_extratores(ctx: dict[str, Any]) -> dict[str, Any]:
+    """Fase 1: descobre classes de extratores disponíveis."""
+    global _ESTAGIO_ATUAL
     _ESTAGIO_ATUAL = "descobrir_extratores"
     classes_extratores = _descobrir_extratores()
     logger.info("Extratores disponíveis: %d", len(classes_extratores))
+    ctx["classes_extratores"] = classes_extratores
+    return {"n_extratores": len(classes_extratores)}
 
-    # 2. Escanear arquivos
+
+def fase_escanear_arquivos(ctx: dict[str, Any]) -> dict[str, Any]:
+    """Fase 2: escaneia DIR_RAW por arquivos elegíveis."""
     arquivos = _escanear_arquivos(DIR_RAW)
+    ctx["arquivos"] = arquivos
+    return {"n_arquivos": len(arquivos)}
 
-    # 3. Extrair transações
-    transacoes = _extrair_tudo(arquivos, classes_extratores)
 
-    # 4. Importar histórico
+def fase_extrair(ctx: dict[str, Any]) -> dict[str, Any]:
+    """Fase 3: aplica extratores a cada arquivo, produzindo transações brutas."""
+    transacoes = _extrair_tudo(ctx["arquivos"], ctx["classes_extratores"])
+    ctx["transacoes"] = transacoes
+    return {"n_extraidas": len(transacoes)}
+
+
+def fase_importar_historico(ctx: dict[str, Any]) -> dict[str, Any]:
+    """Fase 4: anexa transações do histórico legado (controle_antigo)."""
     historico = _importar_historico()
-    transacoes.extend(historico)
+    ctx["transacoes"].extend(historico)
+    return {"n_historico": len(historico), "n_apos_historico": len(ctx["transacoes"])}
 
-    # 5. Deduplicar
-    transacoes = deduplicar(transacoes)
 
-    # 6. Categorizar
+def fase_deduplicar(ctx: dict[str, Any]) -> dict[str, Any]:
+    """Fase 5: remove duplicatas via hash_fuzzy (canonicalização + dedup pass 2b)."""
+    antes = len(ctx["transacoes"])
+    ctx["transacoes"] = deduplicar(ctx["transacoes"])
+    depois = len(ctx["transacoes"])
+    return {"n_antes": antes, "n_depois": depois, "n_removidas": antes - depois}
+
+
+def fase_categorizar(ctx: dict[str, Any]) -> dict[str, Any]:
+    """Fase 6: aplica regras de categoria + reclassificação TI órfã + promoção
+    de variantes curtas. Sub-estágios 6/6b/6c agrupados porque devem rodar em
+    sequência rígida (ordem comentada na versão monolítica)."""
     categorizer = Categorizer()
-    transacoes = categorizer.categorizar_lote(transacoes)
-
+    ctx["transacoes"] = categorizer.categorizar_lote(ctx["transacoes"])
     # 6b. Reclassificar TIs órfãs (Sprint 68b) -- rede de segurança
     # pós-categorização contra falsos-positivos residuais. O categorizer
     # (mappings/categorias.yaml) aplica regras regex amplas como
@@ -916,8 +952,7 @@ def _executar_corpo_pipeline(mes: str | None, processar_tudo: bool) -> None:
     # de fatura do próprio banco, CDB, agência 6450). Rodar DEPOIS do
     # categorizer é crítico: o categorizer pode reintroduzir falsos-
     # positivos se rodarmos antes.
-    transacoes = _reclassificar_ti_orfas(transacoes)
-
+    ctx["transacoes"] = _reclassificar_ti_orfas(ctx["transacoes"])
     # 6c. Promover variantes curtas para Transferência Interna (Sprint 82)
     # -- rede de captura simétrica. A Sprint 68b cobriu o rigoroso
     # (nome_aceitos completo + CPF); a 82 cobre formas abreviadas que só
@@ -925,40 +960,60 @@ def _executar_corpo_pipeline(mes: str | None, processar_tudo: bool) -> None:
     # marcador PIX/TRANSF + data DD/MM, "ANDRE SILVA BATISTA FARIAS"
     # sem o "DA"). Roda DEPOIS do reclassificar para não reintroduzir
     # falsos-positivos que acabaram de ser degradados.
-    transacoes = _promover_variantes_para_ti(transacoes)
+    ctx["transacoes"] = _promover_variantes_para_ti(ctx["transacoes"])
+    n_ti = sum(1 for t in ctx["transacoes"] if t.get("tipo") == "Transferência Interna")
+    return {"n_total": len(ctx["transacoes"]), "n_ti": n_ti}
 
-    # 7. Aplicar tags IRPF
-    transacoes = aplicar_tags_irpf(transacoes)
 
-    # 8. Filtrar por mês se necessário
+def fase_aplicar_tags_irpf(ctx: dict[str, Any]) -> dict[str, Any]:
+    """Fase 7: marca transações elegíveis a IRPF (saúde, educação, doação...)."""
+    ctx["transacoes"] = aplicar_tags_irpf(ctx["transacoes"])
+    n_tagged = sum(1 for t in ctx["transacoes"] if t.get("tag_irpf"))
+    return {"n_total": len(ctx["transacoes"]), "n_tagged": n_tagged}
+
+
+def fase_filtrar_por_mes(ctx: dict[str, Any]) -> dict[str, Any]:
+    """Fase 8: filtra para mês específico se `--mes` foi passado sem `--tudo`."""
+    mes = ctx.get("mes")
+    processar_tudo = ctx.get("processar_tudo", False)
     if mes and not processar_tudo:
-        transacoes_filtradas = _filtrar_por_mes(transacoes, mes)
-        logger.info("Filtrado para %s: %d transações", mes, len(transacoes_filtradas))
-    else:
-        transacoes_filtradas = transacoes
+        ctx["transacoes_filtradas"] = _filtrar_por_mes(ctx["transacoes"], mes)
+        logger.info("Filtrado para %s: %d transações", mes, len(ctx["transacoes_filtradas"]))
+        return {"filtrado": True, "n_apos_filtro": len(ctx["transacoes_filtradas"])}
+    ctx["transacoes_filtradas"] = ctx["transacoes"]
+    return {"filtrado": False, "n_apos_filtro": len(ctx["transacoes_filtradas"])}
 
-    # 9. Ordenar por data
-    transacoes_filtradas.sort(key=lambda t: t.get("data", ""))
 
+def fase_ordenar(ctx: dict[str, Any]) -> dict[str, Any]:
+    """Fase 9: ordena por data e computa identificadores canônicos (hash de
+    transação) para ativar `Doc?` no Extrato em runtime real (Sprint 87b)."""
+    ctx["transacoes_filtradas"].sort(key=lambda t: t.get("data", ""))
     # 9b. Computar identificador canônico (mesmo hash dos nodes `transacao` do  # noqa: accent
     # grafo) para ativar `Doc?` no Extrato em runtime real (Sprint 87b).
     from src.graph.migracao_inicial import hash_transacao_do_tx
 
-    for tx in transacoes_filtradas:
+    n_ident = 0
+    for tx in ctx["transacoes_filtradas"]:
         if tx.get("identificador"):
             continue  # contrato defensivo: não sobrescrever se já existir
         ident = hash_transacao_do_tx(tx)
         if ident is not None:
             tx["identificador"] = ident
+            n_ident += 1
+    return {"n_ordenadas": len(ctx["transacoes_filtradas"]), "n_identificadores": n_ident}
 
-    # 10. Processar holerites (contracheques) -- fonte extra para a aba renda.
-    # P3.2 (auditoria 2026-04-23): passa grafo para ingerir cada holerite como
-    # node `documento` tipo `holerite` (fecha ADR-20 tracking para folha).
+
+def fase_holerites(ctx: dict[str, Any]) -> dict[str, Any]:
+    """Fase 10: ingere holerites (contracheques) como fonte extra de renda.
+    P3.2 (auditoria 2026-04-23): também grava cada holerite como node
+    `documento` no grafo (fecha ADR-20 tracking para folha)."""
+    global _ESTAGIO_ATUAL
     _ESTAGIO_ATUAL = "holerites"
     from src.graph.db import GrafoDB, caminho_padrao
 
     caminho_grafo_hol = caminho_padrao()
     contracheques: list[dict] = []
+    grafo_ok = False
     if caminho_grafo_hol.exists():
         # Sprint INFRA-PIPELINE-TRANSACIONALIDADE: criar_schema é DDL
         # idempotente (fora da transação); processar_holerites é a fase
@@ -970,65 +1025,154 @@ def _executar_corpo_pipeline(mes: str | None, processar_tudo: bool) -> None:
                     contracheques = processar_holerites(
                         DIR_RAW / "andre" / "holerites", grafo=grafo_hol
                     )
+                    grafo_ok = True
             except Exception as erro:
                 _registrar_falha_pipeline_estruturada("processar_holerites", erro)
                 logger.warning("Holerites com grafo falhou: %s", erro)
                 contracheques = processar_holerites(DIR_RAW / "andre" / "holerites")
     else:
         contracheques = processar_holerites(DIR_RAW / "andre" / "holerites")
+    ctx["contracheques"] = contracheques
+    return {"n_contracheques": len(contracheques), "grafo_ok": grafo_ok}
 
-    # 11. Gerar XLSX
+
+def fase_gerar_xlsx(ctx: dict[str, Any]) -> dict[str, Any]:
+    """Fase 11: gera planilha consolidada (8 abas canônicas)."""
+    global _ESTAGIO_ATUAL
     _ESTAGIO_ATUAL = "gerar_xlsx"
+    mes = ctx.get("mes")
     ano = mes[:4] if mes else str(datetime.now().year)
     caminho_xlsx = DIR_OUTPUT / f"ouroboros_{ano}.xlsx"
-    gerar_xlsx(transacoes_filtradas, caminho_xlsx, CONTROLE_ANTIGO, contracheques)
+    gerar_xlsx(ctx["transacoes_filtradas"], caminho_xlsx, CONTROLE_ANTIGO, ctx["contracheques"])
+    ctx["caminho_xlsx"] = caminho_xlsx
+    return {"caminho_xlsx": str(caminho_xlsx), "ano": ano}
 
-    # 11. Gerar relatórios
-    # Quando --mes é usado, passa transações completas (para projeções corretas)
-    # mas filtra a geração apenas para o mês solicitado
-    gerar_relatorios(
-        transacoes, DIR_OUTPUT, meses_filtro=[mes] if (mes and not processar_tudo) else None
-    )
 
-    # 12. Linking de documentos fiscais às transações bancárias (Sprint 48).
-    # Roda apenas se o grafo SQLite já existir (populado via
-    # `python -m src.graph.migracao_inicial` e ingestão de documentos pelos
-    # extratores fiscais). Ausência do grafo não é erro -- pipeline principal
-    # do XLSX segue funcionando sem ele.
+def fase_gerar_relatorios(ctx: dict[str, Any]) -> dict[str, Any]:
+    """Fase 12: gera relatórios markdown auxiliares. Usa transações completas
+    (para projeções corretas) mas filtra geração apenas para o mês solicitado."""
+    mes = ctx.get("mes")
+    processar_tudo = ctx.get("processar_tudo", False)
+    meses_filtro = [mes] if (mes and not processar_tudo) else None
+    gerar_relatorios(ctx["transacoes"], DIR_OUTPUT, meses_filtro=meses_filtro)
+    return {"meses_filtro": meses_filtro, "n_transacoes": len(ctx["transacoes"])}
+
+
+def fase_linking_documentos(ctx: dict[str, Any]) -> dict[str, Any]:
+    """Fase 13: linking de documentos fiscais às transações bancárias
+    (Sprint 48). Roda apenas se grafo SQLite já existir. Ausência de grafo
+    não é erro -- pipeline principal do XLSX segue funcionando sem ele."""
+    global _ESTAGIO_ATUAL
     _ESTAGIO_ATUAL = "linking_documentos"
     _executar_linking_documentos()
+    return {"chamada": True}
 
-    # 13. Entity resolution de produtos (Sprint 49): agrupa itens equivalentes
-    # (mesma descrição, variações ortográficas) em nodes `produto_canonico`.
-    # Roda depois do linking para que itens de documentos ainda por linkar
-    # não fiquem pendurados sem agregado. Ausência de grafo é no-op.
+
+def fase_er_produtos(ctx: dict[str, Any]) -> dict[str, Any]:
+    """Fase 14: entity resolution de produtos (Sprint 49). Agrupa itens
+    equivalentes em nodes `produto_canonico`. Roda depois do linking para
+    que itens recém-linkados ja entrem no agregado. Ausência de grafo é no-op."""
+    global _ESTAGIO_ATUAL
     _ESTAGIO_ATUAL = "er_produtos"
     _executar_er_produtos()
+    return {"chamada": True}
 
-    # 14. Categorização de itens (Sprint 50): aplica regras regex em
-    # `mappings/categorias_item.yaml` a todos os nodes `item`, criando
-    # aresta `categoria_de` -> node `categoria` (com tipo_categoria=item
-    # no metadata, alinhado ao ADR-14). Roda depois do ER para que a
-    # agregação por produto canônico já esteja pronta. Itens em "Outros"
-    # com frequência >=3 geram proposta MD para revisão supervisor.
+
+def fase_item_categorizer(ctx: dict[str, Any]) -> dict[str, Any]:
+    """Fase 15: categorização de itens (Sprint 50). Aplica regex de
+    `mappings/categorias_item.yaml` aos nodes `item`, criando aresta
+    `categoria_de` -> `categoria`. Itens em "Outros" com freq>=3 geram
+    proposta MD para revisão supervisor."""
+    global _ESTAGIO_ATUAL
     _ESTAGIO_ATUAL = "item_categorizer"
     _executar_item_categorizer()
+    return {"chamada": True}
 
-    # 15. Snapshot do classificador D7 (Sprint INFRA-SKILLS-D7-LOG): gera
-    # `data/output/skill_d7_log.json` consumido por `src/dashboard/paginas/skills_d7.py`.
-    # Integração feita em 2026-05-13 após auditoria detectar que o script existia
-    # mas não era invocado automaticamente. Falha-soft (sem grafo == no-op).
+
+def fase_skill_d7_log(ctx: dict[str, Any]) -> dict[str, Any]:
+    """Fase 16: snapshot do classificador D7 (Sprint INFRA-SKILLS-D7-LOG).
+    Gera `data/output/skill_d7_log.json` consumido por dashboard. Falha-soft
+    (sem grafo == no-op)."""
+    global _ESTAGIO_ATUAL
     _ESTAGIO_ATUAL = "skill_d7_log"
     _executar_skill_d7_log()
+    return {"chamada": True}
 
-    # 16. Snapshot do dossie de graduacao por tipo documental (2026-05-13).
-    # Materializa o estado vivo de cada tipo (PENDENTE/CALIBRANDO/GRADUADO/REGREDINDO)
-    # consumido pelo dashboard `graduacao_tipos.py`. Ver docs/CICLO_GRADUACAO_OPERACIONAL.md.
+
+def fase_dossie_snapshot(ctx: dict[str, Any]) -> dict[str, Any]:
+    """Fase 17: snapshot do dossie de graduacao por tipo documental
+    (2026-05-13). Materializa o estado vivo de cada tipo
+    (PENDENTE/CALIBRANDO/GRADUADO/REGREDINDO) consumido pelo dashboard
+    `graduacao_tipos.py`. Ver `docs/CICLO_GRADUACAO_OPERACIONAL.md`."""
+    global _ESTAGIO_ATUAL
     _ESTAGIO_ATUAL = "dossie_snapshot"
     _executar_dossie_snapshot()
+    return {"chamada": True}
 
+
+# Lista canônica de fases em ordem de execução. Pipeline serial depende
+# desta ordem: cada fase pode mutar `ctx` e fases posteriores leem as
+# chaves populadas pelas anteriores.
+FASES: list[tuple[str, Any]] = [
+    ("descobrir_extratores", fase_descobrir_extratores),
+    ("escanear_arquivos", fase_escanear_arquivos),
+    ("extrair", fase_extrair),
+    ("importar_historico", fase_importar_historico),
+    ("deduplicar", fase_deduplicar),
+    ("categorizar", fase_categorizar),
+    ("aplicar_tags_irpf", fase_aplicar_tags_irpf),
+    ("filtrar_por_mes", fase_filtrar_por_mes),
+    ("ordenar", fase_ordenar),
+    ("holerites", fase_holerites),
+    ("gerar_xlsx", fase_gerar_xlsx),
+    ("gerar_relatorios", fase_gerar_relatorios),
+    ("linking_documentos", fase_linking_documentos),
+    ("er_produtos", fase_er_produtos),
+    ("item_categorizer", fase_item_categorizer),
+    ("skill_d7_log", fase_skill_d7_log),
+    ("dossie_snapshot", fase_dossie_snapshot),
+]
+
+
+def _gravar_log_fases(stats_por_fase: list[dict[str, Any]]) -> Path | None:
+    """Grava log estruturado JSON com stats de cada fase. Best-effort: erro
+    de gravação NÃO aborta o pipeline (loga warning e segue). Retorna o path
+    do arquivo gerado, ou None se a gravação falhou."""
+    import json as _json
+
+    try:
+        DIR_OUTPUT.mkdir(parents=True, exist_ok=True)
+        ts = datetime.now().strftime("%Y-%m-%d_%H%M%S")
+        destino = DIR_OUTPUT / f"pipeline_fases_{ts}.json"
+        payload = {
+            "ts": ts,
+            "n_fases": len(stats_por_fase),
+            "fases": stats_por_fase,
+        }
+        destino.write_text(_json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
+        return destino
+    except Exception as erro:
+        logger.warning("Falha ao gravar log estruturado de fases: %s", erro)
+        return None
+
+
+def _executar_corpo_pipeline(mes: str | None, processar_tudo: bool) -> None:
+    """Corpo do pipeline (orquestrador linear sobre `FASES`). Sprint
+    INFRA-PIPELINE-FASES-ISOLADAS (2026-05-17): cada fase é função pura
+    sobre `ctx` mutável, devolvendo dict de stats para log estruturado.
+    `_ESTAGIO_ATUAL` continua sendo atualizado dentro de cada fase para
+    diagnóstico do log de falha em caso de crash."""
+    ctx: dict[str, Any] = {"mes": mes, "processar_tudo": processar_tudo}
+    stats_por_fase: list[dict[str, Any]] = []
+    for nome, fn in FASES:
+        inicio = time.monotonic()
+        stats = fn(ctx)
+        stats["fase"] = nome
+        stats["duracao_s"] = round(time.monotonic() - inicio, 4)
+        stats_por_fase.append(stats)
+    _gravar_log_fases(stats_por_fase)
     logger.info("=== Pipeline concluído ===")
-    logger.info("XLSX: %s", caminho_xlsx)
+    logger.info("XLSX: %s", ctx.get("caminho_xlsx"))
     logger.info("Relatórios: %s", DIR_OUTPUT)
 
 
