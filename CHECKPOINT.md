@@ -3,9 +3,9 @@
 > Atualizado automaticamente pelo Opus principal a cada avanço.
 > **Se sessão cair, próximo Opus retoma daqui.** Não editar manualmente.
 
-**Última atualização**: 2026-05-16 ~21:25
-**HEAD atual**: `98fb902` (pushed em `origin/main`)
-**Working tree**: limpo (caches de fixtures dirty são esperados)
+**Última atualização**: 2026-05-16 ~22:30
+**HEAD atual**: `2c46ddf` (pushed em `origin/main`)
+**Working tree**: arquivos modificados aguardando commit (README + métricas vivas)
 
 ---
 
@@ -79,7 +79,9 @@ Plano original: `~/.claude/plans/recursive-whistling-goblet.md` (aprovado)
 
 ### Pós-sessão: meta-auditoria + checkpoint vivo
 - CHECKPOINT.md vivo (`7c30229`): doc resiliente entre sessões
-- **META-AUDITORIA-CRUZADA-XLSX** (`98fb902`): `scripts/exportar_auditoria_cruzada.py` (380L) + `make auditoria-xlsx`. Gera XLSX com 5 abas (auditoria_cruzada, tipos_resumo, divergencias_detalhe, outros_com_sugestao, stats_globais). 8 testes verdes. **ACHADO**: ETL grava nomes de tipo_documento divergentes do YAML canônico → sprint-filha `META-NORMALIZAR-TIPO-DOCUMENTO-ETL` (P1, 2h) materializada.
+- **META-AUDITORIA-CRUZADA-XLSX** (`98fb902`): `scripts/exportar_auditoria_cruzada.py` (380L) + `make auditoria-xlsx`. Gera XLSX com 5 abas. 8 testes verdes. **ACHADO**: ETL grava nomes de tipo_documento divergentes do YAML canônico.
+- **META-NORMALIZAR-TIPO-DOCUMENTO-ETL** (`c22aeb5`): script de migração retroativa + 3 extratores atualizados (cupom_termico_foto, nfce_pdf, das_parcsn_pdf). 24 nodes migrados no grafo de produção (das_parcsn_andre→das_parcsn+pessoa, cupom_fiscal→cupom_fiscal_foto, nfce_modelo_65→nfce_consumidor_eletronica). 6 testes do migrador + 3 testes de extrator atualizados. **0 nodes divergentes restantes**.
+- **Aba amostras_faltantes + cruzamento por sha8 + promotor (dry-run)** (`2c46ddf`): exportador agora cruza Opus × ETL via sha8 (regex no nome do arquivo). 40 linhas: 5 matches + 19 órfãos ETL + 16 órfãos Opus + 0 divergente. Aba nova `amostras_faltantes` lista 14 tipos PENDENTE/SEM_DOSSIE por prioridade de coleta. `scripts/promover_sugestoes_categoria.py` em dry-run. **ACHADO CRÍTICO**: 319 sugestões com conf≥0.85 têm ruído inaceitável mesmo em conf=1.0 (`Lab Pat e Prev do Cancer → Natação`, `Mp *Barbearia → Bebidas`). Promoção em batch NÃO aplicada. Sprint-filha `CATEGORIZER-SUGESTAO-AUDITORIA-RUIDO` (P2, 2h) materializada.
 
 ### Sprint-filhas materializadas dos achados (8 no backlog)
 - LINK-AUDIT-02-BOOST-DIFF-VALOR-ZERO
@@ -88,7 +90,8 @@ Plano original: `~/.claude/plans/recursive-whistling-goblet.md` (aprovado)
 - ROADMAP-META-LINKING-REDEFINIR
 - META-HOOK-SESSION-DINAMICO-RESOLVER-BLACKLIST (BLOQUEADA — aguarda decisão)
 - INFRA-TEST-LAST-SYNC-GUARD
-- **META-NORMALIZAR-TIPO-DOCUMENTO-ETL** (P1, 2h) — ETL grava nomes divergentes do YAML
+- ~~META-NORMALIZAR-TIPO-DOCUMENTO-ETL~~ — **CONCLUÍDA** em `c22aeb5`
+- **CATEGORIZER-SUGESTAO-AUDITORIA-RUIDO** (P2, 2h) — TF-IDF tem ruído inaceitável em conf=1.0
 
 ---
 

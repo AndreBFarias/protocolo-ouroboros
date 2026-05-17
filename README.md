@@ -41,11 +41,11 @@ O projeto se autogerencia via dossiês por tipo documental. Toda spec que toca e
 
 ### Sobre
 
-Consolida dados bancários de múltiplas fontes (CSVs, XLSX, XLS, PDFs protegidos, imagens via OCR) em um XLSX unificado com 8 abas, relatórios mensais em Markdown e dashboard Streamlit com visualizações interativas.
+Consolida dados bancários de múltiplas fontes (CSVs, XLSX, XLS, PDFs protegidos, imagens via OCR) em um XLSX unificado com 8 abas, relatórios mensais em Markdown e dashboard Streamlit com 42 páginas interativas.
 
-| Transações | Meses | Bancos | Regras | Overrides | Tags IRPF |
-|:----------:|:-----:|:------:|:------:|:---------:|:---------:|
-| 6.094 | 82 | 6 | 111 | 10 | 164 |
+| Transações | Meses | Bancos | Regras | Tags IRPF | Pytest | Tipos GRADUADOS |
+|:----------:|:-----:|:------:|:------:|:---------:|:------:|:---------------:|
+| 6.086 | 82 | 6 | 111 | 164 | 3.145 | 9/22 |
 
 ---
 
@@ -83,15 +83,18 @@ flowchart LR
 |-----------|---------------|
 | Extração | 22 extratores: 9 bancários (Nubank cartão/CC, C6 CC/cartão, Itaú, Santander, OFX Nubank PF/PJ, energia OCR) + 13 documentais (NFCe, DANFE, XML NFe, boleto, cupom térmico foto, cupom garantia estendida, receita médica, garantia fabricante, recibo não-fiscal, DAS PARCSN, DIRPF, contracheque, garantia fabricante) |
 | Detecção | Identifica banco, tipo, pessoa (CPF+CNPJ+razão social+alias) e período pelo conteúdo do arquivo |
-| Categorização | 111 regras regex + 10 overrides manuais + categorias_item.yaml + categorizer.delete-before-insert idempotente (100% de cobertura) |
-| Deduplicação | 3 níveis: UUID, hash cross-source, pares de transferência + canonicalizer variantes curtas (Sprint 82) + dedupe de roteamento por SHA-256 (Sprint P2.3) |
+| Categorização | 111 regras regex + overrides manuais + categorias_item.yaml. Sugestor TF-IDF para "Outros" no dashboard (página `categorizer_sugestoes`) — auditoria de ruído pendente |
+| Deduplicação | 3 níveis: UUID, hash 4-tuple `(data, valor, local_normalizado, banco_origem)` cross-source (sprint INFRA-DEDUP-NIVEL-2-INCLUI-BANCO), pares de transferência + canonicalizer variantes curtas |
 | IRPF | 22 regras declarativas em `mappings/irpf_regras.yaml` (5 tipos fiscais) + 75/164 tags com CNPJ/CPF |
-| Dashboard | 13 páginas interativas com tema Dracula (Visão Geral, Categorias, Extrato, Contas, Pagamentos, Projeções, Metas, Análise, IRPF, Catalogação, Busca Global, Grafo + Obsidian, Completude) |
+| Dashboard | 42 páginas interativas com tema Dracula em 5 clusters. Cluster Sistema com 6 abas (Skills D7, Styleguide, Graduação, Propostas, Tipos por detectar, Sugestor Outros) |
 | Relatórios | Mensais em Markdown com diagnóstico comparativo (variação vs mês-1 e média móvel) + resumo narrativo heurístico PT-BR + alertas de anomalia |
-| Grafo de conhecimento | SQLite 7.480 nodes / 24.700 edges. 41 documentos catalogados: 24 holerites + 10 DAS + 4 NFCe + 2 boletos + 1 DIRPF |
-| Validação | Gauntlet `make lint` + pytest (1.971 passed) + `make smoke` (23 checagens + 8 contratos aritméticos) + `scripts/auditar_extratores.py` |
+| Grafo de conhecimento | SQLite 7.639 nodes / 25.024 edges. 52 documentos catalogados: 24 holerites + 19 DAS + 3 cupom_fiscal_foto + 2 NFCe + 2 boletos + 1 DIRPF + 1 PIX |
+| Ciclo de graduação | 9/22 tipos GRADUADOS (boleto, cupom_fiscal_foto, cupom_garantia_estendida, das_parcsn, extrato_bancario, fatura_cartao, holerite, nfce_consumidor_eletronica, comprovante_pix_foto). 13 tipos PENDENTES — gargalo é coleta humana de amostras |
+| Validação | `make anti-migue` (lint + smoke + test). Pytest 3145 passed. `make smoke` 10/10 contratos aritméticos. `make metricas` regenera métricas vivas. `make auditoria-xlsx` cruza Opus × ETL × Graduação em planilha de auditoria |
+| Concorrência | Lockfile `fcntl.flock` em `data/.pipeline.lock` (sprint INFRA-CONCORRENCIA-PIDFILE). Defesa em camadas: bash flock + python Lockfile + toast no dashboard |
+| Backup | Snapshot automático do grafo antes de cada `--tudo` (sprint INFRA-BACKUP-GRAFO-AUTOMATIZADO). Retenção 7d + 1/semana das 4 semanas anteriores. `./run.sh --restore-grafo <ts>` reverte |
 | Obsidian | Sincronização bidirecional com vault `Controle de Bordo` (forbidden zones ADR-18; soberania humana via tag + frontmatter) |
-| OCR | Leitura de contas de energia via Tesseract (valores R$ 100% precisos) |
+| OCR | Leitura de contas de energia via Tesseract + cache OCR multimodal Opus para cupons fiscais/PIX/holerites |
 
 ---
 
@@ -120,12 +123,34 @@ flowchart LR
 **Via Makefile:**
 
 ```bash
-make help        # Lista todos os comandos
-make install     # Setup completo
-make process     # Pipeline completo
-make dashboard   # Abre dashboard Streamlit
-make lint        # Verifica código (ruff)
-make gauntlet    # Executa gauntlet de testes
+make help                  # Lista todos os comandos
+make install               # Setup completo
+make process               # Pipeline completo
+make dashboard             # Abre dashboard Streamlit
+make lint                  # Verifica código (ruff + acentuação + cobertura D7)
+make smoke                 # Health check + 10 contratos aritméticos
+make anti-migue            # Gate dos 9 checks (lint + smoke + test)
+make gauntlet              # Gauntlet de testes
+make metricas              # Regenera data/output/metricas_prontidao.json + tabela ROADMAP
+make estado-atual-atualizar # Regenera bloco de métricas vivas em ESTADO_ATUAL.md
+make auditoria-xlsx        # Gera XLSX cruzando Opus × ETL × Graduação
+make graduados             # Tabela viva dos tipos canônicos
+make spec NOME=meu-id      # Cria spec do template
+```
+
+**Scripts CLI úteis:**
+
+```bash
+# Ciclo de graduação por tipo documental:
+.venv/bin/python scripts/dossie_tipo.py listar-tipos
+.venv/bin/python scripts/dossie_tipo.py abrir <tipo>
+.venv/bin/python scripts/dossie_tipo.py comparar <tipo> <sha256>
+
+# Análise:
+.venv/bin/python -m scripts.exportar_auditoria_cruzada    # Auditoria Opus × ETL
+.venv/bin/python -m scripts.sugerir_categorias            # TF-IDF para "Outros"
+.venv/bin/python -m scripts.detectar_tipos_novos          # Tipos novos em _classificar/
+.venv/bin/python scripts/diagnosticar_linking.py          # Diagnóstico documento → transação
 ```
 
 ---

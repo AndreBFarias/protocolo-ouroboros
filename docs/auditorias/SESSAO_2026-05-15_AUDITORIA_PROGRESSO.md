@@ -113,18 +113,28 @@ Cumulativo desde início da sessão. Verificar com `git log --oneline origin/mai
 |---|---|---|
 | `7ffacb5` | META-RUFF-FORMAT-NORMALIZAR | `make format` em massa: 206 arquivos reformatados, 310 já em conformidade. Mudanças puramente estilísticas (quebras de linha, trailing commas, espaços). Zero alteração semântica. Pytest baseline 3145 mantida, smoke 10/10, lint exit 0. |
 
-## Resumo final (sessão fechada em 2026-05-16 ~19:55)
+## Resumo final (sessão fechada em 2026-05-16 ~19:55, REABERTA pós-XLSX)
 
-- **HEAD final**: `7ffacb5`
-- **Total commits**: 54 commits desde 2026-05-15
-- **Pytest**: 3145 tests collected (cresceu de 3019 inicial — +126 testes novos)
+- **HEAD final inicial**: `7ffacb5` (Onda F concluída)
+- **HEAD pós-reabertura**: `2c46ddf` (após META-AUDITORIA-CRUZADA-XLSX + META-NORMALIZAR-TIPO-DOCUMENTO-ETL)
+- **Total commits**: 60+ commits desde 2026-05-15
+- **Pytest**: 3174 tests collected (cresceu de 3019 inicial — +155 testes novos)
 - **Smoke**: 10/10 contratos OK
 - **Lint**: exit 0
-- **Sprints concluídas**: 24 + 8 sprint-filhas = 32 entregas
+- **Sprints concluídas**: 26 + 10 sprint-filhas = 36 entregas
 - **Páginas dashboard novas**: 3 (Propostas, Tipos por detectar, Sugestor Outros)
-- **Scripts CLI novos**: 5 (detectar_tipos_novos, sugerir_categorias, regenerar_estado_atual, gerar_metricas_prontidao, dossie_tipo)
+- **Scripts CLI novos**: 7 (detectar_tipos_novos, sugerir_categorias, regenerar_estado_atual, gerar_metricas_prontidao, dossie_tipo, exportar_auditoria_cruzada, normalizar_tipo_documento_grafo, promover_sugestoes_categoria)
 - **Módulos infra novos**: 2 (lockfile.py, categorizer_suggest.py)
-- **Status sistema**: pronto para produção exceto pendências P2/P3 acumuladas em backlog (META-HOOK-SESSION-DINAMICO bloqueado por decisão arquitetural)
+- **Migração grafo**: 24 nodes documento renomeados para IDs canônicos do YAML (defesa em camadas: extratores + grafo + testes)
+- **Status sistema**: pronto para produção exceto pendências P2/P3 acumuladas em backlog. **Sprint nova bloqueante para próximo passo**: `CATEGORIZER-SUGESTAO-AUDITORIA-RUIDO` (descobriu ruído inaceitável no sugestor TF-IDF).
+
+## Onda pós-sessão (Reaberta a pedido do dono)
+
+| Commit | Sprint | Entrega |
+|---|---|---|
+| `98fb902` | META-AUDITORIA-CRUZADA-XLSX | XLSX 5 abas + `make auditoria-xlsx`. Descobre cisma ETL × YAML. |
+| `c22aeb5` | META-NORMALIZAR-TIPO-DOCUMENTO-ETL | Migração retroativa 24 nodes + 3 extratores + 9 testes. 0 nodes divergentes. |
+| `2c46ddf` | Aba amostras_faltantes + cruzamento por sha8 + promotor | XLSX agora cruza 40 linhas (5 match + 19 órfãos ETL + 16 órfãos Opus + 0 divergente). Lista 14 tipos para coleta humana. |
 
 ## Baseline runtime (atualizada via `make estado-atual-atualizar` + `make metricas`)
 
