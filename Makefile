@@ -102,6 +102,9 @@ estado-atual-atualizar: ## Regenera bloco de métricas vivas em contexto/ESTADO_
 metricas: ## Gera data/output/metricas_prontidao.json + atualiza tabela no ROADMAP
 	@$(PYTHON) scripts/gerar_metricas_prontidao.py --apply-roadmap
 
+auditoria-xlsx: ## Gera data/output/auditoria_cruzada_<YYYY-MM-DD>.xlsx (Opus × ETL)
+	@$(PYTHON) -m scripts.exportar_auditoria_cruzada
+
 audit: ## Auditoria rápida (métricas de prontidão; fallback se script não materializado)
 	@if [ -f scripts/gerar_metricas_prontidao.py ]; then \
 		$(PYTHON) scripts/gerar_metricas_prontidao.py; \
