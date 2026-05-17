@@ -3,9 +3,9 @@
 > Atualizado automaticamente pelo Opus principal a cada avanço.
 > **Se sessão cair, próximo Opus retoma daqui.** Não editar manualmente.
 
-**Última atualização**: 2026-05-16 ~19:55
-**HEAD atual**: `9750293` (pushed em `origin/main`)
-**Working tree**: limpo
+**Última atualização**: 2026-05-16 ~21:25
+**HEAD atual**: `98fb902` (pushed em `origin/main`)
+**Working tree**: limpo (caches de fixtures dirty são esperados)
 
 ---
 
@@ -77,6 +77,10 @@ Plano original: `~/.claude/plans/recursive-whistling-goblet.md` (aprovado)
 ### Onda F P3 (último, sozinho)
 - META-RUFF-FORMAT-NORMALIZAR (`7ffacb5`): 206 arquivos reformatados
 
+### Pós-sessão: meta-auditoria + checkpoint vivo
+- CHECKPOINT.md vivo (`7c30229`): doc resiliente entre sessões
+- **META-AUDITORIA-CRUZADA-XLSX** (`98fb902`): `scripts/exportar_auditoria_cruzada.py` (380L) + `make auditoria-xlsx`. Gera XLSX com 5 abas (auditoria_cruzada, tipos_resumo, divergencias_detalhe, outros_com_sugestao, stats_globais). 8 testes verdes. **ACHADO**: ETL grava nomes de tipo_documento divergentes do YAML canônico → sprint-filha `META-NORMALIZAR-TIPO-DOCUMENTO-ETL` (P1, 2h) materializada.
+
 ### Sprint-filhas materializadas dos achados (8 no backlog)
 - LINK-AUDIT-02-BOOST-DIFF-VALOR-ZERO
 - META-FIX-TESTES-E2E-WORKTREE
@@ -84,6 +88,7 @@ Plano original: `~/.claude/plans/recursive-whistling-goblet.md` (aprovado)
 - ROADMAP-META-LINKING-REDEFINIR
 - META-HOOK-SESSION-DINAMICO-RESOLVER-BLACKLIST (BLOQUEADA — aguarda decisão)
 - INFRA-TEST-LAST-SYNC-GUARD
+- **META-NORMALIZAR-TIPO-DOCUMENTO-ETL** (P1, 2h) — ETL grava nomes divergentes do YAML
 
 ---
 
