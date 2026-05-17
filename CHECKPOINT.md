@@ -3,10 +3,11 @@
 > Atualizado automaticamente pelo Opus principal a cada avanço.
 > **Se sessão cair, próximo Opus retoma daqui.** Não editar manualmente.
 
-**Última atualização**: 2026-05-17 ~02:35
-**HEAD atual**: `bc8f578` (pushed)
-**Working tree**: limpo
-**Auditoria 2026-05-17 em execução**: 8/15 specs concluídas (1 P0 + 3 P1 + 3 P2 + 1 P3)
+**Última atualização**: 2026-05-17 ~02:50
+**HEAD atual**: `cf04164` (pushed)
+**Working tree**: docs vivas (CHECKPOINT, métricas, ESTADO)
+**Auditoria 2026-05-17 em execução**: 11/15 specs concluídas (1 P0 + 3 P1 + 4 P2 + 3 P3)
+**Pytest**: 3213 collected (+27 testes nesta onda)
 
 ---
 
@@ -136,15 +137,17 @@ Plano original: `~/.claude/plans/recursive-whistling-goblet.md` (aprovado)
 | 6 | INFRA-PDF-TIMEOUT (P2) | `ad78d32` | CONCLUÍDA. `_pdf_timeout.py` via SIGALRM + aplicado em danfe + garantia. 7 testes regressivos. |
 | 7 | UX-CACHE-BUSCA-TTL-CURTO (P2) | `5cf9685` | CONCLUÍDA. ttl 300s→60s + invalidação por mtime do XLSX. 2 testes regressivos. |
 | 8 | CLEANUP-DATA-OUTPUT-DIRETORIOS (P3) | `b0c1465`+`bc8f578` | CONCLUÍDA. Script + execução real: 3 diretórios obsoletos limpos (~670 KB), 2 movidos para `_arquivo_historico/2026-05-17/`. |
+| 9 | META-REGEN-INDICE-BACKLOG (P3) | `40b128b` | CONCLUÍDA. Script catalogador + `make sprints-indice`. INDICE_2026-05-17 com 136 specs por épico/prioridade. INDICE_2026-05-12 arquivado. |
+| 10 | UX-BE-SESSION-STATE-SAFE (P2) | `e520c0c` | CONCLUÍDA. Bug original era falso positivo (todos `pop()` já têm default). Achado colateral: 2 `del session_state[k]` em extrato.py substituídos por `pop(k, None)` defensivo. |
+| 11 | GRAFO-AUDIT-ORPHAN-NODES (P3) | `cf04164` | CONCLUÍDA. Script + execução: 3 nodes fornecedor órfãos deletados (BIR COMERCIO, CNPJ MEI, DIRPF fragmento). Backup pré-apply, log estruturado. 0 órfãos restantes. |
 
-**Restantes** (em ordem):
-- UX-BE-SESSION-STATE-SAFE (P2, 1h) — `pop()` sem default crash em deep-link
-- INFRA-PIPELINE-FASES-ISOLADAS (P2, 3h) — `_executar_corpo_pipeline` 156L
-- INFRA-SCRIPTS-CLI-PADRAO (P3, 2h) — padrão CLI canônico
-- UX-SPINNER-PROGRESS-FEEDBACK (P3, 1.5h) — 2/42 páginas com spinner
-- TEST-EXTRAIR-HELPERS-PUROS (P3, 2h) — testes importam Streamlit
-- GRAFO-AUDIT-ORPHAN-NODES (P3, 1h) — 3 nodes fornecedor sem edges
-- META-REGEN-INDICE-BACKLOG (P3, 0.5h) — INDICE_2026-05-12 desatualizado
+**Restantes** (em ordem de complexidade):
+- INFRA-PIPELINE-FASES-ISOLADAS (P2, 3h) — `_executar_corpo_pipeline` 156L split em 16 fases
+- INFRA-SCRIPTS-CLI-PADRAO (P3, 2h) — `scripts/_cli_util.py` + --help em 10 órfãos
+- TEST-EXTRAIR-HELPERS-PUROS (P3, 2h) — extrair helpers de paginas/ para utils/
+- UX-SPINNER-PROGRESS-FEEDBACK (P3, 1.5h) — `st.spinner` em 5 operações lentas
+
+**Total restante estimado**: ~8.5h. As 4 são trabalhosas — podem rodar via executor-sprint em background ou sessão futura.
 
 ---
 
