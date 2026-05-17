@@ -2,8 +2,8 @@
 id: META-REGEN-INDICE-BACKLOG <!-- noqa: accent -->
 titulo: "Regenerar `INDICE_*.md` do backlog (130 specs reais vs 113 declaradas no índice 2026-05-12)" <!-- noqa: accent -->
 
-status: backlog
-concluida_em: null
+status: concluída
+concluida_em: 2026-05-17
 prioridade: P3
 data_criacao: 2026-05-17
 fase: SANEAMENTO

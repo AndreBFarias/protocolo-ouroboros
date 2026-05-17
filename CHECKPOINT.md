@@ -3,9 +3,10 @@
 > Atualizado automaticamente pelo Opus principal a cada avanço.
 > **Se sessão cair, próximo Opus retoma daqui.** Não editar manualmente.
 
-**Última atualização**: 2026-05-17 ~01:50
-**HEAD atual**: `be27700` + 15 specs novas pendentes commit
-**Working tree**: 15 novas specs em `docs/sprints/backlog/*2026-05-17*.md`
+**Última atualização**: 2026-05-17 ~02:35
+**HEAD atual**: `bc8f578` (pushed)
+**Working tree**: limpo
+**Auditoria 2026-05-17 em execução**: 8/15 specs concluídas (1 P0 + 3 P1 + 3 P2 + 1 P3)
 
 ---
 
@@ -122,6 +123,28 @@ Plano original: `~/.claude/plans/recursive-whistling-goblet.md` (aprovado)
 **2 achados eram FALSO POSITIVO** (validados manualmente):
 - `pagamentos_valores.py` órfão → NEGADO (importado em `pagamentos.py:52`)
 - `dominio_categorias.yaml` não consumido → NEGADO (consumido em `categorizer_suggest.py` 10x)
+
+### Execução em curso (uma por vez, foreground)
+
+| # | Sprint | Commit | Status |
+|---|---|---|---|
+| 1 | AUDIT-CATEGORIA-REGRA-VALOR-SINAL (P0) | `7328cd6` | CONCLUÍDA. `abs(valor)` em `_verificar_regra_valor`. 4 testes regressivos. Bug confirmado mas sem impacto produção (normalizer já abs antes). |
+| 2 | SEC-SENHAS-PARA-ENV (P1) | `85c0239` | CONCLUÍDA. `src/utils/segredos.py` + `.env.example` + refatora `senhas.py` (YAML fallback). 9 testes regressivos. |
+| 3 | INTAKE-FALLBACK-CPFS-AUSENTE (P1) | `c442e70` | CONCLUÍDA. Log WARNING se `.example` existe + smoke check em `--check` (24 checagens). 2 testes regressivos. |
+| 4 | AUDIT-TI-RECLASSIFICA-RASTREAMENTO (P1) | `62850cd` | CONCLUÍDA. Flag `_reclassificada_68b` + log estruturado `reclassificacao_ti_orfas_<ts>.json`. 3 testes regressivos. |
+| 5 | INFRA-DESCOBRIR-EXTRATORES-REFATORA (P2) | `c819adc` | CONCLUÍDA. `EXTRATORES_CANONICOS` lista declarativa + env var. 166L → 52L (-114L). 5 testes regressivos. |
+| 6 | INFRA-PDF-TIMEOUT (P2) | `ad78d32` | CONCLUÍDA. `_pdf_timeout.py` via SIGALRM + aplicado em danfe + garantia. 7 testes regressivos. |
+| 7 | UX-CACHE-BUSCA-TTL-CURTO (P2) | `5cf9685` | CONCLUÍDA. ttl 300s→60s + invalidação por mtime do XLSX. 2 testes regressivos. |
+| 8 | CLEANUP-DATA-OUTPUT-DIRETORIOS (P3) | `b0c1465`+`bc8f578` | CONCLUÍDA. Script + execução real: 3 diretórios obsoletos limpos (~670 KB), 2 movidos para `_arquivo_historico/2026-05-17/`. |
+
+**Restantes** (em ordem):
+- UX-BE-SESSION-STATE-SAFE (P2, 1h) — `pop()` sem default crash em deep-link
+- INFRA-PIPELINE-FASES-ISOLADAS (P2, 3h) — `_executar_corpo_pipeline` 156L
+- INFRA-SCRIPTS-CLI-PADRAO (P3, 2h) — padrão CLI canônico
+- UX-SPINNER-PROGRESS-FEEDBACK (P3, 1.5h) — 2/42 páginas com spinner
+- TEST-EXTRAIR-HELPERS-PUROS (P3, 2h) — testes importam Streamlit
+- GRAFO-AUDIT-ORPHAN-NODES (P3, 1h) — 3 nodes fornecedor sem edges
+- META-REGEN-INDICE-BACKLOG (P3, 0.5h) — INDICE_2026-05-12 desatualizado
 
 ---
 

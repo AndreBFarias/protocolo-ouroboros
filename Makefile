@@ -105,6 +105,9 @@ metricas: ## Gera data/output/metricas_prontidao.json + atualiza tabela no ROADM
 auditoria-xlsx: ## Gera data/output/auditoria_cruzada_<YYYY-MM-DD>.xlsx (Opus × ETL)
 	@$(PYTHON) -m scripts.exportar_auditoria_cruzada
 
+sprints-indice: ## Regenera docs/sprints/backlog/INDICE_<YYYY-MM-DD>.md (catalogador vivo)
+	@$(PYTHON) scripts/regenerar_indice_backlog.py --apply
+
 audit: ## Auditoria rápida (métricas de prontidão; fallback se script não materializado)
 	@if [ -f scripts/gerar_metricas_prontidao.py ]; then \
 		$(PYTHON) scripts/gerar_metricas_prontidao.py; \
