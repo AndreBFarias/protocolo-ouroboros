@@ -1,8 +1,8 @@
 ---
 id: UX-CACHE-BUSCA-TTL-CURTO
 titulo: "Cache `_indice_cached` em busca.py com TTL=300s causa dados obsoletos por 5min"
-status: backlog
-concluida_em: null
+status: concluída
+concluida_em: 2026-05-17
 prioridade: P2
 data_criacao: 2026-05-17
 fase: UX

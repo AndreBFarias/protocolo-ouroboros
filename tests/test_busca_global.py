@@ -205,4 +205,35 @@ busca.renderizar()
         assert ">52<" not in markdowns
 
 
+# ============================================================================
+# Sprint UX-CACHE-BUSCA-TTL-CURTO (2026-05-17)
+# Cache de _indice_cached invalida automaticamente quando XLSX muda
+# (mtime no cache key) + TTL curto (60s vs 300s).
+# ============================================================================
+
+
+def test_indice_cached_key_inclui_mtime():
+    """Função aceita parâmetro mtime_xlsx (entra na cache key)."""
+    import inspect
+
+    from src.dashboard.paginas.busca import _indice_cached
+
+    sig = inspect.signature(_indice_cached)
+    assert "mtime_xlsx" in sig.parameters
+    # Default deve ser 0.0 (fallback gracioso quando XLSX ausente):
+    assert sig.parameters["mtime_xlsx"].default == 0.0
+
+
+def test_mtime_xlsx_atual_devolve_zero_se_ausente(monkeypatch):
+    """Se XLSX não existe, mtime = 0.0 (não crasha)."""
+
+    from src.dashboard.paginas import busca as busca_mod
+
+    def _fake_stat(_self):
+        raise OSError("inexistente")
+
+    monkeypatch.setattr("pathlib.Path.stat", _fake_stat)
+    assert busca_mod._mtime_xlsx_atual() == 0.0
+
+
 # "Clicar e nada acontecer é pior que não ter botão." -- princípio de UX

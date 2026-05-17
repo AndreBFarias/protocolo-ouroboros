@@ -444,8 +444,10 @@ def renderizar(
 
     # Branch (m) reversível: tenta construir índice; página segue funcional
     # mesmo se o grafo não existir.
+    # Sprint UX-CACHE-BUSCA-TTL-CURTO (2026-05-17): cache invalida automaticamente
+    # quando XLSX muda (via mtime na key).
     try:
-        indice = _indice_cached()
+        indice = _indice_cached(_mtime_xlsx_atual())
         indice_ok = bool(indice and any(indice.values()))
     except Exception:  # noqa: BLE001 -- defensivo; falha única = índice vazio
         indice = {"fornecedores": [], "descricoes": [], "tipos_doc": [], "abas": []}
@@ -551,10 +553,40 @@ def renderizar(
 # ---------------------------------------------------------------------------
 
 
-@st.cache_data(ttl=300)
-def _indice_cached() -> dict[str, list[str]]:
-    """Índice cacheado por sessão (ttl 5 min). Branch reversível se falha."""
+@st.cache_data(ttl=60)
+def _indice_cached(mtime_xlsx: float = 0.0) -> dict[str, list[str]]:
+    """Índice cacheado por sessão.
+
+    Sprint UX-CACHE-BUSCA-TTL-CURTO (2026-05-17): TTL reduzido de 300s
+    para 60s + invalidação automática por mtime do XLSX. Quando dono
+    roda `./run.sh --tudo`, mtime do XLSX muda → cache key diferente →
+    índice atualizado imediatamente, sem esperar TTL.
+
+    Args:
+        mtime_xlsx: timestamp de modificação do XLSX. Faz parte da chave
+            de cache para invalidação automática. Default 0.0 (fallback
+            quando XLSX não existe; cache normal ainda válido).
+
+    Returns:
+        Branch reversível: dict vazio se falha (não crasha a página).
+    """
     return construir_indice()
+
+
+def _mtime_xlsx_atual() -> float:
+    """Devolve mtime do XLSX consolidado (0 se ausente).
+
+    Usado para invalidação de cache do índice de busca. Mudança do XLSX
+    via pipeline ETL muda mtime → próxima chamada de `_indice_cached`
+    com novo mtime quebra cache.
+    """
+    from pathlib import Path
+
+    p = Path(__file__).resolve().parents[3] / "data" / "output" / "ouroboros_2026.xlsx"
+    try:
+        return p.stat().st_mtime
+    except OSError:
+        return 0.0
 
 
 def _aplicar_chip_sugestao(valor: str) -> None:
