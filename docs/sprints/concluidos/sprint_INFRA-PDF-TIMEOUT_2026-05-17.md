@@ -1,8 +1,8 @@
 ---
 id: INFRA-PDF-TIMEOUT
 titulo: "PDFs corrompidos podem hangar pipeline indefinidamente (pdfplumber sem timeout)"
-status: backlog
-concluida_em: null
+status: concluída
+concluida_em: 2026-05-17
 prioridade: P2
 data_criacao: 2026-05-17
 fase: ROBUSTEZ

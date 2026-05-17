@@ -404,15 +404,22 @@ def _ler_pdf(caminho: Path) -> str:
     except ImportError as erro:
         logger.error("pdfplumber indisponível: %s", erro)
         return ""
+
+    # Sprint INFRA-PDF-TIMEOUT (2026-05-17): protege contra PDF corrompido.
+    from src.extractors._pdf_timeout import pdf_timeout
+
     try:
-        with pdfplumber.open(caminho) as pdf:
-            paginas: list[str] = []
-            for pg in pdf.pages:
-                extraido = pg.extract_text() or ""
-                paginas.append(extraido)
+        with pdf_timeout():
+            with pdfplumber.open(caminho) as pdf:
+                paginas: list[str] = []
+                for pg in pdf.pages:
+                    extraido = pg.extract_text() or ""
+                    paginas.append(extraido)
         texto = "\n".join(paginas).strip()
         if texto and len(texto) >= 40:
             return texto
+    except TimeoutError as erro:
+        logger.error("PDF %s travou em pdfplumber: %s. Tentando OCR.", caminho, erro)
     except Exception as erro:
         logger.warning("pdfplumber falhou em %s: %s", caminho, erro)
     return _ocr_pdf(caminho)
@@ -425,13 +432,22 @@ def _ocr_pdf(caminho: Path) -> str:
     except ImportError as erro:
         logger.error("OCR indisponível: %s", erro)
         return ""
+
+    # Sprint INFRA-PDF-TIMEOUT (2026-05-17): OCR tende a ser ainda mais
+    # lento que extract_text; aplica timeout maior (60s).
+    from src.extractors._pdf_timeout import pdf_timeout
+
     try:
-        with pdfplumber.open(caminho) as pdf:
-            textos: list[str] = []
-            for pg in pdf.pages:
-                imagem = pg.to_image(resolution=200).original
-                textos.append(pytesseract.image_to_string(imagem, lang="por"))
+        with pdf_timeout(segundos=60):
+            with pdfplumber.open(caminho) as pdf:
+                textos: list[str] = []
+                for pg in pdf.pages:
+                    imagem = pg.to_image(resolution=200).original
+                    textos.append(pytesseract.image_to_string(imagem, lang="por"))
         return "\n".join(textos)
+    except TimeoutError as erro:
+        logger.error("OCR PDF %s travou: %s. Pulando.", caminho, erro)
+        return ""
     except Exception as erro:
         logger.warning("OCR PDF falhou em %s: %s", caminho, erro)
         return ""

@@ -592,10 +592,18 @@ def _ler_paginas_pdf(caminho: Path) -> list[str]:
         logger.error("pdfplumber indisponível: %s", erro)
         return []
     paginas: list[str] = []
+    # Sprint INFRA-PDF-TIMEOUT (2026-05-17): defesa contra PDF corrompido
+    # que possa hangar pdfminer indefinidamente.
+    from src.extractors._pdf_timeout import pdf_timeout
+
     try:
-        with pdfplumber.open(caminho) as pdf:
-            for pg in pdf.pages:
-                paginas.append(pg.extract_text() or "")
+        with pdf_timeout():
+            with pdfplumber.open(caminho) as pdf:
+                for pg in pdf.pages:
+                    paginas.append(pg.extract_text() or "")
+    except TimeoutError as erro:
+        logger.error("PDF %s travou em pdfplumber: %s. Pulando.", caminho, erro)
+        return []
     except Exception as erro:
         logger.warning("falha ao ler %s via pdfplumber: %s", caminho, erro)
         return []
