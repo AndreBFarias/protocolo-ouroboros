@@ -96,23 +96,55 @@ def _coerce_int(valor: Any) -> int | None:
 
 
 def _listar_dailies(vault_root: Path, periodo_dias: int, hoje: date) -> list[Path]:
-    """Lista .md candidatos em daily/ e inbox/mente/humor/ ordenados por nome."""
-    diretorios = [
+    """Lista .md candidatos em daily/, inbox/mente/humor/ e markdown/ (H2).
+
+    H2 (ADR-0023 do Mobile): layout-por-tipo coloca humor em
+    ``markdown/humor-YYYY-MM-DD.md`` (prefixo no filename, sem
+    subpasta semântica). Legado pre-H2 vive em ``daily/`` e
+    ``inbox/mente/humor/``. Os três coexistem em vault em migração;
+    ``_parse_celula`` deduplica por (data, autor).
+    """
+    diretorios_legado = [
         vault_root / "daily",
         vault_root / "inbox" / "mente" / "humor",
     ]
+    pasta_markdown = vault_root / "markdown"
     limite_inferior = hoje - timedelta(days=periodo_dias - 1)
     arquivos: list[Path] = []
-    for d in diretorios:
+    # Legado: glob por .md direto (todos os arquivos podem ser humor).
+    for d in diretorios_legado:
         if not d.exists():
             continue
         for md in sorted(d.glob("*.md")):
             data_no_nome = _data_no_nome(md.stem)
-            if data_no_nome is not None:
-                if not (limite_inferior <= data_no_nome <= hoje):
-                    continue
+            if data_no_nome is not None and not (limite_inferior <= data_no_nome <= hoje):
+                continue
+            arquivos.append(md)
+    # H2: pasta única com múltiplos tipos; filtra por prefixo ``humor-``.
+    # ``daily-`` também é aceito para tolerar variação de nomenclatura
+    # eventual (writer Python legado escreveu daily/<data>.md; se um dia
+    # for migrado para markdown/, viraria ``daily-<data>.md``).
+    if pasta_markdown.exists():
+        for md in sorted(pasta_markdown.glob("humor-*.md")):
+            data_no_nome = _data_no_nome_h2(md.stem, prefixo="humor-")
+            if data_no_nome is not None and not (limite_inferior <= data_no_nome <= hoje):
+                continue
+            arquivos.append(md)
+        for md in sorted(pasta_markdown.glob("daily-*.md")):
+            data_no_nome = _data_no_nome_h2(md.stem, prefixo="daily-")
+            if data_no_nome is not None and not (limite_inferior <= data_no_nome <= hoje):
+                continue
             arquivos.append(md)
     return arquivos
+
+
+def _data_no_nome_h2(stem: str, *, prefixo: str) -> date | None:
+    """Extrai YYYY-MM-DD de stems H2 do tipo ``humor-2026-05-06`` ou
+    ``daily-2026-05-06``. Devolve ``None`` se prefixo ou data ausentes."""
+    if not stem.startswith(prefixo):
+        return None
+    resto = stem[len(prefixo) :]
+    return _data_no_nome(resto)
 
 
 def _data_no_nome(stem: str) -> date | None:

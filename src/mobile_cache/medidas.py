@@ -25,7 +25,10 @@ from src.mobile_cache.humor_heatmap import _ler_frontmatter, _normalizar_data
 from src.utils.pessoas import pessoa_id_de_legacy
 
 SCHEMA = "medidas"
-SUBPATHS = (("medidas",),)
+# H2 (ADR-0023 do Mobile): ``markdown/`` é o layout-por-tipo canônico
+# pós-migração; ``medidas/`` é o legado pre-H2. Ambos varridos.
+SUBPATHS = (("markdown",), ("medidas",))
+FILENAME_PREFIXES_H2: tuple[str, ...] = ("medidas-",)
 CAMPOS_NUMERICOS = (
     # Antropométricas (UX-RD-16).
     "peso",
@@ -57,6 +60,8 @@ def _coerce_float(valor: Any) -> float | None:
 
 
 def _parse_item(md_path: Path) -> dict[str, Any] | None:
+    if md_path.parent.name == "markdown" and not md_path.name.startswith(FILENAME_PREFIXES_H2):
+        return None
     fm = _ler_frontmatter(md_path)
     if fm is None:
         return None

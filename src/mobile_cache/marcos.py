@@ -19,10 +19,22 @@ from src.mobile_cache.humor_heatmap import _ler_frontmatter, _normalizar_data
 from src.utils.pessoas import pessoa_id_de_legacy
 
 SCHEMA = "marcos"
-SUBPATHS = (("marcos",),)
+# H2 (ADR-0023 do Mobile): ``markdown/`` é o layout-por-tipo canônico
+# pós-migração; ``marcos/`` é o legado pre-H2. Ambos varridos em união
+# pelo ``_base.varrer_schema`` -- vault que tem só um deles funciona,
+# vault em migração intermediária (raro) funciona somando os dois.
+SUBPATHS = (("markdown",), ("marcos",))
+FILENAME_PREFIXES_H2: tuple[str, ...] = ("marco-",)
 
 
 def _parse_item(md_path: Path) -> dict[str, Any] | None:
+    # Em layout H2 (markdown/), arquivos compartilham a pasta entre tipos
+    # diferentes. Filtra rapidamente por prefixo para evitar abrir YAML
+    # de arquivos não-marco (eventos, humor, etc.). Layout legado
+    # (marcos/<file>) não tem essa restrição -- discriminador é só
+    # ``tipo:`` no frontmatter.
+    if md_path.parent.name == "markdown" and not md_path.name.startswith(FILENAME_PREFIXES_H2):
+        return None
     fm = _ler_frontmatter(md_path)
     if fm is None:
         return None

@@ -22,7 +22,12 @@ from src.mobile_cache.humor_heatmap import (
 from src.utils.pessoas import pessoa_id_de_legacy
 
 SCHEMA = "treinos"
-SUBPATHS = (("treinos",),)
+# H2 (ADR-0023 do Mobile): ``markdown/`` é o layout-por-tipo canônico
+# pós-migração; ``treinos/`` é o legado pre-H2. Ambos varridos.
+SUBPATHS = (("markdown",), ("treinos",))
+# Mobile usa prefixo ``treino-`` nas sprints de migração; mantemos
+# também ``treinos-`` como tolerância amigável (writers Python legados).
+FILENAME_PREFIXES_H2: tuple[str, ...] = ("treino-", "treinos-")
 
 
 def _normalizar_exercicios(valor: Any) -> list[dict[str, Any]]:
@@ -48,6 +53,8 @@ def _normalizar_exercicios(valor: Any) -> list[dict[str, Any]]:
 
 
 def _parse_item(md_path: Path) -> dict[str, Any] | None:
+    if md_path.parent.name == "markdown" and not md_path.name.startswith(FILENAME_PREFIXES_H2):
+        return None
     fm = _ler_frontmatter(md_path)
     if fm is None:
         return None

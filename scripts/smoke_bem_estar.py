@@ -1,8 +1,16 @@
-"""Smoke aritmético do cluster Bem-estar (Sprint UX-RD-16).
+"""Smoke aritmético do cluster Bem-estar (Sprint UX-RD-16, atualizado R-CROSS-FLOW-FIX-2).
 
 Compara, para cada um dos 9 schemas Bem-estar, ``count(items)`` no
-cache JSON com ``count(*.md válidos)`` no filesystem do vault. Falha
-com exit 1 se algum schema apresenta divergência.
+cache JSON com ``count(items)`` que o próprio parser do schema
+reconheceria no filesystem do vault. Falha com exit 1 se algum
+schema apresenta divergência.
+
+R-CROSS-FLOW-FIX-2: a contagem do filesystem usa ``parser.varrer()``
+em vez de ``rglob('*.md')`` cru. Isso garante equivalência por
+construção em vault H2 (ADR-0023 do Mobile) onde ``markdown/``
+agrupa múltiplos tipos -- o parser aplica filtro de prefixo +
+discriminador de ``tipo:`` no frontmatter, exatamente o mesmo
+critério do cache.
 
 Uso:
     python scripts/smoke_bem_estar.py                            # auto-detecta vault
@@ -28,18 +36,33 @@ from pathlib import Path
 RAIZ = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(RAIZ))
 
+from src.mobile_cache import (  # noqa: E402
+    alarmes,
+    ciclo,
+    contadores,
+    diario_emocional,
+    eventos,
+    marcos,
+    medidas,
+    tarefas,
+    treinos,
+)
 from src.mobile_cache.varrer_vault import descobrir_vault_root, varrer_tudo  # noqa: E402
 
-SCHEMAS_SUBPATHS: dict[str, tuple[str, ...]] = {
-    "diario-emocional": ("inbox", "mente", "diario"),
-    "eventos": ("eventos",),
-    "treinos": ("treinos",),
-    "medidas": ("medidas",),
-    "marcos": ("marcos",),
-    "alarmes": ("alarmes",),
-    "contadores": ("contadores",),
-    "ciclo": ("ciclo",),
-    "tarefas": ("tarefas",),
+# Map schema → módulo parser. Cada módulo expõe ``varrer(vault_root)``
+# que devolve payload canônico ``{items: [...]}`` -- usamos o próprio
+# parser como fonte da verdade do filesystem (suporta H2 + legado em
+# união, com filtro de prefixo + discriminador de ``tipo``).
+SCHEMAS_PARSERS: dict[str, object] = {
+    "diario-emocional": diario_emocional,
+    "eventos": eventos,
+    "treinos": treinos,
+    "medidas": medidas,
+    "marcos": marcos,
+    "alarmes": alarmes,
+    "contadores": contadores,
+    "ciclo": ciclo,
+    "tarefas": tarefas,
 }
 
 
@@ -56,13 +79,19 @@ def contar_cache(cache_path: Path) -> int:
     return len(items)
 
 
-def contar_filesystem(vault_root: Path | None, subpath: tuple[str, ...]) -> int:
+def contar_filesystem(vault_root: Path | None, parser_modulo) -> int:
+    """Conta items que o parser efetivamente reconheceria no vault.
+
+    Em vez de ``rglob('*.md')`` cru (que falha em H2 onde múltiplos
+    tipos compartilham ``markdown/``), invoca o próprio ``varrer``
+    do módulo do schema. Garante equivalência cache↔filesystem por
+    construção: ambos os lados aplicam exatamente o mesmo filtro.
+    """
     if vault_root is None:
         return 0
-    base = vault_root.joinpath(*subpath)
-    if not base.exists():
-        return 0
-    return sum(1 for _ in base.rglob("*.md"))
+    payload = parser_modulo.varrer(vault_root)
+    items = payload.get("items") or []
+    return len(items) if isinstance(items, list) else 0
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -102,10 +131,10 @@ def main(argv: list[str] | None = None) -> int:
 
     violacoes: list[str] = []
     detalhes: list[str] = []
-    for schema, subpath in SCHEMAS_SUBPATHS.items():
+    for schema, parser_modulo in SCHEMAS_PARSERS.items():
         cache_path = cache_dir / f"{schema}.json"
         cache_count = contar_cache(cache_path)
-        fs_count = contar_filesystem(vault_root, subpath)
+        fs_count = contar_filesystem(vault_root, parser_modulo)
         if cache_count < 0:
             violacoes.append(f"{schema}: cache ausente/inválido ({cache_path})")
             continue
@@ -118,7 +147,7 @@ def main(argv: list[str] | None = None) -> int:
             print(f"[SMOKE-BE] VIOLAÇÃO em {v}")
         return 1
 
-    print(f"[SMOKE-BE] {len(SCHEMAS_SUBPATHS)}/{len(SCHEMAS_SUBPATHS)} schemas OK")
+    print(f"[SMOKE-BE] {len(SCHEMAS_PARSERS)}/{len(SCHEMAS_PARSERS)} schemas OK")
     for d in detalhes:
         print(d)
     return 0
