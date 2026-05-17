@@ -889,8 +889,8 @@ def executar(mes: str | None = None, processar_tudo: bool = False) -> None:
 #   - processar_tudo: bool
 #   - classes_extratores: list (após fase 1)
 #   - arquivos: list[Path] (após fase 2)
-#   - transacoes: list[dict] (mutada do passo 3 em diante)
-#   - transacoes_filtradas: list[dict] (após fase 8)
+#   - transacoes: list[dict] (mutada do passo 3 em diante)  # noqa: accent
+#   - transacoes_filtradas: list[dict] (após fase 8)  # noqa: accent
 #   - contracheques: list[dict] (após fase 10)
 #   - caminho_xlsx: Path (após fase 11)
 # ---------------------------------------------------------------------------

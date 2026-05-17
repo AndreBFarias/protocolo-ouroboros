@@ -137,7 +137,7 @@ Plano original: `~/.claude/plans/recursive-whistling-goblet.md` (aprovado)
 | 6 | INFRA-PDF-TIMEOUT (P2) | `ad78d32` | CONCLUÍDA. `_pdf_timeout.py` via SIGALRM + aplicado em danfe + garantia. 7 testes regressivos. |
 | 7 | UX-CACHE-BUSCA-TTL-CURTO (P2) | `5cf9685` | CONCLUÍDA. ttl 300s→60s + invalidação por mtime do XLSX. 2 testes regressivos. |
 | 8 | CLEANUP-DATA-OUTPUT-DIRETORIOS (P3) | `b0c1465`+`bc8f578` | CONCLUÍDA. Script + execução real: 3 diretórios obsoletos limpos (~670 KB), 2 movidos para `_arquivo_historico/2026-05-17/`. |
-| 9 | META-REGEN-INDICE-BACKLOG (P3) | `40b128b` | CONCLUÍDA. Script catalogador + `make sprints-indice`. INDICE_2026-05-17 com 136 specs por épico/prioridade. INDICE_2026-05-12 arquivado. |
+| 9 | META-REGEN-INDICE-BACKLOG (P3) | `40b128b` | CONCLUÍDA. Script catalogador + `make sprints-indice`. Índice com 136 specs por épico/prioridade. Anterior arquivado. <!-- noqa: accent --> |
 | 10 | UX-BE-SESSION-STATE-SAFE (P2) | `e520c0c` | CONCLUÍDA. Bug original era falso positivo (todos `pop()` já têm default). Achado colateral: 2 `del session_state[k]` em extrato.py substituídos por `pop(k, None)` defensivo. |
 | 11 | GRAFO-AUDIT-ORPHAN-NODES (P3) | `cf04164` | CONCLUÍDA. Script + execução: 3 nodes fornecedor órfãos deletados (BIR COMERCIO, CNPJ MEI, DIRPF fragmento). Backup pré-apply, log estruturado. 0 órfãos restantes. |
 
