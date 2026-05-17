@@ -1,8 +1,8 @@
 ---
 id: CLEANUP-DATA-OUTPUT-DIRETORIOS
 titulo: "Limpeza de diretórios obsoletos em `data/output/` (_lixo, _backup, _arquivado)"
-status: backlog
-concluida_em: null
+status: concluída
+concluida_em: 2026-05-17
 prioridade: P3
 data_criacao: 2026-05-17
 fase: SANEAMENTO
