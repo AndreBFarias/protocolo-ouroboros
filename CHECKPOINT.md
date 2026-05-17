@@ -3,9 +3,9 @@
 > Atualizado automaticamente pelo Opus principal a cada avanço.
 > **Se sessão cair, próximo Opus retoma daqui.** Não editar manualmente.
 
-**Última atualização**: 2026-05-16 ~23:30
-**HEAD atual**: `89a03f7` (pushed em `origin/main`)
-**Working tree**: docs vivas modificadas (métricas regeneradas)
+**Última atualização**: 2026-05-16 ~23:45
+**HEAD atual**: `cca2dde` (pushed em `origin/main`)
+**Working tree**: limpo (lint exit 0, acentuação OK)
 
 ---
 
