@@ -1,8 +1,8 @@
 ---
 id: GRAFO-AUDIT-ORPHAN-NODES
 titulo: "3 nodes fornecedor sem edges no grafo (órfãos): auditar + limpar ou relinkar"
-status: backlog
-concluida_em: null
+status: concluída
+concluida_em: 2026-05-17
 prioridade: P3
 data_criacao: 2026-05-17
 fase: SANEAMENTO
